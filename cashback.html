@@ -112,7 +112,7 @@
             background-color: rgba(255, 107, 107, 0.1); padding: 10px; border-radius: 6px;
         }
 
-        /* --- FINAL: Dashboard Header with SVG URLs --- */
+        /* --- Dashboard Header --- */
         .header {
             display: flex;
             flex-direction: column;
@@ -134,68 +134,32 @@
             gap: 15px;
         }
         .header-icon {
-            font-size: 24px; 
-            cursor: pointer; 
-            line-height: 1; 
-            padding: 8px;
-            border-radius: 50%; 
-            transition: background-color 0.2s, transform 0.2s; 
-            user-select: none; 
-            position: relative;
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            text-decoration: none;
+            font-size: 24px; cursor: pointer; line-height: 1; padding: 8px;
+            border-radius: 50%; transition: background-color 0.2s, transform 0.2s; 
+            user-select: none; position: relative; display: flex; 
+            align-items: center; justify-content: center; text-decoration: none;
         }
         .header-icon:hover { 
             background-color: var(--border-color-dark); 
             transform: scale(1.1);
         }
         .header-icon img {
-            width: 24px;
-            height: 24px;
-            transition: filter 0.3s;
+            width: 24px; height: 24px; transition: filter 0.3s;
         }
-        /* Default dark mode: make icons white */
-        .header-icon img {
-            filter: invert(1);
-        }
-        /* Light mode: make icons black (original color) */
-        body[data-theme="light"] .header-icon img {
-            filter: none;
-        }
+        body[data-theme="dark"] .header-icon img { filter: invert(1); }
+        body[data-theme="light"] .header-icon img { filter: none; }
         
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        #refresh-btn.refreshing img {
-            animation: spin 1s linear;
-        }
+        #refresh-btn.refreshing img { animation: spin 1s linear; }
 
         #logout-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background-color: var(--brand-red);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
-            margin-left: auto; /* Pushes logout to the far right */
+            display: flex; align-items: center; gap: 8px; background-color: var(--brand-red);
+            color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s; margin-left: auto;
         }
-        #logout-btn:hover {
-            background-color: var(--brand-red-hover);
-            transform: scale(1.05);
-        }
-        #logout-btn img {
-            width: 18px;
-            height: 18px;
-            filter: invert(1); /* Always white */
-        }
-        #logout-btn span {
-            font-weight: 500;
-            font-size: 14px;
-            line-height: 1;
-        }
+        #logout-btn:hover { background-color: var(--brand-red-hover); transform: scale(1.05); }
+        #logout-btn img { width: 18px; height: 18px; filter: invert(1); }
+        #logout-btn span { font-weight: 500; font-size: 14px; line-height: 1; }
         
         .notification-dot {
             position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; background-color: var(--brand-red);
@@ -262,48 +226,19 @@
 
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: var(--text-secondary-dark); }
         
-        /* NEW: Filter Bar Styles */
         .filter-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding-bottom: 10px;
+            display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px;
         }
         .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border-color-dark);
-            background-color: transparent;
-            color: var(--text-secondary-dark);
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s;
-            white-space: nowrap;
+            padding: 8px 16px; border: 1px solid var(--border-color-dark); background-color: transparent;
+            color: var(--text-secondary-dark); border-radius: 20px; cursor: pointer;
+            font-weight: 500; font-size: 14px; transition: all 0.2s; white-space: nowrap;
         }
-        .filter-btn:hover {
-            background-color: var(--border-color-dark);
-            color: var(--text-primary-dark);
-        }
-        .filter-btn.active {
-            background-color: var(--brand-red);
-            color: white;
-            border-color: var(--brand-red);
-        }
-        body[data-theme="light"] .filter-btn {
-             border-color: var(--border-color-light-strong);
-        }
-        body[data-theme="light"] .filter-btn:hover {
-            background-color: #e8eef3;
-            color: var(--text-primary-light);
-        }
-        body[data-theme="light"] .filter-btn.active {
-            background-color: var(--brand-red);
-            color: white;
-            border-color: var(--brand-red);
-        }
-
+        .filter-btn:hover { background-color: var(--border-color-dark); color: var(--text-primary-dark); }
+        .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
+        body[data-theme="light"] .filter-btn { border-color: var(--border-color-light-strong); }
+        body[data-theme="light"] .filter-btn:hover { background-color: #e8eef3; color: var(--text-primary-light); }
+        body[data-theme="light"] .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
 
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item {
@@ -370,8 +305,12 @@
         .btn-secondary { background: var(--border-color-dark); }
         .btn-secondary:hover { background: #414b69; transform: none; box-shadow: none; }
         
-        /* Profile Modal Specifics */
-        .profile-info { text-align: center; margin-bottom: 25px; }
+        /* PROFILE MODAL FIX */
+        #profile-modal .modal-content { padding: 0; }
+        #profile-modal .profile-info { padding: 30px 30px 0 30px; }
+        #profile-modal .modal-body { padding: 0 30px; }
+        #profile-modal .modal-actions { padding: 20px 30px 30px 30px; }
+        
         #profile-modal-display {
             width: 80px; height: 80px; border-radius: 50%; background-color: var(--brand-red); color: white;
             font-size: 40px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;
@@ -382,7 +321,6 @@
         .profile-upload-section { margin-top: 20px; text-align: center; }
         #profile-picture-input { display: none; }
         #upload-status { font-size: 12px; margin-top: 8px; color: var(--accent-yellow); }
-
         #password-change-form { border-top: 1px solid var(--border-color-dark); padding-top: 20px; margin-top: 20px; }
         body[data-theme="light"] #password-change-form { border-top-color: var(--border-color-light-strong); }
         
@@ -420,7 +358,7 @@
         #notification-modal-image {
             width: 100%; height: 180px; object-fit: cover;
             border-top-left-radius: 16px; border-top-right-radius: 16px;
-            cursor: pointer; /* Add cursor pointer for clickability */
+            cursor: pointer;
         }
         #notification-modal .modal-body { padding: 25px; }
         #notification-modal-title { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 10px; }
@@ -657,25 +595,28 @@
         </div>
     </div>
 
+    <!-- PROFILE MODAL (FIXED LAYOUT) -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">
-             <div class="profile-info">
+            <div class="profile-info">
                 <img id="profile-modal-display" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture">
                 <h3 id="profile-modal-name"></h3>
                 <p id="profile-modal-mobile"></p>
             </div>
-            <div class="profile-upload-section">
-                <input type="file" id="profile-picture-input" accept="image/*">
-                <button type="button" class="btn-secondary" onclick="document.getElementById('profile-picture-input').click();">Change Picture</button>
-                <p id="upload-status"></p>
+            <div class="modal-body">
+                <div class="profile-upload-section">
+                    <input type="file" id="profile-picture-input" accept="image/*">
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('profile-picture-input').click();">Change Picture</button>
+                    <p id="upload-status"></p>
+                </div>
+                <form id="password-change-form">
+                    <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div>
+                    <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div>
+                    <div class="form-group"><label for="confirm-password">Naya Password Confirm Karein</label><input type="password" id="confirm-password" required></div>
+                    <button type="submit" id="password-change-btn">Password Badlein</button>
+                    <p id="password-change-error-msg" class="error-message"></p>
+                </form>
             </div>
-            <form id="password-change-form">
-                <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div>
-                <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div>
-                <div class="form-group"><label for="confirm-password">Naya Password Confirm Karein</label><input type="password" id="confirm-password" required></div>
-                <button type="submit" id="password-change-btn">Password Badlein</button>
-                <p id="password-change-error-msg" class="error-message"></p>
-            </form>
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" data-close-modal>Close</button>
             </div>
@@ -722,10 +663,11 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, get, set, push, onValue, runTransaction, query, orderByChild, equalTo, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
+        // --- Global Variables & Constants ---
         const IMGBB_API_KEY = "65bbcf742486328061382f03949b47c6";
         let auth, database;
 
-        // DOM Elements
+        // --- DOM Elements ---
         const views = document.querySelectorAll('.view');
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
@@ -761,7 +703,7 @@
         const claimSubmitBtn = document.getElementById('claim-submit-btn');
         const cashbackSubmitBtn = document.getElementById('cashback-submit-btn');
 
-        // State Variables
+        // --- State Variables ---
         let currentUserData = null;
         let activeListeners = [];
         let allNotifications = [];
@@ -772,6 +714,7 @@
         let activeScratchCardData = null;
         let tempClaimAmount = 0;
         let activeFilter = 'all';
+        let processingRewardKey = null; // BUG FIX: Lock for reward processing
 
         // --- Main Initialization Function ---
         async function initializeFirebaseApp() {
@@ -1077,7 +1020,6 @@
             const productPrice=parseFloat(document.getElementById("product-price").value);
             if(!productName||isNaN(productPrice)||productPrice<10){ showErrorMessage(cashbackErrorMsg,"Sahi product naam aur kam se kam ₹10 ka price daalein."); cashbackSubmitBtn.disabled = false; return; }
             
-            // FEATURE: Fetch dynamic percentage
             const percentage = await getCashbackPercentage();
             const cashbackAmount = productPrice * (percentage / 100);
             
@@ -1115,7 +1057,6 @@
             }
         }
 
-        // --- Profile Picture Upload ---
         profilePictureInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -1139,7 +1080,6 @@
             }
         });
 
-        // --- Notification Logic ---
         function checkNewNotifications() {
             if (!currentUserData || allNotifications.length === 0) { notificationDot.classList.remove('active'); return; }
             const latestNotification = allNotifications.sort((a,b) => b.timestamp - a.timestamp)[0];
@@ -1157,7 +1097,6 @@
             notificationDot.classList.remove('active');
         });
 
-        // --- Scratch Card ---
         function showNextScratchCard() {
             if (isScratchCardActive || unscratchedCardsQueue.length === 0) return;
             isScratchCardActive = true;
@@ -1211,8 +1150,12 @@
         }
 
         async function processReward(amount, key) {
+            if (processingRewardKey === key) return; // BUG FIX: Prevent double processing
+            processingRewardKey = key; // BUG FIX: Set lock
+
             const user = auth.currentUser;
-            if (!user) return;
+            if (!user) { processingRewardKey = null; return; }
+            
             const userRef = ref(database, 'users/' + user.uid);
             const cashbackRef = ref(database, `cashback_requests/${key}`);
             try {
@@ -1227,17 +1170,17 @@
                 showToast(`Badhai! ₹${amount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
             } catch (error) {
                 showToast("Reward process karne mein error aayi.");
+            } finally {
+                processingRewardKey = null; // BUG FIX: Release lock
             }
         }
 
-        // --- NEW/UPDATED: Dynamic Config & Action Handlers ---
         async function getCashbackPercentage() {
             const percentageRef = ref(database, 'config/cashbackPercentage');
             const snapshot = await get(percentageRef);
-            return (snapshot.exists() && typeof snapshot.val() === 'number') ? snapshot.val() : 2; // Default 2%
+            return (snapshot.exists() && typeof snapshot.val() === 'number') ? snapshot.val() : 2;
         }
         
-        // --- App Setup ---
         function setupApplication() {
             initTheme();
             setupAuthentication();
@@ -1256,7 +1199,6 @@
             document.getElementById('open-pending-modal').addEventListener('click', () => openModal(document.getElementById('pending-modal')));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(profileModal));
             
-            // UPDATED: Cashback Modal Trigger with Dynamic Percentage
             document.getElementById('open-cashback-modal').addEventListener('click', async () => {
                 const percentage = await getCashbackPercentage();
                 document.getElementById('cashback-modal-description').textContent = `Product details bharein. ${percentage}% cashback request kiya jayega.`;
@@ -1265,13 +1207,11 @@
 
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
             
-            // Form Submissions
             claimRequestForm.addEventListener('submit', handleClaimRequest);
             cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
             passwordChangeForm.addEventListener('submit', handlePasswordChange);
             modalConfirmBtn.addEventListener('click', processClaimConfirmation);
 
-            // Coupon Copy
             document.getElementById('coupons-list').addEventListener('click', e => {
                 if (e.target?.classList.contains('copy-btn')) {
                     const coupon = e.target.dataset.coupon;
@@ -1282,14 +1222,12 @@
                 }
             });
 
-            // Fullscreen Image Viewer
             notificationModalImage.addEventListener('click', () => {
                 fullscreenImage.src = notificationModalImage.src;
                 fullscreenImageViewer.classList.add('active');
             });
             fullscreenImageViewer.addEventListener('click', () => fullscreenImageViewer.classList.remove('active'));
 
-            // Share Button
             walletShareBtn.addEventListener('click', async () => {
                 if (!auth.currentUser || !currentUserData) { showToast("Data load ho raha hai, कृपया प्रतीक्षा करें।"); return; }
                 const shareMessage = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMaine, *${auth.currentUser.displayName || 'Prince Rama'}* ne, Ramazone Cashback app se ab tak *₹${(currentUserData.lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! 👇\n\nhttps://ramazone.in/cashback.html`;
@@ -1303,7 +1241,6 @@
                 } catch (err) { if (err.name !== 'AbortError') showToast('Share karne mein error aayi.'); }
             });
 
-            // Filter Bar Logic
             filterBar.addEventListener('click', e => {
                 const target = e.target.closest('.filter-btn');
                 if (!target) return;
@@ -1313,25 +1250,19 @@
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot);
             });
             
-            // BUG FIX: Added a lock to prevent double-claiming
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
-                if (!activeScratchCardData) return; // Guard against multiple clicks
-                const cardToProcess = activeScratchCardData; // Copy data
-                activeScratchCardData = null; // Instantly invalidate the active card
-
+                if (processingRewardKey || !activeScratchCardData) return;
+                const cardToProcess = activeScratchCardData;
+                activeScratchCardData = null;
                 const btn = document.getElementById('scratch-claim-btn');
                 btn.disabled = true;
                 btn.textContent = 'Claiming...';
-
                 await processReward(cardToProcess.cashbackAmount, cardToProcess.key);
-                
                 closeModal(document.getElementById('scratch-card-modal'));
                 isScratchCardActive = false;
-                unscratchedCardsQueue.shift(); 
-                
+                unscratchedCardsQueue.shift();
                 btn.disabled = false;
                 btn.textContent = 'Claim Reward';
-                
                 setTimeout(showNextScratchCard, 500);
             });
         }
