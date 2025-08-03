@@ -659,6 +659,7 @@
     <div id="toast-notification" class="toast-notification"></div>
 
     <script type="module">
+        // Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, get, set, push, onValue, runTransaction, query, orderByChild, equalTo, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
@@ -714,11 +715,12 @@
         let activeScratchCardData = null;
         let tempClaimAmount = 0;
         let activeFilter = 'all';
-        let processingRewardKey = null; // BUG FIX: Lock for reward processing
+        let processingRewardKey = null;
 
         // --- Main Initialization Function ---
         async function initializeFirebaseApp() {
             try {
+                // Fetch config from Vercel environment
                 const response = await fetch('/api/cashback-config');
                 if (!response.ok) throw new Error('Could not fetch Firebase config from server!');
                 const firebaseConfig = await response.json();
@@ -1020,6 +1022,7 @@
             const productPrice=parseFloat(document.getElementById("product-price").value);
             if(!productName||isNaN(productPrice)||productPrice<10){ showErrorMessage(cashbackErrorMsg,"Sahi product naam aur kam se kam ₹10 ka price daalein."); cashbackSubmitBtn.disabled = false; return; }
             
+            // **FIX**: Get the latest percentage right before submitting the request.
             const percentage = await getCashbackPercentage();
             const cashbackAmount = productPrice * (percentage / 100);
             
@@ -1150,8 +1153,8 @@
         }
 
         async function processReward(amount, key) {
-            if (processingRewardKey === key) return; // BUG FIX: Prevent double processing
-            processingRewardKey = key; // BUG FIX: Set lock
+            if (processingRewardKey === key) return;
+            processingRewardKey = key;
 
             const user = auth.currentUser;
             if (!user) { processingRewardKey = null; return; }
@@ -1171,14 +1174,32 @@
             } catch (error) {
                 showToast("Reward process karne mein error aayi.");
             } finally {
-                processingRewardKey = null; // BUG FIX: Release lock
+                processingRewardKey = null;
             }
         }
 
+        // **NEW & IMPROVED FUNCTION**
+        // Fetches cashback percentage from Firebase, with a fallback to a default value.
         async function getCashbackPercentage() {
-            const percentageRef = ref(database, 'config/cashbackPercentage');
-            const snapshot = await get(percentageRef);
-            return (snapshot.exists() && typeof snapshot.val() === 'number') ? snapshot.val() : 2;
+            const defaultPercentage = 2; // Default to 2% if nothing is set in Firebase
+            if (!database) {
+                console.warn("Database not initialized. Using default percentage.");
+                return defaultPercentage;
+            }
+            try {
+                const percentageRef = ref(database, 'config/cashbackPercentage');
+                const snapshot = await get(percentageRef);
+                // Check if snapshot exists and the value is a valid number
+                if (snapshot.exists() && typeof snapshot.val() === 'number') {
+                    return snapshot.val();
+                } else {
+                    // If not found or not a number, return the default value
+                    return defaultPercentage;
+                }
+            } catch (error) {
+                console.error("Error fetching cashback percentage, using default.", error);
+                return defaultPercentage;
+            }
         }
         
         function setupApplication() {
@@ -1199,9 +1220,13 @@
             document.getElementById('open-pending-modal').addEventListener('click', () => openModal(document.getElementById('pending-modal')));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(profileModal));
             
+            // **FIXED**: This is the corrected event listener for the cashback modal.
             document.getElementById('open-cashback-modal').addEventListener('click', async () => {
+                // First, get the current cashback percentage (from Firebase or default).
                 const percentage = await getCashbackPercentage();
+                // Then, update the text inside the modal.
                 document.getElementById('cashback-modal-description').textContent = `Product details bharein. ${percentage}% cashback request kiya jayega.`;
+                // Finally, open the modal. This ensures the modal always opens.
                 openModal(cashbackModal);
             });
 
