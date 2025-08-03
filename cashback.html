@@ -715,7 +715,6 @@
         let activeScratchCardData = null;
         let tempClaimAmount = 0;
         let activeFilter = 'all';
-        let processingRewardKey = null;
 
         // --- Main Initialization Function ---
         async function initializeFirebaseApp() {
@@ -1022,7 +1021,6 @@
             const productPrice=parseFloat(document.getElementById("product-price").value);
             if(!productName||isNaN(productPrice)||productPrice<10){ showErrorMessage(cashbackErrorMsg,"Sahi product naam aur kam se kam ₹10 ka price daalein."); cashbackSubmitBtn.disabled = false; return; }
             
-            // **FIX**: Get the latest percentage right before submitting the request.
             const percentage = await getCashbackPercentage();
             const cashbackAmount = productPrice * (percentage / 100);
             
@@ -1152,50 +1150,63 @@
             canvas.addEventListener('touchend', stop);
         }
 
+        // **BUG FIX**: This function is now more robust to prevent double crediting.
         async function processReward(amount, key) {
-            if (processingRewardKey === key) return;
-            processingRewardKey = key;
-
             const user = auth.currentUser;
-            if (!user) { processingRewardKey = null; return; }
-            
+            if (!user) return;
+
             const userRef = ref(database, 'users/' + user.uid);
             const cashbackRef = ref(database, `cashback_requests/${key}`);
+
             try {
-                await runTransaction(userRef, (data) => {
+                const transactionResult = await runTransaction(userRef, (data) => {
                     if (data) {
+                        // Check if this cashback has already been processed for this user.
+                        if (data.processedCashbacks && data.processedCashbacks[key]) {
+                            // If yes, abort the transaction by returning undefined.
+                            return; 
+                        }
+
+                        // If not processed, update wallet and lifetime earning.
                         data.wallet = (data.wallet || 0) + amount;
                         data.lifetimeEarning = (data.lifetimeEarning || 0) + amount;
+
+                        // Initialize the processedCashbacks object if it doesn't exist.
+                        if (!data.processedCashbacks) {
+                            data.processedCashbacks = {};
+                        }
+                        // Mark this cashback key as processed.
+                        data.processedCashbacks[key] = true;
                     }
                     return data;
                 });
-                await update(cashbackRef, { scratched: true });
-                showToast(`Badhai! ₹${amount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
+
+                // Only update the 'scratched' flag and show toast if the transaction was successful.
+                if (transactionResult.committed) {
+                    await update(cashbackRef, { scratched: true });
+                    showToast(`Badhai! ₹${amount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
+                } else {
+                    // This else block will run if the transaction was aborted (because it was already processed).
+                    // We can silently ignore it or show a message if needed.
+                    console.log(`Reward for key ${key} was already processed.`);
+                }
+
             } catch (error) {
+                console.error("Error processing reward transaction: ", error);
                 showToast("Reward process karne mein error aayi.");
-            } finally {
-                processingRewardKey = null;
             }
         }
 
-        // **NEW & IMPROVED FUNCTION**
-        // Fetches cashback percentage from Firebase, with a fallback to a default value.
         async function getCashbackPercentage() {
-            const defaultPercentage = 2; // Default to 2% if nothing is set in Firebase
-            if (!database) {
-                console.warn("Database not initialized. Using default percentage.");
-                return defaultPercentage;
-            }
+            const defaultPercentage = 2;
+            if (!database) return defaultPercentage;
             try {
                 const percentageRef = ref(database, 'config/cashbackPercentage');
                 const snapshot = await get(percentageRef);
-                // Check if snapshot exists and the value is a valid number
                 if (snapshot.exists() && typeof snapshot.val() === 'number') {
                     return snapshot.val();
-                } else {
-                    // If not found or not a number, return the default value
-                    return defaultPercentage;
                 }
+                return defaultPercentage;
             } catch (error) {
                 console.error("Error fetching cashback percentage, using default.", error);
                 return defaultPercentage;
@@ -1220,13 +1231,9 @@
             document.getElementById('open-pending-modal').addEventListener('click', () => openModal(document.getElementById('pending-modal')));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(profileModal));
             
-            // **FIXED**: This is the corrected event listener for the cashback modal.
             document.getElementById('open-cashback-modal').addEventListener('click', async () => {
-                // First, get the current cashback percentage (from Firebase or default).
                 const percentage = await getCashbackPercentage();
-                // Then, update the text inside the modal.
                 document.getElementById('cashback-modal-description').textContent = `Product details bharein. ${percentage}% cashback request kiya jayega.`;
-                // Finally, open the modal. This ensures the modal always opens.
                 openModal(cashbackModal);
             });
 
@@ -1276,18 +1283,25 @@
             });
             
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
-                if (processingRewardKey || !activeScratchCardData) return;
+                if (!activeScratchCardData) return;
                 const cardToProcess = activeScratchCardData;
-                activeScratchCardData = null;
+                
                 const btn = document.getElementById('scratch-claim-btn');
                 btn.disabled = true;
                 btn.textContent = 'Claiming...';
+
                 await processReward(cardToProcess.cashbackAmount, cardToProcess.key);
+                
                 closeModal(document.getElementById('scratch-card-modal'));
                 isScratchCardActive = false;
                 unscratchedCardsQueue.shift();
+                
                 btn.disabled = false;
                 btn.textContent = 'Claim Reward';
+
+                // Clear the active card data *after* processing
+                activeScratchCardData = null;
+
                 setTimeout(showNextScratchCard, 500);
             });
         }
