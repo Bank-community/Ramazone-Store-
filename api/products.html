@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Products - Ramazone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { 
+            --primary-color: #4F46E5; 
+            --text-dark: #111827;
+            --bg-light: #F9FAFB;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); }
+        .product-card { background-color: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); border: 1px solid #E5E7EB; transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; overflow: hidden; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .product-image-container { position: relative; width: 100%; padding-top: 100%; /* 1:1 Aspect Ratio */ }
+        .product-image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .product-details { padding: 1rem; text-align: center; }
+        .product-name { font-weight: 600; color: var(--text-dark); }
+        .product-offer { background-color: var(--primary-color); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; display: inline-block; margin-top: 0.5rem; }
+        
+        /* Category Filter Styles */
+        .category-scroll-container {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .category-scroll-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, and Opera */
+        }
+        .category-btn {
+            transition: all 0.2s ease-in-out;
+            border: 1px solid #D1D5DB;
+            color: #374151;
+            background-color: white;
+            flex-shrink: 0;
+        }
+        .category-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+        .loader { 
+            border-radius: 50%; width: 40px; height: 40px; margin: 0 auto; 
+            border-top: 4px solid rgba(79, 70, 229, 0.2); 
+            border-right: 4px solid rgba(79, 70, 229, 0.2); 
+            border-bottom: 4px solid rgba(79, 70, 229, 0.2); 
+            border-left: 4px solid var(--primary-color); 
+            transform: translateZ(0); animation: loader 1.1s infinite linear; 
+        }
+        @keyframes loader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="./index.html" class="text-xl font-bold text-gray-800">❮ Home</a>
+            <h1 class="text-2xl font-bold text-gray-800">All Products</h1>
+            <div class="w-16"></div> <!-- Spacer -->
+        </div>
+    </header>
+
+    <!-- Category Filter Bar -->
+    <div class="bg-white py-3 border-b border-gray-200">
+        <div class="container mx-auto px-4">
+            <div id="category-filter-bar" class="flex items-center space-x-3 overflow-x-auto category-scroll-container">
+                <!-- Category buttons will be loaded here -->
+                <div class="text-center py-2 px-4 text-gray-500">Loading categories...</div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto p-4 md:p-8">
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Products will be loaded here by JS -->
+        </div>
+        <div id="loading-indicator" class="text-center py-20">
+            <div class="loader"></div>
+            <p class="text-lg font-semibold mt-4 text-gray-600">Loading Products...</p>
+        </div>
+        <div id="no-products-message" class="hidden text-center py-20">
+             <div class="mx-auto h-16 w-16 flex items-center justify-center bg-gray-200 rounded-full">
+                <i class="fas fa-box-open fa-2x text-gray-500"></i>
+            </div>
+            <p class="mt-4 text-xl font-semibold text-gray-700">No Products Found</p>
+            <p class="text-gray-500">There are no products available in this category.</p>
+        </div>
+    </main>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // --- Main Initialization Function ---
+        async function initializeAppAndLoadData() {
+            try {
+                // Step 1: Fetch the config from the serverless function
+                const response = await fetch('/api/firebase-config');
+                if (!response.ok) {
+                    throw new Error('Could not fetch Firebase config!');
+                }
+                const firebaseConfig = await response.json();
+
+                // Step 2: Initialize Firebase with the fetched config
+                firebase.initializeApp(firebaseConfig);
+                const database = firebase.database();
+
+                // Step 3: Fetch and display products and categories
+                fetchProductsAndCategories(database);
+
+            } catch (error) {
+                console.error("Initialization or data fetch failed:", error);
+                const loader = document.getElementById('loading-indicator');
+                loader.innerHTML = '<p class="text-red-500">Failed to load data.</p>';
+            }
+        }
+        
+        // --- Data Fetching and Display Logic ---
+        function fetchProductsAndCategories(database) {
+            const productsRef = database.ref('ramazone/homepage/festiveCollection/products');
+            const specialCategoriesRef = database.ref('ramazone/homepage/specialCategories');
+            const normalCategoriesRef = database.ref('ramazone/homepage/normalCategories');
+
+            const grid = document.getElementById('products-grid');
+            const loader = document.getElementById('loading-indicator');
+            const noProductsMsg = document.getElementById('no-products-message');
+            const categoryBar = document.getElementById('category-filter-bar');
+            
+            let allProducts = [];
+
+            // Fetch all data simultaneously
+            Promise.all([
+                productsRef.get(),
+                specialCategoriesRef.get(),
+                normalCategoriesRef.get()
+            ]).then(([productsSnapshot, specialCatSnapshot, normalCatSnapshot]) => {
+                
+                // Convert object to array if needed
+                const productsData = productsSnapshot.val();
+                allProducts = productsData ? Object.keys(productsData).map(key => ({ id: key, ...productsData[key] })) : [];
+                
+                const specialCategories = specialCatSnapshot.val() || [];
+                const normalCategories = normalCatSnapshot.val() || [];
+                const allCategories = [...specialCategories, ...normalCategories];
+
+                displayCategories(allCategories, allProducts);
+                displayProducts(allProducts, 'All'); // Show all products initially
+
+                loader.style.display = 'none';
+
+            }).catch(error => {
+                console.error("Error fetching data: ", error);
+                loader.innerHTML = '<p class="text-red-500">Failed to load data.</p>';
+            });
+        }
+
+        function displayCategories(categories, products) {
+            const categoryBar = document.getElementById('category-filter-bar');
+            categoryBar.innerHTML = ''; // Clear loader text
+
+            // Add 'All' button first
+            const allBtn = document.createElement('button');
+            allBtn.className = 'category-btn active px-4 py-2 rounded-full';
+            allBtn.textContent = 'All';
+            allBtn.dataset.category = 'All';
+            categoryBar.appendChild(allBtn);
+
+            categories.forEach(cat => {
+                if (cat && cat.name) {
+                    const catBtn = document.createElement('button');
+                    catBtn.className = 'category-btn px-4 py-2 rounded-full';
+                    catBtn.textContent = cat.name;
+                    catBtn.dataset.category = cat.name;
+                    categoryBar.appendChild(catBtn);
+                }
+            });
+
+            // Add click listener to the bar for event delegation
+            categoryBar.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    // Remove active class from all buttons
+                    categoryBar.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    e.target.classList.add('active');
+                    // Filter products
+                    const categoryFilter = e.target.dataset.category;
+                    displayProducts(products, categoryFilter);
+                }
+            });
+        }
+
+        function displayProducts(products, filter) {
+            const grid = document.getElementById('products-grid');
+            const noProductsMsg = document.getElementById('no-products-message');
+            grid.innerHTML = '';
+            noProductsMsg.classList.add('hidden');
+
+            const filteredProducts = products.filter(prod => {
+                if (filter === 'All') {
+                    return true;
+                }
+                // This filter assumes a 'category' field in your product data.
+                return prod && prod.category === filter;
+            });
+
+            if (filteredProducts.length > 0) {
+                filteredProducts.forEach(prod => {
+                    const cardLink = document.createElement('a');
+                    // Use the product's actual ID (key from firebase) for the link
+                    cardLink.href = `./product-details.html?id=${prod.id}`;
+                    cardLink.className = 'product-card';
+                    cardLink.innerHTML = `
+                        <div class="product-image-container">
+                            <img src="${prod.imageUrl || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image'}" alt="${prod.name}">
+                        </div>
+                        <div class="product-details">
+                            <p class="product-name truncate">${prod.name}</p>
+                            ${prod.offer ? `<span class="product-offer">${prod.offer}</span>` : ''}
+                        </div>
+                    `;
+                    grid.appendChild(cardLink);
+                });
+            } else {
+                noProductsMsg.classList.remove('hidden');
+            }
+        }
+
+        // --- Start the application ---
+        document.addEventListener('DOMContentLoaded', initializeAppAndLoadData);
+    </script>
+</body>
+</html>
+
+Ab aapke project ki teeno files (index.html, product-details.html, aur products.html) Vercel ke environment variables ka istemal kar rahi hain. Aapka setup ab poori tarah se secure hai!
