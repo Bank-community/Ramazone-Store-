@@ -1235,7 +1235,7 @@
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot);
             });
             
-            // **LEGEND LOGIC: FINAL AND CORRECTED**
+            // **FINAL LEGEND LOGIC**
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
                 if (!activeScratchCardData) return;
 
@@ -1256,21 +1256,20 @@
                 const cashbackRef = ref(database, `cashback_requests/${cardToProcess.key}`);
 
                 try {
-                    // **STEP 1: Transaction to add funds to WALLET and LIFETIME, and prevent duplicates**
+                    // **STEP 1: Transaction to ONLY update lifetimeEarning**
                     const transactionResult = await runTransaction(userRef, (data) => {
                         if (data) {
-                            // Foolproof Check: Agar is request ka paisa pehle hi mil chuka hai, to transaction cancel kar do.
-                            if (data.processedCashbacks && data.processedCashbacks[cardToProcess.key]) {
+                            // Foolproof Check: Agar is request ka lifetime value pehle hi jud chuka hai, to transaction cancel kar do.
+                            if (data.processedLifetime && data.processedLifetime[cardToProcess.key]) {
                                 return; // Abort transaction
                             }
                             
-                            // **YOUR LOGIC**: Wallet aur Lifetime Earning, dono mein paisa YAHAN add hoga.
-                            data.wallet = (data.wallet || 0) + cardToProcess.cashbackAmount;
+                            // **YOUR LOGIC**: SIRF lifetimeEarning mein paisa YAHAN add hoga.
                             data.lifetimeEarning = (data.lifetimeEarning || 0) + cardToProcess.cashbackAmount;
                             
-                            // Is request ko "processed" mark kar do taaki dobara paisa na mile.
-                            if (!data.processedCashbacks) data.processedCashbacks = {};
-                            data.processedCashbacks[cardToProcess.key] = true;
+                            // Is request ko "processed" mark kar do taaki dobara lifetime earning na badhe.
+                            if (!data.processedLifetime) data.processedLifetime = {};
+                            data.processedLifetime[cardToProcess.key] = true;
                         }
                         return data;
                     });
@@ -1279,9 +1278,9 @@
                     if (transactionResult.committed) {
                         // Card ko "scratched" mark karo taaki dobara na dikhe.
                         await update(cashbackRef, { scratched: true });
-                        showToast(`Badhai! ₹${cardToProcess.cashbackAmount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
+                        showToast(`Your cashback money is successfully claimed`);
                     } else {
-                        // Transaction isliye cancel hua kyunki paisa pehle hi mil chuka tha.
+                        // Transaction isliye cancel hua kyunki lifetime earning pehle hi jud chuki thi.
                         // Sirf card ko "scratched" mark karke hata do.
                         await update(cashbackRef, { scratched: true });
                         showToast("Yeh reward pehle hi claim kiya ja chuka hai.");
