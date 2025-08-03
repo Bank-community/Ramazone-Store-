@@ -1235,7 +1235,7 @@
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot);
             });
             
-            // **FINAL WORKING LOGIC**
+            // **FINAL WORKING LOGIC (AS PER YOUR IDEA)**
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
                 if (!activeScratchCardData) return;
 
@@ -1256,49 +1256,51 @@
                 const cashbackRef = ref(database, `cashback_requests/${cardToProcess.key}`);
 
                 try {
-                    // **STEP 1: Transaction to add funds and prevent duplicates**
+                    // **STEP 1: Transaction to add funds to WALLET and LIFETIME, and prevent duplicates**
                     const transactionResult = await runTransaction(userRef, (data) => {
                         if (data) {
-                            // Check if this cashback has already been processed
+                            // Foolproof Check: Agar is request ka paisa pehle hi mil chuka hai, to transaction cancel kar do.
                             if (data.processedCashbacks && data.processedCashbacks[cardToProcess.key]) {
-                                return; // Abort if already processed
+                                return; // Abort transaction
                             }
-                            // Add to wallet and lifetime earning
+                            
+                            // **YOUR LOGIC**: Wallet aur Lifetime Earning, dono mein paisa YAHAN add hoga.
                             data.wallet = (data.wallet || 0) + cardToProcess.cashbackAmount;
                             data.lifetimeEarning = (data.lifetimeEarning || 0) + cardToProcess.cashbackAmount;
-                            // Mark as processed
+                            
+                            // Is request ko "processed" mark kar do taaki dobara paisa na mile.
                             if (!data.processedCashbacks) data.processedCashbacks = {};
                             data.processedCashbacks[cardToProcess.key] = true;
                         }
                         return data;
                     });
 
-                    // **STEP 2: If transaction was successful, update the UI**
+                    // **STEP 2: Agar transaction safal raha, to UI update karo**
                     if (transactionResult.committed) {
+                        // Card ko "scratched" mark karo taaki dobara na dikhe.
                         await update(cashbackRef, { scratched: true });
                         showToast(`Badhai! ₹${cardToProcess.cashbackAmount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
                     } else {
-                        // This means the transaction was aborted (already processed)
-                        // We still need to mark it as scratched to remove the card from the UI
+                        // Transaction isliye cancel hua kyunki paisa pehle hi mil chuka tha.
+                        // Sirf card ko "scratched" mark karke hata do.
                         await update(cashbackRef, { scratched: true });
                         showToast("Yeh reward pehle hi claim kiya ja chuka hai.");
                     }
                 } catch (error) {
                     console.error("Error processing reward:", error);
                     showToast("Reward process karne mein error aayi.");
+                } finally {
+                    // **STEP 3: UI ko saaf karo**
+                    closeModal(document.getElementById('scratch-card-modal'));
+                    isScratchCardActive = false;
+                    unscratchedCardsQueue.shift(); // Queue se is card ko hata do.
+                    activeScratchCardData = null;
                     btn.disabled = false;
                     btn.textContent = 'Claim Reward';
-                    return;
+                    
+                    // Agla card (agar hai to) dikhao.
+                    setTimeout(showNextScratchCard, 500);
                 }
-
-                // **STEP 3: Clean up the UI**
-                closeModal(document.getElementById('scratch-card-modal'));
-                isScratchCardActive = false;
-                unscratchedCardsQueue.shift();
-                activeScratchCardData = null;
-                btn.disabled = false;
-                btn.textContent = 'Claim Reward';
-                setTimeout(showNextScratchCard, 500);
             });
         }
 
