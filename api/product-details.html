@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Default Meta Tags (will be updated by JS) -->
+    <title>Product Details - Ramazone</title>
+    <meta property="og:title" content="Ramazone">
+    <meta property="og:type" content="product">
+    <meta property="og:description" content="Discover amazing products on Ramazone!">
+    <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
+    <meta property="og:url" content="">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-color: #4F46E5; --text-dark: #111827; --bg-light: #F9FAFB; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); }
+        .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
+        .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
+        .thumbnail { cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s; }
+        .thumbnail.active { border-color: var(--primary-color); }
+        
+        /* Main image container style for better touch interaction */
+        #main-image-container {
+            touch-action: pan-y; /* Allow vertical scroll but handle horizontal touch in JS */
+            user-select: none; /* Prevent text selection on drag */
+            -webkit-user-select: none;
+        }
+
+        #image-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.95); justify-content: center; align-items: center; flex-direction: column; }
+        #image-modal img { max-width: 90%; max-height: 85%; object-fit: contain; }
+        #image-modal .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        #image-modal .close:hover { color: #bbb; }
+        .modal-nav { cursor: pointer; position: absolute; top: 50%; width: auto; padding: 16px; margin-top: -50px; color: white; font-weight: bold; font-size: 30px; transition: 0.6s ease; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; }
+        .modal-nav.prev { left: 0; border-radius: 3px 0 0 3px; }
+        .modal-nav.next { right: 0; border-radius: 0 3px 3px 0; }
+        .modal-nav:hover { background-color: rgba(0, 0, 0, 0.8); }
+
+        #share-button { background-color: #f3f4f6; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.3s; }
+        #share-button:hover { background-color: #e5e7eb; }
+        #toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; transition: bottom 0.5s ease-in-out; }
+        #toast-notification.show { bottom: 30px; }
+        
+        /* Quantity Selector Styles */
+        .quantity-selector button {
+            background-color: #e5e7eb;
+            border: 1px solid #d1d5db;
+            color: #374151;
+            font-weight: bold;
+            width: 44px;
+            height: 44px;
+            transition: background-color 0.2s;
+        }
+        .quantity-selector button:hover {
+            background-color: #d1d5db;
+        }
+        .quantity-selector button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .quantity-selector span {
+            font-size: 1.25rem;
+            font-weight: 600;
+            min-width: 60px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="./products.html" class="text-2xl text-gray-600 hover:text-gray-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            </a>
+            <a href="./index.html">
+                <img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 35px; border-radius: 0;">
+            </a>
+            <div class="w-6"></div> <!-- Spacer -->
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8" id="product-content" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-lg p-4 md:p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                <!-- Product Image Gallery -->
+                <div>
+                    <div class="rounded-xl mb-4 cursor-pointer" id="main-image-container">
+                        <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover rounded-xl pointer-events-none">
+                    </div>
+                    <div class="grid grid-cols-5 gap-2" id="thumbnail-gallery"></div>
+                </div>
+                <!-- Product Details & Actions -->
+                <div class="flex flex-col">
+                    <div class="flex justify-between items-start">
+                        <h1 id="product-title" class="text-2xl md:text-4xl font-bold text-gray-900 leading-tight"></h1>
+                        <button id="share-button" title="Share Product">
+                            <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
+                        </button>
+                    </div>
+                    <!-- Price Section -->
+                    <div class="flex items-center gap-4 my-4">
+                        <span id="product-price" class="text-3xl md:text-4xl font-extrabold" style="color: var(--primary-color);"></span>
+                        <div id="product-discount-container" style="display: none;" class="flex items-baseline gap-2">
+                            <span id="product-original-price" class="text-lg line-through text-gray-400"></span>
+                            <span id="product-discount" class="text-sm font-semibold text-green-600"></span>
+                        </div>
+                    </div>
+                    <!-- Action Buttons Section -->
+                    <div class="mt-auto pt-6">
+                        <!-- NEW: Quantity Selector -->
+                        <div class="mb-5 text-center">
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                             <div class="quantity-selector inline-flex items-center justify-center bg-white rounded-lg">
+                                <button id="decrease-quantity" class="rounded-l-lg">-</button>
+                                <span id="quantity-display" class="text-center px-4 py-2 border-t border-b">1</span>
+                                <button id="increase-quantity" class="rounded-r-lg">+</button>
+                            </div>
+                        </div>
+                        
+                        <!-- WhatsApp Order Button -->
+                        <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-4 px-6 rounded-xl text-lg shadow-lg">
+                            <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
+                            Order on WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Description & Details -->
+            <div id="description-section" class="mt-12 border-t border-gray-200 pt-8" style="display: none;">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Product Details</h2>
+                <div id="product-description" class="prose max-w-none text-gray-600"></div>
+            </div>
+        </div>
+        <!-- Related Products -->
+        <div id="related-products-section" class="mt-12" style="display: none;">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Aapko yeh bhi pasand aa sakta hai</h2>
+            <div id="related-products-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+    </main>
+    <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
+
+    <!-- Full Screen Image Modal with Slider Controls -->
+    <div id="image-modal">
+        <span class="close">&times;</span>
+        <a class="modal-nav prev">&#10094;</a>
+        <img id="modal-image-content">
+        <a class="modal-nav next">&#10095;</a>
+    </div>
+
+    <!-- Toast Notification for Share -->
+    <div id="toast-notification">Link Copied!</div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // --- Global Variables ---
+        const sellerPhoneNumber = '917903698180'; // Your WhatsApp number
+        let modalImages = [];
+        let currentImageIndex = 0;
+        let productQuantity = 1;
+        let currentProductData = null;
+        let currentProductId = null;
+
+        // --- Main Initialization Function ---
+        async function initializeAppAndLoadProduct() {
+            try {
+                // Step 1: Fetch the config from the serverless function
+                const response = await fetch('/api/firebase-config');
+                if (!response.ok) {
+                    throw new Error('Could not fetch Firebase config!');
+                }
+                const firebaseConfig = await response.json();
+
+                // Step 2: Initialize Firebase with the fetched config
+                firebase.initializeApp(firebaseConfig);
+                const database = firebase.database();
+
+                // Step 3: Fetch and display the product data
+                fetchProductData(database);
+
+            } catch (error) {
+                console.error("Initialization or data fetch failed:", error);
+                document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Product data load karne mein error hua.</p>';
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('product-content').style.display = 'block';
+            }
+        }
+
+        // --- Data Fetching Function ---
+        function fetchProductData(database) {
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
+            currentProductId = productId; // Store ID globally
+
+            if (productId === null) {
+                document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">URL mein product ID nahi mila.</p>';
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('product-content').style.display = 'block';
+                return;
+            }
+
+            const productRef = database.ref(`ramazone/homepage/festiveCollection/products/${productId}`);
+            productRef.get().then((snapshot) => {
+                if (snapshot.exists()) {
+                    currentProductData = snapshot.val(); // Store data globally
+                    loadProduct(currentProductData, currentProductId);
+                    loadRelatedProducts(currentProductId, database);
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    document.getElementById('product-content').style.display = 'block';
+                } else {
+                    document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Maaf kijiye, yeh product nahi mil saka.</p>';
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    document.getElementById('product-content').style.display = 'block';
+                }
+            });
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAppAndLoadProduct(); // Start the process on page load
+            setupImageModal();
+        });
+
+        // --- Core Functions ---
+
+        /**
+         * Populates the page with product data.
+         * @param {object} data - The product data object from Firebase.
+         * @param {string} id - The product's unique ID.
+         */
+        function loadProduct(data, id) {
+            const firstImage = (data.images && data.images.length > 0) ? data.images[0] : data.imageUrl;
+            const plainDescription = `Check out this amazing product: ${data.name} on Ramazone!`;
+
+            // Update Meta tags for sharing
+            document.title = `${data.name || 'Product'} - Ramazone`;
+            document.querySelector('meta[property="og:title"]').setAttribute('content', data.name || 'Product on Ramazone');
+            document.querySelector('meta[property="og:description"]').setAttribute('content', plainDescription);
+            document.querySelector('meta[property="og:image"]').setAttribute('content', firstImage || 'https://i.ibb.co/My6h0gdd/20250706-230221.png');
+            document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
+
+            // Populate product details
+            document.getElementById('product-title').textContent = data.name || 'Product Name';
+            document.getElementById('product-price').textContent = data.price ? `₹${data.price}` : `₹${data.offer || 'N/A'}`;
+
+            // Handle discount display
+            if (data.originalPrice && data.price) {
+                const discount = Math.round(((data.originalPrice - data.price) / data.originalPrice) * 100);
+                if (discount > 0) {
+                    document.getElementById('product-discount-container').style.display = 'flex';
+                    document.getElementById('product-original-price').textContent = `₹${data.originalPrice}`;
+                    document.getElementById('product-discount').textContent = `${discount}% OFF`;
+                }
+            }
+
+            // Handle description
+            if (data.description) {
+                document.getElementById('description-section').style.display = 'block';
+                document.getElementById('product-description').innerHTML = data.description;
+            }
+
+            // Setup image gallery
+            modalImages = data.images && data.images.length > 0 ? data.images : [data.imageUrl];
+            showImage(0); // Show the first image initially
+
+            const gallery = document.getElementById('thumbnail-gallery');
+            gallery.innerHTML = ''; 
+            modalImages.forEach((imgSrc, index) => {
+                const img = document.createElement('img');
+                img.src = imgSrc;
+                img.alt = `${data.name} thumbnail ${index + 1}`;
+                img.className = 'thumbnail w-full h-auto object-cover rounded-md';
+                if (index === 0) img.classList.add('active');
+                
+                img.addEventListener('click', () => showImage(index));
+                gallery.appendChild(img);
+            });
+            
+            // Setup swipe functionality for the main image
+            setupImageSwipe();
+            
+            // Setup quantity controls and initial WhatsApp link
+            setupQuantityControls();
+            
+            // Setup share button
+            setupShareButton(data);
+        }
+
+        /**
+         * Sets up the event listeners for the quantity buttons.
+         */
+        function setupQuantityControls() {
+            const decreaseBtn = document.getElementById('decrease-quantity');
+            const increaseBtn = document.getElementById('increase-quantity');
+            
+            increaseBtn.addEventListener('click', () => {
+                productQuantity++;
+                updateQuantityAndWhatsAppLink();
+            });
+
+            decreaseBtn.addEventListener('click', () => {
+                if (productQuantity > 1) {
+                    productQuantity--;
+                    updateQuantityAndWhatsAppLink();
+                }
+            });
+            
+            // Set initial state
+            updateQuantityAndWhatsAppLink();
+        }
+
+        /**
+         * Updates the quantity display and the WhatsApp order link.
+         */
+        function updateQuantityAndWhatsAppLink() {
+            const quantityDisplay = document.getElementById('quantity-display');
+            const decreaseBtn = document.getElementById('decrease-quantity');
+            
+            // Update display
+            quantityDisplay.textContent = productQuantity;
+            
+            // Disable minus button if quantity is 1
+            decreaseBtn.disabled = productQuantity <= 1;
+
+            // Update WhatsApp link
+            const productLink = window.location.href;
+            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* ${currentProductData.name}\n*Price:* ₹${currentProductData.price || currentProductData.offer}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${productLink}\n\nPlease let me know if it's available.`;
+            document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+        }
+
+
+        /**
+         * Displays a specific image and updates thumbnails.
+         * @param {number} index - The index of the image to show in the modalImages array.
+         */
+        function showImage(index) {
+            if (!modalImages || modalImages.length === 0) return;
+
+            // Loop around if index is out of bounds
+            if (index >= modalImages.length) {
+                index = 0;
+            } else if (index < 0) {
+                index = modalImages.length - 1;
+            }
+            
+            currentImageIndex = index;
+            const mainImage = document.getElementById('main-product-image');
+            mainImage.src = modalImages[currentImageIndex];
+
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail').forEach((thumb, thumbIndex) => {
+                if (thumbIndex === currentImageIndex) {
+                    thumb.classList.add('active');
+                } else {
+                    thumb.classList.remove('active');
+                }
+            });
+        }
+
+        /**
+         * Sets up touch and mouse swipe functionality for the main image.
+         */
+        function setupImageSwipe() {
+            const imageContainer = document.getElementById('main-image-container');
+            let touchStartX = 0;
+            let touchEndX = 0;
+            let isDragging = false;
+
+            const handleSwipe = () => {
+                // Swipe left (next image)
+                if (touchEndX < touchStartX - 50) {
+                    showImage(currentImageIndex + 1);
+                }
+                // Swipe right (previous image)
+                if (touchEndX > touchStartX + 50) {
+                    showImage(currentImageIndex - 1);
+                }
+            };
+
+            // Touch events
+            imageContainer.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            imageContainer.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+
+            // Mouse events for desktop dragging
+            imageContainer.addEventListener('mousedown', e => {
+                isDragging = true;
+                touchStartX = e.screenX;
+                imageContainer.style.cursor = 'grabbing';
+            });
+
+            imageContainer.addEventListener('mouseup', e => {
+                if (isDragging) {
+                    isDragging = false;
+                    touchEndX = e.screenX;
+                    handleSwipe();
+                    imageContainer.style.cursor = 'pointer';
+                }
+            });
+            
+            imageContainer.addEventListener('mouseleave', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    imageContainer.style.cursor = 'pointer';
+                }
+            });
+        }
+
+        /**
+         * Loads related products, excluding the current one.
+         * @param {string} currentId - The ID of the product currently being viewed.
+         * @param {object} database - The initialized Firebase database instance.
+         */
+        function loadRelatedProducts(currentId, database) {
+            const productsRef = database.ref('ramazone/homepage/festiveCollection/products');
+            productsRef.get().then(snapshot => {
+                if (snapshot.exists()) {
+                    const relatedGrid = document.getElementById('related-products-grid');
+                    const relatedSection = document.getElementById('related-products-section');
+                    relatedGrid.innerHTML = ''; 
+                    let count = 0;
+                    
+                    const productList = [];
+                    snapshot.forEach(childSnapshot => {
+                        if (childSnapshot.key !== currentId) {
+                            productList.push({ id: childSnapshot.key, ...childSnapshot.val() });
+                        }
+                    });
+
+                    productList.sort(() => 0.5 - Math.random());
+                    
+                    productList.slice(0, 4).forEach(prod => {
+                        const cardLink = document.createElement('a');
+                        cardLink.href = `./product-details.html?id=${prod.id}`;
+                        cardLink.className = 'block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow';
+                        
+                        const imageUrl = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.imageUrl;
+
+                        cardLink.innerHTML = `
+                            <img src="${imageUrl || 'https://placehold.co/200x200/F9FAFB/111827?text=No+Image'}" 
+                                 onerror="this.onerror=null;this.src='https://placehold.co/200x200/F9FAFB/111827?text=No+Image';"
+                                 class="w-full h-40 object-cover" 
+                                 alt="${prod.name || 'Related Product'}">
+                            <div class="p-2 text-center">
+                                <p class="text-sm font-semibold truncate">${prod.name}</p>
+                            </div>`;
+                        relatedGrid.appendChild(cardLink);
+                        count++;
+                    });
+
+                    if (count > 0) relatedSection.style.display = 'block';
+                }
+            });
+        }
+        
+        /**
+         * Sets up the functionality for the full-screen image modal viewer.
+         */
+        function setupImageModal() {
+            const modal = document.getElementById('image-modal');
+            const mainImageContainer = document.getElementById('main-image-container');
+            const modalImg = document.getElementById("modal-image-content");
+            const closeBtn = document.querySelector("#image-modal .close");
+            const prevBtn = document.querySelector("#image-modal .prev");
+            const nextBtn = document.querySelector("#image-modal .next");
+
+            mainImageContainer.onclick = () => {
+                modal.style.display = "flex";
+                modalImg.src = modalImages[currentImageIndex];
+            }
+            closeBtn.onclick = () => modal.style.display = "none";
+            
+            const showModalImage = (index) => {
+                if(index >= modalImages.length) { index = 0; }
+                if(index < 0) { index = modalImages.length - 1; }
+                modalImg.src = modalImages[index];
+                currentImageIndex = index; // Keep modal and main view in sync
+            };
+
+            prevBtn.onclick = (e) => { e.stopPropagation(); showModalImage(currentImageIndex - 1); };
+            nextBtn.onclick = (e) => { e.stopPropagation(); showModalImage(currentImageIndex + 1); };
+            
+            modal.onclick = (e) => { if (e.target === modal) { modal.style.display = "none"; } }
+        }
+
+        /**
+         * Configures the share button to use the Web Share API or fallback to clipboard.
+         * @param {object} productData - The data of the product to be shared.
+         */
+        function setupShareButton(productData) {
+            const shareButton = document.getElementById('share-button');
+            
+            const productName = `Product Name:- *${productData.name.toUpperCase().trim()}*`;
+            const productPrice = `Price:- *₹${productData.price || productData.offer}*`;
+            const closingText = `✨ Discover more amazing deals at Ramazone! ✨`;
+            const productLink = window.location.href;
+
+            const shareText = `${productName}\n${productPrice}\n\n${closingText}\n${productLink}`;
+
+            shareButton.addEventListener('click', async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ text: shareText });
+                    } catch (err) {
+                        console.error('Share failed:', err.message);
+                    }
+                } else {
+                    try {
+                        const textArea = document.createElement('textarea');
+                        textArea.value = window.location.href;
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        showToast("Link Copied!");
+                    } catch (err) {
+                        console.error('Fallback copy failed:', err);
+                        showToast("Failed to copy link.");
+                    }
+                }
+            });
+        }
+
+        /**
+         * Shows a temporary toast notification at the bottom of the screen.
+         * @param {string} message - The message to display in the toast.
+         */
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
+
+ 
