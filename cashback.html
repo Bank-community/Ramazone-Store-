@@ -824,20 +824,67 @@
                 claimsDataSnapshot = snapshot;
                 renderAllViews();
             }));
+            
+            // **UPDATED LOGIC**: This listener now handles crediting funds upon approval.
             const cashbackQuery = query(ref(database, 'cashback_requests'), orderByChild('userId'), equalTo(user.uid));
             activeListeners.push(onValue(cashbackQuery, (snapshot) => {
                 cashbackDataSnapshot = snapshot;
-                unscratchedCardsQueue = [];
-                snapshot.forEach(child => {
-                    const req = child.val();
-                    if (req.status === 'approved' && !req.scratched) {
-                       unscratchedCardsQueue.push({ key: child.key, ...req });
-                    }
-                });
+                const newUnscratchedCards = [];
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const req = child.val();
+                        const reqKey = child.key;
+
+                        // **ACTION 1: Credit Funds if Approved & Not Yet Credited**
+                        // This will run in the background as soon as the app detects an approval.
+                        if (req.status === 'approved') {
+                            creditApprovedCashback(reqKey, req.cashbackAmount);
+                        }
+
+                        // **ACTION 2: Prepare UI Card if Approved & Not Yet Scratched**
+                        // This is separate from crediting funds.
+                        if (req.status === 'approved' && !req.scratched) {
+                            newUnscratchedCards.push({ key: reqKey, ...req });
+                        }
+                    });
+                }
+                unscratchedCardsQueue = newUnscratchedCards;
                 showNextScratchCard();
                 renderAllViews();
             }));
         }
+
+        // **NEW FUNCTION**: Handles the one-time crediting of funds using a transaction.
+        async function creditApprovedCashback(key, amount) {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const userRef = ref(database, 'users/' + user.uid);
+            try {
+                await runTransaction(userRef, (data) => {
+                    if (data) {
+                        // Idempotency Check: If this request key is already processed, abort.
+                        if (data.processedCashbacks && data.processedCashbacks[key]) {
+                            return; // Abort transaction by returning undefined.
+                        }
+
+                        // If not processed, update wallet AND lifetime earning.
+                        data.wallet = (data.wallet || 0) + amount;
+                        data.lifetimeEarning = (data.lifetimeEarning || 0) + amount;
+
+                        // Mark this request key as processed to prevent double-crediting.
+                        if (!data.processedCashbacks) {
+                            data.processedCashbacks = {};
+                        }
+                        data.processedCashbacks[key] = true;
+                    }
+                    return data;
+                });
+            } catch (error) {
+                console.error(`Transaction failed for key ${key}:`, error);
+            }
+        }
+
 
         function detachAllListeners() {
             activeListeners.forEach(unsubscribe => unsubscribe());
@@ -1235,13 +1282,11 @@
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot);
             });
             
-            // **FINAL BUG FIX**: New logic for the claim button.
+            // **UPDATED LOGIC**: This button now only marks the card as seen.
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
-                // Check if there is an active card.
                 if (!activeScratchCardData) return;
 
                 const btn = document.getElementById('scratch-claim-btn');
-                // Disable the button immediately to prevent multiple clicks.
                 btn.disabled = true;
 
                 const cardToProcess = activeScratchCardData;
@@ -1249,29 +1294,22 @@
 
                 try {
                     // The ONLY action is to mark the card as "scratched".
-                    // We are NOT touching the user's wallet here.
                     await update(cashbackRef, { scratched: true });
-
-                    // Show the success message as requested.
                     showToast("Your cashback money is successfully claimed");
-
                 } catch (error) {
                     console.error("Error marking card as scratched: ", error);
                     showToast("Reward claim karne mein error aayi.");
-                    btn.disabled = false; // Re-enable button on error.
+                    btn.disabled = false;
                     return;
                 }
                 
-                // Clean up the UI after successful operation.
                 closeModal(document.getElementById('scratch-card-modal'));
                 isScratchCardActive = false;
-                unscratchedCardsQueue.shift(); // Remove the claimed card from the queue.
+                unscratchedCardsQueue.shift();
                 
-                // Reset button and active card data for the next card.
                 btn.disabled = false;
                 activeScratchCardData = null;
 
-                // Check if there's another card in the queue to show.
                 setTimeout(showNextScratchCard, 500);
             });
         }
