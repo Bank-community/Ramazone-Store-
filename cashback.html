@@ -1150,53 +1150,6 @@
             canvas.addEventListener('touchend', stop);
         }
 
-        // **BUG FIX**: This function is now more robust to prevent double crediting.
-        async function processReward(amount, key) {
-            const user = auth.currentUser;
-            if (!user) return;
-
-            const userRef = ref(database, 'users/' + user.uid);
-            const cashbackRef = ref(database, `cashback_requests/${key}`);
-
-            try {
-                const transactionResult = await runTransaction(userRef, (data) => {
-                    if (data) {
-                        // Check if this cashback has already been processed for this user.
-                        if (data.processedCashbacks && data.processedCashbacks[key]) {
-                            // If yes, abort the transaction by returning undefined.
-                            return; 
-                        }
-
-                        // If not processed, update wallet and lifetime earning.
-                        data.wallet = (data.wallet || 0) + amount;
-                        data.lifetimeEarning = (data.lifetimeEarning || 0) + amount;
-
-                        // Initialize the processedCashbacks object if it doesn't exist.
-                        if (!data.processedCashbacks) {
-                            data.processedCashbacks = {};
-                        }
-                        // Mark this cashback key as processed.
-                        data.processedCashbacks[key] = true;
-                    }
-                    return data;
-                });
-
-                // Only update the 'scratched' flag and show toast if the transaction was successful.
-                if (transactionResult.committed) {
-                    await update(cashbackRef, { scratched: true });
-                    showToast(`Badhai! ₹${amount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
-                } else {
-                    // This else block will run if the transaction was aborted (because it was already processed).
-                    // We can silently ignore it or show a message if needed.
-                    console.log(`Reward for key ${key} was already processed.`);
-                }
-
-            } catch (error) {
-                console.error("Error processing reward transaction: ", error);
-                showToast("Reward process karne mein error aayi.");
-            }
-        }
-
         async function getCashbackPercentage() {
             const defaultPercentage = 2;
             if (!database) return defaultPercentage;
@@ -1282,26 +1235,75 @@
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot);
             });
             
+            // **BUG FIX**: This is the new, robust logic for claiming rewards.
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
+                // Step 1: Check if there is an active card to prevent errors.
                 if (!activeScratchCardData) return;
+
                 const cardToProcess = activeScratchCardData;
-                
+                const user = auth.currentUser;
+                if (!user) {
+                    showToast("Authentication error. Please refresh.");
+                    return;
+                }
+
                 const btn = document.getElementById('scratch-claim-btn');
                 btn.disabled = true;
                 btn.textContent = 'Claiming...';
 
-                await processReward(cardToProcess.cashbackAmount, cardToProcess.key);
-                
+                // Step 2: Define references to the database paths we need to update.
+                const userRef = ref(database, 'users/' + user.uid);
+                const cashbackRef = ref(database, `cashback_requests/${cardToProcess.key}`);
+
+                // Step 3: Run the transaction to update the user's wallet.
+                try {
+                    const transactionResult = await runTransaction(userRef, (data) => {
+                        if (data) {
+                            // Idempotency Check: If this cashback key is already in the user's processed list, abort.
+                            if (data.processedCashbacks && data.processedCashbacks[cardToProcess.key]) {
+                                return; // Abort transaction by returning undefined
+                            }
+
+                            // Update wallet and lifetime earning
+                            data.wallet = (data.wallet || 0) + cardToProcess.cashbackAmount;
+                            data.lifetimeEarning = (data.lifetimeEarning || 0) + cardToProcess.cashbackAmount;
+
+                            // Add the key to the processed list to prevent future duplicates.
+                            if (!data.processedCashbacks) {
+                                data.processedCashbacks = {};
+                            }
+                            data.processedCashbacks[cardToProcess.key] = true;
+                        }
+                        return data;
+                    });
+
+                    // Step 4: If the transaction was successful, update the cashback request to mark it as scratched.
+                    if (transactionResult.committed) {
+                        await update(cashbackRef, { scratched: true });
+                        showToast(`Badhai! ₹${cardToProcess.cashbackAmount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
+                    } else {
+                        // This means the transaction was aborted, likely because it was already processed.
+                        showToast("Yeh reward pehle hi claim kiya ja chuka hai.");
+                    }
+                } catch (error) {
+                    console.error("Error processing reward transaction: ", error);
+                    showToast("Reward process karne mein error aayi.");
+                    btn.disabled = false;
+                    btn.textContent = 'Claim Reward';
+                    return; // Stop execution on error
+                }
+
+                // Step 5: Clean up the UI
                 closeModal(document.getElementById('scratch-card-modal'));
                 isScratchCardActive = false;
-                unscratchedCardsQueue.shift();
-                
+                unscratchedCardsQueue.shift(); // Remove the claimed card from the queue
+
+                // Reset button and active card data
                 btn.disabled = false;
                 btn.textContent = 'Claim Reward';
-
-                // Clear the active card data *after* processing
                 activeScratchCardData = null;
 
+                // Step 6: Check if there's another card in the queue to show.
                 setTimeout(showNextScratchCard, 500);
             });
         }
