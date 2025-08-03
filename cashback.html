@@ -1235,75 +1235,43 @@
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot);
             });
             
-            // **BUG FIX**: This is the new, robust logic for claiming rewards.
+            // **FINAL BUG FIX**: New logic for the claim button.
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
-                // Step 1: Check if there is an active card to prevent errors.
+                // Check if there is an active card.
                 if (!activeScratchCardData) return;
 
-                const cardToProcess = activeScratchCardData;
-                const user = auth.currentUser;
-                if (!user) {
-                    showToast("Authentication error. Please refresh.");
-                    return;
-                }
-
                 const btn = document.getElementById('scratch-claim-btn');
+                // Disable the button immediately to prevent multiple clicks.
                 btn.disabled = true;
-                btn.textContent = 'Claiming...';
 
-                // Step 2: Define references to the database paths we need to update.
-                const userRef = ref(database, 'users/' + user.uid);
+                const cardToProcess = activeScratchCardData;
                 const cashbackRef = ref(database, `cashback_requests/${cardToProcess.key}`);
 
-                // Step 3: Run the transaction to update the user's wallet.
                 try {
-                    const transactionResult = await runTransaction(userRef, (data) => {
-                        if (data) {
-                            // Idempotency Check: If this cashback key is already in the user's processed list, abort.
-                            if (data.processedCashbacks && data.processedCashbacks[cardToProcess.key]) {
-                                return; // Abort transaction by returning undefined
-                            }
+                    // The ONLY action is to mark the card as "scratched".
+                    // We are NOT touching the user's wallet here.
+                    await update(cashbackRef, { scratched: true });
 
-                            // Update wallet and lifetime earning
-                            data.wallet = (data.wallet || 0) + cardToProcess.cashbackAmount;
-                            data.lifetimeEarning = (data.lifetimeEarning || 0) + cardToProcess.cashbackAmount;
+                    // Show the success message as requested.
+                    showToast("Your cashback money is successfully claimed");
 
-                            // Add the key to the processed list to prevent future duplicates.
-                            if (!data.processedCashbacks) {
-                                data.processedCashbacks = {};
-                            }
-                            data.processedCashbacks[cardToProcess.key] = true;
-                        }
-                        return data;
-                    });
-
-                    // Step 4: If the transaction was successful, update the cashback request to mark it as scratched.
-                    if (transactionResult.committed) {
-                        await update(cashbackRef, { scratched: true });
-                        showToast(`Badhai! ₹${cardToProcess.cashbackAmount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
-                    } else {
-                        // This means the transaction was aborted, likely because it was already processed.
-                        showToast("Yeh reward pehle hi claim kiya ja chuka hai.");
-                    }
                 } catch (error) {
-                    console.error("Error processing reward transaction: ", error);
-                    showToast("Reward process karne mein error aayi.");
-                    btn.disabled = false;
-                    btn.textContent = 'Claim Reward';
-                    return; // Stop execution on error
+                    console.error("Error marking card as scratched: ", error);
+                    showToast("Reward claim karne mein error aayi.");
+                    btn.disabled = false; // Re-enable button on error.
+                    return;
                 }
-
-                // Step 5: Clean up the UI
+                
+                // Clean up the UI after successful operation.
                 closeModal(document.getElementById('scratch-card-modal'));
                 isScratchCardActive = false;
-                unscratchedCardsQueue.shift(); // Remove the claimed card from the queue
-
-                // Reset button and active card data
+                unscratchedCardsQueue.shift(); // Remove the claimed card from the queue.
+                
+                // Reset button and active card data for the next card.
                 btn.disabled = false;
-                btn.textContent = 'Claim Reward';
                 activeScratchCardData = null;
 
-                // Step 6: Check if there's another card in the queue to show.
+                // Check if there's another card in the queue to show.
                 setTimeout(showNextScratchCard, 500);
             });
         }
