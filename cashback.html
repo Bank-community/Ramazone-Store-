@@ -595,7 +595,6 @@
         </div>
     </div>
 
-    <!-- PROFILE MODAL (FIXED LAYOUT) -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="profile-info">
@@ -659,7 +658,6 @@
     <div id="toast-notification" class="toast-notification"></div>
 
     <script type="module">
-        // Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, get, set, push, onValue, runTransaction, query, orderByChild, equalTo, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
@@ -719,7 +717,6 @@
         // --- Main Initialization Function ---
         async function initializeFirebaseApp() {
             try {
-                // Fetch config from Vercel environment
                 const response = await fetch('/api/cashback-config');
                 if (!response.ok) throw new Error('Could not fetch Firebase config from server!');
                 const firebaseConfig = await response.json();
@@ -825,7 +822,6 @@
                 renderAllViews();
             }));
             
-            // **NEW LOGIC**: This listener now ONLY prepares the scratch card for the UI.
             const cashbackQuery = query(ref(database, 'cashback_requests'), orderByChild('userId'), equalTo(user.uid));
             activeListeners.push(onValue(cashbackQuery, (snapshot) => {
                 cashbackDataSnapshot = snapshot;
@@ -833,7 +829,6 @@
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
                         const req = child.val();
-                        // It only checks if the card is approved and NOT scratched by the user yet.
                         if (req.status === 'approved' && !req.scratched) {
                            unscratchedCardsQueue.push({ key: child.key, ...req });
                         }
@@ -1240,35 +1235,69 @@
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot);
             });
             
-            // **FINAL LOGIC**: This button now ONLY marks the card as seen.
+            // **FINAL WORKING LOGIC**
             document.getElementById('scratch-claim-btn').addEventListener('click', async () => {
                 if (!activeScratchCardData) return;
 
                 const btn = document.getElementById('scratch-claim-btn');
                 btn.disabled = true;
+                btn.textContent = 'Claiming...';
 
                 const cardToProcess = activeScratchCardData;
+                const user = auth.currentUser;
+                if (!user) {
+                    showToast("Authentication Error. Please refresh.");
+                    btn.disabled = false;
+                    btn.textContent = 'Claim Reward';
+                    return;
+                }
+
+                const userRef = ref(database, 'users/' + user.uid);
                 const cashbackRef = ref(database, `cashback_requests/${cardToProcess.key}`);
 
                 try {
-                    // Action: Mark the card as "scratched" so it doesn't appear again.
-                    await update(cashbackRef, { scratched: true });
-                    showToast("Your cashback money is successfully claimed");
+                    // **STEP 1: Transaction to add funds and prevent duplicates**
+                    const transactionResult = await runTransaction(userRef, (data) => {
+                        if (data) {
+                            // Check if this cashback has already been processed
+                            if (data.processedCashbacks && data.processedCashbacks[cardToProcess.key]) {
+                                return; // Abort if already processed
+                            }
+                            // Add to wallet and lifetime earning
+                            data.wallet = (data.wallet || 0) + cardToProcess.cashbackAmount;
+                            data.lifetimeEarning = (data.lifetimeEarning || 0) + cardToProcess.cashbackAmount;
+                            // Mark as processed
+                            if (!data.processedCashbacks) data.processedCashbacks = {};
+                            data.processedCashbacks[cardToProcess.key] = true;
+                        }
+                        return data;
+                    });
+
+                    // **STEP 2: If transaction was successful, update the UI**
+                    if (transactionResult.committed) {
+                        await update(cashbackRef, { scratched: true });
+                        showToast(`Badhai! ₹${cardToProcess.cashbackAmount.toFixed(2)} aapke wallet mein add ho gaye hain.`);
+                    } else {
+                        // This means the transaction was aborted (already processed)
+                        // We still need to mark it as scratched to remove the card from the UI
+                        await update(cashbackRef, { scratched: true });
+                        showToast("Yeh reward pehle hi claim kiya ja chuka hai.");
+                    }
                 } catch (error) {
-                    console.error("Error marking card as scratched: ", error);
-                    showToast("Reward claim karne mein error aayi.");
+                    console.error("Error processing reward:", error);
+                    showToast("Reward process karne mein error aayi.");
                     btn.disabled = false;
+                    btn.textContent = 'Claim Reward';
                     return;
                 }
-                
-                // Cleanup UI
+
+                // **STEP 3: Clean up the UI**
                 closeModal(document.getElementById('scratch-card-modal'));
                 isScratchCardActive = false;
                 unscratchedCardsQueue.shift();
-                
-                btn.disabled = false;
                 activeScratchCardData = null;
-
+                btn.disabled = false;
+                btn.textContent = 'Claim Reward';
                 setTimeout(showNextScratchCard, 500);
             });
         }
