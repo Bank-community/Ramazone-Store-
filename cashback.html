@@ -67,7 +67,7 @@
             border-color: var(--border-color-light-strong);
             color: var(--text-primary-light);
         }
-        body[data-theme="light"] label, body[data-theme="light"] .form-link, body[data-theme="light"] .section-title, body[data-theme="light"] .modal-description, body[data-theme="light"] .history-info .date {
+        body[data-theme="light"] label, body[data-theme="light"] .form-link, body[data-theme="light"] .section-title, body[data-theme="light"] .modal-description, body[data-theme="light"] .history-info .date, body[data-theme="light"] #profile-payment-id {
             color: var(--text-secondary-light);
         }
         body[data-theme="light"] .btn-secondary {
@@ -206,9 +206,8 @@
         .action-card:hover { transform: translateY(-5px); background-color: var(--border-color-dark); }
         body[data-theme="light"] .action-card:hover { background-color: #f8f9fa; border-color: #adb5bd; }
         .action-card .icon { font-size: 28px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;}
-        .action-card .icon svg { width: 28px; height: 28px; }
+        .action-card .icon img, .action-card .icon svg { width: 32px; height: 32px; }
 
-        /* UPDATED: Icon Colors */
         .action-card.scan .icon { color: var(--accent-purple); } /* Scan & Pay */
         .action-card.claim .icon { color: var(--accent-green); } /* Claim */
         .action-card.cashback .icon { color: var(--accent-blue); } /* Cashback */
@@ -245,27 +244,23 @@
             display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-light);
             padding: 15px; border-radius: 10px; border-left: 4px solid var(--accent-blue);
         }
-        /* UPDATED: History Item Colors */
-        .history-item.payment { border-left-color: var(--accent-purple); } /* Sent Payment */
-        .history-item.debit { border-left-color: var(--brand-red); } /* Claim */
-        .history-item.credit { border-left-color: var(--accent-green); } /* Cashback */
+        .history-item.payment { border-left-color: var(--accent-purple); } 
+        .history-item.debit { border-left-color: var(--brand-red); } 
+        .history-item.credit { border-left-color: var(--accent-green); } 
         .history-details { display: flex; align-items: center; gap: 15px; }
         .history-icon {
             width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;
         }
         .history-icon svg { width: 20px; height: 20px; }
-        /* UPDATED: History Icon Colors */
-        .history-icon.payment { background-color: rgba(155, 89, 182, 0.1); color: var(--accent-purple); } /* Sent Payment */
-        .history-icon.debit { background-color: rgba(229, 9, 20, 0.1); color: var(--brand-red); } /* Claim */
-        .history-icon.credit { background-color: rgba(46, 204, 113, 0.1); color: var(--accent-green); } /* Cashback */
+        .history-icon.payment { background-color: rgba(155, 89, 182, 0.1); color: var(--accent-purple); }
+        .history-icon.debit { background-color: rgba(229, 9, 20, 0.1); color: var(--brand-red); } 
+        .history-icon.credit { background-color: rgba(46, 204, 113, 0.1); color: var(--accent-green); } 
         
         .history-info .title { font-weight: 600; font-size: 15px; }
         .history-info .date { font-size: 13px; color: var(--text-secondary-dark); }
         .history-amount { text-align: right; }
         .history-amount .amount { font-weight: 600; font-size: 16px; }
-        /* UPDATED: Amount Colors */
-        .history-amount .amount.payment { color: #ff6b6b; } /* Sent payment is a debit */
-        .history-amount .amount.debit { color: #ff6b6b; } /* Claim is a debit */
+        .history-amount .amount.payment, .history-amount .amount.debit { color: #ff6b6b; }
         .history-amount .amount.credit { color: #2ecc71; }
         .history-amount .status {
             font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 12px; text-transform: capitalize;
@@ -312,7 +307,6 @@
         .btn-secondary { background: var(--border-color-dark); }
         .btn-secondary:hover { background: #414b69; transform: none; box-shadow: none; }
         
-        /* NEW: Scan & Pay Modal Styles */
         #scan-pay-modal .modal-content { padding: 20px; }
         #scanner-container {
             position: relative; width: 100%; max-width: 300px;
@@ -325,7 +319,6 @@
         .scanned-info p { margin-bottom: 5px; }
         .scanned-info span { font-weight: 600; color: var(--brand-red); }
 
-        /* PROFILE MODAL FIX */
         #profile-modal .modal-content { padding: 0; }
         #profile-modal .profile-info { padding: 30px 30px 0 30px; }
         #profile-modal .modal-body { padding: 0 30px; }
@@ -336,7 +329,6 @@
             font-size: 40px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;
             object-fit: cover; border: 3px solid var(--brand-red);
         }
-        /* NEW: Payment ID Style */
         #profile-payment-id {
             font-size: 14px; color: var(--text-secondary-dark); background-color: var(--bg-light);
             padding: 8px 12px; border-radius: 8px; margin-top: 10px; text-align: center;
@@ -354,7 +346,6 @@
         #password-change-form { border-top: 1px solid var(--border-color-dark); padding-top: 20px; margin-top: 20px; }
         body[data-theme="light"] #password-change-form { border-top-color: var(--border-color-light-strong); }
         
-        /* Toast Notification Style */
         .toast-notification {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
             background-color: var(--accent-green); color: white; padding: 12px 25px;
@@ -363,7 +354,6 @@
         }
         .toast-notification.show { bottom: 30px; }
 
-        /* Mobile Full Screen Adjustments */
         @media (max-width: 600px) {
             body { padding: 0; }
             .container { max-width: 100%; }
@@ -378,6 +368,7 @@
 
     <div class="container">
         
+        <!-- Login View -->
         <div id="login-view" class="view active">
             <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="logo-link">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/121828/FFFFFF?text=Ramazone';">
@@ -398,6 +389,7 @@
             <p class="form-link">Naye user? <a href="#" id="show-register-link">Yahan register karein</a></p>
         </div>
 
+        <!-- Registration View -->
         <div id="registration-view" class="view">
              <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="logo-link">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/121828/FFFFFF?text=Ramazone';">
@@ -413,6 +405,7 @@
             <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
         </div>
 
+        <!-- Dashboard View -->
         <div id="dashboard-view" class="view">
             <div class="header">
                 <h1 id="user-greeting">Good Morning, Kunal!</h1>
@@ -462,9 +455,10 @@
                     </div>
                     <div class="card-text"><strong>Cashback Request</strong></div>
                 </div>
+                <!-- UPDATED: Scan & Pay button with new icon -->
                 <div id="scan-and-pay-btn" class="action-card scan">
                      <div class="icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <img src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" alt="Scan & Pay">
                      </div>
                     <p>Scan & Pay</p>
                 </div>
@@ -496,12 +490,14 @@
                     <button class="filter-btn" data-filter="cashback">Cashback</button>
                     <button class="filter-btn" data-filter="claim">Claims</button>
                     <button class="filter-btn" data-filter="approved">Approved</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
                 </div>
                 <div id="unified-history-list" class="history-list"></div>
             </div>
         </div>
     </div>
 
+    <!-- All Modals -->
     <div id="password-modal-for-action" class="modal-overlay">
         <div class="modal-content">
             <h3 id="password-modal-title">Confirm Your Request</h3>
@@ -645,14 +641,12 @@
         const registerErrorMsg = document.getElementById('register-error-msg');
         const themeSwitcher = document.getElementById('theme-switcher');
         const refreshBtn = document.getElementById('refresh-btn');
-        const notificationBtn = document.getElementById('notification-btn');
-        const notificationDot = document.getElementById('notification-dot');
         const profilePictureInput = document.getElementById('profile-picture-input');
         const uploadStatus = document.getElementById('upload-status');
         const walletShareBtn = document.getElementById('wallet-share-btn');
         const whatsappSupportLink = document.getElementById('whatsapp-support-link');
         const filterBar = document.getElementById('filter-bar');
-        const passwordModal = document.getElementById('password-modal-for-action'); // UPDATED
+        const passwordModal = document.getElementById('password-modal-for-action');
         const claimModal = document.getElementById('claim-modal');
         const cashbackModal = document.getElementById('cashback-modal');
         const profileModal = document.getElementById('profile-modal');
@@ -667,8 +661,6 @@
         const modalPasswordInput = document.getElementById('modal-password');
         const claimSubmitBtn = document.getElementById('claim-submit-btn');
         const cashbackSubmitBtn = document.getElementById('cashback-submit-btn');
-
-        // NEW: Scan & Pay DOM Elements
         const scanPayModal = document.getElementById('scan-pay-modal');
         const scannerVideo = document.getElementById('scanner-video');
         const scannerStatus = document.getElementById('scanner-status');
@@ -683,12 +675,12 @@
         let activeListeners = [];
         let claimsDataSnapshot = null;
         let cashbackDataSnapshot = null;
-        let paymentsDataSnapshot = null; // NEW
+        // UPDATED: Split payment snapshots for sent and received
+        let sentPaymentsDataSnapshot = null;
+        let receivedPaymentsDataSnapshot = null;
         let activeFilter = 'all';
-
-        // NEW: Scan & Pay State
         let scanner = null;
-        let tempActionData = {}; // To store data for password confirmation
+        let tempActionData = {};
 
         // --- Main Initialization Function ---
         async function initializeFirebaseApp() {
@@ -713,9 +705,8 @@
         function openModal(modalElement) { modalElement?.classList.add('active'); }
         function closeModal(modalElement) { 
             modalElement?.classList.remove('active');
-            // NEW: Stop scanner when any modal is closed, especially the scanner modal
             if (scanner) {
-                scanner.srcObject.getTracks().forEach(track => track.stop());
+                scanner.getTracks().forEach(track => track.stop());
                 scanner = null;
             }
         }
@@ -725,7 +716,6 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
-        // NEW: Payment ID Generator
         function generatePaymentId(name, mobile) {
             if (!name || !mobile) return '';
             const formattedName = name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
@@ -810,10 +800,17 @@
                 renderAllViews();
             }));
 
-            // NEW: Listener for Payments
-            const paymentsQuery = query(ref(database, 'payments'), orderByChild('senderId'), equalTo(user.uid));
-             activeListeners.push(onValue(paymentsQuery, (snapshot) => {
-                paymentsDataSnapshot = snapshot;
+            // NEW: Listener for SENT Payments
+            const sentPaymentsQuery = query(ref(database, 'payments'), orderByChild('senderId'), equalTo(user.uid));
+             activeListeners.push(onValue(sentPaymentsQuery, (snapshot) => {
+                sentPaymentsDataSnapshot = snapshot;
+                renderAllViews();
+            }));
+
+            // NEW: Listener for RECEIVED Payments
+            const receivedPaymentsQuery = query(ref(database, 'payments'), orderByChild('receiverId'), equalTo(user.uid));
+             activeListeners.push(onValue(receivedPaymentsQuery, (snapshot) => {
+                receivedPaymentsDataSnapshot = snapshot;
                 renderAllViews();
             }));
         }
@@ -821,7 +818,8 @@
         function detachAllListeners() {
             activeListeners.forEach(unsubscribe => unsubscribe());
             activeListeners = [];
-            currentUserData = null; claimsDataSnapshot = null; cashbackDataSnapshot = null; paymentsDataSnapshot = null;
+            currentUserData = null; claimsDataSnapshot = null; cashbackDataSnapshot = null; 
+            sentPaymentsDataSnapshot = null; receivedPaymentsDataSnapshot = null;
             claimSubmitBtn.disabled = true; cashbackSubmitBtn.disabled = true;
         }
 
@@ -834,9 +832,9 @@
 
         // --- UI Rendering ---
         function renderAllViews() {
-            // UPDATED to include payments
-            if (claimsDataSnapshot && cashbackDataSnapshot && paymentsDataSnapshot) {
-                renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot, paymentsDataSnapshot);
+            // UPDATED: Wait for all snapshots before rendering
+            if (claimsDataSnapshot && cashbackDataSnapshot && sentPaymentsDataSnapshot && receivedPaymentsDataSnapshot) {
+                renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot, sentPaymentsDataSnapshot, receivedPaymentsDataSnapshot);
                 renderCouponsModal(claimsDataSnapshot);
             }
         }
@@ -862,7 +860,6 @@
             document.getElementById('profile-modal-mobile').textContent = dbData.mobile;
             const whatsappMessage = `Help Required\n\nName: ${authUser.displayName || 'N/A'}\nWallet Balance: ₹${walletBalance}`;
             whatsappSupportLink.href = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`;
-            // NEW: Display Payment ID in Profile
             document.getElementById('profile-payment-id').textContent = generatePaymentId(authUser.displayName, dbData.mobile);
         }
 
@@ -875,45 +872,83 @@
             return `<div class="empty-state"><div class="empty-state-icon">${msg.icon}</div><h4>${msg.title}</h4><p>${msg.text}</p></div>`;
         }
 
-        function renderUnifiedHistory(claimSnapshot, cashbackSnapshot, paymentSnapshot) { // UPDATED
+        // UPDATED: Complete history rendering logic
+        function renderUnifiedHistory(claimSnap, cashbackSnap, sentPaymentSnap, receivedPaymentSnap) {
             const historyList = document.getElementById('unified-history-list');
             historyList.innerHTML = '';
             let combinedHistory = [];
-            // Claims
-            if (claimSnapshot.exists()) claimSnapshot.forEach(child => {
+
+            // 1. Claims (Debit)
+            if (claimSnap.exists()) claimSnap.forEach(child => {
                 const req = child.val();
                 combinedHistory.push({ type: 'claim', date: new Date(req.requestDate), title: 'Wallet Claim', amount: req.claimAmount, status: req.status, couponCode: req.couponCode });
             });
-            // Cashback
-            if(cashbackSnapshot.exists()) cashbackSnapshot.forEach(child => {
+            // 2. Cashback (Credit)
+            if(cashbackSnap.exists()) cashbackSnap.forEach(child => {
                 const req = child.val();
                 combinedHistory.push({ type: 'cashback', date: new Date(req.requestDate), title: `Cashback: ${req.productName}`, amount: req.cashbackAmount, status: req.status });
             });
-            // NEW: Payments
-            if(paymentSnapshot.exists()) paymentSnapshot.forEach(child => {
+            // 3. Sent Payments (Debit)
+            if(sentPaymentSnap.exists()) sentPaymentSnap.forEach(child => {
                 const req = child.val();
                 combinedHistory.push({ type: 'payment', date: new Date(req.timestamp), title: `Paid to ${req.receiverName}`, amount: req.amount, status: 'completed' });
+            });
+            // 4. Received Payments (Credit)
+            if(receivedPaymentSnap.exists()) receivedPaymentSnap.forEach(child => {
+                const req = child.val();
+                combinedHistory.push({ type: 'received', date: new Date(req.timestamp), title: `Received from ${req.senderName}`, amount: req.amount, status: 'completed' });
             });
 
             let filteredHistory = combinedHistory.filter(item => {
                 if (activeFilter === 'all') return true;
-                if (activeFilter === 'payment' || activeFilter === 'cashback' || activeFilter === 'claim') return item.type === activeFilter;
-                return item.status === activeFilter;
+                if (activeFilter === 'payment') return item.type === 'payment' || item.type === 'received';
+                if (activeFilter === 'cashback' || activeFilter === 'claim' || activeFilter === 'pending' || activeFilter === 'approved') {
+                    if (item.type === activeFilter) return true;
+                    if (item.status === activeFilter) return true;
+                }
+                return false;
             });
+
             if (filteredHistory.length === 0) { historyList.innerHTML = getEmptyStateHTML('history'); return; }
+
             filteredHistory.sort((a, b) => b.date - a.date).forEach(item => {
                 const itemDiv = document.createElement('div');
                 const isDebit = item.type === 'claim' || item.type === 'payment';
-                const typeClass = item.type === 'claim' ? 'debit' : (item.type === 'cashback' ? 'credit' : 'payment');
-                itemDiv.className = `history-item ${typeClass}`;
-
+                let typeClass = '';
                 let iconContent = '';
-                if(typeClass === 'debit') iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
-                else if (typeClass === 'credit') iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
-                else if (typeClass === 'payment') iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
                 
+                switch(item.type) {
+                    case 'claim':
+                        typeClass = 'debit';
+                        iconContent = `💸`;
+                        break;
+                    case 'payment':
+                        typeClass = 'payment';
+                        iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
+                        break;
+                    case 'cashback':
+                    case 'received':
+                        typeClass = 'credit';
+                        iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
+                        break;
+                }
+                
+                itemDiv.className = `history-item ${typeClass}`;
                 let couponHTML = (item.type === 'claim' && item.status === 'approved' && item.couponCode) ? `<span class="coupon-code">${item.couponCode}</span>` : (item.type === 'claim' && item.status === 'rejected') ? `<span class="coupon-code">Refunded</span>` : '';
-                itemDiv.innerHTML = `<div class="history-details"><div class="history-icon ${typeClass}">${iconContent}</div><div class="history-info"><div class="title">${item.title}</div><div class="date">${item.date.toLocaleDateString()}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${isDebit ? '-' : '+'} ₹${parseFloat(item.amount).toFixed(2)}</div><span class="status status-${item.status}">${item.status}</span>${couponHTML}</div>`;
+                
+                itemDiv.innerHTML = `
+                    <div class="history-details">
+                        <div class="history-icon ${typeClass}">${iconContent}</div>
+                        <div class="history-info">
+                            <div class="title">${item.title}</div>
+                            <div class="date">${item.date.toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <div class="history-amount">
+                        <div class="amount ${typeClass}">${isDebit ? '-' : '+'} ₹${parseFloat(item.amount).toFixed(2)}</div>
+                        <span class="status status-${item.status}">${item.status}</span>
+                        ${couponHTML}
+                    </div>`;
                 historyList.appendChild(itemDiv);
             });
         }
@@ -1022,9 +1057,7 @@
             }
         }
 
-        // NEW: Scan & Pay Functions
         function startScanner() {
-            // Reset UI
             paymentForm.style.display = 'none';
             scannerStatus.textContent = "Scanning for QR code...";
             scannerStatus.style.color = 'inherit';
@@ -1072,17 +1105,15 @@
             scanner = null;
             scannerStatus.textContent = 'Processing ID...';
             
-            // Validate format: @NameRMZ1234567890
             const match = paymentId.match(/@(.+?)RMZ(\d{10})$/);
             if (!match) {
                 scannerStatus.textContent = "Invalid QR Code format.";
                 scannerStatus.style.color = 'var(--brand-red)';
-                setTimeout(startScanner, 2000); // Try again
+                setTimeout(startScanner, 2000);
                 return;
             }
             const mobile = match[2];
             
-            // Find user in database
             const usersRef = ref(database, 'users');
             const userQuery = query(usersRef, orderByChild('mobile'), equalTo(mobile));
             const snapshot = await get(userQuery);
@@ -1101,7 +1132,6 @@
                 return;
             }
 
-            // Show payment form
             scannerStatus.textContent = 'QR Code Scanned!';
             scanPayInitialActions.style.display = 'none';
             paymentForm.style.display = 'block';
@@ -1128,28 +1158,33 @@
         async function processPaymentConfirmation() {
             const { amount, receiverUid, receiverData } = tempActionData;
             
-            // IMPORTANT SECURITY NOTE: This client-side transaction is for demonstration.
-            // In a production app, this entire logic should be inside a secure Firebase Cloud Function
-            // to prevent tampering and ensure atomicity.
+            // This entire logic should ideally be a Cloud Function for security.
             const senderRef = ref(database, 'users/' + auth.currentUser.uid);
             const receiverRef = ref(database, 'users/' + receiverUid);
 
-            await runTransaction(senderRef, (senderData) => {
+            // Using a single transaction path to update both users is not directly possible in RTDB
+            // without structuring data differently. A Cloud Function is the correct approach.
+            // For client-side simulation, we perform two transactions.
+            
+            const senderTx = await runTransaction(senderRef, (senderData) => {
                 if (senderData && (senderData.wallet || 0) >= amount) {
                     senderData.wallet -= amount;
                     return senderData;
                 }
-                return; // Abort transaction
+                return; // Abort
             });
 
-             await runTransaction(receiverRef, (receiverData) => {
-                if (receiverData) {
-                    receiverData.wallet = (receiverData.wallet || 0) + amount;
+            if(!senderTx.committed) {
+                 throw new Error("Payment failed. Could not debit from your account.");
+            }
+
+            await runTransaction(receiverRef, (rcvData) => {
+                if (rcvData) {
+                    rcvData.wallet = (rcvData.wallet || 0) + amount;
                 }
-                return receiverData;
+                return rcvData;
             });
 
-            // Log the payment
             const newPaymentRef = push(ref(database, 'payments'));
             await set(newPaymentRef, {
                 paymentId: newPaymentRef.key,
@@ -1165,8 +1200,6 @@
             closeModal(passwordModal);
         }
 
-
-        // UPDATED: Central password confirmation handler
         async function handlePasswordConfirmation() {
             hideErrorMessage(modalErrorMsg);
             modalConfirmBtn.disabled = true;
@@ -1201,6 +1234,27 @@
             }
         }
         
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            hideErrorMessage(passwordChangeErrorMsg);
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            if (newPassword !== confirmPassword) { showErrorMessage(passwordChangeErrorMsg, "Naya password match nahi ho raha."); return; }
+            if (newPassword.length < 6) { showErrorMessage(passwordChangeErrorMsg, "Naya password kam se kam 6 akshar ka hona chahiye."); return; }
+            const user = auth.currentUser;
+            const credential = EmailAuthProvider.credential(`${currentUserData.mobile}@ramazone.com`, currentPassword);
+            try {
+                await reauthenticateWithCredential(user, credential);
+                await updatePassword(user, newPassword);
+                showToast("Password safaltapoorvak badal gaya hai!");
+                passwordChangeForm.reset();
+                closeModal(profileModal);
+            } catch (error) {
+                showErrorMessage(passwordChangeErrorMsg, "Purana password galat hai ya koi aur error aayi.");
+            }
+        }
+
         // --- Setup Function ---
         function setupApplication() {
             initTheme();
@@ -1214,7 +1268,6 @@
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             
-            // Modal Triggers
             document.getElementById('open-claim-modal').addEventListener('click', () => openModal(claimModal));
             document.getElementById('open-coupons-modal').addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(profileModal));
@@ -1230,9 +1283,8 @@
             
             claimRequestForm.addEventListener('submit', handleClaimRequest);
             cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
-            passwordChangeForm.addEventListener('submit', () => alert("Password change function needs to be implemented."));
+            passwordChangeForm.addEventListener('submit', handlePasswordChange);
             
-            // UPDATED to use central handler
             modalConfirmBtn.addEventListener('click', handlePasswordConfirmation);
 
             document.getElementById('coupons-list').addEventListener('click', e => {
@@ -1263,7 +1315,6 @@
                 renderAllViews();
             });
             
-            // NEW: Scan & Pay Listeners
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => {
                 openModal(scanPayModal);
                 startScanner();
@@ -1277,3 +1328,4 @@
     </script>
 </body>
 </html>
+
