@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Payment QR Code</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QR Code Generation Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        #qrcode-container {
+            border: 10px solid white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        #qrcode {
+            width: 280px;
+            height: 280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #qrcode img {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-200 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-sm text-center">
+        
+        <div id="qrcode-container">
+            <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="mx-auto mb-4 w-48" onerror="this.onerror=null;this.src='https://placehold.co/192x48/ffffff/000000?text=Ramazone';">
+            
+            <div id="qrcode"></div>
+            
+            <p class="mt-4 text-lg font-semibold text-gray-800" id="payment-id-display"></p>
+            <p class="text-gray-500 text-sm">Scan karke pay karein</p>
+        </div>
+        
+        <a id="download-btn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6 cursor-pointer inline-block">
+            Download QR Code
+        </a>
+        <button id="print-btn" class="hidden w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 mt-3">
+            Print QR Code
+        </button>
+
+    </div>
+
+    <script>
+        // UPDATED: New Admin Payment ID
+        const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
+
+        const qrcodeContainer = document.getElementById('qrcode');
+        const downloadBtn = document.getElementById('download-btn');
+        const printBtn = document.getElementById('print-btn');
+        const paymentIdDisplay = document.getElementById('payment-id-display');
+
+        // Function to generate QR code
+        const generateQRCode = () => {
+            paymentIdDisplay.textContent = ADMIN_PAYMENT_ID;
+
+            const qrcode = new QRCode(qrcodeContainer, {
+                text: ADMIN_PAYMENT_ID,
+                width: 280,
+                height: 280,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => {
+                const qrImage = qrcodeContainer.querySelector('img');
+                if (qrImage) {
+                    downloadBtn.href = qrImage.src;
+                    downloadBtn.download = `admin-payment-qr.png`;
+                    downloadBtn.classList.remove('hidden');
+                    printBtn.classList.remove('hidden');
+                }
+            }, 300);
+        };
+
+        // Print function
+        printBtn.addEventListener('click', () => {
+            const qrImageSrc = qrcodeContainer.querySelector('img').src;
+            const logoSrc = document.querySelector('img[alt="Ramazone Logo"]').src;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Print QR Code</title>
+                        <style>
+                            body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+                            img.logo { width: 200px; margin-bottom: 20px; }
+                            img.qr { width: 300px; }
+                            p { font-size: 20px; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${logoSrc}" class="logo" alt="Logo">
+                        <img src="${qrImageSrc}" class="qr" alt="QR Code">
+                        <p>${ADMIN_PAYMENT_ID}</p>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        });
+
+        window.onload = generateQRCode;
+    </script>
+
+</body>
+</html>
+
