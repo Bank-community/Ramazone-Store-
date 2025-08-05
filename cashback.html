@@ -30,6 +30,7 @@
             --whatsapp-green: #25D366;
             --accent-purple: #9b59b6; 
             --shiny-green: #2eff71;
+            --due-red: #ff6b6b; /* NEW: Color for due amount */
         }
 
         /* --- Base Styles & Resets --- */
@@ -79,17 +80,14 @@
         
         .container { width: 100%; max-width: 500px; padding: 0; }
 
-        /* --- Logo Styles --- */
         .logo-link { display: block; text-align: center; margin: 40px 0 30px 0; }
         .main-logo { max-width: 220px; width: 100%; height: auto; transition: transform 0.3s ease; }
         .main-logo:hover { transform: scale(1.05); }
 
-        /* --- View Transitions --- */
         .view { display: none; padding: 20px; }
         .view.active { display: block; animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Forms & Inputs --- */
         h1 { text-align: center; font-size: 24px; font-weight: 600; margin-bottom: 30px; }
         .form-group { margin-bottom: 20px; position: relative; }
         label { font-weight: 500; color: var(--text-secondary-dark); font-size: 14px; margin-bottom: 8px; display: block; }
@@ -112,7 +110,6 @@
             background-color: rgba(255, 107, 107, 0.1); padding: 10px; border-radius: 6px;
         }
 
-        /* --- Dashboard Header --- */
         .header {
             display: flex;
             flex-direction: column;
@@ -178,8 +175,9 @@
         }
         .wallet-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
         .wallet-header p { font-size: 16px; opacity: 0.9; margin: 0 0 4px 0; }
-        #lifetime-earning { font-size: 13px; font-weight: 500; opacity: 0.8; display: block; }
+        #lifetime-earning, #due-amount { font-size: 13px; font-weight: 500; opacity: 0.8; display: block; } /* UPDATED */
         .highlight-amount { font-weight: 700; color: var(--shiny-green); }
+        .highlight-due { font-weight: 700; color: var(--due-red); } /* NEW */
         
         #profile-display {
             width: 50px; height: 50px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.9);
@@ -208,12 +206,12 @@
         .action-card .icon { font-size: 28px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;}
         .action-card .icon img, .action-card .icon svg { width: 32px; height: 32px; }
 
-        .action-card.scan .icon { color: var(--accent-purple); } /* Scan & Pay */
-        .action-card.claim .icon { color: var(--accent-green); } /* Claim */
-        .action-card.cashback .icon { color: var(--accent-blue); } /* Cashback */
-        .action-card.coupons .icon { color: var(--brand-red); } /* Coupons */
-        .action-card.profile .icon { color: #8e44ad; } /* Profile */
-        .action-card.whatsapp .icon { color: var(--whatsapp-green); } /* WhatsApp */
+        .action-card.scan .icon { color: var(--accent-purple); }
+        .action-card.claim .icon { color: var(--accent-green); }
+        .action-card.cashback .icon { color: var(--accent-blue); }
+        .action-card.coupons .icon { color: var(--brand-red); }
+        .action-card.profile .icon { color: #8e44ad; }
+        .action-card.whatsapp .icon { color: var(--whatsapp-green); }
 
         @keyframes gift-pulse {
             0%, 100% { transform: scale(1) rotate(0deg); }
@@ -288,7 +286,6 @@
         body[data-theme="light"] .empty-state h4 { color: var(--text-primary-light); }
         .empty-state p { margin-bottom: 20px; }
         
-        /* --- Modal --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);
             display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px);
@@ -368,7 +365,6 @@
 
     <div class="container">
         
-        <!-- Login View -->
         <div id="login-view" class="view active">
             <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="logo-link">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/121828/FFFFFF?text=Ramazone';">
@@ -389,7 +385,6 @@
             <p class="form-link">Naye user? <a href="#" id="show-register-link">Yahan register karein</a></p>
         </div>
 
-        <!-- Registration View -->
         <div id="registration-view" class="view">
              <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="logo-link">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/121828/FFFFFF?text=Ramazone';">
@@ -405,7 +400,6 @@
             <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
         </div>
 
-        <!-- Dashboard View -->
         <div id="dashboard-view" class="view">
             <div class="header">
                 <h1 id="user-greeting">Good Morning, Kunal!</h1>
@@ -434,7 +428,9 @@
                 <div class="wallet-header">
                     <div>
                         <p>Wallet Balance</p>
+                        <!-- UPDATED: Added Due Amount display -->
                         <small id="lifetime-earning">Lifetime Earning: <span class="highlight-amount">₹0.00</span></small>
+                        <small id="due-amount">Total Due: <span class="highlight-due">₹0.00</span></small>
                     </div>
                     <img id="profile-display" src="https://placehold.co/50x50/ffffff/2980b9?text=R" alt="Profile Picture">
                 </div>
@@ -455,7 +451,6 @@
                     </div>
                     <div class="card-text"><strong>Cashback Request</strong></div>
                 </div>
-                <!-- UPDATED: Scan & Pay button with new icon -->
                 <div id="scan-and-pay-btn" class="action-card scan">
                      <div class="icon">
                         <img src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" alt="Scan & Pay">
@@ -630,6 +625,8 @@
 
         // --- Global Variables & Constants ---
         const IMGBB_API_KEY = "65bbcf742486328061382f03949b47c6";
+        // NEW: Admin Payment ID Constant
+        const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
         let auth, database;
 
         // --- DOM Elements ---
@@ -675,7 +672,6 @@
         let activeListeners = [];
         let claimsDataSnapshot = null;
         let cashbackDataSnapshot = null;
-        // UPDATED: Split payment snapshots for sent and received
         let sentPaymentsDataSnapshot = null;
         let receivedPaymentsDataSnapshot = null;
         let activeFilter = 'all';
@@ -765,7 +761,8 @@
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await updateProfile(userCredential.user, { displayName: name });
                     const userRef = ref(database, 'users/' + userCredential.user.uid);
-                    await set(userRef, { name, mobile, wallet: 0, lifetimeEarning: 0, profilePictureUrl: '', lastSeenNotificationTimestamp: 0 });
+                    // NEW: Initialize dueAmount for new users
+                    await set(userRef, { name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0, profilePictureUrl: '', lastSeenNotificationTimestamp: 0 });
                     alert("Registration safal hua! Ab aap login kar sakte hain.");
                     toggleView('login-view');
                     registerForm.reset();
@@ -800,14 +797,12 @@
                 renderAllViews();
             }));
 
-            // NEW: Listener for SENT Payments
             const sentPaymentsQuery = query(ref(database, 'payments'), orderByChild('senderId'), equalTo(user.uid));
              activeListeners.push(onValue(sentPaymentsQuery, (snapshot) => {
                 sentPaymentsDataSnapshot = snapshot;
                 renderAllViews();
             }));
 
-            // NEW: Listener for RECEIVED Payments
             const receivedPaymentsQuery = query(ref(database, 'payments'), orderByChild('receiverId'), equalTo(user.uid));
              activeListeners.push(onValue(receivedPaymentsQuery, (snapshot) => {
                 receivedPaymentsDataSnapshot = snapshot;
@@ -832,21 +827,30 @@
 
         // --- UI Rendering ---
         function renderAllViews() {
-            // UPDATED: Wait for all snapshots before rendering
             if (claimsDataSnapshot && cashbackDataSnapshot && sentPaymentsDataSnapshot && receivedPaymentsDataSnapshot) {
                 renderUnifiedHistory(claimsDataSnapshot, cashbackDataSnapshot, sentPaymentsDataSnapshot, receivedPaymentsDataSnapshot);
                 renderCouponsModal(claimsDataSnapshot);
             }
         }
 
+        // UPDATED: Display Due Amount
         function updateDashboardUI(dbData, authUser) {
             if (!dbData || !authUser) return;
             const hour = new Date().getHours();
             let greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
             document.getElementById('user-greeting').textContent = `${greeting}, ${authUser.displayName || 'Kunal'}!`;
+            
             const walletBalance = (dbData.wallet || 0).toFixed(2);
             document.getElementById('wallet-balance').textContent = `₹ ${walletBalance}`;
+            
             document.querySelector('#lifetime-earning .highlight-amount').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+            
+            // NEW: Update Due Amount UI
+            const dueAmount = dbData.dueAmount || 0;
+            const dueAmountEl = document.getElementById('due-amount');
+            dueAmountEl.querySelector('.highlight-due').textContent = `₹ ${dueAmount.toFixed(2)}`;
+            dueAmountEl.style.display = dueAmount > 0 ? 'block' : 'none'; // Show only if there is a due
+
             document.getElementById('user-mobile').textContent = `Mobile: ${dbData.mobile}`;
             const initial = authUser.displayName ? authUser.displayName.charAt(0).toUpperCase() : 'R';
             const placeholderUrl = `https://placehold.co/80x80/ffffff/2980b9?text=${initial}`;
@@ -872,28 +876,23 @@
             return `<div class="empty-state"><div class="empty-state-icon">${msg.icon}</div><h4>${msg.title}</h4><p>${msg.text}</p></div>`;
         }
 
-        // UPDATED: Complete history rendering logic
         function renderUnifiedHistory(claimSnap, cashbackSnap, sentPaymentSnap, receivedPaymentSnap) {
             const historyList = document.getElementById('unified-history-list');
             historyList.innerHTML = '';
             let combinedHistory = [];
 
-            // 1. Claims (Debit)
             if (claimSnap.exists()) claimSnap.forEach(child => {
                 const req = child.val();
                 combinedHistory.push({ type: 'claim', date: new Date(req.requestDate), title: 'Wallet Claim', amount: req.claimAmount, status: req.status, couponCode: req.couponCode });
             });
-            // 2. Cashback (Credit)
             if(cashbackSnap.exists()) cashbackSnap.forEach(child => {
                 const req = child.val();
                 combinedHistory.push({ type: 'cashback', date: new Date(req.requestDate), title: `Cashback: ${req.productName}`, amount: req.cashbackAmount, status: req.status });
             });
-            // 3. Sent Payments (Debit)
             if(sentPaymentSnap.exists()) sentPaymentSnap.forEach(child => {
                 const req = child.val();
                 combinedHistory.push({ type: 'payment', date: new Date(req.timestamp), title: `Paid to ${req.receiverName}`, amount: req.amount, status: 'completed' });
             });
-            // 4. Received Payments (Credit)
             if(receivedPaymentSnap.exists()) receivedPaymentSnap.forEach(child => {
                 const req = child.val();
                 combinedHistory.push({ type: 'received', date: new Date(req.timestamp), title: `Received from ${req.senderName}`, amount: req.amount, status: 'completed' });
@@ -918,19 +917,9 @@
                 let iconContent = '';
                 
                 switch(item.type) {
-                    case 'claim':
-                        typeClass = 'debit';
-                        iconContent = `💸`;
-                        break;
-                    case 'payment':
-                        typeClass = 'payment';
-                        iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
-                        break;
-                    case 'cashback':
-                    case 'received':
-                        typeClass = 'credit';
-                        iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
-                        break;
+                    case 'claim': typeClass = 'debit'; iconContent = `💸`; break;
+                    case 'payment': typeClass = 'payment'; iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`; break;
+                    case 'cashback': case 'received': typeClass = 'credit'; iconContent = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`; break;
                 }
                 
                 itemDiv.className = `history-item ${typeClass}`;
@@ -1100,11 +1089,25 @@
             }
         }
 
+        // UPDATED: Handle special Admin ID and regular user IDs
         async function handleScannedCode(paymentId) {
             scanner.getTracks().forEach(track => track.stop());
             scanner = null;
             scannerStatus.textContent = 'Processing ID...';
             
+            // Case 1: Scanned the Admin QR Code
+            if (paymentId === ADMIN_PAYMENT_ID) {
+                scannerStatus.textContent = 'QR Code Scanned!';
+                scanPayInitialActions.style.display = 'none';
+                paymentForm.style.display = 'block';
+                document.getElementById('receiver-name-display').textContent = "Ramazone Store";
+                document.getElementById('receiver-id-display').textContent = paymentId;
+                // Use a special receiverId for admin
+                tempActionData = { type: 'payment', receiverUid: 'admin_account', receiverData: { name: 'Ramazone Store' } };
+                return;
+            }
+
+            // Case 2: Scanned a regular user's QR Code
             const match = paymentId.match(/@(.+?)RMZ(\d{10})$/);
             if (!match) {
                 scannerStatus.textContent = "Invalid QR Code format.";
@@ -1155,42 +1158,49 @@
             modalPasswordInput.focus();
         }
 
+        // UPDATED: Handle payment to admin and regular users
         async function processPaymentConfirmation() {
             const { amount, receiverUid, receiverData } = tempActionData;
             
-            // This entire logic should ideally be a Cloud Function for security.
             const senderRef = ref(database, 'users/' + auth.currentUser.uid);
-            const receiverRef = ref(database, 'users/' + receiverUid);
-
-            // Using a single transaction path to update both users is not directly possible in RTDB
-            // without structuring data differently. A Cloud Function is the correct approach.
-            // For client-side simulation, we perform two transactions.
             
+            // Deduct from sender's wallet
             const senderTx = await runTransaction(senderRef, (senderData) => {
                 if (senderData && (senderData.wallet || 0) >= amount) {
                     senderData.wallet -= amount;
-                    return senderData;
+                    // If user has due amount, payment reduces it first
+                    if (senderData.dueAmount > 0) {
+                        const remainingDue = senderData.dueAmount - amount;
+                        senderData.dueAmount = Math.max(0, remainingDue);
+                    }
+                } else {
+                    return; // Abort
                 }
-                return; // Abort
+                return senderData;
             });
 
             if(!senderTx.committed) {
-                 throw new Error("Payment failed. Could not debit from your account.");
+                 throw new Error("Payment failed. Insufficient balance.");
             }
 
-            await runTransaction(receiverRef, (rcvData) => {
-                if (rcvData) {
-                    rcvData.wallet = (rcvData.wallet || 0) + amount;
-                }
-                return rcvData;
-            });
+            // Add to receiver's wallet (if not admin)
+            if (receiverUid !== 'admin_account') {
+                const receiverRef = ref(database, 'users/' + receiverUid);
+                await runTransaction(receiverRef, (rcvData) => {
+                    if (rcvData) {
+                        rcvData.wallet = (rcvData.wallet || 0) + amount;
+                    }
+                    return rcvData;
+                });
+            }
 
+            // Log the payment
             const newPaymentRef = push(ref(database, 'payments'));
             await set(newPaymentRef, {
                 paymentId: newPaymentRef.key,
                 senderId: auth.currentUser.uid,
                 senderName: currentUserData.name,
-                receiverId: receiverUid,
+                receiverId: receiverUid, // Can be 'admin_account'
                 receiverName: receiverData.name,
                 amount: amount,
                 timestamp: new Date().toISOString()
