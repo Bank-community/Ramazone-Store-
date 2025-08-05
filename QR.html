@@ -7,163 +7,186 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- QR Code Generation Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- HTML to Image Conversion Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
+            background-color: #e5e7eb; /* bg-gray-200 */
         }
-        #qrcode-container {
+        .main-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem; /* p-4 */
+        }
+        /* This is the element that will be converted to an image */
+        #qrcode-card {
             border: 10px solid white;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             padding: 20px;
             background-color: #ffffff;
+            width: 100%;
+            max-width: 24rem; /* max-w-sm */
+            text-align: center;
         }
         #qrcode {
-            width: 280px;
-            height: 280px;
-            margin: 0 auto;
+            width: 256px; /* Adjusted for better scaling */
+            height: 256px;
+            margin: 1rem auto; /* mx-auto my-4 */
             display: flex;
             justify-content: center;
             align-items: center;
         }
+        /* Ensure the generated QR image fills its container */
         #qrcode img {
             width: 100% !important;
             height: 100% !important;
             border-radius: 8px;
         }
+        .action-button {
+            width: 100%;
+            font-weight: 700; /* font-bold */
+            padding: 0.75rem 1rem; /* py-3 px-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: transform 0.2s;
+            cursor: pointer;
+            margin-top: 0.75rem; /* mt-3 */
+        }
+        .action-button:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
-<body class="bg-gray-200 flex items-center justify-center min-h-screen p-4">
+<body>
 
-    <div class="w-full max-w-sm text-center">
-        
-        <div id="qrcode-container">
-            <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="mx-auto mb-4 w-48" onerror="this.onerror=null;this.src='https://placehold.co/192x48/ffffff/000000?text=Ramazone';">
+    <div class="main-container">
+        <div class="w-full max-w-sm">
+            <!-- Card to be downloaded -->
+            <div id="qrcode-card">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="mx-auto mb-4 w-48" onerror="this.onerror=null;this.src='https://placehold.co/192x48/ffffff/000000?text=Ramazone';">
+                
+                <div id="qrcode"></div>
+                
+                <p class="mt-4 text-lg font-semibold text-gray-800" id="payment-id-display"></p>
+                <p class="text-gray-500 text-sm">Scan karke pay karein</p>
+            </div>
             
-            <div id="qrcode"></div>
-            
-            <p class="mt-4 text-lg font-semibold text-gray-800" id="payment-id-display"></p>
-            <p class="text-gray-500 text-sm">Scan karke pay karein</p>
+            <!-- Action Buttons -->
+            <button id="download-btn" class="hidden action-button bg-blue-600 hover:bg-blue-700 text-white mt-6">
+                Download Full HD
+            </button>
+            <button id="print-btn" class="hidden action-button bg-gray-600 hover:bg-gray-700 text-white">
+                Print QR Code
+            </button>
         </div>
-        
-        <button id="download-btn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6 cursor-pointer inline-block">
-            Download Full HD
-        </button>
-        <button id="print-btn" class="hidden w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 mt-3">
-            Print QR Code
-        </button>
-
     </div>
 
     <script>
-        const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
+        document.addEventListener('DOMContentLoaded', function () {
+            const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
 
-        const qrcodeContainer = document.getElementById('qrcode');
-        const downloadBtn = document.getElementById('download-btn');
-        const printBtn = document.getElementById('print-btn');
-        const paymentIdDisplay = document.getElementById('payment-id-display');
+            const qrcodeContainer = document.getElementById('qrcode');
+            const downloadBtn = document.getElementById('download-btn');
+            const printBtn = document.getElementById('print-btn');
+            const paymentIdDisplay = document.getElementById('payment-id-display');
+            const qrCardElement = document.getElementById('qrcode-card');
 
-        // Function to generate the QR code for display on the screen
-        const generateDisplayQRCode = () => {
-            paymentIdDisplay.textContent = ADMIN_PAYMENT_ID;
-            
-            // Clear any previous QR code
-            qrcodeContainer.innerHTML = '';
+            // Function to generate the QR code for display on the screen
+            const generateDisplayQRCode = () => {
+                paymentIdDisplay.textContent = ADMIN_PAYMENT_ID;
+                
+                qrcodeContainer.innerHTML = '';
 
-            new QRCode(qrcodeContainer, {
-                text: ADMIN_PAYMENT_ID,
-                width: 280,
-                height: 280,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+                new QRCode(qrcodeContainer, {
+                    text: ADMIN_PAYMENT_ID,
+                    width: 256,
+                    height: 256,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
 
-            // Show buttons after rendering
-            setTimeout(() => {
-                downloadBtn.classList.remove('hidden');
-                printBtn.classList.remove('hidden');
-            }, 200);
-        };
+                // The library needs a moment to render the QR code image
+                // We show the buttons after a short delay to ensure the QR is visible
+                setTimeout(() => {
+                    downloadBtn.classList.remove('hidden');
+                    printBtn.classList.remove('hidden');
+                }, 300);
+            };
 
-        // NEW: Function to generate a high-quality QR code for download
-        const downloadHDQRCode = () => {
-            // Create a temporary container for the HD QR code
-            const tempContainer = document.createElement('div');
-            
-            // Generate a larger QR code (1024x1024) in the temporary container
-            new QRCode(tempContainer, {
-                text: ADMIN_PAYMENT_ID,
-                width: 1024,
-                height: 1024,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
-            // The library needs a moment to generate the image
-            setTimeout(() => {
-                const qrImage = tempContainer.querySelector('img');
-                if (qrImage) {
+            // **FIXED**: Function to download the entire QR card as a high-quality image
+            const downloadFullCard = () => {
+                // Use html2canvas to capture the 'qrcode-card' div
+                // The scale option increases the resolution of the output image
+                html2canvas(qrCardElement, { scale: 3, useCORS: true }).then(canvas => {
                     // Create a temporary link to trigger the download
                     const link = document.createElement('a');
-                    link.href = qrImage.src;
-                    link.download = `Ramazone-Store-QR-HD.png`;
+                    // Convert canvas to PNG image data URL
+                    link.href = canvas.toDataURL('image/png');
+                    link.download = `Ramazone-Store-QR-Card.png`;
+                    
+                    // Trigger the download
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                }
-            }, 100);
-        };
-
-        // Print function (fixed to ensure image is loaded)
-        const printQRCode = () => {
-            const qrImage = qrcodeContainer.querySelector('img');
-            const logoImage = document.querySelector('img[alt="Ramazone Logo"]');
-            
-            if (!qrImage) {
-                alert("QR Code abhi load ho raha hai, कृपया प्रतीक्षा करें।");
-                return;
-            }
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Print Ramazone QR Code</title>
-                        <style>
-                            body { font-family: 'Poppins', sans-serif; text-align: center; padding-top: 50px; }
-                            .logo { max-width: 250px; margin-bottom: 25px; }
-                            .qr-code { max-width: 350px; }
-                            .payment-id { font-size: 22px; font-weight: 600; margin-top: 15px; }
-                        </style>
-                    </head>
-                    <body>
-                        <img src="${logoImage.src}" class="logo" alt="Logo">
-                        <img src="${qrImage.src}" class="qr-code" alt="QR Code">
-                        <p class="payment-id">${ADMIN_PAYMENT_ID}</p>
-                    </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            
-            // Wait for images to load before printing
-            printWindow.onload = function() {
-                printWindow.print();
-                printWindow.close();
+                }).catch(err => {
+                    console.error("Oops, something went wrong!", err);
+                    alert("Image download nahi ho saki. कृपया console check karein.");
+                });
             };
-        };
 
-        // Add event listeners
-        downloadBtn.addEventListener('click', downloadHDQRCode);
-        printBtn.addEventListener('click', printQRCode);
+            // Print function (ensures images are loaded before printing)
+            const printQRCode = () => {
+                const qrImage = qrcodeContainer.querySelector('img');
+                const logoImage = qrCardElement.querySelector('img[alt="Ramazone Logo"]');
+                
+                if (!qrImage) {
+                    alert("QR Code abhi load ho raha hai, कृपया प्रतीक्षा करें।");
+                    return;
+                }
 
-        // IMPORTANT: Generate the QR code only after the entire page is loaded
-        window.onload = generateDisplayQRCode;
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Print Ramazone QR Code</title>
+                            <style>
+                                body { font-family: 'Poppins', sans-serif; text-align: center; padding-top: 40px; }
+                                .logo { max-width: 200px; margin-bottom: 20px; }
+                                .qr-code { max-width: 300px; }
+                                .payment-id { font-size: 20px; font-weight: 600; margin-top: 15px; }
+                            </style>
+                        </head>
+                        <body>
+                            <img src="${logoImage.src}" class="logo" alt="Logo">
+                            <img src="${qrImage.src}" class="qr-code" alt="QR Code">
+                            <p class="payment-id">${ADMIN_PAYMENT_ID}</p>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                
+                // Wait for the new window content (especially images) to load before printing
+                printWindow.onload = function() {
+                    printWindow.focus();
+                    printWindow.print();
+                    printWindow.close();
+                };
+            };
+
+            // Add event listeners
+            downloadBtn.addEventListener('click', downloadFullCard);
+            printBtn.addEventListener('click', printQRCode);
+
+            // Generate the QR code once the page is ready
+            generateDisplayQRCode();
+        });
     </script>
 
 </body>
