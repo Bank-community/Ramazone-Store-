@@ -62,7 +62,7 @@
         body[data-theme="light"] .action-card {
             border: 1px solid var(--border-color-light-strong);
         }
-        body[data-theme="light"] input, body[data-theme="light"] select {
+        body[data-theme="light"] input, body[data-theme="light"] select, body[data-theme="light"] input[type="date"] {
             background-color: var(--bg-light-theme);
             border-color: var(--border-color-light-strong);
             color: var(--text-primary-light);
@@ -93,7 +93,7 @@
         h1 { text-align: center; font-size: 24px; font-weight: 600; margin-bottom: 30px; }
         .form-group { margin-bottom: 20px; position: relative; }
         label { font-weight: 500; color: var(--text-secondary-dark); font-size: 14px; margin-bottom: 8px; display: block; }
-        input[type="text"], input[type="tel"], input[type="password"], input[type="number"], select {
+        input[type="text"], input[type="tel"], input[type="password"], input[type="number"], input[type="date"], select {
             width: 100%; padding: 14px; background-color: var(--bg-light); border: 1px solid var(--border-color-dark);
             border-radius: 8px; color: var(--text-primary-dark); font-size: 16px; transition: border-color 0.3s, box-shadow 0.3s;
         }
@@ -567,6 +567,11 @@
              <p id="cashback-modal-description" class="modal-description">Product details bharein. Cashback request kiya jayega.</p>
             <form id="cashback-request-form">
                 <div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div>
+                <!-- NEW DATE FIELD ADDED HERE -->
+                <div class="form-group">
+                    <label for="product-purchase-date">Product Kab Purchase Kiya Tha?</label>
+                    <input type="date" id="product-purchase-date" required>
+                </div>
                 <div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div>
                 <p id="cashback-error-msg" class="error-message"></p>
                  <div class="modal-actions">
@@ -787,7 +792,8 @@
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await updateProfile(userCredential.user, { displayName: name });
                     const userRef = ref(database, 'users/' + userCredential.user.uid);
-                    await set(userRef, { name, mobile, password, wallet: 0, lifetimeEarning: 0, profilePictureUrl: '', lastSeenNotificationTimestamp: 0 });
+                    // IMPORTANT SECURITY FIX: Removed plain text password from being stored in the database.
+                    await set(userRef, { name, mobile, wallet: 0, lifetimeEarning: 0, profilePictureUrl: '', lastSeenNotificationTimestamp: 0 });
                     alert("Registration safal hua! Ab aap login kar sakte hain.");
                     toggleView('login-view');
                     registerForm.reset();
@@ -1013,20 +1019,15 @@
             }
         }
         
-        // UPDATED LOGIC HERE
         async function getCashbackPercentage() {
-            // Default percentage agar Firebase se value na mile
             const defaultPercentage = 2; 
             if (!database) return defaultPercentage;
             try {
-                // Correct path as per your database structure
                 const percentageRef = ref(database, 'app_settings/cashback_percentage');
                 const snapshot = await get(percentageRef);
                 if (snapshot.exists() && typeof snapshot.val() === 'number') {
-                    // Firebase se mili value return karein
                     return snapshot.val();
                 }
-                // Agar value nahi hai to default return karein
                 return defaultPercentage;
             } catch (error) {
                 console.error("Error fetching cashback percentage, using default.", error);
@@ -1034,24 +1035,41 @@
             }
         }
 
-        // UPDATED LOGIC HERE
+        // UPDATED with Purchase Date
         async function handleCashbackRequest(e) {
             e.preventDefault();
             hideErrorMessage(cashbackErrorMsg);
             cashbackSubmitBtn.disabled = true;
             if(!auth.currentUser || !currentUserData){ showErrorMessage(cashbackErrorMsg,"Data load ho raha hai..."); cashbackSubmitBtn.disabled = false; return; }
-            const productName=document.getElementById("product-name").value.trim();
-            const productPrice=parseFloat(document.getElementById("product-price").value);
-            if(!productName||isNaN(productPrice)||productPrice<10){ showErrorMessage(cashbackErrorMsg,"Sahi product naam aur kam se kam ₹10 ka price daalein."); cashbackSubmitBtn.disabled = false; return; }
             
-            // Firebase se percentage dynamically fetch karein
+            const productName = document.getElementById("product-name").value.trim();
+            const productPrice = parseFloat(document.getElementById("product-price").value);
+            const purchaseDate = document.getElementById("product-purchase-date").value;
+
+            if(!productName || isNaN(productPrice) || productPrice < 10 || !purchaseDate){ 
+                showErrorMessage(cashbackErrorMsg,"Sahi product naam, price aur purchase date daalein."); 
+                cashbackSubmitBtn.disabled = false; 
+                return; 
+            }
+            
             const percentage = await getCashbackPercentage();
-            // Fetched percentage se cashback amount calculate karein
             const cashbackAmount = productPrice * (percentage / 100);
             
             const newRequestRef=push(ref(database,"cashback_requests"));
             try{
-                await set(newRequestRef,{ requestId:newRequestRef.key, userMobile:currentUserData.mobile, userName:auth.currentUser.displayName, productName:productName, productPrice:productPrice, cashbackAmount:cashbackAmount, status:"pending", requestDate:(new Date).toISOString(), userId: auth.currentUser.uid, scratched: false });
+                await set(newRequestRef,{ 
+                    requestId: newRequestRef.key, 
+                    userMobile: currentUserData.mobile, 
+                    userName: auth.currentUser.displayName, 
+                    productName: productName, 
+                    productPrice: productPrice, 
+                    purchaseDate: purchaseDate, // <-- SAVING THE DATE
+                    cashbackAmount: cashbackAmount, 
+                    status: "pending", 
+                    requestDate: (new Date).toISOString(), 
+                    userId: auth.currentUser.uid, 
+                    scratched: false 
+                });
                 showToast("Cashback request submit ho gaya!");
                 cashbackRequestForm.reset();
                 closeModal(cashbackModal);
@@ -1193,12 +1211,12 @@
             document.getElementById('open-pending-modal').addEventListener('click', () => openModal(document.getElementById('pending-modal')));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(profileModal));
             
-            // UPDATED LOGIC HERE
+            // UPDATED to set default date
             document.getElementById('open-cashback-modal').addEventListener('click', async () => {
-                // Modal kholne se pehle percentage fetch karein
                 const percentage = await getCashbackPercentage();
-                // Modal ke description ko dynamic percentage ke saath update karein
                 document.getElementById('cashback-modal-description').textContent = `Product details bharein. ${percentage}% cashback request kiya jayega.`;
+                // Set date to today by default
+                document.getElementById('product-purchase-date').valueAsDate = new Date();
                 openModal(cashbackModal);
             });
 
