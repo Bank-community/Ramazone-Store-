@@ -250,7 +250,7 @@
         #profile-modal-mobile { font-size: 16px; color: var(--text-secondary-dark); }
         .profile-upload-section { margin-top: 20px; text-align: center; }
         #profile-picture-input { display: none; }
-        #upload-status { font-size: 12px; margin-top: 8px; color: var(--accent-yellow); }
+        #upload-status { font-size: 12px; margin-top: 8px; color: var(--accent-yellow); min-height: 18px; }
         #password-change-form { border-top: 1px solid var(--border-color-dark); padding-top: 20px; margin-top: 20px; }
         body[data-theme="light"] #password-change-form { border-top-color: var(--border-color-light-strong); }
         
@@ -422,7 +422,11 @@
                 <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; margin-bottom: 5px; color: var(--text-secondary-dark);">Your Payment ID</p><div id="profile-payment-id"></div></div>
             </div>
             <div class="modal-body">
-                <div class="profile-upload-section"><input type="file" id="profile-picture-input" accept="image/*"><button type="button" class="btn-secondary" onclick="document.getElementById('profile-picture-input').click();">Change Picture</button><p id="upload-status"></p></div>
+                <div class="profile-upload-section">
+                    <input type="file" id="profile-picture-input" accept="image/*">
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('profile-picture-input').click();">Change Picture</button>
+                    <p id="upload-status"></p>
+                </div>
                 <form id="password-change-form">
                     <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div>
                     <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div>
@@ -443,10 +447,12 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, get, set, push, onValue, runTransaction, query, orderByChild, equalTo, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        const IMGBB_API_KEY = "65bbcf742486328061382f03949b47c6";
+        // Constants and Global Variables
         const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
         let auth, database;
+        let imageApiKey = null; // To cache the fetched ImgBB API key
 
+        // DOM Element References
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
         const logoutBtn = document.getElementById('logout-btn');
@@ -480,18 +486,21 @@
         const scanPayInitialActions = document.getElementById('scan-pay-initial-actions');
         const uploadQrBtn = document.getElementById('upload-qr-btn');
         const qrFileInput = document.getElementById('qr-file-input');
+        const profilePictureInput = document.getElementById('profile-picture-input');
 
+        // State Variables
         let currentUserData = null;
         let activeListeners = [];
         let claimsDataSnapshot = null;
         let cashbackDataSnapshot = null;
         let sentPaymentsDataSnapshot = null;
         let receivedPaymentsDataSnapshot = null;
-        let creditTransDataSnapshot = null; // NEW
+        let creditTransDataSnapshot = null;
         let activeFilter = 'all';
         let scanner = null;
         let tempActionData = {};
 
+        // --- CORE INITIALIZATION ---
         async function initializeFirebaseApp() {
             try {
                 const response = await fetch('/api/cashback-config');
@@ -500,6 +509,10 @@
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 database = getDatabase(app);
+                
+                // Fetch image API key on startup
+                await fetchImageApiKey(); 
+                
                 setupApplication();
             } catch (error) {
                 console.error("FATAL: Firebase initialization failed.", error);
@@ -507,6 +520,74 @@
             }
         }
 
+        // --- IMAGE UPLOAD SYSTEM (NEW) ---
+        async function fetchImageApiKey() {
+            if (imageApiKey) return imageApiKey; // Return cached key if available
+            try {
+                const response = await fetch('/api/image-config'); // Fetch from the new serverless function
+                if (!response.ok) throw new Error('Could not get image config from server.');
+                const config = await response.json();
+                if (!config.apiKey) throw new Error('API Key not found in server response.');
+                imageApiKey = config.apiKey;
+                return imageApiKey;
+            } catch (error) {
+                console.error("Failed to fetch image API key:", error);
+                showToast("Image upload service is unavailable.");
+                return null;
+            }
+        }
+
+        async function handleProfilePictureUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const uploadStatus = document.getElementById('upload-status');
+            uploadStatus.textContent = 'Uploading...';
+            uploadStatus.style.color = 'var(--accent-yellow)';
+            
+            const apiKey = await fetchImageApiKey();
+            if (!apiKey) {
+                uploadStatus.textContent = 'Upload failed. Configuration error.';
+                uploadStatus.style.color = 'var(--due-red)';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const imageUrl = result.data.url;
+                    const userRef = ref(database, 'users/' + auth.currentUser.uid);
+                    await update(userRef, { profilePictureUrl: imageUrl });
+                    
+                    document.getElementById('profile-display').src = imageUrl;
+                    document.getElementById('profile-modal-display').src = imageUrl;
+
+                    uploadStatus.textContent = 'Upload successful!';
+                    uploadStatus.style.color = 'var(--accent-green)';
+                    showToast('Profile picture updated!');
+                } else {
+                    throw new Error(result.error?.message || 'Unknown error from image host.');
+                }
+            } catch (error) {
+                console.error('Image upload failed:', error);
+                uploadStatus.textContent = `Upload failed: ${error.message}`;
+                uploadStatus.style.color = 'var(--due-red)';
+            } finally {
+                setTimeout(() => { uploadStatus.textContent = ''; }, 5000);
+                 profilePictureInput.value = ''; // Reset file input
+            }
+        }
+
+        // --- UTILITY FUNCTIONS ---
         function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
         function hideErrorMessage(element) { element.textContent = ''; element.style.display = 'none'; }
         function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId)?.classList.add('active'); }
@@ -539,6 +620,7 @@
             applyTheme(savedTheme);
         }
 
+        // --- AUTHENTICATION & DATA LISTENERS ---
         function setupAuthentication() {
             onAuthStateChanged(auth, user => {
                 if (user) {
@@ -598,7 +680,7 @@
 
             activeListeners.push(onValue(commonQuery('claim_requests'), s => { claimsDataSnapshot = s; renderAllViews(); }));
             activeListeners.push(onValue(commonQuery('cashback_requests'), s => { cashbackDataSnapshot = s; renderAllViews(); }));
-            activeListeners.push(onValue(commonQuery('credit_transactions'), s => { creditTransDataSnapshot = s; renderAllViews(); })); // NEW
+            activeListeners.push(onValue(commonQuery('credit_transactions'), s => { creditTransDataSnapshot = s; renderAllViews(); }));
             
             activeListeners.push(onValue(query(ref(database, 'payments'), orderByChild('senderId'), equalTo(user.uid)), s => { sentPaymentsDataSnapshot = s; renderAllViews(); }));
             activeListeners.push(onValue(query(ref(database, 'payments'), orderByChild('receiverId'), equalTo(user.uid)), s => { receivedPaymentsDataSnapshot = s; renderAllViews(); }));
@@ -619,6 +701,7 @@
             setTimeout(() => refreshBtn.classList.remove('refreshing'), 1000);
         }
 
+        // --- UI RENDERING ---
         function renderAllViews() {
             if (claimsDataSnapshot && cashbackDataSnapshot && sentPaymentsDataSnapshot && receivedPaymentsDataSnapshot && creditTransDataSnapshot) {
                 renderUnifiedHistory();
@@ -680,7 +763,7 @@
 
             let filteredHistory = combinedHistory.filter(item => {
                 if (activeFilter === 'all') return true;
-                if (activeFilter === 'payment') return item.type === 'payment' || item.type === 'received';
+                if (active-filter === 'payment') return item.type === 'payment' || item.type === 'received';
                 if (activeFilter === 'credit') return item.type === 'credit';
                 if (['cashback', 'claim', 'pending', 'approved'].includes(activeFilter)) {
                     if (item.type === activeFilter || item.status === activeFilter) return true;
@@ -723,6 +806,7 @@
             });
         }
 
+        // --- ACTION HANDLERS ---
         async function handleClaimRequest(e) {
             e.preventDefault();
             hideErrorMessage(claimErrorMsg);
@@ -919,36 +1003,7 @@
             } catch (error) { showErrorMessage(passwordChangeErrorMsg, "Purana password galat hai ya koi aur error aayi."); }
         }
 
-        // NEW: Scan from Gallery handler
-        uploadQrBtn.addEventListener('click', () => qrFileInput.click());
-        qrFileInput.addEventListener('change', e => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, img.width, img.height);
-                    const imageData = ctx.getImageData(0, 0, img.width, img.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
-                    if (code && code.data.startsWith('@')) {
-                        handleScannedCode(code.data);
-                    } else {
-                        scannerStatus.textContent = "No QR code found in image.";
-                        scannerStatus.style.color = 'var(--brand-red)';
-                    }
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-            qrFileInput.value = ''; // Reset for next selection
-        });
-
+        // --- EVENT BINDING & APP SETUP ---
         function setupApplication() {
             initTheme();
             setupAuthentication();
@@ -973,6 +1028,7 @@
             claimRequestForm.addEventListener('submit', handleClaimRequest);
             cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
             passwordChangeForm.addEventListener('submit', handlePasswordChange);
+            profilePictureInput.addEventListener('change', handleProfilePictureUpload); // NEW: Event listener for image upload
             
             modalConfirmBtn.addEventListener('click', handlePasswordConfirmation);
 
@@ -985,6 +1041,31 @@
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal(scanPayModal); startScanner(); });
             paySubmitBtn.addEventListener('click', handlePaymentRequest);
             rescanBtn.addEventListener('click', startScanner);
+            
+            // Scan from Gallery handler
+            uploadQrBtn.addEventListener('click', () => qrFileInput.click());
+            qrFileInput.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, img.width, img.height);
+                        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        if (code && code.data.startsWith('@')) handleScannedCode(code.data);
+                        else { scannerStatus.textContent = "No QR code found in image."; scannerStatus.style.color = 'var(--brand-red)'; }
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+                qrFileInput.value = '';
+            });
         }
 
         document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
