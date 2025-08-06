@@ -169,8 +169,9 @@
         .wallet-footer-item p { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.8); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .wallet-footer-item .amount { font-size: 16px; font-weight: 700; }
         .wallet-footer-item .amount.credit { font-size: 20px; font-weight: 800; color: #f1c40f; } /* Yellow */
-        .wallet-footer-item .amount.earning { color: #2ecc71; } /* Green */
-        .wallet-footer-item .amount.due { color: #e74c3c; } /* Red */
+        /* UPDATED COLORS */
+        .wallet-footer-item .amount.earning { color: var(--accent-blue); } /* Blue */
+        .wallet-footer-item .amount.due { color: var(--due-red); } /* Red */
 
         #wallet-share-btn { position: absolute; bottom: 20px; right: 20px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; }
         #wallet-share-btn:hover { opacity: 1; transform: scale(1.1); }
@@ -397,7 +398,8 @@
 
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card cashback"><div class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg></div><div class="card-text"><strong>Cashback Request</strong></div></div>
-                <div id="scan-and-pay-btn" class="action-card scan"><div class="icon"><img src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" alt="Scan & Pay"></div><p>Scan & Pay</p></div>
+                <!-- UPDATED: BOLD TEXT -->
+                <div id="scan-and-pay-btn" class="action-card scan"><div class="icon"><img src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" alt="Scan & Pay"></div><p><strong>Scan & Pay</strong></p></div>
                 <div id="open-coupons-modal" class="action-card coupons"><div class="icon">🎟️</div><p>My Coupons</p></div>
                 <a href="#" id="whatsapp-support-link" target="_blank" class="action-card whatsapp"><div class="icon">💬</div><p>WhatsApp Support</p></a>
                 <div id="open-profile-modal" class="action-card profile"><div class="icon">👤</div><p>My Profile</p></div>
@@ -750,7 +752,7 @@
             document.getElementById('credit-limit').textContent = `₹${creditLimit.toFixed(2)}`;
             document.getElementById('lifetime-earning').textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
             document.getElementById('due-amount').textContent = `- ₹${dueAmount.toFixed(2)}`;
-            document.querySelector('.wallet-footer-item .due').parentElement.style.display = dueAmount > 0 ? 'flex' : 'none';
+            document.querySelector('.wallet-footer-item .due').parentElement.style.display = dueAmount > 0 ? 'block' : 'none';
 
             const initial = authUser.displayName ? authUser.displayName.charAt(0).toUpperCase() : 'R';
             const placeholderUrl = `https://placehold.co/80x80/ffffff/2980b9?text=${initial}`;
@@ -946,6 +948,45 @@
             } else if (scanner) { requestAnimationFrame(tick); }
         }
 
+        // *** NEW FUNCTION: Handles QR code from file upload ***
+        function handleQrFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            DOMElements.scannerStatus.textContent = 'Processing uploaded image...';
+            DOMElements.scannerStatus.style.color = 'inherit';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const image = new Image();
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(image, 0, 0, image.width, image.height);
+                    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                    if (code && code.data.startsWith('@')) {
+                        // Stop video scanner if it's running
+                        if (scanner) {
+                            scanner.getTracks().forEach(track => track.stop());
+                            scanner = null;
+                        }
+                        document.getElementById('scanner-video').srcObject = null; // Clear video feed
+                        handleScannedCode(code.data);
+                    } else {
+                        DOMElements.scannerStatus.textContent = "No QR code found in image.";
+                        DOMElements.scannerStatus.style.color = 'var(--brand-red)';
+                    }
+                };
+                image.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = ''; // Reset file input
+        }
+
         async function handleScannedCode(paymentId) {
             if(scanner) scanner.getTracks().forEach(track => track.stop());
             scanner = null;
@@ -1104,6 +1145,12 @@
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal(DOMElements.scanPayModal); startScanner(); });
             DOMElements.paySubmitBtn.addEventListener('click', handlePaymentRequest);
             document.getElementById('rescan-btn').addEventListener('click', startScanner);
+            
+            // *** ADDED: Event listeners for QR file upload ***
+            const uploadQrBtn = document.getElementById('upload-qr-btn');
+            const qrFileInput = document.getElementById('qr-file-input');
+            uploadQrBtn.addEventListener('click', () => qrFileInput.click());
+            qrFileInput.addEventListener('change', handleQrFileUpload);
             
             DOMElements.filterBar.addEventListener('click', e => { const target = e.target.closest('.filter-btn'); if (!target) return; DOMElements.filterBar.querySelector('.active').classList.remove('active'); target.classList.add('active'); activeFilter = target.dataset.filter; renderUnifiedHistory(); });
         }
