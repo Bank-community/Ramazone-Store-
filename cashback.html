@@ -585,17 +585,16 @@
         let tempActionData = {};
         let pendingCashbackClaim = null;
 
-        // --- CORE INITIALIZATION (FIXED) ---
+        // --- CORE INITIALIZATION (FINAL FIX) ---
         async function initializeFirebaseApp() {
             try {
-                // This now correctly points to your Vercel serverless function
-                const response = await fetch('/api/cashback-config'); 
+                // Using the full, absolute URL to prevent path issues.
+                const response = await fetch('https://ramazone.in/api/cashback-config'); 
                 if (!response.ok) {
                     throw new Error(`Configuration Error: ${response.statusText}`);
                 }
                 const firebaseConfig = await response.json();
                 
-                // Check if the config keys are present
                 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
                     throw new Error('Firebase configuration is incomplete. Check Vercel environment variables.');
                 }
@@ -611,12 +610,12 @@
             }
         }
 
-        // --- IMAGE UPLOAD & VIEW SYSTEM (FIXED) ---
+        // --- IMAGE UPLOAD & VIEW SYSTEM (FINAL FIX) ---
         async function fetchImageApiKey() {
             if (imageApiKey) return imageApiKey;
             try {
-                // This now correctly points to your Vercel serverless function
-                const response = await fetch('/api/image-config');
+                // Using the full, absolute URL to prevent path issues.
+                const response = await fetch('https://ramazone.in/api/image-config');
                 if (!response.ok) throw new Error('Could not get image config.');
                 const config = await response.json();
                 imageApiKey = config.apiKey;
