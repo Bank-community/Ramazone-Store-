@@ -363,7 +363,6 @@
                 <div class="header-actions-bar">
                     <div id="notification-btn" class="header-icon" title="Notifications"><img src="https://www.svgrepo.com/show/269007/notification-bell.svg" alt="Notifications"><span id="notification-dot" class="notification-dot"></span></div>
                     <div id="theme-switcher" class="header-icon" title="Toggle Theme"><img src="https://www.svgrepo.com/show/527253/moon.svg" alt="Theme"></div>
-                    <!-- UPDATED: Link to history.html with a more descriptive title -->
                     <a href="history.html" id="history-btn" class="header-icon" title="Transaction History"><img src="https://www.svgrepo.com/show/293548/transaction-money.svg" alt="History"></a>
                     <div id="refresh-btn" class="header-icon" title="Refresh Data"><img src="https://www.svgrepo.com/show/533700/refresh-cw-alt-1.svg" alt="Refresh"></div>
                     <div id="logout-btn"><img src="https://www.svgrepo.com/show/500927/logout.svg" alt="Logout"><span>Logout</span></div>
@@ -586,13 +585,21 @@
         let tempActionData = {};
         let pendingCashbackClaim = null;
 
-        // --- CORE INITIALIZATION ---
+        // --- CORE INITIALIZATION (FIXED) ---
         async function initializeFirebaseApp() {
             try {
-                // IMPORTANT: Replace with your actual backend endpoint to fetch Firebase config
+                // This now correctly points to your Vercel serverless function
                 const response = await fetch('/api/cashback-config'); 
-                if (!response.ok) throw new Error('Could not fetch Firebase config!');
+                if (!response.ok) {
+                    throw new Error(`Configuration Error: ${response.statusText}`);
+                }
                 const firebaseConfig = await response.json();
+                
+                // Check if the config keys are present
+                if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+                    throw new Error('Firebase configuration is incomplete. Check Vercel environment variables.');
+                }
+
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 database = getDatabase(app);
@@ -604,11 +611,11 @@
             }
         }
 
-        // --- IMAGE UPLOAD & VIEW SYSTEM ---
+        // --- IMAGE UPLOAD & VIEW SYSTEM (FIXED) ---
         async function fetchImageApiKey() {
             if (imageApiKey) return imageApiKey;
             try {
-                 // IMPORTANT: Replace with your actual backend endpoint to fetch ImageBB API key
+                // This now correctly points to your Vercel serverless function
                 const response = await fetch('/api/image-config');
                 if (!response.ok) throw new Error('Could not get image config.');
                 const config = await response.json();
@@ -786,7 +793,6 @@
 
             let filteredHistory = combinedHistory.filter(item => activeFilter === 'all' || item.type === activeFilter);
             
-            // Show only top 5 recent transactions on dashboard
             filteredHistory.sort((a, b) => b.date - a.date).slice(0, 5).forEach(item => {
                 const itemDiv = document.createElement('div');
                 const typeClass = item.sign === '+' ? 'credit' : 'debit';
@@ -822,7 +828,6 @@
             return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history is empty for this filter.</p></div>`;
         }
 
-        // --- NOTIFICATION & CASHBACK CLAIM LOGIC (UPDATED) ---
         function checkForApprovedCashback() {
             const notifDot = DOMElements.notificationDot;
             if (!allTransactionsSnapshot.cashback?.exists()) {
@@ -836,14 +841,14 @@
                 if (c.status === 'approved' && !c.claimed) {
                     pendingCashbackClaim = { id: snap.key, ...c };
                     document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(c.cashbackAmount).toFixed(2)}`;
-                    notifDot.classList.add('active'); // Activate notification dot
+                    notifDot.classList.add('active');
                     claimFound = true;
                     return; 
                 }
             });
             DOMElements.openCashbackModalBtn.classList.toggle('has-claim', claimFound);
             if (!claimFound) {
-                notifDot.classList.remove('active'); // Deactivate if no claims are pending
+                notifDot.classList.remove('active');
                 pendingCashbackClaim = null;
             }
         }
@@ -1123,7 +1128,6 @@
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             
-            // UPDATED: Notification button logic
             DOMElements.notificationBtn.addEventListener('click', () => {
                 DOMElements.notificationDot.classList.remove('active');
                 if (pendingCashbackClaim) {
