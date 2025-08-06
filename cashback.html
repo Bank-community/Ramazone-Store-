@@ -330,10 +330,11 @@
             padding: 15px;
             z-index: 1001;
             box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-            transition: bottom 0.5s ease-in-out;
+            transition: bottom 0.5s ease-in-out, opacity 0.5s ease-in-out;
             display: flex; /* Changed to flex */
             gap: 15px;
             align-items: center;
+            opacity: 0;
         }
         body[data-theme="light"] #notification-popup-modal {
              background-color: var(--bg-light-theme-card);
@@ -341,6 +342,7 @@
         }
         #notification-popup-modal.show {
             bottom: 20px;
+            opacity: 1;
         }
         #notification-popup-image {
             width: 60px;
@@ -361,6 +363,10 @@
             margin: 0 0 12px 0;
             font-size: 14px;
             color: var(--text-secondary-dark);
+            -webkit-line-clamp: 2;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         body[data-theme="light"] #notification-popup-content p {
             color: var(--text-secondary-light);
@@ -822,26 +828,15 @@
         let pendingCashbackClaim = null;
         let currentPopupNotification = null;
 
-        // --- CORE INITIALIZATION (CORRECTED) ---
+        // --- CORE INITIALIZATION (FIXED) ---
         async function initializeFirebaseApp() {
             try {
-                // This is a placeholder. In a real environment, this fetch would be to a secure endpoint.
-                // For this example, we will hardcode the config.
-                const firebaseConfig = {
-                    apiKey: "YOUR_API_KEY",
-                    authDomain: "YOUR_AUTH_DOMAIN",
-                    databaseURL: "YOUR_DATABASE_URL",
-                    projectId: "YOUR_PROJECT_ID",
-                    storageBucket: "YOUR_STORAGE_BUCKET",
-                    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-                    appId: "YOUR_APP_ID"
-                };
+                // This is the CORRECT way for a Vercel deployment.
+                // It fetches the configuration from a secure serverless function.
+                const response = await fetch('/api/cashback-config');
+                if (!response.ok) throw new Error('Could not fetch Firebase config!');
+                const firebaseConfig = await response.json();
                 
-                // In a real vercel environment, you would fetch this from a serverless function
-                // const response = await fetch('/api/cashback-config');
-                // if (!response.ok) throw new Error('Could not fetch Firebase config!');
-                // const firebaseConfig = await response.json();
-
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 database = getDatabase(app);
@@ -853,11 +848,21 @@
             }
         }
 
-        // --- IMAGE UPLOAD & VIEW SYSTEM (CORRECTED) ---
+        // --- IMAGE UPLOAD & VIEW SYSTEM (FIXED) ---
         async function fetchImageApiKey() {
-            // This is a placeholder.
-            imageApiKey = "YOUR_IMGBB_API_KEY";
-            return imageApiKey;
+            if (imageApiKey) return imageApiKey;
+            try {
+                // This is the CORRECT way for a Vercel deployment.
+                const response = await fetch('/api/image-config');
+                if (!response.ok) throw new Error('Could not get image config.');
+                const config = await response.json();
+                imageApiKey = config.apiKey;
+                return imageApiKey;
+            } catch (error) {
+                console.error("Failed to fetch image API key:", error);
+                showToast("Image upload service is unavailable.");
+                return null;
+            }
         }
 
         async function handleProfilePictureUpload(event) {
@@ -866,10 +871,7 @@
             const uploadStatus = document.getElementById('upload-status');
             uploadStatus.textContent = 'Uploading...';
             const apiKey = await fetchImageApiKey();
-            if (!apiKey || apiKey === "YOUR_IMGBB_API_KEY") { 
-                uploadStatus.textContent = 'Image service not configured.'; 
-                return; 
-            }
+            if (!apiKey) { uploadStatus.textContent = 'Upload failed: Key not available.'; return; }
             const formData = new FormData();
             formData.append('image', file);
             try {
@@ -1217,13 +1219,13 @@
                 const isUnread = !seenIds.includes(n.id);
                 const itemDiv = document.createElement('div');
                 itemDiv.className = `notification-item ${isUnread ? 'unread' : ''}`;
-                const icon = n.imageUrl ? `<img src="${n.imageUrl}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">` : `<div class="history-icon credit">📢</div>`;
+                const icon = n.imageUrl ? `<img src="${n.imageUrl}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">` : `<div class="history-icon credit" style="flex-shrink: 0;">📢</div>`;
                 
                 itemDiv.innerHTML = `
                     ${icon}
-                    <div class="content">
+                    <div class="content" style="overflow: hidden;">
                         <div class="title">${n.title}</div>
-                        <p>${n.message.substring(0, 50)}...</p>
+                        <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${n.message}</p>
                         <div class="date">${new Date(n.timestamp).toLocaleString()}</div>
                     </div>`;
                 itemDiv.addEventListener('click', () => {
@@ -1578,12 +1580,7 @@
         }
 
         // Initialize the app after the DOM is fully loaded.
-        // NOTE: In a real app, replace placeholder configs before deployment.
-        document.addEventListener('DOMContentLoaded', () => {
-            if (firebase.apps.length === 0) {
-                 initializeFirebaseApp();
-            }
-        });
+        document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
     </script>
 </body>
 </html>
