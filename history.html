@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My History - Ramazone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #121828;
+            --bg-light: #1B2133;
+            --text-primary-dark: #ffffff;
+            --text-secondary-dark: #a9b1c8;
+            --border-color-dark: #2c344a;
+            --brand-red: #e50914;
+            --accent-green: #2ecc71;
+            --accent-blue: #3498db;
+            --accent-purple: #9b59b6;
+            --accent-yellow: #f1c40f;
+            --due-red: #ff6b6b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary-dark);
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .back-btn {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color-dark);
+            color: var(--text-primary-dark);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: var(--border-color-dark);
+            transform: scale(1.1);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+        
+        #loader {
+            text-align: center;
+            padding: 50px;
+        }
+        .spinner {
+            border: 4px solid var(--border-color-dark);
+            border-top: 4px solid var(--brand-red);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .filter-bar::-webkit-scrollbar { display: none; }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color-dark);
+            background-color: transparent;
+            color: var(--text-secondary-dark);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+            background-color: var(--border-color-dark);
+            color: var(--text-primary-dark);
+        }
+
+        .filter-btn.active {
+            background-color: var(--brand-red);
+            color: white;
+            border-color: var(--brand-red);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background-color: var(--bg-light);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 5px solid var(--accent-blue);
+            transition: transform 0.2s;
+        }
+        .history-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .history-item.type-cashback { border-left-color: var(--accent-blue); }
+        .history-item.type-claim { border-left-color: var(--accent-purple); }
+        .history-item.type-payment-sent { border-left-color: var(--due-red); }
+        .history-item.type-payment-received { border-left-color: var(--accent-green); }
+        .history-item.type-credit-add { border-left-color: var(--accent-yellow); }
+        .history-item.type-credit-settled { border-left-color: var(--accent-green); }
+        
+        .history-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .history-icon.type-cashback { background-color: rgba(52, 152, 219, 0.1); color: var(--accent-blue); }
+        .history-icon.type-claim { background-color: rgba(155, 89, 182, 0.1); color: var(--accent-purple); }
+        .history-icon.type-payment-sent { background-color: rgba(255, 107, 107, 0.1); color: var(--due-red); }
+        .history-icon.type-payment-received { background-color: rgba(46, 204, 113, 0.1); color: var(--accent-green); }
+        .history-icon.type-credit-add { background-color: rgba(241, 196, 15, 0.1); color: var(--accent-yellow); }
+        .history-icon.type-credit-settled { background-color: rgba(46, 204, 113, 0.1); color: var(--accent-green); }
+
+        .history-details { flex-grow: 1; }
+        .history-details .title { font-weight: 600; font-size: 16px; margin-bottom: 2px; }
+        .history-details .date { font-size: 13px; color: var(--text-secondary-dark); }
+        .history-details .description { font-size: 14px; color: var(--text-secondary-dark); margin-top: 5px; }
+
+        .history-amount { text-align: right; }
+        .history-amount .amount { font-weight: 700; font-size: 18px; }
+        .history-amount .amount.credit { color: var(--accent-green); }
+        .history-amount .amount.debit { color: var(--due-red); }
+        .history-amount .status {
+            font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 12px;
+            text-transform: capitalize; display: inline-block; margin-top: 4px;
+        }
+        .status-pending { background-color: rgba(241, 196, 15, 0.2); color: var(--accent-yellow); }
+        .status-approved, .status-completed, .status-settled { background-color: rgba(46, 204, 113, 0.2); color: var(--accent-green); }
+        .status-rejected { background-color: rgba(229, 9, 20, 0.2); color: var(--brand-red); }
+        .coupon-code { font-family: 'Courier New', Courier, monospace; font-weight: bold; background-color: #333; padding: 2px 5px; border-radius: 4px; color: #eee; font-size: 12px; display: inline-block; margin-top: 4px; }
+
+        .empty-state {
+            text-align: center; padding: 50px 20px; background-color: var(--bg-light);
+            border-radius: 12px; color: var(--text-secondary-dark);
+            border: 2px dashed var(--border-color-dark);
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; opacity: 0.7; }
+        .empty-state h4 { font-size: 18px; font-weight: 600; color: var(--text-primary-dark); margin-bottom: 8px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <a href="cashback.html" class="back-btn" title="Back to Dashboard">←</a>
+            <h1>My Transaction History</h1>
+        </div>
+
+        <div id="loader">
+            <div class="spinner"></div>
+            <p>Loading your history...</p>
+        </div>
+
+        <div id="history-container" style="display: none;">
+            <div class="filter-bar" id="filter-bar">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="payments">Payments</button>
+                <button class="filter-btn" data-filter="cashback">Cashback</button>
+                <button class="filter-btn" data-filter="claims">Claims</button>
+                <button class="filter-btn" data-filter="credit">Credit</button>
+            </div>
+            <div id="history-list" class="history-list">
+                <!-- History items will be injected here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // DOM Elements
+        const loader = document.getElementById('loader');
+        const historyContainer = document.getElementById('history-container');
+        const historyList = document.getElementById('history-list');
+        const filterBar = document.getElementById('filter-bar');
+
+        // Global State
+        let auth, database;
+        let combinedHistory = [];
+        let activeFilter = 'all';
+
+        // --- Main Initialization Function ---
+        async function initializeAppWithRemoteConfig() {
+            try {
+                // Fetch config from Vercel serverless function
+                const response = await fetch('/api/cashback-config');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const firebaseConfig = await response.json();
+                
+                // Initialize Firebase with the fetched config
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                database = getDatabase(app);
+
+                // Setup authentication listener
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        loadAllHistory(user.uid);
+                    } else {
+                        loader.innerHTML = '<h4>Please login to view your history.</h4>';
+                    }
+                });
+
+            } catch (error) {
+                console.error("FATAL: Could not initialize Firebase.", error);
+                loader.innerHTML = '<h4>Could not connect to the service. Please try again later.</h4>';
+            }
+        }
+
+        async function loadAllHistory(userId) {
+            try {
+                // 1. Fetch Cashback Requests
+                const cashbackQuery = query(ref(database, 'cashback_requests'), orderByChild('userId'), equalTo(userId));
+                const cashbackSnapshot = await get(cashbackQuery);
+                if (cashbackSnapshot.exists()) {
+                    cashbackSnapshot.forEach(snap => {
+                        const c = snap.val();
+                        combinedHistory.push({
+                            type: 'cashback',
+                            date: new Date(c.requestDate),
+                            title: `Cashback: ${c.productName}`,
+                            amount: c.cashbackAmount,
+                            status: c.status,
+                            sign: '+'
+                        });
+                    });
+                }
+
+                // 2. Fetch Claim Requests
+                const claimsQuery = query(ref(database, 'claim_requests'), orderByChild('userId'), equalTo(userId));
+                const claimsSnapshot = await get(claimsQuery);
+                if (claimsSnapshot.exists()) {
+                    claimsSnapshot.forEach(snap => {
+                        const c = snap.val();
+                        combinedHistory.push({
+                            type: 'claims',
+                            date: new Date(c.requestDate),
+                            title: 'Wallet Claim',
+                            amount: c.claimAmount,
+                            status: c.status,
+                            sign: '-',
+                            coupon: c.couponCode
+                        });
+                    });
+                }
+
+                // 3. Fetch Sent Payments
+                const sentQuery = query(ref(database, 'payments'), orderByChild('senderId'), equalTo(userId));
+                const sentSnapshot = await get(sentQuery);
+                if (sentSnapshot.exists()) {
+                    sentSnapshot.forEach(snap => {
+                        const p = snap.val();
+                        combinedHistory.push({
+                            type: 'payments',
+                            subType: 'sent',
+                            date: new Date(p.timestamp),
+                            title: `Paid to ${p.receiverName}`,
+                            amount: p.amount,
+                            status: 'completed',
+                            sign: '-'
+                        });
+                    });
+                }
+
+                // 4. Fetch Received Payments
+                const receivedQuery = query(ref(database, 'payments'), orderByChild('receiverId'), equalTo(userId));
+                const receivedSnapshot = await get(receivedQuery);
+                if (receivedSnapshot.exists()) {
+                    receivedSnapshot.forEach(snap => {
+                        const p = snap.val();
+                        combinedHistory.push({
+                            type: 'payments',
+                            subType: 'received',
+                            date: new Date(p.timestamp),
+                            title: `Received from ${p.senderName}`,
+                            amount: p.amount,
+                            status: 'completed',
+                            sign: '+'
+                        });
+                    });
+                }
+
+                // 5. Fetch Credit Transactions
+                const creditQuery = query(ref(database, 'credit_transactions'), orderByChild('userId'), equalTo(userId));
+                const creditSnapshot = await get(creditQuery);
+                if (creditSnapshot.exists()) {
+                    creditSnapshot.forEach(snap => {
+                        const t = snap.val();
+                        combinedHistory.push({
+                            type: 'credit',
+                            subType: t.type, // 'credit' or 'settled'
+                            date: new Date(t.timestamp),
+                            title: t.type === 'credit' ? 'Credit Received from Admin' : 'Dues Settled',
+                            amount: t.amount,
+                            status: t.type === 'credit' ? 'approved' : 'settled',
+                            sign: t.type === 'credit' ? '+' : '-'
+                        });
+                    });
+                }
+
+                // Sort all history by date
+                combinedHistory.sort((a, b) => b.date - a.date);
+                
+                loader.style.display = 'none';
+                historyContainer.style.display = 'block';
+                renderHistory();
+
+            } catch (error) {
+                console.error("Error loading history:", error);
+                loader.innerHTML = '<h4>Could not load history. Please try again later.</h4>';
+            }
+        }
+
+        function renderHistory() {
+            historyList.innerHTML = '';
+
+            const filtered = combinedHistory.filter(item => {
+                if (activeFilter === 'all') return true;
+                return item.type === activeFilter;
+            });
+
+            if (filtered.length === 0) {
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <h4>No Transactions Found</h4>
+                        <p>It looks like you don't have any transactions in this category yet.</p>
+                    </div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'history-item';
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'history-icon';
+                
+                let icon = '📜';
+                let typeClass = 'type-default';
+                let amountClass = item.sign === '+' ? 'credit' : 'debit';
+                
+                switch (item.type) {
+                    case 'cashback':
+                        icon = '🎁';
+                        typeClass = 'type-cashback';
+                        break;
+                    case 'claims':
+                        icon = '💸';
+                        typeClass = 'type-claim';
+                        break;
+                    case 'payments':
+                        if (item.subType === 'sent') {
+                            icon = '🔼';
+                            typeClass = 'type-payment-sent';
+                        } else {
+                            icon = '🔽';
+                            typeClass = 'type-payment-received';
+                        }
+                        break;
+                    case 'credit':
+                         if (item.subType === 'credit') {
+                            icon = '✨';
+                            typeClass = 'type-credit-add';
+                        } else {
+                            icon = '✅';
+                            typeClass = 'type-credit-settled';
+                        }
+                        break;
+                }
+                
+                itemDiv.classList.add(typeClass);
+                iconDiv.classList.add(typeClass);
+                iconDiv.innerHTML = icon;
+
+                let descriptionHTML = '';
+                if(item.type === 'claims' && item.coupon) {
+                    descriptionHTML = `<div class="coupon-code">Coupon: ${item.coupon}</div>`;
+                } else if (item.type === 'cashback') {
+                     descriptionHTML = `<div class="status status-${item.status}">${item.status}</div>`;
+                }
+
+
+                itemDiv.innerHTML = `
+                    ${iconDiv.outerHTML}
+                    <div class="history-details">
+                        <div class="title">${item.title}</div>
+                        <div class="date">${item.date.toLocaleString()}</div>
+                    </div>
+                    <div class="history-amount">
+                        <div class="amount ${amountClass}">${item.sign} ₹${parseFloat(item.amount).toFixed(2)}</div>
+                        ${descriptionHTML}
+                    </div>
+                `;
+                historyList.appendChild(itemDiv);
+            });
+        }
+
+        filterBar.addEventListener('click', e => {
+            const target = e.target.closest('.filter-btn');
+            if (!target) return;
+            
+            filterBar.querySelector('.active').classList.remove('active');
+            target.classList.add('active');
+            activeFilter = target.dataset.filter;
+            renderHistory();
+        });
+        
+        // Start the application
+        document.addEventListener('DOMContentLoaded', initializeAppWithRemoteConfig);
+
+    </script>
+</body>
+</html>
+
