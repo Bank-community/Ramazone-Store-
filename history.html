@@ -160,7 +160,7 @@
         </div>
 
         <div id="unified-history-list" class="history-list">
-            <!-- Transactions will be loaded here -->
+             <div class="empty-state"><h4>Loading History...</h4></div>
         </div>
     </div>
 
@@ -189,13 +189,21 @@
         let activeFilter = 'all';
         let dateFilters = { start: null, end: null };
 
-        // --- CORE INITIALIZATION ---
+        // --- CORE INITIALIZATION (FIXED) ---
         async function initializeFirebaseApp() {
             try {
-                // IMPORTANT: Replace with your actual backend endpoint to fetch Firebase config
+                // This now correctly points to your Vercel serverless function
                 const response = await fetch('/api/cashback-config'); 
-                if (!response.ok) throw new Error('Could not fetch Firebase config!');
+                if (!response.ok) {
+                    throw new Error(`Configuration Error: ${response.statusText}`);
+                }
                 const firebaseConfig = await response.json();
+
+                // Check if the config keys are present
+                if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+                    throw new Error('Firebase configuration is incomplete. Check Vercel environment variables.');
+                }
+
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 database = getDatabase(app);
@@ -219,13 +227,11 @@
                 if (user) {
                     attachRealtimeListeners(user);
                 } else {
-                    // If no user, redirect to login page after a short delay
                     document.body.innerHTML = `<div style="text-align: center; padding: 50px;">Please log in to view your history. Redirecting...</div>`;
                     setTimeout(() => { window.location.href = 'index.html'; }, 2000);
                 }
             });
             
-            // Setup filter event listeners
             document.getElementById('filter-bar').addEventListener('click', e => {
                 const target = e.target.closest('.filter-btn');
                 if (!target) return;
@@ -244,7 +250,6 @@
                 renderUnifiedHistory();
             });
 
-            // QR Modal listeners
             document.getElementById('pay-due-btn').addEventListener('click', generateAndShowQR);
             document.getElementById('qr-modal-close').addEventListener('click', () => document.getElementById('qr-modal').classList.remove('active'));
         }
@@ -298,25 +303,21 @@
             historyList.innerHTML = '';
             let combinedHistory = [];
 
-            // Combine all transaction types into one array
             if (allTransactionsSnapshot.cashback?.exists()) allTransactionsSnapshot.cashback.forEach(snap => { const c = snap.val(); combinedHistory.push({ key: snap.key, type: 'cashback', date: new Date(c.requestDate), title: `Cashback: ${c.productName}`, amount: c.cashbackAmount, status: c.status, sign: '+' }); });
             if (allTransactionsSnapshot.claims?.exists()) allTransactionsSnapshot.claims.forEach(snap => { const c = snap.val(); combinedHistory.push({ key: snap.key, type: 'claim', date: new Date(c.requestDate), title: 'Wallet Claim', amount: c.claimAmount, status: c.status, sign: '-', coupon: c.couponCode }); });
             if (allTransactionsSnapshot.sent?.exists()) allTransactionsSnapshot.sent.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key, type: 'payment', date: new Date(p.timestamp), title: `Paid to ${p.receiverName}`, amount: p.amount, status: 'completed', sign: '-' }); });
             if (allTransactionsSnapshot.received?.exists()) allTransactionsSnapshot.received.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key+'_rec', type: 'payment', date: new Date(p.timestamp), title: `Received from ${p.senderName}`, amount: p.amount, status: 'completed', sign: '+' }); });
             if (allTransactionsSnapshot.credit?.exists()) allTransactionsSnapshot.credit.forEach(snap => { const c = snap.val(); if (c.type === 'credit') combinedHistory.push({ key: snap.key, type: 'credit', date: new Date(c.timestamp), title: `Credit from Admin`, amount: c.amount, status: 'completed', sign: '+' }); });
 
-            // Apply filters
             let filteredHistory = combinedHistory
                 .filter(item => {
-                    // Type filter
                     if (activeFilter !== 'all' && item.type !== activeFilter) return false;
-                    // Date filter
                     const itemDate = new Date(item.date);
-                    itemDate.setHours(0, 0, 0, 0); // Normalize to start of day
+                    itemDate.setHours(0, 0, 0, 0);
                     if (dateFilters.start && itemDate < dateFilters.start) return false;
                     if (dateFilters.end) {
                         const endDate = new Date(dateFilters.end);
-                        endDate.setHours(23, 59, 59, 999); // Normalize to end of day
+                        endDate.setHours(23, 59, 59, 999);
                         if(itemDate > endDate) return false;
                     }
                     return true;
@@ -327,7 +328,6 @@
                 return;
             }
 
-            // Sort and render
             filteredHistory.sort((a, b) => b.date - a.date).forEach(item => {
                 const itemDiv = document.createElement('div');
                 const typeClass = item.sign === '+' ? 'credit' : 'debit';
@@ -360,7 +360,6 @@
             const upiId = 'princekumar954684-1@okicici';
             const receiverName = 'Ramazone Store';
             
-            // UPI QR Code String format
             const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(receiverName)}&am=${dueAmount}&cu=INR`;
 
             const qr = new QRious({
@@ -368,12 +367,11 @@
                 value: upiString,
                 size: 256,
                 padding: 15,
-                foreground: '#1c2028',
-                background: '#ffffff',
+                foreground: document.body.dataset.theme === 'light' ? '#1c2028' : '#ffffff',
+                background: document.body.dataset.theme === 'light' ? '#ffffff' : '#1B2133',
                 level: 'H'
             });
 
-            // Set download link
             const downloadLink = document.getElementById('download-qr-btn');
             downloadLink.href = qr.toDataURL('image/png');
 
