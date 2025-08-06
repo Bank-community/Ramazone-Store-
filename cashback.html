@@ -58,7 +58,7 @@
             background-color: var(--bg-light-theme);
             color: var(--text-primary-light);
         }
-        body[data-theme="light"] .view, body[data-theme="light"] .action-card, body[data-theme="light"] .modal-content, body[data-theme="light"] .history-item {
+        body[data-theme="light"] .view, body[data-theme="light"] .action-card, body[data-theme="light"] .modal-content, body[data-theme="light"] .history-item, body[data-theme="light"] .notification-item {
             background-color: var(--bg-light-theme-card);
             border-color: var(--border-color-light);
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -71,7 +71,7 @@
             border-color: var(--border-color-light-strong);
             color: var(--text-primary-light);
         }
-        body[data-theme="light"] label, body[data-theme="light"] .form-link, body[data-theme="light"] .section-title, body[data-theme="light"] .modal-description, body[data-theme="light"] .history-info .date, body[data-theme="light"] #profile-payment-id {
+        body[data-theme="light"] label, body[data-theme="light"] .form-link, body[data-theme="light"] .section-title, body[data-theme="light"] .modal-description, body[data-theme="light"] .history-info .date, body[data-theme="light"] #profile-payment-id, body[data-theme="light"] .notification-item .date {
             color: var(--text-secondary-light);
         }
         body[data-theme="light"] .btn-secondary {
@@ -168,9 +168,11 @@
         .wallet-footer-item { text-align: center; }
         .wallet-footer-item p { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.8); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .wallet-footer-item .amount { font-size: 16px; font-weight: 700; }
-        .wallet-footer-item .amount.credit { font-size: 20px; font-weight: 800; color: #f1c40f; } /* Yellow */
-        .wallet-footer-item .amount.earning { color: var(--accent-blue); } /* Blue */
-        .wallet-footer-item .amount.due { color: var(--due-red); } /* Red */
+        
+        /* UPDATED: Color fixes for light/dark mode */
+        .wallet-footer-item .amount.credit { font-size: 20px; font-weight: 800; color: var(--accent-yellow) !important; }
+        .wallet-footer-item .amount.earning { color: var(--accent-blue); } 
+        .wallet-footer-item .amount.due { color: var(--due-red) !important; }
 
         #wallet-share-btn { 
             position: absolute; 
@@ -180,6 +182,7 @@
             opacity: 0.7; 
             transition: opacity 0.2s, transform 0.2s; 
         }
+
         #wallet-share-btn:hover { opacity: 1; transform: scale(1.1); }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
 
@@ -202,13 +205,15 @@
 
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: var(--text-secondary-dark); }
         
-        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 16px; border: 1px solid var(--border-color-dark); background-color: transparent; color: var(--text-secondary-dark); border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; white-space: nowrap; }
         .filter-btn:hover { background-color: var(--border-color-dark); color: var(--text-primary-dark); }
         .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         body[data-theme="light"] .filter-btn { border-color: var(--border-color-light-strong); }
         body[data-theme="light"] .filter-btn:hover { background-color: #e8eef3; color: var(--text-primary-light); }
         body[data-theme="light"] .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
+        /* NEW: Date filter style */
+        #date-filter { padding: 6px 16px; }
 
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item { display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-light); padding: 15px; border-radius: 10px; border-left: 4px solid var(--accent-blue); }
@@ -310,6 +315,75 @@
             object-fit: contain;
         }
 
+        /* --- NEW NOTIFICATION POPUP --- */
+        #notification-popup-modal {
+            position: fixed;
+            bottom: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 450px;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color-dark);
+            border-radius: 12px;
+            padding: 20px;
+            z-index: 1001;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            transition: bottom 0.5s ease-in-out;
+            display: block; /* Keep it block but position it off-screen */
+        }
+        body[data-theme="light"] #notification-popup-modal {
+             background-color: var(--bg-light-theme-card);
+             border-color: var(--border-color-light-strong);
+        }
+        #notification-popup-modal.show {
+            bottom: 20px;
+        }
+        #notification-popup-modal h4 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        #notification-popup-modal p {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: var(--text-secondary-dark);
+        }
+        body[data-theme="light"] #notification-popup-modal p {
+            color: var(--text-secondary-light);
+        }
+        #notification-popup-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        #notification-popup-actions button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        /* --- NEW NOTIFICATION LIST MODAL --- */
+        .notification-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-blue);
+            margin-bottom: 10px;
+        }
+        .notification-item.unread {
+            background-color: var(--border-color-dark);
+            border-left-color: var(--brand-red);
+        }
+        body[data-theme="light"] .notification-item.unread {
+            background-color: #fff3f4;
+        }
+        .notification-item .icon { font-size: 20px; }
+        .notification-item .content .title { font-weight: 600; }
+        .notification-item .content .date { font-size: 12px; color: var(--text-secondary-dark); }
+
+
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--accent-green); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; font-weight: 500; z-index: 2000; transition: bottom 0.5s ease-in-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .toast-notification.show { bottom: 30px; }
 
@@ -363,7 +437,7 @@
                 <div class="header-actions-bar">
                     <div id="notification-btn" class="header-icon" title="Notifications"><img src="https://www.svgrepo.com/show/269007/notification-bell.svg" alt="Notifications"><span id="notification-dot" class="notification-dot"></span></div>
                     <div id="theme-switcher" class="header-icon" title="Toggle Theme"><img src="https://www.svgrepo.com/show/527253/moon.svg" alt="Theme"></div>
-                    <a href="history.html" id="history-btn" class="header-icon" title="Transaction History"><img src="https://www.svgrepo.com/show/293548/transaction-money.svg" alt="History"></a>
+                    <a href="history.html" target="_blank" rel="noopener noreferrer" id="store-btn" class="header-icon" title="Online Store"><img src="https://www.svgrepo.com/show/293548/transaction-money.svg" alt="Store"></a>
                     <div id="refresh-btn" class="header-icon" title="Refresh Data"><img src="https://www.svgrepo.com/show/533700/refresh-cw-alt-1.svg" alt="Refresh"></div>
                     <div id="logout-btn"><img src="https://www.svgrepo.com/show/500927/logout.svg" alt="Logout"><span>Logout</span></div>
                 </div>
@@ -409,12 +483,13 @@
             </div>
 
             <div class="section">
-                <div style="display: flex; justify-content: space-between; align-items: center;"><h2 class="section-title">Recent Transactions</h2></div>
+                <div style="display: flex; justify-content: space-between; align-items: center;"><h2 class="section-title">All Transactions</h2></div>
                 <div class="filter-bar" id="filter-bar">
                     <button class="filter-btn active" data-filter="all">All</button>
                     <button class="filter-btn" data-filter="payment">Payments</button>
                     <button class="filter-btn" data-filter="cashback">Cashback</button>
                     <button class="filter-btn" data-filter="claim">Claims</button>
+                    <input type="date" id="date-filter" class="filter-btn">
                 </div>
                 <div id="unified-history-list" class="history-list"></div>
             </div>
@@ -490,7 +565,7 @@
             <p id="scanner-status" class="mt-4">Scanning for QR code...</p>
             <div id="payment-form" style="display: none;">
                 <div class="scanned-info"><p>Paying to: <span id="receiver-name-display"></span></p><p>ID: <span id="receiver-id-display"></span></p></div>
-                <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="1" step="0.01" required></div>
+                <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" step="0.01" required></div>
                 <p id="payment-error-msg" class="error-message"></p>
                 <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn">Pay Now</button></div>
             </div>
@@ -522,6 +597,29 @@
         </div>
     </div>
 
+    <!-- NEW: Notification List Modal -->
+    <div id="notifications-list-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Notifications</h3>
+            <div class="modal-body" id="notifications-list-container">
+                <!-- Notification items will be injected here -->
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" data-close-modal>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Notification Popup -->
+    <div id="notification-popup-modal">
+        <h4>📢 New Notification</h4>
+        <p id="notification-popup-message"></p>
+        <div id="notification-popup-actions">
+            <button id="notification-popup-close" class="btn-secondary">Close</button>
+            <button id="notification-popup-view" class="btn-primary">View</button>
+        </div>
+    </div>
+
     <div id="toast-notification" class="toast-notification"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
@@ -546,6 +644,7 @@
             notificationBtn: document.getElementById('notification-btn'),
             notificationDot: document.getElementById('notification-dot'),
             filterBar: document.getElementById('filter-bar'),
+            dateFilter: document.getElementById('date-filter'),
             passwordModal: document.getElementById('password-modal-for-action'),
             claimModal: document.getElementById('claim-modal'),
             cashbackModal: document.getElementById('cashback-modal'),
@@ -553,6 +652,9 @@
             scanPayModal: document.getElementById('scan-pay-modal'),
             cashbackClaimModal: document.getElementById('cashback-claim-modal'),
             imageViewModal: document.getElementById('image-view-modal'),
+            couponsModal: document.getElementById('coupons-modal'),
+            notificationsListModal: document.getElementById('notifications-list-modal'),
+            notificationPopupModal: document.getElementById('notification-popup-modal'),
             claimRequestForm: document.getElementById('claim-request-form'),
             cashbackRequestForm: document.getElementById('cashback-request-form'),
             passwordChangeForm: document.getElementById('password-change-form'),
@@ -580,64 +682,52 @@
         let currentUserData = null;
         let activeListeners = [];
         let allTransactionsSnapshot = {};
+        let allNotifications = [];
         let activeFilter = 'all';
         let scanner = null;
         let tempActionData = {};
         let pendingCashbackClaim = null;
+        let currentPopupNotification = null;
 
-        // --- CORE INITIALIZATION (FINAL FIX) ---
+        // --- CORE INITIALIZATION ---
         async function initializeFirebaseApp() {
             try {
-                // Using the full, absolute URL to prevent path issues.
-                const response = await fetch('https://ramazone.in/api/cashback-config'); 
-                if (!response.ok) {
-                    throw new Error(`Configuration Error: ${response.statusText}`);
-                }
-                const firebaseConfig = await response.json();
-                
-                if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-                    throw new Error('Firebase configuration is incomplete. Check Vercel environment variables.');
-                }
-
+                // In a real-world scenario, this would be a secure endpoint.
+                // For this example, we simulate fetching the config.
+                const firebaseConfig = {
+                    // --- IMPORTANT ---
+                    // Replace with your actual Firebase config object
+                    apiKey: "AIzaSy...",
+                    authDomain: "your-project-id.firebaseapp.com",
+                    databaseURL: "https://your-project-id.firebaseio.com",
+                    projectId: "your-project-id",
+                    storageBucket: "your-project-id.appspot.com",
+                    messagingSenderId: "...",
+                    appId: "..."
+                    // --- IMPORTANT ---
+                };
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 database = getDatabase(app);
-                await fetchImageApiKey();
+                // The image API key should also be fetched from a secure backend
+                imageApiKey = "YOUR_IMGBB_API_KEY"; // Replace with your ImgBB API Key
                 setupApplication();
             } catch (error) {
                 console.error("FATAL: Firebase initialization failed.", error);
-                document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #ff6b6b;">Application could not start. Please check connection and configuration.</div>`;
+                document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #ff6b6b;">Application could not start. Please check configuration.</div>`;
             }
         }
 
-        // --- IMAGE UPLOAD & VIEW SYSTEM (FINAL FIX) ---
-        async function fetchImageApiKey() {
-            if (imageApiKey) return imageApiKey;
-            try {
-                // Using the full, absolute URL to prevent path issues.
-                const response = await fetch('https://ramazone.in/api/image-config');
-                if (!response.ok) throw new Error('Could not get image config.');
-                const config = await response.json();
-                imageApiKey = config.apiKey;
-                return imageApiKey;
-            } catch (error) {
-                console.error("Failed to fetch image API key:", error);
-                showToast("Image upload service is unavailable.");
-                return null;
-            }
-        }
-
+        // --- IMAGE UPLOAD & VIEW SYSTEM ---
         async function handleProfilePictureUpload(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file || !imageApiKey) return;
             const uploadStatus = document.getElementById('upload-status');
             uploadStatus.textContent = 'Uploading...';
-            const apiKey = await fetchImageApiKey();
-            if (!apiKey) { uploadStatus.textContent = 'Upload failed.'; return; }
             const formData = new FormData();
             formData.append('image', file);
             try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: 'POST', body: formData });
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${imageApiKey}`, { method: 'POST', body: formData });
                 const result = await response.json();
                 if (result.success) {
                     await update(ref(database, 'users/' + auth.currentUser.uid), { profilePictureUrl: result.data.url });
@@ -734,6 +824,17 @@
                     if(key === 'claims') renderCouponsModal();
                 }));
             }
+            // NEW: Listener for global notifications
+            activeListeners.push(onValue(ref(database, 'notifications'), (snapshot) => {
+                if (snapshot.exists()) {
+                    const fetchedNotifications = [];
+                    snapshot.forEach(childSnap => {
+                        fetchedNotifications.push({ id: childSnap.key, ...childSnap.val() });
+                    });
+                    allNotifications = fetchedNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    processNotifications();
+                }
+            }));
         }
 
         function detachAllListeners() {
@@ -741,6 +842,7 @@
             activeListeners = [];
             currentUserData = null;
             allTransactionsSnapshot = {};
+            allNotifications = [];
         }
 
         function refreshData() {
@@ -790,9 +892,20 @@
             if (allTransactionsSnapshot.received?.exists()) allTransactionsSnapshot.received.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key+'_rec', type: 'payment', date: new Date(p.timestamp), title: `Received from ${p.senderName}`, amount: p.amount, status: 'completed', sign: '+' }); });
             if (allTransactionsSnapshot.credit?.exists()) allTransactionsSnapshot.credit.forEach(snap => { const c = snap.val(); if (c.type === 'credit') combinedHistory.push({ key: snap.key, type: 'credit', date: new Date(c.timestamp), title: `Credit from Admin`, amount: c.amount, status: 'completed', sign: '+' }); });
 
-            let filteredHistory = combinedHistory.filter(item => activeFilter === 'all' || item.type === activeFilter);
-            
-            filteredHistory.sort((a, b) => b.date - a.date).slice(0, 5).forEach(item => {
+            // UPDATED: Filtering logic
+            const selectedDate = DOMElements.dateFilter.value;
+            let filteredHistory = combinedHistory
+                .filter(item => activeFilter === 'all' || item.type === activeFilter)
+                .filter(item => {
+                    if (!selectedDate) return true;
+                    // Compare YYYY-MM-DD strings to avoid timezone issues
+                    const itemDate = item.date.toISOString().split('T')[0];
+                    return itemDate === selectedDate;
+                });
+
+            if (filteredHistory.length === 0) { historyList.innerHTML = getEmptyStateHTML('history'); return; }
+
+            filteredHistory.sort((a, b) => b.date - a.date).forEach(item => {
                 const itemDiv = document.createElement('div');
                 const typeClass = item.sign === '+' ? 'credit' : 'debit';
                 const icon = { cashback: '🎁', claim: '💸', payment: '↔️', credit: '✨' }[item.type] || '📜';
@@ -803,9 +916,6 @@
                 itemDiv.innerHTML = `<div class="history-details"><div class="history-icon ${typeClass}">${icon}</div><div class="history-info"><div class="title">${item.title}</div><div class="date">${item.date.toLocaleDateString()}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${item.sign} ₹${parseFloat(item.amount).toFixed(2)}</div><span class="status status-${item.status}">${item.status}</span>${couponHTML}</div>`;
                 historyList.appendChild(itemDiv);
             });
-            if (historyList.innerHTML === '') {
-                historyList.innerHTML = getEmptyStateHTML('history');
-            }
         }
         
         function renderCouponsModal() {
@@ -823,15 +933,16 @@
         }
 
         function getEmptyStateHTML(type) {
-            if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Yet</h4><p>Your approved claim coupons will appear here.</p></div>`;
-            return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history is empty for this filter.</p></div>`;
+            if (type === 'history') return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history for the selected filter is empty.</p></div>`;
+            if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Available</h4><p>You don't have any active coupons right now.</p></div>`;
+            if (type === 'notifications') return `<div class="empty-state"><div class="empty-state-icon">📭</div><h4>No Notifications</h4><p>You're all caught up!</p></div>`;
+            return '';
         }
 
+        // --- CASHBACK CLAIM LOGIC ---
         function checkForApprovedCashback() {
-            const notifDot = DOMElements.notificationDot;
             if (!allTransactionsSnapshot.cashback?.exists()) {
                 DOMElements.openCashbackModalBtn.classList.remove('has-claim');
-                notifDot.classList.remove('active');
                 return;
             }
             let claimFound = false;
@@ -840,16 +951,12 @@
                 if (c.status === 'approved' && !c.claimed) {
                     pendingCashbackClaim = { id: snap.key, ...c };
                     document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(c.cashbackAmount).toFixed(2)}`;
-                    notifDot.classList.add('active');
+                    openModal(DOMElements.cashbackClaimModal);
                     claimFound = true;
                     return; 
                 }
             });
             DOMElements.openCashbackModalBtn.classList.toggle('has-claim', claimFound);
-            if (!claimFound) {
-                notifDot.classList.remove('active');
-                pendingCashbackClaim = null;
-            }
         }
 
         async function handleCashbackClaim() {
@@ -874,10 +981,102 @@
                     showToast('Lifetime Earning update ho gayi hai!');
                     closeModal(DOMElements.cashbackClaimModal);
                     pendingCashbackClaim = null;
-                    DOMElements.notificationDot.classList.remove('active');
                 } else { throw new Error("Transaction fail ho gaya."); }
             } catch (error) { showToast(`Error: ${error.message}`); } 
             finally { DOMElements.claimNowBtn.disabled = false; DOMElements.claimNowBtn.textContent = 'Claim Now'; }
+        }
+
+        // --- NOTIFICATION SYSTEM (NEW & UPDATED) ---
+        function getSeenNotifications() {
+            const seen = localStorage.getItem('ramazone_notifications_seen');
+            return seen ? JSON.parse(seen) : [];
+        }
+        function getDismissedNotifications() {
+            const dismissed = localStorage.getItem('ramazone_notifications_dismissed');
+            return dismissed ? JSON.parse(dismissed) : {};
+        }
+
+        function processNotifications() {
+            const seenIds = getSeenNotifications();
+            const unreadCount = allNotifications.filter(n => !seenIds.includes(n.id)).length;
+            DOMElements.notificationDot.classList.toggle('active', unreadCount > 0);
+
+            // Check for popup
+            const dismissed = getDismissedNotifications();
+            const latestUnread = allNotifications.find(n => !seenIds.includes(n.id));
+
+            if (latestUnread) {
+                const dismissedTime = dismissed[latestUnread.id];
+                const oneDay = 24 * 60 * 60 * 1000;
+                // Show if never dismissed OR dismissed more than 24 hours ago
+                if (!dismissedTime || (Date.now() - dismissedTime > oneDay)) {
+                    showNotificationPopup(latestUnread);
+                }
+            }
+        }
+
+        function showNotificationPopup(notification) {
+            currentPopupNotification = notification;
+            document.getElementById('notification-popup-message').textContent = notification.message;
+            DOMElements.notificationPopupModal.classList.add('show');
+        }
+
+        function handlePopupClose() {
+            DOMElements.notificationPopupModal.classList.remove('show');
+            if (!currentPopupNotification) return;
+
+            const dismissed = getDismissedNotifications();
+            dismissed[currentPopupNotification.id] = Date.now();
+            localStorage.setItem('ramazone_notifications_dismissed', JSON.stringify(dismissed));
+            currentPopupNotification = null;
+        }
+        
+        function handlePopupView() {
+            DOMElements.notificationPopupModal.classList.remove('show');
+            if (!currentPopupNotification) return;
+            
+            markNotificationAsRead(currentPopupNotification.id);
+            openModal(DOMElements.notificationsListModal);
+            renderNotificationsList();
+            currentPopupNotification = null;
+        }
+
+        function markNotificationAsRead(notificationId) {
+            const seenIds = getSeenNotifications();
+            if (!seenIds.includes(notificationId)) {
+                seenIds.push(notificationId);
+                localStorage.setItem('ramazone_notifications_seen', JSON.stringify(seenIds));
+                processNotifications(); // Re-evaluate dot and counts
+            }
+        }
+
+        function renderNotificationsList() {
+            const container = document.getElementById('notifications-list-container');
+            container.innerHTML = '';
+            const seenIds = getSeenNotifications();
+
+            if (allNotifications.length === 0) {
+                container.innerHTML = getEmptyStateHTML('notifications');
+                return;
+            }
+
+            allNotifications.forEach(n => {
+                const isUnread = !seenIds.includes(n.id);
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `notification-item ${isUnread ? 'unread' : ''}`;
+                itemDiv.innerHTML = `
+                    <div class="icon">📢</div>
+                    <div class="content">
+                        <div class="title">${n.title}</div>
+                        <p>${n.message}</p>
+                        <div class="date">${new Date(n.timestamp).toLocaleString()}</div>
+                    </div>`;
+                itemDiv.addEventListener('click', () => {
+                    markNotificationAsRead(n.id);
+                    itemDiv.classList.remove('unread'); // Instant visual feedback
+                });
+                container.appendChild(itemDiv);
+            });
         }
 
         // --- ACTION HANDLERS ---
@@ -968,7 +1167,7 @@
                 if (code && code.data.startsWith('@')) handleScannedCode(code.data); else requestAnimationFrame(tick);
             } else if (scanner) { requestAnimationFrame(tick); }
         }
-
+        
         function handleQrFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1045,7 +1244,8 @@
             const amount = parseFloat(document.getElementById('payment-amount').value);
             const availableBalance = (currentUserData.wallet || 0) + (currentUserData.dueAmount || 0);
 
-            if(isNaN(amount) || amount <= 0) { showErrorMessage(DOMElements.paymentErrorMsg, "Please enter a valid amount."); return; }
+            // UPDATED: Minimum amount check
+            if(isNaN(amount) || amount < 5) { showErrorMessage(DOMElements.paymentErrorMsg, "Kam se kam ₹5 bhejein."); return; }
             if(amount > availableBalance) { showErrorMessage(DOMElements.paymentErrorMsg, "Insufficient balance (including credit)."); return; }
             
             tempActionData.amount = amount;
@@ -1127,17 +1327,8 @@
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             
-            DOMElements.notificationBtn.addEventListener('click', () => {
-                DOMElements.notificationDot.classList.remove('active');
-                if (pendingCashbackClaim) {
-                    openModal(DOMElements.cashbackClaimModal);
-                } else {
-                    showToast("Aapke paas koi nayi notification nahi hai.");
-                }
-            });
-
             document.getElementById('open-claim-modal').addEventListener('click', () => openModal(DOMElements.claimModal));
-            document.getElementById('open-coupons-modal').addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
+            document.getElementById('open-coupons-modal').addEventListener('click', () => openModal(DOMElements.couponsModal));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(DOMElements.profileModal));
             
             DOMElements.openCashbackModalBtn.addEventListener('click', () => {
@@ -1176,7 +1367,23 @@
             uploadQrBtn.addEventListener('click', () => qrFileInput.click());
             qrFileInput.addEventListener('change', handleQrFileUpload);
             
-            DOMElements.filterBar.addEventListener('click', e => { const target = e.target.closest('.filter-btn'); if (!target) return; DOMElements.filterBar.querySelector('.active').classList.remove('active'); target.classList.add('active'); activeFilter = target.dataset.filter; renderUnifiedHistory(); });
+            // UPDATED: Event listeners for new filters and notifications
+            DOMElements.filterBar.addEventListener('click', e => { 
+                const target = e.target.closest('.filter-btn'); 
+                if (!target || target.type === 'date') return; 
+                DOMElements.filterBar.querySelector('.active').classList.remove('active'); 
+                target.classList.add('active'); 
+                activeFilter = target.dataset.filter; 
+                renderUnifiedHistory(); 
+            });
+            DOMElements.dateFilter.addEventListener('change', renderUnifiedHistory);
+
+            DOMElements.notificationBtn.addEventListener('click', () => {
+                openModal(DOMElements.notificationsListModal);
+                renderNotificationsList();
+            });
+            document.getElementById('notification-popup-close').addEventListener('click', handlePopupClose);
+            document.getElementById('notification-popup-view').addEventListener('click', handlePopupView);
         }
 
         document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
