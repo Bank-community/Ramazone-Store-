@@ -224,7 +224,6 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // **FIXED**: Hardcoded Firebase config to ensure connectivity
         const firebaseConfig = {
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
             authDomain: "tipsplit-e3wes.firebaseapp.com",
@@ -235,25 +234,20 @@
             appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
         };
         
-        // DOM Elements
         const loader = document.getElementById('loader');
         const historyContainer = document.getElementById('history-container');
         const historyList = document.getElementById('history-list');
         const filterBar = document.getElementById('filter-bar');
 
-        // Global State
         let combinedHistory = [];
         let activeFilter = 'all';
 
-        // --- Main Initialization Function ---
         function initializeAppWithConfig() {
             try {
-                // Initialize Firebase with the hardcoded config
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const database = getDatabase(app);
 
-                // Setup authentication listener
                 onAuthStateChanged(auth, user => {
                     if (user) {
                         loadAllHistory(user.uid, database);
@@ -269,107 +263,73 @@
         }
 
         async function loadAllHistory(userId, database) {
-            try {
-                // 1. Fetch Cashback Requests
-                const cashbackQuery = query(ref(database, 'cashback_requests'), orderByChild('userId'), equalTo(userId));
-                const cashbackSnapshot = await get(cashbackQuery);
-                if (cashbackSnapshot.exists()) {
-                    cashbackSnapshot.forEach(snap => {
-                        const c = snap.val();
-                        combinedHistory.push({
-                            type: 'cashback',
-                            date: new Date(c.requestDate),
-                            title: `Cashback: ${c.productName}`,
-                            amount: c.cashbackAmount,
-                            status: c.status,
-                            sign: '+'
-                        });
-                    });
-                }
+            const queries = {
+                cashback: query(ref(database, 'cashback_requests'), orderByChild('userId'), equalTo(userId)),
+                claims: query(ref(database, 'claim_requests'), orderByChild('userId'), equalTo(userId)),
+                sent: query(ref(database, 'payments'), orderByChild('senderId'), equalTo(userId)),
+                received: query(ref(database, 'payments'), orderByChild('receiverId'), equalTo(userId)),
+                credit: query(ref(database, 'credit_transactions'), orderByChild('userId'), equalTo(userId))
+            };
 
-                // 2. Fetch Claim Requests
-                const claimsQuery = query(ref(database, 'claim_requests'), orderByChild('userId'), equalTo(userId));
-                const claimsSnapshot = await get(claimsQuery);
-                if (claimsSnapshot.exists()) {
-                    claimsSnapshot.forEach(snap => {
-                        const c = snap.val();
-                        combinedHistory.push({
-                            type: 'claims',
-                            date: new Date(c.requestDate),
-                            title: 'Wallet Claim',
-                            amount: c.claimAmount,
-                            status: c.status,
-                            sign: '-',
-                            coupon: c.couponCode
-                        });
-                    });
-                }
+            // **NEW**: Fetch all data in parallel and handle individual errors
+            const results = await Promise.all(
+                Object.entries(queries).map(([key, q]) => 
+                    get(q).catch(error => ({ key, error }))
+                )
+            );
 
-                // 3. Fetch Sent Payments
-                const sentQuery = query(ref(database, 'payments'), orderByChild('senderId'), equalTo(userId));
-                const sentSnapshot = await get(sentQuery);
-                if (sentSnapshot.exists()) {
-                    sentSnapshot.forEach(snap => {
-                        const p = snap.val();
-                        combinedHistory.push({
-                            type: 'payments',
-                            subType: 'sent',
-                            date: new Date(p.timestamp),
-                            title: `Paid to ${p.receiverName}`,
-                            amount: p.amount,
-                            status: 'completed',
-                            sign: '-'
-                        });
-                    });
-                }
+            // Process results
+            const [
+                cashbackSnapshot, claimsSnapshot, sentSnapshot, 
+                receivedSnapshot, creditSnapshot
+            ] = results;
 
-                // 4. Fetch Received Payments
-                const receivedQuery = query(ref(database, 'payments'), orderByChild('receiverId'), equalTo(userId));
-                const receivedSnapshot = await get(receivedQuery);
-                if (receivedSnapshot.exists()) {
-                    receivedSnapshot.forEach(snap => {
-                        const p = snap.val();
-                        combinedHistory.push({
-                            type: 'payments',
-                            subType: 'received',
-                            date: new Date(p.timestamp),
-                            title: `Received from ${p.senderName}`,
-                            amount: p.amount,
-                            status: 'completed',
-                            sign: '+'
-                        });
-                    });
-                }
-
-                // 5. Fetch Credit Transactions
-                const creditQuery = query(ref(database, 'credit_transactions'), orderByChild('userId'), equalTo(userId));
-                const creditSnapshot = await get(creditQuery);
-                if (creditSnapshot.exists()) {
-                    creditSnapshot.forEach(snap => {
-                        const t = snap.val();
-                        combinedHistory.push({
-                            type: 'credit',
-                            subType: t.type, // 'credit' or 'settled'
-                            date: new Date(t.timestamp),
-                            title: t.type === 'credit' ? 'Credit Received from Admin' : 'Dues Settled',
-                            amount: t.amount,
-                            status: t.type === 'credit' ? 'approved' : 'settled',
-                            sign: t.type === 'credit' ? '+' : '-'
-                        });
-                    });
-                }
-
-                // Sort all history by date
-                combinedHistory.sort((a, b) => b.date - a.date);
-                
-                loader.style.display = 'none';
-                historyContainer.style.display = 'block';
-                renderHistory();
-
-            } catch (error) {
-                console.error("Error loading history:", error);
-                loader.innerHTML = '<h4>Could not load history. Please try again later.</h4>';
+            if (!(cashbackSnapshot instanceof Error) && cashbackSnapshot.exists()) {
+                cashbackSnapshot.forEach(snap => {
+                    const c = snap.val();
+                    combinedHistory.push({ type: 'cashback', date: new Date(c.requestDate), title: `Cashback: ${c.productName}`, amount: c.cashbackAmount, status: c.status, sign: '+' });
+                });
             }
+            if (!(claimsSnapshot instanceof Error) && claimsSnapshot.exists()) {
+                claimsSnapshot.forEach(snap => {
+                    const c = snap.val();
+                    combinedHistory.push({ type: 'claims', date: new Date(c.requestDate), title: 'Wallet Claim', amount: c.claimAmount, status: c.status, sign: '-', coupon: c.couponCode });
+                });
+            }
+            if (!(sentSnapshot instanceof Error) && sentSnapshot.exists()) {
+                sentSnapshot.forEach(snap => {
+                    const p = snap.val();
+                    combinedHistory.push({ type: 'payments', subType: 'sent', date: new Date(p.timestamp), title: `Paid to ${p.receiverName}`, amount: p.amount, status: 'completed', sign: '-' });
+                });
+            }
+            if (!(receivedSnapshot instanceof Error) && receivedSnapshot.exists()) {
+                receivedSnapshot.forEach(snap => {
+                    const p = snap.val();
+                    combinedHistory.push({ type: 'payments', subType: 'received', date: new Date(p.timestamp), title: `Received from ${p.senderName}`, amount: p.amount, status: 'completed', sign: '+' });
+                });
+            }
+            if (!(creditSnapshot instanceof Error) && creditSnapshot.exists()) {
+                creditSnapshot.forEach(snap => {
+                    const t = snap.val();
+                    combinedHistory.push({ type: 'credit', subType: t.type, date: new Date(t.timestamp), title: t.type === 'credit' ? 'Credit Received' : 'Dues Settled', amount: t.amount, status: t.type === 'credit' ? 'approved' : 'settled', sign: t.type === 'credit' ? '+' : '-' });
+                });
+            }
+
+            if(combinedHistory.length === 0) {
+                 // Check if any query failed
+                const failedQuery = results.find(r => r instanceof Error);
+                if (failedQuery) {
+                    console.error("A part of history failed to load:", failedQuery.key, failedQuery.error);
+                     loader.innerHTML = '<h4>Could not load complete history. Please check your connection and try again.</h4>';
+                     return;
+                }
+            }
+
+            combinedHistory.sort((a, b) => b.date - a.date);
+            
+            loader.style.display = 'none';
+            historyContainer.style.display = 'block';
+            renderHistory();
         }
 
         function renderHistory() {
@@ -402,31 +362,15 @@
                 let amountClass = item.sign === '+' ? 'credit' : 'debit';
                 
                 switch (item.type) {
-                    case 'cashback':
-                        icon = '🎁';
-                        typeClass = 'type-cashback';
-                        break;
-                    case 'claims':
-                        icon = '💸';
-                        typeClass = 'type-claim';
-                        break;
+                    case 'cashback': icon = '🎁'; typeClass = 'type-cashback'; break;
+                    case 'claims': icon = '💸'; typeClass = 'type-claim'; break;
                     case 'payments':
-                        if (item.subType === 'sent') {
-                            icon = '🔼';
-                            typeClass = 'type-payment-sent';
-                        } else {
-                            icon = '🔽';
-                            typeClass = 'type-payment-received';
-                        }
+                        if (item.subType === 'sent') { icon = '🔼'; typeClass = 'type-payment-sent'; } 
+                        else { icon = '🔽'; typeClass = 'type-payment-received'; }
                         break;
                     case 'credit':
-                         if (item.subType === 'credit') {
-                            icon = '✨';
-                            typeClass = 'type-credit-add';
-                        } else {
-                            icon = '✅';
-                            typeClass = 'type-credit-settled';
-                        }
+                         if (item.subType === 'credit') { icon = '✨'; typeClass = 'type-credit-add'; } 
+                         else { icon = '✅'; typeClass = 'type-credit-settled'; }
                         break;
                 }
                 
@@ -440,7 +384,6 @@
                 } else if (item.type === 'cashback') {
                      descriptionHTML = `<div class="status status-${item.status}">${item.status}</div>`;
                 }
-
 
                 itemDiv.innerHTML = `
                     ${iconDiv.outerHTML}
@@ -467,7 +410,6 @@
             renderHistory();
         });
         
-        // Start the application
         document.addEventListener('DOMContentLoaded', initializeAppWithConfig);
 
     </script>
