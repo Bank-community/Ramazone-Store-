@@ -169,19 +169,17 @@
         .wallet-footer-item p { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.8); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .wallet-footer-item .amount { font-size: 16px; font-weight: 700; }
         .wallet-footer-item .amount.credit { font-size: 20px; font-weight: 800; color: #f1c40f; } /* Yellow */
-        /* UPDATED COLORS */
         .wallet-footer-item .amount.earning { color: var(--accent-blue); } /* Blue */
         .wallet-footer-item .amount.due { color: var(--due-red); } /* Red */
 
         #wallet-share-btn { 
-    position: absolute; 
-    bottom: 100px; /* Pehle 20px tha, ab 60px kar diya hai */
-    right: 20px; 
-    cursor: pointer; 
-    opacity: 0.7; 
-    transition: opacity 0.2s, transform 0.2s; 
-}
-
+            position: absolute; 
+            bottom: 20px;
+            right: 20px; 
+            cursor: pointer; 
+            opacity: 0.7; 
+            transition: opacity 0.2s, transform 0.2s; 
+        }
         #wallet-share-btn:hover { opacity: 1; transform: scale(1.1); }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
 
@@ -359,21 +357,19 @@
 
         <div id="dashboard-view" class="view">
             <div class="header">
-                <!-- FINAL CLICKABLE HEADER LOGO -->
                 <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="header-logo-link">
                     <img src="https://i.ibb.co/xq5y8nQN/20250708-142020.png" alt="Ramazone" class="header-logo">
                 </a>
                 <div class="header-actions-bar">
                     <div id="notification-btn" class="header-icon" title="Notifications"><img src="https://www.svgrepo.com/show/269007/notification-bell.svg" alt="Notifications"><span id="notification-dot" class="notification-dot"></span></div>
                     <div id="theme-switcher" class="header-icon" title="Toggle Theme"><img src="https://www.svgrepo.com/show/527253/moon.svg" alt="Theme"></div>
-                    <!-- FINAL ONLINE STORE ICON -->
-                    <a href="history.html" target="_blank" rel="noopener noreferrer" id="store-btn" class="header-icon" title="Online Store"><img src="https://www.svgrepo.com/show/293165/online-store-supermarket.svg" alt="Store"></a>
+                    <!-- UPDATED: Link to history.html with a more descriptive title -->
+                    <a href="history.html" id="history-btn" class="header-icon" title="Transaction History"><img src="https://www.svgrepo.com/show/293548/transaction-money.svg" alt="History"></a>
                     <div id="refresh-btn" class="header-icon" title="Refresh Data"><img src="https://www.svgrepo.com/show/533700/refresh-cw-alt-1.svg" alt="Refresh"></div>
                     <div id="logout-btn"><img src="https://www.svgrepo.com/show/500927/logout.svg" alt="Logout"><span>Logout</span></div>
                 </div>
             </div>
             
-            <!-- FINAL PROFESSIONAL WALLET CARD -->
             <div class="wallet-card">
                 <div class="wallet-card-header">
                     <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="wallet-card-logo">
@@ -406,7 +402,6 @@
 
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card cashback"><div class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg></div><div class="card-text"><strong>Cashback Request</strong></div></div>
-                <!-- UPDATED: BOLD TEXT -->
                 <div id="scan-and-pay-btn" class="action-card scan"><div class="icon"><img src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" alt="Scan & Pay"></div><p><strong>Scan & Pay</strong></p></div>
                 <div id="open-coupons-modal" class="action-card coupons"><div class="icon">🎟️</div><p>My Coupons</p></div>
                 <a href="#" id="whatsapp-support-link" target="_blank" class="action-card whatsapp"><div class="icon">💬</div><p>WhatsApp Support</p></a>
@@ -415,7 +410,7 @@
             </div>
 
             <div class="section">
-                <div style="display: flex; justify-content: space-between; align-items: center;"><h2 class="section-title">All Transactions</h2></div>
+                <div style="display: flex; justify-content: space-between; align-items: center;"><h2 class="section-title">Recent Transactions</h2></div>
                 <div class="filter-bar" id="filter-bar">
                     <button class="filter-btn active" data-filter="all">All</button>
                     <button class="filter-btn" data-filter="payment">Payments</button>
@@ -549,6 +544,8 @@
             logoutBtn: document.getElementById('logout-btn'),
             themeSwitcher: document.getElementById('theme-switcher'),
             refreshBtn: document.getElementById('refresh-btn'),
+            notificationBtn: document.getElementById('notification-btn'),
+            notificationDot: document.getElementById('notification-dot'),
             filterBar: document.getElementById('filter-bar'),
             passwordModal: document.getElementById('password-modal-for-action'),
             claimModal: document.getElementById('claim-modal'),
@@ -592,7 +589,8 @@
         // --- CORE INITIALIZATION ---
         async function initializeFirebaseApp() {
             try {
-                const response = await fetch('/api/cashback-config');
+                // IMPORTANT: Replace with your actual backend endpoint to fetch Firebase config
+                const response = await fetch('/api/cashback-config'); 
                 if (!response.ok) throw new Error('Could not fetch Firebase config!');
                 const firebaseConfig = await response.json();
                 const app = initializeApp(firebaseConfig);
@@ -602,7 +600,7 @@
                 setupApplication();
             } catch (error) {
                 console.error("FATAL: Firebase initialization failed.", error);
-                document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #ff6b6b;">Application could not start. Please check connection.</div>`;
+                document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #ff6b6b;">Application could not start. Please check connection and configuration.</div>`;
             }
         }
 
@@ -610,6 +608,7 @@
         async function fetchImageApiKey() {
             if (imageApiKey) return imageApiKey;
             try {
+                 // IMPORTANT: Replace with your actual backend endpoint to fetch ImageBB API key
                 const response = await fetch('/api/image-config');
                 if (!response.ok) throw new Error('Could not get image config.');
                 const config = await response.json();
@@ -786,10 +785,9 @@
             if (allTransactionsSnapshot.credit?.exists()) allTransactionsSnapshot.credit.forEach(snap => { const c = snap.val(); if (c.type === 'credit') combinedHistory.push({ key: snap.key, type: 'credit', date: new Date(c.timestamp), title: `Credit from Admin`, amount: c.amount, status: 'completed', sign: '+' }); });
 
             let filteredHistory = combinedHistory.filter(item => activeFilter === 'all' || item.type === activeFilter);
-
-            if (filteredHistory.length === 0) { historyList.innerHTML = getEmptyStateHTML('history'); return; }
-
-            filteredHistory.sort((a, b) => b.date - a.date).forEach(item => {
+            
+            // Show only top 5 recent transactions on dashboard
+            filteredHistory.sort((a, b) => b.date - a.date).slice(0, 5).forEach(item => {
                 const itemDiv = document.createElement('div');
                 const typeClass = item.sign === '+' ? 'credit' : 'debit';
                 const icon = { cashback: '🎁', claim: '💸', payment: '↔️', credit: '✨' }[item.type] || '📜';
@@ -800,6 +798,9 @@
                 itemDiv.innerHTML = `<div class="history-details"><div class="history-icon ${typeClass}">${icon}</div><div class="history-info"><div class="title">${item.title}</div><div class="date">${item.date.toLocaleDateString()}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${item.sign} ₹${parseFloat(item.amount).toFixed(2)}</div><span class="status status-${item.status}">${item.status}</span>${couponHTML}</div>`;
                 historyList.appendChild(itemDiv);
             });
+            if (historyList.innerHTML === '') {
+                historyList.innerHTML = getEmptyStateHTML('history');
+            }
         }
         
         function renderCouponsModal() {
@@ -816,10 +817,17 @@
             });
         }
 
-        // --- CASHBACK CLAIM LOGIC (UPDATED) ---
+        function getEmptyStateHTML(type) {
+            if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Yet</h4><p>Your approved claim coupons will appear here.</p></div>`;
+            return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history is empty for this filter.</p></div>`;
+        }
+
+        // --- NOTIFICATION & CASHBACK CLAIM LOGIC (UPDATED) ---
         function checkForApprovedCashback() {
+            const notifDot = DOMElements.notificationDot;
             if (!allTransactionsSnapshot.cashback?.exists()) {
                 DOMElements.openCashbackModalBtn.classList.remove('has-claim');
+                notifDot.classList.remove('active');
                 return;
             }
             let claimFound = false;
@@ -828,12 +836,16 @@
                 if (c.status === 'approved' && !c.claimed) {
                     pendingCashbackClaim = { id: snap.key, ...c };
                     document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(c.cashbackAmount).toFixed(2)}`;
-                    openModal(DOMElements.cashbackClaimModal);
+                    notifDot.classList.add('active'); // Activate notification dot
                     claimFound = true;
                     return; 
                 }
             });
             DOMElements.openCashbackModalBtn.classList.toggle('has-claim', claimFound);
+            if (!claimFound) {
+                notifDot.classList.remove('active'); // Deactivate if no claims are pending
+                pendingCashbackClaim = null;
+            }
         }
 
         async function handleCashbackClaim() {
@@ -846,11 +858,8 @@
             const amount = parseFloat(pendingCashbackClaim.cashbackAmount);
 
             try {
-                // *** UPDATED LOGIC AS PER REQUEST ***
-                // This transaction now ONLY updates lifetimeEarning.
                 const txResult = await runTransaction(userRef, (data) => {
                     if (data) {
-                        // data.wallet is NO LONGER updated here.
                         data.lifetimeEarning = (data.lifetimeEarning || 0) + amount;
                     }
                     return data;
@@ -858,16 +867,16 @@
 
                 if (txResult.committed) {
                     await update(cashbackRef, { claimed: true, status: 'completed' });
-                    // *** UPDATED TOAST MESSAGE ***
                     showToast('Lifetime Earning update ho gayi hai!');
                     closeModal(DOMElements.cashbackClaimModal);
                     pendingCashbackClaim = null;
+                    DOMElements.notificationDot.classList.remove('active');
                 } else { throw new Error("Transaction fail ho gaya."); }
             } catch (error) { showToast(`Error: ${error.message}`); } 
             finally { DOMElements.claimNowBtn.disabled = false; DOMElements.claimNowBtn.textContent = 'Claim Now'; }
         }
 
-        // --- ACTION HANDLERS (VERIFIED) ---
+        // --- ACTION HANDLERS ---
         async function handleCashbackRequest(e) {
             e.preventDefault();
             hideErrorMessage(DOMElements.cashbackErrorMsg);
@@ -956,7 +965,6 @@
             } else if (scanner) { requestAnimationFrame(tick); }
         }
 
-        // *** NEW FUNCTION: Handles QR code from file upload ***
         function handleQrFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -977,12 +985,8 @@
                     const code = jsQR(imageData.data, imageData.width, imageData.height);
 
                     if (code && code.data.startsWith('@')) {
-                        // Stop video scanner if it's running
-                        if (scanner) {
-                            scanner.getTracks().forEach(track => track.stop());
-                            scanner = null;
-                        }
-                        document.getElementById('scanner-video').srcObject = null; // Clear video feed
+                        if (scanner) { scanner.getTracks().forEach(track => track.stop()); scanner = null; }
+                        document.getElementById('scanner-video').srcObject = null;
                         handleScannedCode(code.data);
                     } else {
                         DOMElements.scannerStatus.textContent = "No QR code found in image.";
@@ -992,7 +996,7 @@
                 image.src = e.target.result;
             };
             reader.readAsDataURL(file);
-            event.target.value = ''; // Reset file input
+            event.target.value = '';
         }
 
         async function handleScannedCode(paymentId) {
@@ -1119,6 +1123,16 @@
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             
+            // UPDATED: Notification button logic
+            DOMElements.notificationBtn.addEventListener('click', () => {
+                DOMElements.notificationDot.classList.remove('active');
+                if (pendingCashbackClaim) {
+                    openModal(DOMElements.cashbackClaimModal);
+                } else {
+                    showToast("Aapke paas koi nayi notification nahi hai.");
+                }
+            });
+
             document.getElementById('open-claim-modal').addEventListener('click', () => openModal(DOMElements.claimModal));
             document.getElementById('open-coupons-modal').addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(DOMElements.profileModal));
@@ -1154,7 +1168,6 @@
             DOMElements.paySubmitBtn.addEventListener('click', handlePaymentRequest);
             document.getElementById('rescan-btn').addEventListener('click', startScanner);
             
-            // *** ADDED: Event listeners for QR file upload ***
             const uploadQrBtn = document.getElementById('upload-qr-btn');
             const qrFileInput = document.getElementById('qr-file-input');
             uploadQrBtn.addEventListener('click', () => qrFileInput.click());
