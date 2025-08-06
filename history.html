@@ -224,6 +224,17 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
+        // **FIXED**: Hardcoded Firebase config to ensure connectivity
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+            authDomain: "tipsplit-e3wes.firebaseapp.com",
+            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tipsplit-e3wes",
+            storageBucket: "tipsplit-e3wes.appspot.com",
+            messagingSenderId: "984733883633",
+            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+        };
+        
         // DOM Elements
         const loader = document.getElementById('loader');
         const historyContainer = document.getElementById('history-container');
@@ -231,29 +242,21 @@
         const filterBar = document.getElementById('filter-bar');
 
         // Global State
-        let auth, database;
         let combinedHistory = [];
         let activeFilter = 'all';
 
         // --- Main Initialization Function ---
-        async function initializeAppWithRemoteConfig() {
+        function initializeAppWithConfig() {
             try {
-                // Fetch config from Vercel serverless function
-                const response = await fetch('/api/cashback-config');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const firebaseConfig = await response.json();
-                
-                // Initialize Firebase with the fetched config
+                // Initialize Firebase with the hardcoded config
                 const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                database = getDatabase(app);
+                const auth = getAuth(app);
+                const database = getDatabase(app);
 
                 // Setup authentication listener
                 onAuthStateChanged(auth, user => {
                     if (user) {
-                        loadAllHistory(user.uid);
+                        loadAllHistory(user.uid, database);
                     } else {
                         loader.innerHTML = '<h4>Please login to view your history.</h4>';
                     }
@@ -265,7 +268,7 @@
             }
         }
 
-        async function loadAllHistory(userId) {
+        async function loadAllHistory(userId, database) {
             try {
                 // 1. Fetch Cashback Requests
                 const cashbackQuery = query(ref(database, 'cashback_requests'), orderByChild('userId'), equalTo(userId));
@@ -465,7 +468,7 @@
         });
         
         // Start the application
-        document.addEventListener('DOMContentLoaded', initializeAppWithRemoteConfig);
+        document.addEventListener('DOMContentLoaded', initializeAppWithConfig);
 
     </script>
 </body>
