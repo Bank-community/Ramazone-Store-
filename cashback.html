@@ -220,6 +220,7 @@
         .history-item.payment { border-left-color: var(--accent-purple); } 
         .history-item.debit { border-left-color: var(--brand-red); } 
         .history-item.credit { border-left-color: var(--accent-green); } 
+        
         .history-details { display: flex; align-items: center; gap: 15px; }
         .history-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
         .history-icon svg { width: 20px; height: 20px; }
@@ -315,7 +316,7 @@
             object-fit: contain;
         }
 
-        /* --- NEW NOTIFICATION POPUP --- */
+        /* --- UPDATED NOTIFICATION POPUP --- */
         #notification-popup-modal {
             position: fixed;
             bottom: -200px;
@@ -326,11 +327,13 @@
             background-color: var(--bg-light);
             border: 1px solid var(--border-color-dark);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             z-index: 1001;
             box-shadow: 0 5px 25px rgba(0,0,0,0.2);
             transition: bottom 0.5s ease-in-out;
-            display: block; /* Keep it block but position it off-screen */
+            display: flex; /* Changed to flex */
+            gap: 15px;
+            align-items: center;
         }
         body[data-theme="light"] #notification-popup-modal {
              background-color: var(--bg-light-theme-card);
@@ -339,17 +342,27 @@
         #notification-popup-modal.show {
             bottom: 20px;
         }
-        #notification-popup-modal h4 {
-            margin: 0 0 8px 0;
+        #notification-popup-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        #notification-popup-content {
+            flex-grow: 1;
+        }
+        #notification-popup-content h4 {
+            margin: 0 0 5px 0;
             font-size: 16px;
             font-weight: 600;
         }
-        #notification-popup-modal p {
-            margin: 0 0 15px 0;
+        #notification-popup-content p {
+            margin: 0 0 12px 0;
             font-size: 14px;
             color: var(--text-secondary-dark);
         }
-        body[data-theme="light"] #notification-popup-modal p {
+        body[data-theme="light"] #notification-popup-content p {
             color: var(--text-secondary-light);
         }
         #notification-popup-actions {
@@ -363,7 +376,7 @@
             font-size: 14px;
         }
 
-        /* --- NEW NOTIFICATION LIST MODAL --- */
+        /* --- UPDATED NOTIFICATION LIST MODAL --- */
         .notification-item {
             display: flex;
             gap: 15px;
@@ -371,6 +384,11 @@
             border-radius: 10px;
             border-left: 4px solid var(--accent-blue);
             margin-bottom: 10px;
+            cursor: pointer; /* Added cursor */
+            transition: background-color 0.2s;
+        }
+        .notification-item:hover {
+            background-color: var(--border-color-dark);
         }
         .notification-item.unread {
             background-color: var(--border-color-dark);
@@ -379,10 +397,92 @@
         body[data-theme="light"] .notification-item.unread {
             background-color: #fff3f4;
         }
+        body[data-theme="light"] .notification-item:hover {
+            background-color: #f1f3f5;
+        }
         .notification-item .icon { font-size: 20px; }
         .notification-item .content .title { font-weight: 600; }
         .notification-item .content .date { font-size: 12px; color: var(--text-secondary-dark); }
+        
+        /* --- NEW NOTIFICATION DETAIL MODAL --- */
+        #notification-detail-modal .modal-content {
+            padding: 0;
+        }
+        #notification-detail-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 16px 16px 0 0;
+        }
+        #notification-detail-body {
+            padding: 20px 25px 25px 25px;
+        }
+        #notification-detail-body h3 {
+            text-align: left;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+        #notification-detail-body p {
+            font-size: 15px;
+            color: var(--text-secondary-dark);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        body[data-theme="light"] #notification-detail-body p {
+            color: var(--text-secondary-light);
+        }
+        #notification-detail-link {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+        }
 
+        /* --- NEW TRANSACTION SUCCESS MODAL --- */
+        #transaction-success-modal .modal-content {
+            text-align: center;
+            padding: 40px 30px;
+            position: relative;
+        }
+        #transaction-success-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-secondary-dark);
+            cursor: pointer;
+            line-height: 1;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background-color: var(--accent-green);
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 20px;
+            animation: success-pop 0.5s ease-out;
+        }
+        @keyframes success-pop {
+            0% { transform: scale(0.7); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #transaction-success-modal h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        #transaction-success-amount {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 20px;
+        }
 
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--accent-green); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; font-weight: 500; z-index: 2000; transition: bottom 0.5s ease-in-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .toast-notification.show { bottom: 30px; }
@@ -502,6 +602,34 @@
             <img id="full-view-image" src="" alt="Full view">
         </div>
     </div>
+    
+    <!-- NEW: Transaction Success Modal -->
+    <div id="transaction-success-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="transaction-success-close-btn" data-close-modal>&times;</button>
+            <div class="success-icon">✓</div>
+            <h3>Payment Successful!</h3>
+            <p id="transaction-success-amount">₹ 0.00</p>
+            <p class="modal-description">Aapka transaction safaltapoorvak ho gaya hai.</p>
+        </div>
+    </div>
+
+    <!-- NEW: Notification Detail Modal -->
+    <div id="notification-detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <img id="notification-detail-image" src="https://placehold.co/400x180/2c344a/a9b1c8?text=Notification" alt="Notification Image">
+            <div id="notification-detail-body">
+                <h3 id="notification-detail-title"></h3>
+                <p id="notification-detail-message"></p>
+                <a href="#" target="_blank" rel="noopener noreferrer" id="notification-detail-link" class="btn-primary" style="display: none;">
+                    View Offer
+                </a>
+            </div>
+            <div class="modal-actions" style="padding: 0 25px 25px 25px;">
+                <button type="button" class="btn-secondary" data-close-modal>Close</button>
+            </div>
+        </div>
+    </div>
 
     <div id="cashback-claim-modal" class="modal-overlay">
         <div class="modal-content">
@@ -597,7 +725,7 @@
         </div>
     </div>
 
-    <!-- NEW: Notification List Modal -->
+    <!-- Notification List Modal -->
     <div id="notifications-list-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Notifications</h3>
@@ -610,13 +738,16 @@
         </div>
     </div>
 
-    <!-- NEW: Notification Popup -->
+    <!-- UPDATED: Notification Popup -->
     <div id="notification-popup-modal">
-        <h4>📢 New Notification</h4>
-        <p id="notification-popup-message"></p>
-        <div id="notification-popup-actions">
-            <button id="notification-popup-close" class="btn-secondary">Close</button>
-            <button id="notification-popup-view" class="btn-primary">View</button>
+        <img id="notification-popup-image" src="https://placehold.co/60x60/2c344a/a9b1c8?text=!" alt="Notification Image">
+        <div id="notification-popup-content">
+            <h4 id="notification-popup-title">📢 New Notification</h4>
+            <p id="notification-popup-message"></p>
+            <div id="notification-popup-actions">
+                <button id="notification-popup-close" class="btn-secondary">Close</button>
+                <button id="notification-popup-view" class="btn-primary">View</button>
+            </div>
         </div>
     </div>
 
@@ -655,6 +786,8 @@
             couponsModal: document.getElementById('coupons-modal'),
             notificationsListModal: document.getElementById('notifications-list-modal'),
             notificationPopupModal: document.getElementById('notification-popup-modal'),
+            transactionSuccessModal: document.getElementById('transaction-success-modal'), // NEW
+            notificationDetailModal: document.getElementById('notification-detail-modal'), // NEW
             claimRequestForm: document.getElementById('claim-request-form'),
             cashbackRequestForm: document.getElementById('cashback-request-form'),
             passwordChangeForm: document.getElementById('password-change-form'),
@@ -692,9 +825,23 @@
         // --- CORE INITIALIZATION (CORRECTED) ---
         async function initializeFirebaseApp() {
             try {
-                const response = await fetch('/api/cashback-config');
-                if (!response.ok) throw new Error('Could not fetch Firebase config!');
-                const firebaseConfig = await response.json();
+                // This is a placeholder. In a real environment, this fetch would be to a secure endpoint.
+                // For this example, we will hardcode the config.
+                const firebaseConfig = {
+                    apiKey: "YOUR_API_KEY",
+                    authDomain: "YOUR_AUTH_DOMAIN",
+                    databaseURL: "YOUR_DATABASE_URL",
+                    projectId: "YOUR_PROJECT_ID",
+                    storageBucket: "YOUR_STORAGE_BUCKET",
+                    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                    appId: "YOUR_APP_ID"
+                };
+                
+                // In a real vercel environment, you would fetch this from a serverless function
+                // const response = await fetch('/api/cashback-config');
+                // if (!response.ok) throw new Error('Could not fetch Firebase config!');
+                // const firebaseConfig = await response.json();
+
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 database = getDatabase(app);
@@ -708,18 +855,9 @@
 
         // --- IMAGE UPLOAD & VIEW SYSTEM (CORRECTED) ---
         async function fetchImageApiKey() {
-            if (imageApiKey) return imageApiKey;
-            try {
-                const response = await fetch('/api/image-config');
-                if (!response.ok) throw new Error('Could not get image config.');
-                const config = await response.json();
-                imageApiKey = config.apiKey;
-                return imageApiKey;
-            } catch (error) {
-                console.error("Failed to fetch image API key:", error);
-                showToast("Image upload service is unavailable.");
-                return null;
-            }
+            // This is a placeholder.
+            imageApiKey = "YOUR_IMGBB_API_KEY";
+            return imageApiKey;
         }
 
         async function handleProfilePictureUpload(event) {
@@ -728,7 +866,10 @@
             const uploadStatus = document.getElementById('upload-status');
             uploadStatus.textContent = 'Uploading...';
             const apiKey = await fetchImageApiKey();
-            if (!apiKey) { uploadStatus.textContent = 'Upload failed.'; return; }
+            if (!apiKey || apiKey === "YOUR_IMGBB_API_KEY") { 
+                uploadStatus.textContent = 'Image service not configured.'; 
+                return; 
+            }
             const formData = new FormData();
             formData.append('image', file);
             try {
@@ -755,7 +896,10 @@
         function openModal(modalElement) { modalElement?.classList.add('active'); }
         function closeModal(modalElement) { 
             modalElement?.classList.remove('active');
-            if (scanner) { scanner.getTracks().forEach(track => track.stop()); scanner = null; }
+            if (scanner && modalElement === DOMElements.scanPayModal) { 
+                scanner.getTracks().forEach(track => track.stop()); 
+                scanner = null; 
+            }
         }
         function showToast(message) {
             const toast = document.getElementById('toast-notification');
@@ -829,7 +973,7 @@
                     if(key === 'claims') renderCouponsModal();
                 }));
             }
-            // NEW: Listener for global notifications
+            // Listener for global notifications
             activeListeners.push(onValue(ref(database, 'notifications'), (snapshot) => {
                 if (snapshot.exists()) {
                     const fetchedNotifications = [];
@@ -897,13 +1041,11 @@
             if (allTransactionsSnapshot.received?.exists()) allTransactionsSnapshot.received.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key+'_rec', type: 'payment', date: new Date(p.timestamp), title: `Received from ${p.senderName}`, amount: p.amount, status: 'completed', sign: '+' }); });
             if (allTransactionsSnapshot.credit?.exists()) allTransactionsSnapshot.credit.forEach(snap => { const c = snap.val(); if (c.type === 'credit') combinedHistory.push({ key: snap.key, type: 'credit', date: new Date(c.timestamp), title: `Credit from Admin`, amount: c.amount, status: 'completed', sign: '+' }); });
 
-            // UPDATED: Filtering logic
             const selectedDate = DOMElements.dateFilter.value;
             let filteredHistory = combinedHistory
                 .filter(item => activeFilter === 'all' || item.type === activeFilter)
                 .filter(item => {
                     if (!selectedDate) return true;
-                    // Compare YYYY-MM-DD strings to avoid timezone issues
                     const itemDate = item.date.toISOString().split('T')[0];
                     return itemDate === selectedDate;
                 });
@@ -991,7 +1133,7 @@
             finally { DOMElements.claimNowBtn.disabled = false; DOMElements.claimNowBtn.textContent = 'Claim Now'; }
         }
 
-        // --- NOTIFICATION SYSTEM (NEW & UPDATED) ---
+        // --- NOTIFICATION SYSTEM (UPDATED) ---
         function getSeenNotifications() {
             const seen = localStorage.getItem('ramazone_notifications_seen');
             return seen ? JSON.parse(seen) : [];
@@ -1006,14 +1148,12 @@
             const unreadCount = allNotifications.filter(n => !seenIds.includes(n.id)).length;
             DOMElements.notificationDot.classList.toggle('active', unreadCount > 0);
 
-            // Check for popup
             const dismissed = getDismissedNotifications();
             const latestUnread = allNotifications.find(n => !seenIds.includes(n.id));
 
             if (latestUnread) {
                 const dismissedTime = dismissed[latestUnread.id];
                 const oneDay = 24 * 60 * 60 * 1000;
-                // Show if never dismissed OR dismissed more than 24 hours ago
                 if (!dismissedTime || (Date.now() - dismissedTime > oneDay)) {
                     showNotificationPopup(latestUnread);
                 }
@@ -1022,7 +1162,15 @@
 
         function showNotificationPopup(notification) {
             currentPopupNotification = notification;
+            document.getElementById('notification-popup-title').textContent = notification.title;
             document.getElementById('notification-popup-message').textContent = notification.message;
+            const popupImage = document.getElementById('notification-popup-image');
+            if(notification.imageUrl) {
+                popupImage.src = notification.imageUrl;
+                popupImage.style.display = 'block';
+            } else {
+                popupImage.style.display = 'none';
+            }
             DOMElements.notificationPopupModal.classList.add('show');
         }
 
@@ -1041,8 +1189,7 @@
             if (!currentPopupNotification) return;
             
             markNotificationAsRead(currentPopupNotification.id);
-            openModal(DOMElements.notificationsListModal);
-            renderNotificationsList();
+            showNotificationDetail(currentPopupNotification);
             currentPopupNotification = null;
         }
 
@@ -1051,7 +1198,8 @@
             if (!seenIds.includes(notificationId)) {
                 seenIds.push(notificationId);
                 localStorage.setItem('ramazone_notifications_seen', JSON.stringify(seenIds));
-                processNotifications(); // Re-evaluate dot and counts
+                processNotifications();
+                renderNotificationsList(); // Re-render list to remove unread style
             }
         }
 
@@ -1069,19 +1217,51 @@
                 const isUnread = !seenIds.includes(n.id);
                 const itemDiv = document.createElement('div');
                 itemDiv.className = `notification-item ${isUnread ? 'unread' : ''}`;
+                const icon = n.imageUrl ? `<img src="${n.imageUrl}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">` : `<div class="history-icon credit">📢</div>`;
+                
                 itemDiv.innerHTML = `
-                    <div class="icon">📢</div>
+                    ${icon}
                     <div class="content">
                         <div class="title">${n.title}</div>
-                        <p>${n.message}</p>
+                        <p>${n.message.substring(0, 50)}...</p>
                         <div class="date">${new Date(n.timestamp).toLocaleString()}</div>
                     </div>`;
                 itemDiv.addEventListener('click', () => {
                     markNotificationAsRead(n.id);
-                    itemDiv.classList.remove('unread'); // Instant visual feedback
+                    showNotificationDetail(n);
                 });
                 container.appendChild(itemDiv);
             });
+        }
+        
+        function showNotificationDetail(notification) {
+            const detailImage = document.getElementById('notification-detail-image');
+            const detailLink = document.getElementById('notification-detail-link');
+
+            document.getElementById('notification-detail-title').textContent = notification.title;
+            document.getElementById('notification-detail-message').textContent = notification.message;
+            
+            if (notification.imageUrl) {
+                detailImage.src = notification.imageUrl;
+                detailImage.style.display = 'block';
+            } else {
+                detailImage.style.display = 'none';
+            }
+
+            if (notification.link) {
+                detailLink.href = notification.link;
+                detailLink.style.display = 'block';
+            } else {
+                detailLink.style.display = 'none';
+            }
+            
+            openModal(DOMElements.notificationDetailModal);
+        }
+
+        // --- PAYMENT SUCCESS MODAL (NEW) ---
+        function showTransactionSuccess(amount) {
+            document.getElementById('transaction-success-amount').textContent = `₹ ${parseFloat(amount).toFixed(2)}`;
+            openModal(DOMElements.transactionSuccessModal);
         }
 
         // --- ACTION HANDLERS ---
@@ -1249,7 +1429,6 @@
             const amount = parseFloat(document.getElementById('payment-amount').value);
             const availableBalance = (currentUserData.wallet || 0) + (currentUserData.dueAmount || 0);
 
-            // UPDATED: Minimum amount check
             if(isNaN(amount) || amount < 5) { showErrorMessage(DOMElements.paymentErrorMsg, "Kam se kam ₹5 bhejein."); return; }
             if(amount > availableBalance) { showErrorMessage(DOMElements.paymentErrorMsg, "Insufficient balance (including credit)."); return; }
             
@@ -1281,8 +1460,9 @@
 
             const newPaymentRef = push(ref(database, 'payments'));
             await set(newPaymentRef, { paymentId: newPaymentRef.key, senderId: auth.currentUser.uid, senderName: currentUserData.name, receiverId: receiverUid, receiverName: receiverData.name, amount: amount, timestamp: new Date().toISOString() });
-            showToast(`₹${amount.toFixed(2)} paid successfully!`);
+            
             closeModal(DOMElements.passwordModal);
+            showTransactionSuccess(amount); // UPDATED: Show success modal instead of toast
         }
 
         async function handlePasswordConfirmation() {
@@ -1372,19 +1552,17 @@
             uploadQrBtn.addEventListener('click', () => qrFileInput.click());
             qrFileInput.addEventListener('change', handleQrFileUpload);
             
-            // UPDATED: Event listeners for new filters and notifications
             DOMElements.filterBar.addEventListener('click', e => { 
                 const target = e.target.closest('.filter-btn'); 
                 if (!target || target.type === 'date') return; 
-                DOMElements.filterBar.querySelector('.active').classList.remove('active'); 
+                DOMElements.filterBar.querySelector('.active')?.classList.remove('active'); 
                 target.classList.add('active'); 
                 activeFilter = target.dataset.filter; 
-                DOMElements.dateFilter.value = ''; // Reset date filter when category changes
+                DOMElements.dateFilter.value = '';
                 renderUnifiedHistory(); 
             });
             DOMElements.dateFilter.addEventListener('change', () => {
                 if (DOMElements.dateFilter.value) {
-                    // Deactivate category filters when a date is selected
                     const currentActive = DOMElements.filterBar.querySelector('.active');
                     if (currentActive) currentActive.classList.remove('active');
                 }
@@ -1399,7 +1577,13 @@
             document.getElementById('notification-popup-view').addEventListener('click', handlePopupView);
         }
 
-        document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
+        // Initialize the app after the DOM is fully loaded.
+        // NOTE: In a real app, replace placeholder configs before deployment.
+        document.addEventListener('DOMContentLoaded', () => {
+            if (firebase.apps.length === 0) {
+                 initializeFirebaseApp();
+            }
+        });
     </script>
 </body>
 </html>
