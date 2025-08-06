@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ramazone - Polished Look</title>
+    <title>Ramazone - Fully Responsive</title>
     <link rel="apple-touch-icon" href="https://i.ibb.co/WvTg0bc5/20240813-084352.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -39,18 +39,29 @@
         }
 
         /* --- General Styles --- */
-        img { border-radius: 12px; }
         .smooth-scroll { scroll-behavior: smooth; }
         .section-title {
-            font-size: 1.75rem;
+            font-size: 1.5rem; /* Adjusted for mobile */
             font-weight: 800;
             text-align: center;
             margin-bottom: 1.5rem;
             letter-spacing: -0.5px;
         }
+        @media (min-width: 768px) { /* md breakpoint */
+            .section-title {
+                font-size: 2rem;
+            }
+        }
         .section-container {
             padding: 2rem 1rem;
-            margin: 0;
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .section-container {
+                padding: 3rem 2rem;
+                max-width: 1280px;
+                margin-left: auto;
+                margin-right: auto;
+            }
         }
 
         /* --- Sticky Header --- */
@@ -67,15 +78,24 @@
             width: 100%;
             margin: 0 auto;
             overflow: hidden;
-            height: 60vw;
-            max-height: 450px;
+            height: 60vw; /* Responsive height */
+            max-height: 300px; /* Mobile max height */
         }
-        .slider { display: flex; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+        @media (min-width: 768px) { /* md breakpoint */
+            .slider-container {
+                height: 40vw;
+                max-height: 500px; /* Desktop max height */
+                border-radius: 24px;
+                margin: 1rem auto;
+                max-width: 1280px;
+            }
+        }
+        .slider { display: flex; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
         .slider a { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
         .slider a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.5), transparent); }
-        .slider img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+        .slider img { width: 100%; height: 100%; object-fit: cover; }
         .slider-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; display: flex; justify-content: space-between; padding: 0 1rem; }
-        .slider-nav button { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
+        .slider-nav button { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3); color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
         .slider-nav button:hover { background: rgba(255, 255, 255, 0.5); transform: scale(1.1); }
         .slider-dots { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
         .slider-dots .dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s ease; }
@@ -102,57 +122,30 @@
         #fakeSearchInput:hover { transform: translateY(-3px); }
         .search-icon { width: 24px; height: 24px; color: var(--primary-color); }
 
-        /* --- Enhanced Special Category Section --- */
-        .special-category-wrapper {
-            display: flex;
-            gap: 1rem;
-            overflow-x: auto;
-            padding: 0.5rem;
-            scrollbar-width: none;
-        }
-        .special-category-wrapper::-webkit-scrollbar { display: none; }
-        .special-category-item {
-            flex: 0 0 calc(33.333% - 11px);
-            text-align: center;
-        }
-        .special-category-image-wrapper {
-            border-radius: 1.5rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.07);
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            aspect-ratio: 1 / 1;
-        }
-        .special-category-item:hover .special-category-image-wrapper {
-            transform: translateY(-8px) scale(1.05);
-            box-shadow: 0 12px 25px rgba(79, 70, 229, 0.15);
-        }
-        .special-category-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 0;
-        }
-        .special-category-item p {
-            margin-top: 0.75rem;
-            font-size: 0.85rem;
-            color: var(--text-dark);
-            font-weight: 600;
-        }
-        
-        /* --- Enhanced Festive Collection --- */
+        /* --- Festive Collection --- */
         .festive-collection {
             background-size: cover;
             background-position: center;
             padding: 2rem 0;
-            border-radius: 24px;
-            margin: 1.5rem;
+            border-radius: 0;
+            margin: 1.5rem 0;
             position: relative;
             overflow: hidden;
         }
+         @media (min-width: 768px) {
+            .festive-collection {
+                border-radius: 24px;
+                margin: 1.5rem;
+            }
+        }
         .festive-collection::before { content: ''; position: absolute; inset: 0; background-color: rgba(255,255,255,0.6); backdrop-filter: blur(5px); }
-        .festival-headline { position: relative; font-size: 2.5rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--text-dark); }
-        .product-slider { position: relative; display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; }
+        .festival-headline { position: relative; font-size: 2rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--text-dark); }
+         @media (min-width: 768px) {
+            .festival-headline {
+                font-size: 2.5rem;
+            }
+        }
+        .product-slider { position: relative; display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; }
         .product-slider::-webkit-scrollbar { display: none; }
         .product-card {
             background-color: var(--bg-white);
@@ -164,9 +157,19 @@
             display: block;
             text-decoration: none;
         }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .product-card {
+                flex-basis: calc(33.33% - 12px);
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .product-card {
+                flex-basis: calc(20% - 13px);
+            }
+        }
         .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12); }
-        .product-image-container { position: relative; width: 100%; height: 150px; overflow: hidden; border-top-left-radius: 16px; border-top-right-radius: 16px; }
-        .product-image-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .product-image-container { position: relative; width: 100%; padding-top: 100%; /* Aspect Ratio 1:1 */ overflow: hidden; border-top-left-radius: 16px; border-top-right-radius: 16px; }
+        .product-image-container img { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
         .product-card:hover .product-image-container img { transform: scale(1.1); }
         .product-details { padding: 1rem; text-align: center; }
         .product-name { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.5rem; color: var(--text-dark); }
@@ -180,44 +183,100 @@
             overflow: hidden;
             margin: 1.5rem;
         }
-        .dynamic-card img { width: 100%; height: auto; object-fit: cover; border-radius: 0; }
-        #sponsor-section-container img { max-height: 180px; }
+        .dynamic-card img { width: 100%; height: auto; object-fit: cover; }
+        #sponsor-section-container img { max-height: 180px; object-fit: cover; }
         .dynamic-card-content { padding: 1.5rem; }
         .dynamic-card-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
         .dynamic-card-text { color: var(--text-light); margin-bottom: 1rem; }
-        .dynamic-card-button { background-color: var(--primary-color); color: white; padding: 10px 20px; border-radius: 50px; font-weight: 600; display: inline-block; transition: background-color 0.3s, transform 0.3s; }
+        .dynamic-card-button { background-color: var(--primary-color); color: white; padding: 10px 20px; border-radius: 50px; font-weight: 600; display: inline-block; transition: background-color 0.3s, transform 0.3s; text-decoration: none; }
         .dynamic-card-button:hover { background-color: #4338CA; transform: scale(1.05); }
 
-        /* --- Advantages Section --- */
-        #advantages-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; }
-        .advantage-item { background-color: var(--bg-white); padding: 1.5rem; border-radius: 16px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s, box-shadow 0.3s; }
-        .advantage-item:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-        .advantage-item img { width: 90px; height: 90px; margin: 0 auto 1rem; object-fit: contain; }
-        .advantage-item p { font-weight: 600; color: var(--text-dark); }
-        
-        /* --- Floating Footer --- */
-        #footer { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); border-radius: 50px; display: flex; justify-content: space-around; padding: 0.5rem; z-index: 100; }
-        #footer a { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-light); padding: 0.5rem; border-radius: 50px; transition: color 0.3s, background-color 0.3s; }
+        /* --- Floating Footer for Mobile --- */
+        #footer { 
+            position: fixed; 
+            bottom: 1rem; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: calc(100% - 2rem); 
+            max-width: 400px; 
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); 
+            border-radius: 50px; 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 0.5rem; 
+            z-index: 100; 
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            #footer {
+                display: none; /* Hide floating footer on desktop */
+            }
+        }
+        #footer a { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-light); padding: 0.5rem; border-radius: 50px; transition: color 0.3s, background-color 0.3s; text-decoration: none; }
         #footer a:hover, #footer a.active { color: var(--primary-color); background-color: rgba(79, 70, 229, 0.1); }
-        #footer img { width: 24px; height: 24px; margin-bottom: 2px; border-radius: 0; }
+        #footer img { width: 24px; height: 24px; margin-bottom: 2px; }
         #footer span { font-size: 0.7rem; font-weight: 500; }
         
         /* --- Professional Social Media Links --- */
         .social-media-links { position: fixed; bottom: 6rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 99; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; transform: translateY(20px) scale(0.9); opacity: 0; pointer-events: none; }
+        @media (min-width: 768px) {
+             .social-media-links {
+                 bottom: 2rem;
+             }
+        }
         .social-media-links.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
         .social-link { position: relative; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
         .social-link:hover { transform: scale(1.1); }
         .social-link .tooltip { position: absolute; right: 120%; top: 50%; transform: translateY(-50%); background-color: var(--text-dark); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; }
         .social-link:hover .tooltip { opacity: 1; transform: translateY(-50%) translateX(-10px); }
-        .social-link img { width: 28px; height: 28px; }
+        
+        /* --- Desktop Footer --- */
+        #desktop-footer {
+            background-color: var(--bg-white);
+            color: var(--text-light);
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+        @media (min-width: 1024px) {
+            .footer-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .footer-column h3 {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+        .footer-column a {
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s;
+        }
+        .footer-column a:hover {
+            color: var(--primary-color);
+        }
+        .footer-bottom {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
 
     <!-- Sticky Header -->
     <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-2">
-        <div class="container mx-auto flex justify-center items-center">
-            <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px; border-radius: 0;">
+        <div class="container mx-auto flex justify-center items-center px-4">
+            <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px;">
         </div>
     </header>
 
@@ -232,7 +291,7 @@
     </div>
     
     <!-- Enhanced Search System -->
-    <div class="flex justify-center">
+    <div class="flex justify-center px-4">
         <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
             <div id="fakeSearchInput">
                 <div>
@@ -245,46 +304,53 @@
         </a>
     </div>
 
-    <!-- Special Premium Category Section -->
-    <div class="section-container bg-white reveal" id="special-category-section">
-        <h2 class="section-title">Top Picks For You</h2>
-        <div class="special-category-wrapper" id="special-category-wrapper"></div>
-    </div>
-
-    <!-- Normal Category Section -->
-    <div class="section-container reveal" id="normal-category-section">
-        <div class="category-container">
-            <div class="category-wrapper" id="normal-category-wrapper"></div>
+    <main class="mb-28 md:mb-0">
+        <!-- Special Premium Category Section -->
+        <div class="section-container bg-white reveal" id="special-category-section">
+            <h2 class="section-title">Top Picks For You</h2>
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4" id="special-category-wrapper">
+                <!-- JS will populate this -->
+            </div>
         </div>
-    </div>
 
-    <!-- Festive Collection Section -->
-    <div class="festive-collection reveal" id="festive-collection-container">
-        <h1 class="festival-headline text-center" id="festive-headline">The Festive Collection</h1>
-        <div class="product-slider" id="festive-product-slider"></div>
-    </div>
+        <!-- Normal Category Section -->
+        <div class="section-container reveal" id="normal-category-section">
+             <h2 class="section-title">Shop by Category</h2>
+            <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4" id="normal-category-wrapper">
+                <!-- JS will populate this -->
+            </div>
+        </div>
 
-    <!-- Dynamic Section 1 -->
-    <div class="dynamic-card reveal" id="dynamic-section-1"></div>
+        <!-- Festive Collection Section -->
+        <div class="festive-collection reveal" id="festive-collection-container">
+            <h1 class="festival-headline text-center" id="festive-headline">The Festive Collection</h1>
+            <div class="product-slider" id="festive-product-slider"></div>
+        </div>
 
-    <!-- Info Marquee System -->
-    <div class="marquee bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
-        <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
-    </div>
+        <!-- Dynamic Section 1 -->
+        <div class="dynamic-card reveal" id="dynamic-section-1"></div>
 
-    <!-- Sponsor Section -->
-    <div class="dynamic-card reveal" id="sponsor-section-container"></div>
+        <!-- Info Marquee System -->
+        <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
+            <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
+        </div>
 
-    <!-- Dynamic Section 2 -->
-    <div class="dynamic-card reveal" id="dynamic-section-2"></div>
+        <!-- Sponsor Section -->
+        <div class="dynamic-card reveal" id="sponsor-section-container"></div>
 
-    <!-- Advantages of Ramazone -->
-    <div class="section-container bg-white reveal mb-28" id="advantages-section">
-        <h2 class="section-title">Why <span style="color: var(--primary-color);">Ramazone?</span></h2>
-        <div id="advantages-grid" class="px-4"></div>
-    </div>
+        <!-- Dynamic Section 2 -->
+        <div class="dynamic-card reveal" id="dynamic-section-2"></div>
 
-    <!-- Floating Footer -->
+        <!-- Advantages of Ramazone -->
+        <div class="section-container bg-white reveal" id="advantages-section">
+            <h2 class="section-title">Why <span style="color: var(--primary-color);">Ramazone?</span></h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 px-4" id="advantages-grid">
+                <!-- JS will populate this -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Footer for Mobile -->
     <div id="footer">
         <a href="./index.html" id="homeButton" class="active">
             <img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home">
@@ -311,6 +377,42 @@
     <!-- Social Media Links -->
     <div class="social-media-links" id="social-links-container"></div>
 
+    <!-- Desktop Footer -->
+    <footer id="desktop-footer" class="hidden md:block bg-white">
+        <div class="container mx-auto">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4">
+                    <p>India's favorite online shopping destination.</p>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact Us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Blog</a>
+                </div>
+                <div class="footer-column">
+                    <h3>Help</h3>
+                    <a href="#">Payments</a>
+                    <a href="#">Shipping</a>
+                    <a href="#">Cancellation & Returns</a>
+                    <a href="#">FAQ</a>
+                </div>
+                <div class="footer-column">
+                    <h3>Follow Us</h3>
+                    <div id="desktop-social-links" class="flex gap-4">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; <span id="copyright-year">2024</span> Ramazone. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -320,22 +422,36 @@
         async function initializeFirebaseAndLoadContent() {
             try {
                 // Step 1: Apne serverless function se config fetch karein
-                const response = await fetch('/api/firebase-config');
-                if (!response.ok) {
-                    throw new Error('Could not fetch Firebase config!');
-                }
-                const firebaseConfig = await response.json();
+                // For this example, we will use a placeholder config.
+                // Replace this with your actual fetch logic:
+                // const response = await fetch('/api/firebase-config');
+                // if (!response.ok) throw new Error('Could not fetch Firebase config!');
+                // const firebaseConfig = await response.json();
+                
+                // --- START: Placeholder Firebase Config ---
+                // IMPORTANT: Replace this with your actual Firebase configuration
+                const firebaseConfig = {
+                    apiKey: "YOUR_API_KEY",
+                    authDomain: "YOUR_AUTH_DOMAIN",
+                    databaseURL: "https://ramazone-3c2c5-default-rtdb.firebaseio.com", // Using the public URL
+                    projectId: "YOUR_PROJECT_ID",
+                    storageBucket: "YOUR_STORAGE_BUCKET",
+                    messagingSenderId: "YOUR_SENDER_ID",
+                    appId: "YOUR_APP_ID"
+                };
+                // --- END: Placeholder Firebase Config ---
 
                 // Step 2: Fetch ki hui config se Firebase ko initialize karein
-                firebase.initializeApp(firebaseConfig);
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
                 const database = firebase.database();
 
-                // Step 3: Firebase se data load karein (yeh aapka purana logic hai)
+                // Step 3: Firebase se data load karein
                 loadDataFromFirebase(database);
 
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                // User ko error dikhayein
                 document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem;">Could not load page data. Please try again later.</div>';
             }
         }
@@ -357,21 +473,20 @@
                     renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
                     renderAdvantages(data.advantages);
                     renderFooter(data.footer);
+                    document.getElementById('copyright-year').textContent = new Date().getFullYear();
                 } else {
                     console.log("No data found in Firebase.");
-                    document.querySelectorAll('.reveal').forEach(el => el.style.display = 'none');
+                    document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem;">Welcome! Content is being prepared.</div>';
                 }
+            }, (error) => {
+                 console.error("Firebase read failed: " + error.name);
+                 document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem;">Error loading data. Check console for details.</div>';
             });
             setupScrollAnimations();
         }
 
-        // Page load hone par initialization process shuru karein
         document.addEventListener('DOMContentLoaded', initializeFirebaseAndLoadContent);
 
-
-        // --- BAAKI SARA CODE (RENDER FUNCTIONS, UI, ETC.) SAME RAHEGA ---
-
-        // --- Helper function to hide/show sections ---
         function toggleSection(sectionId, show) {
             const section = document.getElementById(sectionId);
             if (section) {
@@ -379,28 +494,25 @@
             }
         }
 
-        // --- RENDER FUNCTIONS ---
+        // --- RENDER FUNCTIONS (Updated for Responsiveness) ---
         
         function renderSlider(sliderData) {
+            const container = document.querySelector('.slider-container');
             const slider = document.getElementById('main-slider');
             const dotsContainer = document.getElementById('slider-dots-container');
             if (!slider || !sliderData || sliderData.length === 0) {
-                toggleSection('slider-container', false);
+                if(container) container.style.display = 'none';
                 return;
             };
-            toggleSection('slider-container', true);
+            if(container) container.style.display = 'block';
             slider.innerHTML = '';
             dotsContainer.innerHTML = '';
             
             sliderData.forEach((slide, index) => {
-                const slideLink = document.createElement('a');
-                slideLink.href = slide.linkUrl || '#';
-                slideLink.target = '_blank';
-                const img = document.createElement('img');
-                img.src = slide.imageUrl;
-                img.alt = `Slide ${index + 1}`;
-                slideLink.appendChild(img);
-                slider.appendChild(slideLink);
+                slider.innerHTML += `
+                    <a href="${slide.linkUrl || '#'}" target="_blank">
+                        <img src="${slide.imageUrl}" alt="Promotional banner ${index + 1}">
+                    </a>`;
 
                 const dot = document.createElement('div');
                 dot.classList.add('dot');
@@ -422,7 +534,7 @@
                 const categoryTextEl = document.getElementById("categoryText");
                 if (window.categoryInterval) clearInterval(window.categoryInterval);
                 window.categoryInterval = setInterval(() => {
-                    categoryTextEl.innerText = categories[categoryIndex];
+                    if(categoryTextEl) categoryTextEl.innerText = categories[categoryIndex];
                     categoryIndex = (categoryIndex + 1) % categories.length;
                 }, 2000);
             }
@@ -430,33 +542,45 @@
         
         function renderSpecialCategories(categories) {
             const wrapper = document.getElementById('special-category-wrapper');
-            if (!categories || categories.length === 0) {
+            if (!wrapper || !categories || categories.length === 0) {
                 toggleSection('special-category-section', false);
                 return;
             }
             toggleSection('special-category-section', true);
             wrapper.innerHTML = '';
             categories.forEach(cat => {
-                wrapper.innerHTML += `<div class="special-category-item"><a href="${cat.linkUrl || '#'}" target="_blank"><div class="special-category-image-wrapper"><img src="${cat.imageUrl}" alt="${cat.name}"></div><p>${cat.name}</p></a></div>`;
+                wrapper.innerHTML += `
+                    <a href="${cat.linkUrl || '#'}" target="_blank" class="text-center group">
+                        <div class="aspect-square bg-white rounded-2xl shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">
+                            <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-cover">
+                        </div>
+                        <p class="mt-2 text-xs sm:text-sm font-semibold text-gray-700">${cat.name}</p>
+                    </a>`;
             });
         }
 
         function renderNormalCategories(categories) {
             const wrapper = document.getElementById('normal-category-wrapper');
-            if (!categories || categories.length === 0) {
+            if (!wrapper || !categories || categories.length === 0) {
                 toggleSection('normal-category-section', false);
                 return;
             }
             toggleSection('normal-category-section', true);
             wrapper.innerHTML = '';
             categories.forEach(cat => {
-                wrapper.innerHTML += `<div class="category-item"><a href="${cat.linkUrl || '#'}"><div class="img-container"><img src="${cat.imageUrl}" alt="${cat.name}" class="category-image"></div><p>${cat.name}</p></a></div>`;
+                wrapper.innerHTML += `
+                    <a href="${cat.linkUrl || '#'}" class="text-center group">
+                        <div class="aspect-square bg-gray-200 rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-110">
+                            <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-contain p-2">
+                        </div>
+                        <p class="mt-2 text-xs font-medium text-gray-600">${cat.name}</p>
+                    </a>`;
             });
         }
 
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
-            if (!collectionData || !collectionData.products || collectionData.products.length === 0) {
+            if (!container || !collectionData || !collectionData.products || collectionData.products.length === 0) {
                 toggleSection('festive-collection-container', false);
                 return;
             }
@@ -467,32 +591,29 @@
             
             slider.innerHTML = '';
             collectionData.products.forEach((prod, index) => {
-                const cardLink = document.createElement('a');
-                cardLink.href = `./product-details.html?id=${index}`;
-                cardLink.className = 'product-card';
-                cardLink.innerHTML = `
-                    <div class="product-image-container">
-                        <img src="${prod.imageUrl}" alt="${prod.name}">
-                    </div>
-                    <div class="product-details">
-                        <p class="product-name">${prod.name}</p>
-                        <span class="product-offer">${prod.offer}</span>
-                    </div>
-                `;
-                slider.appendChild(cardLink);
+                slider.innerHTML += `
+                    <a href="./product-details.html?id=${index}" class="product-card">
+                        <div class="product-image-container">
+                            <img src="${prod.imageUrl}" alt="${prod.name}">
+                        </div>
+                        <div class="product-details">
+                            <p class="product-name">${prod.name}</p>
+                            <span class="product-offer">${prod.offer}</span>
+                        </div>
+                    </a>`;
             });
         }
         
         function renderDynamicSection(selector, sectionData) {
             const container = document.querySelector(selector);
-            if (!sectionData || !sectionData.imageUrl) {
+            if (!container || !sectionData || !sectionData.imageUrl) {
                 if(container) container.style.display = 'none';
                 return;
             }
-            if(container) container.style.display = 'block';
+            container.style.display = 'block';
             container.innerHTML = `
-                <a href="${sectionData.linkUrl || '#'}" target="_blank">
-                    <img src="${sectionData.imageUrl}" alt="${sectionData.title || 'Dynamic Content'}">
+                <a href="${sectionData.linkUrl || '#'}" target="_blank" class="block">
+                    <img src="${sectionData.imageUrl}" alt="${sectionData.title || 'Dynamic Content'}" class="w-full h-auto">
                 </a>
                 <div class="dynamic-card-content">
                     <h3 class="dynamic-card-title" style="color: ${sectionData.titleColor || 'var(--text-dark)'};">${sectionData.title || ''}</h3>
@@ -505,6 +626,7 @@
         }
         
         function renderInfoMarquee(marqueeText) {
+            const section = document.getElementById('info-marquee-section');
             if (!marqueeText) {
                 toggleSection('info-marquee-section', false);
                 return;
@@ -515,14 +637,14 @@
         
         function renderSponsor(sponsorData) {
             const container = document.getElementById('sponsor-section-container');
-            if (!sponsorData || !sponsorData.imageUrl) {
+            if (!container || !sponsorData || !sponsorData.imageUrl) {
                 if(container) container.style.display = 'none';
                 return;
             }
-            if(container) container.style.display = 'block';
+            container.style.display = 'block';
             container.innerHTML = `
                  <a href="${sponsorData.linkUrl || '#'}" target="_blank">
-                    <img src="${sponsorData.imageUrl}" alt="Sponsor">
+                    <img src="${sponsorData.imageUrl}" alt="Sponsor" class="w-full">
                 </a>
                 <div class="dynamic-card-content text-center py-4">
                     <p class="text-sm font-semibold text-gray-500 tracking-widest uppercase">Sponsored</p>
@@ -532,44 +654,61 @@
         
         function renderAdvantages(advantagesData) {
             const grid = document.getElementById('advantages-grid');
-            if (!advantagesData || advantagesData.length === 0) {
+            if (!grid || !advantagesData || advantagesData.length === 0) {
                 toggleSection('advantages-section', false);
                 return;
             }
             toggleSection('advantages-section', true);
             grid.innerHTML = '';
             advantagesData.forEach(adv => {
-                grid.innerHTML += `<div class="advantage-item"><img src="${adv.imageUrl}" alt="${adv.title}"><p>${adv.title}</p></div>`;
+                grid.innerHTML += `
+                    <div class="advantage-item bg-white p-4 rounded-xl text-center shadow-sm hover:shadow-md transition-shadow">
+                        <img src="${adv.imageUrl}" alt="${adv.title}" class="w-16 h-16 mx-auto mb-2 object-contain">
+                        <p class="font-semibold text-sm text-gray-800">${adv.title}</p>
+                    </div>`;
             });
         }
 
         function renderFooter(footerData) {
             if (!footerData) return;
+            // Mobile Footer
             document.getElementById('footer-shop-link').href = './products.html';
             document.getElementById('footer-play-link').href = footerData.playLink || '#';
             document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
             
             const socialContainer = document.getElementById('social-links-container');
-            socialContainer.innerHTML = '';
+            const desktopSocialContainer = document.getElementById('desktop-social-links');
+            let socialHTML = '';
             if (footerData.followLinks) {
                 const links = footerData.followLinks;
+                // Mobile floating icons
                 if (links.youtube) socialContainer.innerHTML += `<a href="${links.youtube}" target="_blank" class="social-link bg-red-500"><img src="https://cdn-icons-png.flaticon.com/128/3670/3670147.png" alt="YouTube"><span class="tooltip">YouTube</span></a>`;
                 if (links.facebook) socialContainer.innerHTML += `<a href="${links.facebook}" target="_blank" class="social-link bg-blue-600"><img src="https://www.svgrepo.com/show/303114/facebook-3-logo.svg" alt="Facebook"><span class="tooltip">Facebook</span></a>`;
                 if (links.instagram) socialContainer.innerHTML += `<a href="${links.instagram}" target="_blank" class="social-link bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"><img src="https://cdn-icons-png.flaticon.com/128/2111/2111463.png" alt="Instagram"><span class="tooltip">Instagram</span></a>`;
                 if (links.whatsapp) socialContainer.innerHTML += `<a href="${links.whatsapp}" target="_blank" class="social-link bg-green-500"><img src="https://cdn-icons-png.flaticon.com/128/3991/3991765.png" alt="WhatsApp"><span class="tooltip">WhatsApp</span></a>`;
+                
+                // Desktop footer icons
+                if (links.youtube) socialHTML += `<a href="${links.youtube}" target="_blank" class="text-gray-500 hover:text-red-500 transition"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10,15L15.19,12L10,9V15M21.56,7.17C21.69,7.64 21.78,8.27 21.84,9.07C21.91,9.87 21.94,10.56 21.94,11.16L22,12C22,14.19 21.84,15.8 21.56,16.83C21.31,17.73 20.73,18.31 19.83,18.56C19.36,18.69 18.73,18.78 17.93,18.84C17.13,18.91 16.44,18.94 15.84,18.94L15,19C12.81,19 11.2,18.84 10.17,18.56C9.27,18.31 8.69,17.73 8.44,16.83C8.31,16.36 8.22,15.73 8.16,14.93C8.09,14.13 8.06,13.44 8.06,12.84L8,12C8,9.81 8.16,8.2 8.44,7.17C8.69,6.27 9.27,5.69 10.17,5.44C11.2,5.16 12.81,5 15,5L15.84,5.06C16.44,5.06 17.13,5.09 17.93,5.16C18.73,5.22 19.36,5.31 19.83,5.44C20.73,5.69 21.31,6.27 21.56,7.17Z" /></svg></a>`;
+                if (links.facebook) socialHTML += `<a href="${links.facebook}" target="_blank" class="text-gray-500 hover:text-blue-600 transition"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.81C10.44 7.31 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" /></svg></a>`;
+                if (links.instagram) socialHTML += `<a href="${links.instagram}" target="_blank" class="text-gray-500 hover:text-pink-500 transition"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" /></svg></a>`;
+                if (desktopSocialContainer) desktopSocialContainer.innerHTML = socialHTML;
             }
         }
         
         // --- UI FUNCTIONALITY ---
         let currentSlide = 0, totalSlides = 0, sliderInterval;
         function initializeSlider(count) { totalSlides = count; if (sliderInterval) clearInterval(sliderInterval); if (totalSlides > 0) { currentSlide = 0; updateSlider(); sliderInterval = setInterval(nextSlide, 4000); } }
-        function goToSlide(index) { currentSlide = index; updateSlider(); }
+        function goToSlide(index) { currentSlide = index; updateSlider(); resetSliderInterval(); }
         function nextSlide() { currentSlide = (currentSlide + 1) % totalSlides; updateSlider(); }
-        function prevSlide() { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; updateSlider(); }
+        function prevSlide() { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; updateSlider(); resetSliderInterval(); }
         function updateSlider() {
             const slider = document.querySelector('.slider');
             const dots = document.querySelectorAll('.slider-dots .dot');
             if (slider && dots.length > 0) { slider.style.transform = `translateX(-${currentSlide * 100}%)`; dots.forEach((dot, i) => dot.classList.toggle('active', i === currentSlide)); }
+        }
+        function resetSliderInterval() {
+             clearInterval(sliderInterval);
+             sliderInterval = setInterval(nextSlide, 4000);
         }
         
         let socialLinksTimer;
@@ -590,6 +729,7 @@
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Animate only once
                     }
                 });
             }, { threshold: 0.1 });
