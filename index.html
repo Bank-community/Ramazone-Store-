@@ -418,28 +418,15 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // --- Naya Logic: Firebase Config ko Server se Fetch karna ---
+        // --- Sahi Logic: Firebase Config ko Server se Fetch karna ---
         async function initializeFirebaseAndLoadContent() {
             try {
                 // Step 1: Apne serverless function se config fetch karein
-                // For this example, we will use a placeholder config.
-                // Replace this with your actual fetch logic:
-                // const response = await fetch('/api/firebase-config');
-                // if (!response.ok) throw new Error('Could not fetch Firebase config!');
-                // const firebaseConfig = await response.json();
-                
-                // --- START: Placeholder Firebase Config ---
-                // IMPORTANT: Replace this with your actual Firebase configuration
-                const firebaseConfig = {
-                    apiKey: "YOUR_API_KEY",
-                    authDomain: "YOUR_AUTH_DOMAIN",
-                    databaseURL: "https://ramazone-3c2c5-default-rtdb.firebaseio.com", // Using the public URL
-                    projectId: "YOUR_PROJECT_ID",
-                    storageBucket: "YOUR_STORAGE_BUCKET",
-                    messagingSenderId: "YOUR_SENDER_ID",
-                    appId: "YOUR_APP_ID"
-                };
-                // --- END: Placeholder Firebase Config ---
+                const response = await fetch('/api/firebase-config');
+                if (!response.ok) {
+                    throw new Error('Could not fetch Firebase config from Vercel!');
+                }
+                const firebaseConfig = await response.json();
 
                 // Step 2: Fetch ki hui config se Firebase ko initialize karein
                 if (!firebase.apps.length) {
@@ -462,6 +449,7 @@
             homepageRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    // All render functions will be called here
                     renderSlider(data.slider);
                     renderSearch(data.search);
                     renderSpecialCategories(data.specialCategories);
@@ -479,12 +467,13 @@
                     document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem;">Welcome! Content is being prepared.</div>';
                 }
             }, (error) => {
-                 console.error("Firebase read failed: " + error.name);
+                 console.error("Firebase read failed: " + error.code + " - " + error.message);
                  document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem;">Error loading data. Check console for details.</div>';
             });
             setupScrollAnimations();
         }
 
+        // Page load hone par initialization process shuru karein
         document.addEventListener('DOMContentLoaded', initializeFirebaseAndLoadContent);
 
         function toggleSection(sectionId, show) {
