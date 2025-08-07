@@ -191,15 +191,15 @@
             try {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
-                fetchProductData(database);
+                await fetchProductData(database); // Use await here
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
                 showError('Could not connect to the database.');
             }
         }
 
-        // --- Data Fetching Function ---
-        function fetchProductData(database) {
+        // --- UPDATED Data Fetching Function with better async/await and error handling ---
+        async function fetchProductData(database) {
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('id');
             currentProductId = productId;
@@ -210,36 +210,38 @@
             }
 
             const pathsToTry = [`ramazone/homepage/festiveCollection/products/${productId}`];
-            let productFound = false;
+            
+            try {
+                for (const path of pathsToTry) {
+                    const productRef = database.ref(path);
+                    const snapshot = await productRef.get();
 
-            pathsToTry.forEach((path, index) => {
-                if (productFound) return;
-                const productRef = database.ref(path);
-                productRef.get()
-                .then((snapshot) => {
                     if (snapshot.exists()) {
-                        productFound = true;
                         currentProductData = snapshot.val();
                         loadProduct(currentProductData, productId);
                         loadRelatedProducts(productId, database);
                         document.getElementById('loading-indicator').style.display = 'none';
                         document.getElementById('product-content').style.display = 'block';
-                    } else if (index === pathsToTry.length - 1 && !productFound) {
-                        showError('Sorry, this product could not be found.');
+                        return; // Product found, exit the function
                     }
-                })
-                // --- FIXED: Added .catch() for error handling during fetch ---
-                .catch(error => {
-                    console.error("Firebase data fetch error:", error);
-                    showError('An error occurred while fetching product data.');
-                });
-            });
+                }
+                // If loop finishes and no product was found
+                showError('Sorry, this product could not be found.');
+            } catch (error) {
+                console.error("Firebase data fetch error:", error);
+                let userMessage = 'An error occurred while fetching product data.';
+                // Provide a more specific error if it's a permission issue
+                if (error.code === 'PERMISSION_DENIED') {
+                    userMessage = 'Could not access product data. Please check your database security rules.';
+                }
+                showError(userMessage);
+            }
         }
 
         // --- Utility to show error message ---
         function showError(message) {
             const productContent = document.getElementById('product-content');
-            productContent.innerHTML = `<p class="text-center text-red-500 font-bold p-8">${message}</p>`;
+            productContent.innerHTML = `<div class="text-center p-8"><p class="text-red-600 font-semibold">${message}</p></div>`;
             document.getElementById('loading-indicator').style.display = 'none';
             productContent.style.display = 'block';
         }
@@ -250,7 +252,7 @@
             setupImageModal();
         });
 
-        // --- Core Functions ---
+        // --- Core Functions (No changes below this line, they are already robust) ---
         function loadProduct(data, id) {
             const firstImage = (data.images && data.images.length > 0) ? data.images[0] : data.imageUrl;
             const plainDescription = `Check out this amazing product: ${data.name} on Ramazone!`;
