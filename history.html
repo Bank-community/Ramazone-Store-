@@ -86,8 +86,8 @@
         @media (min-width: 1024px) { .product-card { flex-basis: calc(20% - 13px); } }
         .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12); }
         .product-media-container { position: relative; width: 100%; padding-top: 100%; background-color: #f3f4f6; }
-        .product-media-container img, .product-media-container video { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        .product-card:hover .product-media-container img, .product-card:hover .product-media-container video { transform: scale(1.1); }
+        .product-media-container img { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .product-card:hover .product-media-container img { transform: scale(1.1); }
         .product-details { padding: 1rem; text-align: left; }
         .product-name { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.25rem; color: var(--text-dark); }
         .product-offer { background-color: var(--primary-color); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-bottom: 0.5rem; }
@@ -204,7 +204,6 @@
         <a href="./index.html" class="active">
             <img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span>
         </a>
-        <!-- UPDATED: Shop link ab seedhe products.html par jaayega -->
         <a href="./products.html" id="footer-shop-link">
             <img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Shop"><span>Shop</span>
         </a>
@@ -389,10 +388,13 @@
             });
         }
 
-        // --- UPDATED Festive Collection Function ---
+        // --- FIXED Festive Collection Function ---
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
-            if (!container || !collectionData || !collectionData.products) return;
+            if (!container || !collectionData || !collectionData.products) {
+                if(container) container.style.display = 'none';
+                return;
+            }
             
             document.getElementById('festive-headline').innerText = collectionData.title || 'Special Offers';
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
@@ -400,24 +402,22 @@
             const slider = document.getElementById('festive-product-slider');
             slider.innerHTML = '';
 
-            // Products data ab ek object hai, isliye Object.keys() use karein
             const productIds = Object.keys(collectionData.products);
 
             productIds.forEach(productId => {
                 const prod = collectionData.products[productId];
-                const mainMedia = prod.videoUrl || (prod.images && prod.images[0]) || prod.imageUrl || '';
-                const isVideo = mainMedia.includes('.mp4');
                 
-                // Har product ko uske details page par link karein
+                // FIX: Always use an image for the thumbnail, never the video.
+                // Prioritize the first image in the 'images' array, then the 'imageUrl'.
+                const thumbnailUrl = (prod.images && prod.images[0]) || prod.imageUrl || 'https://placehold.co/200x200/F9FAFB/111827?text=No+Image';
+                
+                // Link each product to its details page
                 const productLink = `./product-details.html?id=${productId}`;
 
                 slider.innerHTML += `
                     <a href="${productLink}" class="product-card">
                         <div class="product-media-container">
-                            ${isVideo 
-                                ? `<video src="${mainMedia}" muted loop playsinline preload="metadata"></video>` 
-                                : `<img src="${mainMedia}" alt="${prod.name}">`
-                            }
+                            <img src="${thumbnailUrl}" alt="${prod.name || 'Product'}" onerror="this.onerror=null;this.src='https://placehold.co/200x200/F9FAFB/111827?text=No+Image';">
                         </div>
                         <div class="product-details">
                             <p class="product-name">${prod.name || ''}</p>
@@ -480,11 +480,8 @@
             });
         }
         
-        // --- UPDATED Footer Function ---
         function renderFooter(footerData) {
             if (!footerData) return;
-            // Shop link ab HTML mein hardcoded hai, isliye use yahan update nahi karenge.
-            // Baki links ko update karein.
             document.getElementById('footer-play-link').href = footerData.playLink || '#';
             document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
             
