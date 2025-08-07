@@ -3,622 +3,1602 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ramazone - Aapki Apni Dukaan</title>
-    <link rel="apple-touch-icon" href="https://i.ibb.co/WvTg0bc5/20240813-084352.png">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <title>Ramazone Cashback</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4F46E5;
-            --secondary-color: #F59E0B;
-            --text-dark: #111827;
-            --text-light: #6B7280;
-            --bg-light: #F9FAFB;
-            --bg-white: #FFFFFF;
-            --border-color: #E5E7EB;
+            --bg-dark: #121828;
+            --bg-light: #1B2133;
+            --text-primary-dark: #ffffff;
+            --text-secondary-dark: #a9b1c8;
+            --border-color-dark: #2c344a;
+
+            --bg-light-theme: #f4f7f9;
+            --bg-light-theme-card: #ffffff;
+            --text-primary-light: #1c2028;
+            --text-secondary-light: #5a647e;
+            --border-color-light: #e8eef3;
+            --border-color-light-strong: #ced4da;
+            
+            --brand-red: #e50914;
+            --brand-red-hover: #c40812;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --accent-yellow: #f1c40f;
+            --whatsapp-green: #25D366;
+            --accent-purple: #9b59b6; 
+            --shiny-green: #2eff71;
+            --due-red: #ff6b6b;
+            
+            /* FINAL: Professional Card Color */
+            --card-bg: #00ADEF;
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); }
-        .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
-        .reveal.visible { opacity: 1; transform: translateY(0); }
-        .section-title { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 1.5rem; letter-spacing: -0.5px; }
-        @media (min-width: 768px) { .section-title { font-size: 2rem; } }
-        .section-container { padding: 2rem 1rem; }
-        @media (min-width: 1024px) { .section-container { padding: 3rem 2rem; max-width: 1280px; margin-left: auto; margin-right: auto; } }
-        header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3s, box-shadow 0.3s; }
 
-        /* --- Cinematic Slider (Infinite Loop) --- */
-        .slider-container { position: relative; width: 100%; margin: 0 auto; overflow: hidden; height: 80vw; max-height: 400px; background-color: #e5e7eb; }
-        @media (min-width: 768px) { .slider-container { height: 45vw; max-height: 600px; border-radius: 24px; margin: 1rem auto; max-width: 1280px; } }
-        .slider { display: flex; height: 100%; }
-        .slider.transitioning { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
-        .slide { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
-        .slide video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
-        .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; }
-        .slide .overlay { position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%); }
-        .slider-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; display: flex; justify-content: space-between; padding: 0 1rem; z-index: 10; }
-        .slider-nav button { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
-        .slider-nav button:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.1); }
-        .slider-dots { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
-        .slider-dots .dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s ease; }
-        .slider-dots .dot.active { background: white; transform: scale(1.3); }
+        /* --- Base Styles & Resets --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* --- Search Bar --- */
-        #fakeSearchInput { font-size: 1rem; padding: 14px 24px; cursor: pointer; background-color: var(--bg-white); display: flex; align-items: center; justify-content: space-between; border-radius: 50px; width: 95%; max-width: 600px; margin: -40px auto 1.5rem; position: relative; z-index: 10; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0,0,0,0.04); transition: transform 0.3s ease; }
-        #fakeSearchInput:hover { transform: translateY(-3px); }
-        .search-icon { width: 24px; height: 24px; color: var(--primary-color); }
+        html { height: 100%; }
 
-        /* --- Videos Section Slider --- */
-        .videos-slider-container { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x mandatory; }
-        .videos-slider-container::-webkit-scrollbar { display: none; }
-        .video-card { flex: 0 0 90%; scroll-snap-align: center; }
-        @media (min-width: 640px) { .video-card { flex-basis: 60%; } }
-        @media (min-width: 1024px) { .video-card { flex-basis: calc(33.33% - 11px); } }
-        .video-card { cursor: pointer; background-color: var(--bg-white); border-radius: 1rem; box-shadow: 0 8px 25px rgba(0,0,0,0.07); overflow: hidden; transition: all 0.3s ease; }
-        .video-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        .video-media { position: relative; padding-top: 56.25%; background-color: #e5e7eb; }
-        .video-media img, .video-media video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .video-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; transition: transform 0.3s; }
-        .video-card:hover .video-play-icon { transform: translate(-50%, -50%) scale(1.1); }
-        .video-content { padding: 1.25rem; }
-        .video-title { font-weight: 700; font-size: 1.125rem; }
-        .video-description { color: var(--text-light); margin-top: 0.5rem; }
-        .video-link { display: inline-block; margin-top: 1rem; color: var(--primary-color); font-weight: 600; text-decoration: none; }
-        .video-link:hover { text-decoration: underline; }
-
-        /* --- Video Lightbox/Modal --- */
-        #video-lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        #video-lightbox.show { opacity: 1; pointer-events: auto; }
-        #video-lightbox .lightbox-content { position: relative; width: 90%; max-width: 900px; aspect-ratio: 16/9; }
-        #video-lightbox video { width: 100%; height: 100%; }
-        #video-lightbox .close-btn { position: absolute; top: -40px; right: 0; font-size: 2.5rem; color: white; cursor: pointer; }
-
-        /* --- Festive Collection --- */
-        .festive-collection { padding: 2rem 0; margin: 1.5rem 0; position: relative; overflow: hidden; }
-        @media (min-width: 768px) { .festive-collection { border-radius: 24px; margin: 1.5rem; padding: 3rem 1rem; } }
-        .festival-headline { font-size: 2rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; color: var(--text-dark); text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
-        @media (min-width: 768px) { .festival-headline { font-size: 2.75rem; } }
-        .product-slider { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; }
-        .product-slider::-webkit-scrollbar { display: none; }
-        .product-card { background-color: var(--bg-white); border-radius: 16px; flex: 0 0 calc(50% - 10px); max-width: 200px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; text-decoration: none; overflow: hidden; }
-        @media (min-width: 640px) { .product-card { flex-basis: calc(33.33% - 12px); } }
-        @media (min-width: 1024px) { .product-card { flex-basis: calc(20% - 13px); } }
-        .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12); }
-        .product-media-container { position: relative; width: 100%; padding-top: 100%; background-color: #f3f4f6; }
-        .product-media-container img { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        .product-card:hover .product-media-container img { transform: scale(1.1); }
-        .product-details { padding: 1rem; text-align: left; }
-        .product-name { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.25rem; color: var(--text-dark); }
-        .product-offer { background-color: var(--primary-color); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-bottom: 0.5rem; }
-        .product-price { display: flex; align-items: baseline; gap: 0.5rem; }
-        .display-price { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; }
-        .original-price { font-size: 0.85rem; text-decoration: line-through; color: var(--text-light); }
-
-        /* --- Flip Card Section (Auto Flip) --- */
-        @keyframes auto-flip {
-          0%, 15% { transform: rotateY(0deg); }
-          20%, 65% { transform: rotateY(180deg); }
-          70%, 100% { transform: rotateY(360deg); }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary-dark);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100%;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
         }
-        .flip-card-container { perspective: 1000px; }
-        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; animation: auto-flip 10s infinite ease-in-out; }
-        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .flip-card-back { transform: rotateY(180deg); }
-        .flip-card-front img, .flip-card-back img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- Other Sections --- */
-        .sponsor-card { border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); overflow: hidden; margin: 1.5rem; }
-        .sponsor-card video, .sponsor-card img { width: 100%; height: auto; object-fit: cover; }
-        #footer { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); border-radius: 50px; display: flex; justify-content: space-around; padding: 0.5rem; z-index: 100; }
-        @media (min-width: 768px) { #footer { display: none; } }
-        #footer a { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-light); padding: 0.5rem; border-radius: 50px; transition: color 0.3s, background-color 0.3s; text-decoration: none; }
-        #footer a:hover, #footer a.active { color: var(--primary-color); background-color: rgba(79, 70, 229, 0.1); }
-        #footer img { width: 24px; height: 24px; margin-bottom: 2px; }
-        #footer span { font-size: 0.7rem; font-weight: 500; }
-        #desktop-footer { display: none; }
-        @media (min-width: 768px) { #desktop-footer { display: block; background-color: var(--bg-white); color: var(--text-light); padding: 3rem 2rem; border-top: 1px solid var(--border-color); } }
-        .footer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
-        @media (min-width: 1024px) { .footer-grid { grid-template-columns: repeat(4, 1fr); } }
-        .footer-column h3 { font-weight: 600; color: var(--text-dark); margin-bottom: 1rem; }
-        .footer-column a { display: block; margin-bottom: 0.5rem; transition: color 0.3s; }
-        .footer-column a:hover { color: var(--primary-color); }
-        .footer-bottom { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.9rem; }
+        /* --- Light Theme --- */
+        body[data-theme="light"] {
+            background-color: var(--bg-light-theme);
+            color: var(--text-primary-light);
+        }
+        body[data-theme="light"] .view, body[data-theme="light"] .action-card, body[data-theme="light"] .modal-content, body[data-theme="light"] .history-item, body[data-theme="light"] .notification-item {
+            background-color: var(--bg-light-theme-card);
+            border-color: var(--border-color-light);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        body[data-theme="light"] .action-card {
+            border: 1px solid var(--border-color-light-strong);
+        }
+        body[data-theme="light"] input, body[data-theme="light"] select, body[data-theme="light"] input[type="date"] {
+            background-color: var(--bg-light-theme);
+            border-color: var(--border-color-light-strong);
+            color: var(--text-primary-light);
+        }
+        body[data-theme="light"] label, body[data-theme="light"] .form-link, body[data-theme="light"] .section-title, body[data-theme="light"] .modal-description, body[data-theme="light"] .history-info .date, body[data-theme="light"] #profile-payment-id, body[data-theme="light"] .notification-item .date {
+            color: var(--text-secondary-light);
+        }
+        body[data-theme="light"] .btn-secondary {
+            background-color: #e8eef3;
+            color: var(--text-primary-light);
+        }
+        body[data-theme="light"] .header-icon:hover { background-color: #e8eef3; }
+        body[data-theme="light"] .notification-dot { border-color: var(--bg-light-theme-card); }
+        body[data-theme="light"] .wallet-card {
+            background: var(--card-bg);
+            color: white;
+        }
+        body[data-theme="light"] .wallet-card-logo { filter: none; }
+        body[data-theme="light"] #user-name-display { color: white; }
+        body[data-theme="light"] .wallet-balance-label, body[data-theme="light"] #user-mobile { color: rgba(255,255,255,0.8); }
+        body[data-theme="light"] .wallet-footer-item p { color: rgba(255,255,255,0.8); }
+        body[data-theme="light"] .wallet-footer-item .amount { color: white; }
         
-        /* Social Media Links Popup */
-        .social-media-links { position: fixed; bottom: 6rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 99; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; transform: translateY(20px) scale(0.9); opacity: 0; pointer-events: none; }
-        .social-media-links.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
-        .social-link { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.15); transition: transform 0.3s ease; text-decoration: none; }
-        .social-link:hover { transform: scale(1.1); }
-        .social-link img { width: 28px; height: 28px; }
+        .container { width: 100%; max-width: 500px; padding: 0; }
+
+        .logo-link { display: block; text-align: center; margin: 40px 0 30px 0; }
+        .main-logo { max-width: 220px; width: 100%; height: auto; transition: transform 0.3s ease; }
+        .main-logo:hover { transform: scale(1.05); }
+
+        .view { display: none; padding: 20px; }
+        .view.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { text-align: center; font-size: 24px; font-weight: 600; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; position: relative; }
+        label { font-weight: 500; color: var(--text-secondary-dark); font-size: 14px; margin-bottom: 8px; display: block; }
+        input[type="text"], input[type="tel"], input[type="password"], input[type="number"], input[type="date"], select {
+            width: 100%; padding: 14px; background-color: var(--bg-light); border: 1px solid var(--border-color-dark);
+            border-radius: 8px; color: var(--text-primary-dark); font-size: 16px; transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--brand-red); box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.25); }
+        button, .btn-primary {
+            width: 100%; padding: 15px; background: linear-gradient(90deg, var(--brand-red), #f64d54); color: white;
+            border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.3s; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        button:hover, .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(229, 9, 20, 0.2); }
+        button:disabled, .btn-primary:disabled { background: #555; cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; }
+        .form-link { text-align: center; margin-top: 25px; color: var(--text-secondary-dark); }
+        .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
+        .error-message {
+            color: #ff6b6b; font-size: 14px; text-align: center; margin-top: 15px; display: none;
+            background-color: rgba(255, 107, 107, 0.1); padding: 10px; border-radius: 6px;
+        }
+
+        /* --- FINAL HEADER --- */
+        .header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 25px; width: 100%; }
+        .header-logo-link { display: block; margin-bottom: 10px; }
+        .header-logo { height: 45px; transition: transform 0.3s ease; } /* Increased size */
+        .header-logo:hover { transform: scale(1.05); }
+        .header-actions-bar { display: flex; align-items: center; width: 100%; gap: 15px; }
+        .header-icon { font-size: 24px; cursor: pointer; line-height: 1; padding: 8px; border-radius: 50%; transition: background-color 0.2s, transform 0.2s; user-select: none; position: relative; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+        .header-icon:hover { background-color: var(--border-color-dark); transform: scale(1.1); }
+        .header-icon img { width: 24px; height: 24px; transition: filter 0.3s; }
+        body[data-theme="dark"] .header-icon img { filter: invert(1); }
+        body[data-theme="light"] .header-icon img { filter: none; }
+        
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        #refresh-btn.refreshing img { animation: spin 1s linear; }
+
+        #logout-btn { display: flex; align-items: center; gap: 8px; background-color: var(--brand-red); color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; transition: background-color 0.2s, transform 0.2s; margin-left: auto; }
+        #logout-btn:hover { background-color: var(--brand-red-hover); transform: scale(1.05); }
+        #logout-btn img { width: 18px; height: 18px; filter: invert(1); }
+        #logout-btn span { font-weight: 500; font-size: 14px; line-height: 1; }
+        
+        .notification-dot { position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; background-color: var(--brand-red); border-radius: 50%; border: 2px solid var(--bg-dark); display: none; }
+        body[data-theme="light"] .notification-dot { border-color: var(--bg-light-theme-card); }
+        .notification-dot.active { display: block; }
+
+        /* --- FINAL PROFESSIONAL WALLET CARD --- */
+        .wallet-card {
+            background: var(--card-bg);
+            color: white; padding: 20px; border-radius: 20px; margin-bottom: 30px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 173, 239, 0.3);
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .wallet-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .wallet-card-logo { width: 120px; opacity: 0.9; filter: brightness(0) invert(1); }
+        #profile-display { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); cursor: pointer; }
+        
+        .wallet-card-body { text-align: center; }
+        #user-name-display { font-size: 22px; font-weight: 600; margin-bottom: 5px; }
+        .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 5px; }
+        #wallet-balance { font-size: 44px; font-weight: 800; line-height: 1; }
+        #user-mobile { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 5px; }
+        
+        .wallet-card-footer { display: flex; justify-content: space-around; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 15px; margin-top: 5px; }
+        .wallet-footer-item { text-align: center; }
+        .wallet-footer-item p { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.8); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .wallet-footer-item .amount { font-size: 16px; font-weight: 700; }
+        
+        /* UPDATED: Color fixes for light/dark mode */
+        .wallet-footer-item .amount.credit { font-size: 20px; font-weight: 800; color: var(--accent-yellow) !important; }
+        .wallet-footer-item .amount.earning { color: var(--accent-blue); } 
+        .wallet-footer-item .amount.due { color: var(--due-red) !important; }
+
+        #wallet-share-btn { 
+            position: absolute; 
+            bottom: 100px;
+            right: 20px; 
+            cursor: pointer; 
+            opacity: 0.7; 
+            transition: opacity 0.2s, transform 0.2s; 
+        }
+
+        #wallet-share-btn:hover { opacity: 1; transform: scale(1.1); }
+        #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
+
+        .dashboard-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .action-card { background-color: var(--bg-light); padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s, border-color 0.2s; border: 1px solid var(--border-color-dark); position: relative; z-index: 2; aspect-ratio: 1 / 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; color: inherit; }
+        .action-card:hover { transform: translateY(-5px); background-color: var(--border-color-dark); }
+        body[data-theme="light"] .action-card:hover { background-color: #f8f9fa; border-color: #adb5bd; }
+        .action-card .icon { font-size: 28px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;}
+        .action-card .icon img, .action-card .icon svg { width: 32px; height: 32px; }
+
+        .action-card.scan .icon { color: var(--accent-purple); }
+        .action-card.claim .icon { color: var(--accent-green); }
+        .action-card.cashback .icon { color: var(--accent-blue); }
+        .action-card.coupons .icon { color: var(--brand-red); }
+        .action-card.profile .icon { color: #8e44ad; }
+        .action-card.whatsapp .icon { color: var(--whatsapp-green); }
+
+        @keyframes gift-pulse { 0%, 100% { transform: scale(1) rotate(0deg); } 5%, 15% { transform: scale(1.1) rotate(-3deg); } 10%, 20% { transform: scale(1.1) rotate(3deg); } 25% { transform: scale(1.1) rotate(0deg); } }
+        .action-card.cashback.has-claim .icon { animation: gift-pulse 4s infinite ease-in-out; }
+
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: var(--text-secondary-dark); }
+        
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border: 1px solid var(--border-color-dark); background-color: transparent; color: var(--text-secondary-dark); border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; white-space: nowrap; }
+        .filter-btn:hover { background-color: var(--border-color-dark); color: var(--text-primary-dark); }
+        .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
+        body[data-theme="light"] .filter-btn { border-color: var(--border-color-light-strong); }
+        body[data-theme="light"] .filter-btn:hover { background-color: #e8eef3; color: var(--text-primary-light); }
+        body[data-theme="light"] .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
+        /* NEW: Date filter style */
+        #date-filter { padding: 6px 16px; }
+
+        .history-list { display: flex; flex-direction: column; gap: 12px; }
+        .history-item { display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-light); padding: 15px; border-radius: 10px; border-left: 4px solid var(--accent-blue); }
+        .history-item.payment { border-left-color: var(--accent-purple); } 
+        .history-item.debit { border-left-color: var(--brand-red); } 
+        .history-item.credit { border-left-color: var(--accent-green); } 
+        
+        .history-details { display: flex; align-items: center; gap: 15px; }
+        .history-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .history-icon svg { width: 20px; height: 20px; }
+        .history-icon.payment { background-color: rgba(155, 89, 182, 0.1); color: var(--accent-purple); }
+        .history-icon.debit { background-color: rgba(229, 9, 20, 0.1); color: var(--brand-red); } 
+        .history-icon.credit { background-color: rgba(46, 204, 113, 0.1); color: var(--accent-green); } 
+        
+        .history-info .title { font-weight: 600; font-size: 15px; }
+        .history-info .date { font-size: 13px; color: var(--text-secondary-dark); }
+        .history-amount { text-align: right; }
+        .history-amount .amount { font-weight: 600; font-size: 16px; }
+        .history-amount .amount.debit { color: #ff6b6b; }
+        .history-amount .amount.credit { color: #2ecc71; }
+        .history-amount .status { font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 12px; text-transform: capitalize; }
+        .status-pending { background-color: rgba(241, 196, 15, 0.2); color: var(--accent-yellow); }
+        .status-approved, .status-completed { background-color: rgba(46, 204, 113, 0.2); color: var(--accent-green); }
+        .status-rejected { background-color: rgba(229, 9, 20, 0.2); color: var(--brand-red); }
+        .coupon-code { font-family: 'Courier New', Courier, monospace; font-weight: bold; background-color: #333; padding: 2px 5px; border-radius: 4px; color: #eee; font-size: 12px; display: inline-block; margin-top: 4px; }
+        body[data-theme="light"] .coupon-code { background-color: #e9ecef; color: #343a40; }
+        .copy-btn { background: none; border: none; color: var(--text-secondary-dark); cursor: pointer; font-size: 12px; padding: 2px 5px; margin-left: 5px; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; background-color: var(--bg-light); border-radius: 12px; color: var(--text-secondary-dark); border: 2px dashed var(--border-color-dark); }
+        body[data-theme="light"] .empty-state { background-color: var(--bg-light-theme-card); border-color: var(--border-color-light-strong); }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; opacity: 0.7; }
+        .empty-state h4 { font-size: 18px; font-weight: 600; color: var(--text-primary-dark); margin-bottom: 8px; }
+        body[data-theme="light"] .empty-state h4 { color: var(--text-primary-light); }
+        .empty-state p { margin-bottom: 20px; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
+        .modal-content { background-color: var(--bg-light); padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color-dark); animation: slideIn 0.4s cubic-bezier(0.25, 1, 0.5, 1); max-height: 80vh; display: flex; flex-direction: column; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .modal-body { overflow-y: auto; margin-top: 15px; padding-right: 10px; }
+        .modal-content h3 { margin-top: 0; text-align: center; font-size: 20px; margin-bottom: 10px; }
+        .modal-content .modal-description { text-align: center; color: var(--text-secondary-dark); margin-bottom: 25px; font-size: 14px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-secondary { background: var(--border-color-dark); }
+        .btn-secondary:hover { background: #414b69; transform: none; box-shadow: none; }
+        
+        #scan-pay-modal .modal-content { padding: 20px; }
+        #scan-pay-modal h3 { font-weight: 700; }
+        #scanner-container { position: relative; width: 100%; max-width: 300px; aspect-ratio: 1 / 1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background-color: #000; }
+        #scanner-video { width: 100%; height: 100%; object-fit: cover; }
+        #scanner-status { text-align: center; font-size: 14px; min-height: 20px; }
+        .scanned-info { display: none; text-align: center; margin-top: 10px; }
+        .scanned-info p { margin-bottom: 5px; }
+        .scanned-info span { font-weight: 600; color: var(--brand-red); }
+
+        #profile-modal .modal-content { padding: 0; }
+        #profile-modal .profile-info { padding: 30px 30px 0 30px; }
+        #profile-modal .modal-body { padding: 0 30px; }
+        #profile-modal .modal-actions { padding: 20px 30px 30px 30px; }
+        
+        #profile-modal-display { width: 80px; height: 80px; border-radius: 50%; background-color: var(--brand-red); color: white; font-size: 40px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; object-fit: cover; border: 3px solid var(--brand-red); cursor: pointer; }
+        #profile-payment-id { font-size: 14px; color: var(--text-secondary-dark); background-color: var(--bg-light); padding: 8px 12px; border-radius: 8px; margin-top: 10px; text-align: center; border: 1px solid var(--border-color-dark); word-break: break-all; }
+        body[data-theme="light"] #profile-payment-id { background-color: var(--bg-light-theme); border-color: var(--border-color-light-strong); }
+        #profile-modal-name { font-size: 22px; font-weight: 600; }
+        #profile-modal-mobile { font-size: 16px; color: var(--text-secondary-dark); }
+        .profile-upload-section { margin-top: 20px; text-align: center; }
+        #profile-picture-input { display: none; }
+        #upload-status { font-size: 12px; margin-top: 8px; color: var(--accent-yellow); min-height: 18px; }
+        #password-change-form { border-top: 1px solid var(--border-color-dark); padding-top: 20px; margin-top: 20px; }
+        body[data-theme="light"] #password-change-form { border-top-color: var(--border-color-light-strong); }
+        
+        /* --- NEW CASHBACK CLAIM MODAL --- */
+        #cashback-claim-modal .modal-content {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            text-align: center;
+            border: none;
+        }
+        .claim-gift-icon { font-size: 60px; animation: gift-pulse 2s infinite; margin-bottom: 15px; }
+        #cashback-claim-modal h3 { font-size: 24px; font-weight: 700; }
+        #cashback-claim-modal .modal-description { color: rgba(255,255,255,0.8); }
+        #claim-amount-display { font-size: 48px; font-weight: 800; margin: 10px 0; color: var(--shiny-green); }
+        #claim-now-btn { background: var(--shiny-green); color: #1c2028; font-weight: 800; }
+        #claim-now-btn:hover { background: #28e266; }
+
+        /* --- NEW IMAGE VIEW MODAL --- */
+        #image-view-modal .modal-content {
+            background: transparent;
+            padding: 0;
+            width: auto;
+            max-width: 90vw;
+            max-height: 90vh;
+            box-shadow: none;
+            border: none;
+        }
+        #full-view-image {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
+        /* --- UPDATED NOTIFICATION POPUP --- */
+        #notification-popup-modal {
+            position: fixed;
+            bottom: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 450px;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color-dark);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 1001;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            transition: bottom 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            display: flex; /* Changed to flex */
+            gap: 15px;
+            align-items: center;
+            opacity: 0;
+        }
+        body[data-theme="light"] #notification-popup-modal {
+             background-color: var(--bg-light-theme-card);
+             border-color: var(--border-color-light-strong);
+        }
+        #notification-popup-modal.show {
+            bottom: 20px;
+            opacity: 1;
+        }
+        #notification-popup-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        #notification-popup-content {
+            flex-grow: 1;
+        }
+        #notification-popup-content h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        #notification-popup-content p {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: var(--text-secondary-dark);
+            -webkit-line-clamp: 2;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        body[data-theme="light"] #notification-popup-content p {
+            color: var(--text-secondary-light);
+        }
+        #notification-popup-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        #notification-popup-actions button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        /* --- UPDATED NOTIFICATION LIST MODAL --- */
+        .notification-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-blue);
+            margin-bottom: 10px;
+            cursor: pointer; /* Added cursor */
+            transition: background-color 0.2s;
+        }
+        .notification-item:hover {
+            background-color: var(--border-color-dark);
+        }
+        .notification-item.unread {
+            background-color: var(--border-color-dark);
+            border-left-color: var(--brand-red);
+        }
+        body[data-theme="light"] .notification-item.unread {
+            background-color: #fff3f4;
+        }
+        body[data-theme="light"] .notification-item:hover {
+            background-color: #f1f3f5;
+        }
+        .notification-item .icon { font-size: 20px; }
+        .notification-item .content .title { font-weight: 600; }
+        .notification-item .content .date { font-size: 12px; color: var(--text-secondary-dark); }
+        
+        /* --- NEW NOTIFICATION DETAIL MODAL --- */
+        #notification-detail-modal .modal-content {
+            padding: 0;
+        }
+        #notification-detail-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 16px 16px 0 0;
+        }
+        #notification-detail-body {
+            padding: 20px 25px 25px 25px;
+        }
+        #notification-detail-body h3 {
+            text-align: left;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+        #notification-detail-body p {
+            font-size: 15px;
+            color: var(--text-secondary-dark);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        body[data-theme="light"] #notification-detail-body p {
+            color: var(--text-secondary-light);
+        }
+        #notification-detail-link {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        /* --- UPDATED TRANSACTION SUCCESS MODAL --- */
+        #transaction-success-modal .modal-content {
+            text-align: center;
+            padding: 40px 30px;
+            position: relative;
+        }
+        #transaction-success-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-secondary-dark);
+            cursor: pointer;
+            line-height: 1;
+            padding: 5px;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background-color: var(--accent-green);
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 20px;
+            animation: success-pop 0.5s ease-out;
+        }
+        @keyframes success-pop {
+            0% { transform: scale(0.7); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #transaction-success-modal h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        #transaction-success-amount {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--accent-green);
+            margin-bottom: 20px;
+        }
+
+        .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--accent-green); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; font-weight: 500; z-index: 2000; transition: bottom 0.5s ease-in-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .toast-notification.show { bottom: 30px; }
+
+        @media (max-width: 600px) { body { padding: 0; } .container { max-width: 100%; } .view { border-radius: 0; min-height: 100vh; } .logo-link { margin-top: 50px; } .dashboard-actions { grid-template-columns: 1fr 1fr; } .action-card p, .action-card .card-text { font-size: 13px; } }
     </style>
 </head>
-<body class="bg-gray-100">
+<body>
 
-    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-2">
-        <div class="container mx-auto flex justify-center items-center px-4">
-            <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px;">
+    <div class="container">
+        
+        <div id="login-view" class="view active">
+            <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="logo-link">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/121828/FFFFFF?text=Ramazone';">
+            </a>
+            <h1>Customer Login</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-mobile">Mobile Number</label>
+                    <input type="tel" id="login-mobile" inputmode="numeric" pattern="[0-9]{10}" required placeholder="10-digit mobile number">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+                <button type="submit">Login</button>
+                <p id="login-error-msg" class="error-message"></p>
+            </form>
+            <p class="form-link">Naye user? <a href="#" id="show-register-link">Yahan register karein</a></p>
         </div>
-    </header>
 
-    <div class="slider-container">
-        <div class="slider" id="main-slider"></div>
-        <div class="slider-nav">
-            <button onclick="prevSlide()">❮</button>
-            <button onclick="nextSlide()">❯</button>
+        <div id="registration-view" class="view">
+             <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="logo-link">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/121828/FFFFFF?text=Ramazone';">
+            </a>
+             <h1>Register New Account</h1>
+            <form id="register-form">
+                <div class="form-group"><label for="reg-name">Poora Naam (Full Name)</label><input type="text" id="reg-name" required></div>
+                <div class="form-group"><label for="reg-mobile">Mobile Number (10 अंक)</label><input type="tel" id="reg-mobile" inputmode="numeric" pattern="[0-9]{10}" required></div>
+                <div class="form-group"><label for="reg-password">Password Banayein</label><input type="password" id="reg-password" required placeholder="Kam se kam 6 akshar"></div>
+                <button type="submit">Register Karein</button>
+                <p id="register-error-msg" class="error-message"></p>
+            </form>
+            <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
         </div>
-        <div class="slider-dots" id="slider-dots-container"></div>
+
+        <div id="dashboard-view" class="view">
+            <div class="header">
+                <a href="https://ramazone.in" target="_blank" rel="noopener noreferrer" class="header-logo-link">
+                    <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone" class="header-logo">
+                </a>
+                <div class="header-actions-bar">
+                    <div id="notification-btn" class="header-icon" title="Notifications"><img src="https://www.svgrepo.com/show/269007/notification-bell.svg" alt="Notifications"><span id="notification-dot" class="notification-dot"></span></div>
+                    <div id="theme-switcher" class="header-icon" title="Toggle Theme"><img src="https://www.svgrepo.com/show/527253/moon.svg" alt="Theme"></div>
+                    <a href="index.html" target="_blank" rel="noopener noreferrer" id="store-btn" class="header-icon" title="Online Store"><img src="https://www.svgrepo.com/show/293165/online-store-supermarket.svg" alt="Store"></a>
+                    <div id="refresh-btn" class="header-icon" title="Refresh Data"><img src="https://www.svgrepo.com/show/533700/refresh-cw-alt-1.svg" alt="Refresh"></div>
+                    <a href="QR.html" id="qr-code-btn" class="header-icon" title="My QR Code"><img src="https://www.svgrepo.com/show/499833/qr-code.svg" alt="QR Code"></a>
+                    <div id="logout-btn"><img src="https://www.svgrepo.com/show/500927/logout.svg" alt="Logout"><span>Logout</span></div>
+                </div>
+            </div>
+            
+            <div class="wallet-card">
+                <div class="wallet-card-header">
+                    <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="wallet-card-logo">
+                    <img id="profile-display" src="https://placehold.co/50x50/ffffff/2980b9?text=R" alt="Profile Picture">
+                </div>
+                <div class="wallet-card-body">
+                    <h2 id="user-name-display">User Name</h2>
+                    <p class="wallet-balance-label">Available Balance</p>
+                    <p id="wallet-balance">₹ 0.00</p>
+                    <p id="user-mobile">Mobile: 0000000000</p>
+                </div>
+                <div class="wallet-card-footer">
+                    <div class="wallet-footer-item">
+                        <p>Credit Limit</p>
+                        <span id="credit-limit" class="amount credit">₹0.00</span>
+                    </div>
+                    <div class="wallet-footer-item">
+                        <p>Lifetime Earning</p>
+                        <span id="lifetime-earning" class="amount earning">₹0.00</span>
+                    </div>
+                    <div class="wallet-footer-item">
+                        <p>Total Due</p>
+                        <span id="due-amount" class="amount due">- ₹0.00</span>
+                    </div>
+                </div>
+                <div id="wallet-share-btn" title="Share App">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </div>
+            </div>
+
+            <div class="dashboard-actions">
+                <div id="open-cashback-modal" class="action-card cashback"><div class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg></div><div class="card-text"><strong>Cashback Request</strong></div></div>
+                <div id="scan-and-pay-btn" class="action-card scan"><div class="icon"><img src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" alt="Scan & Pay"></div><p><strong>Scan & Pay</strong></p></div>
+                <div id="open-coupons-modal" class="action-card coupons"><div class="icon">🎟️</div><p>My Coupons</p></div>
+                <a href="#" id="whatsapp-support-link" target="_blank" class="action-card whatsapp"><div class="icon">💬</div><p>WhatsApp Support</p></a>
+                <div id="open-profile-modal" class="action-card profile"><div class="icon">👤</div><p>My Profile</p></div>
+                <div id="open-claim-modal" class="action-card claim"><div class="icon" style="font-size: 36px;">💸</div><p>Claim From Wallet</p></div>
+            </div>
+
+            <div class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center;"><h2 class="section-title">All Transactions</h2></div>
+                <div class="filter-bar" id="filter-bar">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="payment">Payments</button>
+                    <button class="filter-btn" data-filter="cashback">Cashback</button>
+                    <button class="filter-btn" data-filter="claim">Claims</button>
+                    <input type="date" id="date-filter" class="filter-btn">
+                </div>
+                <div id="unified-history-list" class="history-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="image-view-modal" class="modal-overlay">
+        <div class="modal-content">
+            <img id="full-view-image" src="" alt="Full view">
+        </div>
     </div>
     
-    <div class="flex justify-center px-4">
-        <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
-            <div id="fakeSearchInput">
-                <div>
-                    <span style="color: var(--text-light);">Search for</span>
-                    <span>&nbsp;</span>
-                    <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
-                </div>
-                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            </div>
-        </a>
+    <div id="transaction-success-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="transaction-success-close-btn" data-close-modal>&times;</button>
+            <div class="success-icon">✓</div>
+            <h3>Payment Successful!</h3>
+            <p id="transaction-success-amount">₹ 0.00</p>
+            <p class="modal-description">Aapka transaction safaltapoorvak ho gaya hai.</p>
+        </div>
     </div>
 
-    <main class="mb-28 md:mb-0">
-        <section class="section-container bg-white reveal" id="special-category-section">
-            <h2 class="section-title">Top Picks For You</h2>
-            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4" id="special-category-wrapper"></div>
-        </section>
-
-        <section class="section-container reveal" id="videos-section">
-            <h2 class="section-title">Latest Offer</h2>
-            <div class="videos-slider-container" id="videos-wrapper"></div>
-        </section>
-
-        <section class="section-container reveal" id="normal-category-section">
-             <h2 class="section-title">Shop by Category</h2>
-            <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4" id="normal-category-wrapper"></div>
-        </section>
-
-        <section class="festive-collection reveal" id="festive-collection-container">
-            <h1 class="festival-headline" id="festive-headline">The Festive Collection</h1>
-            <div class="product-slider" id="festive-product-slider"></div>
-        </section>
-
-        <section class="section-container reveal" id="flipcard-section">
-        </section>
-
-        <div class="sponsor-card reveal" id="dynamic-section-1"></div>
-        <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
-            <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
+    <div id="notification-detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <img id="notification-detail-image" src="https://placehold.co/400x180/2c344a/a9b1c8?text=Notification" alt="Notification Image">
+            <div id="notification-detail-body">
+                <h3 id="notification-detail-title"></h3>
+                <p id="notification-detail-message"></p>
+                <a href="#" target="_blank" rel="noopener noreferrer" id="notification-detail-link" class="btn-primary" style="display: none;">
+                    View Offer
+                </a>
+            </div>
+            <div class="modal-actions" style="padding: 0 25px 25px 25px;">
+                <button type="button" class="btn-secondary" data-close-modal>Close</button>
+            </div>
         </div>
-        <div class="sponsor-card reveal" id="sponsor-section-container"></div>
-        <div class="sponsor-card reveal" id="dynamic-section-2"></div>
+    </div>
 
-        <section class="section-container bg-white reveal" id="advantages-section">
-            <h2 class="section-title">Why <span style="color: var(--primary-color);">Ramazone?</span></h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 px-4" id="advantages-grid"></div>
-        </section>
-    </main>
+    <div id="cashback-claim-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="claim-gift-icon">🎁</div>
+            <h3>Cashback Mubarak!</h3>
+            <p class="modal-description">Aapka cashback approve ho gaya hai. Abhi claim karein!</p>
+            <p id="claim-amount-display">₹ 0.00</p>
+            <div class="modal-actions">
+                <button id="claim-now-btn" class="btn-primary">Claim Now</button>
+            </div>
+        </div>
+    </div>
 
-    <div id="footer">
-        <a href="./index.html" class="active">
-            <img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span>
-        </a>
-        <a href="./products.html" id="footer-shop-link">
-            <img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Shop"><span>Shop</span>
-        </a>
-        <a href="#" id="footer-play-link" target="_blank">
-            <img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span>
-        </a>
-        <a href="#" id="footer-profile-link" target="_blank">
-            <img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Profile"><span>Cashback</span>
-        </a>
-        <a href="#" onclick="toggleSocialMedia(event)">
-            <img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span>
-        </a>
+    <div id="password-modal-for-action" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="password-modal-title">Confirm Your Request</h3>
+            <p id="password-modal-description" class="modal-description">Kripya aage badhne ke liye apna password daalein.</p>
+            <div class="form-group"><label for="modal-password">Password</label><input type="password" id="modal-password" required></div>
+            <p id="modal-error-msg" class="error-message"></p>
+            <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="modal-confirm-btn">Confirm</button></div>
+        </div>
+    </div>
+    <div id="claim-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Wallet Se Claim Karein</h3>
+            <p class="modal-description">Aapke wallet se amount redeem kiya jayega.</p>
+            <form id="claim-request-form">
+                <div class="form-group"><label for="claim-amount">Kitna Amount Claim Karna Hai? (kam se kam ₹10)</label><input type="number" id="claim-amount" step="0.01" min="10" required></div>
+                <p id="claim-error-msg" class="error-message"></p>
+                <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="claim-submit-btn">Request Bhejein</button></div>
+            </form>
+        </div>
+    </div>
+    <div id="cashback-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Cashback Request</h3>
+            <p id="cashback-modal-description" class="modal-description">Product details bharein. Cashback request kiya jayega.</p>
+            <form id="cashback-request-form">
+                <div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div>
+                <div class="form-group"><label for="product-purchase-date">Product Kab Purchase Kiya Tha?</label><input type="date" id="product-purchase-date" required></div>
+                <div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div>
+                <p id="cashback-error-msg" class="error-message"></p>
+                <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request Submit Karein</button></div>
+            </form>
+        </div>
+    </div>
+    <div id="coupons-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Aapke Coupons</h3>
+            <div class="modal-body" id="coupons-list"></div>
+            <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Close</button></div>
+        </div>
     </div>
     
-    <div class="social-media-links" id="social-links-container"></div>
-
-    <footer id="desktop-footer">
-        <div class="container mx-auto">
-            <div class="footer-grid">
-                <div class="footer-column">
-                    <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4">
-                    <p>India's favorite online shopping destination.</p>
-                </div>
-                <div class="footer-column"><h3>Quick Links</h3><a href="#">About Us</a><a href="#">Contact Us</a></div>
-                <div class="footer-column"><h3>Help</h3><a href="#">Payments</a><a href="#">Shipping</a><a href="#">FAQ</a></div>
-                <div class="footer-column"><h3>Follow Us</h3><div id="desktop-social-links" class="flex gap-4 text-2xl"></div></div>
+    <div id="scan-pay-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Scan QR and Pay</h3>
+            <div id="scanner-container"><video id="scanner-video" playsinline></video></div>
+            <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+            <button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button>
+            <p id="scanner-status" class="mt-4">Scanning for QR code...</p>
+            <div id="payment-form" style="display: none;">
+                <div class="scanned-info"><p>Paying to: <span id="receiver-name-display"></span></p><p>ID: <span id="receiver-id-display"></span></p></div>
+                <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" step="0.01" required></div>
+                <p id="payment-error-msg" class="error-message"></p>
+                <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn">Pay Now</button></div>
             </div>
-            <div class="footer-bottom">&copy; <span id="copyright-year">2025</span> Ramazone. All Rights Reserved.</div>
-        </div>
-    </footer>
-
-    <div id="video-lightbox" onclick="closeVideoLightbox()">
-        <div class="lightbox-content" onclick="event.stopPropagation()">
-            <span class="close-btn" onclick="closeVideoLightbox()">&times;</span>
-            <video id="lightbox-video-player" src="" controls></video>
+            <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="profile-info">
+                <img id="profile-modal-display" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture">
+                <h3 id="profile-modal-name"></h3><p id="profile-modal-mobile"></p>
+                <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; margin-bottom: 5px; color: var(--text-secondary-dark);">Your Payment ID</p><div id="profile-payment-id"></div></div>
+            </div>
+            <div class="modal-body">
+                <div class="profile-upload-section">
+                    <input type="file" id="profile-picture-input" accept="image/*">
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('profile-picture-input').click();">Change Picture</button>
+                    <p id="upload-status"></p>
+                </div>
+                <form id="password-change-form">
+                    <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div>
+                    <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div>
+                    <div class="form-group"><label for="confirm-password">Naya Password Confirm Karein</label><input type="password" id="confirm-password" required></div>
+                    <button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p>
+                </form>
+            </div>
+            <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Close</button></div>
+        </div>
+    </div>
 
-    <script>
-        // --- Function to fetch Firebase config from serverless function ---
-        async function fetchFirebaseConfig() {
+    <div id="notifications-list-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Notifications</h3>
+            <div class="modal-body" id="notifications-list-container">
+                </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" data-close-modal>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-popup-modal">
+        <img id="notification-popup-image" src="https://placehold.co/60x60/2c344a/a9b1c8?text=!" alt="Notification Image">
+        <div id="notification-popup-content">
+            <h4 id="notification-popup-title">📢 New Notification</h4>
+            <p id="notification-popup-message"></p>
+            <div id="notification-popup-actions">
+                <button id="notification-popup-close" class="btn-secondary">Close</button>
+                <button id="notification-popup-view" class="btn-primary">View</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-notification" class="toast-notification"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, get, set, push, onValue, runTransaction, query, orderByChild, equalTo, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // Constants and Global Variables
+        const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
+        let auth, database;
+        let imageApiKey = null;
+
+        // All DOM Element references are grouped here for clarity
+        const DOMElements = {
+            loginForm: document.getElementById('login-form'),
+            registerForm: document.getElementById('register-form'),
+            logoutBtn: document.getElementById('logout-btn'),
+            themeSwitcher: document.getElementById('theme-switcher'),
+            refreshBtn: document.getElementById('refresh-btn'),
+            notificationBtn: document.getElementById('notification-btn'),
+            notificationDot: document.getElementById('notification-dot'),
+            filterBar: document.getElementById('filter-bar'),
+            dateFilter: document.getElementById('date-filter'),
+            passwordModal: document.getElementById('password-modal-for-action'),
+            claimModal: document.getElementById('claim-modal'),
+            cashbackModal: document.getElementById('cashback-modal'),
+            profileModal: document.getElementById('profile-modal'),
+            scanPayModal: document.getElementById('scan-pay-modal'),
+            cashbackClaimModal: document.getElementById('cashback-claim-modal'),
+            imageViewModal: document.getElementById('image-view-modal'),
+            couponsModal: document.getElementById('coupons-modal'),
+            notificationsListModal: document.getElementById('notifications-list-modal'),
+            notificationPopupModal: document.getElementById('notification-popup-modal'),
+            transactionSuccessModal: document.getElementById('transaction-success-modal'), // NEW
+            notificationDetailModal: document.getElementById('notification-detail-modal'), // NEW
+            claimRequestForm: document.getElementById('claim-request-form'),
+            cashbackRequestForm: document.getElementById('cashback-request-form'),
+            passwordChangeForm: document.getElementById('password-change-form'),
+            profilePictureInput: document.getElementById('profile-picture-input'),
+            modalConfirmBtn: document.getElementById('modal-confirm-btn'),
+            claimSubmitBtn: document.getElementById('claim-submit-btn'),
+            cashbackSubmitBtn: document.getElementById('cashback-submit-btn'),
+            paySubmitBtn: document.getElementById('pay-submit-btn'),
+            claimNowBtn: document.getElementById('claim-now-btn'),
+            openCashbackModalBtn: document.getElementById('open-cashback-modal'),
+            walletShareBtn: document.getElementById('wallet-share-btn'),
+            profileDisplay: document.getElementById('profile-display'),
+            profileModalDisplay: document.getElementById('profile-modal-display'),
+            loginErrorMsg: document.getElementById('login-error-msg'),
+            registerErrorMsg: document.getElementById('register-error-msg'),
+            claimErrorMsg: document.getElementById('claim-error-msg'),
+            cashbackErrorMsg: document.getElementById('cashback-error-msg'),
+            modalErrorMsg: document.getElementById('modal-error-msg'),
+            passwordChangeErrorMsg: document.getElementById('password-change-error-msg'),
+            paymentErrorMsg: document.getElementById('payment-error-msg'),
+            scannerStatus: document.getElementById('scanner-status'),
+        };
+
+        // State Variables
+        let currentUserData = null;
+        let activeListeners = [];
+        let allTransactionsSnapshot = {};
+        let allNotifications = [];
+        let activeFilter = 'all';
+        let scanner = null;
+        let tempActionData = {};
+        let pendingCashbackClaim = null;
+        let currentPopupNotification = null;
+
+        // --- CORE INITIALIZATION (FIXED) ---
+        async function initializeFirebaseApp() {
             try {
-                const response = await fetch('/api/firebase-config');
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok, status: ${response.status}`);
-                }
-                const config = await response.json();
-                if (!config.apiKey || !config.databaseURL) {
-                    throw new Error('Incomplete Firebase config received from server.');
-                }
-                return config;
+                // This is the CORRECT way for a Vercel deployment.
+                // It fetches the configuration from a secure serverless function.
+                const response = await fetch('/api/cashback-config');
+                if (!response.ok) throw new Error('Could not fetch Firebase config!');
+                const firebaseConfig = await response.json();
+                
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                database = getDatabase(app);
+                await fetchImageApiKey();
+                setupApplication();
             } catch (error) {
-                console.error('Failed to fetch Firebase config:', error);
-                document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem; color: red;">Error: Application configuration could not be loaded. Please try again later.</div>';
+                console.error("FATAL: Firebase initialization failed.", error);
+                document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #ff6b6b;">Application could not start. Please check connection and configuration.</div>`;
+            }
+        }
+
+        // --- IMAGE UPLOAD & VIEW SYSTEM (FIXED) ---
+        async function fetchImageApiKey() {
+            if (imageApiKey) return imageApiKey;
+            try {
+                // This is the CORRECT way for a Vercel deployment.
+                const response = await fetch('/api/image-config');
+                if (!response.ok) throw new Error('Could not get image config.');
+                const config = await response.json();
+                imageApiKey = config.apiKey;
+                return imageApiKey;
+            } catch (error) {
+                console.error("Failed to fetch image API key:", error);
+                showToast("Image upload service is unavailable.");
                 return null;
             }
         }
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            const firebaseConfig = await fetchFirebaseConfig();
-            if (!firebaseConfig) return; // Stop if config fetching failed
+        async function handleProfilePictureUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const uploadStatus = document.getElementById('upload-status');
+            uploadStatus.textContent = 'Uploading...';
+            const apiKey = await fetchImageApiKey();
+            if (!apiKey) { uploadStatus.textContent = 'Upload failed: Key not available.'; return; }
+            const formData = new FormData();
+            formData.append('image', file);
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    await update(ref(database, 'users/' + auth.currentUser.uid), { profilePictureUrl: result.data.url });
+                    showToast('Profile picture updated!');
+                } else { throw new Error(result.error?.message || 'Unknown error.'); }
+            } catch (error) { uploadStatus.textContent = `Upload failed: ${error.message}`; } 
+            finally { setTimeout(() => { uploadStatus.textContent = ''; }, 5000); DOMElements.profilePictureInput.value = ''; }
+        }
+
+        function showFullImage(src) {
+            if (!src || src.includes('placehold.co')) return;
+            document.getElementById('full-view-image').src = src;
+            openModal(DOMElements.imageViewModal);
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
+        function hideErrorMessage(element) { element.style.display = 'none'; }
+        function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId)?.classList.add('active'); }
+        function openModal(modalElement) { modalElement?.classList.add('active'); }
+        function closeModal(modalElement) { 
+            modalElement?.classList.remove('active');
+            if (scanner && modalElement === DOMElements.scanPayModal) { 
+                scanner.getTracks().forEach(track => track.stop()); 
+                scanner = null; 
+            }
+        }
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        function generatePaymentId(name, mobile) {
+            if (!name || !mobile) return '';
+            const formattedName = name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+            return `@${formattedName}RMZ${mobile}`;
+        }
+        function applyTheme(theme) {
+            document.body.dataset.theme = theme;
+            DOMElements.themeSwitcher.querySelector('img').src = theme === 'light' ? "https://www.svgrepo.com/show/527253/moon.svg" : "https://www.svgrepo.com/show/433086/light-mode.svg";
+        }
+
+        // --- AUTHENTICATION & DATA LISTENERS ---
+        function setupAuthentication() {
+            onAuthStateChanged(auth, user => {
+                if (user) { toggleView('dashboard-view'); attachRealtimeListeners(user); } 
+                else { toggleView('login-view'); detachAllListeners(); }
+            });
+            DOMElements.loginForm.addEventListener('submit', e => {
+                e.preventDefault();
+                hideErrorMessage(DOMElements.loginErrorMsg);
+                signInWithEmailAndPassword(auth, `${document.getElementById('login-mobile').value}@ramazone.com`, document.getElementById('login-password').value)
+                .catch(() => showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile number ya password."));
+            });
+            DOMElements.registerForm.addEventListener('submit', async e => {
+                e.preventDefault();
+                const name = document.getElementById('reg-name').value.trim();
+                const mobile = document.getElementById('reg-mobile').value.trim();
+                const password = document.getElementById('reg-password').value.trim();
+                if (!name || !/^\d{10}$/.test(mobile) || password.length < 6) { showErrorMessage(DOMElements.registerErrorMsg, "Kripya sabhi details sahi se bharein."); return; }
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+                    await updateProfile(userCredential.user, { displayName: name });
+                    await set(ref(database, 'users/' + userCredential.user.uid), { name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0, profilePictureUrl: '' });
+                    alert("Registration safal hua! Ab aap login kar sakte hain.");
+                    toggleView('login-view');
+                } catch (error) { showErrorMessage(DOMElements.registerErrorMsg, error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : "Registration fail ho gaya."); }
+            });
+            DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
+        }
+
+        function attachRealtimeListeners(user) {
+            detachAllListeners();
+            const uid = user.uid;
+            activeListeners.push(onValue(ref(database, 'users/' + uid), (snapshot) => {
+                if(snapshot.exists()){
+                    currentUserData = { uid, ...snapshot.val() };
+                    updateDashboardUI(currentUserData, user);
+                    checkForApprovedCashback();
+                }
+            }));
+            
+            const queries = {
+                claims: query(ref(database, 'claim_requests'), orderByChild('userId'), equalTo(uid)),
+                cashback: query(ref(database, 'cashback_requests'), orderByChild('userId'), equalTo(uid)),
+                credit: query(ref(database, 'credit_transactions'), orderByChild('userId'), equalTo(uid)),
+                sent: query(ref(database, 'payments'), orderByChild('senderId'), equalTo(uid)),
+                received: query(ref(database, 'payments'), orderByChild('receiverId'), equalTo(uid))
+            };
+
+            for (const key in queries) {
+                activeListeners.push(onValue(queries[key], s => { 
+                    allTransactionsSnapshot[key] = s;
+                    renderUnifiedHistory();
+                    if(key === 'cashback') checkForApprovedCashback();
+                    if(key === 'claims') renderCouponsModal();
+                }));
+            }
+            // Listener for global notifications
+            activeListeners.push(onValue(ref(database, 'notifications'), (snapshot) => {
+                if (snapshot.exists()) {
+                    const fetchedNotifications = [];
+                    snapshot.forEach(childSnap => {
+                        fetchedNotifications.push({ id: childSnap.key, ...childSnap.val() });
+                    });
+                    allNotifications = fetchedNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    processNotifications();
+                }
+            }));
+        }
+
+        function detachAllListeners() {
+            activeListeners.forEach(unsubscribe => unsubscribe());
+            activeListeners = [];
+            currentUserData = null;
+            allTransactionsSnapshot = {};
+            allNotifications = [];
+        }
+
+        function refreshData() {
+            if (!auth.currentUser) return;
+            DOMElements.refreshBtn.classList.add('refreshing');
+            attachRealtimeListeners(auth.currentUser);
+            setTimeout(() => DOMElements.refreshBtn.classList.remove('refreshing'), 1000);
+        }
+
+        // --- UI RENDERING ---
+        function updateDashboardUI(dbData, authUser) {
+            if (!dbData || !authUser) return;
+            
+            document.getElementById('user-name-display').textContent = authUser.displayName;
+            document.getElementById('user-mobile').textContent = `Mobile: ${dbData.mobile}`;
+
+            const walletBalance = dbData.wallet || 0;
+            const dueAmount = dbData.dueAmount || 0;
+            const creditLimit = walletBalance + dueAmount;
+            
+            document.getElementById('wallet-balance').textContent = `₹ ${walletBalance.toFixed(2)}`;
+            document.getElementById('credit-limit').textContent = `₹${creditLimit.toFixed(2)}`;
+            document.getElementById('lifetime-earning').textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+            document.getElementById('due-amount').textContent = `- ₹${dueAmount.toFixed(2)}`;
+            document.querySelector('.wallet-footer-item .due').parentElement.style.display = dueAmount > 0 ? 'block' : 'none';
+
+            const initial = authUser.displayName ? authUser.displayName.charAt(0).toUpperCase() : 'R';
+            const placeholderUrl = `https://placehold.co/80x80/ffffff/2980b9?text=${initial}`;
+            const profilePicUrl = dbData.profilePictureUrl || placeholderUrl;
+            DOMElements.profileDisplay.src = profilePicUrl;
+            DOMElements.profileModalDisplay.src = profilePicUrl;
+            
+            document.getElementById('profile-modal-name').textContent = authUser.displayName;
+            document.getElementById('profile-modal-mobile').textContent = dbData.mobile;
+            document.getElementById('whatsapp-support-link').href = `https://wa.me/917903698180?text=${encodeURIComponent(`Help Required\nName: ${authUser.displayName}\nMobile: ${dbData.mobile}`)}`;
+            document.getElementById('profile-payment-id').textContent = generatePaymentId(authUser.displayName, dbData.mobile);
+        }
+
+        function renderUnifiedHistory() {
+            const historyList = document.getElementById('unified-history-list');
+            historyList.innerHTML = '';
+            let combinedHistory = [];
+
+            if (allTransactionsSnapshot.cashback?.exists()) allTransactionsSnapshot.cashback.forEach(snap => { const c = snap.val(); combinedHistory.push({ key: snap.key, type: 'cashback', date: new Date(c.requestDate), title: `Cashback: ${c.productName}`, amount: c.cashbackAmount, status: c.status, sign: '+' }); });
+            if (allTransactionsSnapshot.claims?.exists()) allTransactionsSnapshot.claims.forEach(snap => { const c = snap.val(); combinedHistory.push({ key: snap.key, type: 'claim', date: new Date(c.requestDate), title: 'Wallet Claim', amount: c.claimAmount, status: c.status, sign: '-', coupon: c.couponCode }); });
+            if (allTransactionsSnapshot.sent?.exists()) allTransactionsSnapshot.sent.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key, type: 'payment', date: new Date(p.timestamp), title: `Paid to ${p.receiverName}`, amount: p.amount, status: 'completed', sign: '-' }); });
+            if (allTransactionsSnapshot.received?.exists()) allTransactionsSnapshot.received.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key+'_rec', type: 'payment', date: new Date(p.timestamp), title: `Received from ${p.senderName}`, amount: p.amount, status: 'completed', sign: '+' }); });
+            if (allTransactionsSnapshot.credit?.exists()) allTransactionsSnapshot.credit.forEach(snap => { const c = snap.val(); if (c.type === 'credit') combinedHistory.push({ key: snap.key, type: 'credit', date: new Date(c.timestamp), title: `Credit from Admin`, amount: c.amount, status: 'completed', sign: '+' }); });
+
+            const selectedDate = DOMElements.dateFilter.value;
+            let filteredHistory = combinedHistory
+                .filter(item => activeFilter === 'all' || item.type === activeFilter)
+                .filter(item => {
+                    if (!selectedDate) return true;
+                    const itemDate = item.date.toISOString().split('T')[0];
+                    return itemDate === selectedDate;
+                });
+
+            if (filteredHistory.length === 0) { historyList.innerHTML = getEmptyStateHTML('history'); return; }
+
+            filteredHistory.sort((a, b) => b.date - a.date).forEach(item => {
+                const itemDiv = document.createElement('div');
+                const typeClass = item.sign === '+' ? 'credit' : 'debit';
+                const icon = { cashback: '🎁', claim: '💸', payment: '↔️', credit: '✨' }[item.type] || '📜';
+                
+                itemDiv.className = `history-item ${typeClass}`;
+                let couponHTML = (item.type === 'claim' && item.status === 'approved' && item.coupon) ? `<span class="coupon-code">${item.coupon}</span>` : (item.type === 'claim' && item.status === 'rejected') ? `<span class="coupon-code">Refunded</span>` : '';
+                
+                itemDiv.innerHTML = `<div class="history-details"><div class="history-icon ${typeClass}">${icon}</div><div class="history-info"><div class="title">${item.title}</div><div class="date">${item.date.toLocaleDateString()}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${item.sign} ₹${parseFloat(item.amount).toFixed(2)}</div><span class="status status-${item.status}">${item.status}</span>${couponHTML}</div>`;
+                historyList.appendChild(itemDiv);
+            });
+        }
+        
+        function renderCouponsModal() {
+            const list = document.getElementById('coupons-list');
+            list.innerHTML = '';
+            const approvedClaims = [];
+            if(allTransactionsSnapshot.claims?.exists()) allTransactionsSnapshot.claims.forEach(c => { if(c.val().status === 'approved' && c.val().couponCode) approvedClaims.push(c.val()); });
+            if (approvedClaims.length === 0) { list.innerHTML = getEmptyStateHTML('coupons'); return; }
+            approvedClaims.sort((a,b) => new Date(b.requestDate) - new Date(a.requestDate)).forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'history-item debit';
+                itemDiv.innerHTML = `<div class="history-details"><div class="history-icon debit">🎟️</div><div class="history-info"><div class="title">₹${parseFloat(item.claimAmount).toFixed(2)} Coupon</div><div class="date">${new Date(item.requestDate).toLocaleDateString()}</div></div></div><div class="history-amount"><span class="coupon-code" style="font-size: 14px;">${item.couponCode}</span><button class="copy-btn" data-coupon="${item.couponCode}">📋 Copy</button></div>`;
+                list.appendChild(itemDiv);
+            });
+        }
+
+        function getEmptyStateHTML(type) {
+            if (type === 'history') return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history for the selected filter is empty.</p></div>`;
+            if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Available</h4><p>You don't have any active coupons right now.</p></div>`;
+            if (type === 'notifications') return `<div class="empty-state"><div class="empty-state-icon">📭</div><h4>No Notifications</h4><p>You're all caught up!</p></div>`;
+            return '';
+        }
+
+        // --- CASHBACK CLAIM LOGIC ---
+        function checkForApprovedCashback() {
+            if (!allTransactionsSnapshot.cashback?.exists()) {
+                DOMElements.openCashbackModalBtn.classList.remove('has-claim');
+                return;
+            }
+            let claimFound = false;
+            allTransactionsSnapshot.cashback.forEach(snap => {
+                const c = snap.val();
+                if (c.status === 'approved' && !c.claimed) {
+                    pendingCashbackClaim = { id: snap.key, ...c };
+                    document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(c.cashbackAmount).toFixed(2)}`;
+                    openModal(DOMElements.cashbackClaimModal);
+                    claimFound = true;
+                    return; 
+                }
+            });
+            DOMElements.openCashbackModalBtn.classList.toggle('has-claim', claimFound);
+        }
+
+        async function handleCashbackClaim() {
+            if (!pendingCashbackClaim || !currentUserData) return;
+            DOMElements.claimNowBtn.disabled = true;
+            DOMElements.claimNowBtn.textContent = 'Claiming...';
+
+            const userRef = ref(database, 'users/' + currentUserData.uid);
+            const cashbackRef = ref(database, 'cashback_requests/' + pendingCashbackClaim.id);
+            const amount = parseFloat(pendingCashbackClaim.cashbackAmount);
 
             try {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
+                const txResult = await runTransaction(userRef, (data) => {
+                    if (data) {
+                        data.lifetimeEarning = (data.lifetimeEarning || 0) + amount;
+                    }
+                    return data;
+                });
+
+                if (txResult.committed) {
+                    await update(cashbackRef, { claimed: true, status: 'completed' });
+                    showToast('Lifetime Earning update ho gayi hai!');
+                    closeModal(DOMElements.cashbackClaimModal);
+                    pendingCashbackClaim = null;
+                } else { throw new Error("Transaction fail ho gaya."); }
+            } catch (error) { showToast(`Error: ${error.message}`); } 
+            finally { DOMElements.claimNowBtn.disabled = false; DOMElements.claimNowBtn.textContent = 'Claim Now'; }
+        }
+
+        // --- NOTIFICATION SYSTEM (UPDATED) ---
+        function getSeenNotifications() {
+            const seen = localStorage.getItem('ramazone_notifications_seen');
+            return seen ? JSON.parse(seen) : [];
+        }
+        function getDismissedNotifications() {
+            const dismissed = localStorage.getItem('ramazone_notifications_dismissed');
+            return dismissed ? JSON.parse(dismissed) : {};
+        }
+
+        function processNotifications() {
+            const seenIds = getSeenNotifications();
+            const unreadCount = allNotifications.filter(n => !seenIds.includes(n.id)).length;
+            DOMElements.notificationDot.classList.toggle('active', unreadCount > 0);
+
+            const dismissed = getDismissedNotifications();
+            const latestUnread = allNotifications.find(n => !seenIds.includes(n.id));
+
+            if (latestUnread) {
+                const dismissedTime = dismissed[latestUnread.id];
+                const oneDay = 24 * 60 * 60 * 1000;
+                if (!dismissedTime || (Date.now() - dismissedTime > oneDay)) {
+                    showNotificationPopup(latestUnread);
                 }
-                const database = firebase.database();
-                loadDataFromFirebase(database);
+            }
+        }
+
+        function showNotificationPopup(notification) {
+            currentPopupNotification = notification;
+            document.getElementById('notification-popup-title').textContent = notification.title;
+            document.getElementById('notification-popup-message').textContent = notification.message;
+            const popupImage = document.getElementById('notification-popup-image');
+            if(notification.imageUrl) {
+                popupImage.src = notification.imageUrl;
+                popupImage.style.display = 'block';
+            } else {
+                popupImage.style.display = 'none';
+            }
+            DOMElements.notificationPopupModal.classList.add('show');
+        }
+
+        function handlePopupClose() {
+            DOMElements.notificationPopupModal.classList.remove('show');
+            if (!currentPopupNotification) return;
+
+            const dismissed = getDismissedNotifications();
+            dismissed[currentPopupNotification.id] = Date.now();
+            localStorage.setItem('ramazone_notifications_dismissed', JSON.stringify(dismissed));
+            currentPopupNotification = null;
+        }
+        
+        function handlePopupView() {
+            DOMElements.notificationPopupModal.classList.remove('show');
+            if (!currentPopupNotification) return;
+            
+            markNotificationAsRead(currentPopupNotification.id);
+            showNotificationDetail(currentPopupNotification);
+            currentPopupNotification = null;
+        }
+
+        function markNotificationAsRead(notificationId) {
+            const seenIds = getSeenNotifications();
+            if (!seenIds.includes(notificationId)) {
+                seenIds.push(notificationId);
+                localStorage.setItem('ramazone_notifications_seen', JSON.stringify(seenIds));
+                processNotifications();
+                renderNotificationsList(); // Re-render list to remove unread style
+            }
+        }
+
+        function renderNotificationsList() {
+            const container = document.getElementById('notifications-list-container');
+            container.innerHTML = '';
+            const seenIds = getSeenNotifications();
+
+            if (allNotifications.length === 0) {
+                container.innerHTML = getEmptyStateHTML('notifications');
+                return;
+            }
+
+            allNotifications.forEach(n => {
+                const isUnread = !seenIds.includes(n.id);
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `notification-item ${isUnread ? 'unread' : ''}`;
+                const icon = n.imageUrl ? `<img src="${n.imageUrl}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">` : `<div class="history-icon credit" style="flex-shrink: 0;">📢</div>`;
+                
+                itemDiv.innerHTML = `
+                    ${icon}
+                    <div class="content" style="overflow: hidden;">
+                        <div class="title">${n.title}</div>
+                        <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${n.message}</p>
+                        <div class="date">${new Date(n.timestamp).toLocaleString()}</div>
+                    </div>`;
+                itemDiv.addEventListener('click', () => {
+                    markNotificationAsRead(n.id);
+                    showNotificationDetail(n);
+                });
+                container.appendChild(itemDiv);
+            });
+        }
+        
+        function showNotificationDetail(notification) {
+            const detailImage = document.getElementById('notification-detail-image');
+            const detailLink = document.getElementById('notification-detail-link');
+
+            document.getElementById('notification-detail-title').textContent = notification.title;
+            document.getElementById('notification-detail-message').textContent = notification.message;
+            
+            if (notification.imageUrl) {
+                detailImage.src = notification.imageUrl;
+                detailImage.style.display = 'block';
+            } else {
+                detailImage.style.display = 'none';
+            }
+
+            if (notification.link) {
+                detailLink.href = notification.link;
+                detailLink.style.display = 'block';
+            } else {
+                detailLink.style.display = 'none';
+            }
+            
+            openModal(DOMElements.notificationDetailModal);
+        }
+
+        // --- PAYMENT SUCCESS MODAL (NEW) ---
+        function showTransactionSuccess(amount) {
+            document.getElementById('transaction-success-amount').textContent = `₹ ${parseFloat(amount).toFixed(2)}`;
+            openModal(DOMElements.transactionSuccessModal);
+        }
+
+        // --- ACTION HANDLERS ---
+        async function handleCashbackRequest(e) {
+            e.preventDefault();
+            hideErrorMessage(DOMElements.cashbackErrorMsg);
+            DOMElements.cashbackSubmitBtn.disabled = true;
+            
+            const productName = document.getElementById("product-name").value.trim();
+            const productPrice = parseFloat(document.getElementById("product-price").value);
+            const purchaseDate = document.getElementById("product-purchase-date").value;
+            if(!productName || isNaN(productPrice) || productPrice < 10 || !purchaseDate){ 
+                showErrorMessage(DOMElements.cashbackErrorMsg,"Sahi details daalein."); 
+                DOMElements.cashbackSubmitBtn.disabled = false;
+                return; 
+            }
+            
+            try {
+                const percentage = await get(ref(database, 'app_settings/cashback_percentage')).then(s => s.exists() ? s.val() : 2);
+                const cashbackAmount = productPrice * (percentage / 100);
+                
+                const newRequestRef = push(ref(database, "cashback_requests"));
+                await set(newRequestRef, { 
+                    requestId: newRequestRef.key, userId: currentUserData.uid, userName: currentUserData.name, 
+                    userMobile: currentUserData.mobile, productName, productPrice, purchaseDate, cashbackAmount, 
+                    status: "pending", requestDate: (new Date).toISOString(), claimed: false 
+                });
+                showToast("Cashback request submit ho gaya!");
+                DOMElements.cashbackRequestForm.reset();
+                closeModal(DOMElements.cashbackModal);
             } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem;">Could not load page data.</div>';
+                showErrorMessage(DOMElements.cashbackErrorMsg, `Error: ${error.message}`);
+            } finally {
+                DOMElements.cashbackSubmitBtn.disabled = false;
             }
-        });
+        }
 
-        function loadDataFromFirebase(database) {
-            const homepageRef = database.ref('ramazone/homepage');
-            homepageRef.on('value', (snapshot) => {
-                const data = snapshot.val();
+        async function handleClaimRequest(e) {
+            e.preventDefault();
+            const claimAmount = parseFloat(document.getElementById("claim-amount").value);
+            if(isNaN(claimAmount) || claimAmount < 10 || claimAmount > (currentUserData.wallet||0)){ showErrorMessage(DOMElements.claimErrorMsg,"Sahi amount daalein."); return; }
+            tempActionData = { type: 'claim', amount: claimAmount };
+            document.getElementById('password-modal-title').textContent = 'Confirm Claim Request';
+            closeModal(DOMElements.claimModal); openModal(DOMElements.passwordModal);
+        }
+        
+        async function processClaimConfirmation() {
+            const userRef = ref(database, 'users/' + auth.currentUser.uid);
+            const txResult = await runTransaction(userRef, data => { if (data && (data.wallet || 0) >= tempActionData.amount) { data.wallet -= tempActionData.amount; return data; } return; });
+            if (txResult.committed) {
+                const newClaimRef = push(ref(database, "claim_requests"));
+                await set(newClaimRef, { claimId: newClaimRef.key, userMobile: currentUserData.mobile, userName: currentUserData.name, claimAmount: tempActionData.amount, status: "pending", requestDate: (new Date).toISOString(), userId: auth.currentUser.uid });
+                showToast("Request safaltapoorvak bhej diya gaya hai!");
+                closeModal(DOMElements.passwordModal);
+                DOMElements.claimRequestForm.reset();
+            } else { throw new Error("Transaction fail. Balance check karein."); }
+        }
+
+        function startScanner() {
+            const paymentFormEl = document.getElementById('payment-form');
+            const scanPayInitialActions = document.getElementById('scan-pay-initial-actions');
+            paymentFormEl.style.display = 'none';
+            DOMElements.scannerStatus.textContent = "Scanning for QR code...";
+            DOMElements.scannerStatus.style.color = 'inherit';
+            scanPayInitialActions.style.display = 'flex';
+            hideErrorMessage(DOMElements.paymentErrorMsg);
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                scanner = stream;
+                document.getElementById('scanner-video').srcObject = stream;
+                document.getElementById('scanner-video').play();
+                requestAnimationFrame(tick);
+            })
+            .catch(err => { DOMElements.scannerStatus.textContent = "Could not access camera."; DOMElements.scannerStatus.style.color = 'var(--brand-red)'; });
+        }
+
+        function tick() {
+            const scannerVideo = document.getElementById('scanner-video');
+            if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA && scanner) {
+                const canvas = document.createElement('canvas');
+                canvas.width = scannerVideo.videoWidth;
+                canvas.height = scannerVideo.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+                if (code && code.data.startsWith('@')) handleScannedCode(code.data); else requestAnimationFrame(tick);
+            } else if (scanner) { requestAnimationFrame(tick); }
+        }
+        
+        function handleQrFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            DOMElements.scannerStatus.textContent = 'Processing uploaded image...';
+            DOMElements.scannerStatus.style.color = 'inherit';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const image = new Image();
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(image, 0, 0, image.width, image.height);
+                    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                    if (code && code.data.startsWith('@')) {
+                        if (scanner) { scanner.getTracks().forEach(track => track.stop()); scanner = null; }
+                        document.getElementById('scanner-video').srcObject = null;
+                        handleScannedCode(code.data);
+                    } else {
+                        DOMElements.scannerStatus.textContent = "No QR code found in image.";
+                        DOMElements.scannerStatus.style.color = 'var(--brand-red)';
+                    }
+                };
+                image.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        async function handleScannedCode(paymentId) {
+            if(scanner) scanner.getTracks().forEach(track => track.stop());
+            scanner = null;
+            DOMElements.scannerStatus.textContent = 'Processing ID...';
+            
+            const paymentFormEl = document.getElementById('payment-form');
+            const scanPayInitialActions = document.getElementById('scan-pay-initial-actions');
+
+            if (paymentId === ADMIN_PAYMENT_ID) {
+                DOMElements.scannerStatus.textContent = 'QR Code Scanned!';
+                scanPayInitialActions.style.display = 'none';
+                paymentFormEl.style.display = 'block';
+                document.getElementById('receiver-name-display').textContent = "Ramazone Store";
+                document.getElementById('receiver-id-display').textContent = paymentId;
+                tempActionData = { type: 'payment', receiverUid: 'admin_account', receiverData: { name: 'Ramazone Store' } };
+                return;
+            }
+
+            const match = paymentId.match(/@(.+?)RMZ(\d{10})$/);
+            if (!match) { DOMElements.scannerStatus.textContent = "Invalid QR Code format."; DOMElements.scannerStatus.style.color = 'var(--brand-red)'; setTimeout(startScanner, 2000); return; }
+            
+            const mobile = match[2];
+            const snapshot = await get(query(ref(database, 'users'), orderByChild('mobile'), equalTo(mobile)));
+
+            if (!snapshot.exists()) { DOMElements.scannerStatus.textContent = "Receiver not found."; DOMElements.scannerStatus.style.color = 'var(--brand-red)'; return; }
+
+            const [receiverUid, receiverData] = Object.entries(snapshot.val())[0];
+            if(receiverUid === auth.currentUser.uid){ DOMElements.scannerStatus.textContent = "You cannot pay yourself."; DOMElements.scannerStatus.style.color = 'var(--brand-red)'; return; }
+
+            DOMElements.scannerStatus.textContent = 'QR Code Scanned!';
+            scanPayInitialActions.style.display = 'none';
+            paymentFormEl.style.display = 'block';
+            document.getElementById('receiver-name-display').textContent = receiverData.name;
+            document.getElementById('receiver-id-display').textContent = paymentId;
+            tempActionData = { type: 'payment', receiverUid, receiverData };
+        }
+
+        async function handlePaymentRequest() {
+            hideErrorMessage(DOMElements.paymentErrorMsg);
+            const amount = parseFloat(document.getElementById('payment-amount').value);
+            const availableBalance = (currentUserData.wallet || 0) + (currentUserData.dueAmount || 0);
+
+            if(isNaN(amount) || amount < 5) { showErrorMessage(DOMElements.paymentErrorMsg, "Kam se kam ₹5 bhejein."); return; }
+            if(amount > availableBalance) { showErrorMessage(DOMElements.paymentErrorMsg, "Insufficient balance (including credit)."); return; }
+            
+            tempActionData.amount = amount;
+            document.getElementById('password-modal-title').textContent = 'Confirm Payment';
+            document.getElementById('password-modal-description').textContent = `Paying ₹${amount.toFixed(2)} to ${tempActionData.receiverData.name}. Please enter your password.`;
+            closeModal(DOMElements.scanPayModal);
+            openModal(DOMElements.passwordModal);
+            document.getElementById('modal-password').focus();
+        }
+        
+        // === UPDATED FUNCTION FOR DUE PAYMENT LOGIC ===
+        async function processPaymentConfirmation() {
+            const { amount, receiverUid, receiverData } = tempActionData;
+            const senderRef = ref(database, 'users/' + auth.currentUser.uid);
+            
+            const senderTx = await runTransaction(senderRef, (data) => {
                 if (data) {
-                    renderSlider(data.slider);
-                    renderSearch(data.search);
-                    renderSpecialCategories(data.specialCategories);
-                    renderVideosSection(data.videos);
-                    renderNormalCategories(data.normalCategories);
-                    renderFestiveCollection(data.festiveCollection);
-                    renderFlipCardSection(data.flipCard);
-                    renderDynamicSection('#dynamic-section-1', data.dynamicSection1);
-                    renderInfoMarquee(data.infoMarquee);
-                    renderSponsor(data.sponsor);
-                    renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
-                    renderAdvantages(data.advantages);
-                    renderFooter(data.footer);
-                    document.getElementById('copyright-year').textContent = new Date().getFullYear();
+                    const availableBalance = (data.wallet || 0) + (data.dueAmount || 0);
+                    if (availableBalance < amount) {
+                        return; // Abort transaction if balance is insufficient
+                    }
+
+                    // If paying to admin, prioritize clearing due amount
+                    if (receiverUid === 'admin_account') {
+                        let remainingAmountToPay = amount;
+                        const currentDue = data.dueAmount || 0;
+                        
+                        const paidTowardsDue = Math.min(currentDue, remainingAmountToPay);
+                        data.dueAmount = currentDue - paidTowardsDue;
+                        
+                        remainingAmountToPay = remainingAmountToPay - paidTowardsDue;
+                        
+                        // Deduct the rest from the main wallet
+                        data.wallet = (data.wallet || 0) - remainingAmountToPay;
+                    } else {
+                        // Original logic for peer-to-peer payments
+                        data.wallet -= amount;
+                    }
                 }
-            }, (error) => {
-                 console.error("Firebase read failed: " + error.name);
+                return data;
             });
-            setupScrollAnimations();
-        }
 
-        // --- RENDER FUNCTIONS ---
-        
-        function renderSlider(sliderData) {
-            const slider = document.getElementById('main-slider');
-            const dotsContainer = document.getElementById('slider-dots-container');
-            if (!slider || !sliderData || sliderData.length === 0) return;
-            
-            slider.innerHTML = '';
-            dotsContainer.innerHTML = '';
-            
-            sliderData.forEach((slide) => {
-                const slideEl = document.createElement('a');
-                slideEl.href = slide.linkUrl || '#';
-                slideEl.className = 'slide';
-                slideEl.target = '_blank';
-                let mediaHtml = '';
-                if (slide.videoUrl) {
-                    mediaHtml = `<video src="${slide.videoUrl}" autoplay muted loop playsinline></video>`;
-                }
-                mediaHtml += `
-                    <picture>
-                        <source media="(min-width: 768px)" srcset="${slide.imageUrlDesktop || slide.imageUrlMobile || ''}">
-                        <img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner">
-                    </picture>
-                `;
-                slideEl.innerHTML = `${mediaHtml}<div class="overlay"></div>`;
-                slider.appendChild(slideEl);
-            });
-            
-            initializeSlider(sliderData.length);
-        }
+            if(!senderTx.committed) throw new Error("Payment failed. Insufficient balance.");
 
-        function renderVideosSection(videosData) {
-            const section = document.getElementById('videos-section');
-            const wrapper = document.getElementById('videos-wrapper');
-            if (!section || !wrapper || !videosData || videosData.length === 0) {
-                if(section) section.style.display = 'none';
-                return;
+            // Credit the receiver (if not admin)
+            if (receiverUid !== 'admin_account') {
+                await runTransaction(ref(database, 'users/' + receiverUid), (data) => { if (data) data.wallet = (data.wallet || 0) + amount; return data; });
             }
-            section.style.display = 'block';
-            wrapper.innerHTML = '';
 
-            videosData.forEach(item => {
-                const isVideo = item.mediaUrl && (item.mediaUrl.includes('.mp4') || item.mediaUrl.includes('.webm'));
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                card.innerHTML = `
-                    <div class="video-media">
-                        ${isVideo 
-                            ? `<video src="${item.mediaUrl}" muted loop playsinline preload="metadata"></video><div class="video-play-icon"><i class="fas fa-play"></i></div>` 
-                            : `<img src="${item.mediaUrl}" alt="${item.title || 'Video thumbnail'}">`
-                        }
-                    </div>
-                    <div class="video-content">
-                        <h3 class="video-title">${item.title || ''}</h3>
-                        <p class="video-description">${item.description || ''}</p>
-                        ${item.redirectUrl ? `<a href="${item.redirectUrl}" target="_blank" class="video-link" onclick="event.stopPropagation()">Learn More &rarr;</a>` : ''}
-                    </div>
-                `;
-                if (isVideo) {
-                    card.onclick = () => openVideoLightbox(item.mediaUrl);
-                }
-                wrapper.appendChild(card);
-            });
-        }
-
-        function renderNormalCategories(categories) {
-            const section = document.getElementById('normal-category-section');
-            const wrapper = document.getElementById('normal-category-wrapper');
-            if (!section || !wrapper || !categories || categories.length === 0) {
-                if(section) section.style.display = 'none';
-                return;
-            }
-            section.style.display = 'block';
-            wrapper.innerHTML = '';
-            categories.forEach(cat => {
-                wrapper.innerHTML += `<a href="${cat.linkUrl||'#'}" class="text-center group"><div class="aspect-square bg-gray-200 rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-110"><img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-contain p-2"></div><p class="mt-2 text-xs font-medium text-gray-600">${cat.name}</p></a>`;
-            });
-        }
-
-        // --- UPDATED Festive Collection Function ---
-        function renderFestiveCollection(collectionData) {
-            const container = document.getElementById('festive-collection-container');
-            if (!container || !collectionData || !collectionData.products) {
-                if(container) container.style.display = 'none';
-                return;
-            }
+            // Log the payment transaction
+            const newPaymentRef = push(ref(database, 'payments'));
+            await set(newPaymentRef, { paymentId: newPaymentRef.key, senderId: auth.currentUser.uid, senderName: currentUserData.name, receiverId: receiverUid, receiverName: receiverData.name, amount: amount, timestamp: new Date().toISOString() });
             
-            const headline = document.getElementById('festive-headline');
-            headline.innerText = collectionData.title || 'Special Offers';
-            // Apply headline color from Firebase
-            headline.style.color = collectionData.headlineColor || 'var(--text-dark)';
-
-            container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
-            
-            const slider = document.getElementById('festive-product-slider');
-            slider.innerHTML = '';
-
-            const productIds = Object.keys(collectionData.products);
-
-            productIds.forEach(productId => {
-                const prod = collectionData.products[productId];
-                const thumbnailUrl = (prod.images && prod.images[0]) || prod.imageUrl || 'https://placehold.co/200x200/F9FAFB/111827?text=No+Image';
-                const productLink = `./product-details.html?id=${productId}`;
-
-                slider.innerHTML += `
-                    <a href="${productLink}" class="product-card">
-                        <div class="product-media-container">
-                            <img src="${thumbnailUrl}" alt="${prod.name}" onerror="this.onerror=null;this.src='https://placehold.co/200x200/F9FAFB/111827?text=No+Image';">
-                        </div>
-                        <div class="product-details">
-                            <p class="product-name">${prod.name || ''}</p>
-                            ${prod.offer ? `<span class="product-offer">${prod.offer}</span>` : ''}
-                            <div class="product-price">
-                                ${prod.displayPrice ? `<span class="display-price">₹${prod.displayPrice}</span>` : ''}
-                                ${prod.originalPrice ? `<span class="original-price">₹${prod.originalPrice}</span>` : ''}
-                            </div>
-                        </div>
-                    </a>`;
-            });
+            closeModal(DOMElements.passwordModal);
+            showTransactionSuccess(amount);
         }
 
-        function renderFlipCardSection(flipCardData) {
-            const section = document.getElementById('flipcard-section');
-            if (!section || !flipCardData || !flipCardData.front?.imageUrl || !flipCardData.back?.imageUrl) {
-                if(section) section.style.display = 'none';
-                return;
-            }
-            section.style.display = 'block';
-            section.innerHTML = `
-                <div class="flip-card-container w-full md:w-1/2 mx-auto aspect-video">
-                    <div class="flip-card-inner">
-                        <a href="${flipCardData.front.linkUrl || '#'}" target="_blank" class="flip-card-front">
-                            <img src="${flipCardData.front.imageUrl}" alt="Front of card">
-                        </a>
-                        <a href="${flipCardData.back.linkUrl || '#'}" target="_blank" class="flip-card-back">
-                            <img src="${flipCardData.back.imageUrl}" alt="Back of card">
-                        </a>
-                    </div>
-                </div>
-            `;
+        async function handlePasswordConfirmation() {
+            const modalPasswordInput = document.getElementById('modal-password');
+            hideErrorMessage(DOMElements.modalErrorMsg);
+            DOMElements.modalConfirmBtn.disabled = true;
+            DOMElements.modalConfirmBtn.textContent = "Verifying...";
+            const password = modalPasswordInput.value;
+            if (!password) { showErrorMessage(DOMElements.modalErrorMsg, "Kripya password daalein."); DOMElements.modalConfirmBtn.disabled = false; DOMElements.modalConfirmBtn.textContent = "Confirm"; return; }
+            
+            const credential = EmailAuthProvider.credential(`${currentUserData.mobile}@ramazone.com`, password);
+            try {
+                await reauthenticateWithCredential(auth.currentUser, credential);
+                DOMElements.modalConfirmBtn.textContent = "Processing...";
+                if (tempActionData.type === 'claim') await processClaimConfirmation();
+                else if (tempActionData.type === 'payment') await processPaymentConfirmation();
+            } catch (error) { showErrorMessage(DOMElements.modalErrorMsg, "Galat password ya koi anya error."); } 
+            finally { DOMElements.modalConfirmBtn.disabled = false; DOMElements.modalConfirmBtn.textContent = "Confirm"; modalPasswordInput.value = ''; tempActionData = {}; }
         }
         
-        function renderSponsor(sponsorData) {
-            const container = document.getElementById('sponsor-section-container');
-            if (!container || (!sponsorData?.videoUrl && !sponsorData?.imageUrl)) {
-                if(container) container.style.display = 'none';
-                return;
-            }
-            container.style.display = 'block';
-            const mediaHtml = sponsorData.videoUrl
-                ? `<video src="${sponsorData.videoUrl}" autoplay muted loop playsinline></video>`
-                : `<img src="${sponsorData.imageUrl}" alt="Sponsor">`;
-            
-            container.innerHTML = `<a href="${sponsorData.linkUrl || '#'}" target="_blank">${mediaHtml}</a>`;
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            hideErrorMessage(DOMElements.passwordChangeErrorMsg);
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            if (newPassword !== confirmPassword) { showErrorMessage(DOMElements.passwordChangeErrorMsg, "Naya password match nahi ho raha."); return; }
+            if (newPassword.length < 6) { showErrorMessage(DOMElements.passwordChangeErrorMsg, "Naya password kam se kam 6 akshar ka hona chahiye."); return; }
+            const user = auth.currentUser;
+            const credential = EmailAuthProvider.credential(`${currentUserData.mobile}@ramazone.com`, currentPassword);
+            try {
+                await reauthenticateWithCredential(user, credential);
+                await updatePassword(user, newPassword);
+                showToast("Password safaltapoorvak badal gaya hai!");
+                DOMElements.passwordChangeForm.reset();
+                closeModal(DOMElements.profileModal);
+            } catch (error) { showErrorMessage(DOMElements.passwordChangeErrorMsg, "Purana password galat hai ya koi aur error aayi."); }
         }
-        
-        function renderAdvantages(advantagesData) {
-            const section = document.getElementById('advantages-section');
-            const grid = document.getElementById('advantages-grid');
-            if (!section || !grid || !advantagesData || advantagesData.length === 0) {
-                if(section) section.style.display = 'none';
-                return;
-            }
-            section.style.display = 'block';
-            grid.innerHTML = '';
-            advantagesData.forEach(adv => {
-                grid.innerHTML += `<div class="bg-white p-4 rounded-xl text-center shadow-sm hover:shadow-md transition-shadow"><img src="${adv.imageUrl}" alt="${adv.title}" class="w-16 h-16 mx-auto mb-2 object-contain"><p class="font-semibold text-sm text-gray-800">${adv.title}</p></div>`;
-            });
-        }
-        
-        function renderFooter(footerData) {
-            if (!footerData) return;
-            document.getElementById('footer-shop-link').href = footerData.shopLink || './products.html';
-            document.getElementById('footer-play-link').href = footerData.playLink || '#';
-            document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
-            
-            const socialContainer = document.getElementById('social-links-container');
-            const desktopSocialContainer = document.getElementById('desktop-social-links');
-            let socialHTML = '';
-            let desktopSocialHTML = '';
-            if (footerData.followLinks) {
-                const links = footerData.followLinks;
-                if (links.youtube) {
-                    socialHTML += `<a href="${links.youtube}" target="_blank" class="social-link bg-red-500"><img src="https://cdn-icons-png.flaticon.com/128/3670/3670147.png" alt="YouTube"></a>`;
-                    desktopSocialHTML += `<a href="${links.youtube}" target="_blank" class="text-gray-500 hover:text-red-500"><i class="fab fa-youtube"></i></a>`;
-                }
-                if (links.facebook) {
-                    socialHTML += `<a href="${links.facebook}" target="_blank" class="social-link bg-blue-600"><img src="https://www.svgrepo.com/show/303114/facebook-3-logo.svg" alt="Facebook"></a>`;
-                    desktopSocialHTML += `<a href="${links.facebook}" target="_blank" class="text-gray-500 hover:text-blue-600"><i class="fab fa-facebook"></i></a>`;
-                }
-                if (links.instagram) {
-                    socialHTML += `<a href="${links.instagram}" target="_blank" class="social-link bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"><img src="https://cdn-icons-png.flaticon.com/128/2111/2111463.png" alt="Instagram"></a>`;
-                    desktopSocialHTML += `<a href="${links.instagram}" target="_blank" class="text-gray-500 hover:text-pink-500"><i class="fab fa-instagram"></i></a>`;
-                }
-                if (links.whatsapp) {
-                    socialHTML += `<a href="${links.whatsapp}" target="_blank" class="social-link bg-green-500"><img src="https://cdn-icons-png.flaticon.com/128/3991/3991765.png" alt="WhatsApp"></a>`;
-                }
-                socialContainer.innerHTML = socialHTML;
-                desktopSocialContainer.innerHTML = desktopSocialHTML;
-            }
-        }
-        
-        function renderSearch(d) { if(d) { document.getElementById('search-link').href = d.redirectUrl || '#'; const c = d.scrollingTexts || []; if(c.length > 0){ let i=0; const e=document.getElementById("categoryText"); if(window.ci) clearInterval(window.ci); window.ci=setInterval(()=>{if(e)e.innerText=c[i];i=(i+1)%c.length},2000)} } }
-        function renderSpecialCategories(c) { const w=document.getElementById('special-category-wrapper'); if(!w || !c || c.length===0)return; w.innerHTML=''; c.forEach(cat=>{w.innerHTML+=`<a href="${cat.linkUrl||'#'}" target="_blank" class="text-center group"><div class="aspect-square bg-white rounded-2xl shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden"><img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-cover"></div><p class="mt-2 text-xs sm:text-sm font-semibold text-gray-700">${cat.name}</p></a>`}) }
-        function renderDynamicSection(s,d) { const c=document.querySelector(s); if(!c||!d||!d.imageUrl){if(c)c.style.display='none';return} c.style.display='block'; c.innerHTML=`<a href="${d.linkUrl||'#'}" target="_blank"><img src="${d.imageUrl}" alt="${d.title||'Dynamic Content'}"></a><div class="p-6"><h3 class="text-xl font-bold mb-2">${d.title||''}</h3><p class="text-gray-600 mb-4">${d.text||''}</p><a href="${d.linkUrl||'#'}" target="_blank" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-full text-sm px-5 py-2.5 text-center">${d.buttonText||'Discover'}</a></div>` }
-        function renderInfoMarquee(t) { const s=document.getElementById('info-marquee-section'); if(!t){s.style.display='none';return} s.style.display='block'; document.getElementById('info-marquee-text').innerHTML=t }
-        
-        // --- UI FUNCTIONALITY ---
-        let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
-        
-        function initializeSlider(count) {
-            const slider = document.getElementById('main-slider');
-            totalSlides = count;
-            if (totalSlides <= 1) {
-                if (slider.children.length > 1) { 
-                    slider.children[1].remove();
-                    slider.children[0].remove();
-                }
-                return;
-            }
 
-            const firstClone = slider.children[0].cloneNode(true);
-            const lastClone = slider.children[totalSlides - 1].cloneNode(true);
-            slider.appendChild(firstClone);
-            slider.insertBefore(lastClone, slider.children[0]);
-
-            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+        // --- EVENT BINDING & APP SETUP ---
+        function setupApplication() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            applyTheme(savedTheme);
+            setupAuthentication();
+            DOMElements.themeSwitcher.addEventListener('click', () => { const newTheme = document.body.dataset.theme === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); localStorage.setItem('theme', newTheme); });
+            DOMElements.refreshBtn.addEventListener('click', refreshData);
+            document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
+            document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             
-            slider.addEventListener('transitionend', () => {
-                isTransitioning = false;
-                if (currentSlide === 0) {
-                    slider.classList.remove('transitioning');
-                    currentSlide = totalSlides;
-                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-                }
-                if (currentSlide === totalSlides + 1) {
-                    slider.classList.remove('transitioning');
-                    currentSlide = 1;
-                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            document.getElementById('open-claim-modal').addEventListener('click', () => openModal(DOMElements.claimModal));
+            document.getElementById('open-coupons-modal').addEventListener('click', () => openModal(DOMElements.couponsModal));
+            document.getElementById('open-profile-modal').addEventListener('click', () => openModal(DOMElements.profileModal));
+            
+            DOMElements.openCashbackModalBtn.addEventListener('click', () => {
+                if (pendingCashbackClaim) { openModal(DOMElements.cashbackClaimModal); } 
+                else { 
+                    DOMElements.cashbackSubmitBtn.disabled = false;
+                    hideErrorMessage(DOMElements.cashbackErrorMsg);
+                    document.getElementById('product-purchase-date').valueAsDate = new Date();
+                    openModal(DOMElements.cashbackModal); 
                 }
             });
 
-            if (sliderInterval) clearInterval(sliderInterval);
-            sliderInterval = setInterval(nextSlide, 5000);
-            updateDots();
-        }
+            document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
+            
+            DOMElements.claimRequestForm.addEventListener('submit', handleClaimRequest);
+            DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
+            DOMElements.passwordChangeForm.addEventListener('submit', handlePasswordChange);
+            DOMElements.profilePictureInput.addEventListener('change', handleProfilePictureUpload);
+            DOMElements.claimNowBtn.addEventListener('click', handleCashbackClaim);
+            DOMElements.modalConfirmBtn.addEventListener('click', handlePasswordConfirmation);
 
-        function moveSlide(direction) {
-            if (isTransitioning) return;
-            const slider = document.getElementById('main-slider');
-            isTransitioning = true;
-            slider.classList.add('transitioning');
-            currentSlide += direction;
-            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-            resetSliderInterval();
-            updateDots();
-        }
+            DOMElements.profileDisplay.addEventListener('click', (e) => showFullImage(e.target.src));
+            DOMElements.profileModalDisplay.addEventListener('click', (e) => showFullImage(e.target.src));
+            DOMElements.imageViewModal.addEventListener('click', () => closeModal(DOMElements.imageViewModal));
 
-        function nextSlide() { moveSlide(1); }
-        function prevSlide() { moveSlide(-1); }
-        function goToSlide(index) {
-            const slider = document.getElementById('main-slider');
-            if (isTransitioning) return;
-            isTransitioning = true;
-            slider.classList.add('transitioning');
-            currentSlide = index + 1;
-            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-            resetSliderInterval();
-            updateDots();
-        }
+            document.getElementById('coupons-list').addEventListener('click', e => { if (e.target?.classList.contains('copy-btn')) { navigator.clipboard.writeText(e.target.dataset.coupon).then(() => { e.target.textContent = '✅ Copied!'; setTimeout(() => { e.target.textContent = '📋 Copy'; }, 2000); }); } });
+            
+            DOMElements.walletShareBtn.addEventListener('click', async () => { if (!auth.currentUser || !currentUserData) { showToast("Data load ho raha hai..."); return; } const shareMessage = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMaine, *${auth.currentUser.displayName}* ne, Ramazone Cashback app se ab tak *₹${(currentUserData.lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! 👇\n\nhttps://ramazone.in/cashback.html`; try { if (navigator.share) await navigator.share({ text: shareMessage }); else { navigator.clipboard.writeText(shareMessage); showToast('Share message copied!'); } } catch (err) { if (err.name !== 'AbortError') showToast('Share karne mein error aayi.'); } });
 
-        function updateDots() {
-            const dots = document.querySelectorAll('.slider-dots .dot');
-            dots.forEach((dot, i) => {
-                const activeIndex = (currentSlide - 1 + totalSlides) % totalSlides;
-                dot.classList.toggle('active', i === activeIndex)
+            document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal(DOMElements.scanPayModal); startScanner(); });
+            DOMElements.paySubmitBtn.addEventListener('click', handlePaymentRequest);
+            document.getElementById('rescan-btn').addEventListener('click', startScanner);
+            
+            const uploadQrBtn = document.getElementById('upload-qr-btn');
+            const qrFileInput = document.getElementById('qr-file-input');
+            uploadQrBtn.addEventListener('click', () => qrFileInput.click());
+            qrFileInput.addEventListener('change', handleQrFileUpload);
+            
+            DOMElements.filterBar.addEventListener('click', e => { 
+                const target = e.target.closest('.filter-btn'); 
+                if (!target || target.type === 'date') return; 
+                DOMElements.filterBar.querySelector('.active')?.classList.remove('active'); 
+                target.classList.add('active'); 
+                activeFilter = target.dataset.filter; 
+                DOMElements.dateFilter.value = '';
+                renderUnifiedHistory(); 
             });
+            DOMElements.dateFilter.addEventListener('change', () => {
+                if (DOMElements.dateFilter.value) {
+                    const currentActive = DOMElements.filterBar.querySelector('.active');
+                    if (currentActive) currentActive.classList.remove('active');
+                }
+                renderUnifiedHistory();
+            });
+
+            DOMElements.notificationBtn.addEventListener('click', () => {
+                openModal(DOMElements.notificationsListModal);
+                renderNotificationsList();
+            });
+            document.getElementById('notification-popup-close').addEventListener('click', handlePopupClose);
+            document.getElementById('notification-popup-view').addEventListener('click', handlePopupView);
         }
 
-        function resetSliderInterval() { clearInterval(sliderInterval); sliderInterval = setInterval(nextSlide, 5000); }
-        
-        function openVideoLightbox(videoUrl) {
-            const lightbox = document.getElementById('video-lightbox');
-            const videoPlayer = document.getElementById('lightbox-video-player');
-            videoPlayer.src = videoUrl;
-            lightbox.classList.add('show');
-            videoPlayer.play();
-        }
-
-        function closeVideoLightbox() {
-            const lightbox = document.getElementById('video-lightbox');
-            const videoPlayer = document.getElementById('lightbox-video-player');
-            videoPlayer.pause();
-            videoPlayer.src = '';
-            lightbox.classList.remove('show');
-        }
-
-        let socialLinksTimer;
-        function toggleSocialMedia(event) {
-            event.preventDefault();
-            const container = document.getElementById('social-links-container');
-            const isActive = container.classList.toggle('active');
-            clearTimeout(socialLinksTimer);
-            if (isActive) {
-                socialLinksTimer = setTimeout(() => container.classList.remove('active'), 8000);
-            }
-        }
-
-        function setupScrollAnimations() { const o=new IntersectionObserver((e)=>{e.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');o.unobserve(entry.target)}})},{threshold:0.1}); document.querySelectorAll('.reveal').forEach(el=>o.observe(el)) }
+        // Initialize the app after the DOM is fully loaded.
+        document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
     </script>
 </body>
 </html>
-
