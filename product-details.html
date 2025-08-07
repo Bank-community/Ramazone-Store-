@@ -163,26 +163,42 @@
         let currentProductData = null;
         let currentProductId = null;
 
-        // --- Main Initialization Function ---
-        async function initializeAppAndLoadProduct() {
+        // --- Function to fetch Firebase config from serverless function ---
+        async function fetchFirebaseConfig() {
             try {
-                // Step 1: Fetch the config from the serverless function
                 const response = await fetch('/api/firebase-config');
                 if (!response.ok) {
-                    throw new Error('Could not fetch Firebase config!');
+                    throw new Error(`Network response was not ok, status: ${response.status}`);
                 }
-                const firebaseConfig = await response.json();
-
-                // Step 2: Initialize Firebase with the fetched config
-                firebase.initializeApp(firebaseConfig);
-                const database = firebase.database();
-
-                // Step 3: Fetch and display the product data
-                fetchProductData(database);
-
+                const config = await response.json();
+                if (!config.apiKey || !config.databaseURL) {
+                    throw new Error('Incomplete Firebase config received from server.');
+                }
+                return config;
             } catch (error) {
-                console.error("Initialization or data fetch failed:", error);
-                document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Product data load karne mein error hua.</p>';
+                console.error('Failed to fetch Firebase config:', error);
+                document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Application configuration could not be loaded. Please try again later.</p>';
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('product-content').style.display = 'block';
+                return null;
+            }
+        }
+        
+        // --- Main Initialization Function ---
+        async function initializeAppAndLoadProduct() {
+            const firebaseConfig = await fetchFirebaseConfig();
+            if (!firebaseConfig) return; // Stop if config fetching failed
+
+            try {
+                // Initialize Firebase only if it hasn't been already
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                const database = firebase.database();
+                fetchProductData(database);
+            } catch (error) {
+                console.error("Firebase initialization or data fetch failed:", error);
+                document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Product data could not be loaded.</p>';
                 document.getElementById('loading-indicator').style.display = 'none';
                 document.getElementById('product-content').style.display = 'block';
             }
@@ -194,26 +210,41 @@
             const productId = params.get('id');
             currentProductId = productId; // Store ID globally
 
-            if (productId === null) {
-                document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">URL mein product ID nahi mila.</p>';
+            if (!productId) {
+                document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found in the URL.</p>';
                 document.getElementById('loading-indicator').style.display = 'none';
                 document.getElementById('product-content').style.display = 'block';
                 return;
             }
 
-            const productRef = database.ref(`ramazone/homepage/festiveCollection/products/${productId}`);
-            productRef.get().then((snapshot) => {
-                if (snapshot.exists()) {
-                    currentProductData = snapshot.val(); // Store data globally
-                    loadProduct(currentProductData, currentProductId);
-                    loadRelatedProducts(currentProductId, database);
-                    document.getElementById('loading-indicator').style.display = 'none';
-                    document.getElementById('product-content').style.display = 'block';
-                } else {
-                    document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Maaf kijiye, yeh product nahi mil saka.</p>';
-                    document.getElementById('loading-indicator').style.display = 'none';
-                    document.getElementById('product-content').style.display = 'block';
-                }
+            // We need to check multiple paths for the product
+            const pathsToTry = [
+                `ramazone/homepage/festiveCollection/products/${productId}`,
+                // Add other potential paths here if products exist in other categories
+                // e.g., `ramazone/homepage/anotherCategory/products/${productId}`
+            ];
+
+            let productFound = false;
+
+            pathsToTry.forEach((path, index) => {
+                if (productFound) return;
+
+                const productRef = database.ref(path);
+                productRef.get().then((snapshot) => {
+                    if (snapshot.exists()) {
+                        productFound = true;
+                        currentProductData = snapshot.val(); // Store data globally
+                        loadProduct(currentProductData, productId);
+                        loadRelatedProducts(productId, database);
+                        document.getElementById('loading-indicator').style.display = 'none';
+                        document.getElementById('product-content').style.display = 'block';
+                    } else if (index === pathsToTry.length - 1 && !productFound) {
+                        // If it's the last path and product is still not found
+                        document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
+                        document.getElementById('loading-indicator').style.display = 'none';
+                        document.getElementById('product-content').style.display = 'block';
+                    }
+                });
             });
         }
 
@@ -545,4 +576,3 @@
 </body>
 </html>
 
- 
