@@ -95,23 +95,37 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        // --- Main Initialization Function ---
-        async function initializeAppAndLoadData() {
+        // --- Function to fetch Firebase config from serverless function ---
+        async function fetchFirebaseConfig() {
             try {
-                // Step 1: Fetch the config from the serverless function
                 const response = await fetch('/api/firebase-config');
                 if (!response.ok) {
-                    throw new Error('Could not fetch Firebase config!');
+                    throw new Error(`Network response was not ok, status: ${response.status}`);
                 }
-                const firebaseConfig = await response.json();
+                const config = await response.json();
+                if (!config.apiKey || !config.databaseURL) {
+                    throw new Error('Incomplete Firebase config received from server.');
+                }
+                return config;
+            } catch (error) {
+                console.error('Failed to fetch Firebase config:', error);
+                const loader = document.getElementById('loading-indicator');
+                loader.innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
+                return null;
+            }
+        }
 
-                // Step 2: Initialize Firebase with the fetched config
-                firebase.initializeApp(firebaseConfig);
+        // --- Main Initialization Function ---
+        async function initializeAppAndLoadData() {
+            const firebaseConfig = await fetchFirebaseConfig();
+            if (!firebaseConfig) return; // Stop if config fetching failed
+
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
                 const database = firebase.database();
-
-                // Step 3: Fetch and display products and categories
                 fetchProductsAndCategories(database);
-
             } catch (error) {
                 console.error("Initialization or data fetch failed:", error);
                 const loader = document.getElementById('loading-indicator');
@@ -121,33 +135,51 @@
         
         // --- Data Fetching and Display Logic ---
         function fetchProductsAndCategories(database) {
-            const productsRef = database.ref('ramazone/homepage/festiveCollection/products');
-            const specialCategoriesRef = database.ref('ramazone/homepage/specialCategories');
-            const normalCategoriesRef = database.ref('ramazone/homepage/normalCategories');
+            // Define all paths where products might be stored
+            const productPaths = [
+                database.ref('ramazone/homepage/festiveCollection/products').get(),
+                // Add other product paths here if you have them
+                // e.g., database.ref('ramazone/homepage/electronics/products').get()
+            ];
+
+            const categoryPaths = [
+                database.ref('ramazone/homepage/specialCategories').get(),
+                database.ref('ramazone/homepage/normalCategories').get()
+            ];
 
             const grid = document.getElementById('products-grid');
             const loader = document.getElementById('loading-indicator');
-            const noProductsMsg = document.getElementById('no-products-message');
-            const categoryBar = document.getElementById('category-filter-bar');
             
             let allProducts = [];
+            let allCategories = [];
 
             // Fetch all data simultaneously
-            Promise.all([
-                productsRef.get(),
-                specialCategoriesRef.get(),
-                normalCategoriesRef.get()
-            ]).then(([productsSnapshot, specialCatSnapshot, normalCatSnapshot]) => {
-                
-                // Convert object to array if needed
-                const productsData = productsSnapshot.val();
-                allProducts = productsData ? Object.keys(productsData).map(key => ({ id: key, ...productsData[key] })) : [];
-                
-                const specialCategories = specialCatSnapshot.val() || [];
-                const normalCategories = normalCatSnapshot.val() || [];
-                const allCategories = [...specialCategories, ...normalCategories];
+            Promise.all([...productPaths, ...categoryPaths]).then((snapshots) => {
+                // Process Products
+                const productSnapshots = snapshots.slice(0, productPaths.length);
+                productSnapshots.forEach(snapshot => {
+                    const productsData = snapshot.val();
+                    if (productsData) {
+                        const productList = Object.keys(productsData).map(key => ({ id: key, ...productsData[key] }));
+                        allProducts = allProducts.concat(productList);
+                    }
+                });
 
-                displayCategories(allCategories, allProducts);
+                // Process Categories
+                const categorySnapshots = snapshots.slice(productPaths.length);
+                categorySnapshots.forEach(snapshot => {
+                    const categoriesData = snapshot.val();
+                    if (categoriesData) {
+                        allCategories = allCategories.concat(Object.values(categoriesData));
+                    }
+                });
+                
+                // Remove duplicate categories by name
+                const uniqueCategories = allCategories.filter((cat, index, self) => 
+                    cat && cat.name && index === self.findIndex(c => c.name === cat.name)
+                );
+
+                displayCategories(uniqueCategories, allProducts);
                 displayProducts(allProducts, 'All'); // Show all products initially
 
                 loader.style.display = 'none';
@@ -204,6 +236,7 @@
                     return true;
                 }
                 // This filter assumes a 'category' field in your product data.
+                // If not, you might need to adjust this logic.
                 return prod && prod.category === filter;
             });
 
@@ -213,12 +246,17 @@
                     // Use the product's actual ID (key from firebase) for the link
                     cardLink.href = `./product-details.html?id=${prod.id}`;
                     cardLink.className = 'product-card';
+                    
+                    const imageUrl = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.imageUrl;
+
                     cardLink.innerHTML = `
                         <div class="product-image-container">
-                            <img src="${prod.imageUrl || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image'}" alt="${prod.name}">
+                            <img src="${imageUrl || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image'}" 
+                                 onerror="this.onerror=null;this.src='https://placehold.co/400x400/e2e8f0/64748b?text=No+Image';"
+                                 alt="${prod.name || 'Product'}">
                         </div>
                         <div class="product-details">
-                            <p class="product-name truncate">${prod.name}</p>
+                            <p class="product-name truncate">${prod.name || 'Product Name'}</p>
                             ${prod.offer ? `<span class="product-offer">${prod.offer}</span>` : ''}
                         </div>
                     `;
@@ -234,5 +272,4 @@
     </script>
 </body>
 </html>
-
 
