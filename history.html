@@ -388,7 +388,7 @@
             });
         }
 
-        // --- FIXED Festive Collection Function ---
+        // --- UPDATED Festive Collection Function ---
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
             if (!container || !collectionData || !collectionData.products) {
@@ -396,7 +396,11 @@
                 return;
             }
             
-            document.getElementById('festive-headline').innerText = collectionData.title || 'Special Offers';
+            const headline = document.getElementById('festive-headline');
+            headline.innerText = collectionData.title || 'Special Offers';
+            // Apply headline color from Firebase
+            headline.style.color = collectionData.headlineColor || 'var(--text-dark)';
+
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
             
             const slider = document.getElementById('festive-product-slider');
@@ -406,18 +410,13 @@
 
             productIds.forEach(productId => {
                 const prod = collectionData.products[productId];
-                
-                // FIX: Always use an image for the thumbnail, never the video.
-                // Prioritize the first image in the 'images' array, then the 'imageUrl'.
                 const thumbnailUrl = (prod.images && prod.images[0]) || prod.imageUrl || 'https://placehold.co/200x200/F9FAFB/111827?text=No+Image';
-                
-                // Link each product to its details page
                 const productLink = `./product-details.html?id=${productId}`;
 
                 slider.innerHTML += `
                     <a href="${productLink}" class="product-card">
                         <div class="product-media-container">
-                            <img src="${thumbnailUrl}" alt="${prod.name || 'Product'}" onerror="this.onerror=null;this.src='https://placehold.co/200x200/F9FAFB/111827?text=No+Image';">
+                            <img src="${thumbnailUrl}" alt="${prod.name}" onerror="this.onerror=null;this.src='https://placehold.co/200x200/F9FAFB/111827?text=No+Image';">
                         </div>
                         <div class="product-details">
                             <p class="product-name">${prod.name || ''}</p>
@@ -482,6 +481,7 @@
         
         function renderFooter(footerData) {
             if (!footerData) return;
+            document.getElementById('footer-shop-link').href = footerData.shopLink || './products.html';
             document.getElementById('footer-play-link').href = footerData.playLink || '#';
             document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
             
