@@ -219,9 +219,7 @@
 
             // We need to check multiple paths for the product
             const pathsToTry = [
-                `ramazone/homepage/festiveCollection/products/${productId}`,
-                // Add other potential paths here if products exist in other categories
-                // e.g., `ramazone/homepage/anotherCategory/products/${productId}`
+                `ramazone/homepage/festiveCollection/products/${productId}`
             ];
 
             let productFound = false;
@@ -274,16 +272,26 @@
 
             // Populate product details
             document.getElementById('product-title').textContent = data.name || 'Product Name';
-            document.getElementById('product-price').textContent = data.price ? `₹${data.price}` : `₹${data.offer || 'N/A'}`;
 
-            // Handle discount display
-            if (data.originalPrice && data.price) {
-                const discount = Math.round(((data.originalPrice - data.price) / data.originalPrice) * 100);
-                if (discount > 0) {
-                    document.getElementById('product-discount-container').style.display = 'flex';
-                    document.getElementById('product-original-price').textContent = `₹${data.originalPrice}`;
-                    document.getElementById('product-discount').textContent = `${discount}% OFF`;
-                }
+            // --- UPDATED PRICE LOGIC ---
+            const priceEl = document.getElementById('product-price');
+            const originalPriceEl = document.getElementById('product-original-price');
+            const discountEl = document.getElementById('product-discount');
+            const discountContainer = document.getElementById('product-discount-container');
+
+            discountContainer.style.display = 'none'; // Reset state
+
+            // Set the final price to be displayed
+            const finalPrice = data.displayPrice || data.price;
+            priceEl.textContent = finalPrice ? `₹${finalPrice}` : 'N/A';
+            
+            // Display original price and discount if available and valid
+            if (data.originalPrice && finalPrice && Number(data.originalPrice) > Number(finalPrice)) {
+                const discount = Math.round(((data.originalPrice - finalPrice) / data.originalPrice) * 100);
+                
+                discountContainer.style.display = 'flex';
+                originalPriceEl.textContent = `₹${data.originalPrice}`;
+                discountEl.textContent = `${discount}% OFF`;
             }
 
             // Handle description
@@ -355,9 +363,10 @@
             // Disable minus button if quantity is 1
             decreaseBtn.disabled = productQuantity <= 1;
 
-            // Update WhatsApp link
+            // --- UPDATED WHATSAPP MESSAGE LOGIC ---
+            const finalPrice = currentProductData.displayPrice || currentProductData.price;
             const productLink = window.location.href;
-            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* ${currentProductData.name}\n*Price:* ₹${currentProductData.price || currentProductData.offer}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${productLink}\n\nPlease let me know if it's available.`;
+            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* ${currentProductData.name}\n*Price:* ₹${finalPrice || 'N/A'}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${productLink}\n\nPlease let me know if it's available.`;
             document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
         }
 
@@ -529,7 +538,8 @@
             const shareButton = document.getElementById('share-button');
             
             const productName = `Product Name:- *${productData.name.toUpperCase().trim()}*`;
-            const productPrice = `Price:- *₹${productData.price || productData.offer}*`;
+            const finalPrice = productData.displayPrice || productData.price;
+            const productPrice = `Price:- *₹${finalPrice || 'N/A'}*`;
             const closingText = `✨ Discover more amazing deals at Ramazone! ✨`;
             const productLink = window.location.href;
 
