@@ -12,19 +12,19 @@
     <meta property="og:url" content="">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary-color: #4F46E5; --text-dark: #111827; --bg-light: #F9FAFB; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); }
         .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
         .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
-        .thumbnail { cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s; }
+        .thumbnail { cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s, transform 0.3s; }
         .thumbnail.active { border-color: var(--primary-color); }
+        .thumbnail:hover { transform: scale(1.05); }
         
-        /* Main image container style for better touch interaction */
         #main-image-container {
-            touch-action: pan-y; /* Allow vertical scroll but handle horizontal touch in JS */
-            user-select: none; /* Prevent text selection on drag */
+            touch-action: pan-y;
+            user-select: none;
             -webkit-user-select: none;
         }
 
@@ -42,7 +42,6 @@
         #toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; transition: bottom 0.5s ease-in-out; }
         #toast-notification.show { bottom: 30px; }
         
-        /* Quantity Selector Styles */
         .quantity-selector button {
             background-color: #e5e7eb;
             border: 1px solid #d1d5db;
@@ -70,7 +69,7 @@
 
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between max-w-7xl">
             <a href="./products.html" class="text-2xl text-gray-600 hover:text-gray-900">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </a>
@@ -81,35 +80,43 @@
         </div>
     </header>
 
-    <main class="container mx-auto p-4 md:p-8" id="product-content" style="display: none;">
-        <div class="bg-white rounded-2xl shadow-lg p-4 md:p-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+    <!-- Main Content: Added max-width and responsive padding -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8" id="product-content" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2">
                 <!-- Product Image Gallery -->
-                <div>
-                    <div class="rounded-xl mb-4 cursor-pointer" id="main-image-container">
-                        <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover rounded-xl pointer-events-none">
+                <div class="p-4 sm:p-6 lg:p-8">
+                    <div class="rounded-xl mb-4 cursor-pointer aspect-square bg-gray-100">
+                        <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-full object-cover rounded-xl pointer-events-none">
                     </div>
-                    <div class="grid grid-cols-5 gap-2" id="thumbnail-gallery"></div>
+                    <!-- Responsive thumbnail grid -->
+                    <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 md:gap-4" id="thumbnail-gallery"></div>
                 </div>
+                
                 <!-- Product Details & Actions -->
-                <div class="flex flex-col">
-                    <div class="flex justify-between items-start">
-                        <h1 id="product-title" class="text-2xl md:text-4xl font-bold text-gray-900 leading-tight"></h1>
-                        <button id="share-button" title="Share Product">
-                            <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
-                        </button>
-                    </div>
-                    <!-- Price Section -->
-                    <div class="flex items-center gap-4 my-4">
-                        <span id="product-price" class="text-3xl md:text-4xl font-extrabold" style="color: var(--primary-color);"></span>
-                        <div id="product-discount-container" style="display: none;" class="flex items-baseline gap-2">
-                            <span id="product-original-price" class="text-lg line-through text-gray-400"></span>
-                            <span id="product-discount" class="text-sm font-semibold text-green-600"></span>
+                <!-- Added flex-col to better structure content on all screen sizes -->
+                <div class="p-4 sm:p-6 lg:p-8 flex flex-col">
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start gap-4">
+                            <h1 id="product-title" class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 leading-tight"></h1>
+                            <button id="share-button" title="Share Product" class="flex-shrink-0">
+                                <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
+                            </button>
+                        </div>
+                        
+                        <!-- Price Section -->
+                        <div class="flex items-center gap-3 sm:gap-4 my-4">
+                            <span id="product-price" class="text-3xl lg:text-4xl font-extrabold" style="color: var(--primary-color);"></span>
+                            <div id="product-discount-container" class="flex items-baseline gap-2">
+                                <span id="product-original-price" class="text-lg text-gray-400 line-through" style="display: none;"></span>
+                                <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-md" style="display: none;"></span>
+                            </div>
                         </div>
                     </div>
+                    
                     <!-- Action Buttons Section -->
-                    <div class="mt-auto pt-6">
-                        <!-- NEW: Quantity Selector -->
+                    <!-- Constrained width on larger screens for better look -->
+                    <div class="mt-6 pt-6 border-t border-gray-200 lg:max-w-sm lg:mx-auto w-full">
                         <div class="mb-5 text-center">
                              <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
                              <div class="quantity-selector inline-flex items-center justify-center bg-white rounded-lg">
@@ -119,7 +126,6 @@
                             </div>
                         </div>
                         
-                        <!-- WhatsApp Order Button -->
                         <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-4 px-6 rounded-xl text-lg shadow-lg">
                             <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
                             Order on WhatsApp
@@ -127,16 +133,18 @@
                     </div>
                 </div>
             </div>
-            <!-- Description & Details -->
-            <div id="description-section" class="mt-12 border-t border-gray-200 pt-8" style="display: none;">
+            
+            <!-- Description & Details: Now inside the white card -->
+            <div id="description-section" class="p-4 sm:p-6 lg:p-8 border-t border-gray-200" style="display: none;">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Product Details</h2>
                 <div id="product-description" class="prose max-w-none text-gray-600"></div>
             </div>
         </div>
+        
         <!-- Related Products -->
-        <div id="related-products-section" class="mt-12" style="display: none;">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Aapko yeh bhi pasand aa sakta hai</h2>
-            <div id="related-products-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        <div id="related-products-section" class="mt-12 lg:mt-16" style="display: none;">
+            <h2 class="text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-6 lg:mb-8">Aapko yeh bhi pasand aa sakta hai</h2>
+            <div id="related-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6"></div>
         </div>
     </main>
     <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
@@ -156,24 +164,20 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
         // --- Global Variables ---
-        const sellerPhoneNumber = '917903698180'; // Your WhatsApp number
+        const sellerPhoneNumber = '917903698180';
         let modalImages = [];
         let currentImageIndex = 0;
         let productQuantity = 1;
         let currentProductData = null;
         let currentProductId = null;
 
-        // --- Function to fetch Firebase config from serverless function ---
+        // --- Function to fetch Firebase config ---
         async function fetchFirebaseConfig() {
             try {
                 const response = await fetch('/api/firebase-config');
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok, status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`Network response was not ok, status: ${response.status}`);
                 const config = await response.json();
-                if (!config.apiKey || !config.databaseURL) {
-                    throw new Error('Incomplete Firebase config received from server.');
-                }
+                if (!config.apiKey || !config.databaseURL) throw new Error('Incomplete Firebase config received from server.');
                 return config;
             } catch (error) {
                 console.error('Failed to fetch Firebase config:', error);
@@ -187,13 +191,10 @@
         // --- Main Initialization Function ---
         async function initializeAppAndLoadProduct() {
             const firebaseConfig = await fetchFirebaseConfig();
-            if (!firebaseConfig) return; // Stop if config fetching failed
+            if (!firebaseConfig) return;
 
             try {
-                // Initialize Firebase only if it hasn't been already
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
                 fetchProductData(database);
             } catch (error) {
@@ -208,7 +209,7 @@
         function fetchProductData(database) {
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('id');
-            currentProductId = productId; // Store ID globally
+            currentProductId = productId;
 
             if (!productId) {
                 document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found in the URL.</p>';
@@ -217,27 +218,21 @@
                 return;
             }
 
-            // We need to check multiple paths for the product
-            const pathsToTry = [
-                `ramazone/homepage/festiveCollection/products/${productId}`
-            ];
-
+            const pathsToTry = [`ramazone/homepage/festiveCollection/products/${productId}`];
             let productFound = false;
 
             pathsToTry.forEach((path, index) => {
                 if (productFound) return;
-
                 const productRef = database.ref(path);
                 productRef.get().then((snapshot) => {
                     if (snapshot.exists()) {
                         productFound = true;
-                        currentProductData = snapshot.val(); // Store data globally
+                        currentProductData = snapshot.val();
                         loadProduct(currentProductData, productId);
                         loadRelatedProducts(productId, database);
                         document.getElementById('loading-indicator').style.display = 'none';
                         document.getElementById('product-content').style.display = 'block';
                     } else if (index === pathsToTry.length - 1 && !productFound) {
-                        // If it's the last path and product is still not found
                         document.getElementById('product-content').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
                         document.getElementById('loading-indicator').style.display = 'none';
                         document.getElementById('product-content').style.display = 'block';
@@ -248,61 +243,57 @@
 
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
-            initializeAppAndLoadProduct(); // Start the process on page load
+            initializeAppAndLoadProduct();
             setupImageModal();
         });
 
         // --- Core Functions ---
-
-        /**
-         * Populates the page with product data.
-         * @param {object} data - The product data object from Firebase.
-         * @param {string} id - The product's unique ID.
-         */
         function loadProduct(data, id) {
             const firstImage = (data.images && data.images.length > 0) ? data.images[0] : data.imageUrl;
             const plainDescription = `Check out this amazing product: ${data.name} on Ramazone!`;
 
-            // Update Meta tags for sharing
             document.title = `${data.name || 'Product'} - Ramazone`;
             document.querySelector('meta[property="og:title"]').setAttribute('content', data.name || 'Product on Ramazone');
             document.querySelector('meta[property="og:description"]').setAttribute('content', plainDescription);
             document.querySelector('meta[property="og:image"]').setAttribute('content', firstImage || 'https://i.ibb.co/My6h0gdd/20250706-230221.png');
             document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
 
-            // Populate product details
             document.getElementById('product-title').textContent = data.name || 'Product Name';
 
-            // --- UPDATED PRICE LOGIC ---
+            // --- PRICE LOGIC (Same as before, but confirmed correct) ---
             const priceEl = document.getElementById('product-price');
             const originalPriceEl = document.getElementById('product-original-price');
             const discountEl = document.getElementById('product-discount');
-            const discountContainer = document.getElementById('product-discount-container');
 
-            discountContainer.style.display = 'none'; // Reset state
+            const displayPrice = data.displayPrice ? Number(data.displayPrice) : 0;
+            priceEl.textContent = displayPrice > 0 ? `₹${displayPrice}` : 'Price not available';
 
-            // Set the final price to be displayed
-            const finalPrice = data.displayPrice || data.price;
-            priceEl.textContent = finalPrice ? `₹${finalPrice}` : 'N/A';
-            
-            // Display original price and discount if available and valid
-            if (data.originalPrice && finalPrice && Number(data.originalPrice) > Number(finalPrice)) {
-                const discount = Math.round(((data.originalPrice - finalPrice) / data.originalPrice) * 100);
-                
-                discountContainer.style.display = 'flex';
-                originalPriceEl.textContent = `₹${data.originalPrice}`;
-                discountEl.textContent = `${discount}% OFF`;
+            const originalPrice = data.originalPrice ? Number(data.originalPrice) : 0;
+            if (originalPrice > 0) {
+                originalPriceEl.style.display = 'inline';
+                originalPriceEl.textContent = `₹${originalPrice}`;
+                if (originalPrice > displayPrice) {
+                    const discount = Math.round(((originalPrice - displayPrice) / originalPrice) * 100);
+                    discountEl.style.display = 'inline-block';
+                    discountEl.textContent = `${discount}% OFF`;
+                } else if (data.offer) {
+                    discountEl.style.display = 'inline-block';
+                    discountEl.textContent = data.offer;
+                } else {
+                    discountEl.style.display = 'none';
+                }
+            } else {
+                originalPriceEl.style.display = 'none';
+                discountEl.style.display = 'none';
             }
 
-            // Handle description
             if (data.description) {
                 document.getElementById('description-section').style.display = 'block';
                 document.getElementById('product-description').innerHTML = data.description;
             }
 
-            // Setup image gallery
             modalImages = data.images && data.images.length > 0 ? data.images : [data.imageUrl];
-            showImage(0); // Show the first image initially
+            showImage(0);
 
             const gallery = document.getElementById('thumbnail-gallery');
             gallery.innerHTML = ''; 
@@ -310,154 +301,61 @@
                 const img = document.createElement('img');
                 img.src = imgSrc;
                 img.alt = `${data.name} thumbnail ${index + 1}`;
-                img.className = 'thumbnail w-full h-auto object-cover rounded-md';
+                img.className = 'thumbnail w-full h-auto object-cover rounded-md aspect-square';
                 if (index === 0) img.classList.add('active');
-                
                 img.addEventListener('click', () => showImage(index));
                 gallery.appendChild(img);
             });
             
-            // Setup swipe functionality for the main image
             setupImageSwipe();
-            
-            // Setup quantity controls and initial WhatsApp link
             setupQuantityControls();
-            
-            // Setup share button
             setupShareButton(data);
         }
 
-        /**
-         * Sets up the event listeners for the quantity buttons.
-         */
         function setupQuantityControls() {
             const decreaseBtn = document.getElementById('decrease-quantity');
             const increaseBtn = document.getElementById('increase-quantity');
-            
-            increaseBtn.addEventListener('click', () => {
-                productQuantity++;
-                updateQuantityAndWhatsAppLink();
-            });
-
-            decreaseBtn.addEventListener('click', () => {
-                if (productQuantity > 1) {
-                    productQuantity--;
-                    updateQuantityAndWhatsAppLink();
-                }
-            });
-            
-            // Set initial state
+            increaseBtn.addEventListener('click', () => { productQuantity++; updateQuantityAndWhatsAppLink(); });
+            decreaseBtn.addEventListener('click', () => { if (productQuantity > 1) { productQuantity--; updateQuantityAndWhatsAppLink(); } });
             updateQuantityAndWhatsAppLink();
         }
 
-        /**
-         * Updates the quantity display and the WhatsApp order link.
-         */
         function updateQuantityAndWhatsAppLink() {
             const quantityDisplay = document.getElementById('quantity-display');
             const decreaseBtn = document.getElementById('decrease-quantity');
-            
-            // Update display
             quantityDisplay.textContent = productQuantity;
-            
-            // Disable minus button if quantity is 1
             decreaseBtn.disabled = productQuantity <= 1;
-
-            // --- UPDATED WHATSAPP MESSAGE LOGIC ---
             const finalPrice = currentProductData.displayPrice || currentProductData.price;
             const productLink = window.location.href;
             const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* ${currentProductData.name}\n*Price:* ₹${finalPrice || 'N/A'}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${productLink}\n\nPlease let me know if it's available.`;
             document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
         }
 
-
-        /**
-         * Displays a specific image and updates thumbnails.
-         * @param {number} index - The index of the image to show in the modalImages array.
-         */
         function showImage(index) {
             if (!modalImages || modalImages.length === 0) return;
-
-            // Loop around if index is out of bounds
-            if (index >= modalImages.length) {
-                index = 0;
-            } else if (index < 0) {
-                index = modalImages.length - 1;
-            }
-            
+            if (index >= modalImages.length) index = 0;
+            else if (index < 0) index = modalImages.length - 1;
             currentImageIndex = index;
-            const mainImage = document.getElementById('main-product-image');
-            mainImage.src = modalImages[currentImageIndex];
-
-            // Update active thumbnail
+            document.getElementById('main-product-image').src = modalImages[currentImageIndex];
             document.querySelectorAll('.thumbnail').forEach((thumb, thumbIndex) => {
-                if (thumbIndex === currentImageIndex) {
-                    thumb.classList.add('active');
-                } else {
-                    thumb.classList.remove('active');
-                }
+                thumb.classList.toggle('active', thumbIndex === currentImageIndex);
             });
         }
 
-        /**
-         * Sets up touch and mouse swipe functionality for the main image.
-         */
         function setupImageSwipe() {
             const imageContainer = document.getElementById('main-image-container');
-            let touchStartX = 0;
-            let touchEndX = 0;
-            let isDragging = false;
-
+            let touchStartX = 0, touchEndX = 0, isDragging = false;
             const handleSwipe = () => {
-                // Swipe left (next image)
-                if (touchEndX < touchStartX - 50) {
-                    showImage(currentImageIndex + 1);
-                }
-                // Swipe right (previous image)
-                if (touchEndX > touchStartX + 50) {
-                    showImage(currentImageIndex - 1);
-                }
+                if (touchEndX < touchStartX - 50) showImage(currentImageIndex + 1);
+                if (touchEndX > touchStartX + 50) showImage(currentImageIndex - 1);
             };
-
-            // Touch events
-            imageContainer.addEventListener('touchstart', e => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, { passive: true });
-
-            imageContainer.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            });
-
-            // Mouse events for desktop dragging
-            imageContainer.addEventListener('mousedown', e => {
-                isDragging = true;
-                touchStartX = e.screenX;
-                imageContainer.style.cursor = 'grabbing';
-            });
-
-            imageContainer.addEventListener('mouseup', e => {
-                if (isDragging) {
-                    isDragging = false;
-                    touchEndX = e.screenX;
-                    handleSwipe();
-                    imageContainer.style.cursor = 'pointer';
-                }
-            });
-            
-            imageContainer.addEventListener('mouseleave', () => {
-                if (isDragging) {
-                    isDragging = false;
-                    imageContainer.style.cursor = 'pointer';
-                }
-            });
+            imageContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            imageContainer.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); });
+            imageContainer.addEventListener('mousedown', e => { isDragging = true; touchStartX = e.screenX; imageContainer.style.cursor = 'grabbing'; });
+            imageContainer.addEventListener('mouseup', e => { if (isDragging) { isDragging = false; touchEndX = e.screenX; handleSwipe(); imageContainer.style.cursor = 'pointer'; } });
+            imageContainer.addEventListener('mouseleave', () => { if (isDragging) { isDragging = false; imageContainer.style.cursor = 'pointer'; } });
         }
 
-        /**
-         * Loads related products, excluding the current one.
-         * @param {string} currentId - The ID of the product currently being viewed.
-         * @param {object} database - The initialized Firebase database instance.
-         */
         function loadRelatedProducts(currentId, database) {
             const productsRef = database.ref('ramazone/homepage/festiveCollection/products');
             productsRef.get().then(snapshot => {
@@ -465,44 +363,25 @@
                     const relatedGrid = document.getElementById('related-products-grid');
                     const relatedSection = document.getElementById('related-products-section');
                     relatedGrid.innerHTML = ''; 
-                    let count = 0;
-                    
                     const productList = [];
                     snapshot.forEach(childSnapshot => {
-                        if (childSnapshot.key !== currentId) {
-                            productList.push({ id: childSnapshot.key, ...childSnapshot.val() });
-                        }
+                        if (childSnapshot.key !== currentId) productList.push({ id: childSnapshot.key, ...childSnapshot.val() });
                     });
-
-                    productList.sort(() => 0.5 - Math.random());
-                    
-                    productList.slice(0, 4).forEach(prod => {
+                    productList.sort(() => 0.5 - Math.random()).slice(0, 4).forEach(prod => {
                         const cardLink = document.createElement('a');
                         cardLink.href = `./product-details.html?id=${prod.id}`;
                         cardLink.className = 'block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow';
-                        
                         const imageUrl = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.imageUrl;
-
                         cardLink.innerHTML = `
-                            <img src="${imageUrl || 'https://placehold.co/200x200/F9FAFB/111827?text=No+Image'}" 
-                                 onerror="this.onerror=null;this.src='https://placehold.co/200x200/F9FAFB/111827?text=No+Image';"
-                                 class="w-full h-40 object-cover" 
-                                 alt="${prod.name || 'Related Product'}">
-                            <div class="p-2 text-center">
-                                <p class="text-sm font-semibold truncate">${prod.name}</p>
-                            </div>`;
+                            <div class="aspect-w-1 aspect-h-1 bg-gray-100"><img src="${imageUrl || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image'}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/e2e8f0/64748b?text=No+Image';" class="w-full h-full object-cover" alt="${prod.name || 'Related Product'}"></div>
+                            <div class="p-3 text-center"><p class="text-sm font-semibold truncate">${prod.name}</p></div>`;
                         relatedGrid.appendChild(cardLink);
-                        count++;
                     });
-
-                    if (count > 0) relatedSection.style.display = 'block';
+                    if (productList.length > 0) relatedSection.style.display = 'block';
                 }
             });
         }
         
-        /**
-         * Sets up the functionality for the full-screen image modal viewer.
-         */
         function setupImageModal() {
             const modal = document.getElementById('image-modal');
             const mainImageContainer = document.getElementById('main-image-container');
@@ -510,55 +389,37 @@
             const closeBtn = document.querySelector("#image-modal .close");
             const prevBtn = document.querySelector("#image-modal .prev");
             const nextBtn = document.querySelector("#image-modal .next");
-
-            mainImageContainer.onclick = () => {
-                modal.style.display = "flex";
-                modalImg.src = modalImages[currentImageIndex];
-            }
+            mainImageContainer.onclick = () => { modal.style.display = "flex"; modalImg.src = modalImages[currentImageIndex]; };
             closeBtn.onclick = () => modal.style.display = "none";
-            
             const showModalImage = (index) => {
-                if(index >= modalImages.length) { index = 0; }
-                if(index < 0) { index = modalImages.length - 1; }
+                if(index >= modalImages.length) index = 0;
+                if(index < 0) index = modalImages.length - 1;
                 modalImg.src = modalImages[index];
-                currentImageIndex = index; // Keep modal and main view in sync
+                currentImageIndex = index;
             };
-
             prevBtn.onclick = (e) => { e.stopPropagation(); showModalImage(currentImageIndex - 1); };
             nextBtn.onclick = (e) => { e.stopPropagation(); showModalImage(currentImageIndex + 1); };
-            
-            modal.onclick = (e) => { if (e.target === modal) { modal.style.display = "none"; } }
+            modal.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; };
         }
 
-        /**
-         * Configures the share button to use the Web Share API or fallback to clipboard.
-         * @param {object} productData - The data of the product to be shared.
-         */
         function setupShareButton(productData) {
             const shareButton = document.getElementById('share-button');
-            
             const productName = `Product Name:- *${productData.name.toUpperCase().trim()}*`;
             const finalPrice = productData.displayPrice || productData.price;
             const productPrice = `Price:- *₹${finalPrice || 'N/A'}*`;
             const closingText = `✨ Discover more amazing deals at Ramazone! ✨`;
             const productLink = window.location.href;
-
             const shareText = `${productName}\n${productPrice}\n\n${closingText}\n${productLink}`;
-
             shareButton.addEventListener('click', async () => {
                 if (navigator.share) {
-                    try {
-                        await navigator.share({ text: shareText });
-                    } catch (err) {
-                        console.error('Share failed:', err.message);
-                    }
+                    try { await navigator.share({ text: shareText }); } 
+                    catch (err) { console.error('Share failed:', err.message); }
                 } else {
                     try {
                         const textArea = document.createElement('textarea');
                         textArea.value = window.location.href;
                         document.body.appendChild(textArea);
-                        textArea.focus();
-                        textArea.select();
+                        textArea.focus(); textArea.select();
                         document.execCommand('copy');
                         document.body.removeChild(textArea);
                         showToast("Link Copied!");
@@ -570,17 +431,11 @@
             });
         }
 
-        /**
-         * Shows a temporary toast notification at the bottom of the screen.
-         * @param {string} message - The message to display in the toast.
-         */
         function showToast(message) {
             const toast = document.getElementById('toast-notification');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2500);
+            setTimeout(() => toast.classList.remove('show'), 2500);
         }
     </script>
 </body>
