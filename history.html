@@ -220,6 +220,7 @@
         .history-item.payment { border-left-color: var(--accent-purple); } 
         .history-item.debit { border-left-color: var(--brand-red); } 
         .history-item.credit { border-left-color: var(--accent-green); } 
+        .history-item.settled { border-left-color: var(--accent-blue); } /* Style for settled due */
         
         .history-details { display: flex; align-items: center; gap: 15px; }
         .history-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
@@ -227,6 +228,7 @@
         .history-icon.payment { background-color: rgba(155, 89, 182, 0.1); color: var(--accent-purple); }
         .history-icon.debit { background-color: rgba(229, 9, 20, 0.1); color: var(--brand-red); } 
         .history-icon.credit { background-color: rgba(46, 204, 113, 0.1); color: var(--accent-green); } 
+        .history-icon.settled { background-color: rgba(52, 152, 219, 0.1); color: var(--accent-blue); }
         
         .history-info .title { font-weight: 600; font-size: 15px; }
         .history-info .date { font-size: 13px; color: var(--text-secondary-dark); }
@@ -443,11 +445,16 @@
             text-decoration: none;
         }
 
-        /* --- UPDATED TRANSACTION SUCCESS MODAL --- */
+        /* --- === UPDATED TRANSACTION SUCCESS MODAL CSS === --- */
         #transaction-success-modal .modal-content {
             text-align: center;
             padding: 40px 30px;
             position: relative;
+            /* Added flex properties for centering */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         #transaction-success-close-btn {
             position: absolute;
@@ -546,6 +553,7 @@
                     <div id="theme-switcher" class="header-icon" title="Toggle Theme"><img src="https://www.svgrepo.com/show/527253/moon.svg" alt="Theme"></div>
                     <a href="index.html" target="_blank" rel="noopener noreferrer" id="store-btn" class="header-icon" title="Online Store"><img src="https://www.svgrepo.com/show/293165/online-store-supermarket.svg" alt="Store"></a>
                     <div id="refresh-btn" class="header-icon" title="Refresh Data"><img src="https://www.svgrepo.com/show/533700/refresh-cw-alt-1.svg" alt="Refresh"></div>
+                    <!-- === UPDATED QR BUTTON ICON === -->
                     <a href="QR.html" id="qr-code-btn" class="header-icon" title="My QR Code"><img src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" alt="QR Code"></a>
                     <div id="logout-btn"><img src="https://www.svgrepo.com/show/500927/logout.svg" alt="Logout"><span>Logout</span></div>
                 </div>
@@ -604,12 +612,14 @@
         </div>
     </div>
 
+    <!-- All Modals -->
     <div id="image-view-modal" class="modal-overlay">
         <div class="modal-content">
             <img id="full-view-image" src="" alt="Full view">
         </div>
     </div>
     
+    <!-- UPDATED: Transaction Success Modal -->
     <div id="transaction-success-modal" class="modal-overlay">
         <div class="modal-content">
             <button id="transaction-success-close-btn" data-close-modal>&times;</button>
@@ -620,6 +630,7 @@
         </div>
     </div>
 
+    <!-- NEW: Notification Detail Modal -->
     <div id="notification-detail-modal" class="modal-overlay">
         <div class="modal-content">
             <img id="notification-detail-image" src="https://placehold.co/400x180/2c344a/a9b1c8?text=Notification" alt="Notification Image">
@@ -730,17 +741,20 @@
         </div>
     </div>
 
+    <!-- Notification List Modal -->
     <div id="notifications-list-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Notifications</h3>
             <div class="modal-body" id="notifications-list-container">
-                </div>
+                <!-- Notification items will be injected here -->
+            </div>
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" data-close-modal>Close</button>
             </div>
         </div>
     </div>
 
+    <!-- UPDATED: Notification Popup -->
     <div id="notification-popup-modal">
         <img id="notification-popup-image" src="https://placehold.co/60x60/2c344a/a9b1c8?text=!" alt="Notification Image">
         <div id="notification-popup-content">
@@ -788,8 +802,8 @@
             couponsModal: document.getElementById('coupons-modal'),
             notificationsListModal: document.getElementById('notifications-list-modal'),
             notificationPopupModal: document.getElementById('notification-popup-modal'),
-            transactionSuccessModal: document.getElementById('transaction-success-modal'), // NEW
-            notificationDetailModal: document.getElementById('notification-detail-modal'), // NEW
+            transactionSuccessModal: document.getElementById('transaction-success-modal'), 
+            notificationDetailModal: document.getElementById('notification-detail-modal'), 
             claimRequestForm: document.getElementById('claim-request-form'),
             cashbackRequestForm: document.getElementById('cashback-request-form'),
             passwordChangeForm: document.getElementById('password-change-form'),
@@ -824,11 +838,9 @@
         let pendingCashbackClaim = null;
         let currentPopupNotification = null;
 
-        // --- CORE INITIALIZATION (FIXED) ---
+        // --- CORE INITIALIZATION ---
         async function initializeFirebaseApp() {
             try {
-                // This is the CORRECT way for a Vercel deployment.
-                // It fetches the configuration from a secure serverless function.
                 const response = await fetch('/api/cashback-config');
                 if (!response.ok) throw new Error('Could not fetch Firebase config!');
                 const firebaseConfig = await response.json();
@@ -844,11 +856,10 @@
             }
         }
 
-        // --- IMAGE UPLOAD & VIEW SYSTEM (FIXED) ---
+        // --- IMAGE UPLOAD & VIEW SYSTEM ---
         async function fetchImageApiKey() {
             if (imageApiKey) return imageApiKey;
             try {
-                // This is the CORRECT way for a Vercel deployment.
                 const response = await fetch('/api/image-config');
                 if (!response.ok) throw new Error('Could not get image config.');
                 const config = await response.json();
@@ -1028,6 +1039,7 @@
             document.getElementById('profile-payment-id').textContent = generatePaymentId(authUser.displayName, dbData.mobile);
         }
 
+        // === UPDATED FUNCTION TO SHOW "Settled" TRANSACTIONS ===
         function renderUnifiedHistory() {
             const historyList = document.getElementById('unified-history-list');
             historyList.innerHTML = '';
@@ -1037,7 +1049,18 @@
             if (allTransactionsSnapshot.claims?.exists()) allTransactionsSnapshot.claims.forEach(snap => { const c = snap.val(); combinedHistory.push({ key: snap.key, type: 'claim', date: new Date(c.requestDate), title: 'Wallet Claim', amount: c.claimAmount, status: c.status, sign: '-', coupon: c.couponCode }); });
             if (allTransactionsSnapshot.sent?.exists()) allTransactionsSnapshot.sent.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key, type: 'payment', date: new Date(p.timestamp), title: `Paid to ${p.receiverName}`, amount: p.amount, status: 'completed', sign: '-' }); });
             if (allTransactionsSnapshot.received?.exists()) allTransactionsSnapshot.received.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key+'_rec', type: 'payment', date: new Date(p.timestamp), title: `Received from ${p.senderName}`, amount: p.amount, status: 'completed', sign: '+' }); });
-            if (allTransactionsSnapshot.credit?.exists()) allTransactionsSnapshot.credit.forEach(snap => { const c = snap.val(); if (c.type === 'credit') combinedHistory.push({ key: snap.key, type: 'credit', date: new Date(c.timestamp), title: `Credit from Admin`, amount: c.amount, status: 'completed', sign: '+' }); });
+            
+            // This part now includes 'credit' and 'Settled' types
+            if (allTransactionsSnapshot.credit?.exists()) {
+                allTransactionsSnapshot.credit.forEach(snap => { 
+                    const c = snap.val(); 
+                    if (c.type === 'credit') {
+                        combinedHistory.push({ key: snap.key, type: 'credit', date: new Date(c.timestamp), title: `Credit from Admin`, amount: c.amount, status: 'completed', sign: '+' }); 
+                    } else if (c.type === 'Settled') {
+                        combinedHistory.push({ key: snap.key, type: 'settled', date: new Date(c.timestamp), title: `Due Amount Settled`, amount: c.amount, status: 'completed', sign: '+' }); 
+                    }
+                });
+            }
 
             const selectedDate = DOMElements.dateFilter.value;
             let filteredHistory = combinedHistory
@@ -1053,12 +1076,12 @@
             filteredHistory.sort((a, b) => b.date - a.date).forEach(item => {
                 const itemDiv = document.createElement('div');
                 const typeClass = item.sign === '+' ? 'credit' : 'debit';
-                const icon = { cashback: '🎁', claim: '💸', payment: '↔️', credit: '✨' }[item.type] || '📜';
+                const icon = { cashback: '🎁', claim: '💸', payment: '↔️', credit: '✨', settled: '🤝' }[item.type] || '📜';
                 
-                itemDiv.className = `history-item ${typeClass}`;
+                itemDiv.className = `history-item ${item.type === 'settled' ? 'settled' : typeClass}`;
                 let couponHTML = (item.type === 'claim' && item.status === 'approved' && item.coupon) ? `<span class="coupon-code">${item.coupon}</span>` : (item.type === 'claim' && item.status === 'rejected') ? `<span class="coupon-code">Refunded</span>` : '';
                 
-                itemDiv.innerHTML = `<div class="history-details"><div class="history-icon ${typeClass}">${icon}</div><div class="history-info"><div class="title">${item.title}</div><div class="date">${item.date.toLocaleDateString()}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${item.sign} ₹${parseFloat(item.amount).toFixed(2)}</div><span class="status status-${item.status}">${item.status}</span>${couponHTML}</div>`;
+                itemDiv.innerHTML = `<div class="history-details"><div class="history-icon ${item.type === 'settled' ? 'settled' : typeClass}">${icon}</div><div class="history-info"><div class="title">${item.title}</div><div class="date">${item.date.toLocaleDateString()}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${item.sign} ₹${parseFloat(item.amount).toFixed(2)}</div><span class="status status-${item.status}">${item.status}</span>${couponHTML}</div>`;
                 historyList.appendChild(itemDiv);
             });
         }
@@ -1131,7 +1154,7 @@
             finally { DOMElements.claimNowBtn.disabled = false; DOMElements.claimNowBtn.textContent = 'Claim Now'; }
         }
 
-        // --- NOTIFICATION SYSTEM (UPDATED) ---
+        // --- NOTIFICATION SYSTEM ---
         function getSeenNotifications() {
             const seen = localStorage.getItem('ramazone_notifications_seen');
             return seen ? JSON.parse(seen) : [];
@@ -1197,7 +1220,7 @@
                 seenIds.push(notificationId);
                 localStorage.setItem('ramazone_notifications_seen', JSON.stringify(seenIds));
                 processNotifications();
-                renderNotificationsList(); // Re-render list to remove unread style
+                renderNotificationsList(); 
             }
         }
 
@@ -1256,7 +1279,7 @@
             openModal(DOMElements.notificationDetailModal);
         }
 
-        // --- PAYMENT SUCCESS MODAL (NEW) ---
+        // --- PAYMENT SUCCESS MODAL ---
         function showTransactionSuccess(amount) {
             document.getElementById('transaction-success-amount').textContent = `₹ ${parseFloat(amount).toFixed(2)}`;
             openModal(DOMElements.transactionSuccessModal);
@@ -1438,7 +1461,6 @@
             document.getElementById('modal-password').focus();
         }
         
-        // === UPDATED FUNCTION FOR DUE PAYMENT LOGIC ===
         async function processPaymentConfirmation() {
             const { amount, receiverUid, receiverData } = tempActionData;
             const senderRef = ref(database, 'users/' + auth.currentUser.uid);
@@ -1447,23 +1469,22 @@
                 if (data) {
                     const availableBalance = (data.wallet || 0) + (data.dueAmount || 0);
                     if (availableBalance < amount) {
-                        return; // Abort transaction if balance is insufficient
+                        return; // Abort transaction
                     }
 
-                    // If paying to admin, prioritize clearing due amount
                     if (receiverUid === 'admin_account') {
                         let remainingAmountToPay = amount;
                         const currentDue = data.dueAmount || 0;
-                        
                         const paidTowardsDue = Math.min(currentDue, remainingAmountToPay);
-                        data.dueAmount = currentDue - paidTowardsDue;
+                        
+                        if (paidTowardsDue > 0) {
+                            data.dueAmount = currentDue - paidTowardsDue;
+                        }
                         
                         remainingAmountToPay = remainingAmountToPay - paidTowardsDue;
-                        
-                        // Deduct the rest from the main wallet
                         data.wallet = (data.wallet || 0) - remainingAmountToPay;
+
                     } else {
-                        // Original logic for peer-to-peer payments
                         data.wallet -= amount;
                     }
                 }
@@ -1472,12 +1493,10 @@
 
             if(!senderTx.committed) throw new Error("Payment failed. Insufficient balance.");
 
-            // Credit the receiver (if not admin)
             if (receiverUid !== 'admin_account') {
                 await runTransaction(ref(database, 'users/' + receiverUid), (data) => { if (data) data.wallet = (data.wallet || 0) + amount; return data; });
             }
 
-            // Log the payment transaction
             const newPaymentRef = push(ref(database, 'payments'));
             await set(newPaymentRef, { paymentId: newPaymentRef.key, senderId: auth.currentUser.uid, senderName: currentUserData.name, receiverId: receiverUid, receiverName: receiverData.name, amount: amount, timestamp: new Date().toISOString() });
             
@@ -1602,3 +1621,4 @@
     </script>
 </body>
 </html>
+
