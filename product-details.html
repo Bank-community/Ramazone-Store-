@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Product Details - Ramazone</title>
     <meta property="og:title" content="Ramazone">
     <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
@@ -10,145 +10,229 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary-color: #4F46E5; }
-        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
-        .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
-        .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
-        
+        html, body {
+            overscroll-behavior-y: contain;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #fff; }
+
+        /* Main Layout */
+        #product-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Full viewport height */
+        }
+        #main-media-container {
+            flex-grow: 1;
+            position: relative;
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #main-media-container img, #main-media-container iframe {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Changed to contain to show full image */
+        }
+        #product-details-sheet {
+            flex-shrink: 0;
+            background-color: #ffffff;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Thumbnails */
         #thumbnail-gallery {
             display: flex;
+            gap: 0.75rem;
             overflow-x: auto;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 0.5rem;
         }
-        #thumbnail-gallery::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
-        }
+        #thumbnail-gallery::-webkit-scrollbar { display: none; }
         .thumbnail { 
             cursor: pointer; 
-            border: 2px solid transparent; 
+            border: 2px solid #e5e7eb; 
             transition: border-color 0.3s; 
-            border-radius: 0.5rem; 
+            border-radius: 0.75rem; 
             position: relative;
             flex-shrink: 0; 
             width: 64px; 
+            height: 64px;
+            overflow: hidden;
         }
         .thumbnail.active { border-color: var(--primary-color); }
-        .thumbnail .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40%; height: 40%; background-color: rgba(0,0,0,0.5); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0.8; }
-        
-        #image-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
-        #image-modal img { max-width: 90%; max-height: 85%; object-fit: contain; }
-        #image-modal .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
-        .modal-nav { cursor: pointer; position: absolute; top: 50%; width: auto; padding: 16px; margin-top: -50px; color: white; font-weight: bold; font-size: 30px; transition: 0.6s ease; user-select: none; }
-        .modal-nav.prev { left: 0; border-radius: 0 3px 3px 0; }
-        .modal-nav.next { right: 0; border-radius: 3px 0 0 3px; }
-        .modal-nav:hover { background-color: rgba(0, 0, 0, 0.8); }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .thumbnail .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; background-color: rgba(0,0,0,0.6); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: none; }
 
+        /* Full Screen Viewer */
+        #fullscreen-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            z-index: 1000;
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            color: white;
+            overscroll-behavior: contain;
+        }
+        #fullscreen-viewer.active { display: flex; }
+        .fullscreen-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+        }
+        .fullscreen-slider-wrapper {
+            flex-grow: 1;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        .fullscreen-slider {
+            display: flex;
+            height: 100%;
+            will-change: transform;
+        }
+        .fullscreen-slider.transitioning {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fullscreen-slide {
+            width: 100vw;
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fullscreen-slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .fullscreen-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+        .fullscreen-dots .dot {
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        .fullscreen-dots .dot.active { background-color: white; }
+
+        /* Buttons */
+        .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
+        .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
         #toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; transition: bottom 0.5s ease-in-out; }
         #toast-notification.show { bottom: 30px; }
-
-        .quantity-selector button { background-color: #e5e7eb; border: 1px solid #d1d5db; color: #374151; font-weight: bold; width: 44px; height: 44px; transition: background-color 0.2s; }
-        .quantity-selector button:hover { background-color: #d1d5db; }
-        .quantity-selector button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .quantity-selector span { font-size: 1.1rem; font-weight: 600; min-width: 60px; }
     </style>
 </head>
 <body>
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="py-3 flex items-center justify-between">
-                <a href="./products.html" class="text-gray-600 hover:text-gray-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                </a>
-                <a href="./index.html"><img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 35px; border-radius: 0;"></a>
-                <div class="w-6"></div>
-            </div>
+    <div id="product-container" style="display: none;">
+        <div id="main-media-container">
+            <img id="main-product-image" src="" alt="Main Product Image">
+            <iframe id="main-product-video" class="hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+            <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
         </div>
-    </header>
 
-    <main id="product-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-12" style="display: none;">
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="p-4 sm:p-6 lg:p-8">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-                    <div>
-                        <div class="rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
-                             <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
-                             <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-                             <!-- FIX: Transparent overlay to catch swipe events over the iframe -->
-                             <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
-                        </div>
-                        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
-                    </div>
-                    <div class="flex flex-col">
-                        <div class="flex justify-between items-start mb-2">
-                            <h1 id="product-title" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight"></h1>
-                            <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition">
-                                <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
-                            </button>
-                        </div>
-                        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 my-4">
-                            <span id="product-price" class="text-3xl lg:text-4xl font-extrabold text-indigo-600"></span>
-                            <div id="product-discount-container" class="flex items-baseline gap-2">
-                                <span id="product-original-price" class="text-xl line-through text-gray-400" style="display: none;"></span>
-                                <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
-                            </div>
-                        </div>
-                        <div id="description-section" class="mt-4 mb-6 border-t border-gray-200 pt-6" style="display: none;">
-                            <h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
-                            <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
-                        </div>
-                        <div class="mt-auto pt-6">
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                                <div class="text-center">
-                                     <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                                     <div class="quantity-selector inline-flex items-center justify-center bg-white rounded-lg">
-                                        <button id="decrease-quantity" class="rounded-l-lg">-</button>
-                                        <span id="quantity-display" class="text-center px-4 py-2 border-t border-b border-gray-300">1</span>
-                                        <button id="increase-quantity" class="rounded-r-lg">+</button>
-                                    </div>
-                                </div>
-                                <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
-                                    <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
-                                    Order on WhatsApp
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+        <div id="product-details-sheet">
+            <div id="thumbnail-gallery" class="mb-4"></div>
+            
+            <div class="flex justify-between items-start mb-2">
+                <h1 id="product-title" class="text-xl sm:text-2xl font-bold text-gray-900 leading-tight"></h1>
+                <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition">
+                    <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-5 h-5" alt="Share Icon">
+                </button>
+            </div>
+
+            <div class="flex items-center flex-wrap gap-x-4 gap-y-2 my-3">
+                <span id="product-price" class="text-2xl lg:text-3xl font-extrabold text-indigo-600"></span>
+                <div id="product-discount-container" class="flex items-baseline gap-2">
+                    <span id="product-original-price" class="text-lg line-through text-gray-400" style="display: none;"></span>
+                    <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
                 </div>
             </div>
-        </div>
-    </main>
-    <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
 
-    <div id="image-modal">
-        <span class="close">&times;</span>
-        <a class="modal-nav prev">&#10094;</a>
-        <img id="modal-image-content">
-        <a class="modal-nav next">&#10095;</a>
+            <div id="description-section" class="mt-4 mb-5 border-t border-gray-200 pt-4" style="display: none;">
+                <h2 class="text-md font-bold text-gray-900 mb-2">Product Details</h2>
+                <div id="product-description" class="prose prose-sm max-w-none text-gray-600"></div>
+            </div>
+
+            <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
+                <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
+                Order on WhatsApp
+            </a>
+        </div>
     </div>
+
+    <div id="loading-indicator" class="flex items-center justify-center h-screen"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
+
+    <div id="fullscreen-viewer">
+        <div class="fullscreen-header">
+             <button id="fullscreen-close-btn" class="text-white text-2xl font-bold">✕</button>
+             <div id="fullscreen-counter" class="text-sm"></div>
+        </div>
+        <div class="fullscreen-slider-wrapper">
+            <div class="fullscreen-slider"></div>
+        </div>
+        <div class="fullscreen-dots"></div>
+    </div>
+
     <div id="toast-notification">Link Copied!</div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        let mediaItems = [];
+        // Global state variables
+        let mediaItems = [], imageItems = [];
         let currentMediaIndex = 0;
-        let productQuantity = 1;
-        let currentProductData = null;
-        let currentProductId = null;
+        let currentProductData = null, currentProductId = null;
+        
+        // Swipe functionality variables
+        let touchstartX = 0, touchendX = 0;
+        let isSwiping = false, currentTranslate = 0, startPos = 0, prevTranslate = 0;
+        let animationID;
+        let currentFullScreenIndex = 0;
 
-        let touchstartX = 0;
-        let touchendX = 0;
+        // DOM Elements
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const productContainer = document.getElementById('product-container');
 
+        // --- Initialization ---
         async function fetchFirebaseConfig() {
             try {
                 const response = await fetch('/api/firebase-config');
                 if (!response.ok) throw new Error(`Network error: ${response.status}`);
-                const config = await response.json();
-                if (!config.apiKey) throw new Error('Incomplete config received.');
-                return config;
+                return await response.json();
             } catch (error) {
                 console.error('Failed to fetch Firebase config:', error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
+                loadingIndicator.innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
                 return null;
             }
         }
@@ -162,16 +246,15 @@
                 fetchProductData(database);
             } catch (error) {
                 console.error("Initialization or data fetch failed:", error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load product data.</p>';
+                loadingIndicator.innerHTML = '<p class="text-red-500">Failed to load product data.</p>';
             }
         }
 
         function fetchProductData(database) {
-            const params = new URLSearchParams(window.location.search);
-            const productId = params.get('id');
+            const productId = new URLSearchParams(window.location.search).get('id');
             currentProductId = productId;
             if (!productId) {
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
+                loadingIndicator.innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
                 return;
             }
             
@@ -180,10 +263,10 @@
                 if (snapshot.exists()) {
                     currentProductData = snapshot.val();
                     loadProduct(currentProductData);
-                    document.getElementById('loading-indicator').style.display = 'none';
-                    document.getElementById('product-content').style.display = 'block';
+                    loadingIndicator.style.display = 'none';
+                    productContainer.style.display = 'flex';
                 } else {
-                    document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
+                    loadingIndicator.innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
                 }
             });
         }
@@ -192,8 +275,10 @@
             mediaItems = [];
             if (data.images) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
             if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl, thumbnail: (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png' });
+            
+            imageItems = mediaItems.filter(item => item.type === 'image');
 
-            const firstImage = (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
+            const firstImage = imageItems.length > 0 ? imageItems[0].src : 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
             document.title = `${data.name || 'Product'} - Ramazone`;
             document.querySelector('meta[property="og:title"]').setAttribute('content', data.name);
             document.querySelector('meta[property="og:image"]').setAttribute('content', firstImage);
@@ -202,11 +287,13 @@
             document.getElementById('product-price').textContent = `₹${Number(data.displayPrice).toLocaleString('en-IN')}`;
             
             if (data.originalPrice && Number(data.originalPrice) > Number(data.displayPrice)) {
-                document.getElementById('product-original-price').textContent = `₹${Number(data.originalPrice).toLocaleString('en-IN')}`;
-                document.getElementById('product-original-price').style.display = 'inline';
+                const originalPriceEl = document.getElementById('product-original-price');
+                const discountEl = document.getElementById('product-discount');
+                originalPriceEl.textContent = `₹${Number(data.originalPrice).toLocaleString('en-IN')}`;
+                originalPriceEl.style.display = 'inline';
                 const discount = Math.round(((data.originalPrice - data.displayPrice) / data.originalPrice) * 100);
-                document.getElementById('product-discount').textContent = `${discount}% OFF`;
-                document.getElementById('product-discount').style.display = 'inline-block';
+                discountEl.textContent = `${discount}% OFF`;
+                discountEl.style.display = 'inline-block';
             }
 
             if (data.description) {
@@ -214,41 +301,31 @@
                 document.getElementById('product-description').innerHTML = data.description;
             }
             
+            updateWhatsAppLink();
+            renderThumbnails();
+            showMedia(0);
+            setupEventHandlers();
+        }
+
+        // --- Rendering ---
+        function renderThumbnails() {
             const gallery = document.getElementById('thumbnail-gallery');
             gallery.innerHTML = '';
             mediaItems.forEach((item, index) => {
                 const thumbWrapper = document.createElement('div');
-                thumbWrapper.className = 'aspect-square thumbnail';
+                thumbWrapper.className = 'thumbnail';
                 const img = document.createElement('img');
                 img.src = item.type === 'image' ? item.src : item.thumbnail;
                 thumbWrapper.appendChild(img);
                 if (item.type === 'video') {
                     const playIcon = document.createElement('div');
                     playIcon.className = 'play-icon';
-                    playIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="50%" height="50%"><path d="M8 5v14l11-7z"/></svg>`;
+                    playIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="100%" height="100%"><path d="M8 5v14l11-7z"/></svg>`;
                     thumbWrapper.appendChild(playIcon);
                 }
-                thumbWrapper.addEventListener('click', () => showMedia(index));
+                thumbWrapper.onclick = () => showMedia(index);
                 gallery.appendChild(thumbWrapper);
             });
-
-            showMedia(0);
-            setupQuantityControls();
-            setupImageModal();
-            setupShareButton();
-            setupSwipeControls();
-        }
-
-        // FIX: Improved function to handle various YouTube URL formats
-        function getYoutubeEmbedUrl(url) {
-            let videoId = null;
-            if(!url) return null;
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            if (match && match[2].length === 11) {
-                videoId = match[2];
-            }
-            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
         }
 
         function showMedia(index) {
@@ -263,113 +340,146 @@
 
             if (item.type === 'image') {
                 mainVideo.classList.add('hidden');
-                mainVideo.src = '';
+                if (mainVideo.src) mainVideo.src = '';
                 mainImage.classList.remove('hidden');
                 mainImage.src = item.src;
-                swipeOverlay.classList.add('hidden'); // Hide overlay for image click
+                swipeOverlay.classList.add('hidden');
             } else if (item.type === 'video') {
                 mainImage.classList.add('hidden');
                 mainVideo.classList.remove('hidden');
                 const embedUrl = getYoutubeEmbedUrl(item.src);
                 if (embedUrl) {
                     mainVideo.src = embedUrl;
-                    swipeOverlay.classList.remove('hidden'); // Show overlay for video swipe
+                    swipeOverlay.classList.remove('hidden');
                 } else {
-                    // Fallback if URL is invalid
-                    showMedia(0); // Show first image
+                    showMedia(0);
                 }
             }
             document.querySelectorAll('.thumbnail').forEach((thumb, i) => thumb.classList.toggle('active', i === index));
         }
-        
-        function setupQuantityControls() {
-            document.getElementById('increase-quantity').addEventListener('click', () => {
-                productQuantity++;
-                updateQuantityAndWhatsAppLink();
-            });
-            document.getElementById('decrease-quantity').addEventListener('click', () => {
-                if (productQuantity > 1) {
-                    productQuantity--;
-                    updateQuantityAndWhatsAppLink();
+
+        // --- Event Handlers & Logic ---
+        function setupEventHandlers() {
+            document.getElementById('share-button').onclick = shareProduct;
+            document.getElementById('main-media-container').onclick = () => {
+                if (mediaItems[currentMediaIndex].type === 'image') {
+                    const imageIndex = imageItems.findIndex(item => item.src === mediaItems[currentMediaIndex].src);
+                    openFullScreenViewer(imageIndex);
                 }
-            });
-            updateQuantityAndWhatsAppLink();
+            };
+            setupMainSwipeControls();
+            setupFullScreenViewer();
         }
 
-        function updateQuantityAndWhatsAppLink() {
+        function updateWhatsAppLink() {
             const sellerPhoneNumber = '917903698180';
-            document.getElementById('quantity-display').textContent = productQuantity;
-            document.getElementById('decrease-quantity').disabled = productQuantity <= 1;
             const finalPrice = currentProductData.displayPrice;
-            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${currentProductData.name}*\n*Price:* ₹${Number(finalPrice).toLocaleString('en-IN')}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
+            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${currentProductData.name}*\n*Price:* ₹${Number(finalPrice).toLocaleString('en-IN')}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
             document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
         }
 
-        function setupImageModal() {
-            const modal = document.getElementById('image-modal');
-            const mainMediaContainer = document.getElementById('main-media-container');
-            const modalImg = document.getElementById("modal-image-content");
-            const closeBtn = document.querySelector("#image-modal .close");
-            const prevBtn = document.querySelector("#image-modal .prev");
-            const nextBtn = document.querySelector("#image-modal .next");
-
-            mainMediaContainer.onclick = () => {
-                if (mediaItems[currentMediaIndex].type === 'image') {
-                     modal.style.display = "flex";
-                     modalImg.src = mediaItems[currentMediaIndex].src;
-                }
-            };
-            closeBtn.onclick = () => modal.style.display = "none";
-            
-            const showModalImage = (direction) => {
-                let nextIndex = currentMediaIndex;
-                const imageItems = mediaItems.map((item, i) => ({...item, originalIndex: i})).filter(item => item.type === 'image');
-                const currentImageInFilteredArray = imageItems.findIndex(item => item.originalIndex === currentMediaIndex);
-                
-                let nextImageInFilteredArray = (currentImageInFilteredArray + direction + imageItems.length) % imageItems.length;
-                
-                const nextImageItem = imageItems[nextImageInFilteredArray];
-                modalImg.src = nextImageItem.src;
-                showMedia(nextImageItem.originalIndex);
-            };
-
-            prevBtn.onclick = (e) => { e.stopPropagation(); showModalImage(-1); };
-            nextBtn.onclick = (e) => { e.stopPropagation(); showModalImage(1); };
+        async function shareProduct() {
+            const finalPrice = currentProductData.displayPrice;
+            const shareText = `*${currentProductData.name}*\nPrice: *₹${Number(finalPrice).toLocaleString('en-IN')}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;
+            if (navigator.share) {
+                await navigator.share({ text: shareText });
+            } else {
+                navigator.clipboard.writeText(window.location.href).then(() => showToast("Link Copied!"));
+            }
         }
 
-        function setupSwipeControls() {
+        function setupMainSwipeControls() {
             const swipeArea = document.getElementById('main-media-container');
-            swipeArea.addEventListener('touchstart', e => {
-                touchstartX = e.changedTouches[0].screenX;
-            }, { passive: true });
-
+            swipeArea.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, { passive: true });
             swipeArea.addEventListener('touchend', e => {
                 touchendX = e.changedTouches[0].screenX;
-                handleSwipe();
+                const swipeThreshold = 50;
+                if (touchendX < touchstartX - swipeThreshold) showMedia(currentMediaIndex + 1);
+                if (touchendX > touchstartX + swipeThreshold) showMedia(currentMediaIndex - 1);
             });
         }
 
-        function handleSwipe() {
-            const swipeThreshold = 50; 
-            if (touchendX < touchstartX - swipeThreshold) {
-                showMedia(currentMediaIndex + 1);
-            }
-            if (touchendX > touchstartX + swipeThreshold) {
-                showMedia(currentMediaIndex - 1);
-            }
+        // --- Full Screen Viewer ---
+        function setupFullScreenViewer() {
+            const viewer = document.getElementById('fullscreen-viewer');
+            const slider = viewer.querySelector('.fullscreen-slider');
+            document.getElementById('fullscreen-close-btn').onclick = closeFullScreenViewer;
+            
+            slider.addEventListener('touchstart', touchStart);
+            slider.addEventListener('touchend', touchEnd);
+            slider.addEventListener('touchmove', touchMove);
         }
 
-        function setupShareButton() {
-            document.getElementById('share-button').addEventListener('click', async () => {
-                const finalPrice = currentProductData.displayPrice;
-                const shareText = `*${currentProductData.name}*\nPrice: *₹${Number(finalPrice).toLocaleString('en-IN')}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;
-                if (navigator.share) {
-                    await navigator.share({ text: shareText });
-                } else {
-                    navigator.clipboard.writeText(window.location.href).then(() => showToast("Link Copied!"));
-                }
-            });
+        function openFullScreenViewer(startIndex) {
+            const viewer = document.getElementById('fullscreen-viewer');
+            const slider = viewer.querySelector('.fullscreen-slider');
+            const dotsContainer = viewer.querySelector('.fullscreen-dots');
+            
+            slider.innerHTML = imageItems.map(item => `<div class="fullscreen-slide"><img src="${item.src}" alt="Product image"></div>`).join('');
+            dotsContainer.innerHTML = imageItems.map(() => `<div class="dot"></div>`).join('');
+
+            currentFullScreenIndex = startIndex;
+            updateFullScreenSlider();
+            viewer.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
+
+        function closeFullScreenViewer() {
+            const viewer = document.getElementById('fullscreen-viewer');
+            viewer.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function updateFullScreenSlider() {
+            const slider = document.getElementById('fullscreen-slider');
+            const counter = document.getElementById('fullscreen-counter');
+            const dots = document.querySelectorAll('#fullscreen-viewer .dot');
+
+            slider.style.transform = `translateX(-${currentFullScreenIndex * 100}vw)`;
+            counter.textContent = `${currentFullScreenIndex + 1} / ${imageItems.length}`;
+            dots.forEach((dot, index) => dot.classList.toggle('active', index === currentFullScreenIndex));
+        }
+
+        function touchStart(event) {
+            isSwiping = true;
+            startPos = event.touches[0].clientX;
+            const slider = event.currentTarget;
+            slider.classList.remove('transitioning');
+        }
+
+        function touchMove(event) {
+            if (!isSwiping) return;
+            const currentPosition = event.touches[0].clientX;
+            currentTranslate = prevTranslate + currentPosition - startPos;
+        }
+
+        function touchEnd(event) {
+            if (!isSwiping) return;
+            isSwiping = false;
+            const slider = event.currentTarget;
+            const movedBy = currentTranslate - prevTranslate;
+
+            if (movedBy < -100 && currentFullScreenIndex < imageItems.length - 1) {
+                currentFullScreenIndex += 1;
+            }
+            if (movedBy > 100 && currentFullScreenIndex > 0) {
+                currentFullScreenIndex -= 1;
+            }
+
+            slider.classList.add('transitioning');
+            slider.style.transform = `translateX(-${currentFullScreenIndex * 100}vw)`;
+            prevTranslate = -currentFullScreenIndex * window.innerWidth;
+            updateFullScreenSlider();
+        }
+
+        // --- Utilities ---
+        function getYoutubeEmbedUrl(url) {
+            if (!url) return null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
+        }
+
         function showToast(message) {
             const toast = document.getElementById('toast-notification');
             toast.textContent = message;
@@ -377,6 +487,7 @@
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
+        // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', initializeAppAndLoadProduct);
     </script>
 </body>
