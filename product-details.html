@@ -2,134 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details - Ramazone</title>
     <meta property="og:title" content="Ramazone">
     <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --primary-color: #4F46E5; }
         body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
-        
-        /* Classic Layout Styles */
-        #main-media-container {
-            cursor: pointer;
-            overflow: hidden;
-            aspect-ratio: 1 / 1;
-        }
-        #main-media-container img, #main-media-container iframe {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        #main-media-container:hover img {
-            transform: scale(1.05);
-        }
-
-        /* Thumbnails */
-        #thumbnail-gallery {
-            display: flex;
-            gap: 0.5rem;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        #thumbnail-gallery::-webkit-scrollbar { display: none; }
-        .thumbnail { 
-            cursor: pointer; 
-            border: 2px solid transparent; 
-            transition: border-color 0.3s; 
-            border-radius: 0.5rem; 
-            position: relative;
-            flex-shrink: 0; 
-            width: 64px; 
-            height: 64px;
-            overflow: hidden;
-        }
-        .thumbnail.active { border-color: var(--primary-color); }
-        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-        .thumbnail .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; background-color: rgba(0,0,0,0.6); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: none; }
-
-        /* Full Screen Viewer */
-        #fullscreen-viewer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            color: white;
-            overscroll-behavior: contain;
-        }
-        #fullscreen-viewer.active { display: flex; }
-        .fullscreen-header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
-        }
-        .fullscreen-slider-wrapper {
-            flex-grow: 1;
-            width: 100%;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-        }
-        .fullscreen-slider {
-            display: flex;
-            height: 100%;
-            will-change: transform;
-        }
-        .fullscreen-slider.transitioning {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .fullscreen-slide {
-            width: 100vw;
-            height: 100%;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        .fullscreen-slide img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        .fullscreen-dots {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-        }
-        .fullscreen-dots .dot {
-            width: 8px;
-            height: 8px;
-            background-color: rgba(255,255,255,0.5);
-            border-radius: 50%;
-            transition: background-color 0.3s;
-        }
-        .fullscreen-dots .dot.active { background-color: white; }
-
-        /* Other styles */
         .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
         .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
+        
+        #thumbnail-gallery {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        #thumbnail-gallery::-webkit-scrollbar { display: none; }
+        .thumbnail { cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s; border-radius: 0.5rem; position: relative; flex-shrink: 0; width: 64px; }
+        .thumbnail.active { border-color: var(--primary-color); }
+        .thumbnail .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40%; height: 40%; background-color: rgba(0,0,0,0.5); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0.8; }
+        
+        #image-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
+        #image-modal img { max-width: 90%; max-height: 85%; object-fit: contain; }
+        #image-modal .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+        .modal-nav { cursor: pointer; position: absolute; top: 50%; width: auto; padding: 16px; margin-top: -50px; color: white; font-weight: bold; font-size: 30px; transition: 0.6s ease; user-select: none; }
+        .modal-nav.prev { left: 0; border-radius: 0 3px 3px 0; }
+        .modal-nav.next { right: 0; border-radius: 3px 0 0 3px; }
+        .modal-nav:hover { background-color: rgba(0, 0, 0, 0.8); }
+
         #toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; transition: bottom 0.5s ease-in-out; }
         #toast-notification.show { bottom: 30px; }
+
+        .quantity-selector button { background-color: #e5e7eb; border: 1px solid #d1d5db; color: #374151; font-weight: bold; width: 44px; height: 44px; transition: background-color 0.2s; }
+        .quantity-selector button:hover { background-color: #d1d5db; }
+        .quantity-selector button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .quantity-selector span { font-size: 1.1rem; font-weight: 600; min-width: 60px; }
+        
+        .rating-stars { color: #f59e0b; }
+        .carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
+        .carousel-container::-webkit-scrollbar { display: none; }
+        .carousel-item { scroll-snap-align: start; flex: 0 0 160px; margin-right: 1rem; }
     </style>
 </head>
 <body>
@@ -139,90 +55,140 @@
                 <a href="./products.html" class="text-gray-600 hover:text-gray-900">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </a>
-                <a href="./index.html"><img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 35px;"></a>
+                <a href="./index.html"><img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 35px; border-radius: 0;"></a>
                 <div class="w-6"></div>
             </div>
         </div>
     </header>
 
-    <main id="product-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-12" style="display: none;">
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="p-4 sm:p-6 lg:p-8">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-                    <div>
-                        <div class="rounded-xl mb-4" id="main-media-container">
-                             <img id="main-product-image" src="" alt="Main Product Image">
-                             <iframe id="main-product-video" class="hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-                             <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
-                        </div>
-                        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
+    <main id="product-content" class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-0 sm:mt-6 mb-12" style="display: none;">
+        <div class="bg-white sm:rounded-2xl sm:shadow-lg overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2">
+                <!-- Image Section -->
+                <div class="p-0 sm:p-4 lg:p-6">
+                    <div class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
+                         <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
+                         <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                         <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
                     </div>
-                    <div class="flex flex-col">
-                        <div class="flex justify-between items-start mb-2">
-                            <h1 id="product-title" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight"></h1>
-                            <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition">
-                                <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
+                    <div class="grid grid-cols-5 gap-2 sm:gap-4 px-4 sm:px-0" id="thumbnail-gallery"></div>
+                </div>
+                <!-- Details Section -->
+                <div class="flex flex-col p-4 sm:p-6 lg:p-8">
+                    <div class="flex justify-between items-start mb-2">
+                        <h1 id="product-title" class="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight"></h1>
+                        <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition">
+                            <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
+                        </button>
+                    </div>
+
+                    <!-- Rating Section -->
+                    <div id="rating-section" class="flex items-center gap-2 text-sm text-gray-500 mb-3" style="display: none;">
+                        <div id="product-rating-stars" class="rating-stars"></div>
+                        <span id="product-review-count"></span>
+                    </div>
+
+                    <!-- Price Section -->
+                    <div class="flex items-center flex-wrap gap-x-4 gap-y-2 mb-4">
+                        <span id="product-price" class="text-3xl lg:text-4xl font-extrabold text-indigo-600"></span>
+                        <div id="product-discount-container" class="flex items-baseline gap-2">
+                            <span id="product-original-price" class="text-xl line-through text-gray-400" style="display: none;"></span>
+                            <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
+                        </div>
+                    </div>
+                    <div id="coupon-applied-message" class="text-sm font-semibold text-green-700 bg-green-100 p-2 rounded-lg mb-4" style="display: none;"></div>
+
+                    <!-- Seller and Delivery Info -->
+                    <div class="border-t border-b border-gray-200 py-4 my-4 space-y-3">
+                        <div id="seller-info" class="flex items-center text-sm text-gray-600" style="display: none;">
+                            <i class="fas fa-store w-5 text-center mr-3 text-gray-400"></i>
+                            <span>Sold by <strong id="product-seller-name" class="text-gray-800"></strong></span>
+                        </div>
+                        <div id="delivery-info" class="flex items-center text-sm text-gray-600" style="display: none;">
+                            <i class="fas fa-truck w-5 text-center mr-3 text-gray-400"></i>
+                            <span id="product-delivery-type" class="font-semibold text-green-600 mr-2"></span>
+                            <span>Expected delivery in <strong id="product-delivery-time" class="text-gray-800"></strong></span>
+                        </div>
+                    </div>
+                    
+                    <div id="description-section" class="mb-6" style="display: none;">
+                        <h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
+                        <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
+                    </div>
+
+                    <!-- Actions Section -->
+                    <div class="mt-auto pt-6">
+                         <div class="flex items-center justify-between mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Quantity</label>
+                            <div class="quantity-selector inline-flex items-center justify-center bg-white rounded-lg">
+                               <button id="decrease-quantity" class="rounded-l-lg">-</button>
+                               <span id="quantity-display" class="text-center px-4 py-2 border-t border-b border-gray-300">1</span>
+                               <button id="increase-quantity" class="rounded-r-lg">+</button>
+                           </div>
+                         </div>
+                         <div class="grid grid-cols-2 gap-3">
+                            <button id="coupon-btn" class="w-full flex items-center justify-center font-bold py-3 px-4 rounded-xl text-lg shadow-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition">
+                                <i class="fas fa-ticket-alt mr-2"></i> Apply Coupon
                             </button>
-                        </div>
-                        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 my-4">
-                            <span id="product-price" class="text-3xl lg:text-4xl font-extrabold text-indigo-600"></span>
-                            <div id="product-discount-container" class="flex items-baseline gap-2">
-                                <span id="product-original-price" class="text-xl line-through text-gray-400" style="display: none;"></span>
-                                <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
-                            </div>
-                        </div>
-                        <div id="description-section" class="mt-4 mb-6 border-t border-gray-200 pt-6" style="display: none;">
-                            <h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
-                            <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
-                        </div>
-                        <div class="mt-auto pt-6">
-                             <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
-                                <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
-                                Order on WhatsApp
+                            <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3 px-4 rounded-xl text-lg shadow-lg">
+                                <i class="fab fa-whatsapp w-7 h-7 mr-2"></i> Order Now
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Recently Viewed Section -->
+        <div id="recently-viewed-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Recently Viewed</h2>
+            <div id="recently-viewed-container" class="carousel-container pb-4"></div>
+        </div>
+
+        <!-- Similar Products Section -->
+        <div id="similar-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Similar Products</h2>
+            <div id="similar-products-container" class="carousel-container pb-4"></div>
+        </div>
     </main>
-    <div id="loading-indicator" class="flex items-center justify-center h-screen"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
+    <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
 
-    <div id="fullscreen-viewer">
-        <div class="fullscreen-header">
-             <button id="fullscreen-close-btn" class="text-white text-2xl font-bold p-2">✕</button>
-             <div id="fullscreen-counter" class="text-sm"></div>
-        </div>
-        <div class="fullscreen-slider-wrapper">
-            <div class="fullscreen-slider"></div>
-        </div>
-        <div class="fullscreen-dots"></div>
+    <div id="image-modal">
+        <span class="close">&times;</span>
+        <a class="modal-nav prev">&#10094;</a>
+        <img id="modal-image-content">
+        <a class="modal-nav next">&#10095;</a>
     </div>
-
-    <div id="toast-notification">Link Copied!</div>
+    <div id="toast-notification"></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        // Global state variables
-        let mediaItems = [], imageItems = [];
+        let mediaItems = [];
         let currentMediaIndex = 0;
-        let currentProductData = null, currentProductId = null;
-        
-        // Swipe variables for full screen viewer
-        let fsTouchStartX = 0;
-        let fsIsSwiping = false;
-        let fsCurrentTranslate = 0;
-        let fsPrevTranslate = 0;
-        let fsAnimationID;
-        let currentFullScreenIndex = 0;
+        let productQuantity = 1;
+        let currentProductData = null;
+        let currentProductId = null;
+        let allProductsCache = null;
+        let validCoupons = null;
+        let appliedCoupon = null;
 
-        // --- Initialization ---
+        let touchstartX = 0;
+        let touchendX = 0;
+
         async function fetchFirebaseConfig() {
             try {
-                const response = await fetch('/api/firebase-config');
-                if (!response.ok) throw new Error(`Network error: ${response.status}`);
-                return await response.json();
+                // This is a placeholder. In a real app, this would fetch from a secure endpoint.
+                // Since we can't do that here, we'll use a hardcoded config.
+                return {
+                    apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+                    authDomain: "re-store-8e5b3.firebaseapp.com",
+                    databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "re-store-8e5b3",
+                    storageBucket: "re-store-8e5b3.firebasestorage.app",
+                    messagingSenderId: "747691299697",
+                    appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
+                };
             } catch (error) {
                 console.error('Failed to fetch Firebase config:', error);
                 document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
@@ -236,56 +202,79 @@
             try {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
+                await fetchAllData(database);
                 fetchProductData(database);
             } catch (error) {
                 console.error("Initialization or data fetch failed:", error);
                 document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load product data.</p>';
             }
         }
+        
+        async function fetchAllData(database) {
+            const homepageRef = database.ref('ramazone/homepage');
+            const snapshot = await homepageRef.get();
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                allProductsCache = data.festiveCollection?.products || [];
+                validCoupons = (data.coupons || []).filter(c => c.status === 'active');
+            }
+        }
 
         function fetchProductData(database) {
-            const productId = new URLSearchParams(window.location.search).get('id');
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
             currentProductId = productId;
             if (!productId) {
                 document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
                 return;
             }
             
-            const productRef = database.ref(`ramazone/homepage/festiveCollection/products/${productId}`);
-            productRef.get().then((snapshot) => {
-                if (snapshot.exists()) {
-                    currentProductData = snapshot.val();
-                    loadProduct(currentProductData);
-                    document.getElementById('loading-indicator').style.display = 'none';
-                    document.getElementById('product-content').style.display = 'block';
-                } else {
-                    document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
-                }
-            });
+            // Find product from cache
+            const productIndex = allProductsCache.findIndex((p, index) => index == productId);
+            if (productIndex !== -1) {
+                currentProductData = allProductsCache[productIndex];
+                loadProduct(currentProductData);
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('product-content').style.display = 'block';
+                
+                // Handle recently viewed
+                updateRecentlyViewed(productId);
+            } else {
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
+            }
         }
 
         function loadProduct(data) {
             mediaItems = [];
             if (data.images) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
             if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl, thumbnail: (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png' });
-            
-            imageItems = mediaItems.filter(item => item.type === 'image');
-            const firstImage = imageItems.length > 0 ? imageItems[0].src : 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
+
+            const firstImage = (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
             document.title = `${data.name || 'Product'} - Ramazone`;
             document.querySelector('meta[property="og:title"]').setAttribute('content', data.name);
             document.querySelector('meta[property="og:image"]').setAttribute('content', firstImage);
 
             document.getElementById('product-title').textContent = data.name;
-            document.getElementById('product-price').textContent = `₹${Number(data.displayPrice).toLocaleString('en-IN')}`;
             
-            if (data.originalPrice && Number(data.originalPrice) > Number(data.displayPrice)) {
-                const originalPriceEl = document.getElementById('product-original-price');
-                const discountEl = document.getElementById('product-discount');
-                originalPriceEl.textContent = `₹${Number(data.originalPrice).toLocaleString('en-IN')}`;
-                originalPriceEl.style.display = 'inline';
-                const discount = Math.round(((data.originalPrice - data.displayPrice) / data.originalPrice) * 100);
-                discountEl.textContent = `${discount}% OFF`;
-                discountEl.style.display = 'inline-block';
+            // Rating
+            if (data.rating && data.reviewCount) {
+                document.getElementById('rating-section').style.display = 'flex';
+                renderStars(data.rating);
+                document.getElementById('product-review-count').textContent = `(${data.reviewCount} ratings)`;
+            }
+
+            // Price
+            updatePriceDisplay();
+            
+            // Seller & Delivery
+            if (data.sellerName) {
+                document.getElementById('seller-info').style.display = 'flex';
+                document.getElementById('product-seller-name').textContent = data.sellerName;
+            }
+            if (data.deliveryType && data.deliveryTime) {
+                document.getElementById('delivery-info').style.display = 'flex';
+                document.getElementById('product-delivery-type').textContent = data.deliveryType === 'Amazon' ? 'Ramazone Delivery' : 'Self Delivery';
+                document.getElementById('product-delivery-time').textContent = data.deliveryTime;
             }
 
             if (data.description) {
@@ -293,31 +282,75 @@
                 document.getElementById('product-description').innerHTML = data.description;
             }
             
-            updateWhatsAppLink();
-            renderThumbnails();
-            showMedia(0);
-            setupEventHandlers();
-        }
-
-        // --- Rendering ---
-        function renderThumbnails() {
             const gallery = document.getElementById('thumbnail-gallery');
             gallery.innerHTML = '';
             mediaItems.forEach((item, index) => {
                 const thumbWrapper = document.createElement('div');
-                thumbWrapper.className = 'thumbnail';
+                thumbWrapper.className = 'aspect-square thumbnail';
                 const img = document.createElement('img');
                 img.src = item.type === 'image' ? item.src : item.thumbnail;
                 thumbWrapper.appendChild(img);
                 if (item.type === 'video') {
                     const playIcon = document.createElement('div');
                     playIcon.className = 'play-icon';
-                    playIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="100%" height="100%"><path d="M8 5v14l11-7z"/></svg>`;
+                    playIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="50%" height="50%"><path d="M8 5v14l11-7z"/></svg>`;
                     thumbWrapper.appendChild(playIcon);
                 }
-                thumbWrapper.onclick = () => showMedia(index);
+                thumbWrapper.addEventListener('click', () => showMedia(index));
                 gallery.appendChild(thumbWrapper);
             });
+
+            showMedia(0);
+            setupQuantityControls();
+            setupImageModal();
+            setupShareButton();
+            setupSwipeControls();
+            setupCouponButton();
+            
+            // Load similar products
+            loadSimilarProducts(data.category);
+        }
+
+        function renderStars(rating) {
+            const starContainer = document.getElementById('product-rating-stars');
+            starContainer.innerHTML = '';
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+            for (let i = 0; i < fullStars; i++) starContainer.innerHTML += '<i class="fas fa-star"></i>';
+            if (halfStar) starContainer.innerHTML += '<i class="fas fa-star-half-alt"></i>';
+            for (let i = 0; i < emptyStars; i++) starContainer.innerHTML += '<i class="far fa-star"></i>';
+        }
+
+        function updatePriceDisplay() {
+            let finalPrice = Number(currentProductData.displayPrice);
+            if (appliedCoupon) {
+                finalPrice -= Number(appliedCoupon.discount);
+            }
+            
+            document.getElementById('product-price').textContent = `₹${finalPrice.toLocaleString('en-IN')}`;
+
+            if (currentProductData.originalPrice && Number(currentProductData.originalPrice) > Number(currentProductData.displayPrice)) {
+                document.getElementById('product-original-price').textContent = `₹${Number(currentProductData.originalPrice).toLocaleString('en-IN')}`;
+                document.getElementById('product-original-price').style.display = 'inline';
+                const discount = Math.round(((currentProductData.originalPrice - currentProductData.displayPrice) / currentProductData.originalPrice) * 100);
+                document.getElementById('product-discount').textContent = `${discount}% OFF`;
+                document.getElementById('product-discount').style.display = 'inline-block';
+            } else {
+                 document.getElementById('product-original-price').style.display = 'none';
+                 document.getElementById('product-discount').style.display = 'none';
+            }
+        }
+
+        function getYoutubeEmbedUrl(url) {
+            let videoId = null;
+            if(!url) return null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            if (match && match[2].length === 11) {
+                videoId = match[2];
+            }
+            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
         }
 
         function showMedia(index) {
@@ -332,7 +365,7 @@
 
             if (item.type === 'image') {
                 mainVideo.classList.add('hidden');
-                if (mainVideo.src) mainVideo.src = '';
+                mainVideo.src = '';
                 mainImage.classList.remove('hidden');
                 mainImage.src = item.src;
                 swipeOverlay.classList.add('hidden');
@@ -349,147 +382,184 @@
             }
             document.querySelectorAll('.thumbnail').forEach((thumb, i) => thumb.classList.toggle('active', i === index));
         }
-
-        // --- Event Handlers & Logic ---
-        function setupEventHandlers() {
-            document.getElementById('share-button').onclick = shareProduct;
-            document.getElementById('main-media-container').onclick = () => {
-                if (mediaItems[currentMediaIndex].type === 'image') {
-                    const imageIndex = imageItems.findIndex(item => item.src === mediaItems[currentMediaIndex].src);
-                    openFullScreenViewer(imageIndex);
+        
+        function setupQuantityControls() {
+            document.getElementById('increase-quantity').addEventListener('click', () => {
+                productQuantity++;
+                updateQuantityAndWhatsAppLink();
+            });
+            document.getElementById('decrease-quantity').addEventListener('click', () => {
+                if (productQuantity > 1) {
+                    productQuantity--;
+                    updateQuantityAndWhatsAppLink();
                 }
-            };
-            setupMainSwipeControls();
-            setupFullScreenViewer();
+            });
+            updateQuantityAndWhatsAppLink();
         }
 
-        function updateWhatsAppLink() {
+        function updateQuantityAndWhatsAppLink() {
             const sellerPhoneNumber = '917903698180';
-            const finalPrice = currentProductData.displayPrice;
-            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${currentProductData.name}*\n*Price:* ₹${Number(finalPrice).toLocaleString('en-IN')}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
+            document.getElementById('quantity-display').textContent = productQuantity;
+            document.getElementById('decrease-quantity').disabled = productQuantity <= 1;
+            
+            let displayPrice = Number(currentProductData.displayPrice);
+            let finalPrice = displayPrice;
+            let couponMessagePart = '';
+
+            if (appliedCoupon) {
+                finalPrice -= Number(appliedCoupon.discount);
+                couponMessagePart = `\n*Coupon Applied:* ${appliedCoupon.code}\n*Discount:* -₹${Number(appliedCoupon.discount).toLocaleString('en-IN')}\n-------------------------------------\n*Final Price:* ₹${finalPrice.toLocaleString('en-IN')}`;
+            }
+
+            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${currentProductData.name}*\n*Price:* ₹${displayPrice.toLocaleString('en-IN')}${couponMessagePart}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
             document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
         }
-
-        async function shareProduct() {
-            const finalPrice = currentProductData.displayPrice;
-            const shareText = `*${currentProductData.name}*\nPrice: *₹${Number(finalPrice).toLocaleString('en-IN')}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;
-            if (navigator.share) {
-                await navigator.share({ text: shareText });
-            } else {
-                navigator.clipboard.writeText(window.location.href).then(() => showToast("Link Copied!"));
-            }
-        }
-
-        function setupMainSwipeControls() {
-            let touchstartX = 0;
-            const swipeArea = document.getElementById('main-media-container');
-            swipeArea.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, { passive: true });
-            swipeArea.addEventListener('touchend', e => {
-                let touchendX = e.changedTouches[0].screenX;
-                const swipeThreshold = 50;
-                if (touchendX < touchstartX - swipeThreshold) showMedia(currentMediaIndex + 1);
-                if (touchendX > touchstartX + swipeThreshold) showMedia(currentMediaIndex - 1);
+        
+        function setupCouponButton() {
+            document.getElementById('coupon-btn').addEventListener('click', () => {
+                const code = prompt("Enter coupon code:");
+                if (code) {
+                    const coupon = validCoupons.find(c => c.code.toLowerCase() === code.toLowerCase());
+                    if (coupon) {
+                        appliedCoupon = coupon;
+                        updatePriceDisplay();
+                        updateQuantityAndWhatsAppLink();
+                        const messageDiv = document.getElementById('coupon-applied-message');
+                        messageDiv.textContent = `🎉 Hurray! ₹${coupon.discount} discount applied with code "${coupon.code}".`;
+                        messageDiv.style.display = 'block';
+                        showToast(`Coupon "${coupon.code}" applied!`);
+                    } else {
+                        showToast("Invalid coupon code.", "error");
+                    }
+                }
             });
         }
 
-        // --- Full Screen Viewer ---
-        function setupFullScreenViewer() {
-            const viewer = document.getElementById('fullscreen-viewer');
-            const slider = viewer.querySelector('.fullscreen-slider');
-            document.getElementById('fullscreen-close-btn').onclick = closeFullScreenViewer;
+        function setupImageModal() {
+            const modal = document.getElementById('image-modal');
+            const mainMediaContainer = document.getElementById('main-media-container');
+            const modalImg = document.getElementById("modal-image-content");
+            const closeBtn = document.querySelector("#image-modal .close");
+            const prevBtn = document.querySelector("#image-modal .prev");
+            const nextBtn = document.querySelector("#image-modal .next");
+
+            mainMediaContainer.onclick = () => {
+                if (mediaItems[currentMediaIndex].type === 'image') {
+                     modal.style.display = "flex";
+                     modalImg.src = mediaItems[currentMediaIndex].src;
+                }
+            };
+            closeBtn.onclick = () => modal.style.display = "none";
             
-            slider.addEventListener('touchstart', fsTouchStart, { passive: true });
-            slider.addEventListener('touchend', fsTouchEnd);
-            slider.addEventListener('touchmove', fsTouchMove, { passive: true });
+            const showModalImage = (direction) => {
+                let imageItems = mediaItems.map((item, i) => ({...item, originalIndex: i})).filter(item => item.type === 'image');
+                if (imageItems.length === 0) return;
+                const currentImageInFilteredArray = imageItems.findIndex(item => item.originalIndex === currentMediaIndex);
+                let nextImageInFilteredArray = (currentImageInFilteredArray + direction + imageItems.length) % imageItems.length;
+                const nextImageItem = imageItems[nextImageInFilteredArray];
+                modalImg.src = nextImageItem.src;
+                showMedia(nextImageItem.originalIndex);
+            };
+
+            prevBtn.onclick = (e) => { e.stopPropagation(); showModalImage(-1); };
+            nextBtn.onclick = (e) => { e.stopPropagation(); showModalImage(1); };
         }
 
-        function openFullScreenViewer(startIndex) {
-            if (imageItems.length === 0) return;
-            const viewer = document.getElementById('fullscreen-viewer');
-            const slider = viewer.querySelector('.fullscreen-slider');
-            const dotsContainer = viewer.querySelector('.fullscreen-dots');
-            
-            slider.innerHTML = imageItems.map(item => `<div class="fullscreen-slide"><img src="${item.src}" alt="Product image"></div>`).join('');
-            dotsContainer.innerHTML = imageItems.map(() => `<div class="dot"></div>`).join('');
-
-            currentFullScreenIndex = startIndex;
-            fsPrevTranslate = -currentFullScreenIndex * window.innerWidth;
-            updateFullScreenSlider(false); // No transition on open
-            viewer.classList.add('active');
-            document.body.style.overflow = 'hidden';
+        function setupSwipeControls() {
+            const swipeArea = document.getElementById('main-media-container');
+            swipeArea.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, { passive: true });
+            swipeArea.addEventListener('touchend', e => { touchendX = e.changedTouches[0].screenX; handleSwipe(); });
         }
 
-        function closeFullScreenViewer() {
-            const viewer = document.getElementById('fullscreen-viewer');
-            viewer.classList.remove('active');
-            document.body.style.overflow = 'auto';
+        function handleSwipe() {
+            const swipeThreshold = 50; 
+            if (touchendX < touchstartX - swipeThreshold) showMedia(currentMediaIndex + 1);
+            if (touchendX > touchstartX + swipeThreshold) showMedia(currentMediaIndex - 1);
         }
 
-        function updateFullScreenSlider(withTransition = true) {
-            const slider = document.getElementById('fullscreen-slider');
-            const counter = document.getElementById('fullscreen-counter');
-            const dots = document.querySelectorAll('#fullscreen-viewer .dot');
-
-            if(withTransition) {
-                slider.classList.add('transitioning');
-            } else {
-                slider.classList.remove('transitioning');
-            }
-
-            slider.style.transform = `translateX(-${currentFullScreenIndex * 100}vw)`;
-            counter.textContent = `${currentFullScreenIndex + 1} / ${imageItems.length}`;
-            dots.forEach((dot, index) => dot.classList.toggle('active', index === currentFullScreenIndex));
+        function setupShareButton() {
+            document.getElementById('share-button').addEventListener('click', async () => {
+                const shareText = `*${currentProductData.name}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString('en-IN')}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;
+                if (navigator.share) {
+                    await navigator.share({ text: shareText });
+                } else {
+                    navigator.clipboard.writeText(window.location.href).then(() => showToast("Link Copied!"));
+                }
+            });
         }
         
-        function fsTouchStart(event) {
-            fsTouchStartX = event.touches[0].clientX;
-            fsIsSwiping = true;
-            fsAnimationID = null;
-            const slider = document.querySelector('.fullscreen-slider');
-            slider.classList.remove('transitioning');
-        }
-
-        function fsTouchMove(event) {
-            if (fsIsSwiping) {
-                const currentPosition = event.touches[0].clientX;
-                fsCurrentTranslate = fsPrevTranslate + currentPosition - fsTouchStartX;
-                document.querySelector('.fullscreen-slider').style.transform = `translateX(${fsCurrentTranslate}px)`;
-            }
-        }
-
-        function fsTouchEnd() {
-            fsIsSwiping = false;
-            const movedBy = fsCurrentTranslate - fsPrevTranslate;
-            const threshold = window.innerWidth / 4;
-
-            if (movedBy < -threshold && currentFullScreenIndex < imageItems.length - 1) {
-                currentFullScreenIndex += 1;
-            }
-            if (movedBy > threshold && currentFullScreenIndex > 0) {
-                currentFullScreenIndex -= 1;
-            }
-
-            fsPrevTranslate = -currentFullScreenIndex * window.innerWidth;
-            updateFullScreenSlider(true);
-        }
-
-
-        // --- Utilities ---
-        function getYoutubeEmbedUrl(url) {
-            if (!url) return null;
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
-        }
-
-        function showToast(message) {
+        function showToast(message, type = 'info') {
             const toast = document.getElementById('toast-notification');
             toast.textContent = message;
+            toast.style.backgroundColor = type === 'error' ? '#ef4444' : '#333';
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
+        
+        // --- Carousel and Recommendation Functions ---
+        function createProductCard(product, id) {
+            return `
+                <a href="?id=${id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+                    <img src="${product.images?.[0] || 'https://i.ibb.co/My6h0gdd/20250706-230221.png'}" class="w-full h-32 object-cover" alt="${product.name}">
+                    <div class="p-2">
+                        <h4 class="text-sm font-semibold truncate text-gray-800">${product.name}</h4>
+                        <p class="text-base font-bold text-indigo-600">₹${Number(product.displayPrice).toLocaleString('en-IN')}</p>
+                    </div>
+                </a>
+            `;
+        }
+        
+        function updateRecentlyViewed(newId) {
+            let viewedIds = JSON.parse(sessionStorage.getItem('recentlyViewed')) || [];
+            // Remove the id if it already exists to move it to the front
+            viewedIds = viewedIds.filter(id => id !== newId);
+            // Add the new id to the front
+            viewedIds.unshift(newId);
+            // Keep only the last 10 viewed items
+            viewedIds = viewedIds.slice(0, 10);
+            sessionStorage.setItem('recentlyViewed', JSON.stringify(viewedIds));
+            loadRecentlyViewed(viewedIds);
+        }
 
-        // --- Initial Load ---
+        function loadRecentlyViewed(viewedIds) {
+            if (!viewedIds || viewedIds.length <= 1) return; // Don't show if only current product is viewed
+
+            const container = document.getElementById('recently-viewed-container');
+            container.innerHTML = '';
+            let cardCount = 0;
+            
+            // Exclude the current product from the list
+            viewedIds.filter(id => id !== currentProductId).forEach(id => {
+                const product = allProductsCache[id];
+                if (product) {
+                    container.innerHTML += createProductCard(product, id);
+                    cardCount++;
+                }
+            });
+
+            if (cardCount > 0) {
+                document.getElementById('recently-viewed-section').style.display = 'block';
+            }
+        }
+        
+        function loadSimilarProducts(category) {
+            if (!category || !allProductsCache) return;
+            const container = document.getElementById('similar-products-container');
+            container.innerHTML = '';
+            let cardCount = 0;
+
+            allProductsCache.forEach((product, index) => {
+                if (product && product.category === category && index != currentProductId) {
+                    container.innerHTML += createProductCard(product, index);
+                    cardCount++;
+                }
+            });
+            
+            if (cardCount > 0) {
+                document.getElementById('similar-products-section').style.display = 'block';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', initializeAppAndLoadProduct);
     </script>
 </body>
