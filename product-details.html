@@ -10,60 +10,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary-color: #4F46E5; }
-        html, body {
-            overscroll-behavior-y: contain;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        body { font-family: 'Inter', sans-serif; background-color: #fff; }
-
-        /* Main Layout */
-        #product-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh; /* Full viewport height */
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
+        
+        /* Classic Layout Styles */
         #main-media-container {
-            flex-grow: 1;
-            position: relative;
-            background-color: #f0f2f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            cursor: pointer;
             overflow: hidden;
+            aspect-ratio: 1 / 1;
         }
         #main-media-container img, #main-media-container iframe {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Changed to contain to show full image */
+            object-fit: cover;
+            transition: transform 0.3s ease;
         }
-        #product-details-sheet {
-            flex-shrink: 0;
-            background-color: #ffffff;
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            position: relative;
-            z-index: 10;
+        #main-media-container:hover img {
+            transform: scale(1.05);
         }
 
         /* Thumbnails */
         #thumbnail-gallery {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.5rem;
             overflow-x: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
-            padding-bottom: 0.5rem;
         }
         #thumbnail-gallery::-webkit-scrollbar { display: none; }
         .thumbnail { 
             cursor: pointer; 
-            border: 2px solid #e5e7eb; 
+            border: 2px solid transparent; 
             transition: border-color 0.3s; 
-            border-radius: 0.75rem; 
+            border-radius: 0.5rem; 
             position: relative;
             flex-shrink: 0; 
             width: 64px; 
@@ -79,11 +57,11 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             background-color: #000;
             z-index: 1000;
-            display: none; /* Initially hidden */
+            display: none;
             flex-direction: column;
             color: white;
             overscroll-behavior: contain;
@@ -123,6 +101,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 1rem;
         }
         .fullscreen-slide img {
             max-width: 100%;
@@ -146,7 +125,7 @@
         }
         .fullscreen-dots .dot.active { background-color: white; }
 
-        /* Buttons */
+        /* Other styles */
         .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
         .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
         #toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; transition: bottom 0.5s ease-in-out; }
@@ -154,48 +133,64 @@
     </style>
 </head>
 <body>
-    <div id="product-container" style="display: none;">
-        <div id="main-media-container">
-            <img id="main-product-image" src="" alt="Main Product Image">
-            <iframe id="main-product-video" class="hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-            <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
-        </div>
-
-        <div id="product-details-sheet">
-            <div id="thumbnail-gallery" class="mb-4"></div>
-            
-            <div class="flex justify-between items-start mb-2">
-                <h1 id="product-title" class="text-xl sm:text-2xl font-bold text-gray-900 leading-tight"></h1>
-                <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition">
-                    <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-5 h-5" alt="Share Icon">
-                </button>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-3 flex items-center justify-between">
+                <a href="./products.html" class="text-gray-600 hover:text-gray-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </a>
+                <a href="./index.html"><img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 35px;"></a>
+                <div class="w-6"></div>
             </div>
+        </div>
+    </header>
 
-            <div class="flex items-center flex-wrap gap-x-4 gap-y-2 my-3">
-                <span id="product-price" class="text-2xl lg:text-3xl font-extrabold text-indigo-600"></span>
-                <div id="product-discount-container" class="flex items-baseline gap-2">
-                    <span id="product-original-price" class="text-lg line-through text-gray-400" style="display: none;"></span>
-                    <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
+    <main id="product-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-12" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div class="p-4 sm:p-6 lg:p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+                    <div>
+                        <div class="rounded-xl mb-4" id="main-media-container">
+                             <img id="main-product-image" src="" alt="Main Product Image">
+                             <iframe id="main-product-video" class="hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                             <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
+                        </div>
+                        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <h1 id="product-title" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight"></h1>
+                            <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition">
+                                <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
+                            </button>
+                        </div>
+                        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 my-4">
+                            <span id="product-price" class="text-3xl lg:text-4xl font-extrabold text-indigo-600"></span>
+                            <div id="product-discount-container" class="flex items-baseline gap-2">
+                                <span id="product-original-price" class="text-xl line-through text-gray-400" style="display: none;"></span>
+                                <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
+                            </div>
+                        </div>
+                        <div id="description-section" class="mt-4 mb-6 border-t border-gray-200 pt-6" style="display: none;">
+                            <h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
+                            <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
+                        </div>
+                        <div class="mt-auto pt-6">
+                             <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
+                                <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
+                                Order on WhatsApp
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div id="description-section" class="mt-4 mb-5 border-t border-gray-200 pt-4" style="display: none;">
-                <h2 class="text-md font-bold text-gray-900 mb-2">Product Details</h2>
-                <div id="product-description" class="prose prose-sm max-w-none text-gray-600"></div>
-            </div>
-
-            <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
-                <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
-                Order on WhatsApp
-            </a>
         </div>
-    </div>
-
+    </main>
     <div id="loading-indicator" class="flex items-center justify-center h-screen"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
 
     <div id="fullscreen-viewer">
         <div class="fullscreen-header">
-             <button id="fullscreen-close-btn" class="text-white text-2xl font-bold">✕</button>
+             <button id="fullscreen-close-btn" class="text-white text-2xl font-bold p-2">✕</button>
              <div id="fullscreen-counter" class="text-sm"></div>
         </div>
         <div class="fullscreen-slider-wrapper">
@@ -214,15 +209,13 @@
         let currentMediaIndex = 0;
         let currentProductData = null, currentProductId = null;
         
-        // Swipe functionality variables
-        let touchstartX = 0, touchendX = 0;
-        let isSwiping = false, currentTranslate = 0, startPos = 0, prevTranslate = 0;
-        let animationID;
+        // Swipe variables for full screen viewer
+        let fsTouchStartX = 0;
+        let fsIsSwiping = false;
+        let fsCurrentTranslate = 0;
+        let fsPrevTranslate = 0;
+        let fsAnimationID;
         let currentFullScreenIndex = 0;
-
-        // DOM Elements
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const productContainer = document.getElementById('product-container');
 
         // --- Initialization ---
         async function fetchFirebaseConfig() {
@@ -232,7 +225,7 @@
                 return await response.json();
             } catch (error) {
                 console.error('Failed to fetch Firebase config:', error);
-                loadingIndicator.innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
                 return null;
             }
         }
@@ -246,7 +239,7 @@
                 fetchProductData(database);
             } catch (error) {
                 console.error("Initialization or data fetch failed:", error);
-                loadingIndicator.innerHTML = '<p class="text-red-500">Failed to load product data.</p>';
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load product data.</p>';
             }
         }
 
@@ -254,7 +247,7 @@
             const productId = new URLSearchParams(window.location.search).get('id');
             currentProductId = productId;
             if (!productId) {
-                loadingIndicator.innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
                 return;
             }
             
@@ -263,10 +256,10 @@
                 if (snapshot.exists()) {
                     currentProductData = snapshot.val();
                     loadProduct(currentProductData);
-                    loadingIndicator.style.display = 'none';
-                    productContainer.style.display = 'flex';
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    document.getElementById('product-content').style.display = 'block';
                 } else {
-                    loadingIndicator.innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
+                    document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
                 }
             });
         }
@@ -277,7 +270,6 @@
             if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl, thumbnail: (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png' });
             
             imageItems = mediaItems.filter(item => item.type === 'image');
-
             const firstImage = imageItems.length > 0 ? imageItems[0].src : 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
             document.title = `${data.name || 'Product'} - Ramazone`;
             document.querySelector('meta[property="og:title"]').setAttribute('content', data.name);
@@ -389,10 +381,11 @@
         }
 
         function setupMainSwipeControls() {
+            let touchstartX = 0;
             const swipeArea = document.getElementById('main-media-container');
             swipeArea.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, { passive: true });
             swipeArea.addEventListener('touchend', e => {
-                touchendX = e.changedTouches[0].screenX;
+                let touchendX = e.changedTouches[0].screenX;
                 const swipeThreshold = 50;
                 if (touchendX < touchstartX - swipeThreshold) showMedia(currentMediaIndex + 1);
                 if (touchendX > touchstartX + swipeThreshold) showMedia(currentMediaIndex - 1);
@@ -405,12 +398,13 @@
             const slider = viewer.querySelector('.fullscreen-slider');
             document.getElementById('fullscreen-close-btn').onclick = closeFullScreenViewer;
             
-            slider.addEventListener('touchstart', touchStart);
-            slider.addEventListener('touchend', touchEnd);
-            slider.addEventListener('touchmove', touchMove);
+            slider.addEventListener('touchstart', fsTouchStart, { passive: true });
+            slider.addEventListener('touchend', fsTouchEnd);
+            slider.addEventListener('touchmove', fsTouchMove, { passive: true });
         }
 
         function openFullScreenViewer(startIndex) {
+            if (imageItems.length === 0) return;
             const viewer = document.getElementById('fullscreen-viewer');
             const slider = viewer.querySelector('.fullscreen-slider');
             const dotsContainer = viewer.querySelector('.fullscreen-dots');
@@ -419,7 +413,8 @@
             dotsContainer.innerHTML = imageItems.map(() => `<div class="dot"></div>`).join('');
 
             currentFullScreenIndex = startIndex;
-            updateFullScreenSlider();
+            fsPrevTranslate = -currentFullScreenIndex * window.innerWidth;
+            updateFullScreenSlider(false); // No transition on open
             viewer.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
@@ -430,47 +425,54 @@
             document.body.style.overflow = 'auto';
         }
 
-        function updateFullScreenSlider() {
+        function updateFullScreenSlider(withTransition = true) {
             const slider = document.getElementById('fullscreen-slider');
             const counter = document.getElementById('fullscreen-counter');
             const dots = document.querySelectorAll('#fullscreen-viewer .dot');
+
+            if(withTransition) {
+                slider.classList.add('transitioning');
+            } else {
+                slider.classList.remove('transitioning');
+            }
 
             slider.style.transform = `translateX(-${currentFullScreenIndex * 100}vw)`;
             counter.textContent = `${currentFullScreenIndex + 1} / ${imageItems.length}`;
             dots.forEach((dot, index) => dot.classList.toggle('active', index === currentFullScreenIndex));
         }
-
-        function touchStart(event) {
-            isSwiping = true;
-            startPos = event.touches[0].clientX;
-            const slider = event.currentTarget;
+        
+        function fsTouchStart(event) {
+            fsTouchStartX = event.touches[0].clientX;
+            fsIsSwiping = true;
+            fsAnimationID = null;
+            const slider = document.querySelector('.fullscreen-slider');
             slider.classList.remove('transitioning');
         }
 
-        function touchMove(event) {
-            if (!isSwiping) return;
-            const currentPosition = event.touches[0].clientX;
-            currentTranslate = prevTranslate + currentPosition - startPos;
+        function fsTouchMove(event) {
+            if (fsIsSwiping) {
+                const currentPosition = event.touches[0].clientX;
+                fsCurrentTranslate = fsPrevTranslate + currentPosition - fsTouchStartX;
+                document.querySelector('.fullscreen-slider').style.transform = `translateX(${fsCurrentTranslate}px)`;
+            }
         }
 
-        function touchEnd(event) {
-            if (!isSwiping) return;
-            isSwiping = false;
-            const slider = event.currentTarget;
-            const movedBy = currentTranslate - prevTranslate;
+        function fsTouchEnd() {
+            fsIsSwiping = false;
+            const movedBy = fsCurrentTranslate - fsPrevTranslate;
+            const threshold = window.innerWidth / 4;
 
-            if (movedBy < -100 && currentFullScreenIndex < imageItems.length - 1) {
+            if (movedBy < -threshold && currentFullScreenIndex < imageItems.length - 1) {
                 currentFullScreenIndex += 1;
             }
-            if (movedBy > 100 && currentFullScreenIndex > 0) {
+            if (movedBy > threshold && currentFullScreenIndex > 0) {
                 currentFullScreenIndex -= 1;
             }
 
-            slider.classList.add('transitioning');
-            slider.style.transform = `translateX(-${currentFullScreenIndex * 100}vw)`;
-            prevTranslate = -currentFullScreenIndex * window.innerWidth;
-            updateFullScreenSlider();
+            fsPrevTranslate = -currentFullScreenIndex * window.innerWidth;
+            updateFullScreenSlider(true);
         }
+
 
         // --- Utilities ---
         function getYoutubeEmbedUrl(url) {
