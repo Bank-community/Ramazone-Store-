@@ -4,15 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details - Ramazone</title>
-    <!-- Meta tags will be updated by JS -->
     <meta property="og:title" content="Ramazone">
     <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
-    <!-- Styles and fonts are inherited from the main shell -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
+        :root { --primary-color: #4F46E5; }
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
         .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
         .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
         .thumbnail { cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s; border-radius: 0.5rem; position: relative; }
-        .thumbnail.active { border-color: #4F46E5; }
+        .thumbnail.active { border-color: var(--primary-color); }
         .thumbnail .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30%; height: 30%; background-color: rgba(0,0,0,0.5); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0.8; }
         #image-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
         #image-modal img { max-width: 90%; max-height: 85%; object-fit: contain; }
@@ -22,134 +25,141 @@
     </style>
 </head>
 <body>
-    <!-- This is a partial page. The content will be loaded into the main shell. -->
-    <header id="page-header" class="bg-white shadow-sm sticky top-0 z-50">
+    <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-3 flex items-center justify-between">
-                <a href="./products.html" class="text-gray-600 hover:text-gray-900 nav-link">
+                <a href="./products.html" class="text-gray-600 hover:text-gray-900">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </a>
-                <a href="./index.html" class="nav-link">
-                    <img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 35px; border-radius: 0;">
-                </a>
-                <div class="w-6"></div> <!-- Spacer -->
+                <a href="./index.html"><img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 35px; border-radius: 0;"></a>
+                <div class="w-6"></div>
             </div>
         </div>
     </header>
 
-    <main id="main-content">
-        <div id="product-content-wrapper" style="display: none;">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-12">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-                    <div class="p-4 sm:p-6 lg:p-8">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-                            <!-- Product Media Gallery -->
-                            <div>
-                                <div class="rounded-xl mb-4 cursor-pointer overflow-hidden" id="main-media-container">
-                                     <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-xl pointer-events-none transition-transform duration-300 ease-in-out hover:scale-105">
-                                     <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-xl hidden" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-                                </div>
-                                <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
+    <main id="product-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 mb-12" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div class="p-4 sm:p-6 lg:p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+                    <div>
+                        <div class="rounded-xl mb-4 cursor-pointer overflow-hidden" id="main-media-container">
+                             <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-xl pointer-events-none transition-transform duration-300 ease-in-out hover:scale-105">
+                             <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-xl hidden" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                        </div>
+                        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <h1 id="product-title" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight"></h1>
+                            <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition">
+                                <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
+                            </button>
+                        </div>
+                        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 my-4">
+                            <span id="product-price" class="text-3xl lg:text-4xl font-extrabold text-indigo-600"></span>
+                            <div id="product-discount-container" class="flex items-baseline gap-2">
+                                <span id="product-original-price" class="text-xl line-through text-gray-400" style="display: none;"></span>
+                                <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
                             </div>
-                            <!-- Product Details & Actions -->
-                            <div class="flex flex-col">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h1 id="product-title" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight"></h1>
-                                    <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition">
-                                        <img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon">
-                                    </button>
-                                </div>
-                                <div class="flex items-center flex-wrap gap-x-4 gap-y-2 my-4">
-                                    <span id="product-price" class="text-3xl lg:text-4xl font-extrabold text-indigo-600"></span>
-                                    <div id="product-discount-container" class="flex items-baseline gap-2">
-                                        <span id="product-original-price" class="text-xl line-through text-gray-400" style="display: none;"></span>
-                                        <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
-                                    </div>
-                                </div>
-                                <div id="description-section" class="mt-4 mb-6 border-t border-gray-200 pt-6" style="display: none;">
-                                    <h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
-                                    <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
-                                </div>
-                                <div class="mt-auto pt-6">
-                                    <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
-                                        <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
-                                        Order on WhatsApp
-                                    </a>
-                                </div>
-                            </div>
+                        </div>
+                        <div id="description-section" class="mt-4 mb-6 border-t border-gray-200 pt-6" style="display: none;">
+                            <h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
+                            <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
+                        </div>
+                        <div class="mt-auto pt-6">
+                            <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
+                                <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
+                                Order on WhatsApp
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
     </main>
+    <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
 
     <div id="image-modal"><span class="close">&times;</span><img id="modal-image-content"></div>
     <div id="toast-notification">Link Copied!</div>
 
-    <script id="page-init-script">
-        function initializePage() {
-            if (typeof window.initializeAppAndLoadProduct === 'function') {
-                window.initializeAppAndLoadProduct();
-            } else {
-                 window.initializeAppAndLoadProduct = async function() {
-                    const firebaseConfig = await fetchFirebaseConfig();
-                    if (!firebaseConfig) return;
-                    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                    const database = firebase.database();
-                    fetchProductData(database);
-                };
-                window.initializeAppAndLoadProduct();
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        async function fetchFirebaseConfig() { /* ... same as products.html ... */ }
+
+        async function initializeAppAndLoadProduct() {
+            const firebaseConfig = await fetchFirebaseConfig();
+            if (!firebaseConfig) return;
+
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                const database = firebase.database();
+                fetchProductData(database);
+            } catch (error) {
+                console.error("Initialization or data fetch failed:", error);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load product data.</p>';
             }
         }
-        
-        async function fetchFirebaseConfig() { /* ... same as products.html ... */ }
 
         function fetchProductData(database) {
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('id');
-            if (!productId) { /* ... error handling ... */ return; }
+            if (!productId) {
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
+                return;
+            }
             
             const productRef = database.ref(`ramazone/homepage/festiveCollection/products/${productId}`);
             productRef.get().then((snapshot) => {
                 if (snapshot.exists()) {
                     loadProduct(snapshot.val());
                     document.getElementById('loading-indicator').style.display = 'none';
-                    document.getElementById('product-content-wrapper').style.display = 'block';
-                } else { /* ... error handling ... */ }
+                    document.getElementById('product-content').style.display = 'block';
+                } else {
+                    document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
+                }
             });
         }
 
         function loadProduct(data) {
             const sellerPhoneNumber = '917903698180';
             let mediaItems = [];
+            
+            // Prioritize video to show first if it exists
             if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl });
             if (data.images) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
 
-            // Update Meta Tags
-            const firstImage = (data.images && data.images[0]) || '';
+            const firstImage = (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
             document.title = `${data.name || 'Product'} - Ramazone`;
             document.querySelector('meta[property="og:title"]').setAttribute('content', data.name);
             document.querySelector('meta[property="og:image"]').setAttribute('content', firstImage);
 
-            // Update Product Info
             document.getElementById('product-title').textContent = data.name;
             document.getElementById('product-price').textContent = `₹${Number(data.displayPrice).toLocaleString('en-IN')}`;
-            // ... other details like discount, description ...
+            
+            if (data.originalPrice && Number(data.originalPrice) > Number(data.displayPrice)) {
+                document.getElementById('product-original-price').textContent = `₹${Number(data.originalPrice).toLocaleString('en-IN')}`;
+                document.getElementById('product-original-price').style.display = 'inline';
+                const discount = Math.round(((data.originalPrice - data.displayPrice) / data.originalPrice) * 100);
+                document.getElementById('product-discount').textContent = `${discount}% OFF`;
+                document.getElementById('product-discount').style.display = 'inline-block';
+            }
 
-            // Update WhatsApp Link
+            if (data.description) {
+                document.getElementById('description-section').style.display = 'block';
+                document.getElementById('product-description').innerHTML = data.description;
+            }
+            
             const whatsappMessage = `Hello, I'm interested in *${data.name}* (Price: ₹${data.displayPrice}).\nLink: ${window.location.href}`;
             document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
             
-            // Render Gallery
             const gallery = document.getElementById('thumbnail-gallery');
             gallery.innerHTML = '';
             mediaItems.forEach((item, index) => {
                 const thumbWrapper = document.createElement('div');
                 thumbWrapper.className = 'aspect-square thumbnail';
                 const img = document.createElement('img');
-                img.src = item.type === 'image' ? item.src : firstImage; // Use first image as thumb for video
+                img.src = item.type === 'image' ? item.src : firstImage;
                 thumbWrapper.appendChild(img);
                 if (item.type === 'video') {
                     const playIcon = document.createElement('div');
@@ -162,7 +172,17 @@
             });
 
             showMedia(0, mediaItems);
+            setupImageModal(mediaItems);
             setupShareButton(data);
+        }
+
+        function getYoutubeEmbedUrl(url) {
+            let videoId = '';
+            try {
+                const urlObj = new URL(url);
+                videoId = urlObj.searchParams.get('v');
+            } catch (e) { return null; }
+            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
         }
 
         function showMedia(index, mediaItems) {
@@ -172,24 +192,40 @@
 
             if (item.type === 'image') {
                 mainVideo.classList.add('hidden');
-                mainVideo.src = ''; // Stop video
+                mainVideo.src = '';
                 mainImage.classList.remove('hidden');
                 mainImage.src = item.src;
             } else if (item.type === 'video') {
                 mainImage.classList.add('hidden');
                 mainVideo.classList.remove('hidden');
-                // FIX: Use clean YouTube embed URL
-                const embedUrl = `https://www.youtube.com/embed/${new URL(item.src).searchParams.get('v')}?autoplay=1&controls=1&rel=0&modestbranding=1`;
-                if (mainVideo.src !== embedUrl) mainVideo.src = embedUrl;
+                const embedUrl = getYoutubeEmbedUrl(item.src);
+                if (embedUrl && mainVideo.src !== embedUrl) mainVideo.src = embedUrl;
             }
             document.querySelectorAll('.thumbnail').forEach((thumb, i) => thumb.classList.toggle('active', i === index));
         }
         
+        function setupImageModal(mediaItems) {
+            const modal = document.getElementById('image-modal');
+            const mainMediaContainer = document.getElementById('main-media-container');
+            const modalImg = document.getElementById("modal-image-content");
+            const closeBtn = document.querySelector("#image-modal .close");
+
+            mainMediaContainer.onclick = () => {
+                if (mediaItems.find(item => item.type === 'image')) { // Only open if there is an image
+                    const currentItem = mediaItems.find((item, index) => document.querySelectorAll('.thumbnail')[index].classList.contains('active'));
+                    if (currentItem && currentItem.type === 'image') {
+                         modal.style.display = "flex";
+                         modalImg.src = currentItem.src;
+                    }
+                }
+            };
+            closeBtn.onclick = () => modal.style.display = "none";
+        }
+
         function setupShareButton(productData) { /* ... same as before ... */ }
         function showToast(message) { /* ... same as before ... */ }
 
-        // Run initialization
-        initializePage();
+        document.addEventListener('DOMContentLoaded', initializeAppAndLoadProduct);
     </script>
 </body>
 </html>
