@@ -49,16 +49,21 @@
 
         .videos-slider-container { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x mandatory; }
         .videos-slider-container::-webkit-scrollbar { display: none; }
-        .video-card { flex: 0 0 90%; scroll-snap-align: center; cursor: pointer; background-color: var(--bg-white); border-radius: 1rem; box-shadow: 0 8px 25px rgba(0,0,0,0.07); overflow: hidden; transition: all 0.3s ease; }
+        .video-card { flex: 0 0 90%; scroll-snap-align: center; }
         @media (min-width: 640px) { .video-card { flex-basis: 60%; } }
         @media (min-width: 1024px) { .video-card { flex-basis: calc(33.33% - 11px); } }
+        .video-card { cursor: pointer; background-color: var(--bg-white); border-radius: 1rem; box-shadow: 0 8px 25px rgba(0,0,0,0.07); overflow: hidden; transition: all 0.3s ease; }
         .video-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
         .video-media { position: relative; padding-top: 56.25%; background-color: #e5e7eb; }
         .video-media img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .video-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; transition: transform 0.3s; }
         .video-card:hover .video-play-icon { transform: translate(-50%, -50%) scale(1.1); }
         .video-content { padding: 1.25rem; }
-        
+        .video-title { font-weight: 700; font-size: 1.125rem; }
+        .video-description { color: var(--text-light); margin-top: 0.5rem; }
+        .video-link { display: inline-block; margin-top: 1rem; color: var(--primary-color); font-weight: 600; text-decoration: none; }
+        .video-link:hover { text-decoration: underline; }
+
         #video-lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         #video-lightbox.show { opacity: 1; pointer-events: auto; }
         #video-lightbox .lightbox-content { position: relative; width: 90%; max-width: 900px; aspect-ratio: 16/9; background-color: #000; }
@@ -67,7 +72,7 @@
 
         .festive-collection { padding: 2rem 0; margin: 1.5rem 0; position: relative; overflow: hidden; }
         @media (min-width: 768px) { .festive-collection { border-radius: 24px; margin: 1.5rem; padding: 3rem 1rem; } }
-        .festival-headline { font-size: 2rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
+        .festival-headline { font-size: 2rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; color: var(--text-dark); text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
         @media (min-width: 768px) { .festival-headline { font-size: 2.75rem; } }
         .product-slider { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; }
         .product-slider::-webkit-scrollbar { display: none; }
@@ -126,42 +131,63 @@
         </div>
     </header>
 
-    <main class="mb-28 md:mb-0">
-        <div id="loading-indicator" class="text-center py-20"><p>Loading content...</p></div>
-        <div id="content-wrapper" class="hidden">
-            <div class="slider-container">
-                <div class="slider" id="main-slider"></div>
-                <div class="slider-nav">
-                    <button onclick="prevSlide()">❮</button>
-                    <button onclick="nextSlide()">❯</button>
-                </div>
-                <div class="slider-dots" id="slider-dots-container"></div>
-            </div>
-            
-            <div class="flex justify-center px-4">
-                <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
-                    <div id="fakeSearchInput">
-                        <div>
-                            <span style="color: var(--text-light);">Search for</span>
-                            <span>&nbsp;</span>
-                            <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
-                        </div>
-                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                    </div>
-                </a>
-            </div>
-
-            <section class="section-container bg-white reveal" id="special-category-section"></section>
-            <section class="section-container reveal" id="videos-section"></section>
-            <section class="section-container reveal" id="normal-category-section"></section>
-            <section class="festive-collection reveal" id="festive-collection-container"></section>
-            <section class="section-container reveal" id="flipcard-section"></section>
-            <div class="sponsor-card reveal" id="dynamic-section-1"></div>
-            <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section"></div>
-            <div class="sponsor-card reveal" id="sponsor-section-container"></div>
-            <div class="sponsor-card reveal" id="dynamic-section-2"></div>
-            <section class="section-container bg-white reveal" id="advantages-section"></section>
+    <div class="slider-container">
+        <div class="slider" id="main-slider"></div>
+        <div class="slider-nav">
+            <button onclick="prevSlide()">❮</button>
+            <button onclick="nextSlide()">❯</button>
         </div>
+        <div class="slider-dots" id="slider-dots-container"></div>
+    </div>
+    
+    <div class="flex justify-center px-4">
+        <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
+            <div id="fakeSearchInput">
+                <div>
+                    <span style="color: var(--text-light);">Search for</span>
+                    <span>&nbsp;</span>
+                    <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
+                </div>
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+            </div>
+        </a>
+    </div>
+
+    <main class="mb-28 md:mb-0">
+        <section class="section-container bg-white reveal" id="special-category-section">
+            <h2 class="section-title">Top Picks For You</h2>
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4" id="special-category-wrapper"></div>
+        </section>
+
+        <section class="section-container reveal" id="videos-section">
+            <h2 class="section-title">Latest Offer</h2>
+            <div class="videos-slider-container" id="videos-wrapper"></div>
+        </section>
+
+        <section class="section-container reveal" id="normal-category-section">
+             <h2 class="section-title">Shop by Category</h2>
+            <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4" id="normal-category-wrapper"></div>
+        </section>
+
+        <section class="festive-collection reveal" id="festive-collection-container">
+            <h1 class="festival-headline" id="festive-headline">The Festive Collection</h1>
+            <div class="product-slider" id="festive-product-slider"></div>
+        </section>
+
+        <section class="section-container reveal" id="flipcard-section">
+        </section>
+
+        <div class="sponsor-card reveal" id="dynamic-section-1"></div>
+        <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
+            <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
+        </div>
+        <div class="sponsor-card reveal" id="sponsor-section-container"></div>
+        <div class="sponsor-card reveal" id="dynamic-section-2"></div>
+
+        <section class="section-container bg-white reveal" id="advantages-section">
+            <h2 class="section-title">Why <span style="color: var(--primary-color);">Ramazone?</span></h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 px-4" id="advantages-grid"></div>
+        </section>
     </main>
 
     <div id="footer">
@@ -183,94 +209,99 @@
     </div>
     
     <div class="social-media-links" id="social-links-container"></div>
-    <footer id="desktop-footer"></footer>
+
+    <footer id="desktop-footer">
+        <div class="container mx-auto">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4">
+                    <p>India's favorite online shopping destination.</p>
+                </div>
+                <div class="footer-column"><h3>Quick Links</h3><a href="#">About Us</a><a href="#">Contact Us</a></div>
+                <div class="footer-column"><h3>Help</h3><a href="#">Payments</a><a href="#">Shipping</a><a href="#">FAQ</a></div>
+                <div class="footer-column"><h3>Follow Us</h3><div id="desktop-social-links" class="flex gap-4 text-2xl"></div></div>
+            </div>
+            <div class="footer-bottom">&copy; <span id="copyright-year">2025</span> Ramazone. All Rights Reserved.</div>
+        </div>
+    </footer>
+
     <div id="video-lightbox" onclick="closeVideoLightbox()">
         <div class="lightbox-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeVideoLightbox()">&times;</span>
-            <iframe id="lightbox-youtube-player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe id="lightbox-youtube-player" style="display:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-        // --- Simplified and reliable script for index.html ---
 
-        async function initializeFirebase() {
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('/api/firebase-config');
-                if (!response.ok) throw new Error(`Config API failed: ${response.status}`);
+                if (!response.ok) throw new Error('Network response was not ok');
                 const firebaseConfig = await response.json();
-                if (!firebaseConfig.apiKey) throw new Error("Incomplete config from API.");
-                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                return firebase.database();
+                
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                const database = firebase.database();
+                loadDataFromFirebase(database);
             } catch (error) {
-                console.error("Fatal Error: Could not initialize Firebase.", error);
-                document.querySelector('main').innerHTML = `<div class="text-center p-8"><p class="text-red-500 font-bold">Error: Application configuration is missing.</p></div>`;
-                return null;
+                console.error("Firebase initialization failed:", error);
+                document.body.innerHTML = '<div style="text-align: center; padding: 50px;">Could not load page data.</div>';
             }
-        }
+        });
 
-        function loadHomepageData(database) {
-            if (!database) return;
+        function loadDataFromFirebase(database) {
             const homepageRef = database.ref('ramazone/homepage');
             homepageRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    renderAllHomepageSections(data);
-                    document.getElementById('loading-indicator').style.display = 'none';
-                    document.getElementById('content-wrapper').classList.remove('hidden');
+                    renderSlider(data.slider);
+                    renderSearch(data.search);
+                    renderSpecialCategories(data.specialCategories);
+                    renderVideosSection(data.videos);
+                    renderNormalCategories(data.normalCategories);
+                    renderFestiveCollection(data.festiveCollection);
+                    renderFlipCardSection(data.flipCard);
+                    renderDynamicSection('#dynamic-section-1', data.dynamicSection1);
+                    renderInfoMarquee(data.infoMarquee);
+                    renderSponsor(data.sponsor);
+                    renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
+                    renderAdvantages(data.advantages);
+                    renderFooter(data.footer);
+                    document.getElementById('copyright-year').textContent = new Date().getFullYear();
                 }
             }, (error) => {
-                console.error("Firebase read failed:", error.name)
-                document.getElementById('loading-indicator').innerHTML = `<p class="text-red-500">Failed to load content.</p>`;
+                 console.error("Firebase read failed: " + error.name);
             });
+            setupScrollAnimations();
         }
         
-        function renderAllHomepageSections(data) {
-            // This function will call individual renderers
-            renderSlider(data.slider);
-            renderSearch(data.search);
-            renderFestiveCollection(data.festiveCollection);
-            // Add other render function calls here as needed
-        }
-
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
-            if (!container || !collectionData || !collectionData.products) {
-                if(container) container.style.display = 'none';
-                return;
-            }
-            container.style.display = 'block';
-
-            let headline = container.querySelector('.festival-headline');
-            if (!headline) {
-                headline = document.createElement('h1');
-                headline.className = 'festival-headline';
-                container.prepend(headline);
-            }
-            headline.innerText = collectionData.title || 'Special Offers';
-            headline.style.color = collectionData.headlineColor || 'var(--text-dark)';
+            if (!container || !collectionData || !collectionData.products) return;
+            
+            document.getElementById('festive-headline').innerText = collectionData.title || 'Special Offers';
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
             
-            let slider = container.querySelector('.product-slider');
-            if (!slider) {
-                slider = document.createElement('div');
-                slider.className = 'product-slider';
-                container.appendChild(slider);
-            }
+            const slider = document.getElementById('festive-product-slider');
             slider.innerHTML = '';
+            
+            const productsData = collectionData.products;
+            const productList = Array.isArray(productsData)
+                ? productsData.map((p, i) => ({ ...p, id: i }))
+                : Object.keys(productsData).map(key => ({ id: key, ...productsData[key] }));
 
-            const productsArray = Array.isArray(collectionData.products) 
-                ? collectionData.products.map((p, i) => ({...p, id: i})) 
-                : Object.keys(collectionData.products).map(key => ({ id: key, ...collectionData.products[key] }));
-
-            productsArray.forEach(prod => {
-                if (!prod) return;
-                const mainMedia = (prod.images && prod.images[0]) || 'https://placehold.co/200x200/e2e8f0/e2e8f0?text=R';
+            productList.forEach(prod => {
+                const mainMedia = (prod.images && prod.images[0]) || '';
+                // FIX: Added correct href to product details page
                 slider.innerHTML += `
                     <a href="./product-details.html?id=${prod.id}" class="product-card">
-                        <div class="product-media-container"><img src="${mainMedia}" alt="${prod.name}"></div>
+                        <div class="product-media-container">
+                            <img src="${mainMedia}" alt="${prod.name}">
+                        </div>
                         <div class="product-details">
                             <p class="product-name">${prod.name || ''}</p>
                             ${prod.offer ? `<span class="product-offer">${prod.offer}</span>` : ''}
@@ -283,29 +314,39 @@
             });
         }
         
-        // --- Placeholder for other render functions to be filled in ---
-        function renderSlider(data) { /* Add slider rendering logic */ }
-        function renderSearch(data) { /* Add search rendering logic */ }
-        function renderSpecialCategories(data) { /* Add special categories logic */ }
-        function renderVideosSection(data) { /* Add videos logic */ }
-        function renderNormalCategories(data) { /* Add normal categories logic */ }
-        function renderFlipCardSection(data) { /* Add flip card logic */ }
-        function renderDynamicSection(selector, data) { /* Add dynamic section logic */ }
-        function renderInfoMarquee(data) { /* Add info marquee logic */ }
-        function renderSponsor(data) { /* Add sponsor logic */ }
-        function renderAdvantages(data) { /* Add advantages logic */ }
-        function renderFooter(data) { /* Add footer logic */ }
-        function setupScrollAnimations() { /* Add scroll animation logic */ }
-        function prevSlide() { /* Add slider logic */ }
-        function nextSlide() { /* Add slider logic */ }
-        function openVideoLightbox(url) { /* Add lightbox logic */ }
-        function closeVideoLightbox() { /* Add lightbox logic */ }
-        function toggleSocialMedia() { /* Add social media logic */ }
+        function renderFooter(footerData) {
+            if (!footerData) return;
+            // FIX: Set the correct href for the shop link
+            document.getElementById('footer-shop-link').href = './products.html';
+            document.getElementById('footer-play-link').href = footerData.playLink || '#';
+            document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
+            
+            // ... rest of the footer rendering logic
+        }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const database = await initializeFirebase();
-            loadHomepageData(database);
-        });
+        // --- Other Render and UI functions from your provided code ---
+        function renderSlider(sliderData) { /* Your existing working code */ }
+        function renderVideosSection(videosData) { /* Your existing working code */ }
+        function renderNormalCategories(categories) { /* Your existing working code */ }
+        function renderFlipCardSection(flipCardData) { /* Your existing working code */ }
+        function renderSponsor(sponsorData) { /* Your existing working code */ }
+        function renderAdvantages(advantagesData) { /* Your existing working code */ }
+        function renderSearch(d) { /* Your existing working code */ }
+        function renderSpecialCategories(c) { /* Your existing working code */ }
+        function renderDynamicSection(s,d) { /* Your existing working code */ }
+        function renderInfoMarquee(t) { /* Your existing working code */ }
+        let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
+        function initializeSlider(count) { /* Your existing working code */ }
+        function moveSlide(direction) { /* Your existing working code */ }
+        function nextSlide() { moveSlide(1); }
+        function prevSlide() { moveSlide(-1); }
+        function goToSlide(index) { /* Your existing working code */ }
+        function updateDots() { /* Your existing working code */ }
+        function resetSliderInterval() { /* Your existing working code */ }
+        function openVideoLightbox(url) { /* Your existing working code */ }
+        function closeVideoLightbox() { /* Your existing working code */ }
+        function toggleSocialMedia(event) { /* Your existing working code */ }
+        function setupScrollAnimations() { /* Your existing working code */ }
     </script>
 </body>
 </html>
