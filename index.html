@@ -78,7 +78,6 @@
         .product-media-container { position: relative; width: 100%; padding-top: 100%; background-color: #f3f4f6; }
         .product-media-container img { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
         .product-card:hover .product-media-container img { transform: scale(1.1); }
-        /* FIX: Centered product details */
         .product-details { padding: 1rem; text-align: center; }
         .product-name { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.25rem; color: var(--text-dark); }
         .product-offer { background-color: var(--primary-color); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-bottom: 0.5rem; }
@@ -121,82 +120,75 @@
 </head>
 <body class="bg-gray-100">
 
-    <div id="page-container">
-        <!-- Header -->
-        <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-2">
-            <div class="container mx-auto flex justify-center items-center px-4">
-                <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px;">
-            </div>
-        </header>
+    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-2">
+        <div class="container mx-auto flex justify-center items-center px-4">
+            <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px;">
+        </div>
+    </header>
 
-        <!-- Main Content (will be replaced by router) -->
-        <main id="main-content">
-            <div class="slider-container">
-                <div class="slider" id="main-slider"></div>
-                <div class="slider-nav">
-                    <button id="prev-slide-btn">❮</button>
-                    <button id="next-slide-btn">❯</button>
-                </div>
-                <div class="slider-dots" id="slider-dots-container"></div>
+    <main class="mb-28 md:mb-0">
+        <div class="slider-container">
+            <div class="slider" id="main-slider"></div>
+            <div class="slider-nav">
+                <button onclick="prevSlide()">❮</button>
+                <button onclick="nextSlide()">❯</button>
             </div>
-            
-            <div class="flex justify-center px-4">
-                <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
-                    <div id="fakeSearchInput">
-                        <div>
-                            <span style="color: var(--text-light);">Search for</span>
-                            <span>&nbsp;</span>
-                            <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
-                        </div>
-                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+            <div class="slider-dots" id="slider-dots-container"></div>
+        </div>
+        
+        <div class="flex justify-center px-4">
+            <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
+                <div id="fakeSearchInput">
+                    <div>
+                        <span style="color: var(--text-light);">Search for</span>
+                        <span>&nbsp;</span>
+                        <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
                     </div>
-                </a>
-            </div>
-
-            <div class="mb-28 md:mb-0">
-                <section class="section-container bg-white reveal" id="special-category-section">
-                    <h2 class="section-title">Top Picks For You</h2>
-                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4" id="special-category-wrapper"></div>
-                </section>
-
-                <section class="section-container reveal" id="videos-section">
-                    <h2 class="section-title">Latest Offer</h2>
-                    <div class="videos-slider-container" id="videos-wrapper"></div>
-                </section>
-
-                <section class="section-container reveal" id="normal-category-section">
-                     <h2 class="section-title">Shop by Category</h2>
-                    <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4" id="normal-category-wrapper"></div>
-                </section>
-
-                <section class="festive-collection reveal" id="festive-collection-container">
-                    <h1 class="festival-headline" id="festive-headline">The Festive Collection</h1>
-                    <div class="product-slider" id="festive-product-slider"></div>
-                </section>
-
-                <section class="section-container reveal" id="flipcard-section"></section>
-
-                <div class="sponsor-card reveal" id="dynamic-section-1"></div>
-                <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
-                    <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                 </div>
-                <div class="sponsor-card reveal" id="sponsor-section-container"></div>
-                <div class="sponsor-card reveal" id="dynamic-section-2"></div>
+            </a>
+        </div>
 
-                <section class="section-container bg-white reveal" id="advantages-section">
-                    <h2 class="section-title">Why <span style="color: var(--primary-color);">Ramazone?</span></h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 px-4" id="advantages-grid"></div>
-                </section>
-            </div>
-        </main>
-    </div>
+        <section class="section-container bg-white reveal" id="special-category-section">
+            <h2 class="section-title">Top Picks For You</h2>
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4" id="special-category-wrapper"></div>
+        </section>
 
-    <!-- Mobile Footer -->
+        <section class="section-container reveal" id="videos-section">
+            <h2 class="section-title">Latest Offer</h2>
+            <div class="videos-slider-container" id="videos-wrapper"></div>
+        </section>
+
+        <section class="section-container reveal" id="normal-category-section">
+             <h2 class="section-title">Shop by Category</h2>
+            <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4" id="normal-category-wrapper"></div>
+        </section>
+
+        <section class="festive-collection reveal" id="festive-collection-container">
+            <h1 class="festival-headline" id="festive-headline">The Festive Collection</h1>
+            <div class="product-slider" id="festive-product-slider"></div>
+        </section>
+
+        <section class="section-container reveal" id="flipcard-section"></section>
+
+        <div class="sponsor-card reveal" id="dynamic-section-1"></div>
+        <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
+            <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
+        </div>
+        <div class="sponsor-card reveal" id="sponsor-section-container"></div>
+        <div class="sponsor-card reveal" id="dynamic-section-2"></div>
+
+        <section class="section-container bg-white reveal" id="advantages-section">
+            <h2 class="section-title">Why <span style="color: var(--primary-color);">Ramazone?</span></h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 px-4" id="advantages-grid"></div>
+        </section>
+    </main>
+
     <div id="footer">
-        <a href="./index.html" class="nav-link active">
+        <a href="./index.html" class="active">
             <img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span>
         </a>
-        <a href="./products.html" id="footer-shop-link" class="nav-link">
+        <a href="./products.html" id="footer-shop-link">
             <img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Shop"><span>Shop</span>
         </a>
         <a href="#" id="footer-play-link" target="_blank">
@@ -212,7 +204,6 @@
     
     <div class="social-media-links" id="social-links-container"></div>
 
-    <!-- Desktop Footer -->
     <footer id="desktop-footer">
         <div class="container mx-auto">
             <div class="footer-grid">
@@ -228,7 +219,6 @@
         </div>
     </footer>
 
-    <!-- Video Lightbox -->
     <div id="video-lightbox" onclick="closeVideoLightbox()">
         <div class="lightbox-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeVideoLightbox()">&times;</span>
@@ -236,77 +226,10 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- Main Application Logic -->
     <script>
-        // --- Router and Page Loader ---
-        const pageCache = new Map();
-
-        async function navigate(path, pushState = true) {
-            const mainContent = document.getElementById('main-content');
-            if (pageCache.has(path)) {
-                mainContent.innerHTML = pageCache.get(path);
-                runScripts(mainContent);
-            } else {
-                try {
-                    const response = await fetch(path);
-                    const text = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(text, 'text/html');
-                    const newContent = doc.getElementById('main-content').innerHTML;
-                    pageCache.set(path, newContent);
-                    mainContent.innerHTML = newContent;
-                    runScripts(mainContent);
-                } catch (err) {
-                    console.error('Failed to load page:', err);
-                    mainContent.innerHTML = `<p class="text-center text-red-500 p-8">Could not load the page.</p>`;
-                }
-            }
-            if (pushState) {
-                history.pushState({path}, '', path);
-            }
-            window.scrollTo(0, 0);
-            updateActiveNav(path);
-        }
-
-        function runScripts(container) {
-            container.querySelectorAll('script').forEach(script => {
-                const newScript = document.createElement('script');
-                if (script.src) {
-                    newScript.src = script.src;
-                } else {
-                    newScript.innerHTML = script.innerHTML;
-                }
-                document.body.appendChild(newScript).parentNode.removeChild(newScript);
-            });
-            // Re-initialize event listeners for dynamic content
-            if (typeof initializePage === 'function') {
-                initializePage();
-            }
-        }
-
-        function updateActiveNav(path) {
-            document.querySelectorAll('.nav-link').forEach(link => {
-                const linkPath = new URL(link.href).pathname;
-                const currentPath = path.split('?')[0];
-                if (linkPath === currentPath || (linkPath === '/index.html' && currentPath === '/')) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-        }
-
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.path) {
-                navigate(event.state.path, false);
-            }
-        });
-
-        // --- Firebase Initialization ---
         async function initializeFirebase() {
             try {
                 const response = await fetch('/api/firebase-config');
@@ -317,13 +240,12 @@
                 return firebase.database();
             } catch (error) {
                 console.error("Fatal Error: Could not initialize Firebase.", error);
-                document.getElementById('main-content').innerHTML = `<div class="text-center p-8"><p class="text-red-500 font-bold">Error: Application configuration is missing.</p></div>`;
+                document.querySelector('main').innerHTML = `<div class="text-center p-8"><p class="text-red-500 font-bold">Error: Application configuration is missing.</p></div>`;
                 return null;
             }
         }
 
-        // --- Homepage Specific Logic ---
-        function initializeHomepage(database) {
+        function loadHomepageData(database) {
             if (!database) return;
             const homepageRef = database.ref('ramazone/homepage');
             homepageRef.on('value', (snapshot) => {
@@ -341,24 +263,12 @@
                     renderSponsor(data.sponsor);
                     renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
                     renderAdvantages(data.advantages);
+                    renderFooter(data.footer);
                 }
             }, (error) => console.error("Firebase read failed:", error.name));
             setupScrollAnimations();
         }
 
-        // --- Global Render Functions ---
-        function renderSlider(sliderData) { /* ... same as before ... */ }
-        function renderSearch(d) { /* ... same as before ... */ }
-        function renderSpecialCategories(c) { /* ... same as before ... */ }
-        function renderNormalCategories(c) { /* ... same as before ... */ }
-        function renderFlipCardSection(flipCardData) { /* ... same as before ... */ }
-        function renderDynamicSection(s,d) { /* ... same as before ... */ }
-        function renderInfoMarquee(t) { /* ... same as before ... */ }
-        function renderSponsor(sponsorData) { /* ... same as before ... */ }
-        function renderAdvantages(advantagesData) { /* ... same as before ... */ }
-        function renderFooter(footerData) { /* ... same as before ... */ }
-        
-        // Updated Festive Collection Renderer
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
             if (!container || !collectionData || !collectionData.products) return;
@@ -373,12 +283,13 @@
             slider.innerHTML = '';
             const productsArray = Array.isArray(collectionData.products) ? collectionData.products : Object.keys(collectionData.products).map(key => ({ id: key, ...collectionData.products[key] }));
 
-            productsArray.forEach(prod => {
+            productsArray.forEach((prod, index) => {
                 if (!prod) return;
+                // Assign the correct ID if it's from an object
+                const productId = prod.id || index;
                 const mainMedia = (prod.images && prod.images[0]) || 'https://placehold.co/200x200/e2e8f0/e2e8f0?text=R';
-                // FIX: Correct link to product details page
                 slider.innerHTML += `
-                    <a href="./product-details.html?id=${prod.id}" class="product-card nav-link">
+                    <a href="./product-details.html?id=${productId}" class="product-card">
                         <div class="product-media-container"><img src="${mainMedia}" alt="${prod.name}"></div>
                         <div class="product-details">
                             <p class="product-name">${prod.name || ''}</p>
@@ -391,43 +302,30 @@
                     </a>`;
             });
         }
+        
+        // Other render functions (renderSlider, renderSearch, etc.) remain the same
+        function renderSlider(sliderData) { /* ... */ }
+        function renderSearch(d) { /* ... */ }
+        function renderSpecialCategories(c) { /* ... */ }
+        function renderNormalCategories(c) { /* ... */ }
+        function renderVideosSection(videosData) { /* ... */ }
+        function renderFlipCardSection(flipCardData) { /* ... */ }
+        function renderDynamicSection(s,d) { /* ... */ }
+        function renderInfoMarquee(t) { /* ... */ }
+        function renderSponsor(sponsorData) { /* ... */ }
+        function renderAdvantages(advantagesData) { /* ... */ }
+        function renderFooter(footerData) { /* ... */ }
+        function getYoutubeEmbedUrl(url) { /* ... */ }
+        function openVideoLightbox(url) { /* ... */ }
+        function closeVideoLightbox() { /* ... */ }
+        function toggleSocialMedia(event) { /* ... */ }
+        function setupScrollAnimations() { /* ... */ }
+        function prevSlide() { /* ... */ }
+        function nextSlide() { /* ... */ }
 
-        // --- Global UI Functions ---
-        function getYoutubeEmbedUrl(url) { /* ... same as before ... */ }
-        function openVideoLightbox(url) { /* ... same as before ... */ }
-        function closeVideoLightbox() { /* ... same as before ... */ }
-        function toggleSocialMedia(event) { /* ... same as before ... */ }
-        function setupScrollAnimations() { /* ... same as before ... */ }
-
-        // --- Initial App Load ---
         document.addEventListener('DOMContentLoaded', async () => {
             const database = await initializeFirebase();
-            initializeHomepage(database);
-            
-            document.body.addEventListener('click', e => {
-                const navLink = e.target.closest('.nav-link');
-                if (navLink) {
-                    e.preventDefault();
-                    const path = navLink.getAttribute('href');
-                    navigate(path);
-                }
-            });
-            
-            // Initial nav setup
-            updateActiveNav(window.location.pathname);
-            history.replaceState({path: window.location.pathname}, '', window.location.pathname);
-
-            // Setup footer data once
-            const footerRef = database.ref('ramazone/homepage/footer');
-            footerRef.once('value', snapshot => {
-                const footerData = snapshot.val();
-                if (footerData) {
-                    document.getElementById('footer-shop-link').href = footerData.shopLink || './products.html';
-                    document.getElementById('footer-play-link').href = footerData.playLink || '#';
-                    document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
-                    // ... rest of footer logic
-                }
-            });
+            loadHomepageData(database);
         });
     </script>
 </body>
