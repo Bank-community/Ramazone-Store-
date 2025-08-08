@@ -106,7 +106,6 @@
         .footer-column a { display: block; margin-bottom: 0.5rem; transition: color 0.3s; }
         .footer-column a:hover { color: var(--primary-color); }
         .footer-bottom { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.9rem; }
-        /* FIX: Social media links styling */
         .social-media-links { position: fixed; bottom: 6rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 99; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; transform: translateY(20px) scale(0.9); opacity: 0; pointer-events: none; }
         .social-media-links.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
         .social-link { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.15); transition: transform 0.3s ease; text-decoration: none; }
@@ -276,7 +275,6 @@
             
             const headline = document.getElementById('festive-headline');
             headline.innerText = collectionData.title || 'Special Offers';
-            // FIX: Set headline color from Firebase data
             if (collectionData.headlineColor) {
                 headline.style.color = collectionData.headlineColor;
             }
@@ -310,37 +308,43 @@
             });
         }
         
-        // FIX: Updated footer function to render social media links
+        // FIX: Renders social media links from the `followLinks` object in Firebase
         function renderFooter(footerData) {
             if (!footerData) return;
             document.getElementById('footer-shop-link').href = './products.html';
             document.getElementById('footer-play-link').href = footerData.playLink || '#';
             document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
 
-            const socialLinks = footerData.socialLinks;
-            if (socialLinks && Array.isArray(socialLinks) && socialLinks.length > 0) {
+            const followLinks = footerData.followLinks;
+            if (followLinks && typeof followLinks === 'object') {
                 const mobileLinksContainer = document.getElementById('social-links-container');
                 const desktopLinksContainer = document.getElementById('desktop-social-links');
                 
-                mobileLinksContainer.innerHTML = ''; // Clear existing
-                desktopLinksContainer.innerHTML = ''; // Clear existing
+                mobileLinksContainer.innerHTML = '';
+                desktopLinksContainer.innerHTML = '';
 
-                socialLinks.forEach(link => {
-                    if (link.url && link.iconUrl) {
-                        // For mobile floating buttons
+                // Define icons and colors for each platform
+                const socialPlatforms = {
+                    youtube: { icon: 'https://www.svgrepo.com/show/452029/youtube.svg', color: '#FF0000' },
+                    instagram: { icon: 'https://www.svgrepo.com/show/452123/instagram.svg', color: '#E4405F' },
+                    facebook: { icon: 'https://www.svgrepo.com/show/452121/facebook.svg', color: '#1877F2' },
+                    whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', color: '#25D366' }
+                };
+
+                Object.keys(followLinks).forEach(key => {
+                    const platform = socialPlatforms[key.toLowerCase()];
+                    const url = followLinks[key];
+                    if (platform && url) {
                         const mobileLinkHtml = `
-                            <a href="${link.url}" target="_blank" class="social-link" style="background-color: ${link.color || '#333'};" title="${link.name || ''}">
-                                <img src="${link.iconUrl}" alt="${link.name || ''}">
-                            </a>
-                        `;
+                            <a href="${url}" target="_blank" class="social-link" style="background-color: ${platform.color};" title="${key}">
+                                <img src="${platform.icon}" alt="${key}">
+                            </a>`;
                         mobileLinksContainer.innerHTML += mobileLinkHtml;
 
-                        // For desktop footer
                         const desktopLinkHtml = `
-                            <a href="${link.url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${link.name || ''}">
-                                <img src="${link.iconUrl}" class="w-7 h-7" alt="${link.name || ''}">
-                            </a>
-                        `;
+                            <a href="${url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${key}">
+                                <img src="${platform.icon}" class="w-7 h-7" alt="${key}">
+                            </a>`;
                         desktopLinksContainer.innerHTML += desktopLinkHtml;
                     }
                 });
@@ -538,7 +542,6 @@
             clearInterval(sliderInterval);
             sliderInterval = setInterval(nextSlide, 5000);
         }
-        // FIX: Social media toggle function
         function toggleSocialMedia(event) {
             event.preventDefault();
             document.getElementById('social-links-container').classList.toggle('active');
