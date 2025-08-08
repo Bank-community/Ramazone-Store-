@@ -127,30 +127,30 @@
     </header>
 
     <main class="mb-28 md:mb-0">
-        <div class="slider-container">
-            <div class="slider" id="main-slider"></div>
-            <div class="slider-nav">
-                <button onclick="prevSlide()">❮</button>
-                <button onclick="nextSlide()">❯</button>
-            </div>
-            <div class="slider-dots" id="slider-dots-container"></div>
-        </div>
-        
-        <div class="flex justify-center px-4">
-            <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
-                <div id="fakeSearchInput">
-                    <div>
-                        <span style="color: var(--text-light);">Search for</span>
-                        <span>&nbsp;</span>
-                        <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
-                    </div>
-                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                </div>
-            </a>
-        </div>
-
         <div id="loading-indicator" class="text-center py-20"><p>Loading content...</p></div>
         <div id="content-wrapper" class="hidden">
+            <div class="slider-container">
+                <div class="slider" id="main-slider"></div>
+                <div class="slider-nav">
+                    <button onclick="prevSlide()">❮</button>
+                    <button onclick="nextSlide()">❯</button>
+                </div>
+                <div class="slider-dots" id="slider-dots-container"></div>
+            </div>
+            
+            <div class="flex justify-center px-4">
+                <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
+                    <div id="fakeSearchInput">
+                        <div>
+                            <span style="color: var(--text-light);">Search for</span>
+                            <span>&nbsp;</span>
+                            <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
+                        </div>
+                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+                    </div>
+                </a>
+            </div>
+
             <section class="section-container bg-white reveal" id="special-category-section"></section>
             <section class="section-container reveal" id="videos-section"></section>
             <section class="section-container reveal" id="normal-category-section"></section>
@@ -183,9 +183,7 @@
     </div>
     
     <div class="social-media-links" id="social-links-container"></div>
-
     <footer id="desktop-footer"></footer>
-
     <div id="video-lightbox" onclick="closeVideoLightbox()">
         <div class="lightbox-content" onclick="event.stopPropagation()">
             <span class="close-btn" onclick="closeVideoLightbox()">&times;</span>
@@ -195,8 +193,9 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script>
+        // --- Simplified and reliable script for index.html ---
+
         async function initializeFirebase() {
             try {
                 const response = await fetch('/api/firebase-config');
@@ -207,7 +206,7 @@
                 return firebase.database();
             } catch (error) {
                 console.error("Fatal Error: Could not initialize Firebase.", error);
-                document.getElementById('loading-indicator').innerHTML = `<div class="text-center p-8"><p class="text-red-500 font-bold">Error: Application configuration is missing.</p></div>`;
+                document.querySelector('main').innerHTML = `<div class="text-center p-8"><p class="text-red-500 font-bold">Error: Application configuration is missing.</p></div>`;
                 return null;
             }
         }
@@ -229,20 +228,11 @@
         }
         
         function renderAllHomepageSections(data) {
+            // This function will call individual renderers
             renderSlider(data.slider);
             renderSearch(data.search);
-            renderSpecialCategories(data.specialCategories);
-            renderVideosSection(data.videos);
-            renderNormalCategories(data.normalCategories);
             renderFestiveCollection(data.festiveCollection);
-            renderFlipCardSection(data.flipCard);
-            renderDynamicSection('#dynamic-section-1', data.dynamicSection1);
-            renderInfoMarquee(data.infoMarquee);
-            renderSponsor(data.sponsor);
-            renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
-            renderAdvantages(data.advantages);
-            renderFooter(data.footer);
-            setupScrollAnimations();
+            // Add other render function calls here as needed
         }
 
         function renderFestiveCollection(collectionData) {
@@ -253,8 +243,12 @@
             }
             container.style.display = 'block';
 
-            const headline = container.querySelector('.festival-headline') || document.createElement('h1');
-            headline.className = 'festival-headline';
+            let headline = container.querySelector('.festival-headline');
+            if (!headline) {
+                headline = document.createElement('h1');
+                headline.className = 'festival-headline';
+                container.prepend(headline);
+            }
             headline.innerText = collectionData.title || 'Special Offers';
             headline.style.color = collectionData.headlineColor || 'var(--text-dark)';
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
@@ -289,25 +283,24 @@
             });
         }
         
-        // --- Other render functions and UI helpers ---
-        function renderSlider(sliderData) { /* Placeholder for actual implementation */ }
-        function renderSearch(d) { /* Placeholder for actual implementation */ }
-        function renderSpecialCategories(c) { /* Placeholder for actual implementation */ }
-        function renderNormalCategories(c) { /* Placeholder for actual implementation */ }
-        function renderVideosSection(videosData) { /* Placeholder for actual implementation */ }
-        function renderFlipCardSection(flipCardData) { /* Placeholder for actual implementation */ }
-        function renderDynamicSection(s,d) { /* Placeholder for actual implementation */ }
-        function renderInfoMarquee(t) { /* Placeholder for actual implementation */ }
-        function renderSponsor(sponsorData) { /* Placeholder for actual implementation */ }
-        function renderAdvantages(advantagesData) { /* Placeholder for actual implementation */ }
-        function renderFooter(footerData) { /* Placeholder for actual implementation */ }
-        function getYoutubeEmbedUrl(url) { /* Placeholder for actual implementation */ }
-        function openVideoLightbox(url) { /* Placeholder for actual implementation */ }
-        function closeVideoLightbox() { /* Placeholder for actual implementation */ }
-        function toggleSocialMedia(event) { /* Placeholder for actual implementation */ }
-        function setupScrollAnimations() { /* Placeholder for actual implementation */ }
-        function prevSlide() { /* Placeholder for actual implementation */ }
-        function nextSlide() { /* Placeholder for actual implementation */ }
+        // --- Placeholder for other render functions to be filled in ---
+        function renderSlider(data) { /* Add slider rendering logic */ }
+        function renderSearch(data) { /* Add search rendering logic */ }
+        function renderSpecialCategories(data) { /* Add special categories logic */ }
+        function renderVideosSection(data) { /* Add videos logic */ }
+        function renderNormalCategories(data) { /* Add normal categories logic */ }
+        function renderFlipCardSection(data) { /* Add flip card logic */ }
+        function renderDynamicSection(selector, data) { /* Add dynamic section logic */ }
+        function renderInfoMarquee(data) { /* Add info marquee logic */ }
+        function renderSponsor(data) { /* Add sponsor logic */ }
+        function renderAdvantages(data) { /* Add advantages logic */ }
+        function renderFooter(data) { /* Add footer logic */ }
+        function setupScrollAnimations() { /* Add scroll animation logic */ }
+        function prevSlide() { /* Add slider logic */ }
+        function nextSlide() { /* Add slider logic */ }
+        function openVideoLightbox(url) { /* Add lightbox logic */ }
+        function closeVideoLightbox() { /* Add lightbox logic */ }
+        function toggleSocialMedia() { /* Add social media logic */ }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const database = await initializeFirebase();
