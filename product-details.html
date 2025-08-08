@@ -6,7 +6,6 @@
     <title>Product Details - Ramazone</title>
     <meta property="og:title" content="Ramazone">
     <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
@@ -14,14 +13,46 @@
         body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
         .whatsapp-btn { background-color: #25D366; transition: background-color 0.3s, transform 0.3s; }
         .whatsapp-btn:hover { background-color: #1DAA50; transform: scale(1.05); }
-        .thumbnail { cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s; border-radius: 0.5rem; position: relative; }
+        
+        /* FIX: Horizontal scrolling for thumbnails */
+        #thumbnail-gallery {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        #thumbnail-gallery::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        .thumbnail { 
+            cursor: pointer; 
+            border: 2px solid transparent; 
+            transition: border-color 0.3s; 
+            border-radius: 0.5rem; 
+            position: relative;
+            flex-shrink: 0; /* Prevent thumbnails from shrinking */
+            width: 64px; /* Fixed width for thumbnails */
+        }
         .thumbnail.active { border-color: var(--primary-color); }
-        .thumbnail .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30%; height: 30%; background-color: rgba(0,0,0,0.5); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0.8; }
+        .thumbnail .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40%; height: 40%; background-color: rgba(0,0,0,0.5); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0.8; }
+        
         #image-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
         #image-modal img { max-width: 90%; max-height: 85%; object-fit: contain; }
         #image-modal .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+        /* FIX: Added modal navigation buttons */
+        .modal-nav { cursor: pointer; position: absolute; top: 50%; width: auto; padding: 16px; margin-top: -50px; color: white; font-weight: bold; font-size: 30px; transition: 0.6s ease; user-select: none; }
+        .modal-nav.prev { left: 0; border-radius: 0 3px 3px 0; }
+        .modal-nav.next { right: 0; border-radius: 3px 0 0 3px; }
+        .modal-nav:hover { background-color: rgba(0, 0, 0, 0.8); }
+
         #toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; transition: bottom 0.5s ease-in-out; }
         #toast-notification.show { bottom: 30px; }
+
+        /* FIX: Added quantity selector styles */
+        .quantity-selector button { background-color: #e5e7eb; border: 1px solid #d1d5db; color: #374151; font-weight: bold; width: 44px; height: 44px; transition: background-color 0.2s; }
+        .quantity-selector button:hover { background-color: #d1d5db; }
+        .quantity-selector button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .quantity-selector span { font-size: 1.1rem; font-weight: 600; min-width: 60px; }
     </style>
 </head>
 <body>
@@ -43,7 +74,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
                     <div>
                         <div class="rounded-xl mb-4 cursor-pointer overflow-hidden" id="main-media-container">
-                             <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-xl pointer-events-none transition-transform duration-300 ease-in-out hover:scale-105">
+                             <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
                              <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
                         </div>
                         <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
@@ -67,10 +98,20 @@
                             <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
                         </div>
                         <div class="mt-auto pt-6">
-                            <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
-                                <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
-                                Order on WhatsApp
-                            </a>
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                                <div class="text-center">
+                                     <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                                     <div class="quantity-selector inline-flex items-center justify-center bg-white rounded-lg">
+                                        <button id="decrease-quantity" class="rounded-l-lg">-</button>
+                                        <span id="quantity-display" class="text-center px-4 py-2 border-t border-b border-gray-300">1</span>
+                                        <button id="increase-quantity" class="rounded-r-lg">+</button>
+                                    </div>
+                                </div>
+                                <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3.5 px-6 rounded-xl text-lg shadow-lg">
+                                    <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" class="w-7 h-7 mr-3" alt="WhatsApp">
+                                    Order on WhatsApp
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -79,12 +120,23 @@
     </main>
     <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
 
-    <div id="image-modal"><span class="close">&times;</span><img id="modal-image-content"></div>
+    <div id="image-modal">
+        <span class="close">&times;</span>
+        <a class="modal-nav prev">&#10094;</a>
+        <img id="modal-image-content">
+        <a class="modal-nav next">&#10095;</a>
+    </div>
     <div id="toast-notification">Link Copied!</div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
+        let mediaItems = [];
+        let currentMediaIndex = 0;
+        let productQuantity = 1;
+        let currentProductData = null;
+        let currentProductId = null;
+
         async function fetchFirebaseConfig() {
             try {
                 const response = await fetch('/api/firebase-config');
@@ -102,7 +154,6 @@
         async function initializeAppAndLoadProduct() {
             const firebaseConfig = await fetchFirebaseConfig();
             if (!firebaseConfig) return;
-
             try {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
@@ -116,6 +167,7 @@
         function fetchProductData(database) {
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('id');
+            currentProductId = productId;
             if (!productId) {
                 document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
                 return;
@@ -124,24 +176,20 @@
             const productRef = database.ref(`ramazone/homepage/festiveCollection/products/${productId}`);
             productRef.get().then((snapshot) => {
                 if (snapshot.exists()) {
-                    loadProduct(snapshot.val());
+                    currentProductData = snapshot.val();
+                    loadProduct(currentProductData);
                     document.getElementById('loading-indicator').style.display = 'none';
                     document.getElementById('product-content').style.display = 'block';
                 } else {
                     document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
                 }
-            }).catch(error => {
-                console.error("Error fetching product data:", error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">An error occurred while fetching the product.</p>';
             });
         }
 
         function loadProduct(data) {
-            const sellerPhoneNumber = '917903698180';
-            let mediaItems = [];
-            
-            if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl });
+            mediaItems = [];
             if (data.images) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
+            if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl });
 
             const firstImage = (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
             document.title = `${data.name || 'Product'} - Ramazone`;
@@ -164,9 +212,6 @@
                 document.getElementById('product-description').innerHTML = data.description;
             }
             
-            const whatsappMessage = `Hello, I'm interested in *${data.name}* (Price: ₹${data.displayPrice}).\nLink: ${window.location.href}`;
-            document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-            
             const gallery = document.getElementById('thumbnail-gallery');
             gallery.innerHTML = '';
             mediaItems.forEach((item, index) => {
@@ -181,13 +226,14 @@
                     playIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="50%" height="50%"><path d="M8 5v14l11-7z"/></svg>`;
                     thumbWrapper.appendChild(playIcon);
                 }
-                thumbWrapper.addEventListener('click', () => showMedia(index, mediaItems));
+                thumbWrapper.addEventListener('click', () => showMedia(index));
                 gallery.appendChild(thumbWrapper);
             });
 
-            showMedia(0, mediaItems);
-            setupImageModal(mediaItems);
-            setupShareButton(data);
+            showMedia(0);
+            setupQuantityControls();
+            setupImageModal();
+            setupShareButton();
         }
 
         function getYoutubeEmbedUrl(url) {
@@ -199,7 +245,11 @@
             return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
         }
 
-        function showMedia(index, mediaItems) {
+        function showMedia(index) {
+            if (index >= mediaItems.length) index = 0;
+            if (index < 0) index = mediaItems.length - 1;
+            currentMediaIndex = index;
+            
             const item = mediaItems[index];
             const mainImage = document.getElementById('main-product-image');
             const mainVideo = document.getElementById('main-product-video');
@@ -218,27 +268,65 @@
             document.querySelectorAll('.thumbnail').forEach((thumb, i) => thumb.classList.toggle('active', i === index));
         }
         
-        function setupImageModal(mediaItems) {
+        function setupQuantityControls() {
+            document.getElementById('increase-quantity').addEventListener('click', () => {
+                productQuantity++;
+                updateQuantityAndWhatsAppLink();
+            });
+            document.getElementById('decrease-quantity').addEventListener('click', () => {
+                if (productQuantity > 1) {
+                    productQuantity--;
+                    updateQuantityAndWhatsAppLink();
+                }
+            });
+            updateQuantityAndWhatsAppLink();
+        }
+
+        function updateQuantityAndWhatsAppLink() {
+            const sellerPhoneNumber = '917903698180';
+            document.getElementById('quantity-display').textContent = productQuantity;
+            document.getElementById('decrease-quantity').disabled = productQuantity <= 1;
+            const finalPrice = currentProductData.displayPrice;
+            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* ${currentProductData.name}\n*Price:* ₹${Number(finalPrice).toLocaleString('en-IN')}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
+            document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+        }
+
+        function setupImageModal() {
             const modal = document.getElementById('image-modal');
             const mainMediaContainer = document.getElementById('main-media-container');
             const modalImg = document.getElementById("modal-image-content");
             const closeBtn = document.querySelector("#image-modal .close");
+            const prevBtn = document.querySelector("#image-modal .prev");
+            const nextBtn = document.querySelector("#image-modal .next");
 
             mainMediaContainer.onclick = () => {
-                const activeThumb = document.querySelector('.thumbnail.active');
-                const activeIndex = Array.from(document.querySelectorAll('.thumbnail')).indexOf(activeThumb);
-                if (mediaItems[activeIndex] && mediaItems[activeIndex].type === 'image') {
+                if (mediaItems[currentMediaIndex].type === 'image') {
                      modal.style.display = "flex";
-                     modalImg.src = mediaItems[activeIndex].src;
+                     modalImg.src = mediaItems[currentMediaIndex].src;
                 }
             };
             closeBtn.onclick = () => modal.style.display = "none";
+            
+            const showModalImage = (direction) => {
+                let nextIndex = currentMediaIndex;
+                const imageItems = mediaItems.map((item, i) => ({...item, originalIndex: i})).filter(item => item.type === 'image');
+                const currentImageInFilteredArray = imageItems.findIndex(item => item.originalIndex === currentMediaIndex);
+                
+                let nextImageInFilteredArray = (currentImageInFilteredArray + direction + imageItems.length) % imageItems.length;
+                
+                const nextImageItem = imageItems[nextImageInFilteredArray];
+                modalImg.src = nextImageItem.src;
+                showMedia(nextImageItem.originalIndex);
+            };
+
+            prevBtn.onclick = (e) => { e.stopPropagation(); showModalImage(-1); };
+            nextBtn.onclick = (e) => { e.stopPropagation(); showModalImage(1); };
         }
 
-        function setupShareButton(productData) {
-            const shareButton = document.getElementById('share-button');
-            shareButton.addEventListener('click', async () => {
-                const shareText = `Check out this product: ${productData.name} on Ramazone! ${window.location.href}`;
+        function setupShareButton() {
+            document.getElementById('share-button').addEventListener('click', async () => {
+                const finalPrice = currentProductData.displayPrice;
+                const shareText = `*${currentProductData.name}*\nPrice: *₹${Number(finalPrice).toLocaleString('en-IN')}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;
                 if (navigator.share) {
                     await navigator.share({ text: shareText });
                 } else {
