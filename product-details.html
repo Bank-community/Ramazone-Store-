@@ -44,7 +44,7 @@
                     <div>
                         <div class="rounded-xl mb-4 cursor-pointer overflow-hidden" id="main-media-container">
                              <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-xl pointer-events-none transition-transform duration-300 ease-in-out hover:scale-105">
-                             <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-xl hidden" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                             <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
                         </div>
                         <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
                     </div>
@@ -85,7 +85,19 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        async function fetchFirebaseConfig() { /* ... same as products.html ... */ }
+        async function fetchFirebaseConfig() {
+            try {
+                const response = await fetch('/api/firebase-config');
+                if (!response.ok) throw new Error(`Network error: ${response.status}`);
+                const config = await response.json();
+                if (!config.apiKey) throw new Error('Incomplete config received.');
+                return config;
+            } catch (error) {
+                console.error('Failed to fetch Firebase config:', error);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
+                return null;
+            }
+        }
 
         async function initializeAppAndLoadProduct() {
             const firebaseConfig = await fetchFirebaseConfig();
@@ -118,6 +130,9 @@
                 } else {
                     document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
                 }
+            }).catch(error => {
+                console.error("Error fetching product data:", error);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">An error occurred while fetching the product.</p>';
             });
         }
 
@@ -125,7 +140,6 @@
             const sellerPhoneNumber = '917903698180';
             let mediaItems = [];
             
-            // Prioritize video to show first if it exists
             if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl });
             if (data.images) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
 
@@ -211,19 +225,33 @@
             const closeBtn = document.querySelector("#image-modal .close");
 
             mainMediaContainer.onclick = () => {
-                if (mediaItems.find(item => item.type === 'image')) { // Only open if there is an image
-                    const currentItem = mediaItems.find((item, index) => document.querySelectorAll('.thumbnail')[index].classList.contains('active'));
-                    if (currentItem && currentItem.type === 'image') {
-                         modal.style.display = "flex";
-                         modalImg.src = currentItem.src;
-                    }
+                const activeThumb = document.querySelector('.thumbnail.active');
+                const activeIndex = Array.from(document.querySelectorAll('.thumbnail')).indexOf(activeThumb);
+                if (mediaItems[activeIndex] && mediaItems[activeIndex].type === 'image') {
+                     modal.style.display = "flex";
+                     modalImg.src = mediaItems[activeIndex].src;
                 }
             };
             closeBtn.onclick = () => modal.style.display = "none";
         }
 
-        function setupShareButton(productData) { /* ... same as before ... */ }
-        function showToast(message) { /* ... same as before ... */ }
+        function setupShareButton(productData) {
+            const shareButton = document.getElementById('share-button');
+            shareButton.addEventListener('click', async () => {
+                const shareText = `Check out this product: ${productData.name} on Ramazone! ${window.location.href}`;
+                if (navigator.share) {
+                    await navigator.share({ text: shareText });
+                } else {
+                    navigator.clipboard.writeText(window.location.href).then(() => showToast("Link Copied!"));
+                }
+            });
+        }
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
 
         document.addEventListener('DOMContentLoaded', initializeAppAndLoadProduct);
     </script>
