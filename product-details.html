@@ -73,6 +73,8 @@
                         <div class="rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
                              <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
                              <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                             <!-- FIX: Transparent overlay to catch swipe events over the iframe -->
+                             <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
                         </div>
                         <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
                     </div>
@@ -134,7 +136,6 @@
         let currentProductData = null;
         let currentProductId = null;
 
-        // Swipe functionality variables
         let touchstartX = 0;
         let touchendX = 0;
 
@@ -190,7 +191,7 @@
         function loadProduct(data) {
             mediaItems = [];
             if (data.images) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
-            if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl });
+            if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl, thumbnail: (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png' });
 
             const firstImage = (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png';
             document.title = `${data.name || 'Product'} - Ramazone`;
@@ -219,7 +220,7 @@
                 const thumbWrapper = document.createElement('div');
                 thumbWrapper.className = 'aspect-square thumbnail';
                 const img = document.createElement('img');
-                img.src = item.type === 'image' ? item.src : firstImage;
+                img.src = item.type === 'image' ? item.src : item.thumbnail;
                 thumbWrapper.appendChild(img);
                 if (item.type === 'video') {
                     const playIcon = document.createElement('div');
@@ -235,15 +236,18 @@
             setupQuantityControls();
             setupImageModal();
             setupShareButton();
-            setupSwipeControls(); // Initialize swipe controls
+            setupSwipeControls();
         }
 
+        // FIX: Improved function to handle various YouTube URL formats
         function getYoutubeEmbedUrl(url) {
-            let videoId = '';
-            try {
-                const urlObj = new URL(url);
-                videoId = urlObj.searchParams.get('v');
-            } catch (e) { return null; }
+            let videoId = null;
+            if(!url) return null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            if (match && match[2].length === 11) {
+                videoId = match[2];
+            }
             return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
         }
 
@@ -255,17 +259,25 @@
             const item = mediaItems[index];
             const mainImage = document.getElementById('main-product-image');
             const mainVideo = document.getElementById('main-product-video');
+            const swipeOverlay = document.getElementById('swipe-overlay');
 
             if (item.type === 'image') {
                 mainVideo.classList.add('hidden');
                 mainVideo.src = '';
                 mainImage.classList.remove('hidden');
                 mainImage.src = item.src;
+                swipeOverlay.classList.add('hidden'); // Hide overlay for image click
             } else if (item.type === 'video') {
                 mainImage.classList.add('hidden');
                 mainVideo.classList.remove('hidden');
                 const embedUrl = getYoutubeEmbedUrl(item.src);
-                if (embedUrl && mainVideo.src !== embedUrl) mainVideo.src = embedUrl;
+                if (embedUrl) {
+                    mainVideo.src = embedUrl;
+                    swipeOverlay.classList.remove('hidden'); // Show overlay for video swipe
+                } else {
+                    // Fallback if URL is invalid
+                    showMedia(0); // Show first image
+                }
             }
             document.querySelectorAll('.thumbnail').forEach((thumb, i) => thumb.classList.toggle('active', i === index));
         }
@@ -289,7 +301,6 @@
             document.getElementById('quantity-display').textContent = productQuantity;
             document.getElementById('decrease-quantity').disabled = productQuantity <= 1;
             const finalPrice = currentProductData.displayPrice;
-            // FIX: Added asterisks around product name to make it bold in WhatsApp
             const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${currentProductData.name}*\n*Price:* ₹${Number(finalPrice).toLocaleString('en-IN')}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
             document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
         }
@@ -326,7 +337,6 @@
             nextBtn.onclick = (e) => { e.stopPropagation(); showModalImage(1); };
         }
 
-        // NEW: Function to handle swipe gestures
         function setupSwipeControls() {
             const swipeArea = document.getElementById('main-media-container');
             swipeArea.addEventListener('touchstart', e => {
@@ -339,15 +349,12 @@
             });
         }
 
-        // NEW: Logic to determine swipe action
         function handleSwipe() {
-            const swipeThreshold = 50; // Minimum distance for a swipe
+            const swipeThreshold = 50; 
             if (touchendX < touchstartX - swipeThreshold) {
-                // Swiped left
                 showMedia(currentMediaIndex + 1);
             }
             if (touchendX > touchstartX + swipeThreshold) {
-                // Swiped right
                 showMedia(currentMediaIndex - 1);
             }
         }
