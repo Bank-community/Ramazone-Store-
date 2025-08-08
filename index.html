@@ -27,8 +27,6 @@
         .section-container { padding: 2rem 1rem; }
         @media (min-width: 1024px) { .section-container { padding: 3rem 2rem; max-width: 1280px; margin-left: auto; margin-right: auto; } }
         header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3s, box-shadow 0.3s; }
-
-        /* --- Cinematic Slider (Infinite Loop) --- */
         .slider-container { position: relative; width: 100%; margin: 0 auto; overflow: hidden; height: 80vw; max-height: 400px; background-color: #e5e7eb; }
         @media (min-width: 768px) { .slider-container { height: 45vw; max-height: 600px; border-radius: 24px; margin: 1rem auto; max-width: 1280px; } }
         .slider { display: flex; height: 100%; }
@@ -43,13 +41,9 @@
         .slider-dots { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
         .slider-dots .dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s ease; }
         .slider-dots .dot.active { background: white; transform: scale(1.3); }
-
-        /* --- Search Bar --- */
         #fakeSearchInput { font-size: 1rem; padding: 14px 24px; cursor: pointer; background-color: var(--bg-white); display: flex; align-items: center; justify-content: space-between; border-radius: 50px; width: 95%; max-width: 600px; margin: -40px auto 1.5rem; position: relative; z-index: 10; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0,0,0,0.04); transition: transform 0.3s ease; }
         #fakeSearchInput:hover { transform: translateY(-3px); }
         .search-icon { width: 24px; height: 24px; color: var(--primary-color); }
-
-        /* --- Videos Section Slider --- */
         .videos-slider-container { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x mandatory; }
         .videos-slider-container::-webkit-scrollbar { display: none; }
         .video-card { flex: 0 0 90%; scroll-snap-align: center; }
@@ -66,15 +60,11 @@
         .video-description { color: var(--text-light); margin-top: 0.5rem; }
         .video-link { display: inline-block; margin-top: 1rem; color: var(--primary-color); font-weight: 600; text-decoration: none; }
         .video-link:hover { text-decoration: underline; }
-
-        /* --- Video Lightbox/Modal --- */
         #video-lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         #video-lightbox.show { opacity: 1; pointer-events: auto; }
         #video-lightbox .lightbox-content { position: relative; width: 90%; max-width: 900px; aspect-ratio: 16/9; background-color: #000; }
-        #video-lightbox video, #video-lightbox iframe { width: 100%; height: 100%; border: none; }
+        #video-lightbox iframe { width: 100%; height: 100%; border: none; }
         #video-lightbox .close-btn { position: absolute; top: -40px; right: 0; font-size: 2.5rem; color: white; cursor: pointer; }
-
-        /* --- Festive Collection --- */
         .festive-collection { padding: 2rem 0; margin: 1.5rem 0; position: relative; overflow: hidden; }
         @media (min-width: 768px) { .festive-collection { border-radius: 24px; margin: 1.5rem; padding: 3rem 1rem; } }
         .festival-headline { font-size: 2rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; color: var(--text-dark); text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
@@ -94,20 +84,12 @@
         .product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; }
         .display-price { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; }
         .original-price { font-size: 0.85rem; text-decoration: line-through; color: var(--text-light); }
-
-        /* --- Flip Card Section (Auto Flip) --- */
-        @keyframes auto-flip {
-          0%, 15% { transform: rotateY(0deg); }
-          20%, 65% { transform: rotateY(180deg); }
-          70%, 100% { transform: rotateY(360deg); }
-        }
+        @keyframes auto-flip { 0%, 15% { transform: rotateY(0deg); } 20%, 65% { transform: rotateY(180deg); } 70%, 100% { transform: rotateY(360deg); } }
         .flip-card-container { perspective: 1000px; }
         .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; animation: auto-flip 10s infinite ease-in-out; }
         .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .flip-card-back { transform: rotateY(180deg); }
         .flip-card-front img, .flip-card-back img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- Other Sections --- */
         .sponsor-card { border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); overflow: hidden; margin: 1.5rem; }
         .sponsor-card iframe, .sponsor-card img { width: 100%; height: auto; object-fit: cover; aspect-ratio: 16/9; }
         #footer { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); border-radius: 50px; display: flex; justify-content: space-around; padding: 0.5rem; z-index: 100; }
@@ -124,8 +106,6 @@
         .footer-column a { display: block; margin-bottom: 0.5rem; transition: color 0.3s; }
         .footer-column a:hover { color: var(--primary-color); }
         .footer-bottom { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.9rem; }
-        
-        /* Social Media Links Popup */
         .social-media-links { position: fixed; bottom: 6rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 99; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; transform: translateY(20px) scale(0.9); opacity: 0; pointer-events: none; }
         .social-media-links.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
         .social-link { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.15); transition: transform 0.3s ease; text-decoration: none; }
@@ -330,29 +310,213 @@
             document.getElementById('footer-profile-link').href = footerData.profileLink || '#';
         }
 
+        function getYoutubeEmbedUrl(url) {
+            let videoId = '';
+            try {
+                const urlObj = new URL(url);
+                if (urlObj.hostname === 'youtu.be') {
+                    videoId = urlObj.pathname.slice(1);
+                } else {
+                    videoId = urlObj.searchParams.get('v');
+                }
+            } catch (e) { return null; }
+            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
+        }
+
+        function openVideoLightbox(url) {
+            const lightbox = document.getElementById('video-lightbox');
+            const youtubePlayer = document.getElementById('lightbox-youtube-player');
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                const embedUrl = getYoutubeEmbedUrl(url);
+                if (embedUrl) {
+                    youtubePlayer.src = embedUrl;
+                    youtubePlayer.style.display = 'block';
+                    lightbox.classList.add('show');
+                }
+            }
+        }
+
+        function closeVideoLightbox() {
+            const lightbox = document.getElementById('video-lightbox');
+            const youtubePlayer = document.getElementById('lightbox-youtube-player');
+            youtubePlayer.src = '';
+            lightbox.classList.remove('show');
+        }
+
         // --- All other functions from your working code ---
-        function renderSlider(sliderData) { /* Your existing working code here */ }
-        function renderVideosSection(videosData) { /* Your existing working code here */ }
-        function renderNormalCategories(categories) { /* Your existing working code here */ }
-        function renderFlipCardSection(flipCardData) { /* Your existing working code here */ }
-        function renderSponsor(sponsorData) { /* Your existing working code here */ }
-        function renderAdvantages(advantagesData) { /* Your existing working code here */ }
-        function renderSearch(d) { /* Your existing working code here */ }
-        function renderSpecialCategories(c) { /* Your existing working code here */ }
-        function renderDynamicSection(s,d) { /* Your existing working code here */ }
-        function renderInfoMarquee(t) { /* Your existing working code here */ }
+        function renderSlider(sliderData) {
+            const slider = document.getElementById('main-slider');
+            if (!slider || !sliderData) return;
+            slider.innerHTML = sliderData.map(slide => `
+                <a href="${slide.linkUrl || '#'}" class="slide" target="_blank">
+                    ${slide.videoUrl ? `<video src="${slide.videoUrl}" autoplay muted loop playsinline></video>` : ''}
+                    <picture>
+                        <source media="(min-width: 768px)" srcset="${slide.imageUrlDesktop || slide.imageUrlMobile || ''}">
+                        <img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner">
+                    </picture>
+                    <div class="overlay"></div>
+                </a>
+            `).join('');
+            initializeSlider(sliderData.length);
+        }
+        function renderVideosSection(videosData) {
+            const wrapper = document.getElementById('videos-wrapper');
+            if (!wrapper || !videosData) return;
+            wrapper.innerHTML = videosData.map(item => `
+                <div class="video-card" onclick="openVideoLightbox('${item.youtubeUrl}')">
+                    <div class="video-media">
+                        <img src="${item.imageUrl || ''}" alt="${item.title || ''}">
+                        ${item.youtubeUrl ? '<div class="video-play-icon"><i class="fas fa-play"></i></div>' : ''}
+                    </div>
+                    <div class="video-content">
+                        <h3 class="video-title">${item.title || ''}</h3>
+                        <p class="video-description">${item.description || ''}</p>
+                        ${item.redirectUrl ? `<a href="${item.redirectUrl}" target="_blank" class="video-link" onclick="event.stopPropagation()">Learn More &rarr;</a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        function renderNormalCategories(categories) {
+            const wrapper = document.getElementById('normal-category-wrapper');
+            if (!wrapper || !categories) return;
+            wrapper.innerHTML = categories.map(cat => `
+                <a href="${cat.linkUrl||'#'}" class="text-center group">
+                    <div class="aspect-square bg-gray-200 rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-110">
+                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-contain p-2">
+                    </div>
+                    <p class="mt-2 text-xs font-medium text-gray-600">${cat.name}</p>
+                </a>
+            `).join('');
+        }
+        function renderFlipCardSection(flipCardData) {
+            const section = document.getElementById('flipcard-section');
+            if (!section || !flipCardData) return;
+            section.innerHTML = `
+                <div class="flip-card-container w-full md:w-1/2 mx-auto aspect-video">
+                    <div class="flip-card-inner">
+                        <a href="${flipCardData.front.linkUrl || '#'}" target="_blank" class="flip-card-front">
+                            <img src="${flipCardData.front.imageUrl}" alt="Front of card">
+                        </a>
+                        <a href="${flipCardData.back.linkUrl || '#'}" target="_blank" class="flip-card-back">
+                            <img src="${flipCardData.back.imageUrl}" alt="Back of card">
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+        function renderSponsor(sponsorData) {
+            const container = document.getElementById('sponsor-section-container');
+            if (!container || !sponsorData) return;
+            const mediaHtml = sponsorData.videoUrl ? `<iframe src="${getYoutubeEmbedUrl(sponsorData.videoUrl)}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>` : `<img src="${sponsorData.imageUrl}" alt="Sponsor">`;
+            container.innerHTML = `<a href="${sponsorData.linkUrl || '#'}" target="_blank">${mediaHtml}</a>`;
+        }
+        function renderAdvantages(advantagesData) {
+            const grid = document.getElementById('advantages-grid');
+            if (!grid || !advantagesData) return;
+            grid.innerHTML = advantagesData.map(adv => `
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm hover:shadow-md transition-shadow">
+                    <img src="${adv.imageUrl}" alt="${adv.title}" class="w-16 h-16 mx-auto mb-2 object-contain">
+                    <p class="font-semibold text-sm text-gray-800">${adv.title}</p>
+                </div>
+            `).join('');
+        }
+        function renderSearch(d) {
+            if (!d) return;
+            document.getElementById('search-link').href = d.redirectUrl || '#';
+            const c = d.scrollingTexts || [];
+            if (c.length > 0) {
+                let i = 0;
+                const e = document.getElementById("categoryText");
+                if (window.ci) clearInterval(window.ci);
+                window.ci = setInterval(() => { if (e) e.innerText = c[i]; i = (i + 1) % c.length }, 2000);
+            }
+        }
+        function renderSpecialCategories(c) {
+            const w = document.getElementById('special-category-wrapper');
+            if (!w || !c) return;
+            w.innerHTML = c.map(cat => `
+                <a href="${cat.linkUrl||'#'}" target="_blank" class="text-center group">
+                    <div class="aspect-square bg-white rounded-2xl shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">
+                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-cover">
+                    </div>
+                    <p class="mt-2 text-xs sm:text-sm font-semibold text-gray-700">${cat.name}</p>
+                </a>
+            `).join('');
+        }
+        function renderDynamicSection(s,d) {
+            const c = document.querySelector(s);
+            if (!c || !d || !d.imageUrl) { if (c) c.style.display = 'none'; return; }
+            c.style.display = 'block';
+            c.innerHTML = `
+                <a href="${d.linkUrl||'#'}" target="_blank"><img src="${d.imageUrl}" alt="${d.title||'Dynamic Content'}"></a>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-2">${d.title||''}</h3>
+                    <p class="text-gray-600 mb-4">${d.text||''}</p>
+                    <a href="${d.linkUrl||'#'}" target="_blank" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-full text-sm px-5 py-2.5 text-center">${d.buttonText||'Discover'}</a>
+                </div>
+            `;
+        }
+        function renderInfoMarquee(t) {
+            const s = document.getElementById('info-marquee-section');
+            if (!t) { s.style.display = 'none'; return; }
+            s.style.display = 'block';
+            s.querySelector('p').innerHTML = t;
+        }
         let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
-        function initializeSlider(count) { /* Your existing working code here */ }
-        function moveSlide(direction) { /* Your existing working code here */ }
+        function initializeSlider(count) {
+            const slider = document.getElementById('main-slider');
+            totalSlides = count;
+            if (totalSlides <= 1) return;
+            const firstClone = slider.children[0].cloneNode(true);
+            const lastClone = slider.children[totalSlides - 1].cloneNode(true);
+            slider.appendChild(firstClone);
+            slider.insertBefore(lastClone, slider.children[0]);
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            slider.addEventListener('transitionend', () => {
+                isTransitioning = false;
+                if (currentSlide === 0) {
+                    slider.classList.remove('transitioning');
+                    currentSlide = totalSlides;
+                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+                }
+                if (currentSlide === totalSlides + 1) {
+                    slider.classList.remove('transitioning');
+                    currentSlide = 1;
+                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+                }
+            });
+            resetSliderInterval();
+        }
+        function moveSlide(direction) {
+            if (isTransitioning) return;
+            const slider = document.getElementById('main-slider');
+            isTransitioning = true;
+            slider.classList.add('transitioning');
+            currentSlide += direction;
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            resetSliderInterval();
+        }
         function nextSlide() { moveSlide(1); }
         function prevSlide() { moveSlide(-1); }
-        function goToSlide(index) { /* Your existing working code here */ }
-        function updateDots() { /* Your existing working code here */ }
-        function resetSliderInterval() { /* Your existing working code here */ }
-        function openVideoLightbox(url) { /* Your existing working code here */ }
-        function closeVideoLightbox() { /* Your existing working code here */ }
-        function toggleSocialMedia(event) { /* Your existing working code here */ }
-        function setupScrollAnimations() { /* Your existing working code here */ }
+        function resetSliderInterval() {
+            clearInterval(sliderInterval);
+            sliderInterval = setInterval(nextSlide, 5000);
+        }
+        function toggleSocialMedia(event) {
+            event.preventDefault();
+            document.getElementById('social-links-container').classList.toggle('active');
+        }
+        function setupScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
     </script>
 </body>
 </html>
