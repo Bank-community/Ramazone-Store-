@@ -248,48 +248,38 @@
 
     <script>
         // --- Firebase Initialization ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initializeFirebase();
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
             setupScrollAnimations();
         });
 
         async function initializeFirebase() {
             try {
-                // Try to fetch config from Vercel serverless function
+                // Fetch config from the Vercel serverless function
                 const response = await fetch('/api/firebase-config');
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`Config API failed with status: ${response.status}`);
                 }
                 const firebaseConfig = await response.json();
-                console.log("Firebase config loaded from API.");
-                firebase.initializeApp(firebaseConfig);
-
-            } catch (error) {
-                // Fallback for local development or if API fails
-                console.warn("Could not fetch Firebase config from API, using fallback. Error:", error.message);
-                const fallbackConfig = {
-                    apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
-                    authDomain: "re-store-8e5b3.firebaseapp.com",
-                    databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
-                    projectId: "re-store-8e5b3",
-                    storageBucket: "re-store-8e5b3.appspot.com",
-                    messagingSenderId: "747691299697",
-                    appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
-                };
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(fallbackConfig);
+                
+                // Check if the received config has necessary keys
+                if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
+                    throw new Error("Incomplete Firebase config received from API.");
                 }
-            }
 
-            try {
+                console.log("Firebase config loaded from API.");
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
                 const database = firebase.database();
                 loadDataFromFirebase(database);
-            } catch (initError) {
-                console.error("Firebase initialization failed:", initError);
-                document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-size: 1.2rem;">Could not load page data.</div>';
+
+            } catch (error) {
+                console.error("Fatal Error: Could not initialize Firebase.", error);
+                document.body.innerHTML = `<div style="text-align: center; padding: 50px; font-size: 1.2rem; color: #ef4444;"><b>Error:</b> Application configuration is missing or invalid. Please contact support.</div>`;
             }
         }
-
 
         function loadDataFromFirebase(database) {
             const homepageRef = database.ref('ramazone/homepage');
@@ -316,7 +306,7 @@
             });
         }
 
-        // --- RENDER FUNCTIONS (Updated for new data structure) ---
+        // --- RENDER FUNCTIONS ---
         
         function renderSlider(sliderData) {
             const slider = document.getElementById('main-slider');
@@ -332,8 +322,7 @@
                 slideEl.className = 'slide';
                 slideEl.target = '_blank';
                 let mediaHtml = '';
-                // Slider still uses Cloudinary for direct video
-                if (slide.videoUrl && slide.videoUrl.includes('cloudinary')) {
+                if (slide.videoUrl) {
                     mediaHtml = `<video src="${slide.videoUrl}" autoplay muted loop playsinline></video>`;
                 }
                 mediaHtml += `
@@ -360,7 +349,6 @@
             wrapper.innerHTML = '';
 
             videosData.forEach(item => {
-                // NEW: Check for youtubeUrl and imageUrl
                 const hasVideo = item.youtubeUrl;
                 const thumbnailUrl = item.imageUrl || 'https://placehold.co/600x400/e2e8f0/e2e8f0?text=R';
 
@@ -405,13 +393,17 @@
                 return;
             }
             container.style.display = 'block';
-            document.getElementById('festive-headline').innerText = collectionData.title || 'Special Offers';
+
+            const headline = document.getElementById('festive-headline');
+            headline.innerText = collectionData.title || 'Special Offers';
+            // FIX: Apply the color from the database
+            headline.style.color = collectionData.headlineColor || 'var(--text-dark)';
+            
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
             
             const slider = document.getElementById('festive-product-slider');
             slider.innerHTML = '';
             collectionData.products.forEach(prod => {
-                // NEW: Always use the first image as the main media. The videoUrl is a youtube link and not displayed on the card.
                 const mainMedia = (prod.images && prod.images[0]) || 'https://placehold.co/200x200/e2e8f0/e2e8f0?text=R';
                 slider.innerHTML += `
                     <a href="${prod.linkUrl || '#'}" class="product-card" target="_blank">
@@ -459,7 +451,6 @@
             }
             container.style.display = 'block';
             let mediaHtml = '';
-            // NEW: Handle youtube link for sponsor video
             if (sponsorData.videoUrl && sponsorData.videoUrl.includes('youtube')) {
                 const embedUrl = getYoutubeEmbedUrl(sponsorData.videoUrl);
                 mediaHtml = `<iframe src="${embedUrl}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
@@ -594,6 +585,7 @@
 
         function resetSliderInterval() { clearInterval(sliderInterval); sliderInterval = setInterval(nextSlide, 5000); }
         
+        // FIX: Add parameters for a cleaner YouTube player
         function getYoutubeEmbedUrl(url) {
             let videoId = '';
             try {
@@ -604,7 +596,8 @@
                     videoId = urlObj.searchParams.get('v');
                 }
             } catch (e) { return null; }
-            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
+            // Add parameters: controls=1 (show controls), rel=0 (no related videos), modestbranding=1 (less branding)
+            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
         }
 
         function openVideoLightbox(url) {
@@ -619,7 +612,7 @@
                     youtubePlayer.style.display = 'block';
                     videoPlayer.style.display = 'none';
                 }
-            } else { // For direct video links like from Cloudinary
+            } else { 
                 videoPlayer.src = url;
                 videoPlayer.style.display = 'block';
                 youtubePlayer.style.display = 'none';
