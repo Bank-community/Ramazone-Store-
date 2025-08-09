@@ -142,7 +142,7 @@
     </div>
     
     <div class="flex justify-center px-4">
-        <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
+        <a id="search-link" href="./products.html" class="w-full flex justify-center">
             <div id="fakeSearchInput">
                 <div>
                     <span style="color: var(--text-light);">Search for</span>
@@ -205,7 +205,7 @@
             <img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Profile"><span>Cashback</span>
         </a>
         <a href="#" onclick="toggleSocialMedia(event)">
-            <img src="https://www.svgrepo.com/show/493490/follow-up.svg" alt="Follow"><span>Follow</span>
+            <img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span>
         </a>
     </div>
     
@@ -432,7 +432,7 @@
             wrapper.innerHTML = categories.map(cat => `
                 <a href="./products.html?category=${encodeURIComponent(cat.name)}" class="text-center group">
                     <div class="aspect-square bg-gray-200 rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-110">
-                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-contain p-2">
+                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-cover">
                     </div>
                     <p class="mt-2 text-xs font-medium text-gray-600">${cat.name}</p>
                 </a>
@@ -472,7 +472,7 @@
         }
         function renderSearch(d) {
             if (!d) return;
-            document.getElementById('search-link').href = d.redirectUrl || '#';
+            document.getElementById('search-link').href = d.redirectUrl || './products.html';
             const c = d.scrollingTexts || [];
             if (c.length > 0) {
                 let i = 0;
