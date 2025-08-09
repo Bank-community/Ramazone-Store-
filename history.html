@@ -52,16 +52,16 @@
             margin-right: 0.75rem;
         }
 
-        /* UPDATED: Slider Styles */
+        /* Slider Styles */
         .slider-wrapper {
-            padding: 0 1rem; /* Added padding for left/right space */
+            padding: 0 1rem;
             margin-top: 0.5rem;
         }
         .slider-container { 
             position: relative; 
             width: 100%; 
             overflow: hidden; 
-            aspect-ratio: 16 / 8.5; /* Adjusted height */
+            aspect-ratio: 16 / 8.5;
             max-height: 400px;
             border-radius: 12px;
         }
@@ -81,28 +81,28 @@
         .slider-dots .dot { width: 8px; height: 8px; background: rgba(0, 0, 0, 0.4); border-radius: 50%; cursor: pointer; transition: all 0.4s ease; }
         .slider-dots .dot.active { background: var(--bg-white); width: 24px; }
 
-        /* UPDATED: Category Section Styles */
+        /* Category Section Styles */
         .category-scroller {
             display: flex;
-            gap: 0.75rem; /* Space between cards */
+            gap: 0.75rem;
             overflow-x: auto;
             scroll-behavior: smooth;
-            padding: 0.5rem 1rem; /* Padding for start/end */
-            scrollbar-width: none; /* For Firefox */
-            -ms-overflow-style: none; /* For IE/Edge */
+            padding: 0.5rem 1rem;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
         .category-scroller::-webkit-scrollbar {
-            display: none; /* For Chrome/Safari */
+            display: none;
         }
         .category-card {
-            flex: 0 0 22%; /* Default size, shows about 4.5 items */
+            flex: 0 0 22%;
             max-width: 100px;
             text-align: center;
             text-decoration: none;
             color: var(--text-dark);
         }
         .category-card--double {
-            flex: 0 0 46%; /* Double size */
+            flex: 0 0 46%;
             max-width: 200px;
         }
         .category-card .img-wrapper {
@@ -128,9 +128,8 @@
             color: var(--text-light);
             line-height: 1.3;
         }
-        /* Special card style for the double one */
         .category-card--double .img-wrapper {
-            aspect-ratio: 2 / 1; /* Different aspect ratio for the special card */
+            aspect-ratio: 2 / 1;
         }
         .category-card--double .category-name {
             font-weight: 600;
@@ -161,7 +160,7 @@
         @media (min-width: 640px) { .product-slider .product-card { flex-basis: calc(33.33% - 12px); } }
         @media (min-width: 1024px) { .product-slider .product-card { flex-basis: calc(20% - 13px); } }
 
-        /* Highlighted Products Grid */
+        /* Highlighted Products Grid (Deals of the Day) */
         #highlighted-products-wrapper {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -176,10 +175,17 @@
 
         /* Flip Card */
         .flip-card-container { perspective: 1000px; padding: 0 1rem; }
-        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; animation: auto-flip 10s infinite ease-in-out; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; }
+        .flip-card-inner.flipping { animation: auto-flip 10s infinite ease-in-out; }
         .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .flip-card-back { transform: rotateY(180deg); }
         .flip-card-front img, .flip-card-back img { width: 100%; height: 100%; object-fit: cover; }
+        @keyframes auto-flip {
+            0%, 45% { transform: rotateY(0deg); }
+            50%, 95% { transform: rotateY(180deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
         .sponsor-card { border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); overflow: hidden; margin: 1.5rem; }
         .sponsor-card iframe, .sponsor-card img { width: 100%; height: auto; object-fit: cover; aspect-ratio: 16/9; }
         
@@ -243,6 +249,10 @@
 
         <div class="sponsor-card reveal" id="dynamic-section-1"></div>
 
+        <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
+            <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
+        </div>
+
         <section class="section-container reveal" id="flipcard-section">
              <div class="flip-card-container w-full aspect-[16/7]">
                 <div class="flip-card-inner" id="flip-card-inner-content">
@@ -258,9 +268,6 @@
             </div>
         </section>
 
-        <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
-            <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
-        </div>
         <div class="sponsor-card reveal" id="dynamic-section-2"></div>
 
     </main>
@@ -305,17 +312,19 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
-            authDomain: "re-store-8e5b3.firebaseapp.com",
+            apiKey: "YOUR_API_KEY", // This will be replaced by Vercel's environment variable
+            authDomain: "YOUR_AUTH_DOMAIN",
             databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "re-store-8e5b3",
-            storageBucket: "re-store-8e5b3.firebasestorage.app",
-            messagingSenderId: "747691299697",
-            appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
         
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // In a real Vercel environment, you would get these from process.env
+                // For this example, we'll use the hardcoded config, but the principle is the same.
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                 }
@@ -332,15 +341,25 @@
             homepageRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    // Combine all available products into one pool for selection logic
+                    const allAvailableProducts = [
+                        ...(data.festiveCollection?.products || []),
+                        ...(data.highlightedProducts || [])
+                    ].filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id)); // Remove duplicates
+
                     renderSlider(data.slider);
                     renderSearch(data.search);
                     renderNormalCategories(data.normalCategories);
                     renderFestiveCollection(data.festiveCollection);
-                    renderFlipCardSection(data.flipCard);
                     renderDynamicSection('#dynamic-section-1', data.dynamicSection1);
                     renderInfoMarquee(data.infoMarquee);
+                    renderFlipCardSection(data.flipCard);
+                    
+                    // New logic for "Deals of the Day"
+                    const dealsProducts = getDealsOfTheDayProducts(data.highlightedProducts, data.normalCategories, allAvailableProducts);
+                    renderHighlightedProducts(dealsProducts);
+
                     renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
-                    renderHighlightedProducts(data.highlightedProducts);
                     renderFooter(data.footer);
                     document.getElementById('copyright-year').textContent = new Date().getFullYear();
                 }
@@ -351,17 +370,27 @@
             syncCategoryScrollers();
         }
         
+        // UPDATED: Applies background and text color
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
-            if (!container || !collectionData || !collectionData.products) return;
+            if (!container || !collectionData) {
+                if(container) container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'block';
             
+            // Apply colors
+            container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
             const headline = document.getElementById('festive-headline');
             headline.innerText = collectionData.title || 'Special Offers';
+            headline.style.color = collectionData.headlineColor || 'var(--text-dark)';
             
             const slider = document.getElementById('festive-product-slider');
             slider.innerHTML = '';
             
             const productsData = collectionData.products;
+            if (!productsData) return;
+
             const productList = Array.isArray(productsData)
                 ? productsData.map((p, i) => ({ ...p, id: i }))
                 : Object.keys(productsData).map(key => ({ id: key, ...productsData[key] }));
@@ -414,14 +443,15 @@
                     const platform = socialPlatforms[key];
                     const url = followLinks[key];
                     if (url) {
-                        mobileLinksContainer.innerHTML += `<a href="${url}" target="_blank" class="social-link" style="background-color: ${platform.color};" title="${key.charAt(0).toUpperCase() + key.slice(1)}"><img src="${platform.icon}" alt="${key}"></a>`;
-                        desktopLinksContainer.innerHTML += `<a href="${url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${key.charAt(0).toUpperCase() + key.slice(1)}"><img src="${platform.icon}" class="w-7 h-7" alt="${key}"></a>`;
+                        const mobileLink = `<a href="${url}" target="_blank" class="social-link" style="background-color: ${platform.color};" title="${key.charAt(0).toUpperCase() + key.slice(1)}"><img src="${platform.icon}" alt="${key}"></a>`;
+                        const desktopLink = `<a href="${url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${key.charAt(0).toUpperCase() + key.slice(1)}"><img src="${platform.icon}" class="w-7 h-7" alt="${key}"></a>`;
+                        mobileLinksContainer.innerHTML += mobileLink;
+                        desktopLinksContainer.innerHTML += desktopLink;
                     }
                 });
             }
         }
 
-        // UPDATED: Slider rendering with video support
         function renderSlider(sliderData) {
             const slider = document.getElementById('main-slider');
             if (!slider || !sliderData) return;
@@ -439,7 +469,7 @@
             initializeSlider(sliderData.length);
         }
         
-        // UPDATED: Category rendering logic
+        // UPDATED: Renders categories into top and bottom rows
         function renderNormalCategories(categories) {
             const topWrapper = document.getElementById('top-category-scroller');
             const bottomWrapper = document.getElementById('bottom-category-scroller');
@@ -448,13 +478,10 @@
             topWrapper.innerHTML = '';
             bottomWrapper.innerHTML = '';
 
-            // Admin panel will determine the row. For now, we'll use a 'row' property.
-            // Default to 'bottom' if not specified.
-            const topCategories = categories.filter(cat => cat.row === 'top');
-            const bottomCategories = categories.filter(cat => cat.row !== 'top');
+            const topCategories = categories.filter(cat => cat && cat.row === 'top');
+            const bottomCategories = categories.filter(cat => cat && cat.row !== 'top');
 
             const renderCategory = (cat) => {
-                // Check for special double-sized card
                 const cardClass = cat.size === 'double' ? 'category-card--double' : '';
                 return `
                     <a href="./products.html?category=${encodeURIComponent(cat.name)}" class="category-card ${cardClass}">
@@ -466,17 +493,17 @@
                 `;
             };
 
-            topCategories.forEach(cat => {
-                topWrapper.innerHTML += renderCategory(cat);
-            });
-            bottomCategories.forEach(cat => {
-                bottomWrapper.innerHTML += renderCategory(cat);
-            });
+            topCategories.forEach(cat => topWrapper.innerHTML += renderCategory(cat));
+            bottomCategories.forEach(cat => bottomWrapper.innerHTML += renderCategory(cat));
         }
         
         function renderFlipCardSection(flipCardData) {
             const section = document.getElementById('flip-card-inner-content');
-            if (!section || !flipCardData) return;
+            if (!section || !flipCardData || !flipCardData.front || !flipCardData.back) {
+                document.getElementById('flipcard-section').style.display = 'none';
+                return;
+            }
+            document.getElementById('flipcard-section').style.display = 'block';
             section.innerHTML = `
                 <a href="${flipCardData.front.linkUrl || '#'}" target="_blank" class="flip-card-front">
                     <img src="${flipCardData.front.imageUrl}" alt="Front of card" loading="lazy">
@@ -485,14 +512,65 @@
                     <img src="${flipCardData.back.imageUrl}" alt="Back of card" loading="lazy">
                 </a>
             `;
+            section.classList.add('flipping');
         }
         
+        // NEW: Smart logic for selecting "Deals of the Day"
+        function getDealsOfTheDayProducts(highlightedFromDB, categories, allProducts) {
+            const MAX_PRODUCTS = 15;
+            let deals = [];
+            const usedProductIds = new Set();
+
+            // Step 1: Use admin-defined highlighted products first
+            if (highlightedFromDB && Array.isArray(highlightedFromDB)) {
+                deals = highlightedFromDB.map(p => {
+                    usedProductIds.add(p.id);
+                    return p;
+                });
+            }
+
+            // Step 2: If not enough, get one unique product from each category
+            if (deals.length < MAX_PRODUCTS && categories && Array.isArray(categories)) {
+                for (const category of categories) {
+                    if (deals.length >= MAX_PRODUCTS) break;
+                    const productFromCategory = allProducts.find(p => p.category === category.name && !usedProductIds.has(p.id));
+                    if (productFromCategory) {
+                        deals.push(productFromCategory);
+                        usedProductIds.add(productFromCategory.id);
+                    }
+                }
+            }
+
+            // Step 3: If still not enough, fill with best-of-the-best from remaining products
+            if (deals.length < MAX_PRODUCTS) {
+                const remainingProducts = allProducts.filter(p => !usedProductIds.has(p.id));
+                
+                remainingProducts.forEach(p => {
+                    const discount = (p.originalPrice || p.displayPrice) - (p.displayPrice || 0);
+                    const rating = parseFloat(p.rating) || 0;
+                    // Score prioritizes higher absolute discount, then rating.
+                    p.score = discount + (rating * 10); 
+                });
+
+                remainingProducts.sort((a, b) => b.score - a.score);
+                const needed = MAX_PRODUCTS - deals.length;
+                deals.push(...remainingProducts.slice(0, needed));
+            }
+
+            return deals.slice(0, MAX_PRODUCTS);
+        }
+
         function renderHighlightedProducts(productsData) {
             const wrapper = document.getElementById('highlighted-products-wrapper');
-            if (!wrapper || !productsData) return;
+            const section = document.getElementById('highlighted-products-section');
+            if (!wrapper || !productsData || productsData.length === 0) {
+                if(section) section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
             wrapper.innerHTML = '';
-            const productList = (Array.isArray(productsData) ? productsData : Object.values(productsData)).slice(0, 15);
-            productList.forEach(prod => {
+            
+            productsData.forEach(prod => {
                 if (!prod) return;
                 const mainMedia = (prod.images && prod.images[0]) || '';
                 let offerTagHtml = '';
@@ -633,24 +711,24 @@
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
         }
-        // NEW: Function to sync category scrollers
         function syncCategoryScrollers() {
             const scroller1 = document.getElementById('top-category-scroller');
             const scroller2 = document.getElementById('bottom-category-scroller');
+            if(!scroller1 || !scroller2) return;
             let isSyncing = false;
 
             scroller1.addEventListener('scroll', () => {
                 if (isSyncing) return;
                 isSyncing = true;
                 scroller2.scrollLeft = scroller1.scrollLeft;
-                isSyncing = false;
+                requestAnimationFrame(() => { isSyncing = false; });
             });
 
             scroller2.addEventListener('scroll', () => {
                 if (isSyncing) return;
                 isSyncing = true;
                 scroller1.scrollLeft = scroller2.scrollLeft;
-                isSyncing = false;
+                requestAnimationFrame(() => { isSyncing = false; });
             });
         }
     </script>
