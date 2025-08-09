@@ -47,26 +47,45 @@
         .carousel-container::-webkit-scrollbar { display: none; }
         .carousel-item { scroll-snap-align: start; flex: 0 0 160px; margin-right: 1rem; }
         
-        /* Styles for new description blocks */
         .desc-block { margin-bottom: 1.25rem; }
         .desc-block-title { font-weight: 700; font-size: 1rem; color: #111827; margin-bottom: 0.25rem; }
         .desc-block-details { color: #4b5563; margin-bottom: 0.5rem; }
         .desc-block-highlights { list-style-type: disc; padding-left: 1.25rem; color: #374151; }
-        .desc-block-highlights li { margin-bottom: 0.25rem; font-weight: 600; } /* UPDATED: Made highlights bold */
+        .desc-block-highlights li { margin-bottom: 0.25rem; font-weight: 600; }
 
+        #offer-tag {
+            position: absolute;
+            bottom: 7.5rem;
+            left: 0.5rem;
+            z-index: 10;
+            display: none;
+        }
         
-        /* UPDATED: Offer Tag Styling */
-#offer-tag {
-    position: absolute;
-    bottom: 7.5rem;
-    left: 0.5rem;
-    z-index: 10;
-    display: none; /* Hidden by default */
-}
-
-
-
-
+        /* NEW: Delivery Option Styling */
+        .delivery-option {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .delivery-option.selected {
+            border-color: var(--primary-color);
+            background-color: #eef2ff;
+        }
+        .delivery-option input[type="radio"] {
+            display: none;
+        }
+        .delivery-option .icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+            color: #6b7280;
+        }
+        .delivery-option.selected .icon {
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -85,27 +104,18 @@
     <main id="product-content" class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-0 sm:mt-6 mb-12" style="display: none;">
         <div class="bg-white sm:rounded-2xl sm:shadow-lg overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2">
-
-
-
-              <!-- Image Section -->
-<div class="p-0 sm:p-4 lg:p-6">
-    <div class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
-         <!-- Offer tag ab yahan nahi hai -->
-         <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
-         <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-         <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
-    </div>
-    <!-- UPDATED: Offer tag ko thumbnail gallery ke upar rakha gaya hai -->
-    <div class="relative px-4 sm:px-0">
-        <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg"></div>
-        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
-    </div>
-</div>
-
-
-
-
+                <!-- Image Section -->
+                <div class="p-0 sm:p-4 lg:p-6">
+                    <div class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
+                         <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
+                         <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                         <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
+                    </div>
+                    <div class="relative px-4 sm:px-0">
+                        <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg"></div>
+                        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
+                    </div>
+                </div>
 
                 <!-- Details Section -->
                 <div class="flex flex-col p-4 sm:p-6 lg:p-8">
@@ -116,33 +126,56 @@
                         </button>
                     </div>
 
-                    <!-- Rating Section -->
                     <div id="rating-section" class="flex items-center gap-2 text-sm text-gray-500 mb-3" style="display: none;">
                         <div id="product-rating-stars" class="rating-stars"></div>
                         <span id="product-review-count"></span>
                     </div>
 
-                    <!-- Price Section -->
-                    <div class="flex items-center flex-wrap gap-x-4 gap-y-2 mb-4">
-                        <span id="product-price" class="text-3xl lg:text-4xl font-extrabold text-indigo-600"></span>
-                        <div id="product-discount-container" class="flex items-baseline gap-2">
-                            <span id="product-original-price" class="text-xl line-through text-gray-400" style="display: none;"></span>
-                            <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
+                    <!-- Price & Delivery Section -->
+                    <div class="space-y-4 border-t border-b border-gray-200 py-4 my-4">
+                        <!-- Price Summary -->
+                        <div id="price-summary" class="space-y-1 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Original Price</span>
+                                <span id="summary-original-price" class="text-gray-600 line-through"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Discount</span>
+                                <span id="summary-discount" class="text-green-600"></span>
+                            </div>
+                            <div id="summary-coupon-row" class="flex justify-between" style="display: none;">
+                                <span class="text-gray-600">Coupon Discount</span>
+                                <span id="summary-coupon-discount" class="text-green-600"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Delivery Charge</span>
+                                <span id="summary-delivery-charge" class="text-gray-800"></span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 mt-2 border-t border-dashed">
+                                <span class="text-lg font-bold text-gray-900">Total Price</span>
+                                <span id="summary-total-price" class="text-2xl font-extrabold text-indigo-600"></span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div id="coupon-applied-message" class="text-sm font-semibold text-green-700 bg-green-100 p-2 rounded-lg mb-4" style="display: none;"></div>
 
-                    <!-- Seller and Delivery Info -->
-                    <div class="border-t border-b border-gray-200 py-4 my-4 space-y-3">
-                        <div id="seller-info" class="flex items-center text-sm text-gray-600" style="display: none;">
-                            <i class="fas fa-store w-5 text-center mr-3 text-gray-400"></i>
-                            <span>Sold by <strong id="product-seller-name" class="text-gray-800"></strong></span>
-                        </div>
-                        <div id="delivery-info" class="flex items-center text-sm text-gray-600" style="display: none;">
-                            <i class="fas fa-truck w-5 text-center mr-3 text-gray-400"></i>
-                            <span id="product-delivery-type" class="font-semibold text-green-600 mr-2"></span>
-                            <span>Expected delivery in <strong id="product-delivery-time" class="text-gray-800"></strong></span>
+                        <!-- Delivery Options -->
+                        <div id="delivery-options" class="space-y-3 pt-4">
+                            <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
+                            <label id="delivery-option-self" class="delivery-option">
+                                <input type="radio" name="delivery" value="Self" checked>
+                                <i class="fas fa-walking icon"></i>
+                                <div>
+                                    <p class="font-semibold text-gray-800">Self Delivery</p>
+                                    <p class="text-xs text-gray-500">No extra charges. Expected in <span id="delivery-time-self"></span>.</p>
+                                </div>
+                            </label>
+                            <label id="delivery-option-ramazone" class="delivery-option">
+                                <input type="radio" name="delivery" value="Ramazone">
+                                <i class="fas fa-truck-fast icon"></i>
+                                <div>
+                                    <p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p>
+                                    <p class="text-xs text-gray-500">Fast delivery. Expected in <span id="delivery-time-ramazone"></span>.</p>
+                                </div>
+                            </label>
                         </div>
                     </div>
                     
@@ -174,13 +207,11 @@
             </div>
         </div>
         
-        <!-- Recently Viewed Section -->
         <div id="recently-viewed-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Recently Viewed</h2>
             <div id="recently-viewed-container" class="carousel-container pb-4"></div>
         </div>
 
-        <!-- Similar Products Section -->
         <div id="similar-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Similar Products</h2>
             <div id="similar-products-container" class="carousel-container pb-4"></div>
@@ -207,21 +238,21 @@
         let allProductsCache = null;
         let validCoupons = null;
         let appliedCoupon = null;
-
         let touchstartX = 0;
         let touchendX = 0;
 
+        // NEW: Delivery state variables
+        let selectedDeliveryType = 'Self';
+        const RAMAZONE_DELIVERY_CHARGE = 10;
+
         async function getFirebaseConfig() {
-            // IMPORTANT: In a real production environment like Vercel,
-            // these keys should be stored as Environment Variables.
-            // Do NOT hardcode API keys in your public code.
-            // This is hardcoded here only for demonstration in this environment.
+            // This function remains the same, assuming Vercel environment variables are used in production.
             return {
                 apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
                 authDomain: "re-store-8e5b3.firebaseapp.com",
                 databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
                 projectId: "re-store-8e5b3",
-                storageBucket: "re-store-8e5b3.firebasestorage.app",
+                storageBucket: "re-store-8e5b3.appspot.com",
                 messagingSenderId: "747691299697",
                 appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
             };
@@ -293,30 +324,21 @@
                 document.getElementById('product-review-count').textContent = `(${data.reviewCount} ratings)`;
             }
 
-            updatePriceDisplay();
-            
-            // UPDATED: Offer Tag logic
             const offerTag = document.getElementById('offer-tag');
             if (data.offerText) {
                 offerTag.textContent = data.offerText;
                 offerTag.style.color = data.offerTextColor || '#ffffff';
                 offerTag.style.backgroundColor = data.offerBackgroundColor || '#ef4444';
-                offerTag.style.display = 'inline-block'; // Changed to inline-block
+                offerTag.style.display = 'inline-block';
             } else {
                 offerTag.style.display = 'none';
             }
 
-            if (data.sellerName) {
-                document.getElementById('seller-info').style.display = 'flex';
-                document.getElementById('product-seller-name').textContent = data.sellerName;
-            }
-            if (data.deliveryType && data.deliveryTime) {
-                document.getElementById('delivery-info').style.display = 'flex';
-                document.getElementById('product-delivery-type').textContent = data.deliveryType === 'Ramazone' ? 'Ramazone Delivery' : 'Self Delivery';
-                document.getElementById('product-delivery-time').textContent = data.deliveryTime;
+            if (data.deliveryTime) {
+                document.getElementById('delivery-time-self').textContent = data.deliveryTime;
+                document.getElementById('delivery-time-ramazone').textContent = data.deliveryTime;
             }
 
-            // UPDATED: Advanced Description Rendering
             const descriptionContainer = document.getElementById('product-description');
             descriptionContainer.innerHTML = '';
             if (data.description && Array.isArray(data.description)) {
@@ -324,23 +346,15 @@
                 data.description.forEach(block => {
                     const blockDiv = document.createElement('div');
                     blockDiv.className = 'desc-block';
-                    
                     let blockHTML = '';
-                    if (block.title) {
-                        blockHTML += `<h3 class="desc-block-title">${block.title}</h3>`;
-                    }
-                    if (block.details) {
-                        blockHTML += `<p class="desc-block-details">${block.details}</p>`;
-                    }
+                    if (block.title) blockHTML += `<h3 class="desc-block-title">${block.title}</h3>`;
+                    if (block.details) blockHTML += `<p class="desc-block-details">${block.details}</p>`;
                     if (block.highlights && Array.isArray(block.highlights) && block.highlights.length > 0) {
                         blockHTML += `<ul class="desc-block-highlights">${block.highlights.map(h => `<li>${h}</li>`).join('')}</ul>`;
                     }
                     blockDiv.innerHTML = blockHTML;
                     descriptionContainer.appendChild(blockDiv);
                 });
-            } else if (data.description) { // Fallback for old string-based description
-                 document.getElementById('description-section').style.display = 'block';
-                 descriptionContainer.innerHTML = `<p>${data.description}</p>`;
             }
             
             const gallery = document.getElementById('thumbnail-gallery');
@@ -360,14 +374,16 @@
                 thumbWrapper.addEventListener('click', () => showMedia(index));
                 gallery.appendChild(thumbWrapper);
             });
-
+            
+            // Call all setup functions
             showMedia(0);
             setupQuantityControls();
             setupImageModal();
             setupShareButton();
             setupSwipeControls();
             setupCouponButton();
-            
+            setupDeliveryOptions(); // NEW
+            updatePriceDisplay(); // Initial price calculation
             loadSimilarProducts(data.category);
         }
 
@@ -382,35 +398,47 @@
             for (let i = 0; i < emptyStars; i++) starContainer.innerHTML += '<i class="far fa-star"></i>';
         }
 
+        // UPDATED: Price Display Logic
         function updatePriceDisplay() {
-            let finalPrice = Number(currentProductData.displayPrice);
-            if (appliedCoupon) {
-                finalPrice -= Number(appliedCoupon.discount);
-            }
-            
-            document.getElementById('product-price').textContent = `₹${finalPrice.toLocaleString('en-IN')}`;
+            const basePrice = Number(currentProductData.displayPrice);
+            const originalPrice = Number(currentProductData.originalPrice);
+            const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
+            const deliveryCharge = selectedDeliveryType === 'Ramazone' ? RAMAZONE_DELIVERY_CHARGE : 0;
+            const finalPrice = basePrice - couponDiscount + deliveryCharge;
 
-            if (currentProductData.originalPrice && Number(currentProductData.originalPrice) > Number(currentProductData.displayPrice)) {
-                document.getElementById('product-original-price').textContent = `₹${Number(currentProductData.originalPrice).toLocaleString('en-IN')}`;
-                document.getElementById('product-original-price').style.display = 'inline';
-                const discount = Math.round(((currentProductData.originalPrice - currentProductData.displayPrice) / currentProductData.originalPrice) * 100);
-                document.getElementById('product-discount').textContent = `${discount}% OFF`;
-                document.getElementById('product-discount').style.display = 'inline-block';
+            // Original price and discount
+            if (originalPrice > basePrice) {
+                document.getElementById('summary-original-price').textContent = `₹${originalPrice.toLocaleString('en-IN')}`;
+                const discountValue = originalPrice - basePrice;
+                document.getElementById('summary-discount').textContent = `- ₹${discountValue.toLocaleString('en-IN')}`;
             } else {
-                 document.getElementById('product-original-price').style.display = 'none';
-                 document.getElementById('product-discount').style.display = 'none';
+                document.getElementById('summary-original-price').textContent = `₹${basePrice.toLocaleString('en-IN')}`;
+                document.getElementById('summary-discount').textContent = `- ₹0`;
             }
+
+            // Coupon
+            const couponRow = document.getElementById('summary-coupon-row');
+            if (appliedCoupon) {
+                document.getElementById('summary-coupon-discount').textContent = `- ₹${couponDiscount.toLocaleString('en-IN')}`;
+                couponRow.style.display = 'flex';
+            } else {
+                couponRow.style.display = 'none';
+            }
+
+            // Delivery
+            document.getElementById('summary-delivery-charge').textContent = deliveryCharge > 0 ? `+ ₹${deliveryCharge.toLocaleString('en-IN')}` : 'Free';
+            
+            // Total
+            document.getElementById('summary-total-price').textContent = `₹${finalPrice.toLocaleString('en-IN')}`;
+
+            updateQuantityAndWhatsAppLink();
         }
 
         function getYoutubeEmbedUrl(url) {
-            let videoId = null;
             if(!url) return null;
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
-            if (match && match[2].length === 11) {
-                videoId = match[2];
-            }
-            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
+            return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
         }
 
         function showMedia(index) {
@@ -457,22 +485,37 @@
             updateQuantityAndWhatsAppLink();
         }
 
+        // UPDATED: WhatsApp Link Logic
         function updateQuantityAndWhatsAppLink() {
             const sellerPhoneNumber = '917903698180';
             document.getElementById('quantity-display').textContent = productQuantity;
             document.getElementById('decrease-quantity').disabled = productQuantity <= 1;
             
-            let displayPrice = Number(currentProductData.displayPrice);
-            let finalPrice = displayPrice;
-            let couponMessagePart = '';
+            const basePrice = Number(currentProductData.displayPrice);
+            const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
+            const deliveryCharge = selectedDeliveryType === 'Ramazone' ? RAMAZONE_DELIVERY_CHARGE : 0;
+            const singleItemFinalPrice = basePrice - couponDiscount + deliveryCharge;
+            const totalOrderPrice = (singleItemFinalPrice * productQuantity);
 
+            // FIXED: Sanitize product name for bolding
+            const productName = currentProductData.name.replace(/\*/g, '').trim();
+
+            let message = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n`;
+            message += `*Product:* *${productName}*\n`;
+            message += `*Quantity:* ${productQuantity}\n`;
+            message += `-------------------------------------\n`;
+            message += `*Price per item:* ₹${basePrice.toLocaleString('en-IN')}\n`;
             if (appliedCoupon) {
-                finalPrice -= Number(appliedCoupon.discount);
-                couponMessagePart = `\n*Coupon Applied:* ${appliedCoupon.code}\n*Discount:* -₹${Number(appliedCoupon.discount).toLocaleString('en-IN')}\n-------------------------------------\n*Final Price:* ₹${finalPrice.toLocaleString('en-IN')}`;
+                message += `*Coupon Discount:* - ₹${couponDiscount.toLocaleString('en-IN')}\n`;
             }
+            message += `*Delivery (${selectedDeliveryType}):* + ₹${deliveryCharge.toLocaleString('en-IN')}\n`;
+            message += `-------------------------------------\n`;
+            message += `*Total Price:* *₹${totalOrderPrice.toLocaleString('en-IN')}*\n\n`;
+            message += `*Product ID:* ${currentProductId}\n`;
+            message += `*Product Link:* ${window.location.href}\n\n`;
+            message += `Please let me know if it's available.`;
 
-            const whatsappMessage = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${currentProductData.name}*\n*Price:* ₹${displayPrice.toLocaleString('en-IN')}${couponMessagePart}\n*Quantity:* ${productQuantity}\n*Product ID:* ${currentProductId}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
-            document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+            document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`;
         }
         
         function setupCouponButton() {
@@ -482,17 +525,29 @@
                     const coupon = validCoupons.find(c => c.code.toLowerCase() === code.toLowerCase());
                     if (coupon) {
                         appliedCoupon = coupon;
-                        updatePriceDisplay();
-                        updateQuantityAndWhatsAppLink();
-                        const messageDiv = document.getElementById('coupon-applied-message');
-                        messageDiv.textContent = `🎉 Hurray! ₹${coupon.discount} discount applied with code "${coupon.code}".`;
-                        messageDiv.style.display = 'block';
                         showToast(`Coupon "${coupon.code}" applied!`);
                     } else {
+                        appliedCoupon = null; // Reset if invalid
                         showToast("Invalid coupon code.", "error");
                     }
+                    updatePriceDisplay();
                 }
             });
+        }
+        
+        // NEW: Delivery Options Logic
+        function setupDeliveryOptions() {
+            const deliveryRadios = document.querySelectorAll('input[name="delivery"]');
+            deliveryRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    selectedDeliveryType = e.target.value;
+                    document.getElementById('delivery-option-self').classList.toggle('selected', selectedDeliveryType === 'Self');
+                    document.getElementById('delivery-option-ramazone').classList.toggle('selected', selectedDeliveryType === 'Ramazone');
+                    updatePriceDisplay();
+                });
+            });
+            // Set initial state
+            document.getElementById('delivery-option-self').classList.add('selected');
         }
 
         function setupImageModal() {
@@ -537,9 +592,12 @@
             if (touchendX > touchstartX + swipeThreshold) showMedia(currentMediaIndex - 1);
         }
 
+        // UPDATED: Share Button Logic
         function setupShareButton() {
             document.getElementById('share-button').addEventListener('click', async () => {
-                const shareText = `*${currentProductData.name}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString('en-IN')}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;
+                // FIXED: Sanitize product name for bolding
+                const productName = currentProductData.name.replace(/\*/g, '').trim();
+                const shareText = `*${productName}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString('en-IN')}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;
                 if (navigator.share) {
                     await navigator.share({ text: shareText });
                 } else {
@@ -579,11 +637,9 @@
 
         function loadRecentlyViewed(viewedIds) {
             if (!viewedIds || viewedIds.length <= 1) return;
-
             const container = document.getElementById('recently-viewed-container');
             container.innerHTML = '';
             let cardCount = 0;
-            
             viewedIds.filter(id => id !== currentProductId).forEach(id => {
                 const product = allProductsCache[id];
                 if (product) {
@@ -591,10 +647,7 @@
                     cardCount++;
                 }
             });
-
-            if (cardCount > 0) {
-                document.getElementById('recently-viewed-section').style.display = 'block';
-            }
+            if (cardCount > 0) document.getElementById('recently-viewed-section').style.display = 'block';
         }
         
         function loadSimilarProducts(category) {
@@ -602,17 +655,13 @@
             const container = document.getElementById('similar-products-container');
             container.innerHTML = '';
             let cardCount = 0;
-
             allProductsCache.forEach((product, index) => {
                 if (product && product.category === category && index != currentProductId) {
                     container.innerHTML += createProductCard(product, index);
                     cardCount++;
                 }
             });
-            
-            if (cardCount > 0) {
-                document.getElementById('similar-products-section').style.display = 'block';
-            }
+            if (cardCount > 0) document.getElementById('similar-products-section').style.display = 'block';
         }
 
         document.addEventListener('DOMContentLoaded', initializeAppAndLoadProduct);
