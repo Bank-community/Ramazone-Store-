@@ -80,17 +80,28 @@
     <main id="product-content" class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-0 sm:mt-6 mb-12" style="display: none;">
         <div class="bg-white sm:rounded-2xl sm:shadow-lg overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2">
-                <!-- Image Section -->
-                <div class="p-0 sm:p-4 lg:p-6">
-                    <div class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
-                         <!-- UPDATED: Offer tag moved here -->
-                         <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg"></div>
-                         <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
-                         <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-                         <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
-                    </div>
-                    <div class="grid grid-cols-5 gap-2 sm:gap-4 px-4 sm:px-0" id="thumbnail-gallery"></div>
-                </div>
+
+
+
+              <!-- Image Section -->
+<div class="p-0 sm:p-4 lg:p-6">
+    <div class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
+         <!-- Offer tag ab yahan nahi hai -->
+         <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
+         <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+         <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
+    </div>
+    <!-- UPDATED: Offer tag ko thumbnail gallery ke upar rakha gaya hai -->
+    <div class="relative px-4 sm:px-0">
+        <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg"></div>
+        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
+    </div>
+</div>
+
+
+
+
+
                 <!-- Details Section -->
                 <div class="flex flex-col p-4 sm:p-6 lg:p-8">
                     <div class="flex justify-between items-start mb-2">
