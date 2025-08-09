@@ -51,8 +51,17 @@
         .desc-block { margin-bottom: 1.25rem; }
         .desc-block-title { font-weight: 700; font-size: 1rem; color: #111827; margin-bottom: 0.25rem; }
         .desc-block-details { color: #4b5563; margin-bottom: 0.5rem; }
-        .desc-block-highlights { list-style-type: disc; padding-left: 1.25rem; color: #4b5563; }
-        .desc-block-highlights li { margin-bottom: 0.25rem; }
+        .desc-block-highlights { list-style-type: disc; padding-left: 1.25rem; color: #374151; }
+        .desc-block-highlights li { margin-bottom: 0.25rem; font-weight: 600; } /* UPDATED: Made highlights bold */
+        
+        /* UPDATED: Offer Tag Styling */
+        #offer-tag {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 10;
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
 <body>
@@ -74,6 +83,8 @@
                 <!-- Image Section -->
                 <div class="p-0 sm:p-4 lg:p-6">
                     <div class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative" id="main-media-container">
+                         <!-- UPDATED: Offer tag moved here -->
+                         <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg"></div>
                          <img id="main-product-image" src="" alt="Main Product Image" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl transition-transform duration-300 ease-in-out hover:scale-105">
                          <iframe id="main-product-video" class="w-full h-auto object-cover aspect-square rounded-none sm:rounded-xl hidden" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
                          <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
@@ -104,9 +115,6 @@
                         </div>
                     </div>
                     
-                    <!-- Offer Tag -->
-                    <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg mb-4" style="display: none;"></div>
-
                     <div id="coupon-applied-message" class="text-sm font-semibold text-green-700 bg-green-100 p-2 rounded-lg mb-4" style="display: none;"></div>
 
                     <!-- Seller and Delivery Info -->
@@ -271,13 +279,13 @@
 
             updatePriceDisplay();
             
-            // NEW: Offer Tag
+            // UPDATED: Offer Tag logic
             const offerTag = document.getElementById('offer-tag');
             if (data.offerText) {
                 offerTag.textContent = data.offerText;
                 offerTag.style.color = data.offerTextColor || '#ffffff';
                 offerTag.style.backgroundColor = data.offerBackgroundColor || '#ef4444';
-                offerTag.style.display = 'inline-block';
+                offerTag.style.display = 'inline-block'; // Changed to inline-block
             } else {
                 offerTag.style.display = 'none';
             }
@@ -292,7 +300,7 @@
                 document.getElementById('product-delivery-time').textContent = data.deliveryTime;
             }
 
-            // NEW: Advanced Description Rendering
+            // UPDATED: Advanced Description Rendering
             const descriptionContainer = document.getElementById('product-description');
             descriptionContainer.innerHTML = '';
             if (data.description && Array.isArray(data.description)) {
