@@ -46,6 +46,13 @@
         .carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
         .carousel-container::-webkit-scrollbar { display: none; }
         .carousel-item { scroll-snap-align: start; flex: 0 0 160px; margin-right: 1rem; }
+        
+        /* Styles for new description blocks */
+        .desc-block { margin-bottom: 1.25rem; }
+        .desc-block-title { font-weight: 700; font-size: 1rem; color: #111827; margin-bottom: 0.25rem; }
+        .desc-block-details { color: #4b5563; margin-bottom: 0.5rem; }
+        .desc-block-highlights { list-style-type: disc; padding-left: 1.25rem; color: #4b5563; }
+        .desc-block-highlights li { margin-bottom: 0.25rem; }
     </style>
 </head>
 <body>
@@ -96,6 +103,10 @@
                             <span id="product-discount" class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-md" style="display: none;"></span>
                         </div>
                     </div>
+                    
+                    <!-- Offer Tag -->
+                    <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg mb-4" style="display: none;"></div>
+
                     <div id="coupon-applied-message" class="text-sm font-semibold text-green-700 bg-green-100 p-2 rounded-lg mb-4" style="display: none;"></div>
 
                     <!-- Seller and Delivery Info -->
@@ -113,7 +124,7 @@
                     
                     <div id="description-section" class="mb-6" style="display: none;">
                         <h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
-                        <div id="product-description" class="prose prose-sm sm:prose-base max-w-none text-gray-600"></div>
+                        <div id="product-description" class="space-y-4"></div>
                     </div>
 
                     <!-- Actions Section -->
@@ -176,37 +187,36 @@
         let touchstartX = 0;
         let touchendX = 0;
 
-        async function fetchFirebaseConfig() {
-            try {
-                // This is a placeholder. In a real app, this would fetch from a secure endpoint.
-                // Since we can't do that here, we'll use a hardcoded config.
-                return {
-                    apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
-                    authDomain: "re-store-8e5b3.firebaseapp.com",
-                    databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
-                    projectId: "re-store-8e5b3",
-                    storageBucket: "re-store-8e5b3.firebasestorage.app",
-                    messagingSenderId: "747691299697",
-                    appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
-                };
-            } catch (error) {
-                console.error('Failed to fetch Firebase config:', error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load application configuration.</p>';
-                return null;
-            }
+        async function getFirebaseConfig() {
+            // IMPORTANT: In a real production environment like Vercel,
+            // these keys should be stored as Environment Variables.
+            // Do NOT hardcode API keys in your public code.
+            // This is hardcoded here only for demonstration in this environment.
+            return {
+                apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+                authDomain: "re-store-8e5b3.firebaseapp.com",
+                databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "re-store-8e5b3",
+                storageBucket: "re-store-8e5b3.firebasestorage.app",
+                messagingSenderId: "747691299697",
+                appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
+            };
         }
 
         async function initializeAppAndLoadProduct() {
-            const firebaseConfig = await fetchFirebaseConfig();
-            if (!firebaseConfig) return;
+            const firebaseConfig = await getFirebaseConfig();
+            if (!firebaseConfig) {
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Application configuration load nahi ho saki.</p>';
+                return;
+            };
             try {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
                 await fetchAllData(database);
                 fetchProductData(database);
             } catch (error) {
-                console.error("Initialization or data fetch failed:", error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load product data.</p>';
+                console.error("Initialization ya data fetch fail ho gaya:", error);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Product data load nahi ho saka.</p>';
             }
         }
         
@@ -225,22 +235,19 @@
             const productId = params.get('id');
             currentProductId = productId;
             if (!productId) {
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">No product ID found.</p>';
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Koi product ID nahi mila.</p>';
                 return;
             }
             
-            // Find product from cache
             const productIndex = allProductsCache.findIndex((p, index) => index == productId);
             if (productIndex !== -1) {
                 currentProductData = allProductsCache[productIndex];
                 loadProduct(currentProductData);
                 document.getElementById('loading-indicator').style.display = 'none';
                 document.getElementById('product-content').style.display = 'block';
-                
-                // Handle recently viewed
                 updateRecentlyViewed(productId);
             } else {
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Sorry, this product could not be found.</p>';
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Maaf kijiye, yeh product nahi mil saka.</p>';
             }
         }
 
@@ -256,30 +263,60 @@
 
             document.getElementById('product-title').textContent = data.name;
             
-            // Rating
             if (data.rating && data.reviewCount) {
                 document.getElementById('rating-section').style.display = 'flex';
                 renderStars(data.rating);
                 document.getElementById('product-review-count').textContent = `(${data.reviewCount} ratings)`;
             }
 
-            // Price
             updatePriceDisplay();
             
-            // Seller & Delivery
+            // NEW: Offer Tag
+            const offerTag = document.getElementById('offer-tag');
+            if (data.offerText) {
+                offerTag.textContent = data.offerText;
+                offerTag.style.color = data.offerTextColor || '#ffffff';
+                offerTag.style.backgroundColor = data.offerBackgroundColor || '#ef4444';
+                offerTag.style.display = 'inline-block';
+            } else {
+                offerTag.style.display = 'none';
+            }
+
             if (data.sellerName) {
                 document.getElementById('seller-info').style.display = 'flex';
                 document.getElementById('product-seller-name').textContent = data.sellerName;
             }
             if (data.deliveryType && data.deliveryTime) {
                 document.getElementById('delivery-info').style.display = 'flex';
-                document.getElementById('product-delivery-type').textContent = data.deliveryType === 'Amazon' ? 'Ramazone Delivery' : 'Self Delivery';
+                document.getElementById('product-delivery-type').textContent = data.deliveryType === 'Ramazone' ? 'Ramazone Delivery' : 'Self Delivery';
                 document.getElementById('product-delivery-time').textContent = data.deliveryTime;
             }
 
-            if (data.description) {
+            // NEW: Advanced Description Rendering
+            const descriptionContainer = document.getElementById('product-description');
+            descriptionContainer.innerHTML = '';
+            if (data.description && Array.isArray(data.description)) {
                 document.getElementById('description-section').style.display = 'block';
-                document.getElementById('product-description').innerHTML = data.description;
+                data.description.forEach(block => {
+                    const blockDiv = document.createElement('div');
+                    blockDiv.className = 'desc-block';
+                    
+                    let blockHTML = '';
+                    if (block.title) {
+                        blockHTML += `<h3 class="desc-block-title">${block.title}</h3>`;
+                    }
+                    if (block.details) {
+                        blockHTML += `<p class="desc-block-details">${block.details}</p>`;
+                    }
+                    if (block.highlights && Array.isArray(block.highlights) && block.highlights.length > 0) {
+                        blockHTML += `<ul class="desc-block-highlights">${block.highlights.map(h => `<li>${h}</li>`).join('')}</ul>`;
+                    }
+                    blockDiv.innerHTML = blockHTML;
+                    descriptionContainer.appendChild(blockDiv);
+                });
+            } else if (data.description) { // Fallback for old string-based description
+                 document.getElementById('description-section').style.display = 'block';
+                 descriptionContainer.innerHTML = `<p>${data.description}</p>`;
             }
             
             const gallery = document.getElementById('thumbnail-gallery');
@@ -307,7 +344,6 @@
             setupSwipeControls();
             setupCouponButton();
             
-            // Load similar products
             loadSimilarProducts(data.category);
         }
 
@@ -496,7 +532,6 @@
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
         
-        // --- Carousel and Recommendation Functions ---
         function createProductCard(product, id) {
             return `
                 <a href="?id=${id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
@@ -511,24 +546,20 @@
         
         function updateRecentlyViewed(newId) {
             let viewedIds = JSON.parse(sessionStorage.getItem('recentlyViewed')) || [];
-            // Remove the id if it already exists to move it to the front
             viewedIds = viewedIds.filter(id => id !== newId);
-            // Add the new id to the front
             viewedIds.unshift(newId);
-            // Keep only the last 10 viewed items
             viewedIds = viewedIds.slice(0, 10);
             sessionStorage.setItem('recentlyViewed', JSON.stringify(viewedIds));
             loadRecentlyViewed(viewedIds);
         }
 
         function loadRecentlyViewed(viewedIds) {
-            if (!viewedIds || viewedIds.length <= 1) return; // Don't show if only current product is viewed
+            if (!viewedIds || viewedIds.length <= 1) return;
 
             const container = document.getElementById('recently-viewed-container');
             container.innerHTML = '';
             let cardCount = 0;
             
-            // Exclude the current product from the list
             viewedIds.filter(id => id !== currentProductId).forEach(id => {
                 const product = allProductsCache[id];
                 if (product) {
