@@ -83,17 +83,17 @@
         .product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; margin-top: 0.5rem; }
         .display-price { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; }
         .original-price { font-size: 0.85rem; text-decoration: line-through; color: var(--text-light); }
+        /* UPDATED: Offer Tag Styling */
         .festive-offer-tag {
             position: absolute;
             bottom: 8px;
             right: 8px;
-            background-color: #FBBF24; /* yellow-400 */
-            color: #1F2937; /* gray-800 */
-            padding: 2px 8px;
+            padding: 2px 10px;
             border-radius: 6px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 700;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 5;
         }
         @keyframes auto-flip { 0%, 15% { transform: rotateY(0deg); } 20%, 65% { transform: rotateY(180deg); } 70%, 100% { transform: rotateY(360deg); } }
         .flip-card-container { perspective: 1000px; }
@@ -142,7 +142,8 @@
     </div>
     
     <div class="flex justify-center px-4">
-        <a id="search-link" href="./products.html" class="w-full flex justify-center">
+        <!-- UPDATED: Search link now points to products.html with a focus parameter -->
+        <a id="search-link" href="./products.html?focus=true" class="w-full flex justify-center">
             <div id="fakeSearchInput">
                 <div>
                     <span style="color: var(--text-light);">Search for</span>
@@ -237,12 +238,20 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
+        // NOTE: In a real production environment, use a secure backend endpoint 
+        // to fetch Firebase config instead of hardcoding it.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+            authDomain: "re-store-8e5b3.firebaseapp.com",
+            databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "re-store-8e5b3",
+            storageBucket: "re-store-8e5b3.firebasestorage.app",
+            messagingSenderId: "747691299697",
+            appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
+        };
+        
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('/api/firebase-config');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const firebaseConfig = await response.json();
-                
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                 }
@@ -280,6 +289,7 @@
             setupScrollAnimations();
         }
         
+        // UPDATED: Function to render festive collection with offer tags
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
             if (!container || !collectionData || !collectionData.products) return;
@@ -303,11 +313,20 @@
             productList.forEach(prod => {
                 if (!prod) return;
                 const mainMedia = (prod.images && prod.images[0]) || '';
+                
+                // Create offer tag HTML if offerText exists
+                let offerTagHtml = '';
+                if (prod.offerText) {
+                    const textColor = prod.offerTextColor || '#ffffff';
+                    const bgColor = prod.offerBackgroundColor || '#ef4444';
+                    offerTagHtml = `<span class="festive-offer-tag" style="color: ${textColor}; background-color: ${bgColor};">${prod.offerText}</span>`;
+                }
+
                 slider.innerHTML += `
                     <a href="./product-details.html?id=${prod.id}" class="product-card">
                         <div class="product-media-container">
                             <img src="${mainMedia}" alt="${prod.name}">
-                            ${prod.offer ? `<span class="festive-offer-tag">${prod.offer}</span>` : ''}
+                            ${offerTagHtml}
                         </div>
                         <div class="product-details">
                             <p class="product-name">${prod.name || ''}</p>
@@ -472,7 +491,8 @@
         }
         function renderSearch(d) {
             if (!d) return;
-            document.getElementById('search-link').href = d.redirectUrl || './products.html';
+            // The href is now static, pointing to the products page with a focus parameter
+            document.getElementById('search-link').href = './products.html?focus=true';
             const c = d.scrollingTexts || [];
             if (c.length > 0) {
                 let i = 0;
