@@ -61,7 +61,6 @@
         .suggestion-item:last-child { border-bottom: none; }
         .suggestion-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-right: 0.75rem; }
 
-        /* NEW: Category Suggestions Styling */
         #category-suggestions {
             background-color: #f9fafb;
             padding: 0.75rem;
@@ -83,9 +82,41 @@
             background-color: #d1d5db;
             color: #1f2937;
         }
+
+        /* NEW: Search Focus Mode Styles */
+        #search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 35; /* Below header (50) and filter bar (40) but above content */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        body.search-active #search-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        body.search-active > .category-filter-container,
+        body.search-active > main {
+            filter: blur(4px);
+            pointer-events: none;
+            user-select: none;
+        }
+        body.search-active header {
+            filter: none;
+            pointer-events: auto;
+            user-select: auto;
+        }
     </style>
 </head>
 <body>
+    <!-- NEW: Overlay for search mode -->
+    <div id="search-overlay"></div>
+
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
             <a href="./index.html">
@@ -100,15 +131,14 @@
                 </div>
                 <div id="search-suggestions" class="hidden"></div>
             </div>
-             <a href="./index.html" class="text-gray-600 hover:text-gray-900">
+             <a href="./index.html" id="close-search-btn" class="text-gray-600 hover:text-gray-900">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
             </a>
         </div>
-        <!-- NEW: Container for category suggestions -->
         <div id="category-suggestions" class="hidden"></div>
     </header>
 
-    <div class="bg-white py-3 border-b border-gray-200 sticky top-[68px] z-40">
+    <div class="category-filter-container bg-white py-3 border-b border-gray-200 sticky top-[68px] z-40">
         <div class="container mx-auto px-4">
             <div id="category-filter-bar" class="flex items-center space-x-3 overflow-x-auto category-scroll-container">
                 <div class="text-center py-2 px-4 text-gray-500">Loading categories...</div>
@@ -180,7 +210,6 @@
                 setupSearch(allCategories);
                 document.getElementById('loading-indicator').style.display = 'none';
                 
-                // NEW: Auto-focus search input if requested
                 if (urlParams.get('focus') === 'true') {
                     document.getElementById('search-input').focus();
                 }
@@ -261,25 +290,26 @@
             }
         }
 
-        // UPDATED: Setup search with category suggestions
+        // UPDATED: Search setup with focus mode
         function setupSearch(categories) {
             const searchInput = document.getElementById('search-input');
             const suggestionsContainer = document.getElementById('search-suggestions');
             const categorySuggestionsContainer = document.getElementById('category-suggestions');
+            const searchOverlay = document.getElementById('search-overlay');
+            const closeSearchBtn = document.getElementById('close-search-btn');
 
-            // Populate category suggestions
             categorySuggestionsContainer.innerHTML = categories.map(cat => `<span class="suggestion-tag" data-category="${cat.name}">${cat.name}</span>`).join('');
             
             categorySuggestionsContainer.addEventListener('click', e => {
                 if(e.target.classList.contains('suggestion-tag')) {
                     const categoryName = e.target.dataset.category;
                     document.querySelector(`#category-filter-bar .category-btn[data-category="${categoryName}"]`).click();
-                    searchInput.blur(); // Hide suggestions after click
+                    searchInput.blur();
                 }
             });
 
             searchInput.addEventListener('input', () => {
-                filterAndDisplayProducts(); // Filter main grid
+                filterAndDisplayProducts();
                 const query = searchInput.value.toLowerCase();
                 if (query.length < 2) {
                     suggestionsContainer.innerHTML = '';
@@ -302,16 +332,34 @@
                 }
             });
 
-            searchInput.addEventListener('focus', () => {
+            const activateSearchMode = () => {
+                document.body.classList.add('search-active');
                 categorySuggestionsContainer.classList.remove('hidden');
-            });
+            };
+
+            const deactivateSearchMode = () => {
+                document.body.classList.remove('search-active');
+                categorySuggestionsContainer.classList.add('hidden');
+                suggestionsContainer.classList.add('hidden');
+            };
+
+            searchInput.addEventListener('focus', activateSearchMode);
             
+            searchOverlay.addEventListener('click', () => searchInput.blur());
+            
+            closeSearchBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if(searchInput.value) {
+                    searchInput.value = '';
+                    filterAndDisplayProducts();
+                } else {
+                    searchInput.blur();
+                }
+            });
+
             searchInput.addEventListener('blur', () => {
-                // Use a small delay to allow clicks on suggestions to register
-                setTimeout(() => {
-                    categorySuggestionsContainer.classList.add('hidden');
-                    suggestionsContainer.classList.add('hidden');
-                }, 150);
+                // Delay deactivation to allow clicks on suggestions
+                setTimeout(deactivateSearchMode, 150);
             });
         }
 
