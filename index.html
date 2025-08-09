@@ -80,10 +80,21 @@
         .product-card:hover .product-media-container img { transform: scale(1.1); }
         .product-details { padding: 1rem; text-align: center; }
         .product-name { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.25rem; color: var(--text-dark); }
-        .product-offer { background-color: var(--primary-color); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-bottom: 0.5rem; }
-        .product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; }
+        .product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; margin-top: 0.5rem; }
         .display-price { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; }
         .original-price { font-size: 0.85rem; text-decoration: line-through; color: var(--text-light); }
+        .festive-offer-tag {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background-color: #FBBF24; /* yellow-400 */
+            color: #1F2937; /* gray-800 */
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
         @keyframes auto-flip { 0%, 15% { transform: rotateY(0deg); } 20%, 65% { transform: rotateY(180deg); } 70%, 100% { transform: rotateY(360deg); } }
         .flip-card-container { perspective: 1000px; }
         .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; animation: auto-flip 10s infinite ease-in-out; }
@@ -131,7 +142,7 @@
     </div>
     
     <div class="flex justify-center px-4">
-        <a id="search-link" href="#" target="_blank" class="w-full flex justify-center">
+        <a id="search-link" href="./products.html" class="w-full flex justify-center">
             <div id="fakeSearchInput">
                 <div>
                     <span style="color: var(--text-light);">Search for</span>
@@ -290,15 +301,16 @@
                 : Object.keys(productsData).map(key => ({ id: key, ...productsData[key] }));
 
             productList.forEach(prod => {
+                if (!prod) return;
                 const mainMedia = (prod.images && prod.images[0]) || '';
                 slider.innerHTML += `
                     <a href="./product-details.html?id=${prod.id}" class="product-card">
                         <div class="product-media-container">
                             <img src="${mainMedia}" alt="${prod.name}">
+                            ${prod.offer ? `<span class="festive-offer-tag">${prod.offer}</span>` : ''}
                         </div>
                         <div class="product-details">
                             <p class="product-name">${prod.name || ''}</p>
-                            ${prod.offer ? `<span class="product-offer">${prod.offer}</span>` : ''}
                             <div class="product-price">
                                 ${prod.displayPrice ? `<span class="display-price">₹${prod.displayPrice}</span>` : ''}
                                 ${prod.originalPrice ? `<span class="original-price">₹${prod.originalPrice}</span>` : ''}
@@ -308,7 +320,6 @@
             });
         }
         
-        // FIX: Renders social media links from the `followLinks` object in Firebase
         function renderFooter(footerData) {
             if (!footerData) return;
             document.getElementById('footer-shop-link').href = './products.html';
@@ -323,26 +334,25 @@
                 mobileLinksContainer.innerHTML = '';
                 desktopLinksContainer.innerHTML = '';
 
-                // Define icons and colors for each platform
                 const socialPlatforms = {
-                    youtube: { icon: 'https://www.svgrepo.com/show/452029/youtube.svg', color: '#FF0000' },
-                    instagram: { icon: 'https://www.svgrepo.com/show/452123/instagram.svg', color: '#E4405F' },
-                    facebook: { icon: 'https://www.svgrepo.com/show/452121/facebook.svg', color: '#1877F2' },
+                    youtube: { icon: 'https://www.svgrepo.com/show/448261/youtube.svg', color: '#FF0000' },
+                    instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', color: '#E4405F' },
+                    facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', color: '#1877F2' },
                     whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', color: '#25D366' }
                 };
 
-                Object.keys(followLinks).forEach(key => {
-                    const platform = socialPlatforms[key.toLowerCase()];
+                Object.keys(socialPlatforms).forEach(key => {
+                    const platform = socialPlatforms[key];
                     const url = followLinks[key];
-                    if (platform && url) {
+                    if (url) {
                         const mobileLinkHtml = `
-                            <a href="${url}" target="_blank" class="social-link" style="background-color: ${platform.color};" title="${key}">
+                            <a href="${url}" target="_blank" class="social-link" style="background-color: ${platform.color};" title="${key.charAt(0).toUpperCase() + key.slice(1)}">
                                 <img src="${platform.icon}" alt="${key}">
                             </a>`;
                         mobileLinksContainer.innerHTML += mobileLinkHtml;
 
                         const desktopLinkHtml = `
-                            <a href="${url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${key}">
+                            <a href="${url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${key.charAt(0).toUpperCase() + key.slice(1)}">
                                 <img src="${platform.icon}" class="w-7 h-7" alt="${key}">
                             </a>`;
                         desktopLinksContainer.innerHTML += desktopLinkHtml;
@@ -420,9 +430,9 @@
             const wrapper = document.getElementById('normal-category-wrapper');
             if (!wrapper || !categories) return;
             wrapper.innerHTML = categories.map(cat => `
-                <a href="${cat.linkUrl||'#'}" class="text-center group">
+                <a href="./products.html?category=${encodeURIComponent(cat.name)}" class="text-center group">
                     <div class="aspect-square bg-gray-200 rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-110">
-                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-contain p-2">
+                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-cover">
                     </div>
                     <p class="mt-2 text-xs font-medium text-gray-600">${cat.name}</p>
                 </a>
@@ -462,7 +472,7 @@
         }
         function renderSearch(d) {
             if (!d) return;
-            document.getElementById('search-link').href = d.redirectUrl || '#';
+            document.getElementById('search-link').href = d.redirectUrl || './products.html';
             const c = d.scrollingTexts || [];
             if (c.length > 0) {
                 let i = 0;
