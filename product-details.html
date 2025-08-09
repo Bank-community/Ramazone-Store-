@@ -59,17 +59,7 @@
         .card-rating-tag { position: absolute; bottom: 0.5rem; left: 0.5rem; background-color: rgba(34, 197, 94, 0.9); color: white; padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem; }
         .card-rating-tag .fa-star { font-size: 0.65rem; }
 
-        /* NEW: Price Section Styling */
-        .lowest-price-tag {
-            background-color: var(--green-color);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border-radius: 0.375rem;
-            display: inline-block;
-            margin-bottom: 0.75rem;
-        }
+        .lowest-price-tag { background-color: var(--green-color); color: white; padding: 0.25rem 0.75rem; font-size: 0.8rem; font-weight: 600; border-radius: 0.375rem; display: inline-block; margin-bottom: 0.75rem; }
     </style>
 </head>
 <body>
@@ -109,7 +99,6 @@
                         <span id="product-review-count"></span>
                     </div>
 
-                    <!-- UPDATED: New Price Section Layout -->
                     <div class="space-y-4 border-t border-b border-gray-200 py-4 my-4">
                         <div id="new-price-section">
                              <div id="lowest-price-tag-container" style="display: none;">
@@ -134,8 +123,8 @@
 
                         <div id="delivery-options" class="space-y-3 pt-4">
                             <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
-                            <label id="delivery-option-self" class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges. Expected in <span id="delivery-time-self"></span>.</p></div></label>
-                            <label id="delivery-option-ramazone" class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p><p class="text-xs text-gray-500">Fast delivery. Expected in <span id="delivery-time-ramazone"></span>.</p></div></label>
+                            <label id="delivery-option-self" class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges. Expected in <span id="delivery-time-self">2-3 days</span>.</p></div></label>
+                            <label id="delivery-option-ramazone" class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p><p class="text-xs text-gray-500">Fast delivery. Expected in <span id="delivery-time-ramazone">1-2 days</span>.</p></div></label>
                         </div>
                     </div>
                     
@@ -185,33 +174,50 @@
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
                 await fetchAllData(database);
-                fetchProductData(database);
+                fetchProductData();
             } catch (error) { console.error("Initialization ya data fetch fail ho gaya:", error); document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Product data load nahi ho saka.</p>'; }
         }
         
+        // UPDATED: Fetches all products into a single cache
         async function fetchAllData(database) {
             const homepageRef = database.ref('ramazone/homepage');
             const snapshot = await homepageRef.get();
             if (snapshot.exists()) {
                 const data = snapshot.val();
-                allProductsCache = (data.festiveCollection?.products || []).map((p, index) => ({...p, id: index}));
+                const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
+                const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
+                
+                // Combine all products and ensure uniqueness
+                allProductsCache = [...festiveProducts, ...highlightedProducts]
+                    .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
+                
                 validCoupons = (data.coupons || []).filter(c => c.status === 'active');
             }
         }
 
-        function fetchProductData(database) {
+        // UPDATED: Simplified product fetching logic
+        function fetchProductData() {
             const params = new URLSearchParams(window.location.search);
             currentProductId = params.get('id');
             if (!currentProductId) { document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Koi product ID nahi mila.</p>'; return; }
             
+            if (!allProductsCache) {
+                 document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Product catalog load nahi hua. Refresh karke try karein.</p>';
+                 return;
+            }
+
             const product = allProductsCache.find(p => p.id == currentProductId);
+            
             if (product) {
                 currentProductData = product;
                 loadProduct(currentProductData);
                 document.getElementById('loading-indicator').style.display = 'none';
                 document.getElementById('product-content').style.display = 'block';
                 updateRecentlyViewed(currentProductId);
-            } else { document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Maaf kijiye, yeh product nahi mil saka.</p>'; }
+            } else { 
+                console.error(`Product with ID "${currentProductId}" not found in cache.`);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Maaf kijiye, yeh product nahi mil saka.</p>'; 
+            }
         }
 
         function loadProduct(data) {
@@ -302,7 +308,6 @@
             for (let i = 0; i < emptyStars; i++) container.innerHTML += '<i class="far fa-star"></i>';
         }
 
-        // UPDATED: New Price Display Logic
         function updatePriceDisplay() {
             const basePrice = Number(currentProductData.displayPrice);
             const originalPrice = Number(currentProductData.originalPrice);
@@ -322,11 +327,7 @@
                 originalPriceEl.textContent = `₹${originalPrice.toLocaleString('en-IN')}`;
                 percentageDiscountEl.style.display = 'flex';
                 originalPriceEl.style.display = 'inline';
-                
-                // NOTE: The "Lowest Price" tag is static for now. For dynamic behavior,
-                // you would need a "lowestPrice" field in your Firebase data.
                 document.getElementById('lowest-price-tag-container').style.display = 'block';
-
             } else {
                 percentageDiscountEl.style.display = 'none';
                 originalPriceEl.style.display = 'none';
