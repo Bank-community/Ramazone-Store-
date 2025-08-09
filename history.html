@@ -35,7 +35,7 @@
         #search-link:hover { border-color: var(--primary-color); }
         #search-link .search-icon { color: var(--text-dark); margin-right: 0.75rem; }
 
-        /* UPDATED: Slider Styles with Timer Dot */
+        /* Slider Styles with Timer Dot */
         .slider-wrapper { padding: 0 1rem; margin-top: 0.5rem; }
         .slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; }
         .slider { display: flex; height: 100%; }
@@ -48,7 +48,7 @@
         .slider-dots .dot .timer { width: 0%; height: 100%; background: var(--bg-white); border-radius: 50px; }
         .slider-dots .dot.active .timer { width: 100%; transition: width var(--slider-interval-duration) linear; }
 
-        /* UPDATED: Category Section Styles */
+        /* Category Section Styles */
         .category-scroller { display: flex; gap: 0.75rem; overflow-x: auto; scroll-behavior: smooth; padding: 0.5rem 1rem; scrollbar-width: none; -ms-overflow-style: none; }
         .category-scroller::-webkit-scrollbar { display: none; }
         .category-card { flex: 0 0 22%; max-width: 100px; text-align: center; text-decoration: none; color: var(--text-dark); }
@@ -226,7 +226,6 @@
 
     <script>
         const firebaseConfig = {
-            // Your Firebase config will be loaded here from Vercel environment variables
             apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
             authDomain: "re-store-8e5b3.firebaseapp.com",
             databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -254,10 +253,12 @@
             homepageRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    const allAvailableProducts = [
-                        ...(data.festiveCollection?.products || []),
-                        ...(data.highlightedProducts || [])
-                    ].filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
+                    // Create a comprehensive product catalog with unique IDs
+                    const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
+                    const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
+                    
+                    const allAvailableProducts = [...festiveProducts, ...highlightedProducts]
+                        .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
 
                     renderSlider(data.slider);
                     renderSearch(data.search);
@@ -283,10 +284,7 @@
         
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
-            if (!container || !collectionData) {
-                if(container) container.style.display = 'none';
-                return;
-            }
+            if (!container || !collectionData) { if(container) container.style.display = 'none'; return; }
             container.style.display = 'block';
             
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
@@ -300,12 +298,12 @@
             const productsData = collectionData.products;
             if (!productsData) return;
 
-            const productList = Array.isArray(productsData)
-                ? productsData.map((p, i) => ({ ...p, id: `festive-${i}` }))
-                : Object.keys(productsData).map(key => ({ id: `festive-${key}`, ...productsData[key] }));
+            const productList = Array.isArray(productsData) ? productsData : Object.values(productsData);
 
-            productList.forEach(prod => {
+            productList.forEach((prod, index) => {
                 if (!prod) return;
+                // FIX: Use a unique and consistent ID for the product link
+                const productId = `festive-${index}`;
                 const mainMedia = (prod.images && prod.images[0]) || '';
                 let offerTagHtml = '';
                 if (prod.offerText) {
@@ -314,7 +312,7 @@
                     offerTagHtml = `<span class="festive-offer-tag" style="color: ${textColor}; background-color: ${bgColor};">${prod.offerText}</span>`;
                 }
                 slider.innerHTML += `
-                    <a href="./product-details.html?id=${prod.id}" class="product-card">
+                    <a href="./product-details.html?id=${productId}" class="product-card">
                         <div class="product-media-container">
                             <img src="${mainMedia}" alt="${prod.name}" loading="lazy">
                             ${offerTagHtml}
@@ -378,10 +376,11 @@
             initializeSlider(sliderData.length);
         }
         
+        // UPDATED: Category rendering with manual link logic
         function renderNormalCategories(categories) {
             const topWrapper = document.getElementById('top-category-scroller');
             const bottomWrapper = document.getElementById('bottom-category-scroller');
-            if (!topWrapper || !bottomWrapper || !categories) return;
+            if (!topWrapper || !bottomWrapper || !Array.isArray(categories)) return;
             
             topWrapper.innerHTML = '';
             bottomWrapper.innerHTML = '';
@@ -391,8 +390,14 @@
 
             const renderCategory = (cat) => {
                 const cardClass = cat.size === 'double' ? 'category-card--double' : '';
+                // FIX: Check for linkUrl on double-sized cards
+                const href = (cat.size === 'double' && cat.linkUrl) 
+                    ? cat.linkUrl 
+                    : `./products.html?category=${encodeURIComponent(cat.name)}`;
+                const target = (cat.size === 'double' && cat.linkUrl) ? '_blank' : '';
+
                 return `
-                    <a href="./products.html?category=${encodeURIComponent(cat.name)}" class="category-card ${cardClass}">
+                    <a href="${href}" target="${target}" class="category-card ${cardClass}">
                         <div class="img-wrapper">
                             <img src="${cat.imageUrl}" alt="${cat.name}" loading="lazy">
                         </div>
@@ -423,7 +428,6 @@
             section.classList.add('flipping');
         }
         
-        // UPDATED: Deals of the Day product selection logic
         function getDealsOfTheDayProducts(highlightedFromDB, categories, allProducts) {
             const MAX_PRODUCTS = 18;
             let deals = [];
@@ -432,11 +436,10 @@
             const getScore = (p) => {
                 const discount = (parseFloat(p.originalPrice) || parseFloat(p.displayPrice)) - (parseFloat(p.displayPrice) || 0);
                 const rating = parseFloat(p.rating) || 0;
-                const hasOffer = p.offerText ? 50 : 0; // Bonus for having an offer tag
+                const hasOffer = p.offerText ? 50 : 0;
                 return (discount * 0.7) + (rating * 10) + hasOffer;
             };
 
-            // Step 1: Get one best product from each category
             if (categories && Array.isArray(categories)) {
                 for (const category of categories) {
                     const productsInCategory = allProducts.filter(p => p.category === category.name);
@@ -451,7 +454,6 @@
                 }
             }
 
-            // Step 2: If not enough, fill with best-of-the-best from remaining products
             if (deals.length < MAX_PRODUCTS) {
                 const remainingProducts = allProducts.filter(p => !usedProductIds.has(p.id));
                 remainingProducts.sort((a, b) => getScore(b) - getScore(a));
@@ -531,7 +533,6 @@
         let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
         const SLIDER_INTERVAL_MS = 5000;
         
-        // UPDATED: Slider logic with timer bar
         function initializeSlider(count) {
             const slider = document.getElementById('main-slider');
             const dotsContainer = document.getElementById('slider-dots-container');
@@ -602,7 +603,6 @@
             const activeDot = dots[activeDotIndex];
             if(activeDot) {
                 activeDot.classList.add('active');
-                // Force a reflow to restart the animation
                 void activeDot.querySelector('.timer').offsetWidth; 
                 activeDot.querySelector('.timer').style.transition = `width var(--slider-interval-duration) linear`;
                 activeDot.querySelector('.timer').style.width = '100%';
@@ -635,20 +635,36 @@
             const scroller2 = document.getElementById('bottom-category-scroller');
             if(!scroller1 || !scroller2) return;
             
-            let isSyncing1 = false, isSyncing2 = false;
-
-            scroller1.addEventListener('scroll', () => {
-                if (isSyncing1) return;
-                isSyncing2 = true;
+            let activeScroller = null;
+            
+            const onScroll1 = () => {
+                if (activeScroller === scroller2) return;
+                activeScroller = scroller1;
                 scroller2.scrollLeft = scroller1.scrollLeft;
-            });
-            scroller2.addEventListener('scroll', () => {
-                if (isSyncing2) return;
-                isSyncing1 = true;
+            };
+            
+            const onScroll2 = () => {
+                if (activeScroller === scroller1) return;
+                activeScroller = scroller2;
                 scroller1.scrollLeft = scroller2.scrollLeft;
-            });
-            scroller1.addEventListener('pointerdown', () => { isSyncing1 = false; isSyncing2 = false; });
-            scroller2.addEventListener('pointerdown', () => { isSyncing1 = false; isSyncing2 = false; });
+            };
+
+            scroller1.addEventListener('scroll', onScroll1);
+            scroller2.addEventListener('scroll', onScroll2);
+            
+            // Reset active scroller when user stops scrolling
+            let scrollTimeout;
+            const resetActiveScroller = () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    activeScroller = null;
+                }, 150);
+            };
+            
+            scroller1.addEventListener('pointerdown', resetActiveScroller);
+            scroller2.addEventListener('pointerdown', resetActiveScroller);
+            scroller1.addEventListener('wheel', resetActiveScroller);
+            scroller2.addEventListener('wheel', resetActiveScroller);
         }
     </script>
 </body>
