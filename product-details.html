@@ -72,7 +72,7 @@
         #coupon-btn { border-color: var(--primary-color); color: var(--primary-color); }
         #coupon-btn:hover { background-color: var(--primary-color); color: white; }
 
-        /* New Variant Styles */
+        /* Variant Styles */
         .variant-btn { border: 2px solid #e5e7eb; background-color: white; color: #374151; transition: all 0.2s ease; font-weight: 600; text-align: left; }
         .variant-btn:hover { border-color: var(--primary-color); }
         .variant-btn .value { color: var(--primary-color); font-weight: 700; }
@@ -124,7 +124,7 @@
 
                     <div id="variant-selection-section" class="mb-4" style="display: none;">
                         <div id="variant-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            </div>
+                        </div>
                     </div>
                     
                     <div class="space-y-3 border-t border-b border-gray-200 py-3 my-3">
@@ -181,7 +181,7 @@
                 <button id="variant-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             <div id="variant-modal-body" class="p-4 overflow-y-auto space-y-3">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -214,7 +214,7 @@
         let mediaItems = [], currentMediaIndex = 0, productQuantity = 1, currentProductData = null, currentProductId = null;
         let allProductsCache = [], validCoupons = [], appliedCoupon = null;
         let selectedDeliveryType = 'Self';
-        let selectedVariants = {}; // NEW: To store selected variant options
+        let selectedVariants = {};
         let ramazoneDeliveryCharge = 10;
         let appThemeColor = '#4F46E5';
 
@@ -282,7 +282,7 @@
 
         function loadProduct(data) {
             mediaItems = [];
-            if (data.images) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
+            if (data.images && Array.isArray(data.images)) mediaItems.push(...data.images.map(src => ({ type: 'image', src })));
             if (data.videoUrl) mediaItems.push({ type: 'video', src: data.videoUrl, thumbnail: (data.images && data.images[0]) || 'https://i.ibb.co/My6h0gdd/20250706-230221.png' });
 
             document.title = `${data.name || 'Product'} - Ramazone`;
@@ -325,7 +325,9 @@
                     slide.innerHTML = `<img src="${item.src}" alt="Product image ${index + 1}" draggable="false">`;
                 } else {
                     const embedUrl = getYoutubeEmbedUrl(item.src);
-                    slide.innerHTML = `<iframe src="${embedUrl}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+                    if (embedUrl) {
+                        slide.innerHTML = `<iframe src="${embedUrl}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+                    }
                 }
                 slider.appendChild(slide);
 
@@ -345,14 +347,14 @@
             });
             
             showMedia(0);
-            renderVariantSelectors(data.variants); // NEW: Render variants
+            renderVariantSelectors(data.variants);
             setupSliderControls();
             setupQuantityControls();
             setupImageModal();
             setupShareButton();
             setupCouponButton();
             setupDeliveryOptions();
-            setupVariantModal(); // NEW: Setup variant modal listeners
+            setupVariantModal();
             updatePriceDisplay();
             loadSimilarProducts(data.category);
             loadOtherProducts(data.category);
@@ -406,14 +408,26 @@
             updateQuantityAndWhatsAppLink();
         }
 
+        // --- CORRECTED YOUTUBE URL FUNCTION ---
         function getYoutubeEmbedUrl(url) {
-            if(!url) return null;
-            const regExp = /^.*(http://googleusercontent.com/youtube.com/5\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? `http://googleusercontent.com/youtube.com/6{match[2]}?controls=1&rel=0&modestbranding=1` : null;
+            if (!url) return null;
+            let videoId = null;
+            try {
+                const urlObj = new URL(url);
+                if (urlObj.hostname === 'youtu.be') {
+                    videoId = urlObj.pathname.slice(1);
+                } else if (urlObj.hostname.includes('youtube.com')) {
+                    videoId = urlObj.searchParams.get('v');
+                }
+                return videoId ? `https://www.youtube.com/embed/${videoId}?controls=1&rel=0&modestbranding=1` : null;
+            } catch (e) {
+                console.error("Invalid video URL:", url, e);
+                return null;
+            }
         }
 
         function showMedia(index) {
+            if (index < 0 || index >= mediaItems.length) return;
             slider.style.transition = 'transform 0.3s ease-out';
             currentMediaIndex = index;
             currentTranslate = index * -sliderWrapper.offsetWidth;
@@ -492,7 +506,6 @@
 
             let message = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${productName}*\n`;
             
-            // NEW: Add selected variants to the message
             if (Object.keys(selectedVariants).length > 0) {
                 message += `*Options:*\n`;
                 for (const type in selectedVariants) {
@@ -568,12 +581,12 @@
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
-        // --- NEW: VARIANT LOGIC ---
+        // --- VARIANT LOGIC ---
         function renderVariantSelectors(variants) {
             const container = document.getElementById('variant-buttons-container');
             const section = document.getElementById('variant-selection-section');
             container.innerHTML = '';
-            selectedVariants = {}; // Reset selections
+            selectedVariants = {}; 
 
             if (!variants || !Array.isArray(variants) || variants.length === 0) {
                 section.style.display = 'none';
@@ -582,11 +595,13 @@
 
             section.style.display = 'block';
             variants.forEach(variant => {
-                const button = document.createElement('button');
-                button.className = 'variant-btn w-full p-3 rounded-lg flex justify-between items-center';
-                button.innerHTML = `<span>${variant.type}</span> <i class="fas fa-chevron-down text-xs"></i>`;
-                button.addEventListener('click', () => openVariantModal(variant));
-                container.appendChild(button);
+                if(variant && variant.type && variant.options) {
+                    const button = document.createElement('button');
+                    button.className = 'variant-btn w-full p-3 rounded-lg flex justify-between items-center';
+                    button.innerHTML = `<span>${variant.type}</span> <i class="fas fa-chevron-down text-xs"></i>`;
+                    button.addEventListener('click', () => openVariantModal(variant));
+                    container.appendChild(button);
+                }
             });
         }
         
@@ -621,13 +636,13 @@
             });
 
             overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.add('active'), 10); // For transition
+            setTimeout(() => overlay.classList.add('active'), 10);
         }
 
         function closeVariantModal() {
             const overlay = document.getElementById('variant-modal-overlay');
             overlay.classList.remove('active');
-            setTimeout(() => overlay.classList.add('hidden'), 300); // For transition
+            setTimeout(() => overlay.classList.add('hidden'), 300);
         }
 
         function updateVariantButtonDisplay(type, value) {
