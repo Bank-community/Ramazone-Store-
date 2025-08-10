@@ -17,9 +17,8 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
         
-        /* --- Enhanced Slider Styles --- */
         #main-media-wrapper { overflow: hidden; touch-action: pan-y; }
-        #media-slider { display: flex; transition: transform 0.3s ease-out; } /* Faster, smoother transition */
+        #media-slider { display: flex; transition: transform 0.3s ease-out; }
         .media-item { flex: 0 0 100%; min-width: 100%; position: relative; }
         .media-item img, .media-item iframe { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1 / 1; }
         
@@ -162,7 +161,6 @@
                     <i class="fas fa-ticket-alt mr-2"></i> Coupon
                 </button>
                 <a id="whatsapp-order-link" href="#" target="_blank" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3 px-4 rounded-xl text-lg shadow-lg">
-                    <!-- Adjusted WhatsApp Icon -->
                     <i class="fab fa-whatsapp text-2xl mr-2"></i> Order Now
                 </a>
             </div>
@@ -420,7 +418,6 @@
             cancelAnimationFrame(animationID);
             const movedBy = currentTranslate - prevTranslate;
 
-            // More sensitive swipe threshold
             if (movedBy < -50 && currentMediaIndex < mediaItems.length - 1) {
                 currentMediaIndex += 1;
             }
@@ -527,12 +524,26 @@
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
         
+        // --- UPDATED FUNCTION ---
         function createCarouselCard(product) {
             const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : '';
+            const discount = (product.originalPrice && product.originalPrice > product.displayPrice) ? Math.round(((product.originalPrice - product.displayPrice) / product.originalPrice) * 100) : 0;
+            const discountTag = discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : '';
+
             return `
                 <a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                    <div class="relative"><img src="${product.images?.[0] || 'https://i.ibb.co/My6h0gdd/20250706-230221.png'}" class="w-full h-32 object-cover" alt="${product.name}">${ratingTag}</div>
-                    <div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800">${product.name}</h4><p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(product.displayPrice).toLocaleString('en-IN')}</p></div>
+                    <div class="relative">
+                        <img src="${product.images?.[0] || 'https://i.ibb.co/My6h0gdd/20250706-230221.png'}" class="w-full object-cover aspect-square" alt="${product.name}">
+                        ${ratingTag}
+                    </div>
+                    <div class="p-2">
+                        <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
+                        <div class="flex items-baseline gap-2">
+                            <p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(product.displayPrice).toLocaleString('en-IN')}</p>
+                            ${product.originalPrice > product.displayPrice ? `<p class="text-xs text-gray-400 line-through">₹${Number(product.originalPrice).toLocaleString('en-IN')}</p>` : ''}
+                        </div>
+                        ${discountTag}
+                    </div>
                 </a>`;
         }
 
