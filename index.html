@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ramazone - Aapki Apni Dukaan</title>
+    <title>Ramazone</title>
     <link rel="apple-touch-icon" href="https://i.ibb.co/WvTg0bc5/20240813-084352.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,11 +42,13 @@
 
         /* Slider Styles */
         .slider-wrapper { padding: 0 1rem; margin-top: 0.5rem; }
-        .slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; }
-        .slider { display: flex; height: 100%; }
-        .slider.transitioning { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+        .slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; user-select: none; }
+        .slider { display: flex; height: 100%; cursor: grab; }
+        .slider.grabbing { cursor: grabbing; }
+        /* Snappier transition for a better swipe feel */
+        .slider.transitioning { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .slide { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
-        .slide video, .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; }
+        .slide video, .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; pointer-events: none; }
         .slider-dots { display: flex; justify-content: center; gap: 8px; z-index: 10; padding-top: 0.5rem; }
         .slider-dots .dot { width: 8px; height: 4px; background: rgba(0, 0, 0, 0.15); border-radius: 50px; cursor: pointer; transition: all 0.4s ease; overflow: hidden; }
         .slider-dots .dot.active { background: rgba(0, 0, 0, 0.3); width: 32px; }
@@ -281,12 +283,12 @@
             if (!slider || !Array.isArray(sliderData) || sliderData.length === 0) { if(section) section.style.display = 'none'; return; }
             section.style.display = 'block';
             slider.innerHTML = sliderData.map(slide => `
-                <a href="${slide.linkUrl || '#'}" class="slide" target="_blank">
+                <a href="${slide.linkUrl || '#'}" class="slide" target="_blank" draggable="false">
                     ${slide.videoUrl 
-                        ? `<video src="${slide.videoUrl}" autoplay muted loop playsinline></video>` 
+                        ? `<video src="${slide.videoUrl}" autoplay muted loop playsinline draggable="false"></video>` 
                         : `<picture>
                                 <source media="(min-width: 768px)" srcset="${slide.imageUrlDesktop || slide.imageUrlMobile || ''}">
-                                <img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner">
+                                <img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner" draggable="false">
                            </picture>`
                     }
                 </a>`).join('');
@@ -398,8 +400,142 @@
         function toggleSocialMedia(event) { event.preventDefault(); document.getElementById('social-links-container').classList.toggle('active'); }
         function setupScrollAnimations() { const obs = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }); }, { threshold: 0.1 }); document.querySelectorAll('.reveal').forEach(el => obs.observe(el)); }
         
-        let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false; function initializeSlider(count) { const slider = document.getElementById('main-slider'); const dots = document.getElementById('slider-dots-container'); totalSlides = count; if (totalSlides <= 1) { if(dots) dots.style.display = 'none'; return; }; slider.appendChild(slider.children[0].cloneNode(true)); slider.insertBefore(slider.children[totalSlides - 1].cloneNode(true), slider.children[0]); slider.style.transform = `translateX(-${currentSlide * 100}%)`; slider.addEventListener('transitionend', () => { isTransitioning = false; if (currentSlide === 0) { slider.classList.remove('transitioning'); currentSlide = totalSlides; slider.style.transform = `translateX(-${currentSlide * 100}%)`; } if (currentSlide === totalSlides + 1) { slider.classList.remove('transitioning'); currentSlide = 1; slider.style.transform = `translateX(-${currentSlide * 100}%)`; } }); dots.innerHTML = ''; for (let i = 0; i < totalSlides; i++) { dots.innerHTML += `<div class="dot" data-slide="${i+1}"><div class="timer"></div></div>`; } dots.addEventListener('click', e => { if(e.target.closest('.dot')) { goToSlide(e.target.closest('.dot').dataset.slide); } }); updateDots(); resetSliderInterval(); } function moveSlide(dir) { if (isTransitioning) return; isTransitioning = true; document.getElementById('main-slider').classList.add('transitioning'); currentSlide += dir; document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`; updateDots(); resetSliderInterval(); } function goToSlide(num) { if (isTransitioning || currentSlide == num) return; isTransitioning = true; document.getElementById('main-slider').classList.add('transitioning'); currentSlide = parseInt(num); document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`; updateDots(); resetSliderInterval(); } function updateDots() { const dots = document.querySelectorAll('.slider-dots .dot'); dots.forEach(d => { d.classList.remove('active'); d.querySelector('.timer').style.transition = 'none'; d.querySelector('.timer').style.width = '0%'; }); let activeDotIndex = currentSlide - 1; if (currentSlide === 0) activeDotIndex = totalSlides - 1; if (currentSlide === totalSlides + 1) activeDotIndex = 0; const activeDot = dots[activeDotIndex]; if(activeDot) { activeDot.classList.add('active'); void activeDot.querySelector('.timer').offsetWidth; activeDot.querySelector('.timer').style.transition = `width ${5000}ms linear`; activeDot.querySelector('.timer').style.width = '100%'; } } function resetSliderInterval() { clearInterval(sliderInterval); sliderInterval = setInterval(() => moveSlide(1), 5000); }
-        let jfyCurrentSlide = 1, jfyTotalSlides = 0, jfySliderInterval, jfyIsTransitioning = false; function initializeJfySlider(count) { const slider = document.querySelector('.jfy-poster-slider'); const dots = document.querySelector('.jfy-slider-dots'); if (!slider) return; jfyTotalSlides = count; if (jfyTotalSlides <= 1) { if(dots) dots.style.display = 'none'; return; }; slider.appendChild(slider.children[0].cloneNode(true)); slider.insertBefore(slider.children[jfyTotalSlides - 1].cloneNode(true), slider.children[0]); slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; slider.addEventListener('transitionend', () => { jfyIsTransitioning = false; if (jfyCurrentSlide === 0) { slider.classList.remove('transitioning'); jfyCurrentSlide = jfyTotalSlides; slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; } if (jfyCurrentSlide === jfyTotalSlides + 1) { slider.classList.remove('transitioning'); jfyCurrentSlide = 1; slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; } }); dots.innerHTML = ''; for (let i = 0; i < jfyTotalSlides; i++) { dots.innerHTML += `<div class="dot" data-slide="${i+1}"></div>`; } dots.addEventListener('click', e => { if(e.target.closest('.dot')) goToJfySlide(e.target.closest('.dot').dataset.slide); }); updateJfyDots(); resetJfySliderInterval(); } function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = document.querySelector('.jfy-poster-slider'); if (!slider) return; jfyIsTransitioning = true; slider.classList.add('transitioning'); jfyCurrentSlide += dir; slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; updateJfyDots(); resetJfySliderInterval(); } function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector('.jfy-poster-slider'); if (!slider) return; jfyIsTransitioning = true; slider.classList.add('transitioning'); jfyCurrentSlide = parseInt(num); slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; updateJfyDots(); resetJfySliderInterval(); } function updateJfyDots() { const dots = document.querySelectorAll('.jfy-slider-dots .dot'); dots.forEach(d => d.classList.remove('active')); let activeDotIndex = jfyCurrentSlide - 1; if (jfyCurrentSlide === 0) activeDotIndex = jfyTotalSlides - 1; if (jfyCurrentSlide === jfyTotalSlides + 1) activeDotIndex = 0; const activeDot = dots[activeDotIndex]; if(activeDot) activeDot.classList.add('active');} function resetJfySliderInterval() { clearInterval(jfySliderInterval); jfySliderInterval = setInterval(() => moveJfySlide(1), 4000); }
+        // --- REFINED SLIDER LOGIC ---
+        let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
+
+        function initializeSlider(count) {
+            const slider = document.getElementById('main-slider');
+            const dots = document.getElementById('slider-dots-container');
+            totalSlides = count;
+            if (totalSlides <= 1) {
+                if (dots) dots.style.display = 'none';
+                return;
+            }
+
+            // --- Infinite Slider Setup (Cloning first and last slides) ---
+            slider.appendChild(slider.children[0].cloneNode(true));
+            slider.insertBefore(slider.children[totalSlides - 1].cloneNode(true), slider.children[0]);
+            
+            // --- Set initial position ---
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+            // --- Dots Setup ---
+            dots.innerHTML = '';
+            for (let i = 0; i < totalSlides; i++) {
+                dots.innerHTML += `<div class="dot" data-slide="${i+1}"><div class="timer"></div></div>`;
+            }
+            dots.addEventListener('click', e => {
+                const dot = e.target.closest('.dot');
+                if (dot) goToSlide(parseInt(dot.dataset.slide));
+            });
+
+            // --- SWIPE-TO-SLIDE FUNCTIONALITY ---
+            let startPos = 0;
+            const swipeThreshold = 50; // Minimum pixel distance for a swipe to be registered
+
+            const getPositionX = (event) => event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+
+            const swipeStart = (e) => {
+                startPos = getPositionX(e);
+                clearInterval(sliderInterval); // Pause auto-slide on user interaction
+            };
+
+            const swipeEnd = (e) => {
+                // For touchend, the final position is in changedTouches
+                const endPos = e.type.includes('mouse') ? e.pageX : e.changedTouches[0].clientX;
+                const deltaX = endPos - startPos;
+
+                if (Math.abs(deltaX) > swipeThreshold) {
+                    // If swipe distance is significant, move the slide
+                    if (deltaX < 0) {
+                        // Swiped Left
+                        moveSlide(1);
+                    } else {
+                        // Swiped Right
+                        moveSlide(-1);
+                    }
+                }
+                resetSliderInterval(); // Always resume auto-slide after interaction ends
+            };
+
+            slider.addEventListener('mousedown', swipeStart);
+            slider.addEventListener('touchstart', swipeStart, { passive: true });
+
+            slider.addEventListener('mouseup', swipeEnd);
+            slider.addEventListener('touchend', swipeEnd);
+            
+            // --- Transition End Handler (for seamless infinite loop) ---
+            slider.addEventListener('transitionend', () => {
+                isTransitioning = false;
+                if (currentSlide === 0) { // If we are at the cloned last slide
+                    slider.classList.remove('transitioning'); // Remove transition for the jump
+                    currentSlide = totalSlides;
+                    slider.style.transform = `translateX(-${currentSlide * 100}%)`; // Jump to the actual last slide
+                }
+                if (currentSlide === totalSlides + 1) { // If we are at the cloned first slide
+                    slider.classList.remove('transitioning'); // Remove transition for the jump
+                    currentSlide = 1;
+                    slider.style.transform = `translateX(-${currentSlide * 100}%)`; // Jump to the actual first slide
+                }
+            });
+
+            updateDots();
+            resetSliderInterval();
+        }
+
+        function moveSlide(dir) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            document.getElementById('main-slider').classList.add('transitioning');
+            currentSlide += dir;
+            document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`;
+            updateDots();
+        }
+
+        function goToSlide(num) {
+            if (isTransitioning || currentSlide === num) return;
+            isTransitioning = true;
+            document.getElementById('main-slider').classList.add('transitioning');
+            currentSlide = num;
+            document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`;
+            updateDots();
+            resetSliderInterval();
+        }
+
+        function updateDots() {
+            const dots = document.querySelectorAll('.slider-dots .dot');
+            dots.forEach(d => {
+                d.classList.remove('active');
+                const timer = d.querySelector('.timer');
+                if (timer) {
+                    timer.style.transition = 'none';
+                    timer.style.width = '0%';
+                }
+            });
+
+            let activeDotIndex = currentSlide - 1;
+            if (currentSlide === 0) activeDotIndex = totalSlides - 1;
+            if (currentSlide === totalSlides + 1) activeDotIndex = 0;
+            
+            const activeDot = dots[activeDotIndex];
+            if (activeDot) {
+                activeDot.classList.add('active');
+                const timer = activeDot.querySelector('.timer');
+                if (timer) {
+                    void timer.offsetWidth; // Trigger reflow to restart animation
+                    timer.style.transition = `width ${5000}ms linear`;
+                    timer.style.width = '100%';
+                }
+            }
+        }
+
+        function resetSliderInterval() {
+            clearInterval(sliderInterval);
+            sliderInterval = setInterval(() => moveSlide(1), 5000);
+        }
+
+        // JFY Slider (unchanged)
+        let jfyCurrentSlide = 1, jfyTotalSlides = 0, jfySliderInterval, jfyIsTransitioning = false; function initializeJfySlider(count) { const slider = document.querySelector('.jfy-poster-slider'); const dots = document.querySelector('.jfy-slider-dots'); if (!slider) return; jfyTotalSlides = count; if (jfyTotalSlides <= 1) { if(dots) dots.style.display = 'none'; return; }; slider.appendChild(slider.children[0].cloneNode(true)); slider.insertBefore(slider.children[jfyTotalSlides - 1].cloneNode(true), slider.children[0]); slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; slider.addEventListener('transitionend', () => { jfyIsTransitioning = false; if (jfyCurrentSlide === 0) { slider.classList.remove('transitioning'); jfyCurrentSlide = jfyTotalSlides; slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; } if (jfyCurrentSlide === jfyTotalSlides + 1) { slider.classList.remove('transitioning'); jfyCurrentSlide = 1; slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; } }); dots.innerHTML = ''; for (let i = 0; i < jfyTotalSlides; i++) { dots.innerHTML += `<div class="dot" data-slide="${i+1}"></div>`; } dots.addEventListener('click', e => { if(e.target.closest('.dot')) goToJfySlide(e.target.closest('.dot').dataset.slide); }); updateJfyDots(); resetJfySliderInterval(); } function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = document.querySelector('.jfy-poster-slider'); if (!slider) return; jfyIsTransitioning = true; slider.classList.add('transitioning'); jfyCurrentSlide += dir; slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; updateJfyDots(); resetJfySliderInterval(); } function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector('.jfy-poster-slider'); if (!slider) return; jfyIsTransitioning = true; slider.classList.add('transitioning'); jfyCurrentSlide = parseInt(num); slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`; updateJfyDots(); resetJfySliderInterval(); } function updateJfyDots() { const dots = document.querySelectorAll('.jfy-slider-dots .dot'); dots.forEach(d => d.classList.remove('active')); let activeDotIndex = jfyCurrentSlide - 1; if (jfyCurrentSlide === 0) activeDotIndex = jfyTotalSlides - 1; if (jfyCurrentSlide === totalSlides + 1) activeDotIndex = 0; const activeDot = dots[activeDotIndex]; if(activeDot) activeDot.classList.add('active');} function resetJfySliderInterval() { clearInterval(jfySliderInterval); jfySliderInterval = setInterval(() => moveJfySlide(1), 4000); }
     </script>
 </body>
 </html>
