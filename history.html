@@ -108,26 +108,32 @@
         .flip-card-front img, .flip-card-back img { width: 100%; height: 100%; object-fit: cover; }
         @keyframes auto-flip { 0%, 45% { transform: rotateY(0deg); } 50%, 95% { transform: rotateY(180deg); } 100% { transform: rotateY(0deg); } }
         
-        /* === NEW "JUST FOR YOU" SECTION STYLES === */
+        /* === FINAL "JUST FOR YOU" SECTION STYLES === */
         #just-for-you-section { padding: 1.5rem 1rem; }
-        .jfy-grid { display: grid; grid-template-columns: 40% 1fr; gap: 1rem; }
-        .jfy-poster-card { background-color: #f0f8ff; border-radius: 1rem; overflow: hidden; position: relative; height: 100%; }
-        .jfy-poster-slider { height: 200%; display: flex; flex-direction: column; animation: jfy-slide-up 10s infinite; }
-        .jfy-poster-slide { width: 100%; height: 50%; flex-shrink: 0; }
+        .jfy-main-container { border-radius: 1rem; padding: 1rem; background-color: var(--bg-light); display: flex; flex-direction: column; aspect-ratio: 1080 / 1002; }
+        .jfy-main-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; flex-shrink: 0; }
+        .jfy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; flex-grow: 1; min-height: 0; }
+        
+        .jfy-poster-card { border-radius: 1rem; overflow: hidden; position: relative; }
+        .jfy-poster-slider-container { position: relative; width: 100%; height: 100%; }
+        .jfy-poster-slider { display: flex; height: 100%; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+        .jfy-poster-slide { width: 100%; height: 100%; flex-shrink: 0; }
         .jfy-poster-slide img { width: 100%; height: 100%; object-fit: cover; }
-        @keyframes jfy-slide-up {
-            0%, 45% { transform: translateY(0); }
-            50%, 95% { transform: translateY(-50%); }
-            100% { transform: translateY(0); }
-        }
-        .jfy-deals-card { display: flex; flex-direction: column; gap: 0.5rem; }
-        .jfy-deals-title { font-weight: 700; font-size: 1.1rem; color: var(--text-dark); }
-        .jfy-deals-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; flex-grow: 1; }
-        .jfy-main-product, .jfy-sub-products { background-color: white; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); }
-        .jfy-main-product { flex-grow: 2; }
-        .jfy-sub-products { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-        .jfy-sub-product-item { background-color: white; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); }
-        .jfy-main-product img, .jfy-sub-product-item img { width: 100%; height: 100%; object-fit: cover; }
+        .jfy-slider-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 10; }
+        .jfy-slider-dots .dot { width: 6px; height: 6px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s ease; }
+        .jfy-slider-dots .dot.active { background: white; transform: scale(1.2); }
+        
+        .jfy-deals-card { display: flex; flex-direction: column; gap: 0.75rem; }
+        .jfy-main-product { background-color: white; border-radius: 0.75rem; overflow: hidden; position: relative; padding-top: 100%; }
+        .jfy-main-product img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .jfy-sub-products { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex-grow: 1; }
+        
+        .jfy-sub-product-item { background-color: white; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; text-decoration: none; }
+        .jfy-sub-product-item .img-wrapper { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; }
+        .jfy-sub-product-item .img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .jfy-sub-product-item .details { padding: 0.5rem; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .jfy-sub-product-item .name { font-size: 0.7rem; font-weight: 500; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .jfy-sub-product-item .discount { font-size: 0.75rem; font-weight: 600; color: #16a34a; margin-top: 0.125rem; }
         /* === END OF "JUST FOR YOU" SECTION STYLES === */
 
         .sponsor-card { border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); overflow: hidden; margin: 1.5rem; }
@@ -280,29 +286,27 @@
         function loadDataFromFirebase(database) {
             const homepageRef = database.ref('ramazone/homepage');
             homepageRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
-                    const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
-                    
-                    const allAvailableProducts = [...festiveProducts, ...highlightedProducts]
-                        .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
+                const data = snapshot.val() || {};
+                const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
+                const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
+                
+                const allAvailableProducts = [...festiveProducts, ...highlightedProducts]
+                    .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
 
-                    renderSlider(data.slider);
-                    renderSearch(data.search);
-                    renderNormalCategories(data.normalCategories);
-                    renderFestiveCollection(data.festiveCollection);
-                    renderInfoMarquee(data.infoMarquee);
-                    renderFlipCardSection(data.flipCard);
-                    renderJustForYouSection(data.justForYou, allAvailableProducts);
-                    
-                    const dealsProducts = getDealsOfTheDayProducts(data.highlightedProducts, data.normalCategories, allAvailableProducts);
-                    renderHighlightedProducts(dealsProducts);
+                renderSlider(data.slider);
+                renderSearch(data.search);
+                renderNormalCategories(data.normalCategories);
+                renderFestiveCollection(data.festiveCollection);
+                renderInfoMarquee(data.infoMarquee);
+                renderFlipCardSection(data.flipCard);
+                renderJustForYouSection(data.justForYou, allAvailableProducts);
+                
+                const dealsProducts = getDealsOfTheDayProducts(data.highlightedProducts, data.normalCategories, allAvailableProducts);
+                renderHighlightedProducts(dealsProducts);
 
-                    renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
-                    renderFooter(data.footer);
-                    document.getElementById('copyright-year').textContent = new Date().getFullYear();
-                }
+                renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
+                renderFooter(data.footer);
+                document.getElementById('copyright-year').textContent = new Date().getFullYear();
             }, (error) => {
                  console.error("Firebase read failed: " + error.name);
             });
@@ -375,16 +379,18 @@
 
         function renderJustForYouSection(jfyData, allProducts) {
             const section = document.getElementById('just-for-you-section');
-            if (!section || !jfyData) { if(section) section.style.display = 'none'; return; }
+            if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
 
             const poster = jfyData.poster;
             const deals = jfyData.topDeals;
 
-            const posterHTML = poster && poster.images && poster.images.length >= 2 ? `
-                <a href="${poster.linkUrl || '#'}" class="jfy-poster-card" style="background-color:${poster.backgroundColor || '#f0f8ff'};">
-                    <div class="jfy-poster-slider">
-                        <div class="jfy-poster-slide"><img src="${poster.images[0]}" alt="Poster Image 1"></div>
-                        <div class="jfy-poster-slide"><img src="${poster.images[1]}" alt="Poster Image 2"></div>
+            const posterHTML = poster && poster.images && poster.images.length >= 3 ? `
+                <a href="${poster.linkUrl || '#'}" class="jfy-poster-card">
+                    <div class="jfy-poster-slider-container">
+                         <div class="jfy-poster-slider">
+                            ${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image"></div>`).join('')}
+                         </div>
+                         <div class="jfy-slider-dots"></div>
                     </div>
                 </a>
             ` : '';
@@ -393,28 +399,50 @@
             const subProduct1 = allProducts.find(p => p.id === deals?.subProductIds?.[0]);
             const subProduct2 = allProducts.find(p => p.id === deals?.subProductIds?.[1]);
 
+            let subProduct1Discount = '';
+            if (subProduct1 && subProduct1.originalPrice && Number(subProduct1.originalPrice) > Number(subProduct1.displayPrice)) {
+                subProduct1Discount = `<p class="discount">${Math.round(((subProduct1.originalPrice - subProduct1.displayPrice) / subProduct1.originalPrice) * 100)}% OFF</p>`;
+            }
+            let subProduct2Discount = '';
+            if (subProduct2 && subProduct2.originalPrice && Number(subProduct2.originalPrice) > Number(subProduct2.displayPrice)) {
+                subProduct2Discount = `<p class="discount">${Math.round(((subProduct2.originalPrice - subProduct2.displayPrice) / subProduct2.originalPrice) * 100)}% OFF</p>`;
+            }
+
             const dealsHTML = deals && mainProduct && subProduct1 && subProduct2 ? `
                 <div class="jfy-deals-card">
-                    <h3 class="jfy-deals-title">${deals.title || 'Top Deals'}</h3>
-                    <div class="jfy-deals-grid">
-                        <a href="./product-details.html?id=${mainProduct.id}" class="jfy-main-product">
-                            <img src="${(mainProduct.images && mainProduct.images[0]) || ''}" alt="${mainProduct.name}">
+                    <a href="./product-details.html?id=${mainProduct.id}" class="jfy-main-product">
+                        <img src="${(mainProduct.images && mainProduct.images[0]) || ''}" alt="${mainProduct.name}">
+                    </a>
+                    <div class="jfy-sub-products">
+                        <a href="./product-details.html?id=${subProduct1.id}" class="jfy-sub-product-item">
+                            <div class="img-wrapper"><img src="${(subProduct1.images && subProduct1.images[0]) || ''}" alt="${subProduct1.name}"></div>
+                            <div class="details">
+                                <p class="name">${subProduct1.name}</p>
+                                ${subProduct1Discount}
+                            </div>
                         </a>
-                        <div class="jfy-sub-products">
-                            <a href="./product-details.html?id=${subProduct1.id}" class="jfy-sub-product-item">
-                                <img src="${(subProduct1.images && subProduct1.images[0]) || ''}" alt="${subProduct1.name}">
-                            </a>
-                            <a href="./product-details.html?id=${subProduct2.id}" class="jfy-sub-product-item">
-                               <img src="${(subProduct2.images && subProduct2.images[0]) || ''}" alt="${subProduct2.name}">
-                            </a>
-                        </div>
+                        <a href="./product-details.html?id=${subProduct2.id}" class="jfy-sub-product-item">
+                           <div class="img-wrapper"><img src="${(subProduct2.images && subProduct2.images[0]) || ''}" alt="${subProduct2.name}"></div>
+                           <div class="details">
+                                <p class="name">${subProduct2.name}</p>
+                                ${subProduct2Discount}
+                            </div>
+                        </a>
                     </div>
                 </div>
             ` : '';
             
             if(posterHTML && dealsHTML) {
-                section.innerHTML = `<div class="jfy-grid">${posterHTML}${dealsHTML}</div>`;
+                section.innerHTML = `
+                    <div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};">
+                        <h2 class="jfy-main-title">${jfyData.title || 'Just for you'}</h2>
+                        <div class="jfy-grid">
+                            ${posterHTML}
+                            ${dealsHTML}
+                        </div>
+                    </div>`;
                 section.style.display = 'block';
+                initializeJfySlider(poster.images.length);
             } else {
                 section.style.display = 'none';
             }
@@ -597,6 +625,7 @@
             }
         }
 
+        // --- SLIDER LOGIC ---
         let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
         const SLIDER_INTERVAL_MS = 5000;
         
@@ -604,10 +633,7 @@
             const slider = document.getElementById('main-slider');
             const dotsContainer = document.getElementById('slider-dots-container');
             totalSlides = count;
-            if (totalSlides <= 1) {
-                if(dotsContainer) dotsContainer.style.display = 'none';
-                return;
-            };
+            if (totalSlides <= 1) { if(dotsContainer) dotsContainer.style.display = 'none'; return; };
             const firstClone = slider.children[0].cloneNode(true);
             const lastClone = slider.children[totalSlides - 1].cloneNode(true);
             slider.appendChild(firstClone);
@@ -615,75 +641,60 @@
             slider.style.transform = `translateX(-${currentSlide * 100}%)`;
             slider.addEventListener('transitionend', () => {
                 isTransitioning = false;
-                if (currentSlide === 0) {
-                    slider.classList.remove('transitioning');
-                    currentSlide = totalSlides;
-                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-                }
-                if (currentSlide === totalSlides + 1) {
-                    slider.classList.remove('transitioning');
-                    currentSlide = 1;
-                    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-                }
+                if (currentSlide === 0) { slider.classList.remove('transitioning'); currentSlide = totalSlides; slider.style.transform = `translateX(-${currentSlide * 100}%)`; }
+                if (currentSlide === totalSlides + 1) { slider.classList.remove('transitioning'); currentSlide = 1; slider.style.transform = `translateX(-${currentSlide * 100}%)`; }
             });
             dotsContainer.innerHTML = '';
-            for (let i = 0; i < totalSlides; i++) {
-                dotsContainer.innerHTML += `<div class="dot" data-slide="${i+1}"><div class="timer"></div></div>`;
-            }
-            dotsContainer.addEventListener('click', e => {
-                if(e.target.closest('.dot')) {
-                    goToSlide(e.target.closest('.dot').dataset.slide);
-                }
-            });
+            for (let i = 0; i < totalSlides; i++) { dotsContainer.innerHTML += `<div class="dot" data-slide="${i+1}"><div class="timer"></div></div>`; }
+            dotsContainer.addEventListener('click', e => { if(e.target.closest('.dot')) { goToSlide(e.target.closest('.dot').dataset.slide); } });
             updateDots();
             resetSliderInterval();
         }
-        function moveSlide(direction) {
-            if (isTransitioning) return;
-            isTransitioning = true;
-            document.getElementById('main-slider').classList.add('transitioning');
-            currentSlide += direction;
-            document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`;
-            updateDots();
-            resetSliderInterval();
-        }
-        function goToSlide(slideNumber) {
-            if (isTransitioning || currentSlide == slideNumber) return;
-            isTransitioning = true;
-            document.getElementById('main-slider').classList.add('transitioning');
-            currentSlide = parseInt(slideNumber);
-            document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`;
-            updateDots();
-            resetSliderInterval();
-        }
+        function moveSlide(direction) { if (isTransitioning) return; isTransitioning = true; document.getElementById('main-slider').classList.add('transitioning'); currentSlide += direction; document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`; updateDots(); resetSliderInterval(); }
+        function goToSlide(slideNumber) { if (isTransitioning || currentSlide == slideNumber) return; isTransitioning = true; document.getElementById('main-slider').classList.add('transitioning'); currentSlide = parseInt(slideNumber); document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`; updateDots(); resetSliderInterval(); }
         function updateDots() {
             const dots = document.querySelectorAll('.slider-dots .dot');
-            dots.forEach(dot => {
-                dot.classList.remove('active');
-                dot.querySelector('.timer').style.transition = 'none';
-                dot.querySelector('.timer').style.width = '0%';
-            });
+            dots.forEach(dot => { dot.classList.remove('active'); dot.querySelector('.timer').style.transition = 'none'; dot.querySelector('.timer').style.width = '0%'; });
             let activeDotIndex = currentSlide - 1;
             if (currentSlide === 0) activeDotIndex = totalSlides - 1;
             if (currentSlide === totalSlides + 1) activeDotIndex = 0;
-            
             const activeDot = dots[activeDotIndex];
-            if(activeDot) {
-                activeDot.classList.add('active');
-                void activeDot.querySelector('.timer').offsetWidth; 
-                activeDot.querySelector('.timer').style.transition = `width var(--slider-interval-duration) linear`;
-                activeDot.querySelector('.timer').style.width = '100%';
-            }
+            if(activeDot) { activeDot.classList.add('active'); void activeDot.querySelector('.timer').offsetWidth; activeDot.querySelector('.timer').style.transition = `width var(--slider-interval-duration) linear`; activeDot.querySelector('.timer').style.width = '100%'; }
         }
         function nextSlide() { moveSlide(1); }
-        function resetSliderInterval() {
-            clearInterval(sliderInterval);
-            sliderInterval = setInterval(nextSlide, SLIDER_INTERVAL_MS);
+        function resetSliderInterval() { clearInterval(sliderInterval); sliderInterval = setInterval(nextSlide, SLIDER_INTERVAL_MS); }
+
+        // --- JFY SLIDER LOGIC ---
+        let jfyCurrentSlide = 0, jfyTotalSlides = 0, jfySliderInterval;
+        function initializeJfySlider(count) {
+            jfyTotalSlides = count;
+            if (jfyTotalSlides <= 1) return;
+            const dotsContainer = document.querySelector('.jfy-slider-dots');
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i < jfyTotalSlides; i++) {
+                dotsContainer.innerHTML += `<div class="dot" data-slide="${i}"></div>`;
+            }
+            updateJfyDots();
+            resetJfySliderInterval();
         }
-        function toggleSocialMedia(event) {
-            event.preventDefault();
-            document.getElementById('social-links-container').classList.toggle('active');
+        function updateJfyDots() {
+            const dots = document.querySelectorAll('.jfy-slider-dots .dot');
+            dots.forEach(dot => dot.classList.remove('active'));
+            if(dots[jfyCurrentSlide]) dots[jfyCurrentSlide].classList.add('active');
         }
+        function nextJfySlide() {
+            jfyCurrentSlide = (jfyCurrentSlide + 1) % jfyTotalSlides;
+            const slider = document.querySelector('.jfy-poster-slider');
+            if(slider) slider.style.transform = `translateX(-${jfyCurrentSlide * 100}%)`;
+            updateJfyDots();
+        }
+        function resetJfySliderInterval() {
+            clearInterval(jfySliderInterval);
+            jfySliderInterval = setInterval(nextJfySlide, 4000);
+        }
+
+        // --- GENERAL ---
+        function toggleSocialMedia(event) { event.preventDefault(); document.getElementById('social-links-container').classList.toggle('active'); }
         function setupScrollAnimations() {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
