@@ -155,30 +155,39 @@
         let selectedDeliveryType = 'Self';
         const RAMAZONE_DELIVERY_CHARGE = 10;
 
+        // UPDATED: Function to fetch config securely
         async function getFirebaseConfig() {
-            return {
-                apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
-                authDomain: "re-store-8e5b3.firebaseapp.com",
-                databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
-                projectId: "re-store-8e5b3",
-                storageBucket: "re-store-8e5b3.appspot.com",
-                messagingSenderId: "747691299697",
-                appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
-            };
+            try {
+                // This endpoint should be your Vercel serverless function
+                const response = await fetch('/api/firebase-config.js');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Failed to fetch Firebase config:', error);
+                return null;
+            }
         }
 
+        // UPDATED: Main initialization function
         async function initializeAppAndLoadProduct() {
             const firebaseConfig = await getFirebaseConfig();
-            if (!firebaseConfig) { document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Application configuration load nahi ho saki.</p>'; return; };
+            if (!firebaseConfig) { 
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Application configuration load nahi ho saki.</p>'; 
+                return; 
+            };
             try {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
                 await fetchAllData(database);
                 fetchProductData();
-            } catch (error) { console.error("Initialization ya data fetch fail ho gaya:", error); document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Product data load nahi ho saka.</p>'; }
+            } catch (error) { 
+                console.error("Initialization ya data fetch fail ho gaya:", error); 
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Product data load nahi ho saka.</p>'; 
+            }
         }
         
-        // UPDATED: Fetches all products into a single cache
         async function fetchAllData(database) {
             const homepageRef = database.ref('ramazone/homepage');
             const snapshot = await homepageRef.get();
@@ -187,7 +196,6 @@
                 const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
                 const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
                 
-                // Combine all products and ensure uniqueness
                 allProductsCache = [...festiveProducts, ...highlightedProducts]
                     .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
                 
@@ -195,7 +203,6 @@
             }
         }
 
-        // UPDATED: Simplified product fetching logic
         function fetchProductData() {
             const params = new URLSearchParams(window.location.search);
             currentProductId = params.get('id');
