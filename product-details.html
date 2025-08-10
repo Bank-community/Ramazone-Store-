@@ -46,7 +46,7 @@
         .desc-block-title { font-weight: 700; font-size: 1rem; color: #111827; margin-bottom: 0.25rem; }
         .desc-block-details { color: #4b5563; margin-bottom: 0.5rem; }
         .desc-block-highlights { list-style-type: disc; padding-left: 1.25rem; color: #374151; }
-        .desc-block-highlights li { margin-bottom: 0.25rem; }
+        .desc-block-highlights li { margin-bottom: 0.25rem; font-weight: 600; } /* Highlight text made bold */
 
         .delivery-option { display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s ease; }
         .delivery-option.selected { border-color: var(--primary-color); background-color: #eef2ff; }
@@ -96,11 +96,18 @@
                         <span id="product-review-count"></span>
                     </div>
                     
-                    <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg mb-4" style="display: none;"></div>
+                    <!-- Offer Tag Removed -->
 
                     <div class="space-y-4 border-t border-b border-gray-200 py-4 my-4">
-                        <!-- Reverted Price Section UI -->
-                        <div id="new-price-section">
+                        <!-- Position Changed: Delivery Options now before Price -->
+                        <div id="delivery-options" class="space-y-3">
+                            <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
+                            <label class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges.</p></div></label>
+                            <label class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p><p class="text-xs text-gray-500">Fast and secure delivery.</p></div></label>
+                        </div>
+
+                        <!-- Position Changed: Price now after Delivery Options -->
+                        <div id="new-price-section" class="pt-4">
                              <div id="lowest-price-tag-container" style="display: none;">
                                 <div class="lowest-price-tag">Lowest Price since Launch</div>
                             </div>
@@ -119,13 +126,6 @@
                                     <span id="price-delivery-charge" class="font-medium text-gray-800"></span>
                                 </div>
                             </div>
-                        </div>
-                        <!-- End Reverted Price Section UI -->
-
-                        <div id="delivery-options" class="space-y-3 pt-4">
-                            <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
-                            <label class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges.</p></div></label>
-                            <label class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p><p class="text-xs text-gray-500">Fast and secure delivery.</p></div></label>
                         </div>
                     </div>
                     
@@ -231,13 +231,7 @@
                 document.getElementById('product-review-count').textContent = `(${data.reviewCount} ratings)`;
             }
 
-            const offerTag = document.getElementById('offer-tag');
-            if (data.offerText) {
-                offerTag.textContent = data.offerText;
-                offerTag.style.color = data.offerTextColor || '#ffffff';
-                offerTag.style.backgroundColor = data.offerBackgroundColor || '#ef4444';
-                offerTag.style.display = 'inline-block';
-            }
+            // Offer tag logic is removed from here
 
             const descriptionContainer = document.getElementById('product-description');
             descriptionContainer.innerHTML = '';
