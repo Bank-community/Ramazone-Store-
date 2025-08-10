@@ -23,6 +23,7 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease; 
             display: block; 
             overflow: hidden; 
+            text-decoration: none;
         }
         .product-card:hover { 
             transform: translateY(-5px); 
@@ -32,6 +33,7 @@
             position: relative; 
             width: 100%; 
             padding-top: 100%; /* 1:1 Aspect Ratio */
+            background-color: #f3f4f6;
         }
         .product-image-container img { 
             position: absolute; 
@@ -43,7 +45,7 @@
         }
         .product-details { 
             padding: 0.75rem; 
-            text-align: center; /* Centered text */
+            text-align: center;
         }
         .product-name { 
             font-weight: 600; 
@@ -51,7 +53,7 @@
             margin-bottom: 0.25rem;
         }
         .product-discount {
-            color: #16a34a; /* Green color for discount */
+            color: #16a34a;
             font-size: 0.875rem;
             font-weight: 600;
         }
@@ -98,10 +100,11 @@
         @keyframes loader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         #search-suggestions { position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); z-index: 60; max-height: 300px; overflow-y: auto; }
-        .suggestion-item { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background-color 0.2s; }
+        .suggestion-item { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background-color 0.2s; text-decoration: none; }
         .suggestion-item:hover { background-color: #f9fafb; }
         .suggestion-item:last-child { border-bottom: none; }
         .suggestion-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-right: 0.75rem; }
+        .suggestion-item span { color: var(--text-dark); }
 
         #category-suggestions { background-color: #f9fafb; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
         .suggestion-tag { display: inline-block; background-color: #e5e7eb; color: #4b5563; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; margin-right: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; }
@@ -120,7 +123,10 @@
         <div class="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
             <a href="./index.html"><img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" class="h-10 w-10 object-contain"></a>
             <div class="flex-1 relative">
-                <div class="relative"><input type="text" id="search-input" placeholder="Search for products..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-color"><div class="absolute left-3 top-1/2 -translate-y-1/2"><img src="https://www.svgrepo.com/show/522266/search.svg" class="h-5 w-5 text-gray-400" alt="Search Icon"></div></div>
+                <div class="relative">
+                    <input type="text" id="search-input" placeholder="Search for products..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-color">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2"><img src="https://www.svgrepo.com/show/522266/search.svg" class="h-5 w-5 text-gray-400" alt="Search Icon"></div>
+                </div>
                 <div id="search-suggestions" class="hidden"></div>
             </div>
              <a href="./index.html" id="close-search-btn" class="text-gray-600 hover:text-gray-900"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></a>
@@ -129,86 +135,97 @@
     </header>
 
     <div class="category-filter-container bg-white py-3 border-b border-gray-200 sticky top-[68px] z-40">
-        <div class="container mx-auto px-4"><div id="category-filter-bar" class="flex items-center space-x-3 overflow-x-auto category-scroll-container"><div class="text-center py-2 px-4 text-gray-500">Loading categories...</div></div></div>
+        <div class="container mx-auto px-4">
+            <div id="category-filter-bar" class="flex items-center space-x-3 overflow-x-auto category-scroll-container">
+                <div class="text-center py-2 px-4 text-gray-500">Loading categories...</div>
+            </div>
+        </div>
     </div>
 
     <main class="container mx-auto p-4 md:p-8">
-        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"></div>
         <div id="loading-indicator" class="text-center py-20"><div class="loader"></div><p class="text-lg font-semibold mt-4 text-gray-600">Loading Products...</p></div>
-        <div id="no-products-message" class="hidden text-center py-20"><div class="mx-auto h-16 w-16 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-box-open fa-2x text-gray-500"></i></div><p class="mt-4 text-xl font-semibold text-gray-700">No Products Found</p><p class="text-gray-500">There are no products available for your search or filter.</p></div>
+        <div id="no-products-message" class="hidden text-center py-20"><div class="mx-auto h-16 w-16 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-box-open fa-2x text-gray-500"></i></div><p class="mt-4 text-xl font-semibold text-gray-700">No Products Found</p><p class="text-gray-500">Aapke search ya filter ke liye koi product nahi mila.</p></div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+            authDomain: "re-store-8e5b3.firebaseapp.com",
+            databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "re-store-8e5b3",
+            storageBucket: "re-store-8e5b3.appspot.com",
+            messagingSenderId: "747691299697",
+            appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
+        };
+        
         let allProducts = [];
         let allCategories = [];
         let currentCategory = 'All';
 
-        // UPDATED: Function to fetch config securely
-        async function getFirebaseConfig() {
-            try {
-                // This endpoint should be your Vercel serverless function
-                const response = await fetch('/api/firebase-config.js');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return await response.json();
-            } catch (error) {
-                console.error('Failed to fetch Firebase config:', error);
-                return null;
-            }
-        }
-
-        // UPDATED: Main initialization function
         async function initializeAppAndLoadData() {
             try {
-                const firebaseConfig = await getFirebaseConfig();
-                if (!firebaseConfig) { 
-                    throw new Error("Firebase config is null");
-                }
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
-                fetchProductsAndCategories(database);
-            } catch (error) {
-                console.error("Initialization or data fetch failed:", error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load data.</p>';
-            }
-        }
-        
-        function fetchProductsAndCategories(database) {
-            const homepageRef = database.ref('ramazone/homepage');
-
-            homepageRef.get().then(snapshot => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    
-                    const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
-                    const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
-                    
-                    allProducts = [...festiveProducts, ...highlightedProducts]
-                        .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
-
-                    allCategories = (data.normalCategories || []).filter((cat, index, self) => cat && cat.name && index === self.findIndex(c => c.name === cat.name));
-                }
+                await fetchAllData(database);
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 currentCategory = urlParams.get('category') || 'All';
 
-                displayCategories(allCategories);
+                displayCategories();
                 filterAndDisplayProducts();
-                setupSearch(allCategories);
+                setupSearch();
                 document.getElementById('loading-indicator').style.display = 'none';
                 
-                if (urlParams.get('focus') === 'true') document.getElementById('search-input').focus();
+                if (urlParams.get('focus') === 'true') {
+                    document.getElementById('search-input').focus();
+                }
 
-            }).catch(error => {
-                console.error("Error fetching data: ", error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Failed to load data.</p>';
-            });
+            } catch (error) {
+                console.error("Initialization or data fetch failed:", error);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Data load nahi ho saka.</p>';
+            }
+        }
+        
+        async function fetchAllData(database) {
+            const dbRef = database.ref('ramazone');
+            const snapshot = await dbRef.get();
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                const homepageData = data.homepage || {};
+                
+                const mainProducts = data.products || [];
+                
+                // Get product IDs from other sections
+                const festiveProductIds = homepageData.festiveCollection?.productIds || [];
+                const jfyMainProductId = homepageData.justForYou?.topDeals?.mainProductId;
+                const jfySubProductIds = homepageData.justForYou?.topDeals?.subProductIds || [];
+                
+                const allReferencedIds = new Set([
+                    ...festiveProductIds,
+                    jfyMainProductId,
+                    ...jfySubProductIds
+                ].filter(Boolean));
+
+                // Combine main product list with products referenced in other sections
+                const referencedProducts = mainProducts.filter(p => allReferencedIds.has(p.id));
+                const combinedProducts = [...mainProducts, ...referencedProducts];
+
+                // Remove duplicates to create the final, unified catalog
+                allProducts = combinedProducts.filter((p, index, self) =>
+                    p && p.id && index === self.findIndex((t) => t.id === p.id)
+                );
+                
+                // Get categories
+                allCategories = (homepageData.normalCategories || []).filter((cat, index, self) => 
+                    cat && cat.name && index === self.findIndex(c => c.name === cat.name)
+                );
+            }
         }
 
-        function displayCategories(categories) {
+        function displayCategories() {
             const categoryBar = document.getElementById('category-filter-bar');
             categoryBar.innerHTML = '';
             const allBtn = document.createElement('button');
@@ -218,7 +235,7 @@
             if (currentCategory === 'All') allBtn.classList.add('active');
             categoryBar.appendChild(allBtn);
 
-            categories.forEach(cat => {
+            allCategories.forEach(cat => {
                 if (cat && cat.name) {
                     const catBtn = document.createElement('button');
                     catBtn.className = 'category-btn rounded-full';
@@ -257,56 +274,41 @@
 
             if (filteredProducts.length > 0) {
                 filteredProducts.forEach(prod => {
-                    const cardLink = document.createElement('a');
-                    cardLink.href = `./product-details.html?id=${prod.id}`;
-                    cardLink.className = 'product-card';
-                    
-                    const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image';
-                    
-                    const ratingTag = prod.rating ? `<div class="product-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
-                    
-                    const offerTag = prod.offerText ? `<span class="product-offer-tag" style="color:${prod.offerTextColor || 'white'}; background-color:${prod.offerBackgroundColor || '#4F46E5'}">${prod.offerText}</span>` : '';
-
-                    let priceHTML = `<p class="text-lg font-bold text-gray-800">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</p>`;
-                    let discountHTML = '';
-
-                    if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
-                        const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
-                        priceHTML = `
-                            <div class="flex items-baseline gap-2 justify-center">
-                                <p class="text-lg font-bold text-gray-800">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</p>
-                                <p class="text-sm text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString('en-IN')}</p>
-                            </div>`;
-                        discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
-                    }
-
-                    cardLink.innerHTML = `
-                        <div class="product-image-container">
-                            <img src="${imageUrl}" alt="${prod.name || 'Product'}">
-                            ${ratingTag}
-                            ${offerTag}
-                        </div>
-                        <div class="product-details">
-                            <p class="product-name truncate">${prod.name || 'Product Name'}</p>
-                            ${priceHTML}
-                            ${discountHTML}
-                        </div>
-                    `;
-                    grid.appendChild(cardLink);
+                    grid.insertAdjacentHTML('beforeend', createProductCardHTML(prod));
                 });
             } else {
                 noProductsMsg.classList.remove('hidden');
             }
         }
 
-        function setupSearch(categories) {
+        function createProductCardHTML(prod) {
+            if (!prod) return '';
+            const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
+            const ratingTag = prod.rating ? `<div class="product-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
+            const offerTag = prod.offerText ? `<span class="product-offer-tag" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</span>` : '';
+            let priceHTML = `<p class="text-lg font-bold text-gray-800">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</p>`;
+            let discountHTML = '';
+
+            if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
+                const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
+                priceHTML = `<div class="flex items-baseline gap-2 justify-center"><p class="text-lg font-bold text-gray-800">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</p><p class="text-sm text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString('en-IN')}</p></div>`;
+                if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
+            }
+
+            return `<a href="./product-details.html?id=${prod.id}" class="product-card">
+                        <div class="product-image-container"><img src="${imageUrl}" alt="${prod.name || 'Product'}">${ratingTag}${offerTag}</div>
+                        <div class="product-details"><p class="product-name truncate">${prod.name || 'Product Name'}</p>${priceHTML}${discountHTML}</div>
+                    </a>`;
+        }
+
+        function setupSearch() {
             const searchInput = document.getElementById('search-input');
             const suggestionsContainer = document.getElementById('search-suggestions');
             const categorySuggestionsContainer = document.getElementById('category-suggestions');
             const searchOverlay = document.getElementById('search-overlay');
             const closeSearchBtn = document.getElementById('close-search-btn');
 
-            categorySuggestionsContainer.innerHTML = categories.map(cat => `<span class="suggestion-tag" data-category="${cat.name}">${cat.name}</span>`).join('');
+            categorySuggestionsContainer.innerHTML = allCategories.map(cat => `<span class="suggestion-tag" data-category="${cat.name}">${cat.name}</span>`).join('');
             
             categorySuggestionsContainer.addEventListener('click', e => {
                 if(e.target.classList.contains('suggestion-tag')) {
@@ -345,7 +347,7 @@
             closeSearchBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 if(searchInput.value) { searchInput.value = ''; filterAndDisplayProducts(); } 
-                else { searchInput.blur(); }
+                else { window.location.href = './index.html'; }
             });
             searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
         }
