@@ -30,12 +30,12 @@
         header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3s, box-shadow 0.3s; }
         
         /* Search Bar Styles */
-        #search-container { background-color: var(--bg-white); padding: 1rem; }
+        #search-container { background-color: var(--bg-white); padding: 0.5rem 1rem; }
         #search-link { display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
         #search-link:hover { border-color: var(--primary-color); }
         #search-link .search-icon { color: var(--text-dark); margin-right: 0.75rem; }
 
-        /* === UPDATED SLIDER STYLES === */
+        /* Slider Styles */
         .slider-wrapper { padding: 0 1rem; margin-top: 0.5rem; }
         .slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; }
         .slider { display: flex; height: 100%; }
@@ -43,30 +43,71 @@
         .slide { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
         .slide video, .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; }
         
-        /* Dots are now outside the container */
-        .slider-dots { display: flex; justify-content: center; gap: 8px; z-index: 10; padding-top: 12px; }
+        .slider-dots { display: flex; justify-content: center; gap: 8px; z-index: 10; padding-top: 0.5rem; }
         .slider-dots .dot { width: 8px; height: 4px; background: rgba(0, 0, 0, 0.15); border-radius: 50px; cursor: pointer; transition: all 0.4s ease; overflow: hidden; }
         .slider-dots .dot.active { background: rgba(0, 0, 0, 0.3); width: 32px; }
         .slider-dots .dot .timer { width: 0%; height: 100%; background: var(--text-dark); border-radius: 50px; }
         .slider-dots .dot.active .timer { width: 100%; transition: width var(--slider-interval-duration) linear; }
-        /* === END OF SLIDER STYLE UPDATES === */
 
-        /* === UPDATED CATEGORY STYLES === */
-        .category-scroller { display: flex; gap: 0.75rem; overflow-x: auto; scroll-behavior: smooth; padding: 0.5rem 1rem; scrollbar-width: none; -ms-overflow-style: none; }
+        /* === FINAL CATEGORY STYLES v9 === */
+        #normal-category-section { padding: 0.5rem 0; } /* Reduced padding */
+        .category-scroller {
+            display: flex;
+            gap: 0.75rem; /* 12px */
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 0.25rem 1rem; /* Reduced padding */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
         .category-scroller::-webkit-scrollbar { display: none; }
-        /* Adjusted flex-basis to show 5 categories */
-        .category-card { flex: 0 0 calc(20% - 0.75rem); max-width: 80px; text-align: center; text-decoration: none; color: var(--text-dark); }
-        .category-card--double { flex: 0 0 calc(40% - 0.75rem); max-width: 160px; }
-        .category-card .img-wrapper { aspect-ratio: 1 / 1; background-color: var(--bg-light); border-radius: 12px; overflow: hidden; margin-bottom: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .category-card .img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+
+        .category-card {
+            flex: 0 0 60px; 
+            width: 60px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+        }
+        .category-card--double {
+            flex: 0 0 132px; /* (60px * 2) + 12px gap */
+            width: 132px;
+        }
+
+        .category-card .img-wrapper {
+            background-color: var(--bg-light);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            width: 100%;
+            height: 60px;
+        }
+        .category-card .img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
         .category-card:hover .img-wrapper img { transform: scale(1.05); }
-        .category-card .category-name { font-size: 0.8rem; font-weight: 600; color: var(--text-dark); line-height: 1.3; }
-        .category-card--double .img-wrapper { aspect-ratio: 2 / 1; }
-        /* === END OF CATEGORY STYLE UPDATES === */
+
+        .category-name {
+            font-size: 0.62rem; 
+            font-weight: 600; 
+            color: var(--text-dark);
+            line-height: 1.3;
+            margin-top: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        /* === END OF CATEGORY STYLE FIX === */
 
         /* Festive Collection */
-        .festive-collection { padding: 2rem 0; margin-top: 1.5rem; position: relative; overflow: hidden; }
-        .festival-headline { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1.5rem; letter-spacing: -0.5px; padding: 0 1rem; }
+        .festive-collection { padding: 1rem 0; margin-top: 0.5rem; position: relative; overflow: hidden; }
+        .festival-headline { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1rem; letter-spacing: -0.5px; padding: 0 1rem; }
         .product-slider { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 0.5rem 1rem; scrollbar-width: none; -ms-overflow-style: none; }
         .product-slider::-webkit-scrollbar { display: none; }
         
@@ -132,7 +173,7 @@
 </head>
 <body class="bg-white">
 
-    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-2">
+    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-1">
         <div class="container mx-auto flex justify-center items-center px-4">
             <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px;">
         </div>
@@ -141,29 +182,24 @@
     <div id="search-container">
          <a id="search-link" href="./products.html?focus=true">
             <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <span id="categoryText">Search for Products...</span>
+            <span class="text-gray-500">Search for&nbsp;&nbsp;<span id="categoryText" class="text-gray-800 font-medium">Products...</span></span>
         </a>
     </div>
 
-    <!-- === UPDATED SLIDER HTML STRUCTURE === -->
     <div class="slider-wrapper">
         <div class="slider-container">
             <div class="slider" id="main-slider"></div>
         </div>
         <div class="slider-dots" id="slider-dots-container"></div>
     </div>
-    <!-- === END OF SLIDER HTML UPDATE === -->
     
     <main class="mb-28 md:mb-0">
-        <!-- === UPDATED CATEGORY HTML STRUCTURE === -->
         <section class="section-container reveal" id="normal-category-section">
-             <!-- "Shop by Category" title removed & space-y-3 class removed for tighter rows -->
              <div>
                 <div class="category-scroller" id="top-category-scroller"></div>
-                <div class="category-scroller mt-2" id="bottom-category-scroller"></div> <!-- Added small margin-top for spacing -->
+                <div class="category-scroller" id="bottom-category-scroller"></div>
              </div>
         </section>
-        <!-- === END OF CATEGORY HTML UPDATE === -->
 
         <section class="festive-collection reveal" id="festive-collection-container">
             <h1 class="festival-headline" id="festive-headline">The Festive Collection</h1>
@@ -234,9 +270,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // NOTE: The Firebase config is hardcoded here for demonstration.
-        // In a real production environment, you should fetch this from your Vercel environment variables
-        // using a serverless function as discussed to keep it secure.
         const firebaseConfig = {
             apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
             authDomain: "re-store-8e5b3.firebaseapp.com",
@@ -265,7 +298,6 @@
             homepageRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    // Create a comprehensive product catalog with unique IDs
                     const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
                     const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
                     
@@ -641,21 +673,23 @@
         function syncCategoryScrollers() {
             const scroller1 = document.getElementById('top-category-scroller');
             const scroller2 = document.getElementById('bottom-category-scroller');
-            if(!scroller1 || !scroller2) return;
-            
+            if (!scroller1 || !scroller2) return;
+
             let isSyncing = false;
 
-            const syncScroll = (source, target) => {
+            const handleScroll = (scrollerA, scrollerB) => {
                 if (isSyncing) return;
                 isSyncing = true;
-                target.scrollLeft = source.scrollLeft;
+                if (scrollerB.scrollLeft !== scrollerA.scrollLeft) {
+                    scrollerB.scrollLeft = scrollerA.scrollLeft;
+                }
                 requestAnimationFrame(() => {
                     isSyncing = false;
                 });
             };
 
-            scroller1.addEventListener('scroll', () => syncScroll(scroller1, scroller2));
-            scroller2.addEventListener('scroll', () => syncScroll(scroller2, scroller1));
+            scroller1.addEventListener('scroll', () => handleScroll(scroller1, scroller2), { passive: true });
+            scroller2.addEventListener('scroll', () => handleScroll(scroller2, scroller1), { passive: true });
         }
     </script>
 </body>
