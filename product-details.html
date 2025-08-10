@@ -71,6 +71,21 @@
         
         #coupon-btn { border-color: var(--primary-color); color: var(--primary-color); }
         #coupon-btn:hover { background-color: var(--primary-color); color: white; }
+
+        /* New Variant Styles */
+        .variant-btn { border: 2px solid #e5e7eb; background-color: white; color: #374151; transition: all 0.2s ease; font-weight: 600; text-align: left; }
+        .variant-btn:hover { border-color: var(--primary-color); }
+        .variant-btn .value { color: var(--primary-color); font-weight: 700; }
+
+        #variant-modal-overlay { transition: opacity 0.3s ease-in-out; }
+        #variant-modal-overlay.hidden { opacity: 0; pointer-events: none; }
+        #variant-modal-overlay:not(.hidden) #variant-modal-content { transform: scale(1); opacity: 1; }
+
+        .variant-option { cursor: pointer; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.75rem; }
+        .variant-option:hover { border-color: #d1d5db; background-color: #f9fafb; }
+        .variant-option.selected { border-color: var(--primary-color); background-color: #eef2ff; font-weight: 600; color: var(--primary-color); }
+        .color-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e5e7eb; flex-shrink: 0; }
+        .variant-option.selected .color-swatch { transform: scale(1.1); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary-color); }
     </style>
 </head>
 <body>
@@ -102,9 +117,14 @@
                         <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition"><img src="https://www.svgrepo.com/show/527876/share.svg" class="w-6 h-6" alt="Share Icon"></button>
                     </div>
 
-                    <div id="rating-section" class="flex items-center gap-2 text-sm text-gray-500 mb-2" style="display: none;">
+                    <div id="rating-section" class="flex items-center gap-2 text-sm text-gray-500 mb-4" style="display: none;">
                         <div id="product-rating-stars" class="rating-stars"></div>
                         <span id="product-review-count"></span>
+                    </div>
+
+                    <div id="variant-selection-section" class="mb-4" style="display: none;">
+                        <div id="variant-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            </div>
                     </div>
                     
                     <div class="space-y-3 border-t border-b border-gray-200 py-3 my-3">
@@ -151,8 +171,19 @@
     </main>
     <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
 
-    <div id="image-modal"><span class="close">&times;</span><a class="modal-nav prev">&#10094;</a><img id="modal-image-content"><a class="modal-nav next">&#10095;</a></div>
+    <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
     <div id="toast-notification"></div>
+
+    <div id="variant-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
+        <div id="variant-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="variant-modal-title" class="text-lg font-bold">Select Option</h3>
+                <button id="variant-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div id="variant-modal-body" class="p-4 overflow-y-auto space-y-3">
+                </div>
+        </div>
+    </div>
 
     <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-3 z-40 border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-4">
@@ -183,6 +214,7 @@
         let mediaItems = [], currentMediaIndex = 0, productQuantity = 1, currentProductData = null, currentProductId = null;
         let allProductsCache = [], validCoupons = [], appliedCoupon = null;
         let selectedDeliveryType = 'Self';
+        let selectedVariants = {}; // NEW: To store selected variant options
         let ramazoneDeliveryCharge = 10;
         let appThemeColor = '#4F46E5';
 
@@ -313,12 +345,14 @@
             });
             
             showMedia(0);
+            renderVariantSelectors(data.variants); // NEW: Render variants
             setupSliderControls();
             setupQuantityControls();
             setupImageModal();
             setupShareButton();
             setupCouponButton();
             setupDeliveryOptions();
+            setupVariantModal(); // NEW: Setup variant modal listeners
             updatePriceDisplay();
             loadSimilarProducts(data.category);
             loadOtherProducts(data.category);
@@ -374,9 +408,9 @@
 
         function getYoutubeEmbedUrl(url) {
             if(!url) return null;
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const regExp = /^.*(http://googleusercontent.com/youtube.com/5\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
-            return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}?controls=1&rel=0&modestbranding=1` : null;
+            return (match && match[2].length === 11) ? `http://googleusercontent.com/youtube.com/6{match[2]}?controls=1&rel=0&modestbranding=1` : null;
         }
 
         function showMedia(index) {
@@ -456,7 +490,17 @@
             const singleItemFinalPrice = basePrice - couponDiscount, totalOrderPrice = (singleItemFinalPrice * productQuantity) + deliveryCharge;
             const productName = currentProductData.name.replace(/\*/g, '').trim();
 
-            let message = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${productName}*\n*Quantity:* ${productQuantity}\n-------------------------------------\n*Price per item:* ₹${basePrice.toLocaleString('en-IN')}\n`;
+            let message = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${productName}*\n`;
+            
+            // NEW: Add selected variants to the message
+            if (Object.keys(selectedVariants).length > 0) {
+                message += `*Options:*\n`;
+                for (const type in selectedVariants) {
+                    message += ` - ${type}: ${selectedVariants[type]}\n`;
+                }
+            }
+            
+            message += `*Quantity:* ${productQuantity}\n-------------------------------------\n*Price per item:* ₹${basePrice.toLocaleString('en-IN')}\n`;
             if (appliedCoupon) message += `*Coupon Discount:* - ₹${couponDiscount.toLocaleString('en-IN')}\n`;
             message += `*Delivery (${selectedDeliveryType}):* + ₹${deliveryCharge.toLocaleString('en-IN')}\n-------------------------------------\n*Total Price:* *₹${totalOrderPrice.toLocaleString('en-IN')}*\n\n*Product ID:* ${currentProductId}\n*Product Link:* ${window.location.href}\n\nPlease let me know if it's available.`;
             document.getElementById('whatsapp-order-link').href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`;
@@ -523,11 +567,91 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
+
+        // --- NEW: VARIANT LOGIC ---
+        function renderVariantSelectors(variants) {
+            const container = document.getElementById('variant-buttons-container');
+            const section = document.getElementById('variant-selection-section');
+            container.innerHTML = '';
+            selectedVariants = {}; // Reset selections
+
+            if (!variants || !Array.isArray(variants) || variants.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            variants.forEach(variant => {
+                const button = document.createElement('button');
+                button.className = 'variant-btn w-full p-3 rounded-lg flex justify-between items-center';
+                button.innerHTML = `<span>${variant.type}</span> <i class="fas fa-chevron-down text-xs"></i>`;
+                button.addEventListener('click', () => openVariantModal(variant));
+                container.appendChild(button);
+            });
+        }
         
-        // --- CORRECTED FUNCTION ---
+        function openVariantModal(variant) {
+            const overlay = document.getElementById('variant-modal-overlay');
+            const titleEl = document.getElementById('variant-modal-title');
+            const bodyEl = document.getElementById('variant-modal-body');
+            
+            titleEl.textContent = `Select ${variant.type}`;
+            bodyEl.innerHTML = '';
+
+            variant.options.forEach(option => {
+                const isSelected = selectedVariants[variant.type] === option.name;
+                const optionEl = document.createElement('div');
+                optionEl.className = `variant-option ${isSelected ? 'selected' : ''}`;
+                
+                let content = '';
+                if (variant.type.toLowerCase() === 'color' && option.value) {
+                    content = `<div class="color-swatch" style="background-color: ${option.value};"></div> <span class="flex-grow">${option.name}</span>`;
+                } else {
+                    content = `<span>${option.name}</span>`;
+                }
+                optionEl.innerHTML = content;
+
+                optionEl.addEventListener('click', () => {
+                    selectedVariants[variant.type] = option.name;
+                    updateVariantButtonDisplay(variant.type, option.name);
+                    updateQuantityAndWhatsAppLink();
+                    closeVariantModal();
+                });
+                bodyEl.appendChild(optionEl);
+            });
+
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('active'), 10); // For transition
+        }
+
+        function closeVariantModal() {
+            const overlay = document.getElementById('variant-modal-overlay');
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 300); // For transition
+        }
+
+        function updateVariantButtonDisplay(type, value) {
+            const container = document.getElementById('variant-buttons-container');
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(button => {
+                if (button.textContent.includes(type)) {
+                    button.innerHTML = `<span>${type}: <span class="value">${value}</span></span> <i class="fas fa-chevron-down text-xs"></i>`;
+                }
+            });
+        }
+
+        function setupVariantModal() {
+            const overlay = document.getElementById('variant-modal-overlay');
+            document.getElementById('variant-modal-close').addEventListener('click', closeVariantModal);
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    closeVariantModal();
+                }
+            });
+        }
+        
         function createCarouselCard(product) {
             const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : '';
-            // FIX: Convert prices to numbers before comparison
             const originalPriceNum = Number(product.originalPrice);
             const displayPriceNum = Number(product.displayPrice);
             
@@ -550,11 +674,9 @@
                     </div>
                 </a>`;
         }
-
-        // --- CORRECTED FUNCTION ---
+        
         function createGridCard(product) {
             const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : '';
-            // FIX: Convert prices to numbers before comparison
             const originalPriceNum = Number(product.originalPrice);
             const displayPriceNum = Number(product.displayPrice);
 
@@ -627,4 +749,3 @@
     </script>
 </body>
 </html>
-
