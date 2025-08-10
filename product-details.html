@@ -98,13 +98,7 @@
                     
                     <!-- Offer Tag Removed -->
 
-                    <div class="space-y-4 border-t border-b border-gray-200 py-4 my-4">
-                        <!-- Position Changed: Delivery Options now before Price -->
-                        <div id="delivery-options" class="space-y-3">
-                            <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
-                            <label class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges.</p></div></label>
-                            <label class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p><p class="text-xs text-gray-500">Fast and secure delivery.</p></div></label>
-                        </div>
+
 
                         <!-- Position Changed: Price now after Delivery Options -->
                         <div id="new-price-section" class="pt-4">
@@ -112,10 +106,10 @@
                                 <div class="lowest-price-tag">Lowest Price since Launch</div>
                             </div>
                             <div class="flex items-center gap-3 mb-2">
-                                <span id="price-final" class="text-3xl font-extrabold text-gray-900"></span>
+                                <span id="price-percentage-discount" class="text-2xl font-bold text-green-600 flex items-center"></span>
                                 <span id="price-original" class="text-xl text-gray-400 line-through"></span>
-<span id="price-percentage-discount" class="text-2xl font-bold text-green-600 flex items-center"></span>
-           </div>
+                                <span id="price-final" class="text-3xl font-extrabold text-gray-900"></span>
+                            </div>
                              <div class="space-y-1 text-sm">
                                 <div id="price-coupon-row" class="flex justify-between items-baseline" style="display: none;">
                                     <span class="text-gray-600">Coupon Discount</span>
@@ -129,6 +123,14 @@
                         </div>
                     </div>
                     
+                                        <div class="space-y-4 border-t border-b border-gray-200 py-4 my-4">
+                        <!-- Position Changed: Delivery Options now before Price -->
+                        <div id="delivery-options" class="space-y-3">
+                            <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
+                            <label class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges.</p></div></label>
+                            <label class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p><p class="text-xs text-gray-500">Fast and secure delivery.</p></div></label>
+                        </div>
+                      
                     <div id="description-section" class="mb-6" style="display: none;"><h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2><div id="product-description" class="space-y-4"></div></div>
 
                     <div class="mt-auto pt-6">
