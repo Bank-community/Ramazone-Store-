@@ -18,91 +18,92 @@
             --bg-light: #F9FAFB;
             --bg-white: #FFFFFF;
             --border-color: #E5E7EB;
+            --slider-interval-duration: 5s; /* Slider timer duration */
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-white); color: var(--text-dark); }
         .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
         .reveal.visible { opacity: 1; transform: translateY(0); }
-        .section-title { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 1.5rem; letter-spacing: -0.5px; }
-        @media (min-width: 768px) { .section-title { font-size: 2rem; } }
-        .section-container { padding: 2rem 1rem; }
-        @media (min-width: 1024px) { .section-container { padding: 3rem 2rem; max-width: 1280px; margin-left: auto; margin-right: auto; } }
+        .section-title { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1.5rem; letter-spacing: -0.5px; padding: 0 1rem; }
+        @media (min-width: 768px) { .section-title { font-size: 1.75rem; } }
+        .section-container { padding: 1.5rem 0; }
+        @media (min-width: 1024px) { .section-container { padding: 2rem 0; } }
         header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3s, box-shadow 0.3s; }
-        .slider-container { position: relative; width: 100%; margin: 0 auto; overflow: hidden; height: 80vw; max-height: 400px; background-color: #e5e7eb; }
-        @media (min-width: 768px) { .slider-container { height: 45vw; max-height: 600px; border-radius: 24px; margin: 1rem auto; max-width: 1280px; } }
+        
+        /* Search Bar Styles */
+        #search-container { background-color: var(--bg-white); padding: 1rem; }
+        #search-link { display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
+        #search-link:hover { border-color: var(--primary-color); }
+        #search-link .search-icon { color: var(--text-dark); margin-right: 0.75rem; }
+
+        /* Slider Styles with Timer Dot */
+        .slider-wrapper { padding: 0 1rem; margin-top: 0.5rem; }
+        .slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; }
         .slider { display: flex; height: 100%; }
         .slider.transitioning { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
         .slide { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
-        .slide video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
-        .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; }
-        .slide .overlay { position: absolute; inset: 0; z-index: 2; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%); }
-        .slider-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; display: flex; justify-content: space-between; padding: 0 1rem; z-index: 10; }
-        .slider-nav button { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
-        .slider-nav button:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.1); }
+        .slide video, .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; }
         .slider-dots { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
-        .slider-dots .dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s ease; }
-        .slider-dots .dot.active { background: white; transform: scale(1.3); }
-        #fakeSearchInput { font-size: 1rem; padding: 14px 24px; cursor: pointer; background-color: var(--bg-white); display: flex; align-items: center; justify-content: space-between; border-radius: 50px; width: 95%; max-width: 600px; margin: -40px auto 1.5rem; position: relative; z-index: 10; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0,0,0,0.04); transition: transform 0.3s ease; }
-        #fakeSearchInput:hover { transform: translateY(-3px); }
-        .search-icon { width: 24px; height: 24px; color: var(--primary-color); }
-        .videos-slider-container { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x mandatory; }
-        .videos-slider-container::-webkit-scrollbar { display: none; }
-        .video-card { flex: 0 0 90%; scroll-snap-align: center; }
-        @media (min-width: 640px) { .video-card { flex-basis: 60%; } }
-        @media (min-width: 1024px) { .video-card { flex-basis: calc(33.33% - 11px); } }
-        .video-card { cursor: pointer; background-color: var(--bg-white); border-radius: 1rem; box-shadow: 0 8px 25px rgba(0,0,0,0.07); overflow: hidden; transition: all 0.3s ease; }
-        .video-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        .video-media { position: relative; padding-top: 56.25%; background-color: #e5e7eb; }
-        .video-media img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .video-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; transition: transform 0.3s; }
-        .video-card:hover .video-play-icon { transform: translate(-50%, -50%) scale(1.1); }
-        .video-content { padding: 1.25rem; }
-        .video-title { font-weight: 700; font-size: 1.125rem; }
-        .video-description { color: var(--text-light); margin-top: 0.5rem; }
-        .video-link { display: inline-block; margin-top: 1rem; color: var(--primary-color); font-weight: 600; text-decoration: none; }
-        .video-link:hover { text-decoration: underline; }
-        #video-lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        #video-lightbox.show { opacity: 1; pointer-events: auto; }
-        #video-lightbox .lightbox-content { position: relative; width: 90%; max-width: 900px; aspect-ratio: 16/9; background-color: #000; }
-        #video-lightbox iframe { width: 100%; height: 100%; border: none; }
-        #video-lightbox .close-btn { position: absolute; top: -40px; right: 0; font-size: 2.5rem; color: white; cursor: pointer; }
-        .festive-collection { padding: 2rem 0; margin: 1.5rem 0; position: relative; overflow: hidden; }
-        @media (min-width: 768px) { .festive-collection { border-radius: 24px; margin: 1.5rem; padding: 3rem 1rem; } }
-        .festival-headline { font-size: 2rem; font-weight: 900; text-align: center; margin-bottom: 1.5rem; color: var(--text-dark); text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
-        @media (min-width: 768px) { .festival-headline { font-size: 2.75rem; } }
-        .product-slider { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 1rem; scrollbar-width: none; -ms-overflow-style: none; }
+        .slider-dots .dot { width: 8px; height: 8px; background: rgba(0, 0, 0, 0.4); border-radius: 50px; cursor: pointer; transition: all 0.4s ease; overflow: hidden; }
+        .slider-dots .dot.active { background: rgba(255, 255, 255, 0.5); width: 32px; }
+        .slider-dots .dot .timer { width: 0%; height: 100%; background: var(--bg-white); border-radius: 50px; }
+        .slider-dots .dot.active .timer { width: 100%; transition: width var(--slider-interval-duration) linear; }
+
+        /* Category Section Styles */
+        .category-scroller { display: flex; gap: 0.75rem; overflow-x: auto; scroll-behavior: smooth; padding: 0.5rem 1rem; scrollbar-width: none; -ms-overflow-style: none; }
+        .category-scroller::-webkit-scrollbar { display: none; }
+        .category-card { flex: 0 0 22%; max-width: 100px; text-align: center; text-decoration: none; color: var(--text-dark); }
+        .category-card--double { flex: 0 0 46%; max-width: 200px; }
+        .category-card .img-wrapper { aspect-ratio: 1 / 1; background-color: var(--bg-light); border-radius: 12px; overflow: hidden; margin-bottom: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .category-card .img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+        .category-card:hover .img-wrapper img { transform: scale(1.05); }
+        .category-card .category-name { font-size: 0.8rem; font-weight: 600; color: var(--text-dark); line-height: 1.3; } /* Unified style */
+        .category-card--double .img-wrapper { aspect-ratio: 2 / 1; }
+
+        /* Festive Collection */
+        .festive-collection { padding: 2rem 0; margin-top: 1.5rem; position: relative; overflow: hidden; }
+        .festival-headline { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1.5rem; letter-spacing: -0.5px; padding: 0 1rem; }
+        .product-slider { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 0.5rem 1rem; scrollbar-width: none; -ms-overflow-style: none; }
         .product-slider::-webkit-scrollbar { display: none; }
-        .product-card { background-color: var(--bg-white); border-radius: 16px; flex: 0 0 calc(50% - 10px); max-width: 200px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; text-decoration: none; overflow: hidden; }
-        @media (min-width: 640px) { .product-card { flex-basis: calc(33.33% - 12px); } }
-        @media (min-width: 1024px) { .product-card { flex-basis: calc(20% - 13px); } }
-        .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12); }
+        
+        /* Product Card Base Styles */
+        .product-card { background-color: var(--bg-white); border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05); transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; text-decoration: none; overflow: hidden; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08); }
         .product-media-container { position: relative; width: 100%; padding-top: 100%; background-color: #f3f4f6; }
         .product-media-container img { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        .product-card:hover .product-media-container img { transform: scale(1.1); }
+        .product-card:hover .product-media-container img { transform: scale(1.08); }
         .product-details { padding: 1rem; text-align: center; }
         .product-name { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.25rem; color: var(--text-dark); }
         .product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; margin-top: 0.5rem; }
         .display-price { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; }
         .original-price { font-size: 0.85rem; text-decoration: line-through; color: var(--text-light); }
-        /* UPDATED: Offer Tag Styling */
-        .festive-offer-tag {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            padding: 2px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 5;
-        }
-        @keyframes auto-flip { 0%, 15% { transform: rotateY(0deg); } 20%, 65% { transform: rotateY(180deg); } 70%, 100% { transform: rotateY(360deg); } }
-        .flip-card-container { perspective: 1000px; }
-        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; animation: auto-flip 10s infinite ease-in-out; }
+        .festive-offer-tag { position: absolute; bottom: 8px; right: 8px; padding: 2px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 5; }
+
+        /* Festive Slider Product Card */
+        .product-slider .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
+        @media (min-width: 640px) { .product-slider .product-card { flex-basis: calc(33.33% - 12px); } }
+        @media (min-width: 1024px) { .product-slider .product-card { flex-basis: calc(20% - 13px); } }
+
+        /* Highlighted Products Grid (Deals of the Day) */
+        #highlighted-products-wrapper { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0 1rem; }
+        @media (min-width: 768px) { #highlighted-products-wrapper { grid-template-columns: repeat(3, 1fr); } }
+
+        /* Flip Card */
+        .flip-card-container { perspective: 1000px; padding: 0 1rem; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; }
+        .flip-card-inner.flipping { animation: auto-flip 10s infinite ease-in-out; }
         .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .flip-card-back { transform: rotateY(180deg); }
         .flip-card-front img, .flip-card-back img { width: 100%; height: 100%; object-fit: cover; }
+        @keyframes auto-flip {
+            0%, 45% { transform: rotateY(0deg); }
+            50%, 95% { transform: rotateY(180deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
         .sponsor-card { border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); overflow: hidden; margin: 1.5rem; }
         .sponsor-card iframe, .sponsor-card img { width: 100%; height: auto; object-fit: cover; aspect-ratio: 16/9; }
+        
+        /* Footer */
         #footer { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); border-radius: 50px; display: flex; justify-content: space-around; padding: 0.5rem; z-index: 100; }
         @media (min-width: 768px) { #footer { display: none; } }
         #footer a { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-light); padding: 0.5rem; border-radius: 50px; transition: color 0.3s, background-color 0.3s; text-decoration: none; }
@@ -124,7 +125,7 @@
         .social-link img { width: 28px; height: 28px; }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-white">
 
     <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-2">
         <div class="container mx-auto flex justify-center items-center px-4">
@@ -132,43 +133,27 @@
         </div>
     </header>
 
-    <div class="slider-container">
-        <div class="slider" id="main-slider"></div>
-        <div class="slider-nav">
-            <button onclick="prevSlide()">❮</button>
-            <button onclick="nextSlide()">❯</button>
-        </div>
-        <div class="slider-dots" id="slider-dots-container"></div>
-    </div>
-    
-    <div class="flex justify-center px-4">
-        <!-- UPDATED: Search link now points to products.html with a focus parameter -->
-        <a id="search-link" href="./products.html?focus=true" class="w-full flex justify-center">
-            <div id="fakeSearchInput">
-                <div>
-                    <span style="color: var(--text-light);">Search for</span>
-                    <span>&nbsp;</span>
-                    <span id="categoryText" style="color: var(--text-dark); font-weight: 600;">Hello Ramazone</span>
-                </div>
-                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            </div>
+    <div id="search-container">
+         <a id="search-link" href="./products.html?focus=true">
+            <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+            <span id="categoryText">Search for Products...</span>
         </a>
     </div>
 
+    <div class="slider-wrapper">
+        <div class="slider-container">
+            <div class="slider" id="main-slider"></div>
+            <div class="slider-dots" id="slider-dots-container"></div>
+        </div>
+    </div>
+    
     <main class="mb-28 md:mb-0">
-        <section class="section-container bg-white reveal" id="special-category-section">
-            <h2 class="section-title">Top Picks For You</h2>
-            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4" id="special-category-wrapper"></div>
-        </section>
-
-        <section class="section-container reveal" id="videos-section">
-            <h2 class="section-title">Latest Offer</h2>
-            <div class="videos-slider-container" id="videos-wrapper"></div>
-        </section>
-
         <section class="section-container reveal" id="normal-category-section">
              <h2 class="section-title">Shop by Category</h2>
-            <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4" id="normal-category-wrapper"></div>
+             <div class="space-y-3">
+                <div class="category-scroller" id="top-category-scroller"></div>
+                <div class="category-scroller" id="bottom-category-scroller"></div>
+             </div>
         </section>
 
         <section class="festive-collection reveal" id="festive-collection-container">
@@ -176,20 +161,29 @@
             <div class="product-slider" id="festive-product-slider"></div>
         </section>
 
-        <section class="section-container reveal" id="flipcard-section">
-        </section>
-
         <div class="sponsor-card reveal" id="dynamic-section-1"></div>
+
         <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
             <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
         </div>
-        <div class="sponsor-card reveal" id="sponsor-section-container"></div>
+
+        <section class="section-container reveal" id="flipcard-section">
+             <div class="flip-card-container w-full aspect-[16/7]">
+                <div class="flip-card-inner" id="flip-card-inner-content">
+                    <!-- Flip card content injected by JS -->
+                </div>
+            </div>
+        </section>
+        
+        <section class="section-container reveal" id="highlighted-products-section">
+            <h2 class="section-title">Deals of the Day</h2>
+            <div id="highlighted-products-wrapper">
+                <!-- Products injected by JavaScript -->
+            </div>
+        </section>
+
         <div class="sponsor-card reveal" id="dynamic-section-2"></div>
 
-        <section class="section-container bg-white reveal" id="advantages-section">
-            <h2 class="section-title">Why <span style="color: var(--primary-color);">Ramazone?</span></h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 px-4" id="advantages-grid"></div>
-        </section>
     </main>
 
     <div id="footer">
@@ -227,25 +221,16 @@
         </div>
     </footer>
 
-    <div id="video-lightbox" onclick="closeVideoLightbox()">
-        <div class="lightbox-content" onclick="event.stopPropagation()">
-            <span class="close-btn" onclick="closeVideoLightbox()">&times;</span>
-            <iframe id="lightbox-youtube-player" style="display:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-    </div>
-
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // NOTE: In a real production environment, use a secure backend endpoint 
-        // to fetch Firebase config instead of hardcoding it.
         const firebaseConfig = {
             apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
             authDomain: "re-store-8e5b3.firebaseapp.com",
             databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "re-store-8e5b3",
-            storageBucket: "re-store-8e5b3.firebasestorage.app",
+            storageBucket: "re-store-8e5b3.appspot.com",
             messagingSenderId: "747691299697",
             appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
         };
@@ -268,18 +253,25 @@
             homepageRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    // Create a comprehensive product catalog with unique IDs
+                    const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
+                    const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
+                    
+                    const allAvailableProducts = [...festiveProducts, ...highlightedProducts]
+                        .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
+
                     renderSlider(data.slider);
                     renderSearch(data.search);
-                    renderSpecialCategories(data.specialCategories);
-                    renderVideosSection(data.videos);
                     renderNormalCategories(data.normalCategories);
                     renderFestiveCollection(data.festiveCollection);
-                    renderFlipCardSection(data.flipCard);
                     renderDynamicSection('#dynamic-section-1', data.dynamicSection1);
                     renderInfoMarquee(data.infoMarquee);
-                    renderSponsor(data.sponsor);
+                    renderFlipCardSection(data.flipCard);
+                    
+                    const dealsProducts = getDealsOfTheDayProducts(data.highlightedProducts, data.normalCategories, allAvailableProducts);
+                    renderHighlightedProducts(dealsProducts);
+
                     renderDynamicSection('#dynamic-section-2', data.dynamicSection2);
-                    renderAdvantages(data.advantages);
                     renderFooter(data.footer);
                     document.getElementById('copyright-year').textContent = new Date().getFullYear();
                 }
@@ -287,45 +279,42 @@
                  console.error("Firebase read failed: " + error.name);
             });
             setupScrollAnimations();
+            syncCategoryScrollers();
         }
         
-        // UPDATED: Function to render festive collection with offer tags
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
-            if (!container || !collectionData || !collectionData.products) return;
-            
-            const headline = document.getElementById('festive-headline');
-            headline.innerText = collectionData.title || 'Special Offers';
-            if (collectionData.headlineColor) {
-                headline.style.color = collectionData.headlineColor;
-            }
+            if (!container || !collectionData) { if(container) container.style.display = 'none'; return; }
+            container.style.display = 'block';
             
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
+            const headline = document.getElementById('festive-headline');
+            headline.innerText = collectionData.title || 'Special Offers';
+            headline.style.color = collectionData.headlineColor || 'var(--text-dark)';
             
             const slider = document.getElementById('festive-product-slider');
             slider.innerHTML = '';
             
             const productsData = collectionData.products;
-            const productList = Array.isArray(productsData)
-                ? productsData.map((p, i) => ({ ...p, id: i }))
-                : Object.keys(productsData).map(key => ({ id: key, ...productsData[key] }));
+            if (!productsData) return;
 
-            productList.forEach(prod => {
+            const productList = Array.isArray(productsData) ? productsData : Object.values(productsData);
+
+            productList.forEach((prod, index) => {
                 if (!prod) return;
+                // FIX: Use a unique and consistent ID for the product link
+                const productId = `festive-${index}`;
                 const mainMedia = (prod.images && prod.images[0]) || '';
-                
-                // Create offer tag HTML if offerText exists
                 let offerTagHtml = '';
                 if (prod.offerText) {
                     const textColor = prod.offerTextColor || '#ffffff';
                     const bgColor = prod.offerBackgroundColor || '#ef4444';
                     offerTagHtml = `<span class="festive-offer-tag" style="color: ${textColor}; background-color: ${bgColor};">${prod.offerText}</span>`;
                 }
-
                 slider.innerHTML += `
-                    <a href="./product-details.html?id=${prod.id}" class="product-card">
+                    <a href="./product-details.html?id=${productId}" class="product-card">
                         <div class="product-media-container">
-                            <img src="${mainMedia}" alt="${prod.name}">
+                            <img src="${mainMedia}" alt="${prod.name}" loading="lazy">
                             ${offerTagHtml}
                         </div>
                         <div class="product-details">
@@ -349,68 +338,25 @@
             if (followLinks && typeof followLinks === 'object') {
                 const mobileLinksContainer = document.getElementById('social-links-container');
                 const desktopLinksContainer = document.getElementById('desktop-social-links');
-                
                 mobileLinksContainer.innerHTML = '';
                 desktopLinksContainer.innerHTML = '';
-
                 const socialPlatforms = {
                     youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', color: '#FF1111' },
                     instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', color: '#E4405F' },
                     facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', color: '#1877F2' },
                     whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', color: '#25D366' }
                 };
-
                 Object.keys(socialPlatforms).forEach(key => {
                     const platform = socialPlatforms[key];
                     const url = followLinks[key];
                     if (url) {
-                        const mobileLinkHtml = `
-                            <a href="${url}" target="_blank" class="social-link" style="background-color: ${platform.color};" title="${key.charAt(0).toUpperCase() + key.slice(1)}">
-                                <img src="${platform.icon}" alt="${key}">
-                            </a>`;
-                        mobileLinksContainer.innerHTML += mobileLinkHtml;
-
-                        const desktopLinkHtml = `
-                            <a href="${url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${key.charAt(0).toUpperCase() + key.slice(1)}">
-                                <img src="${platform.icon}" class="w-7 h-7" alt="${key}">
-                            </a>`;
-                        desktopLinksContainer.innerHTML += desktopLinkHtml;
+                        const mobileLink = `<a href="${url}" target="_blank" class="social-link" style="background-color: ${platform.color};" title="${key.charAt(0).toUpperCase() + key.slice(1)}"><img src="${platform.icon}" alt="${key}"></a>`;
+                        const desktopLink = `<a href="${url}" target="_blank" class="text-gray-500 hover:text-indigo-600 transition-colors" title="${key.charAt(0).toUpperCase() + key.slice(1)}"><img src="${platform.icon}" class="w-7 h-7" alt="${key}"></a>`;
+                        mobileLinksContainer.innerHTML += mobileLink;
+                        desktopLinksContainer.innerHTML += desktopLink;
                     }
                 });
             }
-        }
-
-        function getYoutubeEmbedUrl(url) {
-            let videoId = '';
-            try {
-                const urlObj = new URL(url);
-                if (urlObj.hostname === 'youtu.be') {
-                    videoId = urlObj.pathname.slice(1);
-                } else {
-                    videoId = urlObj.searchParams.get('v');
-                }
-            } catch (e) { return null; }
-            return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&modestbranding=1` : null;
-        }
-
-        function openVideoLightbox(url) {
-            const lightbox = document.getElementById('video-lightbox');
-            const youtubePlayer = document.getElementById('lightbox-youtube-player');
-            if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                const embedUrl = getYoutubeEmbedUrl(url);
-                if (embedUrl) {
-                    youtubePlayer.src = embedUrl;
-                    youtubePlayer.style.display = 'block';
-                    lightbox.classList.add('show');
-                }
-            }
-        }
-
-        function closeVideoLightbox() {
-            const lightbox = document.getElementById('video-lightbox');
-            const youtubePlayer = document.getElementById('lightbox-youtube-player');
-            youtubePlayer.src = '';
-            lightbox.classList.remove('show');
         }
 
         function renderSlider(sliderData) {
@@ -418,125 +364,183 @@
             if (!slider || !sliderData) return;
             slider.innerHTML = sliderData.map(slide => `
                 <a href="${slide.linkUrl || '#'}" class="slide" target="_blank">
-                    ${slide.videoUrl ? `<video src="${slide.videoUrl}" autoplay muted loop playsinline></video>` : ''}
-                    <picture>
-                        <source media="(min-width: 768px)" srcset="${slide.imageUrlDesktop || slide.imageUrlMobile || ''}">
-                        <img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner">
-                    </picture>
-                    <div class="overlay"></div>
+                    ${slide.videoUrl 
+                        ? `<video src="${slide.videoUrl}" autoplay muted loop playsinline></video>` 
+                        : `<picture>
+                                <source media="(min-width: 768px)" srcset="${slide.imageUrlDesktop || slide.imageUrlMobile || ''}">
+                                <img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner" loading="lazy">
+                           </picture>`
+                    }
                 </a>
             `).join('');
             initializeSlider(sliderData.length);
         }
-        function renderVideosSection(videosData) {
-            const wrapper = document.getElementById('videos-wrapper');
-            if (!wrapper || !videosData) return;
-            wrapper.innerHTML = videosData.map(item => `
-                <div class="video-card" onclick="openVideoLightbox('${item.youtubeUrl}')">
-                    <div class="video-media">
-                        <img src="${item.imageUrl || ''}" alt="${item.title || ''}">
-                        ${item.youtubeUrl ? '<div class="video-play-icon"><i class="fas fa-play"></i></div>' : ''}
-                    </div>
-                    <div class="video-content">
-                        <h3 class="video-title">${item.title || ''}</h3>
-                        <p class="video-description">${item.description || ''}</p>
-                        ${item.redirectUrl ? `<a href="${item.redirectUrl}" target="_blank" class="video-link" onclick="event.stopPropagation()">Learn More &rarr;</a>` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
+        
+        // UPDATED: Category rendering with manual link logic
         function renderNormalCategories(categories) {
-            const wrapper = document.getElementById('normal-category-wrapper');
-            if (!wrapper || !categories) return;
-            wrapper.innerHTML = categories.map(cat => `
-                <a href="./products.html?category=${encodeURIComponent(cat.name)}" class="text-center group">
-                    <div class="aspect-square bg-gray-200 rounded-full overflow-hidden transition-transform duration-300 group-hover:scale-110">
-                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-cover">
-                    </div>
-                    <p class="mt-2 text-xs font-medium text-gray-600">${cat.name}</p>
-                </a>
-            `).join('');
+            const topWrapper = document.getElementById('top-category-scroller');
+            const bottomWrapper = document.getElementById('bottom-category-scroller');
+            if (!topWrapper || !bottomWrapper || !Array.isArray(categories)) return;
+            
+            topWrapper.innerHTML = '';
+            bottomWrapper.innerHTML = '';
+
+            const topCategories = categories.filter(cat => cat && cat.row === 'top');
+            const bottomCategories = categories.filter(cat => cat && cat.row !== 'top');
+
+            const renderCategory = (cat) => {
+                const cardClass = cat.size === 'double' ? 'category-card--double' : '';
+                // FIX: Check for linkUrl on double-sized cards
+                const href = (cat.size === 'double' && cat.linkUrl) 
+                    ? cat.linkUrl 
+                    : `./products.html?category=${encodeURIComponent(cat.name)}`;
+                const target = (cat.size === 'double' && cat.linkUrl) ? '_blank' : '';
+
+                return `
+                    <a href="${href}" target="${target}" class="category-card ${cardClass}">
+                        <div class="img-wrapper">
+                            <img src="${cat.imageUrl}" alt="${cat.name}" loading="lazy">
+                        </div>
+                        <p class="category-name">${cat.name}</p>
+                    </a>
+                `;
+            };
+
+            topCategories.forEach(cat => topWrapper.innerHTML += renderCategory(cat));
+            bottomCategories.forEach(cat => bottomWrapper.innerHTML += renderCategory(cat));
         }
+        
         function renderFlipCardSection(flipCardData) {
-            const section = document.getElementById('flipcard-section');
-            if (!section || !flipCardData) return;
+            const section = document.getElementById('flip-card-inner-content');
+            if (!section || !flipCardData || !flipCardData.front || !flipCardData.back) {
+                document.getElementById('flipcard-section').style.display = 'none';
+                return;
+            }
+            document.getElementById('flipcard-section').style.display = 'block';
             section.innerHTML = `
-                <div class="flip-card-container w-full md:w-1/2 mx-auto aspect-video">
-                    <div class="flip-card-inner">
-                        <a href="${flipCardData.front.linkUrl || '#'}" target="_blank" class="flip-card-front">
-                            <img src="${flipCardData.front.imageUrl}" alt="Front of card">
-                        </a>
-                        <a href="${flipCardData.back.linkUrl || '#'}" target="_blank" class="flip-card-back">
-                            <img src="${flipCardData.back.imageUrl}" alt="Back of card">
-                        </a>
-                    </div>
-                </div>
+                <a href="${flipCardData.front.linkUrl || '#'}" target="_blank" class="flip-card-front">
+                    <img src="${flipCardData.front.imageUrl}" alt="Front of card" loading="lazy">
+                </a>
+                <a href="${flipCardData.back.linkUrl || '#'}" target="_blank" class="flip-card-back">
+                    <img src="${flipCardData.back.imageUrl}" alt="Back of card" loading="lazy">
+                </a>
             `;
+            section.classList.add('flipping');
         }
-        function renderSponsor(sponsorData) {
-            const container = document.getElementById('sponsor-section-container');
-            if (!container || !sponsorData) return;
-            const mediaHtml = sponsorData.videoUrl ? `<iframe src="${getYoutubeEmbedUrl(sponsorData.videoUrl)}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>` : `<img src="${sponsorData.imageUrl}" alt="Sponsor">`;
-            container.innerHTML = `<a href="${sponsorData.linkUrl || '#'}" target="_blank">${mediaHtml}</a>`;
+        
+        function getDealsOfTheDayProducts(highlightedFromDB, categories, allProducts) {
+            const MAX_PRODUCTS = 18;
+            let deals = [];
+            const usedProductIds = new Set();
+
+            const getScore = (p) => {
+                const discount = (parseFloat(p.originalPrice) || parseFloat(p.displayPrice)) - (parseFloat(p.displayPrice) || 0);
+                const rating = parseFloat(p.rating) || 0;
+                const hasOffer = p.offerText ? 50 : 0;
+                return (discount * 0.7) + (rating * 10) + hasOffer;
+            };
+
+            if (categories && Array.isArray(categories)) {
+                for (const category of categories) {
+                    const productsInCategory = allProducts.filter(p => p.category === category.name);
+                    if (productsInCategory.length > 0) {
+                        productsInCategory.sort((a, b) => getScore(b) - getScore(a));
+                        const bestProduct = productsInCategory[0];
+                        if (bestProduct && !usedProductIds.has(bestProduct.id)) {
+                            deals.push(bestProduct);
+                            usedProductIds.add(bestProduct.id);
+                        }
+                    }
+                }
+            }
+
+            if (deals.length < MAX_PRODUCTS) {
+                const remainingProducts = allProducts.filter(p => !usedProductIds.has(p.id));
+                remainingProducts.sort((a, b) => getScore(b) - getScore(a));
+                const needed = MAX_PRODUCTS - deals.length;
+                deals.push(...remainingProducts.slice(0, needed));
+            }
+
+            return deals.slice(0, MAX_PRODUCTS);
         }
-        function renderAdvantages(advantagesData) {
-            const grid = document.getElementById('advantages-grid');
-            if (!grid || !advantagesData) return;
-            grid.innerHTML = advantagesData.map(adv => `
-                <div class="bg-white p-4 rounded-xl text-center shadow-sm hover:shadow-md transition-shadow">
-                    <img src="${adv.imageUrl}" alt="${adv.title}" class="w-16 h-16 mx-auto mb-2 object-contain">
-                    <p class="font-semibold text-sm text-gray-800">${adv.title}</p>
-                </div>
-            `).join('');
+
+        function renderHighlightedProducts(productsData) {
+            const wrapper = document.getElementById('highlighted-products-wrapper');
+            const section = document.getElementById('highlighted-products-section');
+            if (!wrapper || !productsData || productsData.length === 0) {
+                if(section) section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+            wrapper.innerHTML = '';
+            
+            productsData.forEach(prod => {
+                if (!prod) return;
+                const mainMedia = (prod.images && prod.images[0]) || '';
+                let offerTagHtml = '';
+                if (prod.offerText) {
+                    offerTagHtml = `<span class="festive-offer-tag" style="color: ${prod.offerTextColor||'#fff'}; background-color: ${prod.offerBackgroundColor||'#ef4444'};">${prod.offerText}</span>`;
+                }
+                wrapper.innerHTML += `
+                    <a href="./product-details.html?id=${prod.id}" class="product-card">
+                        <div class="product-media-container">
+                            <img src="${mainMedia}" alt="${prod.name}" loading="lazy">
+                            ${offerTagHtml}
+                        </div>
+                        <div class="product-details">
+                            <p class="product-name">${prod.name || ''}</p>
+                            <div class="product-price">
+                                ${prod.displayPrice ? `<span class="display-price">₹${prod.displayPrice}</span>` : ''}
+                                ${prod.originalPrice ? `<span class="original-price">₹${prod.originalPrice}</span>` : ''}
+                            </div>
+                        </div>
+                    </a>`;
+            });
         }
-        function renderSearch(d) {
-            if (!d) return;
-            // The href is now static, pointing to the products page with a focus parameter
-            document.getElementById('search-link').href = './products.html?focus=true';
-            const c = d.scrollingTexts || [];
-            if (c.length > 0) {
+
+        function renderDynamicSection(selector, data) {
+            const container = document.querySelector(selector);
+            if (!container || !data || !data.imageUrl) { if (container) container.style.display = 'none'; return; }
+            container.style.display = 'block';
+            container.innerHTML = `<a href="${data.linkUrl||'#'}" target="_blank"><img src="${data.imageUrl}" alt="${data.title||'Dynamic Content'}" loading="lazy"></a>`;
+        }
+        function renderInfoMarquee(text) {
+            const section = document.getElementById('info-marquee-section');
+            if (!text) { section.style.display = 'none'; return; }
+            section.style.display = 'block';
+            section.querySelector('p').innerHTML = text;
+        }
+        function renderSearch(searchData) {
+            if (!searchData || !searchData.scrollingTexts) return;
+            const texts = searchData.scrollingTexts;
+            if (texts.length > 0) {
                 let i = 0;
-                const e = document.getElementById("categoryText");
-                if (window.ci) clearInterval(window.ci);
-                window.ci = setInterval(() => { if (e) e.innerText = c[i]; i = (i + 1) % c.length }, 2000);
+                const element = document.getElementById("categoryText");
+                if (window.searchInterval) clearInterval(window.searchInterval);
+                window.searchInterval = setInterval(() => { 
+                    if (element) {
+                        element.style.opacity = 0;
+                        setTimeout(() => {
+                            element.innerText = texts[i];
+                            element.style.opacity = 1;
+                            i = (i + 1) % texts.length;
+                        }, 300);
+                    }
+                }, 2500);
             }
         }
-        function renderSpecialCategories(c) {
-            const w = document.getElementById('special-category-wrapper');
-            if (!w || !c) return;
-            w.innerHTML = c.map(cat => `
-                <a href="${cat.linkUrl||'#'}" target="_blank" class="text-center group">
-                    <div class="aspect-square bg-white rounded-2xl shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 overflow-hidden">
-                        <img src="${cat.imageUrl}" alt="${cat.name}" class="w-full h-full object-cover">
-                    </div>
-                    <p class="mt-2 text-xs sm:text-sm font-semibold text-gray-700">${cat.name}</p>
-                </a>
-            `).join('');
-        }
-        function renderDynamicSection(s,d) {
-            const c = document.querySelector(s);
-            if (!c || !d || !d.imageUrl) { if (c) c.style.display = 'none'; return; }
-            c.style.display = 'block';
-            c.innerHTML = `
-                <a href="${d.linkUrl||'#'}" target="_blank"><img src="${d.imageUrl}" alt="${d.title||'Dynamic Content'}"></a>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold mb-2">${d.title||''}</h3>
-                    <p class="text-gray-600 mb-4">${d.text||''}</p>
-                    <a href="${d.linkUrl||'#'}" target="_blank" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-full text-sm px-5 py-2.5 text-center">${d.buttonText||'Discover'}</a>
-                </div>
-            `;
-        }
-        function renderInfoMarquee(t) {
-            const s = document.getElementById('info-marquee-section');
-            if (!t) { s.style.display = 'none'; return; }
-            s.style.display = 'block';
-            s.querySelector('p').innerHTML = t;
-        }
+
         let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
+        const SLIDER_INTERVAL_MS = 5000;
+        
         function initializeSlider(count) {
             const slider = document.getElementById('main-slider');
+            const dotsContainer = document.getElementById('slider-dots-container');
             totalSlides = count;
-            if (totalSlides <= 1) return;
+            if (totalSlides <= 1) {
+                if(dotsContainer) dotsContainer.style.display = 'none';
+                return;
+            };
             const firstClone = slider.children[0].cloneNode(true);
             const lastClone = slider.children[totalSlides - 1].cloneNode(true);
             slider.appendChild(firstClone);
@@ -555,22 +559,59 @@
                     slider.style.transform = `translateX(-${currentSlide * 100}%)`;
                 }
             });
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i < totalSlides; i++) {
+                dotsContainer.innerHTML += `<div class="dot" data-slide="${i+1}"><div class="timer"></div></div>`;
+            }
+            dotsContainer.addEventListener('click', e => {
+                if(e.target.closest('.dot')) {
+                    goToSlide(e.target.closest('.dot').dataset.slide);
+                }
+            });
+            updateDots();
             resetSliderInterval();
         }
         function moveSlide(direction) {
             if (isTransitioning) return;
-            const slider = document.getElementById('main-slider');
             isTransitioning = true;
-            slider.classList.add('transitioning');
+            document.getElementById('main-slider').classList.add('transitioning');
             currentSlide += direction;
-            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`;
+            updateDots();
             resetSliderInterval();
         }
+        function goToSlide(slideNumber) {
+            if (isTransitioning || currentSlide == slideNumber) return;
+            isTransitioning = true;
+            document.getElementById('main-slider').classList.add('transitioning');
+            currentSlide = parseInt(slideNumber);
+            document.getElementById('main-slider').style.transform = `translateX(-${currentSlide * 100}%)`;
+            updateDots();
+            resetSliderInterval();
+        }
+        function updateDots() {
+            const dots = document.querySelectorAll('.slider-dots .dot');
+            dots.forEach(dot => {
+                dot.classList.remove('active');
+                dot.querySelector('.timer').style.transition = 'none';
+                dot.querySelector('.timer').style.width = '0%';
+            });
+            let activeDotIndex = currentSlide - 1;
+            if (currentSlide === 0) activeDotIndex = totalSlides - 1;
+            if (currentSlide === totalSlides + 1) activeDotIndex = 0;
+            
+            const activeDot = dots[activeDotIndex];
+            if(activeDot) {
+                activeDot.classList.add('active');
+                void activeDot.querySelector('.timer').offsetWidth; 
+                activeDot.querySelector('.timer').style.transition = `width var(--slider-interval-duration) linear`;
+                activeDot.querySelector('.timer').style.width = '100%';
+            }
+        }
         function nextSlide() { moveSlide(1); }
-        function prevSlide() { moveSlide(-1); }
         function resetSliderInterval() {
             clearInterval(sliderInterval);
-            sliderInterval = setInterval(nextSlide, 5000);
+            sliderInterval = setInterval(nextSlide, SLIDER_INTERVAL_MS);
         }
         function toggleSocialMedia(event) {
             event.preventDefault();
@@ -586,6 +627,44 @@
                 });
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
+
+        // UPDATED: Smoother category scroller sync
+        function syncCategoryScrollers() {
+            const scroller1 = document.getElementById('top-category-scroller');
+            const scroller2 = document.getElementById('bottom-category-scroller');
+            if(!scroller1 || !scroller2) return;
+            
+            let activeScroller = null;
+            
+            const onScroll1 = () => {
+                if (activeScroller === scroller2) return;
+                activeScroller = scroller1;
+                scroller2.scrollLeft = scroller1.scrollLeft;
+            };
+            
+            const onScroll2 = () => {
+                if (activeScroller === scroller1) return;
+                activeScroller = scroller2;
+                scroller1.scrollLeft = scroller2.scrollLeft;
+            };
+
+            scroller1.addEventListener('scroll', onScroll1);
+            scroller2.addEventListener('scroll', onScroll2);
+            
+            // Reset active scroller when user stops scrolling
+            let scrollTimeout;
+            const resetActiveScroller = () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    activeScroller = null;
+                }, 150);
+            };
+            
+            scroller1.addEventListener('pointerdown', resetActiveScroller);
+            scroller2.addEventListener('pointerdown', resetActiveScroller);
+            scroller1.addEventListener('wheel', resetActiveScroller);
+            scroller2.addEventListener('wheel', resetActiveScroller);
         }
     </script>
 </body>
