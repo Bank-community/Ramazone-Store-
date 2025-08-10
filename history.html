@@ -23,85 +23,114 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-white); color: var(--text-dark); }
         .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
         .reveal.visible { opacity: 1; transform: translateY(0); }
-        .section-title { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1.5rem; letter-spacing: -0.5px; padding: 0 1rem; }
-        @media (min-width: 768px) { .section-title { font-size: 1.75rem; } }
+        .section-title { font-size: 1.4rem; font-weight: 800; text-align: left; margin-bottom: 1rem; letter-spacing: -0.5px; padding: 0 1rem; }
+        @media (min-width: 768px) { .section-title { font-size: 1.6rem; } }
         .section-container { padding: 1.5rem 0; }
         @media (min-width: 1024px) { .section-container { padding: 2rem 0; } }
         header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3s, box-shadow 0.3s; }
         
         /* Search Bar Styles */
-        #search-container { background-color: var(--bg-white); padding: 1rem; }
+        #search-container { background-color: var(--bg-white); padding: 0.5rem 1rem; }
         #search-link { display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
         #search-link:hover { border-color: var(--primary-color); }
         #search-link .search-icon { color: var(--text-dark); margin-right: 0.75rem; }
 
-        /* Slider Styles with Timer Dot */
+        /* Slider Styles */
         .slider-wrapper { padding: 0 1rem; margin-top: 0.5rem; }
         .slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; }
         .slider { display: flex; height: 100%; }
         .slider.transitioning { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
         .slide { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
         .slide video, .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; }
-        .slider-dots { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
-        .slider-dots .dot { width: 8px; height: 8px; background: rgba(0, 0, 0, 0.4); border-radius: 50px; cursor: pointer; transition: all 0.4s ease; overflow: hidden; }
-        .slider-dots .dot.active { background: rgba(255, 255, 255, 0.5); width: 32px; }
-        .slider-dots .dot .timer { width: 0%; height: 100%; background: var(--bg-white); border-radius: 50px; }
+        
+        .slider-dots { display: flex; justify-content: center; gap: 8px; z-index: 10; padding-top: 0.5rem; }
+        .slider-dots .dot { width: 8px; height: 4px; background: rgba(0, 0, 0, 0.15); border-radius: 50px; cursor: pointer; transition: all 0.4s ease; overflow: hidden; }
+        .slider-dots .dot.active { background: rgba(0, 0, 0, 0.3); width: 32px; }
+        .slider-dots .dot .timer { width: 0%; height: 100%; background: var(--text-dark); border-radius: 50px; }
         .slider-dots .dot.active .timer { width: 100%; transition: width var(--slider-interval-duration) linear; }
 
-        /* Category Section Styles */
-        .category-scroller { display: flex; gap: 0.75rem; overflow-x: auto; scroll-behavior: smooth; padding: 0.5rem 1rem; scrollbar-width: none; -ms-overflow-style: none; }
-        .category-scroller::-webkit-scrollbar { display: none; }
-        .category-card { flex: 0 0 22%; max-width: 100px; text-align: center; text-decoration: none; color: var(--text-dark); }
-        .category-card--double { flex: 0 0 46%; max-width: 200px; }
-        .category-card .img-wrapper { aspect-ratio: 1 / 1; background-color: var(--bg-light); border-radius: 12px; overflow: hidden; margin-bottom: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        /* Optimized Category Styles */
+        #normal-category-section { padding: 0.5rem 0; }
+        .category-master-scroller { overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; padding: 0 1rem; }
+        .category-master-scroller::-webkit-scrollbar { display: none; }
+        .category-rows-container { display: inline-flex; flex-direction: column; gap: 0.5rem; padding: 0.25rem 0; }
+        .category-row { display: flex; gap: 0.75rem; }
+        .category-card { flex-shrink: 0; width: 60px; text-align: center; text-decoration: none; color: var(--text-dark); display: flex; flex-direction: column; }
+        .category-card--double { width: 132px; }
+        .category-card .img-wrapper { background-color: var(--bg-light); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); width: 100%; height: 60px; }
         .category-card .img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
         .category-card:hover .img-wrapper img { transform: scale(1.05); }
-        .category-card .category-name { font-size: 0.8rem; font-weight: 600; color: var(--text-dark); line-height: 1.3; } /* Unified style */
-        .category-card--double .img-wrapper { aspect-ratio: 2 / 1; }
+        .category-name { font-size: 0.62rem; font-weight: 600; color: var(--text-dark); line-height: 1.3; margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
 
-        /* Festive Collection */
-        .festive-collection { padding: 2rem 0; margin-top: 1.5rem; position: relative; overflow: hidden; }
-        .festival-headline { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1.5rem; letter-spacing: -0.5px; padding: 0 1rem; }
+        /* Festive Collection & Deals Section */
+        .festive-collection { padding: 1rem 0 0.5rem 0; margin-top: 0.5rem; position: relative; overflow: hidden; }
+        #highlighted-products-section { padding-top: 1rem; }
+        .festival-headline { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1rem; letter-spacing: -0.5px; padding: 0 1rem; }
         .product-slider { display: flex; gap: 1rem; overflow-x: auto; scroll-behavior: smooth; padding: 0.5rem 1rem; scrollbar-width: none; -ms-overflow-style: none; }
         .product-slider::-webkit-scrollbar { display: none; }
         
-        /* Product Card Base Styles */
-        .product-card { background-color: var(--bg-white); border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05); transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; text-decoration: none; overflow: hidden; }
-        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08); }
+        /* Updated Product Card Styles */
+        .product-card { background-color: var(--bg-white); border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); border: 1px solid #E5E7EB; transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; text-decoration: none; overflow: hidden; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
         .product-media-container { position: relative; width: 100%; padding-top: 100%; background-color: #f3f4f6; }
-        .product-media-container img { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        .product-card:hover .product-media-container img { transform: scale(1.08); }
-        .product-details { padding: 1rem; text-align: center; }
-        .product-name { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.25rem; color: var(--text-dark); }
-        .product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; margin-top: 0.5rem; }
+        .product-media-container img { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; }
+        .product-details { padding: 0.75rem; text-align: center; }
+        .product-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-dark); }
+        .product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; }
         .display-price { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; }
         .original-price { font-size: 0.85rem; text-decoration: line-through; color: var(--text-light); }
-        .festive-offer-tag { position: absolute; bottom: 8px; right: 8px; padding: 2px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 5; }
+        .product-discount { color: #16a34a; font-size: 0.875rem; font-weight: 600; margin-top: 0.25rem; }
+        
+        .product-rating-tag { position: absolute; top: 0.5rem; right: 0.5rem; background-color: #16a34a; color: white; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem; border: 1px solid rgba(255, 255, 255, 0.5); z-index: 5; }
+        .product-rating-tag .fa-star { font-size: 0.65rem; }
+        .product-offer-tag { position: absolute; bottom: 0.5rem; left: 0.5rem; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 500; z-index: 5; }
 
-        /* Festive Slider Product Card */
         .product-slider .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
         @media (min-width: 640px) { .product-slider .product-card { flex-basis: calc(33.33% - 12px); } }
         @media (min-width: 1024px) { .product-slider .product-card { flex-basis: calc(20% - 13px); } }
 
-        /* Highlighted Products Grid (Deals of the Day) */
         #highlighted-products-wrapper { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0 1rem; }
         @media (min-width: 768px) { #highlighted-products-wrapper { grid-template-columns: repeat(3, 1fr); } }
+        
+        /* Marquee Styles */
+        #info-marquee-section { margin: 1rem 0; padding: 0.75rem 0; }
+        .marquee-viewport { overflow: hidden; }
+        .marquee-text { white-space: nowrap; display: inline-block; padding-left: 100%; animation: marquee-scroll 20s linear infinite; will-change: transform; }
+        @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         /* Flip Card */
+        #flipcard-section { padding-top: 0.5rem; }
         .flip-card-container { perspective: 1000px; padding: 0 1rem; }
         .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; }
         .flip-card-inner.flipping { animation: auto-flip 10s infinite ease-in-out; }
-        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .flip-card-back { transform: rotateY(180deg); }
         .flip-card-front img, .flip-card-back img { width: 100%; height: 100%; object-fit: cover; }
-        @keyframes auto-flip {
-            0%, 45% { transform: rotateY(0deg); }
-            50%, 95% { transform: rotateY(180deg); }
-            100% { transform: rotateY(0deg); }
+        @keyframes auto-flip { 0%, 45% { transform: rotateY(0deg); } 50%, 95% { transform: rotateY(180deg); } 100% { transform: rotateY(0deg); } }
+        
+        /* === NEW "JUST FOR YOU" SECTION STYLES === */
+        #just-for-you-section { padding: 1.5rem 1rem; }
+        .jfy-grid { display: grid; grid-template-columns: 40% 1fr; gap: 1rem; }
+        .jfy-poster-card { background-color: #f0f8ff; border-radius: 1rem; overflow: hidden; position: relative; height: 100%; }
+        .jfy-poster-slider { height: 200%; display: flex; flex-direction: column; animation: jfy-slide-up 10s infinite; }
+        .jfy-poster-slide { width: 100%; height: 50%; flex-shrink: 0; }
+        .jfy-poster-slide img { width: 100%; height: 100%; object-fit: cover; }
+        @keyframes jfy-slide-up {
+            0%, 45% { transform: translateY(0); }
+            50%, 95% { transform: translateY(-50%); }
+            100% { transform: translateY(0); }
         }
+        .jfy-deals-card { display: flex; flex-direction: column; gap: 0.5rem; }
+        .jfy-deals-title { font-weight: 700; font-size: 1.1rem; color: var(--text-dark); }
+        .jfy-deals-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; flex-grow: 1; }
+        .jfy-main-product, .jfy-sub-products { background-color: white; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); }
+        .jfy-main-product { flex-grow: 2; }
+        .jfy-sub-products { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .jfy-sub-product-item { background-color: white; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); }
+        .jfy-main-product img, .jfy-sub-product-item img { width: 100%; height: 100%; object-fit: cover; }
+        /* === END OF "JUST FOR YOU" SECTION STYLES === */
 
         .sponsor-card { border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); overflow: hidden; margin: 1.5rem; }
-        .sponsor-card iframe, .sponsor-card img { width: 100%; height: auto; object-fit: cover; aspect-ratio: 16/9; }
         
         /* Footer */
         #footer { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); border-radius: 50px; display: flex; justify-content: space-around; padding: 0.5rem; z-index: 100; }
@@ -127,7 +156,7 @@
 </head>
 <body class="bg-white">
 
-    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-2">
+    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-1">
         <div class="container mx-auto flex justify-center items-center px-4">
             <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px;">
         </div>
@@ -136,24 +165,20 @@
     <div id="search-container">
          <a id="search-link" href="./products.html?focus=true">
             <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <span id="categoryText">Search for Products...</span>
+            <span class="text-gray-500">Search for&nbsp;&nbsp;<span id="categoryText" class="text-gray-800 font-medium">Products...</span></span>
         </a>
     </div>
 
     <div class="slider-wrapper">
         <div class="slider-container">
             <div class="slider" id="main-slider"></div>
-            <div class="slider-dots" id="slider-dots-container"></div>
         </div>
+        <div class="slider-dots" id="slider-dots-container"></div>
     </div>
     
     <main class="mb-28 md:mb-0">
         <section class="section-container reveal" id="normal-category-section">
-             <h2 class="section-title">Shop by Category</h2>
-             <div class="space-y-3">
-                <div class="category-scroller" id="top-category-scroller"></div>
-                <div class="category-scroller" id="bottom-category-scroller"></div>
-             </div>
+            <!-- Content will be injected by renderNormalCategories JS function -->
         </section>
 
         <section class="festive-collection reveal" id="festive-collection-container">
@@ -161,10 +186,10 @@
             <div class="product-slider" id="festive-product-slider"></div>
         </section>
 
-        <div class="sponsor-card reveal" id="dynamic-section-1"></div>
-
-        <div class="bg-yellow-400 p-3 text-center my-8 shadow-md reveal" id="info-marquee-section">
-            <p class="font-bold text-gray-800" id="info-marquee-text">Loading announcement...</p>
+        <div class="bg-yellow-400 text-center shadow-md reveal" id="info-marquee-section">
+            <div class="marquee-viewport">
+                <p class="font-bold text-gray-800 marquee-text" id="info-marquee-text">Loading announcement...</p>
+            </div>
         </div>
 
         <section class="section-container reveal" id="flipcard-section">
@@ -173,6 +198,10 @@
                     <!-- Flip card content injected by JS -->
                 </div>
             </div>
+        </section>
+
+        <section class="reveal" id="just-for-you-section">
+            <!-- "Just for you" content will be injected by JS -->
         </section>
         
         <section class="section-container reveal" id="highlighted-products-section">
@@ -253,7 +282,6 @@
             homepageRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    // Create a comprehensive product catalog with unique IDs
                     const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
                     const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
                     
@@ -264,9 +292,9 @@
                     renderSearch(data.search);
                     renderNormalCategories(data.normalCategories);
                     renderFestiveCollection(data.festiveCollection);
-                    renderDynamicSection('#dynamic-section-1', data.dynamicSection1);
                     renderInfoMarquee(data.infoMarquee);
                     renderFlipCardSection(data.flipCard);
+                    renderJustForYouSection(data.justForYou, allAvailableProducts);
                     
                     const dealsProducts = getDealsOfTheDayProducts(data.highlightedProducts, data.normalCategories, allAvailableProducts);
                     renderHighlightedProducts(dealsProducts);
@@ -279,12 +307,47 @@
                  console.error("Firebase read failed: " + error.name);
             });
             setupScrollAnimations();
-            syncCategoryScrollers();
         }
         
+        // Universal product card renderer
+        function createProductCardHTML(prod) {
+            if (!prod) return '';
+
+            const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image';
+            const ratingTag = prod.rating ? `<div class="product-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
+            const offerTag = prod.offerText ? `<span class="product-offer-tag" style="color:${prod.offerTextColor || 'white'}; background-color:${prod.offerBackgroundColor || '#4F46E5'}">${prod.offerText}</span>` : '';
+
+            let priceHTML = `<div class="product-price"><span class="display-price">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</span></div>`;
+            let discountHTML = '';
+
+            if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
+                const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
+                priceHTML = `
+                    <div class="product-price">
+                        <span class="display-price">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</span>
+                        <span class="original-price">₹${Number(prod.originalPrice).toLocaleString('en-IN')}</span>
+                    </div>`;
+                discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
+            }
+
+            return `
+                <a href="./product-details.html?id=${prod.id}" class="product-card">
+                    <div class="product-media-container">
+                        <img src="${imageUrl}" alt="${prod.name || 'Product'}" loading="lazy">
+                        ${ratingTag}
+                        ${offerTag}
+                    </div>
+                    <div class="product-details">
+                        <p class="product-name truncate">${prod.name || 'Product Name'}</p>
+                        ${priceHTML}
+                        ${discountHTML}
+                    </div>
+                </a>`;
+        }
+
         function renderFestiveCollection(collectionData) {
             const container = document.getElementById('festive-collection-container');
-            if (!container || !collectionData) { if(container) container.style.display = 'none'; return; }
+            if (!container || !collectionData || !collectionData.products) { if(container) container.style.display = 'none'; return; }
             container.style.display = 'block';
             
             container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
@@ -295,39 +358,68 @@
             const slider = document.getElementById('festive-product-slider');
             slider.innerHTML = '';
             
-            const productsData = collectionData.products;
-            if (!productsData) return;
-
-            const productList = Array.isArray(productsData) ? productsData : Object.values(productsData);
-
-            productList.forEach((prod, index) => {
-                if (!prod) return;
-                // FIX: Use a unique and consistent ID for the product link
-                const productId = `festive-${index}`;
-                const mainMedia = (prod.images && prod.images[0]) || '';
-                let offerTagHtml = '';
-                if (prod.offerText) {
-                    const textColor = prod.offerTextColor || '#ffffff';
-                    const bgColor = prod.offerBackgroundColor || '#ef4444';
-                    offerTagHtml = `<span class="festive-offer-tag" style="color: ${textColor}; background-color: ${bgColor};">${prod.offerText}</span>`;
-                }
-                slider.innerHTML += `
-                    <a href="./product-details.html?id=${productId}" class="product-card">
-                        <div class="product-media-container">
-                            <img src="${mainMedia}" alt="${prod.name}" loading="lazy">
-                            ${offerTagHtml}
-                        </div>
-                        <div class="product-details">
-                            <p class="product-name">${prod.name || ''}</p>
-                            <div class="product-price">
-                                ${prod.displayPrice ? `<span class="display-price">₹${prod.displayPrice}</span>` : ''}
-                                ${prod.originalPrice ? `<span class="original-price">₹${prod.originalPrice}</span>` : ''}
-                            </div>
-                        </div>
-                    </a>`;
-            });
+            const productList = Array.isArray(collectionData.products) ? collectionData.products : Object.values(collectionData.products);
+            slider.innerHTML = productList.map(createProductCardHTML).join('');
         }
-        
+
+        function renderHighlightedProducts(productsData) {
+            const wrapper = document.getElementById('highlighted-products-wrapper');
+            const section = document.getElementById('highlighted-products-section');
+            if (!wrapper || !productsData || productsData.length === 0) {
+                if(section) section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+            wrapper.innerHTML = productsData.map(createProductCardHTML).join('');
+        }
+
+        function renderJustForYouSection(jfyData, allProducts) {
+            const section = document.getElementById('just-for-you-section');
+            if (!section || !jfyData) { if(section) section.style.display = 'none'; return; }
+
+            const poster = jfyData.poster;
+            const deals = jfyData.topDeals;
+
+            const posterHTML = poster && poster.images && poster.images.length >= 2 ? `
+                <a href="${poster.linkUrl || '#'}" class="jfy-poster-card" style="background-color:${poster.backgroundColor || '#f0f8ff'};">
+                    <div class="jfy-poster-slider">
+                        <div class="jfy-poster-slide"><img src="${poster.images[0]}" alt="Poster Image 1"></div>
+                        <div class="jfy-poster-slide"><img src="${poster.images[1]}" alt="Poster Image 2"></div>
+                    </div>
+                </a>
+            ` : '';
+            
+            const mainProduct = allProducts.find(p => p.id === deals?.mainProductId);
+            const subProduct1 = allProducts.find(p => p.id === deals?.subProductIds?.[0]);
+            const subProduct2 = allProducts.find(p => p.id === deals?.subProductIds?.[1]);
+
+            const dealsHTML = deals && mainProduct && subProduct1 && subProduct2 ? `
+                <div class="jfy-deals-card">
+                    <h3 class="jfy-deals-title">${deals.title || 'Top Deals'}</h3>
+                    <div class="jfy-deals-grid">
+                        <a href="./product-details.html?id=${mainProduct.id}" class="jfy-main-product">
+                            <img src="${(mainProduct.images && mainProduct.images[0]) || ''}" alt="${mainProduct.name}">
+                        </a>
+                        <div class="jfy-sub-products">
+                            <a href="./product-details.html?id=${subProduct1.id}" class="jfy-sub-product-item">
+                                <img src="${(subProduct1.images && subProduct1.images[0]) || ''}" alt="${subProduct1.name}">
+                            </a>
+                            <a href="./product-details.html?id=${subProduct2.id}" class="jfy-sub-product-item">
+                               <img src="${(subProduct2.images && subProduct2.images[0]) || ''}" alt="${subProduct2.name}">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            ` : '';
+            
+            if(posterHTML && dealsHTML) {
+                section.innerHTML = `<div class="jfy-grid">${posterHTML}${dealsHTML}</div>`;
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
         function renderFooter(footerData) {
             if (!footerData) return;
             document.getElementById('footer-shop-link').href = './products.html';
@@ -376,21 +468,27 @@
             initializeSlider(sliderData.length);
         }
         
-        // UPDATED: Category rendering with manual link logic
         function renderNormalCategories(categories) {
-            const topWrapper = document.getElementById('top-category-scroller');
-            const bottomWrapper = document.getElementById('bottom-category-scroller');
-            if (!topWrapper || !bottomWrapper || !Array.isArray(categories)) return;
-            
-            topWrapper.innerHTML = '';
-            bottomWrapper.innerHTML = '';
+            const section = document.getElementById('normal-category-section');
+            if (!section || !Array.isArray(categories)) return;
+
+            section.innerHTML = `
+                <div class="category-master-scroller">
+                    <div class="category-rows-container">
+                        <div id="top-category-row" class="category-row"></div>
+                        <div id="bottom-category-row" class="category-row"></div>
+                    </div>
+                </div>
+            `;
+
+            const topWrapper = document.getElementById('top-category-row');
+            const bottomWrapper = document.getElementById('bottom-category-row');
 
             const topCategories = categories.filter(cat => cat && cat.row === 'top');
             const bottomCategories = categories.filter(cat => cat && cat.row !== 'top');
 
-            const renderCategory = (cat) => {
+            const renderCategoryHTML = (cat) => {
                 const cardClass = cat.size === 'double' ? 'category-card--double' : '';
-                // FIX: Check for linkUrl on double-sized cards
                 const href = (cat.size === 'double' && cat.linkUrl) 
                     ? cat.linkUrl 
                     : `./products.html?category=${encodeURIComponent(cat.name)}`;
@@ -406,8 +504,8 @@
                 `;
             };
 
-            topCategories.forEach(cat => topWrapper.innerHTML += renderCategory(cat));
-            bottomCategories.forEach(cat => bottomWrapper.innerHTML += renderCategory(cat));
+            topWrapper.innerHTML = topCategories.map(renderCategoryHTML).join('');
+            bottomWrapper.innerHTML = bottomCategories.map(renderCategoryHTML).join('');
         }
         
         function renderFlipCardSection(flipCardData) {
@@ -464,40 +562,6 @@
             return deals.slice(0, MAX_PRODUCTS);
         }
 
-        function renderHighlightedProducts(productsData) {
-            const wrapper = document.getElementById('highlighted-products-wrapper');
-            const section = document.getElementById('highlighted-products-section');
-            if (!wrapper || !productsData || productsData.length === 0) {
-                if(section) section.style.display = 'none';
-                return;
-            }
-            section.style.display = 'block';
-            wrapper.innerHTML = '';
-            
-            productsData.forEach(prod => {
-                if (!prod) return;
-                const mainMedia = (prod.images && prod.images[0]) || '';
-                let offerTagHtml = '';
-                if (prod.offerText) {
-                    offerTagHtml = `<span class="festive-offer-tag" style="color: ${prod.offerTextColor||'#fff'}; background-color: ${prod.offerBackgroundColor||'#ef4444'};">${prod.offerText}</span>`;
-                }
-                wrapper.innerHTML += `
-                    <a href="./product-details.html?id=${prod.id}" class="product-card">
-                        <div class="product-media-container">
-                            <img src="${mainMedia}" alt="${prod.name}" loading="lazy">
-                            ${offerTagHtml}
-                        </div>
-                        <div class="product-details">
-                            <p class="product-name">${prod.name || ''}</p>
-                            <div class="product-price">
-                                ${prod.displayPrice ? `<span class="display-price">₹${prod.displayPrice}</span>` : ''}
-                                ${prod.originalPrice ? `<span class="original-price">₹${prod.originalPrice}</span>` : ''}
-                            </div>
-                        </div>
-                    </a>`;
-            });
-        }
-
         function renderDynamicSection(selector, data) {
             const container = document.querySelector(selector);
             if (!container || !data || !data.imageUrl) { if (container) container.style.display = 'none'; return; }
@@ -506,9 +570,12 @@
         }
         function renderInfoMarquee(text) {
             const section = document.getElementById('info-marquee-section');
-            if (!text) { section.style.display = 'none'; return; }
+            if (!text) { 
+                if(section) section.style.display = 'none'; 
+                return; 
+            }
             section.style.display = 'block';
-            section.querySelector('p').innerHTML = text;
+            section.querySelector('#info-marquee-text').innerHTML = text;
         }
         function renderSearch(searchData) {
             if (!searchData || !searchData.scrollingTexts) return;
@@ -627,44 +694,6 @@
                 });
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-        }
-
-        // UPDATED: Smoother category scroller sync
-        function syncCategoryScrollers() {
-            const scroller1 = document.getElementById('top-category-scroller');
-            const scroller2 = document.getElementById('bottom-category-scroller');
-            if(!scroller1 || !scroller2) return;
-            
-            let activeScroller = null;
-            
-            const onScroll1 = () => {
-                if (activeScroller === scroller2) return;
-                activeScroller = scroller1;
-                scroller2.scrollLeft = scroller1.scrollLeft;
-            };
-            
-            const onScroll2 = () => {
-                if (activeScroller === scroller1) return;
-                activeScroller = scroller2;
-                scroller1.scrollLeft = scroller2.scrollLeft;
-            };
-
-            scroller1.addEventListener('scroll', onScroll1);
-            scroller2.addEventListener('scroll', onScroll2);
-            
-            // Reset active scroller when user stops scrolling
-            let scrollTimeout;
-            const resetActiveScroller = () => {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    activeScroller = null;
-                }, 150);
-            };
-            
-            scroller1.addEventListener('pointerdown', resetActiveScroller);
-            scroller2.addEventListener('pointerdown', resetActiveScroller);
-            scroller1.addEventListener('wheel', resetActiveScroller);
-            scroller2.addEventListener('wheel', resetActiveScroller);
         }
     </script>
 </body>
