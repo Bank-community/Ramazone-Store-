@@ -524,10 +524,14 @@
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
         
-        // --- UPDATED FUNCTION ---
+        // --- CORRECTED FUNCTION ---
         function createCarouselCard(product) {
             const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : '';
-            const discount = (product.originalPrice && product.originalPrice > product.displayPrice) ? Math.round(((product.originalPrice - product.displayPrice) / product.originalPrice) * 100) : 0;
+            // FIX: Convert prices to numbers before comparison
+            const originalPriceNum = Number(product.originalPrice);
+            const displayPriceNum = Number(product.displayPrice);
+            
+            const discount = (originalPriceNum && originalPriceNum > displayPriceNum) ? Math.round(((originalPriceNum - displayPriceNum) / originalPriceNum) * 100) : 0;
             const discountTag = discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : '';
 
             return `
@@ -539,17 +543,22 @@
                     <div class="p-2">
                         <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
                         <div class="flex items-baseline gap-2">
-                            <p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(product.displayPrice).toLocaleString('en-IN')}</p>
-                            ${product.originalPrice > product.displayPrice ? `<p class="text-xs text-gray-400 line-through">₹${Number(product.originalPrice).toLocaleString('en-IN')}</p>` : ''}
+                            <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString('en-IN')}</p>
+                            ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString('en-IN')}</p>` : ''}
                         </div>
                         ${discountTag}
                     </div>
                 </a>`;
         }
 
+        // --- CORRECTED FUNCTION ---
         function createGridCard(product) {
             const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : '';
-            const discount = (product.originalPrice && product.originalPrice > product.displayPrice) ? Math.round(((product.originalPrice - product.displayPrice) / product.originalPrice) * 100) : 0;
+            // FIX: Convert prices to numbers before comparison
+            const originalPriceNum = Number(product.originalPrice);
+            const displayPriceNum = Number(product.displayPrice);
+
+            const discount = (originalPriceNum && originalPriceNum > displayPriceNum) ? Math.round(((originalPriceNum - displayPriceNum) / originalPriceNum) * 100) : 0;
             const discountTag = discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : '';
 
             return `
@@ -561,8 +570,8 @@
                     <div class="p-2 sm:p-3">
                         <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
                         <div class="flex items-baseline gap-2">
-                            <p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(product.displayPrice).toLocaleString('en-IN')}</p>
-                            ${product.originalPrice > product.displayPrice ? `<p class="text-xs text-gray-400 line-through">₹${Number(product.originalPrice).toLocaleString('en-IN')}</p>` : ''}
+                            <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString('en-IN')}</p>
+                            ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString('en-IN')}</p>` : ''}
                         </div>
                         ${discountTag}
                     </div>
@@ -605,7 +614,7 @@
         }
 
         function loadOtherProducts(currentCategory) {
-            const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = p.originalPrice > p.displayPrice ? ((p.originalPrice - p.displayPrice) / p.originalPrice) * 100 : 0; const rating = p.rating || 0; const score = (rating * 5) + (discount * 0.5); return {...p, score}; }).sort((a, b) => b.score - a.score).slice(0, 20);
+            const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) * 100 : 0; const rating = p.rating || 0; const score = (rating * 5) + (discount * 0.5); return {...p, score}; }).sort((a, b) => b.score - a.score).slice(0, 20);
             const container = document.getElementById('other-products-container');
             container.innerHTML = '';
             if (otherProducts.length > 0) {
