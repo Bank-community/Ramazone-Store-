@@ -46,10 +46,8 @@
         .desc-block-title { font-weight: 700; font-size: 1rem; color: #111827; margin-bottom: 0.25rem; }
         .desc-block-details { color: #4b5563; margin-bottom: 0.5rem; }
         .desc-block-highlights { list-style-type: disc; padding-left: 1.25rem; color: #374151; }
-        .desc-block-highlights li { margin-bottom: 0.25rem; font-weight: 600; }
+        .desc-block-highlights li { margin-bottom: 0.25rem; }
 
-        #offer-tag { position: absolute; bottom: 7.5rem; left: 0.5rem; z-index: 10; display: none; }
-        
         .delivery-option { display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s ease; }
         .delivery-option.selected { border-color: var(--primary-color); background-color: #eef2ff; }
         .delivery-option input[type="radio"] { display: none; }
@@ -58,8 +56,6 @@
 
         .card-rating-tag { position: absolute; bottom: 0.5rem; left: 0.5rem; background-color: rgba(34, 197, 94, 0.9); color: white; padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem; }
         .card-rating-tag .fa-star { font-size: 0.65rem; }
-
-        .lowest-price-tag { background-color: var(--green-color); color: white; padding: 0.25rem 0.75rem; font-size: 0.8rem; font-weight: 600; border-radius: 0.375rem; display: inline-block; margin-bottom: 0.75rem; }
     </style>
 </head>
 <body>
@@ -83,7 +79,6 @@
                          <div id="swipe-overlay" class="absolute inset-0 z-10 hidden"></div>
                     </div>
                     <div class="relative px-4 sm:px-0">
-                        <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg"></div>
                         <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
                     </div>
                 </div>
@@ -98,16 +93,15 @@
                         <div id="product-rating-stars" class="rating-stars"></div>
                         <span id="product-review-count"></span>
                     </div>
+                    
+                    <div id="offer-tag" class="text-sm font-bold px-3 py-1.5 rounded-lg mb-4" style="display: none;"></div>
 
                     <div class="space-y-4 border-t border-b border-gray-200 py-4 my-4">
                         <div id="new-price-section">
-                             <div id="lowest-price-tag-container" style="display: none;">
-                                <div class="lowest-price-tag">Lowest Price since Launch</div>
-                            </div>
                             <div class="flex items-center gap-3 mb-2">
-                                <span id="price-percentage-discount" class="text-2xl font-bold text-green-600 flex items-center"></span>
-                                <span id="price-original" class="text-xl text-gray-400 line-through"></span>
                                 <span id="price-final" class="text-3xl font-extrabold text-gray-900"></span>
+                                <span id="price-original" class="text-xl text-gray-400 line-through"></span>
+                                <span id="price-percentage-discount" class="text-lg font-bold text-green-600 flex items-center"></span>
                             </div>
                              <div class="space-y-1 text-sm">
                                 <div id="price-coupon-row" class="flex justify-between items-baseline" style="display: none;">
@@ -123,8 +117,8 @@
 
                         <div id="delivery-options" class="space-y-3 pt-4">
                             <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
-                            <label id="delivery-option-self" class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges. Expected in <span id="delivery-time-self">2-3 days</span>.</p></div></label>
-                            <label id="delivery-option-ramazone" class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹10)</p><p class="text-xs text-gray-500">Fast delivery. Expected in <span id="delivery-time-ramazone">1-2 days</span>.</p></div></label>
+                            <label class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges.</p></div></label>
+                            <label class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p class="font-semibold text-gray-800">Ramazone Delivery (+₹40)</p><p class="text-xs text-gray-500">Fast and secure delivery.</p></div></label>
                         </div>
                     </div>
                     
@@ -150,33 +144,22 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+            authDomain: "re-store-8e5b3.firebaseapp.com",
+            databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "re-store-8e5b3",
+            storageBucket: "re-store-8e5b3.appspot.com",
+            messagingSenderId: "747691299697",
+            appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
+        };
+        
         let mediaItems = [], currentMediaIndex = 0, productQuantity = 1, currentProductData = null, currentProductId = null;
-        let allProductsCache = null, validCoupons = null, appliedCoupon = null, touchstartX = 0, touchendX = 0;
+        let allProductsCache = [], validCoupons = [], appliedCoupon = null, touchstartX = 0, touchendX = 0;
         let selectedDeliveryType = 'Self';
-        const RAMAZONE_DELIVERY_CHARGE = 10;
+        const RAMAZONE_DELIVERY_CHARGE = 40;
 
-        // UPDATED: Function to fetch config securely
-        async function getFirebaseConfig() {
-            try {
-                // This endpoint should be your Vercel serverless function
-                const response = await fetch('/api/firebase-config.js');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return await response.json();
-            } catch (error) {
-                console.error('Failed to fetch Firebase config:', error);
-                return null;
-            }
-        }
-
-        // UPDATED: Main initialization function
         async function initializeAppAndLoadProduct() {
-            const firebaseConfig = await getFirebaseConfig();
-            if (!firebaseConfig) { 
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Application configuration load nahi ho saki.</p>'; 
-                return; 
-            };
             try {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
@@ -189,17 +172,32 @@
         }
         
         async function fetchAllData(database) {
-            const homepageRef = database.ref('ramazone/homepage');
-            const snapshot = await homepageRef.get();
+            const dbRef = database.ref('ramazone');
+            const snapshot = await dbRef.get();
             if (snapshot.exists()) {
                 const data = snapshot.val();
-                const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
-                const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
+                const homepageData = data.homepage || {};
                 
-                allProductsCache = [...festiveProducts, ...highlightedProducts]
-                    .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
+                const mainProducts = data.products || [];
                 
-                validCoupons = (data.coupons || []).filter(c => c.status === 'active');
+                const festiveProductIds = homepageData.festiveCollection?.productIds || [];
+                const jfyMainProductId = homepageData.justForYou?.topDeals?.mainProductId;
+                const jfySubProductIds = homepageData.justForYou?.topDeals?.subProductIds || [];
+                
+                const allReferencedIds = new Set([
+                    ...festiveProductIds,
+                    jfyMainProductId,
+                    ...jfySubProductIds
+                ].filter(Boolean));
+
+                const referencedProducts = mainProducts.filter(p => allReferencedIds.has(p.id));
+                const combinedProducts = [...mainProducts, ...referencedProducts];
+
+                allProductsCache = combinedProducts.filter((p, index, self) =>
+                    p && p.id && index === self.findIndex((t) => t.id === p.id)
+                );
+                
+                validCoupons = (homepageData.coupons || []).filter(c => c.status === 'active');
             }
         }
 
@@ -208,7 +206,7 @@
             currentProductId = params.get('id');
             if (!currentProductId) { document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Koi product ID nahi mila.</p>'; return; }
             
-            if (!allProductsCache) {
+            if (allProductsCache.length === 0) {
                  document.getElementById('loading-indicator').innerHTML = '<p class="text-center text-red-500 font-bold">Product catalog load nahi hua. Refresh karke try karein.</p>';
                  return;
             }
@@ -250,11 +248,6 @@
                 offerTag.style.color = data.offerTextColor || '#ffffff';
                 offerTag.style.backgroundColor = data.offerBackgroundColor || '#ef4444';
                 offerTag.style.display = 'inline-block';
-            } else { offerTag.style.display = 'none'; }
-
-            if (data.deliveryTime) {
-                document.getElementById('delivery-time-self').textContent = data.deliveryTime;
-                document.getElementById('delivery-time-ramazone').textContent = data.deliveryTime;
             }
 
             const descriptionContainer = document.getElementById('product-description');
@@ -321,24 +314,22 @@
             const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
             const deliveryCharge = selectedDeliveryType === 'Ramazone' ? RAMAZONE_DELIVERY_CHARGE : 0;
             
-            const finalPrice = basePrice + deliveryCharge - couponDiscount;
+            const finalPrice = basePrice - couponDiscount; // Delivery charge is separate
 
-            document.getElementById('price-final').textContent = `₹${basePrice.toLocaleString('en-IN')}`;
+            document.getElementById('price-final').textContent = `₹${finalPrice.toLocaleString('en-IN')}`;
 
             const percentageDiscountEl = document.getElementById('price-percentage-discount');
             const originalPriceEl = document.getElementById('price-original');
 
             if (originalPrice > basePrice) {
                 const discount = Math.round(((originalPrice - basePrice) / originalPrice) * 100);
-                percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`;
+                percentageDiscountEl.textContent = `${discount}% off`;
                 originalPriceEl.textContent = `₹${originalPrice.toLocaleString('en-IN')}`;
                 percentageDiscountEl.style.display = 'flex';
                 originalPriceEl.style.display = 'inline';
-                document.getElementById('lowest-price-tag-container').style.display = 'block';
             } else {
                 percentageDiscountEl.style.display = 'none';
                 originalPriceEl.style.display = 'none';
-                document.getElementById('lowest-price-tag-container').style.display = 'none';
             }
 
             const couponRow = document.getElementById('price-coupon-row');
@@ -387,7 +378,7 @@
             document.getElementById('decrease-quantity').disabled = productQuantity <= 1;
             
             const basePrice = Number(currentProductData.displayPrice), couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0, deliveryCharge = selectedDeliveryType === 'Ramazone' ? RAMAZONE_DELIVERY_CHARGE : 0;
-            const singleItemFinalPrice = basePrice - couponDiscount + deliveryCharge, totalOrderPrice = (singleItemFinalPrice * productQuantity);
+            const singleItemFinalPrice = basePrice - couponDiscount, totalOrderPrice = (singleItemFinalPrice * productQuantity) + deliveryCharge;
             const productName = currentProductData.name.replace(/\*/g, '').trim();
 
             let message = `🛍️ *Ramazone Store Order* 🛍️\n\nHello! I'm interested in this product:\n\n*Product:* *${productName}*\n*Quantity:* ${productQuantity}\n-------------------------------------\n*Price per item:* ₹${basePrice.toLocaleString('en-IN')}\n`;
@@ -413,12 +404,12 @@
             deliveryRadios.forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     selectedDeliveryType = e.target.value;
-                    document.getElementById('delivery-option-self').classList.toggle('selected', selectedDeliveryType === 'Self');
-                    document.getElementById('delivery-option-ramazone').classList.toggle('selected', selectedDeliveryType === 'Ramazone');
+                    document.querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
+                    e.target.closest('.delivery-option').classList.add('selected');
                     updatePriceDisplay();
                 });
             });
-            document.getElementById('delivery-option-self').classList.add('selected');
+            document.querySelector('.delivery-option').classList.add('selected');
         }
 
         function setupImageModal() {
