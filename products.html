@@ -15,7 +15,6 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); }
         
-        /* UPDATED: Product Card Styling */
         .product-card { 
             background-color: white; 
             border-radius: 12px; 
@@ -73,7 +72,6 @@
         }
         .product-rating-tag .fa-star { font-size: 0.65rem; }
         
-        /* NEW: Offer Tag Styling */
         .product-offer-tag {
             position: absolute;
             bottom: 0.5rem;
@@ -147,18 +145,28 @@
         let allCategories = [];
         let currentCategory = 'All';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
-            authDomain: "re-store-8e5b3.firebaseapp.com",
-            databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "re-store-8e5b3",
-            storageBucket: "re-store-8e5b3.appspot.com",
-            messagingSenderId: "747691299697",
-            appId: "1:747691299697:web:20dda42f47c7b39d495cd0"
-        };
-        
+        // UPDATED: Function to fetch config securely
+        async function getFirebaseConfig() {
+            try {
+                // This endpoint should be your Vercel serverless function
+                const response = await fetch('/api/firebase-config.js');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Failed to fetch Firebase config:', error);
+                return null;
+            }
+        }
+
+        // UPDATED: Main initialization function
         async function initializeAppAndLoadData() {
             try {
+                const firebaseConfig = await getFirebaseConfig();
+                if (!firebaseConfig) { 
+                    throw new Error("Firebase config is null");
+                }
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
                 fetchProductsAndCategories(database);
@@ -169,16 +177,19 @@
         }
         
         function fetchProductsAndCategories(database) {
-            const productsRef = database.ref('ramazone/homepage/festiveCollection/products');
-            const categoriesRef = database.ref('ramazone/homepage/normalCategories');
+            const homepageRef = database.ref('ramazone/homepage');
 
-            Promise.all([productsRef.get(), categoriesRef.get()]).then(([productsSnapshot, categoriesSnapshot]) => {
-                if (productsSnapshot.exists()) {
-                    const productsData = productsSnapshot.val();
-                    allProducts = Object.keys(productsData).map(key => ({ id: key, ...productsData[key] })).filter(p => p && p.name);
-                }
-                if (categoriesSnapshot.exists()) {
-                    allCategories = Object.values(categoriesSnapshot.val()).filter((cat, index, self) => cat && cat.name && index === self.findIndex(c => c.name === cat.name));
+            homepageRef.get().then(snapshot => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    
+                    const festiveProducts = (data.festiveCollection?.products || []).map((p, i) => ({...p, id: `festive-${i}`}));
+                    const highlightedProducts = (data.highlightedProducts || []).map((p, i) => ({...p, id: `highlighted-${i}`}));
+                    
+                    allProducts = [...festiveProducts, ...highlightedProducts]
+                        .filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
+
+                    allCategories = (data.normalCategories || []).filter((cat, index, self) => cat && cat.name && index === self.findIndex(c => c.name === cat.name));
                 }
                 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -229,7 +240,6 @@
             });
         }
 
-        // UPDATED: Product card rendering function
         function filterAndDisplayProducts() {
             const grid = document.getElementById('products-grid');
             const noProductsMsg = document.getElementById('no-products-message');
