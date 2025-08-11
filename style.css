@@ -212,3 +212,87 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
 #apply-coupon-btn:hover {
     opacity: 0.9;
 }
+
+/* --- PREVIOUS CSS CODE REMAINS THE SAME --- */
+
+
+
+/* --- PREVIOUS CSS CODE REMAINS THE SAME --- */
+
+/* --- ORDER PAGE STYLES (Final Polish) --- */
+
+/* This makes sure the input fields are styled correctly */
+.form-input, 
+input[type="text"]#customer-name, 
+textarea#customer-address {
+    display: block;
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none; /* Fix for iOS default styles */
+    appearance: none;
+}
+
+.form-input:focus,
+input[type="text"]#customer-name:focus, 
+textarea#customer-address:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.delivery-option.selected, .payment-option.selected {
+    border-color: var(--primary-color);
+    background-color: #eef2ff;
+}
+
+.form-radio {
+    width: 1rem; height: 1rem;
+    color: var(--primary-color);
+}
+.coupon-apply-btn {
+    margin-left: 0.75rem; padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem; background-color: var(--primary-color);
+    color: white; font-weight: 600; flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+.coupon-apply-btn:hover { background-color: #4338ca; }
+
+/* Quantity Selector on Order Page */
+.quantity-selector-order {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
+}
+.quantity-selector-order button {
+    background-color: transparent;
+    border: none;
+    color: var(--primary-color);
+    font-weight: bold;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+.quantity-selector-order span {
+    font-size: 1rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Toast Notification Styles */
+#toast-notification {
+    position: fixed; bottom: -100px; left: 50%;
+    transform: translateX(-50%); background-color: #333;
+    color: white; padding: 12px 24px; border-radius: 8px;
+    font-size: 14px; z-index: 2000;
+    transition: bottom 0.5s ease-in-out, background-color 0.3s;
+}
+#toast-notification.show { bottom: 80px; }
+#toast-notification.success { background-color: var(--green-color); }
+#toast-notification.error { background-color: #ef4444; }
