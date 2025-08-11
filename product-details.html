@@ -109,6 +109,18 @@
         </div>
     </div>
 
+    <div id="coupon-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
+        <div id="coupon-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-bold text-gray-800">Apply Coupon</h3>
+                <button id="coupon-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">×</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <input type="text" id="coupon-input" placeholder="Enter Coupon Code" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2">
+                <button id="apply-coupon-btn" class="w-full flex items-center justify-center font-bold py-3 px-4 rounded-xl text-lg text-white shadow-lg transition-all duration-300">Apply Coupon</button>
+            </div>
+        </div>
+    </div>
     <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-3 z-40 border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-4">
             <div class="grid grid-cols-2 gap-3">

@@ -190,3 +190,25 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
 .variant-option.selected { border-color: var(--primary-color); background-color: #eef2ff; font-weight: 600; color: var(--primary-color); }
 .color-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e5e7eb; flex-shrink: 0; }
 .variant-option.selected .color-swatch { transform: scale(1.1); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary-color); }
+
+/* NEW: Coupon Modal Styles */
+#coupon-modal-overlay {
+    transition: opacity 0.3s ease-in-out;
+}
+#coupon-modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+#coupon-modal-overlay:not(.hidden) #coupon-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+#coupon-input {
+    --tw-ring-color: var(--primary-color);
+}
+#apply-coupon-btn {
+    background-color: var(--primary-color);
+}
+#apply-coupon-btn:hover {
+    opacity: 0.9;
+}
