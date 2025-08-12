@@ -23,7 +23,7 @@
         </div>
     </header>
 
-    <main id="product-content" class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-0 sm:mt-6 mb-12 pb-28" style="display: none;">
+    <main id="product-content" class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-0 sm:mt-2 mb-12 pb-28" style="display: none;">
         <div class="bg-white sm:rounded-2xl sm:shadow-lg overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2">
                 <div class="p-0 sm:p-4 lg:p-6">
@@ -50,7 +50,7 @@
                         <div id="variant-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         </div>
                     </div>
-                    
+
                     <div class="space-y-3 border-t border-b border-gray-200 py-3 my-3">
                         <div id="new-price-section">
                              <div id="lowest-price-tag-container" style="display: none;">
@@ -61,35 +61,31 @@
                                 <span id="price-original" class="text-xl text-gray-400 line-through"></span>
                                 <span id="price-final" class="text-3xl font-extrabold text-gray-900"></span>
                             </div>
-                             <div class="space-y-1 text-sm">
-                                <div id="price-coupon-row" class="flex justify-between items-baseline" style="display: none;">
-                                    <span class="text-gray-600">Coupon Discount</span>
-                                    <span id="price-coupon-discount" class="font-medium text-gray-800"></span>
-                                </div>
-                                <div class="flex justify-between items-baseline">
-                                    <span class="text-gray-600">Delivery Charges</span>
-                                    <span id="price-delivery-charge" class="font-medium text-gray-800"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="delivery-options" class="space-y-3 pt-2">
-                            <h3 class="text-md font-semibold text-gray-800">Choose Delivery Option</h3>
-                            <label class="delivery-option"><input type="radio" name="delivery" value="Self" checked><i class="fas fa-walking icon"></i><div><p class="font-semibold text-gray-800">Self Delivery</p><p class="text-xs text-gray-500">No extra charges.</p></div></label>
-                            <label class="delivery-option"><input type="radio" name="delivery" value="Ramazone"><i class="fas fa-truck-fast icon"></i><div><p id="ramazone-delivery-label" class="font-semibold text-gray-800">Ramazone Delivery</p><p class="text-xs text-gray-500">Fast and secure delivery.</p></div></label>
                         </div>
                     </div>
-                    
+
                     <div id="description-section" class="mb-6" style="display: none;"><h2 class="text-lg font-bold text-gray-900 mb-2">Product Details</h2><div id="product-description" class="space-y-4"></div></div>
 
-                    </div>
+                </div>
             </div>
         </div>
-        
-        <div id="recently-viewed-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;"><h2 class="text-2xl font-bold text-gray-800 mb-4">Recently Viewed</h2><div id="recently-viewed-container" class="carousel-container pb-4"></div></div>
-        <div id="similar-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;"><h2 class="text-2xl font-bold text-gray-800 mb-4">Similar Products</h2><div id="similar-products-container" class="carousel-container pb-4"></div></div>
-        <div id="other-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;"><h2 class="text-2xl font-bold text-gray-800 mb-4">Other Products</h2><div id="other-products-container" class="grid grid-cols-2 gap-3 sm:gap-4"></div></div>
+
+        <div id="recently-viewed-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Recently Viewed</h2>
+            <div id="recently-viewed-container" class="carousel-container pb-4"></div>
+        </div>
+
+        <div id="similar-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Similar Products</h2>
+            <div id="similar-products-container" class="carousel-container pb-4"></div>
+        </div>
+
+        <div id="other-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Other Products</h2>
+            <div id="other-products-container" class="grid grid-cols-2 gap-3 sm:gap-4"></div>
+        </div>
     </main>
+
     <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Product load ho raha hai...</p></div>
 
     <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
@@ -116,7 +112,7 @@
                         <button id="increase-quantity" class="rounded-r-lg">+</button>
                     </div>
                 </div>
-                
+
                 <a id="order-now-link" href="#" class="whatsapp-btn w-full flex items-center justify-center text-white font-bold py-3 px-4 rounded-xl text-lg shadow-lg">
                     <i class="fab fa-whatsapp text-2xl mr-2"></i> Order Now
                 </a>
@@ -126,7 +122,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
+
     <script src="product-details-main.js"></script>
 </body>
 </html>
