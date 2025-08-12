@@ -1,11 +1,37 @@
 // --- GLOBAL STATE for Order Page ---
 let allProductsCache = [];
 let validCoupons = [];
-let orderItems = [];
+let orderItems = []; // This will now be populated from the cart
 let appliedCoupon = null;
 let deliveryFee = 0;
-let ramazoneDeliveryCharge = 10; // Default delivery charge
+let ramazoneDeliveryCharge = 10;
 let database;
+
+// --- NEW CART HELPER FUNCTIONS ---
+/**
+ * Retrieves the cart from localStorage.
+ * @returns {Array} The cart array, or an empty array if not found.
+ */
+function getCart() {
+    try {
+        const cart = localStorage.getItem('ramazoneCart');
+        return cart ? JSON.parse(cart) : [];
+    } catch (e) {
+        console.error("Could not parse cart from localStorage", e);
+        return [];
+    }
+}
+
+/**
+ * Saves the cart to localStorage.
+ * @param {Array} cart The cart array to save.
+ */
+function saveCart(cart) {
+    // We only need to store id and quantity
+    const cartToSave = cart.map(item => ({ id: item.id, quantity: item.quantity }));
+    localStorage.setItem('ramazoneCart', JSON.stringify(cartToSave));
+}
+
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeOrderPage);
@@ -20,7 +46,7 @@ async function initializeOrderPage() {
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
             await fetchAllData(database);
-            loadInitialOrder();
+            loadOrderFromCart(); 
             setupEventListeners();
         } else {
             throw new Error("Firebase config is missing or invalid.");
@@ -31,6 +57,10 @@ async function initializeOrderPage() {
     }
 }
 
+/**
+ * CORRECTED FUNCTION
+ * Uses the detailed version of fetchAllData to ensure all products are cached.
+ */
 async function fetchAllData(db) {
     const dbRef = db.ref('ramazone');
     const snapshot = await dbRef.get();
@@ -38,54 +68,78 @@ async function fetchAllData(db) {
         const data = snapshot.val();
         const config = data.config || {};
         ramazoneDeliveryCharge = config.deliveryCharge || 10;
-        allProductsCache = data.products || [];
-        validCoupons = (data.homepage?.coupons || []).filter(c => c.status === 'active');
-        // Set delivery charge label text
+        
+        // This is the complete logic from your product-details page
+        const homepageData = data.homepage || {};
+        const productsObject = data.products || {};
+        const mainProducts = Object.values(productsObject);
+        
+        const festiveProductIds = homepageData.festiveCollection?.productIds || [];
+        const jfyMainProductId = homepageData.justForYou?.topDeals?.mainProductId;
+        const jfySubProductIds = homepageData.justForYou?.topDeals?.subProductIds || [];
+        
+        const allReferencedIds = new Set([...festiveProductIds, jfyMainProductId, ...jfySubProductIds].filter(Boolean));
+        
+        const referencedProducts = mainProducts.filter(p => p && allReferencedIds.has(p.id));
+        const combinedProducts = [...mainProducts, ...referencedProducts];
+        
+        // This ensures the cache is complete and de-duplicated
+        allProductsCache = combinedProducts.filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
+        
+        validCoupons = (homepageData.coupons || []).filter(c => c.status === 'active');
         document.getElementById('ramazone-delivery-label').textContent = `Ramazone Delivery (+₹${ramazoneDeliveryCharge})`;
     }
 }
 
-function loadInitialOrder() {
-    const params = new URLSearchParams(window.location.search);
-    const productId = params.get('id');
-    const quantity = parseInt(params.get('quantity'), 10) || 1;
-    const couponCodeFromUrl = params.get('coupon');
-    const variantsStr = params.get('variants');
-    let selectedVariants = {};
 
-    if (variantsStr) {
-        try {
-            selectedVariants = JSON.parse(decodeURIComponent(variantsStr));
-        } catch (e) { console.error("Could not parse variants:", e); }
-    }
+/**
+ * CORRECTED FUNCTION
+ * This is the new core function to load items from localStorage cart.
+ * It replaces the old `loadInitialOrder` function.
+ */
+function loadOrderFromCart() {
+    const cart = getCart();
 
-    if (!productId) {
-        document.getElementById('loading-indicator').textContent = 'No product selected.';
+    if (cart.length === 0) {
+        // Cart is empty, show empty message
+        document.getElementById('loading-indicator').style.display = 'none';
+        document.getElementById('order-page-content').style.display = 'none';
+        document.getElementById('sticky-order-footer').style.display = 'none';
+        document.getElementById('empty-cart-message').classList.remove('hidden');
         return;
     }
 
-    const product = allProductsCache.find(p => p.id == productId);
-    if (!product) {
-        document.getElementById('loading-indicator').textContent = 'Selected product not found.';
-        return;
-    }
-    
-    orderItems.push({ ...product, quantity: quantity, selectedVariants: selectedVariants });
-
-    if (couponCodeFromUrl) {
-        const foundCoupon = validCoupons.find(c => c.code === couponCodeFromUrl);
-        if (foundCoupon) {
-            appliedCoupon = foundCoupon;
-            document.getElementById('coupon-section').style.display = 'none';
+    orderItems = [];
+    cart.forEach(cartItem => {
+        const productDetails = allProductsCache.find(p => p && p.id === cartItem.id);
+        if (productDetails) {
+            orderItems.push({
+                ...productDetails,
+                quantity: cartItem.quantity,
+                selectedVariants: {} // Variants can be added later if stored in cart
+            });
+        } else {
+            console.warn(`Product with ID ${cartItem.id} found in cart but not in product cache. It will be ignored.`);
         }
+    });
+
+    // Check again if, after filtering, the orderItems array is empty
+    if(orderItems.length === 0) {
+        // This can happen if ALL products in cart were invalid.
+        // Clear the bad cart from localStorage to prevent loops and show empty cart view.
+        saveCart([]); 
+        loadOrderFromCart();
+        return;
     }
 
     renderOrderItems();
     updatePriceSummary();
     
     document.getElementById('loading-indicator').style.display = 'none';
-    document.getElementById('order-page-content').style.display = 'block';
+    document.getElementById('order-page-content').classList.remove('hidden');
+    document.getElementById('sticky-order-footer').classList.remove('hidden');
 }
+
 
 function setupEventListeners() {
     document.getElementById('apply-coupon-btn').addEventListener('click', applyCoupon);
@@ -98,16 +152,11 @@ function setupEventListeners() {
         });
     });
 
-    // ** NEW: Event listener for DELIVERY changes **
     document.querySelectorAll('input[name="delivery"]').forEach(radio => {
         radio.addEventListener('change', (event) => {
             document.querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
             event.target.closest('.delivery-option').classList.add('selected');
-            if (event.target.value === 'Ramazone') {
-                deliveryFee = ramazoneDeliveryCharge;
-            } else {
-                deliveryFee = 0;
-            }
+            deliveryFee = (event.target.value === 'Ramazone') ? ramazoneDeliveryCharge : 0;
             updatePriceSummary();
         });
     });
@@ -126,10 +175,22 @@ function setupEventListeners() {
         } else if (target.classList.contains('qty-decrease')) {
             if (orderItems[itemIndex].quantity > 1) {
                 orderItems[itemIndex].quantity--;
+            } else {
+                // Remove the item if quantity drops to 0
+                 orderItems.splice(itemIndex, 1);
             }
         }
-        renderOrderItems();
-        updatePriceSummary();
+        
+        // Update the localStorage cart as well
+        saveCart(orderItems);
+        
+        // If all items are removed, refresh the page view
+        if(orderItems.length === 0) {
+            loadOrderFromCart();
+        } else {
+            renderOrderItems();
+            updatePriceSummary();
+        }
     });
 }
 
@@ -180,10 +241,10 @@ function updatePriceSummary() {
 }
 
 function applyCoupon() {
-    const code = document.getElementById('coupon-input').value.trim();
+    const code = document.getElementById('coupon-input').value.trim().toLowerCase();
     if (!code) return;
 
-    const foundCoupon = validCoupons.find(c => c.code.toLowerCase() === code.toLowerCase());
+    const foundCoupon = validCoupons.find(c => c.code.toLowerCase() === code);
     if (foundCoupon) {
         appliedCoupon = foundCoupon;
         showToast(`Coupon "${foundCoupon.code}" applied successfully!`, 'success');
@@ -208,9 +269,8 @@ function placeOrder(event) {
     const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
     const deliveryMethod = document.querySelector('input[name="delivery"]:checked').value;
     
-    const sellerPhoneNumber = '917903698180';
+    const sellerPhoneNumber = '917903698180'; // Your WhatsApp Number
 
-    // ** FINAL: Clean, Emoji-Free WhatsApp Message Format **
     let message = "*Ramazone Store Order*\n\n";
     message += "--- Customer Details ---\n";
     message += `*Name:* ${name}\n`;
