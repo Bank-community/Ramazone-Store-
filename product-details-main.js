@@ -1,7 +1,6 @@
 // --- GLOBAL STATE ---
 let mediaItems = [], currentMediaIndex = 0, productQuantity = 1, currentProductData = null, currentProductId = null;
 let allProductsCache = [], validCoupons = [];
-// let selectedDeliveryType = 'Self'; // REMOVED
 let selectedVariants = {};
 let ramazoneDeliveryCharge = 10;
 let appThemeColor = '#4F46E5';
@@ -99,7 +98,6 @@ function loadProduct(data) {
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images && data.images[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
 
-    // CHANGE: Call Recently Viewed logic
     updateRecentlyViewed(data.id);
 
     // Media Items
@@ -131,9 +129,23 @@ function loadProduct(data) {
             let blockHTML = "";
             if (block.title) blockHTML += `<h3 class="desc-block-title">${block.title}</h3>`;
             if (block.details) blockHTML += `<p class="desc-block-details">${block.details}</p>`;
+
+            // CHANGE: Updated logic to handle highlights with icons
             if (block.highlights && Array.isArray(block.highlights) && block.highlights.length > 0) {
-                blockHTML += `<ul class="desc-block-highlights">${block.highlights.map(h => `<li>${h}</li>`).join("")}</ul>`;
+                let highlightsHTML = block.highlights.map(h => {
+                    // New format: object with icon and text
+                    if (typeof h === 'object' && h.text && h.icon) {
+                        return `<li><div class="icon-wrapper">${h.icon}</div><span>${h.text}</span></li>`;
+                    }
+                    // Fallback for old format: just string
+                    if (typeof h === 'string') {
+                        return `<li><span>${h}</span></li>`;
+                    }
+                    return ''; // Ignore invalid entries
+                }).join("");
+                blockHTML += `<ul class="desc-block-highlights">${highlightsHTML}</ul>`;
             }
+
             blockDiv.innerHTML = blockHTML;
             descriptionContainer.appendChild(blockDiv);
         });
@@ -178,7 +190,6 @@ function loadProduct(data) {
     setupQuantityControls();
     setupImageModal();
     setupShareButton();
-    // setupDeliveryOptions(); // REMOVED
     setupVariantModal();
     updatePriceDisplay();
     loadSimilarProducts(data.category);
@@ -187,17 +198,13 @@ function loadProduct(data) {
 
 function renderStars(rating, container) { container.innerHTML = ""; const fullStars = Math.floor(rating), halfStar = rating % 1 >= .5, emptyStars = 5 - fullStars - (halfStar ? 1 : 0); for (let i = 0; i < fullStars; i++)container.innerHTML += '<i class="fas fa-star"></i>'; halfStar && (container.innerHTML += '<i class="fas fa-star-half-alt"></i>'); for (let i = 0; i < emptyStars; i++)container.innerHTML += '<i class="far fa-star"></i>' }
 
-// CHANGE: updatePriceDisplay simplified
 function updatePriceDisplay() {
     const basePrice = Number(currentProductData.displayPrice);
     const originalPrice = Number(currentProductData.originalPrice);
-
     document.getElementById("price-final").textContent = `₹${basePrice.toLocaleString("en-IN")}`;
-
     const percentageDiscountEl = document.getElementById("price-percentage-discount");
     const originalPriceEl = document.getElementById("price-original");
     const lowestPriceTag = document.getElementById("lowest-price-tag-container");
-
     if (originalPrice > basePrice) {
         const discount = Math.round(100 * ((originalPrice - basePrice) / originalPrice));
         percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`;
@@ -210,7 +217,6 @@ function updatePriceDisplay() {
         originalPriceEl.style.display = "none";
         lowestPriceTag.style.display = "none";
     }
-
     updateOrderLink();
 }
 
@@ -225,7 +231,6 @@ function animation() { setSliderPosition(), isDragging && requestAnimationFrame(
 function setSliderPosition() { slider.style.transform = `translateX(${currentTranslate}px)` }
 function setupQuantityControls() { document.getElementById("increase-quantity").addEventListener("click", () => { productQuantity++, updateOrderLink() }), document.getElementById("decrease-quantity").addEventListener("click", () => { productQuantity > 1 && (productQuantity--, updateOrderLink()) }), updateOrderLink() }
 function updateOrderLink() { document.getElementById("quantity-display").textContent = productQuantity; document.getElementById('decrease-quantity').disabled = productQuantity <= 1; const orderLink = document.getElementById('order-now-link'); if (orderLink) { const variantsQueryString = encodeURIComponent(JSON.stringify(selectedVariants)); orderLink.href = `order.html?id=${currentProductId}&quantity=${productQuantity}&variants=${variantsQueryString}` } }
-// function setupDeliveryOptions() { ... } // REMOVED
 function setupImageModal() { const modal = document.getElementById("image-modal"), modalImg = document.getElementById("modal-image-content"), closeBtn = document.querySelector("#image-modal .close"), prevBtn = document.querySelector("#image-modal .prev"), nextBtn = document.querySelector("#image-modal .next"); sliderWrapper.onclick = e => { if (isDragging || currentTranslate - prevTranslate != 0) return; "image" === mediaItems[currentMediaIndex].type && (modal.style.display = "flex", modalImg.src = mediaItems[currentMediaIndex].src) }, closeBtn.onclick = () => modal.style.display = "none"; const showModalImage = direction => { let imageItems = mediaItems.map((item, i) => ({ ...item, originalIndex: i })).filter(item => "image" === item.type); if (0 !== imageItems.length) { const currentImageInFilteredArray = imageItems.findIndex(item => item.originalIndex === currentMediaIndex); let nextImageInFilteredArray = (currentImageInFilteredArray + direction + imageItems.length) % imageItems.length; const nextImageItem = imageItems[nextImageInFilteredArray]; modalImg.src = nextImageItem.src, showMedia(nextImageItem.originalIndex) } }; prevBtn.onclick = e => { e.stopPropagation(), showModalImage(-1) }, nextBtn.onclick = e => { e.stopPropagation(), showModalImage(1) } }
 function setupShareButton() { document.getElementById("share-button").addEventListener("click", async () => { const productName = currentProductData.name.replace(/\*/g, "").trim(), shareText = `*${productName}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`; navigator.share ? await navigator.share({ text: shareText }) : navigator.clipboard.writeText(window.location.href).then(() => showToast("Link Copied!")) }) }
 function showToast(message, type = "info") { const toast = document.getElementById("toast-notification"); toast.textContent = message, toast.style.backgroundColor = "error" === type ? "#ef4444" : "#333", toast.classList.add("show"), setTimeout(() => toast.classList.remove("show"), 2500) }
@@ -236,7 +241,6 @@ function updateVariantButtonDisplay(type, value) { const container = document.ge
 function setupVariantModal() { const overlay = document.getElementById("variant-modal-overlay"); document.getElementById("variant-modal-close").addEventListener("click", closeVariantModal), overlay.addEventListener("click", e => { e.target === overlay && closeVariantModal() }) }
 function createCarouselCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "", originalPriceNum = Number(product.originalPrice), displayPriceNum = Number(product.displayPrice), discount = originalPriceNum && originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; return `\n                <a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">\n                    <div class="relative">\n                        <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">\n                        ${ratingTag}\n                    </div>\n                    <div class="p-2">\n                        <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>\n                        <div class="flex items-baseline gap-2">\n                            <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>\n                            ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}\n                        </div>\n                        ${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}\n                    </div>\n                </a>` }
 function createGridCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "", originalPriceNum = Number(product.originalPrice), displayPriceNum = Number(product.displayPrice), discount = originalPriceNum && originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; return `\n                <a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">\n                    <div class="relative">\n                        <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">\n                        ${ratingTag}\n                    </div>\n                    <div class="p-2 sm:p-3">\n                        <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>\n                        <div class="flex items-baseline gap-2">\n                            <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>\n                            ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}\n                        </div>\n                        ${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}\n                    </div>\n                </a>` }
-// CHANGE: Recently Viewed Logic
 function updateRecentlyViewed(newId) {
     let viewedIds = JSON.parse(sessionStorage.getItem("ramazoneRecentlyViewed")) || [];
     viewedIds = viewedIds.filter(id => id !== newId);
@@ -249,10 +253,8 @@ function loadRecentlyViewed(viewedIds) {
     const container = document.getElementById("recently-viewed-container");
     const section = document.getElementById("recently-viewed-section");
     if (!container || !section) return;
-
     container.innerHTML = "";
-
-    if (viewedIds && viewedIds.length > 1) { // Only show if there's more than the current product
+    if (viewedIds && viewedIds.length > 1) {
         let cardCount = 0;
         viewedIds.filter(id => id != currentProductId).forEach(id => {
             const product = allProductsCache.find(p => p.id == id);
@@ -261,7 +263,6 @@ function loadRecentlyViewed(viewedIds) {
                 cardCount++;
             }
         });
-
         if (cardCount > 0) {
             section.style.display = "block";
         } else {
@@ -273,4 +274,3 @@ function loadRecentlyViewed(viewedIds) {
 }
 function loadSimilarProducts(category) { if (category && allProductsCache) { const container = document.getElementById("similar-products-container"); container.innerHTML = ""; let cardCount = 0; allProductsCache.forEach(product => { product && product.category === category && product.id != currentProductId && (container.innerHTML += createCarouselCard(product), cardCount++) }), cardCount > 0 && (document.getElementById("similar-products-section").style.display = "block") } }
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
-

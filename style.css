@@ -35,21 +35,15 @@ body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); colo
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
 /* --- HOMEPAGE SPECIFIC STYLES --- */
-
-/* Header & Section Titles */
 header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3s, box-shadow 0.3s; }
 .section-title { font-size: 1.4rem; font-weight: 800; text-align: left; margin-bottom: 1rem; letter-spacing: -0.5px; padding: 0 1rem; }
 @media (min-width: 768px) { .section-title { font-size: 1.6rem; } }
 .section-container { padding: 1.5rem 0; }
 @media (min-width: 1024px) { .section-container { padding: 2rem 0; } }
-
-/* Homepage Search Link */
 #search-container { background-color: var(--bg-white); padding: 0.5rem 1rem; }
 #search-link { display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
 #search-link:hover { border-color: var(--primary-color); }
 #search-link .search-icon { color: var(--text-dark); margin-right: 0.75rem; }
-
-/* Homepage Main Slider */
 .slider-wrapper { padding: 0 1rem; margin-top: 0.5rem; }
 .slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; user-select: none; }
 .slider { display: flex; height: 100%; cursor: grab; }
@@ -62,8 +56,6 @@ header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3
 .slider-dots .dot.active { background: rgba(0, 0, 0, 0.3); width: 32px; }
 .slider-dots .dot .timer { width: 0%; height: 100%; background: var(--text-dark); border-radius: 50px; }
 .slider-dots .dot.active .timer { width: 100%; transition: width var(--slider-interval-duration) linear; }
-
-/* Homepage Category Section */
 #normal-category-section { padding: 0.5rem 0; }
 .category-master-scroller { overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; padding: 0 1rem; }
 .category-master-scroller::-webkit-scrollbar { display: none; }
@@ -75,37 +67,26 @@ header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3
 .category-card .img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
 .category-card:hover .img-wrapper img { transform: scale(1.05); }
 .category-name { font-size: 0.62rem; font-weight: 600; color: var(--text-dark); line-height: 1.3; margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-
-/* Homepage Video Section */
 .video-card { flex: 0 0 70%; max-width: 300px; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: block; text-decoration: none; }
 .video-card img { width: 100%; height: 100%; object-fit: cover; }
 .video-card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 1rem; }
 .video-card-title { color: white; font-weight: 700; font-size: 1rem; }
 .video-card-desc { color: #e5e7eb; font-size: 0.8rem; margin-top: 0.25rem; }
 .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: rgba(255,255,255,0.9); }
-
-/* Homepage Festive Collection */
 .festive-collection { padding: 1rem 0 0.5rem 0; margin-top: 0.5rem; overflow: hidden; }
 .festival-headline { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1rem; letter-spacing: -0.5px; padding: 0 1rem; }
 .product-slider .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
-
-/* Homepage Marquee, Flip Card, JFY Section Styles... (condensed) */
 #info-marquee-section { margin: 1rem 0; padding: 0.75rem 0; } .marquee-viewport { overflow: hidden; } .marquee-text { white-space: nowrap; display: inline-block; padding-left: 100%; animation: marquee-scroll 20s linear infinite; will-change: transform; } @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 #flipcard-section { padding-top: 0.5rem; } .flip-card-container { perspective: 1000px; padding: 0 1rem; } .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; } .flip-card-inner.flipping { animation: auto-flip 10s infinite ease-in-out; } .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); } .flip-card-back { transform: rotateY(180deg); } .flip-card-front img, .flip-card-back img { width: 100%; height: 100%; object-fit: cover; } @keyframes auto-flip { 0%, 45% { transform: rotateY(0deg); } 50%, 95% { transform: rotateY(180deg); } 100% { transform: rotateY(0deg); } }
 #just-for-you-section { padding: 1.5rem 1rem; } .jfy-main-container { border-radius: 1rem; padding: 1rem; background-color: var(--bg-light); display: flex; flex-direction: column; aspect-ratio: 1080 / 1002; } .jfy-main-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; flex-shrink: 0; } .jfy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; flex-grow: 1; min-height: 0; } .jfy-poster-card { border-radius: 1rem; overflow: hidden; position: relative; } .jfy-poster-slider-container { position: relative; width: 100%; height: 100%; overflow: hidden; } .jfy-poster-slider { display: flex; height: 100%; } .jfy-poster-slider.transitioning { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); } .jfy-poster-slide { width: 100%; height: 100%; flex-shrink: 0; } .jfy-poster-slide img { width: 100%; height: 100%; object-fit: cover; } .jfy-slider-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 10; } .jfy-slider-dots .dot { width: 6px; height: 6px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s ease; } .jfy-slider-dots .dot.active { background: white; transform: scale(1.2); } .jfy-deals-card { display: flex; flex-direction: column; gap: 0.75rem; } .jfy-main-product { background-color: white; border-radius: 0.75rem; overflow: hidden; position: relative; padding-top: 100%; } .jfy-main-product img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; } .jfy-sub-products { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; flex-grow: 1; } .jfy-sub-product-item { background-color: white; border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; text-decoration: none; } .jfy-sub-product-item .img-wrapper { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; } .jfy-sub-product-item .img-wrapper img { width: 100%; height: 100%; object-fit: cover; } .jfy-sub-product-item .details { padding: 0.5rem; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; } .jfy-sub-product-item .name { font-size: 0.7rem; font-weight: 500; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .jfy-sub-product-item .discount { font-size: 0.75rem; font-weight: 600; color: #16a34a; margin-top: 0.125rem; }
-
-/* Homepage Deals Grid */
 #highlighted-products-section { padding-top: 1rem; }
 #highlighted-products-wrapper { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0 1rem; }
 @media (min-width: 768px) { #highlighted-products-wrapper { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1024px) { #highlighted-products-wrapper { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 1280px) { #highlighted-products-wrapper { grid-template-columns: repeat(5, 1fr); } }
-
-/* Homepage Footer */
 #footer { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 400px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); border-radius: 50px; display: flex; justify-content: space-around; padding: 0.5rem; z-index: 100; } @media (min-width: 768px) { #footer { display: none; } } #footer a { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-light); padding: 0.5rem; border-radius: 50px; transition: color 0.3s, background-color 0.3s; text-decoration: none; } #footer a:hover, #footer a.active { color: var(--primary-color); background-color: rgba(79, 70, 229, 0.1); } #footer img { width: 24px; height: 24px; margin-bottom: 2px; } #footer span { font-size: 0.7rem; font-weight: 500; }
 #desktop-footer { display: none; } @media (min-width: 768px) { #desktop-footer { display: block; background-color: var(--bg-white); color: var(--text-light); padding: 3rem 2rem; border-top: 1px solid var(--border-color); } } .footer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; } @media (min-width: 1024px) { .footer-grid { grid-template-columns: repeat(4, 1fr); } } .footer-column h3 { font-weight: 600; color: var(--text-dark); margin-bottom: 1rem; } .footer-column a { display: block; margin-bottom: 0.5rem; transition: color 0.3s; } .footer-column a:hover { color: var(--primary-color); } .footer-bottom { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.9rem; }
 .social-media-links { position: fixed; bottom: 6rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; z-index: 99; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease; transform: translateY(20px) scale(0.9); opacity: 0; pointer-events: none; } .social-media-links.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; } .social-link { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.15); transition: transform 0.3s ease; text-decoration: none; } .social-link:hover { transform: scale(1.1); } .social-link img { width: 28px; height: 28px; }
-
 
 /* --- PRODUCT CARD STYLES (UNIFIED) --- */
 .product-card { background-color: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); border: 1px solid #E5E7EB; transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; overflow: hidden; text-decoration: none; }
@@ -167,8 +148,36 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
 .desc-block { margin-bottom: 1.25rem; }
 .desc-block-title { font-weight: 700; font-size: 1rem; color: #111827; margin-bottom: 0.25rem; }
 .desc-block-details { color: #4b5563; margin-bottom: 0.5rem; }
-.desc-block-highlights { list-style-type: disc; padding-left: 1.25rem; color: #374151; }
-.desc-block-highlights li { margin-bottom: 0.25rem; font-weight: 600; }
+
+/* MODIFIED: Highlight list styles for icons */
+.desc-block-highlights {
+    list-style-type: none; /* Removed default dot */
+    padding-left: 0; /* Removed default padding */
+    color: #374151;
+}
+
+/* ADDED: New styles for list items and icons */
+.desc-block-highlights li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Space between icon and text */
+    margin-bottom: 0.5rem;
+    font-weight: 500; /* Adjusted from 600 for better balance */
+}
+
+.desc-block-highlights li .icon-wrapper {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--primary-color); /* Icon will take primary color */
+}
+
+.desc-block-highlights li .icon-wrapper svg {
+    width: 100%;
+    height: 100%;
+}
+
+
 .delivery-option { display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s ease; }
 .delivery-option.selected { border-color: var(--primary-color); background-color: #eef2ff; }
 .delivery-option input[type="radio"] { display: none; }
@@ -189,13 +198,8 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
 .color-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e5e7eb; flex-shrink: 0; }
 .variant-option.selected .color-swatch { transform: scale(1.1); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary-color); }
 
-/* --- COUPON RELATED STYLES HAVE BEEN REMOVED --- */
-
-/* --- PREVIOUS CSS CODE REMAINS THE SAME --- */
 
 /* --- ORDER PAGE STYLES (Final Polish) --- */
-
-/* This makes sure the input fields are styled correctly */
 .form-input, 
 input[type="text"]#customer-name, 
 textarea#customer-address {
@@ -206,7 +210,7 @@ textarea#customer-address {
     padding: 0.75rem 1rem;
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none; /* Fix for iOS default styles */
+    -webkit-appearance: none;
     appearance: none;
 }
 
@@ -234,8 +238,6 @@ textarea#customer-address:focus {
     transition: background-color 0.2s;
 }
 .coupon-apply-btn:hover { background-color: #4338ca; }
-
-/* Quantity Selector on Order Page */
 .quantity-selector-order {
     display: inline-flex;
     align-items: center;
@@ -258,15 +260,5 @@ textarea#customer-address:focus {
     min-width: 40px;
     text-align: center;
 }
-
-/* Toast Notification Styles */
-#toast-notification {
-    position: fixed; bottom: -100px; left: 50%;
-    transform: translateX(-50%); background-color: #333;
-    color: white; padding: 12px 24px; border-radius: 8px;
-    font-size: 14px; z-index: 2000;
-    transition: bottom 0.5s ease-in-out, background-color 0.3s;
-}
-#toast-notification.show { bottom: 80px; }
 #toast-notification.success { background-color: var(--green-color); }
 #toast-notification.error { background-color: #ef4444; }
