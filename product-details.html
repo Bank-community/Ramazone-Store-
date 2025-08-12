@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <!-- ### NEW CSS FOR SPACING & NEW CARDS ### -->
     <style>
         /* Reducing space between carousel items */
         .carousel-container {
@@ -57,7 +56,6 @@
     <main id="product-content" class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-0 sm:mt-2 mb-12 pb-28" style="display: none;">
         <div class="bg-white sm:rounded-2xl sm:shadow-lg overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2">
-                <!-- Media Gallery -->
                 <div class="p-0 sm:p-4 lg:p-6">
                     <div id="main-media-wrapper" class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative">
                         <div id="media-slider"></div>
@@ -67,7 +65,6 @@
                     </div>
                 </div>
 
-                <!-- Product Info -->
                 <div class="flex flex-col p-4 sm:p-6 lg:p-8">
                     <div class="flex justify-between items-start mb-2">
                         <h1 id="product-title" class="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight"></h1>
@@ -79,7 +76,6 @@
                         <span id="product-review-count"></span>
                     </div>
 
-                    <!-- ### OFFER BADGE DISPLAY ### -->
                     <div id="offer-badge" class="mb-4" style="display: none;"></div>
 
                     <div id="variant-selection-section" class="mb-4" style="display: none;">
@@ -107,7 +103,6 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Product Details</h2>
                 <div id="product-description" class="space-y-6"></div>
 
-                <!-- ### NEW "YOU MIGHT ALSO LIKE" SECTION ### -->
                 <div id="handpicked-similar-section" class="mt-8 pt-6 border-t border-gray-200" style="display: none;">
                     <h2 class="text-xl font-bold text-gray-900 mb-4">You Might Also Like</h2>
                     <div id="handpicked-similar-container" class="you-might-like-grid"></div>
@@ -115,7 +110,6 @@
             </div>
         </div>
 
-        <!-- Other carousels -->
         <div id="recently-viewed-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;"><h2 class="text-2xl font-bold text-gray-800 mb-4">Recently Viewed</h2><div id="recently-viewed-container" class="carousel-container pb-4"></div></div>
         <div id="similar-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;"><h2 class="text-2xl font-bold text-gray-800 mb-4">More in this Category</h2><div id="similar-products-container" class="carousel-container pb-4"></div></div>
         <div id="other-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;"><h2 class="text-2xl font-bold text-gray-800 mb-4">Other Products</h2><div id="other-products-container" class="grid grid-cols-2 gap-3 sm:gap-4"></div></div>
@@ -149,7 +143,6 @@
 
         async function initializeApp() {
             try {
-                // This part remains unchanged as requested
                 const response = await fetch('/api/firebase-config');
                 if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
                 const firebaseConfig = await response.json();
@@ -180,7 +173,6 @@
                 ramazoneDeliveryCharge = config.deliveryCharge || 10;
                 appThemeColor = config.themeColor || '#4F46E5';
                 applyTheme(appThemeColor);
-                // Ensure products are stored as an array
                 allProductsCache = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
             }
         }
@@ -221,7 +213,6 @@
             document.getElementById("product-title").textContent = data.name;
 
             updateRecentlyViewed(data.id);
-
             mediaItems = [];
             if (data.images && Array.isArray(data.images)) mediaItems.push(...data.images.map(src => ({ type: "image", src })));
             if (data.videoUrl) mediaItems.push({ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] });
@@ -234,10 +225,9 @@
                 document.getElementById("product-review-count").textContent = `(${data.reviewCount} ratings)`;
             }
 
-            renderOfferBadge(data); // New function call
+            // renderOfferBadge(data); // <<< TASK 1: Offer badge call REMOVED from details page.
             renderAdvancedHighlights(data.specHighlights);
             renderSimpleDescription(data.description);
-
             renderVariantSelectors(data.variants);
             setupSliderControls();
             setupQuantityControls();
@@ -245,14 +235,12 @@
             setupShareButton();
             setupVariantModal();
             updatePriceDisplay();
-
-            // ### UPDATED LOGIC ###
-            loadHandpickedSimilarProducts(data.similarProductIds); // For the new 3-card grid
-            loadCategoryBasedProducts(data.category); // For the "More in this category" carousel
+            loadHandpickedSimilarProducts(data.similarProductIds);
+            loadCategoryBasedProducts(data.category);
             loadOtherProducts(data.category);
         }
 
-        // ### NEW FUNCTION TO RENDER OFFER BADGE ###
+        // Offer Badge function is no longer called directly on the page, but is kept for logic reference if needed.
         function renderOfferBadge(productData) {
             const badgeContainer = document.getElementById('offer-badge');
             if (productData.offerText) {
@@ -274,12 +262,15 @@
             const originalPriceNum = Number(product.originalPrice);
             const displayPriceNum = Number(product.displayPrice);
             const discount = originalPriceNum && originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
+            // TASK 2: Logic to create offer badge for cards
+            const offerBadge = product.offerText ? `<div class="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-1 rounded" style="background-color: ${product.offerBackgroundColor || '#FF3D3D'}; color: ${product.offerTextColor || '#FFFFFF'};">${product.offerText}</div>` : "";
 
             return `
                 <a href="?id=${product.id}" class="block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
                     <div class="relative">
                         <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">
                         ${ratingTag}
+                        ${offerBadge} 
                     </div>
                     <div class="p-2">
                         <h4 class="text-xs font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
@@ -298,11 +289,15 @@
             const originalPriceNum = Number(product.originalPrice);
             const displayPriceNum = Number(product.displayPrice);
             const discount = originalPriceNum && originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
+            // TASK 2: Logic to create offer badge for cards
+            const offerBadge = product.offerText ? `<div class="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-1 rounded" style="background-color: ${product.offerBackgroundColor || '#FF3D3D'}; color: ${product.offerTextColor || '#FFFFFF'};">${product.offerText}</div>` : "";
+
             return `
                 <a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
                     <div class="relative">
                         <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">
                         ${ratingTag}
+                        ${offerBadge}
                     </div>
                     <div class="p-2">
                         <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
@@ -321,11 +316,15 @@
             const originalPriceNum = Number(product.originalPrice);
             const displayPriceNum = Number(product.displayPrice);
             const discount = originalPriceNum && originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
+            // TASK 2: Logic to create offer badge for cards
+            const offerBadge = product.offerText ? `<div class="absolute bottom-2 left-2 text-xs font-bold px-2 py-1 rounded" style="background-color: ${product.offerBackgroundColor || '#FF3D3D'}; color: ${product.offerTextColor || '#FFFFFF'};">${product.offerText}</div>` : "";
+            
             return `
                 <a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
                     <div class="relative">
                         <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">
                         ${ratingTag}
+                        ${offerBadge}
                     </div>
                     <div class="p-2 sm:p-3">
                         <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
@@ -339,45 +338,23 @@
         }
 
         // --- Data Loading Functions for Product Sections ---
-
-        // NEW: Function for the "You Might Also Like" section
         function loadHandpickedSimilarProducts(similarIds) {
             const section = document.getElementById("handpicked-similar-section");
             const container = document.getElementById("handpicked-similar-container");
-
-            if (!similarIds || similarIds.length === 0) {
-                section.style.display = "none";
-                return;
-            }
-
+            if (!similarIds || similarIds.length === 0) { section.style.display = "none"; return; }
             container.innerHTML = "";
             let cardCount = 0;
-
             similarIds.forEach(id => {
                 const product = allProductsCache.find(p => p && p.id === id);
-                if (product) {
-                    container.innerHTML += createHandpickedCard(product);
-                    cardCount++;
-                }
+                if (product) { container.innerHTML += createHandpickedCard(product); cardCount++; }
             });
-
-            if (cardCount > 0) {
-                section.style.display = "block";
-            } else {
-                section.style.display = "none";
-            }
+            section.style.display = cardCount > 0 ? "block" : "none";
         }
 
-        // RENAMED: This now loads products for the "More in this Category" carousel
         function loadCategoryBasedProducts(category) {
             const section = document.getElementById("similar-products-section");
             const container = document.getElementById("similar-products-container");
-
-            if (!category || !allProductsCache) {
-                section.style.display = "none";
-                return;
-            }
-
+            if (!category || !allProductsCache) { section.style.display = "none"; return; }
             container.innerHTML = "";
             let cardCount = 0;
             allProductsCache.forEach(product => {
@@ -386,14 +363,9 @@
                     cardCount++;
                 }
             });
-
-            if (cardCount > 0) {
-                section.style.display = "block";
-            } else {
-                section.style.display = "none";
-            }
+            section.style.display = cardCount > 0 ? "block" : "none";
         }
-
+        
         // --- All other functions remain unchanged ---
         function renderMediaGallery() { /* ... No changes ... */ const gallery=document.getElementById("thumbnail-gallery");gallery.innerHTML="",slider.innerHTML="",mediaItems.forEach((item,index)=>{const e=document.createElement("div");e.className="media-item","image"===item.type?e.innerHTML=`<img src="${item.src}" alt="Product image ${index+1}" draggable="false">`:getYoutubeEmbedUrl(item.src)&&(e.innerHTML=`<iframe src="${getYoutubeEmbedUrl(item.src)}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`),slider.appendChild(e);const t=document.createElement("div");t.className="aspect-square thumbnail";const l=document.createElement("img");l.src="image"===item.type?item.src:item.thumbnail,t.appendChild(l),"video"===item.type&&((n=document.createElement("div")).className="play-icon",n.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="50%" height="50%"><path d="M8 5v14l11-7z"/></svg>',t.appendChild(n));var n;t.addEventListener("click",()=>showMedia(index)),gallery.appendChild(t)}),mediaItems.length>0&&showMedia(0)}
         function renderAdvancedHighlights(specData) { /* ... No changes ... */ const container=document.getElementById("advanced-highlights-section");if(!specData||!specData.blocks||0===specData.blocks.length)return void(container.style.display="none");let html=`<div class="p-4 sm:p-6 lg:p-8"><h2 class="text-xl font-bold text-gray-900 mb-4">Highlights</h2>`;(specData.specScore||specData.specTag)&&(html+='<div class="flex items-center gap-3 mb-6">',specData.specScore&&(html+=`<div class="spec-score font-bold">${specData.specScore}</div>`),specData.specTag&&(html+=`<div class="spec-tag">${specData.specTag}</div>`),html+="</div>"),html+='<div class="space-y-6">',specData.blocks.forEach(block=>{const subtitleStyle="color: #B8860B; font-weight: 500;";html+=`<div class="flex items-start gap-4">\n                    <div class="flex-shrink-0 w-8 h-8 text-gray-600 pt-1">${block.icon||""}</div>\n                    <div class="flex-grow">\n                        <p class="text-sm text-gray-500">${block.category||""}</p>\n                        <h4 class="text-md font-semibold text-gray-800 mt-1">${block.title||""}</h4>\n                        <p class="text-sm mt-1" style="${subtitleStyle}">${block.subtitle||""}</p>\n                    </div>\n                </div>`}),html+="</div></div>",container.innerHTML=html,container.style.display="block"}
@@ -426,5 +398,3 @@
     </script>
 </body>
 </html>
-
-
