@@ -262,3 +262,96 @@ textarea#customer-address:focus {
 }
 #toast-notification.success { background-color: var(--green-color); }
 #toast-notification.error { background-color: #ef4444; }
+
+
+
+/* --- NEW STYLES FOR ADD TO CART SYSTEM --- */
+
+/* Header Cart Icon Styles */
+.header-cart-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: var(--text-dark);
+}
+
+#cart-item-count {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    background-color: #ef4444; /* Red color */
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 18px;
+    height: 18px;
+    padding: 3px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-white);
+    transition: transform 0.2s ease-in-out;
+}
+
+/* Hide counter if it's empty */
+#cart-item-count:empty {
+    display: none;
+}
+
+/* Action Bar Buttons */
+#add-to-cart-btn, #go-to-cart-btn {
+    background-color: var(--primary-color);
+    transition: background-color 0.3s, transform 0.3s;
+}
+#add-to-cart-btn:hover, #go-to-cart-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Hide elements using this class */
+.hidden {
+    display: none !important;
+}
+
+/* Order Page Empty Cart Message */
+#empty-cart-message {
+    text-align: center;
+    padding: 4rem 1rem;
+}
+
+#empty-cart-message i {
+    font-size: 4rem;
+    color: #d1d5db;
+}
+
+#empty-cart-message h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    color: var(--text-dark);
+}
+
+#empty-cart-message p {
+    color: var(--text-light);
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+#empty-cart-message .shop-now-btn {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+#empty-cart-message .shop-now-btn:hover {
+    transform: scale(1.05);
+}
+
