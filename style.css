@@ -21,7 +21,7 @@ body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); colo
 /* Universal Horizontal Scroller */
 .horizontal-scroller, .category-scroll-container, #thumbnail-gallery, .carousel-container { 
     display: flex; 
-    gap: 1rem; 
+    gap: 0.1rem; 
     overflow-x: auto; 
     scroll-behavior: smooth; 
     padding: 0.5rem 1rem; 
