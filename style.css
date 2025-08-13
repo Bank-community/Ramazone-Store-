@@ -496,3 +496,78 @@ textarea#customer-address:focus {
     margin-top: 0.5rem;
 }
 
+
+/* --- STYLES FOR CUSTOM SEARCH PLACEHOLDER --- */
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+    background-color: white;
+    border: 1px solid #D1D5DB; /* gray-300 */
+    border-radius: 9999px; /* rounded-full */
+    display: flex;
+    align-items: center;
+    padding-left: 2.5rem; /* pl-10 */
+    height: 42px; /* Same as input py-2 + border */
+}
+
+.search-wrapper:focus-within {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2); /* ring-2 focus:ring-primary-color */
+}
+
+.search-placeholder-text {
+    position: absolute;
+    left: 2.5rem; /* pl-10 */
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    pointer-events: none; /* Allows clicks to go through to the input */
+    color: #9CA3AF; /* gray-400 */
+    transition: opacity 0.3s ease-out;
+}
+
+.search-placeholder-text #dynamic-placeholder-text {
+    color: #1F2937; /* gray-800 */
+    font-weight: 500; /* medium */
+}
+
+.search-input-field {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    color: #111827; /* text-dark */
+    padding-right: 1rem; /* pr-4 */
+    position: relative;
+    z-index: 2;
+}
+
+/* Hide custom placeholder when input has text */
+.search-input-field:not(:placeholder-shown) + .search-placeholder-text {
+    opacity: 0;
+}
+
+/* We need to use JS to hide it on focus, and show it on blur if empty */
+.search-placeholder-text.hidden-on-focus {
+    opacity: 0 !important;
+}
+
+/* This is the search icon inside the wrapper */
+.search-wrapper::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem; /* left-3 */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem; /* w-5 */
+    height: 1.25rem; /* h-5 */
+    background-image: url('https://www.svgrepo.com/show/522266/search.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.7;
+}
+

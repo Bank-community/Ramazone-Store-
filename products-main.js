@@ -3,8 +3,9 @@ let allProducts = [];
 let allCategories = [];
 let currentCategory = 'All';
 let database;
+let searchScrollingTexts = []; // ADDED: To store texts for the placeholder
 
-// --- CART FUNCTIONS (ADDED) ---
+// --- CART FUNCTIONS ---
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
 function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
 function addToCart(productId, quantityToAdd = 1) { const cart = getCart(); const existingItemIndex = cart.findIndex(item => item.id === productId); if (existingItemIndex > -1) { cart[existingItemIndex].quantity += quantityToAdd; } else { cart.push({ id: productId, quantity: quantityToAdd }); } saveCart(cart); const product = allProducts.find(p => p && p.id === productId); showToast(`${product ? product.name : 'Item'} added to cart!`); updateCartIcon(); }
@@ -52,8 +53,9 @@ async function loadPageData() {
         displayCategories();
         filterAndDisplayProducts();
         setupSearch();
-        setupGlobalEventListeners(); // ADDED
-        updateCartIcon(); // ADDED
+        setupGlobalEventListeners();
+        updateCartIcon();
+        setupDynamicPlaceholder(); // ADDED: Start the dynamic placeholder
 
         document.getElementById('loading-indicator').style.display = 'none';
 
@@ -78,6 +80,11 @@ async function fetchAllData(db) {
         const data = snapshot.val();
         const homepageData = data.homepage || {};
 
+        // ADDED: Fetch scrolling texts for search placeholder
+        if (homepageData.search && homepageData.search.scrollingTexts) {
+            searchScrollingTexts = homepageData.search.scrollingTexts;
+        }
+
         const mainProducts = data.products || [];
 
         const festiveProductIds = homepageData.festiveCollection?.productIds || [];
@@ -97,17 +104,45 @@ async function fetchAllData(db) {
             p && p.id && index === self.findIndex((t) => t.id === p.id)
         );
 
-        allCategories = (homepageData.normalCategories || []).filter((cat, index, self) => 
-            cat && cat.name && index === self.findIndex(c => c.name === cat.name)
+        allCategories = (homepageData.normalCategories || [])
+            .filter(cat => cat && cat.name && cat.size !== 'double')
+            .filter((cat, index, self) => 
+                index === self.findIndex(c => c.name === cat.name)
         );
     }
 }
+
+/**
+ * ADDED: This function sets up the dynamic placeholder for the search input.
+ */
+function setupDynamicPlaceholder() {
+    const searchInput = document.getElementById('search-input');
+    if (!searchInput || !searchScrollingTexts || searchScrollingTexts.length === 0) return;
+
+    let currentIndex = 0;
+    // Set initial placeholder
+    searchInput.placeholder = `Search for ${searchScrollingTexts[currentIndex]}...`;
+    currentIndex++;
+
+    setInterval(() => {
+        searchInput.style.transition = 'opacity 0.3s ease-out';
+        searchInput.style.opacity = 0;
+
+        setTimeout(() => {
+            searchInput.placeholder = `Search for ${searchScrollingTexts[currentIndex]}...`;
+            searchInput.style.opacity = 1;
+            currentIndex = (currentIndex + 1) % searchScrollingTexts.length;
+        }, 300);
+
+    }, 2500);
+}
+
 
 function displayCategories() {
     const categoryBar = document.getElementById('category-filter-bar');
     categoryBar.innerHTML = '';
     const allBtn = document.createElement('button');
-    allBtn.className = 'category-btn rounded-full';
+    allBtn.className = 'category-btn rounded-full px-3 py-1';
     allBtn.textContent = 'All';
     allBtn.dataset.category = 'All';
     if (currentCategory === 'All') allBtn.classList.add('active');
@@ -116,7 +151,7 @@ function displayCategories() {
     allCategories.forEach(cat => {
         if (cat && cat.name) {
             const catBtn = document.createElement('button');
-            catBtn.className = 'category-btn rounded-full';
+            catBtn.className = 'category-btn rounded-full px-3 py-1';
             catBtn.textContent = cat.name;
             catBtn.dataset.category = cat.name;
             if (currentCategory === cat.name) catBtn.classList.add('active');
@@ -159,9 +194,6 @@ function filterAndDisplayProducts() {
     }
 }
 
-/**
- * MODIFIED: This function now creates a robust product card with a correctly placed Add to Cart button.
- */
 function createProductCardHTML(prod) {
     if (!prod) return '';
 
@@ -206,9 +238,6 @@ function createProductCardHTML(prod) {
         </div>`;
 }
 
-/**
- * ADDED: Central event listener for handling clicks on dynamically added elements.
- */
 function setupGlobalEventListeners() {
     document.body.addEventListener('click', function(event) {
         const addButton = event.target.closest('.add-btn');
