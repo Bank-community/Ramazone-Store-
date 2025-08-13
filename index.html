@@ -13,9 +13,26 @@
 </head>
 <body class="bg-white">
 
-    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm py-1">
-        <div class="container mx-auto flex justify-center items-center px-4">
-            <img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" style="max-height: 40px;">
+    <!-- MODIFIED: Header updated with cart icon -->
+    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-2 flex items-center justify-between">
+                <!-- Left side can be a back button or menu, for now it's empty to center the logo -->
+                <div class="w-10"></div>
+                
+                <!-- Center Logo -->
+                <div class="flex-grow text-center">
+                     <a href="./index.html"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="inline-block" style="max-height: 40px;"></a>
+                </div>
+
+                <!-- Right side Cart Icon -->
+                <div class="w-10 flex justify-end">
+                    <a href="order.html" id="header-cart-link" class="header-cart-link">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span id="cart-item-count"></span>
+                    </a>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -34,7 +51,8 @@
     </div>
     
     <main id="main-content-area" class="mb-28 md:mb-0">
-        </main>
+        <!-- Dynamic content will be loaded here by main.js -->
+    </main>
 
     <div id="footer">
         <a href="./index.html" class="active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a>
@@ -45,6 +63,9 @@
     </div>
     
     <div class="social-media-links" id="social-links-container"></div>
+    
+    <!-- ADDED: Toast notification element -->
+    <div id="toast-notification"></div>
 
     <footer id="desktop-footer">
         <div class="container mx-auto">
@@ -64,3 +85,4 @@
     <script src="main.js"></script>
 </body>
 </html>
+

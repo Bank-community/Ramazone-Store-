@@ -2,6 +2,15 @@
 let allProductsCache = [];
 let database;
 
+// --- CART FUNCTIONS ---
+function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
+function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
+function addToCart(productId, quantityToAdd = 1) { const cart = getCart(); const existingItemIndex = cart.findIndex(item => item.id === productId); if (existingItemIndex > -1) { cart[existingItemIndex].quantity += quantityToAdd; } else { cart.push({ id: productId, quantity: quantityToAdd }); } saveCart(cart); const product = allProductsCache.find(p => p && p.id === productId); showToast(`${product ? product.name : 'Item'} added to cart!`); updateCartIcon(); }
+function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
+function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { if (totalQuantity > 0) { cartCountElement.textContent = totalQuantity; } else { cartCountElement.textContent = ''; } } }
+function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
+
+
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
 
@@ -12,7 +21,7 @@ async function initializeApp() {
     try {
         const response = await fetch('/api/firebase-config');
         if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
-        
+
         const firebaseConfig = await response.json();
 
         if (firebaseConfig.apiKey) {
@@ -36,7 +45,8 @@ function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
         const data = snapshot.val() || {};
-        allProductsCache = data.products || [];
+        const productsObject = data.products || {};
+        allProductsCache = Array.isArray(productsObject) ? productsObject : Object.values(productsObject);
 
         await loadPageStructure();
         renderAllSections(data);
@@ -81,7 +91,7 @@ async function loadPageStructure() {
  */
 function renderAllSections(data) {
     const homepageData = data.homepage || {};
-    
+
     renderSlider(homepageData.slider);
     renderSearch(homepageData.search);
     renderNormalCategories(homepageData.normalCategories);
@@ -93,31 +103,63 @@ function renderAllSections(data) {
     renderHighlightedProducts(); 
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
-    
+
+    setupGlobalEventListeners();
+    updateCartIcon();
     setupScrollAnimations();
 }
 
 
 // --- HELPER FUNCTIONS ---
-function createProductCardHTML(prod) {
+
+/**
+ * FIXED: This function now creates a robust product card with a correctly placed Add to Cart button.
+ * It's based on the working `createStandardCard` from product-details.html.
+ */
+function createProductCardHTML(prod, cardClass = '') {
     if (!prod) return '';
+
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-    const ratingTag = prod.rating ? `<div class="product-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
-    const offerTag = prod.offerText ? `<span class="product-offer-tag" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</span>` : '';
-    let priceHTML = `<div class="product-price"><span class="display-price">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</span></div>`;
+    const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
+    const offerTag = prod.offerText ? `<div class="product-offer-tag" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
+
+    let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
+    let originalPriceHTML = '';
     let discountHTML = '';
 
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
-        priceHTML = `<div class="product-price"><span class="display-price">₹${Number(prod.displayPrice).toLocaleString('en-IN')}</span><span class="original-price">₹${Number(prod.originalPrice).toLocaleString('en-IN')}</span></div>`;
-        if(discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
+        originalPriceHTML = `<p class="text-xs text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
+        if(discount > 0) discountHTML = `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>`;
     }
 
-    return `<a href="./product-details.html?id=${prod.id}" class="product-card">
-                <div class="product-media-container"><img src="${imageUrl}" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</div>
-                <div class="product-details"><p class="product-name truncate">${prod.name || 'Product Name'}</p>${priceHTML}${discountHTML}</div>
-            </a>`;
+    const displayPriceNum = Number(prod.displayPrice);
+    const showAddButton = displayPriceNum < 500 || prod.category === 'grocery';
+    const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
+
+    return `
+        <div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+            <div class="relative">
+                <a href="./product-details.html?id=${prod.id}">
+                    <img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">
+                </a>
+                ${ratingTag}
+                ${offerTag}
+                ${addButtonHTML}
+            </div>
+            <div class="p-2">
+                <a href="./product-details.html?id=${prod.id}">
+                    <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4>
+                    <div class="flex items-baseline gap-2">
+                        ${priceHTML}
+                        ${originalPriceHTML}
+                    </div>
+                    ${discountHTML}
+                </a>
+            </div>
+        </div>`;
 }
+
 
 function getDealsOfTheDayProducts(maxCount) {
     if (!allProductsCache || allProductsCache.length === 0) return [];
@@ -134,6 +176,26 @@ function toggleSocialMedia(event) {
     event.preventDefault();
     document.getElementById('social-links-container').classList.toggle('active');
 }
+
+function setupGlobalEventListeners() {
+    document.body.addEventListener('click', function(event) {
+        const addButton = event.target.closest('.add-btn');
+        if (addButton) {
+            event.preventDefault();
+            const productId = addButton.dataset.id;
+            if (productId) {
+                addToCart(productId);
+                addButton.classList.add('added');
+                addButton.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    addButton.classList.remove('added');
+                    addButton.innerHTML = '+';
+                }, 1500);
+            }
+        }
+    });
+}
+
 
 function setupScrollAnimations() {
     const obs = new IntersectionObserver((entries) => {
@@ -202,6 +264,9 @@ function renderVideosSection(videoData) {
         </a>`).join('');
 }
 
+/**
+ * FIXED: This function now uses the corrected product card for its slider.
+ */
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
     if (!container || !collectionData || !Array.isArray(collectionData.productIds) || collectionData.productIds.length === 0) { if(container) container.style.display = 'none'; return; }
@@ -213,18 +278,16 @@ function renderFestiveCollection(collectionData) {
     const productsToRender = collectionData.productIds
         .map(id => allProductsCache.find(p => p.id === id))
         .filter(Boolean);
-    slider.innerHTML = productsToRender.map(createProductCardHTML).join('');
+    slider.innerHTML = productsToRender.map(p => createProductCardHTML(p, 'carousel-item')).join('');
 }
 
 /**
- * #############################################################
- * # THIS IS THE UPDATED FUNCTION FOR "JUST FOR YOU" HEADLINE  #
- * #############################################################
+ * FIXED: This function now uses the corrected card structure for JFY products.
  */
 function renderJustForYouSection(jfyData) {
     const section = document.getElementById('just-for-you-section');
     if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
-    
+
     const poster = jfyData.poster;
     const deals = jfyData.topDeals;
     const mainProduct = allProductsCache.find(p => p.id === deals?.mainProductId);
@@ -235,16 +298,20 @@ function renderJustForYouSection(jfyData) {
         section.style.display = 'none'; 
         return; 
     }
-    
+
     const getDiscount = p => p && p.originalPrice && Number(p.originalPrice) > Number(p.displayPrice) ? `<p class="discount">${Math.round(((p.originalPrice - p.displayPrice) / p.originalPrice) * 100)}% OFF</p>` : '';
-    
+
+    const getAddButton = p => {
+        if (!p) return '';
+        const showAddButton = Number(p.displayPrice) < 500 || p.category === 'grocery';
+        return showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${p.id}">+</button>` : "";
+    };
+
     const jfyContent = document.getElementById('jfy-content');
     if (jfyContent) {
         jfyContent.innerHTML = `
         <div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};">
-            
             <h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2>
-            
             <div class="jfy-grid">
                 <a href="${poster.linkUrl || '#'}" class="jfy-poster-card">
                     <div class="jfy-poster-slider-container">
@@ -253,10 +320,25 @@ function renderJustForYouSection(jfyData) {
                     </div>
                 </a>
                 <div class="jfy-deals-card">
-                    <a href="./product-details.html?id=${mainProduct.id}" class="jfy-main-product"><img src="${(mainProduct.images && mainProduct.images[0]) || ''}" alt="${mainProduct.name}"></a>
+                    <div class="relative jfy-main-product">
+                        <a href="./product-details.html?id=${mainProduct.id}"><img src="${(mainProduct.images && mainProduct.images[0]) || ''}" alt="${mainProduct.name}"></a>
+                        ${getAddButton(mainProduct)}
+                    </div>
                     <div class="jfy-sub-products">
-                        <a href="./product-details.html?id=${subProduct1.id}" class="jfy-sub-product-item"><div class="img-wrapper"><img src="${(subProduct1.images && subProduct1.images[0]) || ''}" alt="${subProduct1.name}"></div><div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div></a>
-                        <a href="./product-details.html?id=${subProduct2.id}" class="jfy-sub-product-item"><div class="img-wrapper"><img src="${(subProduct2.images && subProduct2.images[0]) || ''}" alt="${subProduct2.name}"></div><div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div></a>
+                        <div class="relative jfy-sub-product-item">
+                            <a href="./product-details.html?id=${subProduct1.id}">
+                                <div class="img-wrapper"><img src="${(subProduct1.images && subProduct1.images[0]) || ''}" alt="${subProduct1.name}"></div>
+                                <div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div>
+                            </a>
+                            <div class="absolute bottom-2 right-2">${getAddButton(subProduct1)}</div>
+                        </div>
+                        <div class="relative jfy-sub-product-item">
+                             <a href="./product-details.html?id=${subProduct2.id}">
+                                <div class="img-wrapper"><img src="${(subProduct2.images && subProduct2.images[0]) || ''}" alt="${subProduct2.name}"></div>
+                                <div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div>
+                            </a>
+                            <div class="absolute bottom-2 right-2">${getAddButton(subProduct2)}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -269,13 +351,16 @@ function renderJustForYouSection(jfyData) {
     }
 }
 
+/**
+ * FIXED: This function now uses the corrected product card for its grid.
+ */
 function renderHighlightedProducts() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const section = document.getElementById('highlighted-products-section');
     const deals = getDealsOfTheDayProducts(18);
     if (!wrapper || deals.length === 0) { if(section) section.style.display = 'none'; return; }
     section.style.display = 'block';
-    wrapper.innerHTML = deals.map(createProductCardHTML).join('');
+    wrapper.innerHTML = deals.map(p => createProductCardHTML(p, 'grid-item')).join('');
 }
 
 function renderSearch(searchData) { if (!searchData || !searchData.scrollingTexts || searchData.scrollingTexts.length === 0) return; const texts = searchData.scrollingTexts; let i = 0; const el = document.getElementById("categoryText"); if (window.searchInterval) clearInterval(window.searchInterval); window.searchInterval = setInterval(() => { if (el) { el.style.opacity = 0; setTimeout(() => { el.innerText = texts[i]; el.style.opacity = 1; i = (i + 1) % texts.length; }, 300); } }, 2500); }
@@ -283,6 +368,7 @@ function renderInfoMarquee(text) { const section = document.getElementById('info
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data || !data.front || !data.back) { if(section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
 function renderFooter(data) { if (!data) return; document.getElementById('footer-shop-link').href = './products.html'; document.getElementById('footer-play-link').href = data.playLink || '#'; document.getElementById('footer-profile-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const mobileContainer = document.getElementById('social-links-container'); const desktopContainer = document.getElementById('desktop-social-links'); mobileContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', color: '#FF1111' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', color: '#E4405F' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', color: '#1877F2' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', color: '#25D366' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; mobileContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="social-link" style="background-color:${p.color};"><img src="${p.icon}" alt="${key}"></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
 
-// --- SLIDER LOGIC ---
+// --- SLIDER LOGIC (UNCHANGED) ---
 let currentSlide=1,totalSlides=0,sliderInterval,isTransitioning=!1;function initializeSlider(count){const slider=document.getElementById("main-slider"),dots=document.getElementById("slider-dots-container");if((totalSlides=count)<=1)return void(dots&&(dots.style.display="none"));slider.appendChild(slider.children[0].cloneNode(!0)),slider.insertBefore(slider.children[totalSlides-1].cloneNode(!0),slider.children[0]),slider.style.transform=`translateX(-${100*currentSlide}%)`,dots.innerHTML="";for(let i=0;i<totalSlides;i++)dots.innerHTML+='<div class="dot" data-slide="'.concat(i+1,'"><div class="timer"></div></div>');dots.addEventListener("click",e=>{const dot=e.target.closest(".dot");dot&&goToSlide(parseInt(dot.dataset.slide))});let startPos=0;const swipeThreshold=50,getPositionX=event=>event.type.includes("mouse")?event.pageX:event.touches[0].clientX,swipeStart=e=>{startPos=getPositionX(e),clearInterval(sliderInterval)},swipeEnd=e=>{const endPos=getPositionX(e),deltaX=endPos-startPos;Math.abs(deltaX)>50&&(deltaX<0?moveSlide(1):moveSlide(-1)),resetSliderInterval()};slider.addEventListener("mousedown",swipeStart),slider.addEventListener("touchstart",swipeStart,{passive:!0}),slider.addEventListener("mouseup",swipeEnd),slider.addEventListener("touchend",swipeEnd),slider.addEventListener("transitionend",()=>{isTransitioning=!1,0===currentSlide&&(slider.classList.remove("transitioning"),currentSlide=totalSlides,slider.style.transform=`translateX(-${100*currentSlide}%)`),currentSlide===totalSlides+1&&(slider.classList.remove("transitioning"),currentSlide=1,slider.style.transform=`translateX(-${100*currentSlide}%)`)}),updateDots(),resetSliderInterval()}function moveSlide(dir){isTransitioning||(isTransitioning=!0,document.getElementById("main-slider").classList.add("transitioning"),currentSlide+=dir,document.getElementById("main-slider").style.transform=`translateX(-${100*currentSlide}%)`,updateDots())}function goToSlide(num){isTransitioning||currentSlide===num||(isTransitioning=!0,document.getElementById("main-slider").classList.add("transitioning"),currentSlide=num,document.getElementById("main-slider").style.transform=`translateX(-${100*currentSlide}%)`,updateDots(),resetSliderInterval())}function updateDots(){const dots=document.querySelectorAll(".slider-dots .dot");dots.forEach(d=>{d.classList.remove("active");const timer=d.querySelector(".timer");timer&&(timer.style.transition="none",timer.style.width="0%")});let activeDotIndex=currentSlide-1;0===currentSlide&&(activeDotIndex=totalSlides-1),currentSlide===totalSlides+1&&(activeDotIndex=0);const activeDot=dots[activeDotIndex];if(activeDot){activeDot.classList.add("active");const timer=activeDot.querySelector(".timer");timer&&(void timer.offsetWidth,timer.style.transition="width 5000ms linear",timer.style.width="100%")}}function resetSliderInterval(){clearInterval(sliderInterval),sliderInterval=setInterval(()=>moveSlide(1),5e3)}
 let jfyCurrentSlide=1,jfyTotalSlides=0,jfySliderInterval,jfyIsTransitioning=!1;function initializeJfySlider(count){const slider=document.querySelector(".jfy-poster-slider"),dots=document.querySelector(".jfy-slider-dots");if(!slider)return;if((jfyTotalSlides=count)<=1)return void(dots&&(dots.style.display="none"));slider.appendChild(slider.children[0].cloneNode(!0)),slider.insertBefore(slider.children[jfyTotalSlides-1].cloneNode(!0),slider.children[0]),slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,slider.addEventListener("transitionend",()=>{jfyIsTransitioning=!1,0===jfyCurrentSlide&&(slider.classList.remove("transitioning"),jfyCurrentSlide=jfyTotalSlides,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`),jfyCurrentSlide===jfyTotalSlides+1&&(slider.classList.remove("transitioning"),jfyCurrentSlide=1,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`)}),dots.innerHTML="";for(let i=0;i<jfyTotalSlides;i++)dots.innerHTML+='<div class="dot" data-slide="'.concat(i+1,'"></div>');dots.addEventListener("click",e=>{e.target.closest(".dot")&&goToJfySlide(e.target.closest(".dot").dataset.slide)}),updateJfyDots(),resetJfySliderInterval()}function moveJfySlide(dir){if(jfyIsTransitioning)return;const slider=document.querySelector(".jfy-poster-slider");slider&&(jfyIsTransitioning=!0,slider.classList.add("transitioning"),jfyCurrentSlide+=dir,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,updateJfyDots(),resetJfySliderInterval())}function goToJfySlide(num){if(jfyIsTransitioning||jfyCurrentSlide==num)return;const slider=document.querySelector(".jfy-poster-slider");slider&&(jfyIsTransitioning=!0,slider.classList.add("transitioning"),jfyCurrentSlide=parseInt(num),slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,updateJfyDots(),resetJfySliderInterval())}function updateJfyDots(){const dots=document.querySelectorAll(".jfy-slider-dots .dot");dots.forEach(d=>d.classList.remove("active"));let activeDotIndex=jfyCurrentSlide-1;0===jfyCurrentSlide&&(activeDotIndex=jfyTotalSlides-1),jfyCurrentSlide===jfyTotalSlides+1&&(activeDotIndex=0);const activeDot=dots[activeDotIndex];activeDot&&activeDot.classList.add("active")}function resetJfySliderInterval(){clearInterval(jfySliderInterval),jfySliderInterval=setInterval(()=>moveJfySlide(1),4e3)}
+
