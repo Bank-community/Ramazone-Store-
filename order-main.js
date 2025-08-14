@@ -4,7 +4,7 @@ let validCoupons = [];
 let orderItems = []; 
 let appliedCoupon = null;
 let deliveryFee = 0;
-let ramazoneDeliveryCharge = 15; // Default charge
+let ramazoneDeliveryCharge = 15;
 const FREE_DELIVERY_THRESHOLD = 500;
 let database;
 
@@ -55,17 +55,12 @@ async function fetchAllData(db) {
         const data = snapshot.val();
         const config = data.config || {};
         ramazoneDeliveryCharge = config.deliveryCharge || 15;
-
         const homepageData = data.homepage || {};
         const productsObject = data.products || {};
         const mainProducts = Object.values(productsObject);
-
-        const allReferencedIds = new Set(
-            [...Object.values(homepageData).flatMap(section => section.productIds || [])]
-        );
+        const allReferencedIds = new Set([...Object.values(homepageData).flatMap(section => section.productIds || [])]);
         const referencedProducts = mainProducts.filter(p => p && allReferencedIds.has(p.id));
         const combinedProducts = [...mainProducts, ...referencedProducts];
-
         allProductsCache = combinedProducts.filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
         validCoupons = (homepageData.coupons || []).filter(c => c.status === 'active');
     }
@@ -84,7 +79,6 @@ function loadOrderFromCart() {
         const productDetails = allProductsCache.find(p => p && p.id === cartItem.id);
         return productDetails ? { ...productDetails, quantity: cartItem.quantity, selectedVariants: {} } : null;
     }).filter(Boolean);
-
     if(orderItems.length === 0) {
         saveCart([]); 
         loadOrderFromCart();
@@ -102,9 +96,12 @@ function setupEventListeners() {
     document.getElementById('remove-coupon-btn').addEventListener('click', removeCoupon);
     document.getElementById('place-order-btn').addEventListener('click', placeOrder);
     document.getElementById('search-order-btn').addEventListener('click', searchOrder);
-    document.getElementById('download-slip-btn').addEventListener('click', downloadOrderSlip);
 
-    // New compact option listeners
+    // NEW: Listeners for the new invoice modal
+    document.getElementById('view-invoice-btn').addEventListener('click', viewInvoice);
+    document.getElementById('invoice-close-btn').addEventListener('click', () => document.getElementById('invoice-modal').classList.remove('active'));
+    document.getElementById('download-invoice-btn').addEventListener('click', downloadInvoice);
+
     document.getElementById('payment-option-group').addEventListener('click', e => {
         if (e.target.tagName === 'LABEL') {
             document.querySelectorAll('#payment-option-group .option-label').forEach(l => l.classList.remove('selected'));
@@ -129,16 +126,12 @@ function setupEventListeners() {
         if (target.classList.contains('qty-increase')) {
             orderItems[itemIndex].quantity++;
         } else if (target.classList.contains('qty-decrease')) {
-            if (orderItems[itemIndex].quantity > 1) {
-                orderItems[itemIndex].quantity--;
-            } else {
-                 orderItems.splice(itemIndex, 1);
-            }
+            if (orderItems[itemIndex].quantity > 1) orderItems[itemIndex].quantity--;
+            else orderItems.splice(itemIndex, 1);
         }
         saveCart(orderItems);
-        if(orderItems.length === 0) {
-            loadOrderFromCart();
-        } else {
+        if(orderItems.length === 0) loadOrderFromCart();
+        else {
             renderOrderItems();
             updatePriceSummary();
         }
@@ -167,11 +160,8 @@ function renderOrderItems() {
 function updatePriceSummary() {
     const subtotal = orderItems.reduce((acc, item) => acc + (item.displayPrice * item.quantity), 0);
     const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
-
-    // NEW: Free delivery logic
     const isRamazoneDelivery = document.querySelector('input[name="delivery"]:checked').value === 'Ramazone';
     deliveryFee = (isRamazoneDelivery && subtotal < FREE_DELIVERY_THRESHOLD) ? ramazoneDeliveryCharge : 0;
-
     const grandTotal = subtotal - couponDiscount + deliveryFee;
 
     document.getElementById('subtotal-price').textContent = `₹${subtotal.toLocaleString('en-IN')}`;
@@ -208,7 +198,6 @@ function applyCoupon() {
     updatePriceSummary();
 }
 
-// NEW: Function to remove the applied coupon
 function removeCoupon() {
     appliedCoupon = null;
     showToast('Coupon removed.', 'info');
@@ -258,8 +247,8 @@ async function placeOrder(event) {
         await database.ref(`ramazone/orders/pending/${orderId}`).set(orderData);
         const sellerPhoneNumber = '917903698180';
 
-        // UPDATED: WhatsApp Message Format
-        let message = `🛍️ *Ramazone Store Order* 🛍️\n\n`;
+        // FIXED: WhatsApp Message Format with correct emoji
+        let message = "🛍️ *Ramazone Store Order* 🛍️\n\n";
         message += `*Order ID:* ${orderId}\n\n`;
         message += "--- *Customer Details* ---\n";
         message += `*Name:* ${customerDetails.name}\n`;
@@ -319,15 +308,12 @@ async function searchOrder() {
 function renderSearchResult(orderData) {
     const searchResultEl = document.getElementById('order-search-result');
     renderDeliveryTracker(orderData.status);
-    // This container is now just a placeholder, the real slip is generated on download.
-    document.getElementById('order-slip-container').innerHTML = `<p class="text-center text-gray-500 text-sm">Click the button below to download your order invoice.</p>`;
     searchResultEl.classList.remove('hidden');
 }
 
 function renderDeliveryTracker(status) {
     const container = document.getElementById('delivery-tracker-container');
     const statuses = ['Confirmed', 'Shipped', 'Out for Delivery', 'Delivered'];
-    // UPDATED: New icon for Out for Delivery
     const icons = ['fa-check', 'fa-truck-fast', 'fa-truck-ramp-box', 'fa-star'];
     const currentStatusIndex = statuses.indexOf(status);
     let stepsHtml = statuses.map((s, index) => {
@@ -335,101 +321,91 @@ function renderDeliveryTracker(status) {
         return `<div class="tracker-step ${isCompleted ? 'completed' : ''}"><div class="step-icon"><i class="fas ${icons[index]}"></i></div><p class="step-label">${s.replace(' ', '\n')}</p></div>`;
     }).join('');
     const progressPercentage = currentStatusIndex >= 0 ? (currentStatusIndex / (statuses.length - 1)) * 100 : 0;
-    container.innerHTML = `<div class="relative"><div class="delivery-tracker">${stepsHtml}</div><div class="tracker-line"><div class="tracker-progress-line" style="width: ${progressPercentage}%;"></div></div></div>`;
+    container.innerHTML = `<div class="relative"><div class="tracker-line"><div class="tracker-progress-line" style="width: ${progressPercentage}%;"></div></div><div class="delivery-tracker">${stepsHtml}</div></div>`;
 }
 
-// NEW: Function to generate and download A4-style invoice
-async function downloadOrderSlip() {
+// NEW: Function to show the invoice in a modal
+async function viewInvoice() {
     const orderId = document.getElementById('order-id-input').value.trim().toUpperCase();
     if (!orderId) {
-        showToast('No order loaded to download.', 'error');
+        showToast('No order loaded to view.', 'error');
         return;
     }
-
-    // Fetch the latest order data again to ensure it's current
     const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get();
     if (!snapshot.exists()) {
-        showToast('Could not find order data to download.', 'error');
+        showToast('Could not find order data to view.', 'error');
         return;
     }
     const orderData = snapshot.val();
-
-    const slipContent = document.getElementById('a4-invoice-slip');
+    const slipContent = document.getElementById('invoice-slip-for-render');
     const summary = orderData.priceSummary;
 
-    // Populate the A4 invoice template
     slipContent.innerHTML = `
         <div class="flex justify-between items-start pb-4 border-b">
-            <div>
-                <h1 class="text-4xl font-bold text-gray-800">Ramazone</h1>
-                <p class="text-gray-500">Your Trusted Online Store</p>
-            </div>
+            <div><h1 class="text-4xl font-bold text-gray-800">Ramazone</h1><p class="text-gray-500">Your Trusted Online Store</p></div>
             <h2 class="text-2xl font-semibold text-gray-600">INVOICE</h2>
         </div>
         <div class="flex justify-between mt-8">
-            <div>
-                <p class="font-bold text-gray-700">Billed To:</p>
-                <p>${orderData.customerDetails.name}</p>
-                <p class="text-gray-600">${orderData.customerDetails.address}</p>
-            </div>
-            <div class="text-right">
-                <p><span class="font-bold">Invoice #:</span> ${orderData.orderId}</p>
-                <p><span class="font-bold">Date:</span> ${new Date(orderData.createdAt).toLocaleDateString()}</p>
-            </div>
+            <div><p class="font-bold text-gray-700">Billed To:</p><p>${orderData.customerDetails.name}</p><p class="text-gray-600">${orderData.customerDetails.address}</p></div>
+            <div class="text-right"><p><span class="font-bold">Invoice #:</span> ${orderData.orderId}</p><p><span class="font-bold">Date:</span> ${new Date(orderData.createdAt).toLocaleDateString()}</p></div>
         </div>
         <div class="mt-8">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="p-2 font-semibold">#</th>
-                        <th class="p-2 font-semibold">ITEM</th>
-                        <th class="p-2 font-semibold text-center">QTY</th>
-                        <th class="p-2 font-semibold text-right">PRICE</th>
-                        <th class="p-2 font-semibold text-right">TOTAL</th>
-                    </tr>
-                </thead>
+            <table class="w-full text-left text-sm">
+                <thead><tr class="bg-gray-100"><th class="p-2 font-semibold">#</th><th class="p-2 font-semibold">ITEM</th><th class="p-2 font-semibold text-center">QTY</th><th class="p-2 font-semibold text-right">PRICE</th><th class="p-2 font-semibold text-right">TOTAL</th></tr></thead>
                 <tbody>
                     ${orderData.items.map((item, index) => `
                         <tr class="border-b">
                             <td class="p-2">${index + 1}</td>
-                            <td class="p-2">
-                                <div class="flex items-center">
-                                    <img src="${item.image}" class="w-10 h-10 object-cover rounded mr-3">
-                                    <span>${item.name}</span>
-                                </div>
-                            </td>
+                            <td class="p-2"><div class="flex items-center"><img src="${item.image}" class="w-10 h-10 object-cover rounded mr-3" crossOrigin="anonymous"><span>${item.name}</span></div></td>
                             <td class="p-2 text-center">${item.quantity}</td>
                             <td class="p-2 text-right">₹${item.displayPrice.toLocaleString('en-IN')}</td>
                             <td class="p-2 text-right">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</td>
-                        </tr>
-                    `).join('')}
+                        </tr>`).join('')}
                 </tbody>
             </table>
         </div>
         <div class="flex justify-end mt-8">
-            <div class="w-full max-w-xs space-y-2">
+            <div class="w-full max-w-xs space-y-2 text-sm">
                 <div class="flex justify-between"><span class="text-gray-600">Subtotal:</span><span>₹${summary.subtotal.toLocaleString('en-IN')}</span></div>
-                ${summary.coupon ? `<div class="flex justify-between text-green-600"><span >Coupon Discount:</span><span>- ₹${summary.coupon.discount.toLocaleString('en-IN')}</span></div>` : ''}
+                ${summary.coupon ? `<div class="flex justify-between text-green-600"><span>Coupon Discount:</span><span>- ₹${summary.coupon.discount.toLocaleString('en-IN')}</span></div>` : ''}
                 <div class="flex justify-between"><span class="text-gray-600">Delivery Fee:</span><span>${summary.deliveryFee > 0 ? `₹${summary.deliveryFee.toLocaleString('en-IN')}` : 'Free'}</span></div>
-                <div class="flex justify-between font-bold text-xl border-t pt-2 mt-2"><span >Grand Total:</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div>
+                <div class="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>Grand Total:</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div>
             </div>
         </div>
-        <div class="text-center text-gray-500 text-xs mt-16 border-t pt-4">
-            <p>Thank you for your purchase!</p>
-            <p>Ramazone Store | ramazone.in</p>
-        </div>
-    `;
+        <div class="text-center text-gray-500 text-xs mt-16 border-t pt-4"><p>Thank you for your purchase!</p><p>Ramazone Store | ramazone.in</p></div>`;
 
-    showToast('Generating your invoice...', 'info');
+    document.getElementById('invoice-modal').classList.add('active');
+}
 
-    html2canvas(slipContent, { scale: 3, useCORS: true }).then(canvas => {
+// FIXED: Function to download the VISIBLE invoice
+function downloadInvoice() {
+    const invoiceElement = document.getElementById('invoice-slip-for-render');
+    const orderId = document.getElementById('order-id-input').value.trim().toUpperCase();
+    if (!invoiceElement || !orderId) {
+        showToast('Invoice content not found.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('download-invoice-btn');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Generating...`;
+
+    html2canvas(invoiceElement, { 
+        scale: 2, 
+        useCORS: true, // Important for loading images from other domains
+        allowTaint: true
+    }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Ramazone-Invoice-${orderId}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`;
     }).catch(err => {
-        console.error("Could not create canvas for download:", err);
-        showToast('Failed to generate invoice.', 'error');
+        console.error("Download failed:", err);
+        showToast('Failed to generate invoice. Please try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`;
     });
 }
 
