@@ -1,17 +1,13 @@
 // --- GLOBAL STATE for Order Page ---
 let allProductsCache = [];
 let validCoupons = [];
-let orderItems = []; // This will now be populated from the cart
+let orderItems = []; 
 let appliedCoupon = null;
 let deliveryFee = 0;
 let ramazoneDeliveryCharge = 10;
 let database;
 
-// --- NEW CART HELPER FUNCTIONS ---
-/**
- * Retrieves the cart from localStorage.
- * @returns {Array} The cart array, or an empty array if not found.
- */
+// --- CART HELPER FUNCTIONS ---
 function getCart() {
     try {
         const cart = localStorage.getItem('ramazoneCart');
@@ -22,16 +18,10 @@ function getCart() {
     }
 }
 
-/**
- * Saves the cart to localStorage.
- * @param {Array} cart The cart array to save.
- */
 function saveCart(cart) {
-    // We only need to store id and quantity
     const cartToSave = cart.map(item => ({ id: item.id, quantity: item.quantity }));
     localStorage.setItem('ramazoneCart', JSON.stringify(cartToSave));
 }
-
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeOrderPage);
@@ -57,51 +47,39 @@ async function initializeOrderPage() {
     }
 }
 
-/**
- * CORRECTED FUNCTION
- * Uses the detailed version of fetchAllData to ensure all products are cached.
- */
 async function fetchAllData(db) {
+    // This function remains the same as your previous version
     const dbRef = db.ref('ramazone');
     const snapshot = await dbRef.get();
     if (snapshot.exists()) {
         const data = snapshot.val();
         const config = data.config || {};
         ramazoneDeliveryCharge = config.deliveryCharge || 10;
-        
-        // This is the complete logic from your product-details page
+
         const homepageData = data.homepage || {};
         const productsObject = data.products || {};
         const mainProducts = Object.values(productsObject);
-        
+
         const festiveProductIds = homepageData.festiveCollection?.productIds || [];
         const jfyMainProductId = homepageData.justForYou?.topDeals?.mainProductId;
         const jfySubProductIds = homepageData.justForYou?.topDeals?.subProductIds || [];
-        
+
         const allReferencedIds = new Set([...festiveProductIds, jfyMainProductId, ...jfySubProductIds].filter(Boolean));
-        
+
         const referencedProducts = mainProducts.filter(p => p && allReferencedIds.has(p.id));
         const combinedProducts = [...mainProducts, ...referencedProducts];
-        
-        // This ensures the cache is complete and de-duplicated
+
         allProductsCache = combinedProducts.filter((p, index, self) => p && p.id && index === self.findIndex((t) => t.id === p.id));
-        
+
         validCoupons = (homepageData.coupons || []).filter(c => c.status === 'active');
         document.getElementById('ramazone-delivery-label').textContent = `Ramazone Delivery (+₹${ramazoneDeliveryCharge})`;
     }
 }
 
-
-/**
- * CORRECTED FUNCTION
- * This is the new core function to load items from localStorage cart.
- * It replaces the old `loadInitialOrder` function.
- */
 function loadOrderFromCart() {
     const cart = getCart();
 
     if (cart.length === 0) {
-        // Cart is empty, show empty message
         document.getElementById('loading-indicator').style.display = 'none';
         document.getElementById('order-page-content').style.display = 'none';
         document.getElementById('sticky-order-footer').style.display = 'none';
@@ -116,17 +94,14 @@ function loadOrderFromCart() {
             orderItems.push({
                 ...productDetails,
                 quantity: cartItem.quantity,
-                selectedVariants: {} // Variants can be added later if stored in cart
+                selectedVariants: {} 
             });
         } else {
             console.warn(`Product with ID ${cartItem.id} found in cart but not in product cache. It will be ignored.`);
         }
     });
 
-    // Check again if, after filtering, the orderItems array is empty
     if(orderItems.length === 0) {
-        // This can happen if ALL products in cart were invalid.
-        // Clear the bad cart from localStorage to prevent loops and show empty cart view.
         saveCart([]); 
         loadOrderFromCart();
         return;
@@ -134,17 +109,18 @@ function loadOrderFromCart() {
 
     renderOrderItems();
     updatePriceSummary();
-    
+
     document.getElementById('loading-indicator').style.display = 'none';
     document.getElementById('order-page-content').classList.remove('hidden');
     document.getElementById('sticky-order-footer').classList.remove('hidden');
 }
 
-
 function setupEventListeners() {
     document.getElementById('apply-coupon-btn').addEventListener('click', applyCoupon);
     document.getElementById('place-order-btn').addEventListener('click', placeOrder);
-    
+    document.getElementById('search-order-btn').addEventListener('click', searchOrder);
+    document.getElementById('download-slip-btn').addEventListener('click', downloadOrderSlip);
+
     document.querySelectorAll('.payment-option').forEach(el => {
         el.addEventListener('click', () => {
             document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
@@ -176,15 +152,12 @@ function setupEventListeners() {
             if (orderItems[itemIndex].quantity > 1) {
                 orderItems[itemIndex].quantity--;
             } else {
-                // Remove the item if quantity drops to 0
                  orderItems.splice(itemIndex, 1);
             }
         }
-        
-        // Update the localStorage cart as well
+
         saveCart(orderItems);
-        
-        // If all items are removed, refresh the page view
+
         if(orderItems.length === 0) {
             loadOrderFromCart();
         } else {
@@ -255,54 +228,222 @@ function applyCoupon() {
     updatePriceSummary();
 }
 
-function placeOrder(event) {
+function generateOrderId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = 'RMZ';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+async function placeOrder(event) {
     event.preventDefault();
     const form = document.getElementById('customer-details-form');
     if (!form.checkValidity()) {
         form.reportValidity();
-        showToast('Please fill all required fields.', 'error');
+        showToast('Please fill all required shipping details.', 'error');
         return;
     }
 
-    const name = document.getElementById('customer-name').value;
-    const address = document.getElementById('customer-address').value;
+    const placeOrderBtn = document.getElementById('place-order-btn');
+    placeOrderBtn.textContent = 'Placing...';
+    placeOrderBtn.disabled = true;
+
+    const orderId = generateOrderId();
+    const customerDetails = {
+        name: document.getElementById('customer-name').value,
+        address: document.getElementById('customer-address').value,
+    };
     const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
     const deliveryMethod = document.querySelector('input[name="delivery"]:checked').value;
-    
-    const sellerPhoneNumber = '917903698180'; // Your WhatsApp Number
-
-    let message = "*Ramazone Store Order*\n\n";
-    message += "--- Customer Details ---\n";
-    message += `*Name:* ${name}\n`;
-    message += `*Address:* ${address}\n\n`;
-    
-    message += "--- Order Items ---\n";
-    orderItems.forEach(item => {
-        message += `*Product:* ${item.name}\n`;
-        message += `*Quantity:* ${item.quantity}\n`;
-        message += `*Price:* ₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}\n`;
-        const productUrl = `${window.location.origin}/product-details.html?id=${item.id}`;
-        message += `*Product ID:* ${item.id}\n`;
-        message += `*Product Link:* ${productUrl}\n`;
-        message += `-------------------------------------\n`;
-    });
-    
-    message += `\n--- Payment Summary ---\n`;
     const subtotal = orderItems.reduce((acc, item) => acc + (item.displayPrice * item.quantity), 0);
-    message += `*Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n`;
+    const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
+    const grandTotal = subtotal - couponDiscount + deliveryFee;
 
-    if (appliedCoupon) {
-        message += `*Coupon Discount (${appliedCoupon.code}):* - ₹${Number(appliedCoupon.discount).toLocaleString('en-IN')}\n`;
+    const orderData = {
+        orderId: orderId,
+        customerDetails: customerDetails,
+        items: orderItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            displayPrice: item.displayPrice,
+            image: item.images?.[0] || ''
+        })),
+        priceSummary: {
+            subtotal: subtotal,
+            coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
+            deliveryFee: deliveryFee,
+            grandTotal: grandTotal
+        },
+        paymentMethod: paymentMethod,
+        deliveryMethod: deliveryMethod,
+        status: 'Pending',
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    try {
+        // CORRECTED PATH: Save order inside 'ramazone' node
+        await database.ref(`ramazone/orders/pending/${orderId}`).set(orderData);
+
+        const sellerPhoneNumber = '917903698180';
+        let message = `*New Ramazone Order Received!*\n\n`;
+        message += `*Order ID:* ${orderId}\n\n`;
+        message += "--- Customer Details ---\n";
+        message += `*Name:* ${customerDetails.name}\n`;
+        message += `*Address:* ${customerDetails.address}\n\n`;
+        message += "--- Order Summary ---\n";
+        orderData.items.forEach(item => {
+            message += `*${item.name}* (x${item.quantity}) - ₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}\n`;
+        });
+        message += `\n*Total Amount:* *₹${grandTotal.toLocaleString('en-IN')}*\n`;
+        message += `*Payment:* ${paymentMethod}\n\n`;
+        message += "Please check the admin panel to approve this order.";
+
+        saveCart([]);
+        document.getElementById('order-page-content').innerHTML = `
+            <div class="text-center p-8 bg-white rounded-lg shadow">
+                <i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800">Order Placed Successfully!</h2>
+                <p class="text-gray-600 mt-2">Your order has been sent to the seller for confirmation.</p>
+                <p class="mt-4 font-semibold text-lg">Your Order ID is:</p>
+                <div class="bg-gray-100 text-gray-800 font-bold text-2xl p-3 rounded-lg mt-2 inline-block select-all">${orderId}</div>
+                <p class="text-sm text-gray-500 mt-2">Please save this ID to track your order.</p>
+                <a href="index.html" class="shop-now-btn mt-6">Continue Shopping</a>
+            </div>`;
+        document.getElementById('sticky-order-footer').style.display = 'none';
+
+        const whatsappUrl = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`;
+        window.location.href = whatsappUrl;
+
+    } catch (error) {
+        console.error("Failed to place order:", error);
+        showToast('Could not place order. Please try again.', 'error');
+        placeOrderBtn.textContent = 'Place Order';
+        placeOrderBtn.disabled = false;
     }
-    message += `*Delivery (${deliveryMethod}):* ${deliveryFee > 0 ? `+ ₹${deliveryFee.toLocaleString('en-IN')}` : 'Free'}\n`;
-    
-    const grandTotal = subtotal - (appliedCoupon ? Number(appliedCoupon.discount) : 0) + deliveryFee;
-    message += `*Total Amount:* *₹${grandTotal.toLocaleString('en-IN')}*\n`;
-    message += `*Payment Method:* ${paymentMethod}\n\n`;
-    message += "Please confirm the order. Thanks!";
+}
 
-    const whatsappUrl = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`;
-    window.location.href = whatsappUrl;
+async function searchOrder() {
+    const orderId = document.getElementById('order-id-input').value.trim().toUpperCase();
+    const searchStatusEl = document.getElementById('search-status');
+    const searchResultEl = document.getElementById('order-search-result');
+
+    if (!orderId) {
+        searchStatusEl.textContent = 'Please enter an Order ID.';
+        searchStatusEl.className = 'text-center mt-3 text-sm text-yellow-600';
+        return;
+    }
+
+    searchStatusEl.textContent = 'Searching...';
+    searchStatusEl.className = 'text-center mt-3 text-sm text-blue-600';
+    searchResultEl.classList.add('hidden');
+
+    try {
+        // CORRECTED PATH: Search for order inside 'ramazone' node
+        const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get();
+        if (snapshot.exists()) {
+            const orderData = snapshot.val();
+            renderSearchResult(orderData);
+            searchStatusEl.textContent = `Showing results for Order ID: ${orderId}`;
+            searchStatusEl.className = 'text-center mt-3 text-sm text-green-600';
+        } else {
+            searchStatusEl.textContent = 'Order not found. Please check the ID or contact support. Note: You can only track orders after they are confirmed by the seller.';
+            searchStatusEl.className = 'text-center mt-3 text-sm text-red-600';
+        }
+    } catch (error) {
+        console.error("Order search failed:", error);
+        searchStatusEl.textContent = 'An error occurred while searching. Please try again.';
+        searchStatusEl.className = 'text-center mt-3 text-sm text-red-600';
+    }
+}
+
+function renderSearchResult(orderData) {
+    const searchResultEl = document.getElementById('order-search-result');
+    const slipContainer = document.getElementById('order-slip-container');
+    renderDeliveryTracker(orderData.status);
+    let itemsHtml = orderData.items.map(item => `
+        <div class="flex items-start gap-4 py-3 border-b">
+            <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-md border">
+            <div class="flex-grow">
+                <p class="font-bold text-gray-800">${item.name}</p>
+                <p class="text-sm text-gray-600">Quantity: ${item.quantity}</p>
+            </div>
+            <p class="font-semibold text-gray-900">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</p>
+        </div>
+    `).join('');
+
+    const summary = orderData.priceSummary;
+    slipContainer.innerHTML = `
+        <div id="slip-content-to-download" class="p-2">
+            <div class="text-center mb-4">
+                <h2 class="text-2xl font-bold">Ramazone Order Slip</h2>
+                <p class="text-sm text-gray-500">Order ID: ${orderData.orderId}</p>
+                <p class="text-sm text-gray-500">Date: ${new Date(orderData.createdAt).toLocaleString()}</p>
+            </div>
+            <div class="border-t border-b py-2 my-2">
+                <h3 class="font-bold mb-2">Shipping to:</h3>
+                <p class="text-gray-700">${orderData.customerDetails.name}</p>
+                <p class="text-gray-600">${orderData.customerDetails.address}</p>
+            </div>
+            <div>
+                <h3 class="font-bold mb-2">Items:</h3>
+                ${itemsHtml}
+            </div>
+            <div class="mt-4 pt-4 border-t space-y-2 text-right">
+                <p>Subtotal: <span class="font-medium">₹${summary.subtotal.toLocaleString('en-IN')}</span></p>
+                ${summary.coupon ? `<p class="text-green-600">Coupon (${summary.coupon.code}): <span class="font-medium">- ₹${summary.coupon.discount.toLocaleString('en-IN')}</span></p>` : ''}
+                <p>Delivery Fee: <span class="font-medium">${summary.deliveryFee > 0 ? `₹${summary.deliveryFee.toLocaleString('en-IN')}` : 'Free'}</span></p>
+                <p class="text-xl font-bold">Total: <span class="font-medium">₹${summary.grandTotal.toLocaleString('en-IN')}</span></p>
+            </div>
+        </div>
+    `;
+    searchResultEl.classList.remove('hidden');
+}
+
+function renderDeliveryTracker(status) {
+    const container = document.getElementById('delivery-tracker-container');
+    const statuses = ['Confirmed', 'Shipped', 'Out for Delivery', 'Delivered'];
+    const icons = ['fa-check', 'fa-truck-fast', 'fa-box-taped', 'fa-star'];
+    const currentStatusIndex = statuses.indexOf(status);
+    let stepsHtml = '';
+    statuses.forEach((s, index) => {
+        const isCompleted = index <= currentStatusIndex;
+        stepsHtml += `
+            <div class="tracker-step ${isCompleted ? 'completed' : ''}">
+                <div class="step-icon"><i class="fas ${icons[index]}"></i></div>
+                <p class="step-label">${s}</p>
+            </div>
+        `;
+    });
+    const progressPercentage = currentStatusIndex >= 0 ? (currentStatusIndex / (statuses.length - 1)) * 100 : 0;
+    container.innerHTML = `
+        <div class="delivery-tracker">
+            <div class="tracker-line">
+                <div class="tracker-progress-line" style="width: ${progressPercentage}%;"></div>
+            </div>
+            ${stepsHtml}
+        </div>
+    `;
+}
+
+function downloadOrderSlip() {
+    const slipContent = document.getElementById('slip-content-to-download');
+    const orderId = document.getElementById('order-id-input').value.trim().toUpperCase();
+    if (!slipContent) {
+        showToast('No order details to download.', 'error');
+        return;
+    }
+    html2canvas(slipContent, { scale: 2, useCORS: true }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Ramazone-Order-${orderId || 'slip'}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }).catch(err => {
+        console.error("Could not create canvas for download:", err);
+        showToast('Failed to generate order slip.', 'error');
+    });
 }
 
 function showToast(message, type = "info") {
@@ -314,3 +455,4 @@ function showToast(message, type = "info") {
     if(type === 'error') toast.classList.add('error');
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
+
