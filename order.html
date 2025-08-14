@@ -14,12 +14,10 @@
     </style>
 </head>
 <body class="bg-gray-100">
-    <!-- UPDATED HEADER with Logo Link -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-2 sm:px-4">
             <div class="py-2 flex items-center justify-between gap-2">
                 <a href="javascript:history.back()" class="text-gray-600 hover:text-gray-900 p-2"><i class="fas fa-arrow-left h-5 w-5"></i></a>
-                <!-- LOGO LINK ADDED -->
                 <a href="index.html"><img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" class="h-8"></a>
                 <div class="flex-grow flex items-center gap-2 ml-2">
                     <input type="text" id="order-id-input" placeholder="Search... Your Order ID" class="form-input flex-grow !py-2 !text-sm">
@@ -29,7 +27,6 @@
         </div>
     </header>
 
-    <!-- NEW: All Orders Notification Card -->
     <div id="all-orders-notification" class="max-w-4xl mx-auto px-4 pt-4 hidden">
         <div class="bg-indigo-50 border border-indigo-200 text-indigo-800 text-sm rounded-lg p-3">
             <p id="all-orders-summary" class="font-semibold mb-2"></p>
@@ -69,7 +66,24 @@
     <div id="loading-indicator" class="text-center py-20"><p class="text-lg font-semibold">Loading your cart...</p></div>
     <div id="sticky-order-footer" class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-3 z-40 border-t border-gray-200 hidden"><div class="max-w-4xl mx-auto flex items-center justify-between"><div class="text-left"><p class="text-sm text-gray-600">Total Payable</p><p id="footer-total-price" class="text-2xl font-bold text-gray-900">₹0</p></div><a id="place-order-btn" href="#" class="whatsapp-btn flex-shrink-0 px-8 py-3 rounded-xl text-lg font-bold text-white shadow-lg">Place Order</a></div></div>
     <div id="toast-notification"></div>
-    <div id="invoice-modal"><div id="invoice-modal-content"><div class="bg-white shadow-sm p-3 flex justify-between items-center flex-shrink-0"><h3 class="font-bold text-lg">Order Invoice</h3><button id="invoice-close-btn" class="text-gray-500 text-2xl">&times;</button></div><div id="invoice-viewer"><div id="invoice-slip-for-render"></div></div><div class="bg-white shadow-t p-3 text-center flex-shrink-0"><button id="download-invoice-btn" class="whatsapp-btn w-full max-w-xs mx-auto"><i class="fas fa-download mr-2"></i>Download Invoice</button></div></div></div>
+    
+    <!-- FIXED: Invoice Modal with z-index on header/footer -->
+    <div id="invoice-modal">
+        <div id="invoice-modal-content">
+            <div class="bg-white shadow-sm p-3 flex justify-between items-center flex-shrink-0 relative z-10">
+                <h3 class="font-bold text-lg">Order Invoice</h3>
+                <button id="invoice-close-btn" class="text-gray-500 text-2xl">&times;</button>
+            </div>
+            <div id="invoice-viewer">
+                <div id="invoice-slip-for-render"></div>
+            </div>
+            <div class="bg-white shadow-t p-3 text-center flex-shrink-0 relative z-10">
+                <button id="download-invoice-btn" class="whatsapp-btn w-full max-w-xs mx-auto">
+                    <i class="fas fa-download mr-2"></i>Download Invoice
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>

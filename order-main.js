@@ -132,19 +132,7 @@ function setupEventListeners() {
 
 function renderOrderItems() {
     const container = document.getElementById('order-items-container');
-    container.innerHTML = orderItems.map(item => `
-        <div class="order-item-card flex items-start gap-4 p-2 border-b last:border-b-0">
-            <a href="product-details.html?id=${item.id}" class="flex-shrink-0">
-                <img src="${item.images?.[0] || ''}" alt="${item.name}" class="w-20 h-20 object-cover rounded-md border hover:opacity-80 transition-opacity">
-            </a>
-            <div class="flex-grow flex flex-col justify-between self-stretch">
-                <div><a href="product-details.html?id=${item.id}" class="block"><h3 class="font-bold text-md text-gray-800 hover:text-indigo-600 transition-colors">${item.name}</h3></a></div>
-                <div class="flex items-center justify-between mt-2">
-                    <span class="text-lg font-bold text-gray-900">₹${Number(item.displayPrice).toLocaleString('en-IN')}</span>
-                    <div class="quantity-selector-order"><button class="qty-decrease" data-id="${item.id}">-</button><span>${item.quantity}</span><button class="qty-increase" data-id="${item.id}">+</button></div>
-                </div>
-            </div>
-        </div>`).join('');
+    container.innerHTML = orderItems.map(item => `<div class="order-item-card flex items-start gap-4 p-2 border-b last:border-b-0"><a href="product-details.html?id=${item.id}" class="flex-shrink-0"><img src="${item.images?.[0] || ''}" alt="${item.name}" class="w-20 h-20 object-cover rounded-md border hover:opacity-80 transition-opacity"></a><div class="flex-grow flex flex-col justify-between self-stretch"><div><a href="product-details.html?id=${item.id}" class="block"><h3 class="font-bold text-md text-gray-800 hover:text-indigo-600 transition-colors">${item.name}</h3></a></div><div class="flex items-center justify-between mt-2"><span class="text-lg font-bold text-gray-900">₹${Number(item.displayPrice).toLocaleString('en-IN')}</span><div class="quantity-selector-order"><button class="qty-decrease" data-id="${item.id}">-</button><span>${item.quantity}</span><button class="qty-increase" data-id="${item.id}">+</button></div></div></div></div>`).join('');
 }
 
 function updatePriceSummary() { const subtotal = orderItems.reduce((acc, item) => acc + (item.displayPrice * item.quantity), 0); const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0; const selectedDelivery = document.querySelector('input[name="delivery"]:checked').value; if (selectedDelivery === 'Ramazone') { deliveryFee = subtotal < FREE_DELIVERY_THRESHOLD ? ramazoneDeliveryCharge : 0; } else { deliveryFee = 0; } const grandTotal = subtotal - couponDiscount + deliveryFee; document.getElementById('subtotal-price').textContent = `₹${subtotal.toLocaleString('en-IN')}`; const couponRow = document.getElementById('coupon-discount-row'); if (appliedCoupon) { document.getElementById('coupon-discount-amount').textContent = `- ₹${couponDiscount.toLocaleString('en-IN')}`; couponRow.style.display = 'flex'; } else { couponRow.style.display = 'none'; } document.getElementById('delivery-fee').textContent = deliveryFee > 0 ? `+ ₹${deliveryFee.toLocaleString('en-IN')}` : 'Free'; document.getElementById('grand-total').textContent = `₹${grandTotal.toLocaleString('en-IN')}`; document.getElementById('footer-total-price').textContent = `₹${grandTotal.toLocaleString('en-IN')}`; }
@@ -156,7 +144,7 @@ async function searchOrder() { const orderId = document.getElementById('order-id
 function renderSearchResult(orderData) { const searchResultEl = document.getElementById('order-search-result'); renderDeliveryTracker(orderData.status, document.getElementById('delivery-tracker-container')); searchResultEl.classList.remove('hidden'); }
 function renderDeliveryTracker(status, container) { if (status === 'Rejected') { container.innerHTML = `<div class="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg"><i class="fas fa-times-circle text-red-500 text-3xl mr-4"></i><div><h3 class="font-bold text-red-700">Order Rejected</h3><p class="text-sm text-red-600">This order was rejected. Please contact support for more details.</p></div></div>`; return; } const statuses = ['Confirmed', 'Shipped', 'Out for Delivery', 'Delivered']; const icons = ['fa-check', 'fa-truck-fast', 'fa-truck-ramp-box', 'fa-star']; const currentStatusIndex = statuses.indexOf(status); let stepsHtml = statuses.map((s, index) => { const isCompleted = index <= currentStatusIndex; return `<div class="tracker-step ${isCompleted ? 'completed' : ''}"><div class="step-icon"><i class="fas ${icons[index]}"></i></div><p class="step-label">${s.replace(' ', '\n')}</p></div>`; }).join(''); const progressPercentage = currentStatusIndex >= 0 ? (currentStatusIndex / (statuses.length - 1)) * 100 : 0; container.innerHTML = `<div class="relative"><div class="tracker-line"><div class="tracker-progress-line" style="width: ${progressPercentage}%;"></div></div><div class="delivery-tracker">${stepsHtml}</div></div>`; }
 
-// UPDATED: viewInvoice with professional A4 design
+// UPDATED: viewInvoice with final professional A4 design
 async function viewInvoice() {
     const orderId = document.getElementById('order-id-input').value.trim().toUpperCase();
     if (!orderId) { showToast('No order loaded.', 'error'); return; }
@@ -175,14 +163,8 @@ async function viewInvoice() {
         website: 'www.ramazon.in'
     };
 
-    // Inject a font for the signature
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
-
     slipContent.innerHTML = `
-        <div style="width: 210mm; min-height: 297mm; padding: 15mm; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; color: #333; font-size: 11pt; display: flex; flex-direction: column;">
+        <div style="width: 210mm; min-height: 297mm; padding: 15mm; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; color: #333; font-size: 11pt; display: flex; flex-direction: column; margin: auto; background: white;">
             <header style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 4px solid #DC2626;">
                 <div>
                     <h1 style="font-size: 2.5rem; font-weight: bold; color: #DC2626; margin: 0;">INVOICE</h1>
@@ -190,7 +172,7 @@ async function viewInvoice() {
                     <p style="margin: 4px 0 0; font-size: 1rem; color: #555;"><strong>Invoice Date:</strong> ${new Date(orderData.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div style="text-align: right;">
-                    <img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" style="height: 65px; margin-bottom: 8px;" crossOrigin="anonymous">
+                    <img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" style="height: 65px; margin-bottom: 8px; margin-left: auto;" crossOrigin="anonymous">
                     <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">${storeDetails.name}</p>
                     <p style="margin: 4px 0 0; font-size: 0.9rem; color: #555;">Proprietor: ${storeDetails.owner}</p>
                 </div>
@@ -210,13 +192,13 @@ async function viewInvoice() {
             </section>
             <section style="margin-top: 2.5rem; flex-grow: 1;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                    <thead style="background-color: #DC2626; color: #FFFFFF;">
-                        <tr>
-                            <th style="padding: 0.8rem; text-align: left;">SL.</th>
+                    <thead>
+                        <tr style="background-color: #DC2626; color: #FFFFFF;">
+                            <th style="padding: 0.8rem; text-align: left; border-radius: 6px 0 0 6px;">SL.</th>
                             <th style="padding: 0.8rem; text-align: left;">DESCRIPTION</th>
                             <th style="padding: 0.8rem; text-align: center;">QTY</th>
                             <th style="padding: 0.8rem; text-align: right;">RATE</th>
-                            <th style="padding: 0.8rem; text-align: right;">AMOUNT</th>
+                            <th style="padding: 0.8rem; text-align: right; border-radius: 0 6px 6px 0;">AMOUNT</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -243,10 +225,10 @@ async function viewInvoice() {
             <footer style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #eee; padding-top: 1rem;">
                 <div style="font-size: 0.8rem; color: #888;">
                     <p style="margin: 0;">Thank you for your order!</p>
-                    <p style="margin: 4px 0 0; font-weight: bold;">www.ramazon.in</p>
+                    <p style="margin: 4px 0 0; font-weight: bold;">${storeDetails.website}</p>
                 </div>
                 <div style="text-align: center;">
-                    <p style="font-family: 'Dancing Script', cursive; font-size: 2.5rem; margin: -10px 0; color: #333;">Ramazone</p>
+                    <p style="font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif; margin: 0; color: #333;">Ramazone</p>
                     <p style="margin: 0; border-top: 1px solid #555; padding-top: 4px; font-size: 0.8rem; font-weight: bold;">Authorized Signatory</p>
                 </div>
             </footer>
@@ -254,6 +236,6 @@ async function viewInvoice() {
     document.getElementById('invoice-modal').classList.add('active');
 }
 
-function downloadInvoice() { const invoiceElement = document.getElementById('invoice-slip-for-render').querySelector('div'); const orderId = document.getElementById('order-id-input').value.trim().toUpperCase(); if (!invoiceElement || !orderId) { showToast('Invoice content not found.', 'error'); return; } const btn = document.getElementById('download-invoice-btn'); btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Generating...`; html2canvas(invoiceElement, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => { const link = document.createElement('a'); link.download = `Ramazone-Invoice-${orderId}.png`; link.href = canvas.toDataURL('image/png'); link.click(); btn.disabled = false; btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`; }).catch(err => { console.error("Download failed:", err); showToast('Failed to generate invoice.', 'error'); btn.disabled = false; btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`; }); }
+function downloadInvoice() { const invoiceElement = document.getElementById('invoice-slip-for-render').querySelector('div'); const orderId = document.getElementById('order-id-input').value.trim().toUpperCase(); if (!invoiceElement || !orderId) { showToast('Invoice content not found.', 'error'); return; } const btn = document.getElementById('download-invoice-btn'); btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Generating...`; html2canvas(invoiceElement, { scale: 3, useCORS: true, allowTaint: true, width: 794, height: 1123, windowWidth: 794, windowHeight: 1123 }).then(canvas => { const link = document.createElement('a'); link.download = `Ramazone-Invoice-${orderId}.png`; link.href = canvas.toDataURL('image/png'); link.click(); btn.disabled = false; btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`; }).catch(err => { console.error("Download failed:", err); showToast('Failed to generate invoice.', 'error'); btn.disabled = false; btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`; }); }
 function showToast(message, type = "info") { const toast = document.getElementById("toast-notification"); if(!toast) return; toast.textContent = message; toast.className = 'toast show'; if(type === 'success') toast.classList.add('success'); if(type === 'error') toast.classList.add('error'); setTimeout(() => toast.classList.remove("show"), 3000); }
 
