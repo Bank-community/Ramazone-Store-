@@ -898,7 +898,6 @@ header {
     border-radius: 4px; 
     font-size: 0.7rem; 
     font-weight: 500; 
-    border-color: #ffffff;
     z-index: 5; 
 }
 
@@ -1046,7 +1045,7 @@ textarea#customer-address:focus {
 .delivery-option.selected, 
 .payment-option.selected { 
     border-color: var(--primary-color); 
-    background-color: #eef2ff; 
+    background-color: #0000ff; 
 }
 
 .form-radio { 
@@ -1080,7 +1079,7 @@ textarea#customer-address:focus {
 .quantity-selector-order button { 
     background-color: transparent; 
     border: none; 
-    color: var(--primary-color); 
+    color: blue; 
     font-weight: bold; 
     width: 36px; 
     height: 36px; 
@@ -1500,3 +1499,13 @@ textarea#customer-address:focus {
     font-weight: 700;
     z-index: 2;
 }
+
+#place-order-btn {
+    background-color: #4F46E5; /* यह आपके primary-color का नीला रंग है */
+}
+
+/* (Optional) Hover करने पर थोड़ा गहरा नीला रंग दिखाने के लिए */
+#place-order-btn:hover {
+    background-color: #4338CA; 
+}
+
