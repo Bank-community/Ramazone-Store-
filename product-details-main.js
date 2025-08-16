@@ -11,22 +11,38 @@ let slider, sliderWrapper;
 // --- SLIDER STATE ---
 let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, animationID;
 
-// --- CART FUNCTIONS (RE-IMPLEMENTED) ---
+// --- CART FUNCTIONS ---
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
 
 function addToCart(productId, quantity, variants) {
     const cart = getCart();
-    const existingItemIndex = cart.findIndex(item => item.id === productId);
+    const product = allProductsCache.find(p => p && p.id === productId);
+    if (!product) return;
+
+    // For items without variants, we can merge them if they are already in the cart.
+    const hasVariants = product.variants && product.variants.length > 0;
+    let existingItemIndex = -1;
+    if (hasVariants) {
+        // For items with variants, we treat each combination as unique for now.
+        // A more complex logic could merge if variants are identical.
+        existingItemIndex = -1; 
+    } else {
+        existingItemIndex = cart.findIndex(item => item.id === productId);
+    }
+
     if (existingItemIndex > -1) {
         cart[existingItemIndex].quantity += quantity;
     } else {
-        cart.push({ id: productId, quantity: quantity, variants: variants });
+        cart.push({ id: productId, quantity: quantity, variants: variants || {} });
     }
     saveCart(cart);
-    showToast(`${currentProductData.name} added to cart!`, 'success');
+    showToast(`${product.name} added to cart!`, 'success');
     updateCartIcon();
-    updateStickyActionBar();
+    // If the action is on the current product page, update its sticky bar
+    if (productId === currentProductId) {
+        updateStickyActionBar();
+    }
 }
 
 function updateCartItemQuantity(productId, newQuantity) {
@@ -173,7 +189,7 @@ function populateDataAndAttachListeners(data) {
         document.getElementById("product-review-count").textContent = `(${data.reviewCount} reviews)`;
     }
     if (data.sellerName) {
-        document.getElementById("seller-info").textContent = `Sold by: ${data.sellerName}`;
+        document.getElementById("seller-info").textContent = `Seller by: ${data.sellerName}`;
         document.getElementById("seller-info").style.display = "block";
     }
 
@@ -191,11 +207,31 @@ function populateDataAndAttachListeners(data) {
 
     updateCartIcon();
     updateStickyActionBar();
+
+    // NEW: Add global event listener for quick-add buttons
+    document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
 }
+
+function handleQuickAdd(event) {
+    const quickAddButton = event.target.closest('.quick-add-btn');
+    if (quickAddButton) {
+        event.preventDefault();
+        const productId = quickAddButton.dataset.id;
+        if (productId) {
+            addToCart(productId, 1, {}); // Add with quantity 1 and no variants
+            quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
+            quickAddButton.classList.add('added');
+            setTimeout(() => {
+                quickAddButton.innerHTML = '+';
+                quickAddButton.classList.remove('added');
+            }, 1500);
+        }
+    }
+}
+
 
 function setupActionControls() {
     document.getElementById('add-to-cart-btn').addEventListener('click', () => {
-        // Validate that all variants are selected
         const variantTypes = (currentProductData.variants || []).map(v => v.type);
         const allVariantsSelected = variantTypes.every(type => selectedVariants[type]);
         if (variantTypes.length > 0 && !allVariantsSelected) {
@@ -213,6 +249,115 @@ function setupActionControls() {
         if (item) updateCartItemQuantity(currentProductId, item.quantity - 1);
     });
     setupShareButton();
+}
+
+
+// UPDATED: To auto-select the first variant option
+function renderVariantSelectors(variants) {
+    const container = document.getElementById("variant-buttons-container");
+    const section = document.getElementById("variant-selection-section");
+    container.innerHTML = "";
+    selectedVariants = {};
+
+    if (!variants || !Array.isArray(variants) || variants.length === 0) {
+        section.style.display = "none";
+        return;
+    }
+    section.style.display = "block";
+
+    variants.forEach(variant => {
+        if (variant && variant.type && variant.options && variant.options.length > 0) {
+            const button = document.createElement("button");
+            button.className = "variant-btn w-full p-3 rounded-lg flex justify-between items-center";
+            button.innerHTML = `<span>${variant.type}</span> <i class="fas fa-chevron-down text-xs"></i>`;
+            button.addEventListener("click", () => openVariantModal(variant));
+            container.appendChild(button);
+
+            // --- AUTO-SELECT LOGIC ---
+            const firstOptionName = variant.options[0].name;
+            selectedVariants[variant.type] = firstOptionName;
+            updateVariantButtonDisplay(variant.type, firstOptionName);
+            // -------------------------
+        }
+    });
+}
+
+// UPDATED: Card creation functions to include quick-add button
+function createHandpickedCard(product) {
+    const displayPrice = Number(product.displayPrice);
+    const originalPriceNum = Number(product.originalPrice);
+    const discount = originalPriceNum > displayPrice ? Math.round(100 * ((originalPriceNum - displayPrice) / originalPriceNum)) : 0;
+    const priceHTML = `<div class="mt-2"><p class="text-lg font-bold text-gray-900">₹${displayPrice.toLocaleString("en-IN")}</p>${originalPriceNum > displayPrice ? `<div class="flex items-center gap-2 text-sm mt-1"><span class="text-gray-500 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</span><span class="font-semibold text-green-600">${discount}% OFF</span></div>` : ""}` + "</div>";
+    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
+    const addButton = (displayPrice < 500 || product.category === 'grocery') && (!product.variants || product.variants.length === 0)
+        ? `<button class="quick-add-btn" data-id="${product.id}">+</button>`
+        : "";
+
+    return `<div class="h-full block bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <a href="?id=${product.id}">
+                    <div class="relative">
+                        <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}">
+                        ${ratingTag}
+                        ${addButton}
+                    </div>
+                    <div class="p-3">
+                        <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
+                        ${priceHTML}
+                    </div>
+                </a>
+            </div>`;
+}
+
+function createCarouselCard(product) {
+    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
+    const originalPriceNum = Number(product.originalPrice);
+    const displayPriceNum = Number(product.displayPrice);
+    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
+    const addButton = (displayPriceNum < 500 || product.category === 'grocery') && (!product.variants || product.variants.length === 0)
+        ? `<button class="quick-add-btn" data-id="${product.id}">+</button>`
+        : "";
+
+    return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden">
+                <div class="relative">
+                    <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">
+                    ${ratingTag}
+                    ${addButton}
+                </div>
+                <div class="p-2">
+                    <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
+                    <div class="flex items-baseline gap-2">
+                        <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>
+                        ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}
+                    </div>
+                    ${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}
+                </div>
+            </a>`;
+}
+
+function createGridCard(product) {
+    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
+    const originalPriceNum = Number(product.originalPrice);
+    const displayPriceNum = Number(product.displayPrice);
+    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
+    const addButton = (displayPriceNum < 500 || product.category === 'grocery') && (!product.variants || product.variants.length === 0)
+        ? `<button class="quick-add-btn" data-id="${product.id}">+</button>`
+        : "";
+
+    return `<a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden">
+                <div class="relative">
+                    <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">
+                    ${ratingTag}
+                    ${addButton}
+                </div>
+                <div class="p-2 sm:p-3">
+                    <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
+                    <div class="flex items-baseline gap-2">
+                        <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>
+                        ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}
+                    </div>
+                    ${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}
+                </div>
+            </a>`;
 }
 
 
@@ -234,14 +379,10 @@ function setSliderPosition() { slider.style.transform=`translateX(${currentTrans
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
 function setupShareButton() { document.getElementById("share-button").addEventListener("click",async()=>{const e=currentProductData.name.replace(/\*/g,"").trim(),t=`*${e}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;navigator.share?await navigator.share({text:t}):navigator.clipboard.writeText(window.location.href).then(()=>showToast("Link Copied!"))})}
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
-function renderVariantSelectors(variants) { const container=document.getElementById("variant-buttons-container"),section=document.getElementById("variant-selection-section");if(container.innerHTML="",selectedVariants={},!variants||!Array.isArray(variants)||0===variants.length)return void(section.style.display="none");section.style.display="block",variants.forEach(variant=>{if(variant&&variant.type&&variant.options){const e=document.createElement("button");e.className="variant-btn w-full p-3 rounded-lg flex justify-between items-center",e.innerHTML=`<span>${variant.type}</span> <i class="fas fa-chevron-down text-xs"></i>`,e.addEventListener("click",()=>openVariantModal(variant)),container.appendChild(e)}})}
 function openVariantModal(variant) { const overlay=document.getElementById("variant-modal-overlay"),titleEl=document.getElementById("variant-modal-title"),bodyEl=document.getElementById("variant-modal-body");titleEl.textContent=`Select ${variant.type}`,bodyEl.innerHTML="",variant.options.forEach(option=>{const e=selectedVariants[variant.type]===option.name,t=document.createElement("div");t.className=`variant-option ${e?"selected":""}`;let n="";n="color"===variant.type.toLowerCase()&&option.value?`<div class="color-swatch" style="background-color: ${option.value};"></div> <span class="flex-grow">${option.name}</span>`:`<span>${option.name}</span>`,t.innerHTML=n,t.addEventListener("click",()=>{selectedVariants[variant.type]=option.name,updateVariantButtonDisplay(variant.type,option.name),closeVariantModal()}),bodyEl.appendChild(t)}),overlay.classList.remove("hidden"),setTimeout(()=>overlay.classList.add("active"),10)}
 function closeVariantModal() { const overlay=document.getElementById("variant-modal-overlay");overlay.classList.remove("active"),setTimeout(()=>overlay.classList.add("hidden"),300)}
 function updateVariantButtonDisplay(type, value) { document.getElementById("variant-buttons-container").querySelectorAll("button").forEach(e=>{e.textContent.includes(type)&&(e.innerHTML=`<span>${type}: <span class="value">${value}</span></span> <i class="fas fa-chevron-down text-xs"></i>`)})}
 function setupVariantModal() { const overlay=document.getElementById("variant-modal-overlay");document.getElementById("variant-modal-close").addEventListener("click",closeVariantModal),overlay.addEventListener("click",e=>{e.target===overlay&&closeVariantModal()})}
-function createHandpickedCard(product) { const displayPrice = Number(product.displayPrice), originalPriceNum = Number(product.originalPrice), discount = originalPriceNum > displayPrice ? Math.round(100 * ((originalPriceNum - displayPrice) / originalPriceNum)) : 0, priceHTML = `<div class="mt-2"><p class="text-lg font-bold text-gray-900">₹${displayPrice.toLocaleString("en-IN")}</p>${originalPriceNum > displayPrice ? `<div class="flex items-center gap-2 text-sm mt-1"><span class="text-gray-500 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</span><span class="font-semibold text-green-600">${discount}% OFF</span></div>` : ""}` + "</div>", ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; return `<div class="h-full block bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden"><a href="?id=${product.id}"><div class="relative"><img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}</div><div class="p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>${priceHTML}</div></a></div>` }
-function createCarouselCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "", originalPriceNum = Number(product.originalPrice), displayPriceNum = Number(product.displayPrice), discount = originalPriceNum && originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>` }
-function createGridCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "", originalPriceNum = Number(product.originalPrice), displayPriceNum = Number(product.displayPrice), discount = originalPriceNum && originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; return `<a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">${ratingTag}</div><div class="p-2 sm:p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>` }
 function updateRecentlyViewed(newId) { let viewedIds=JSON.parse(sessionStorage.getItem("ramazoneRecentlyViewed"))||[];viewedIds=viewedIds.filter(e=>e!==newId),viewedIds.unshift(newId),viewedIds=viewedIds.slice(0,10),sessionStorage.setItem("ramazoneRecentlyViewed",JSON.stringify(viewedIds)),loadRecentlyViewed(viewedIds)}
 function loadHandpickedSimilarProducts(similarIds) { const section = document.getElementById("handpicked-similar-section"), container = document.getElementById("handpicked-similar-container"); if (!similarIds || similarIds.length === 0) return void (section.style.display = "none"); container.innerHTML = ""; let hasContent = !1; similarIds.forEach(id => { const product = allProductsCache.find(p => p && p.id === id); product && (container.innerHTML += createHandpickedCard(product), hasContent = !0) }), hasContent && (section.style.display = "block")}
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e);n&&(container.innerHTML+=createCarouselCard(n),t++)}),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
