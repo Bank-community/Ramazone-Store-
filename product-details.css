@@ -1,0 +1,170 @@
+/* --- Product Details Page Specific Styles --- */
+
+/* --- Media Gallery --- */
+#media-slider {
+    display: flex;
+    transition: transform 0.3s ease-out;
+}
+.media-item {
+    flex: 0 0 100%;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}
+.media-item img, .media-item iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.thumbnail {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.2s;
+}
+.thumbnail.active {
+    border-color: var(--primary-color);
+}
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.play-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- Rating Stars --- */
+.rating-stars {
+    color: #f59e0b;
+}
+
+/* --- Variant Buttons & Modal --- */
+.variant-btn {
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+}
+.variant-btn:hover {
+    background-color: #e5e7eb;
+    border-color: #d1d5db;
+}
+.variant-btn .value {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+#variant-modal-overlay.active #variant-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+.variant-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.variant-option:hover {
+    background-color: #f9fafb;
+}
+.variant-option.selected {
+    border-color: var(--primary-color);
+    background-color: #eef2ff;
+    font-weight: 600;
+}
+.color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+}
+
+/* --- Price & Sticky Bar --- */
+.lowest-price-tag {
+    background-color: #16a34a;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 1rem;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+.quantity-selector button {
+    width: 44px;
+    height: 44px;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    background-color: #eef2ff;
+    transition: background-color 0.2s;
+}
+.quantity-selector button:hover {
+    background-color: #e0e7ff;
+}
+.quantity-selector button:disabled {
+    color: #9ca3af;
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+}
+.quantity-selector span {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+/* --- Highlights Section --- */
+.spec-score {
+    background-color: #fefce8;
+    color: #ca8a04;
+    border: 1px solid #facc15;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+.spec-tag {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #4ade80;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+/* --- "You Might Also Like" Grid --- */
+.you-might-like-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+/* --- "Other Products" Grid --- */
+.other-products-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 12px; 
+}
+@media (min-width: 640px) {
+    .other-products-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* --- Image Modal --- */
+#image-modal { display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+#modal-image-content { margin: auto; display: block; max-width: 90%; max-height: 90%; }
+#image-modal .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; }
+#image-modal .close:hover, #image-modal .close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
+.modal-nav { cursor: pointer; position: absolute; top: 50%; width: auto; padding: 16px; margin-top: -50px; color: white; font-weight: bold; font-size: 2rem; transition: 0.6s ease; border-radius: 0 3px 3px 0; user-select: none; -webkit-user-select: none; }
+.modal-nav.prev { left: 0; border-radius: 3px 0 0 3px; }
+.modal-nav.next { right: 0; border-radius: 0 3px 3px 0; }
+.modal-nav:hover { background-color: rgba(255,255,255,0.2); }
