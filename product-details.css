@@ -175,8 +175,66 @@
     padding: 6px 12px; border-radius: 8px;
 }
 
-/* --- "You Might Also Like" & "Other Products" Grids --- */
-.you-might-like-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+/* === NEW: "You Might Also Like" Carousel Style === */
+
+#handpicked-similar-container {
+    display: flex;
+    gap: 12px; /* Cards ke beech mein thoda gap */
+    overflow-x: auto; /* Horizontal scrolling enable karega */
+    scroll-snap-type: x mandatory; /* Smooth scrolling ke liye */
+    padding-bottom: 1rem; /* Scrollbar ke liye neeche space */
+}
+
+/* Scrollbar ko chhipane ke liye */
+#handpicked-similar-container::-webkit-scrollbar {
+    display: none;
+}
+#handpicked-similar-container {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Har ek card ka size set karega taki 3 card screen par fit ho */
+#handpicked-similar-container > div {
+    flex: 0 0 31%; /* Isse ek time par lagbhag 3 card dikhenge */
+    scroll-snap-align: start;
+}
+
+/* === "You Might Also Like" Card Customization (Corrected) === */
+
+/* Is naye selector se hum seedhe card ko target kar rahe hain */
+#handpicked-similar-container > div {
+    border-radius: 6px !important; /* IMPORTANT: Apni pasand ki value yahan daalein (jaise 4px, 8px) */
+}
+
+/* Card ke andar ke text section ki padding kam karke height adjust karne ke liye */
+#handpicked-similar-container .p-3 {
+    padding: 0.6rem; /* Padding ko thoda kam kiya gaya hai */
+}
+
+/* Product ka naam thoda chhota karne ke liye */
+#handpicked-similar-container h4 {
+    margin-bottom: 0.1rem; /* Naam aur price ke beech gap kam kiya gaya hai */
+}
+
+/* Price ka font size chhota karke height kam karne ke liye */
+#handpicked-similar-container .text-lg {
+    font-size: 1rem; /* Font size ko thoda chhota kiya gaya hai */
+    line-height: 1.4rem;
+}
+
+/* Discount text ka size adjust karne ke liye */
+#handpicked-similar-container .text-sm {
+    font-size: 0.8rem;
+}
+
+
+    
+
+
+
+
+
 .other-products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 @media (min-width: 640px) {
     .other-products-grid { grid-template-columns: repeat(3, 1fr); }
