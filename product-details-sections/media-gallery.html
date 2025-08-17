@@ -1,8 +1,26 @@
+<!-- p-0 sm:p-4 lg:p-6 -->
 <div class="p-0 sm:p-4 lg:p-6">
+    <!-- Main image viewer (No change) -->
     <div id="main-media-wrapper" class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative">
         <div id="media-slider"></div>
     </div>
-    <div class="relative px-4 sm:px-0">
-        <div class="grid grid-cols-5 gap-2 sm:gap-4" id="thumbnail-gallery"></div>
+
+    <!-- UPDATED: Container for both thumbnails and combos -->
+    <div class="px-4 sm:px-0 space-y-4">
+        <!-- UPDATED: Thumbnail Gallery Wrapper for Scrolling -->
+        <div id="thumbnail-wrapper" class="relative">
+             <div id="thumbnail-gallery" class="flex items-center gap-2 overflow-x-auto pb-2">
+                <!-- Thumbnails JS se yahan aayenge -->
+             </div>
+        </div>
+
+        <!-- NEW: Combo Offers Section -->
+        <div id="combo-offers-section" class="hidden">
+            <h3 class="text-sm font-bold text-gray-700 mb-2">Available in Packs</h3>
+            <div id="combo-offers-container" class="flex items-center gap-3 overflow-x-auto pb-2">
+                <!-- Combo packs JS se yahan aayenge -->
+            </div>
+        </div>
     </div>
 </div>
+

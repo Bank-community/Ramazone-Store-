@@ -272,4 +272,57 @@
 
 
 
+/* === UPDATE 1: SCROLLING GALLERY & COMBO PACKS === */
 
+/* --- Thumbnail & Combo Scrolling --- */
+/* Hide scrollbar for a cleaner look */
+#thumbnail-gallery, #combo-offers-container {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+#thumbnail-gallery::-webkit-scrollbar, #combo-offers-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+/* Make individual thumbnails non-shrinkable and set their size */
+#thumbnail-gallery .thumbnail {
+    flex-shrink: 0;
+    width: 20%; /* Mobile par lagbhag 5 dikhenge */
+    max-width: 75px;
+}
+
+/* --- NEW: Combo Pack Styling --- */
+.combo-pack-card {
+    flex-shrink: 0;
+    width: 35%; /* Mobile par lagbhag 3 dikhenge */
+    max-width: 130px;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem; /* Thoda zyada rounded */
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.combo-pack-card.selected, .combo-pack-card:hover {
+    border-color: var(--primary-color);
+    background-color: #eef2ff;
+    transform: translateY(-2px); /* Halksa upar uthega */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+.combo-pack-card .combo-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.combo-pack-card .combo-price {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}

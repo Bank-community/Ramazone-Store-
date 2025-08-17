@@ -179,6 +179,7 @@ function populateDataAndAttachListeners(data) {
     sliderWrapper = document.getElementById('main-media-wrapper');
     mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
     renderMediaGallery();
+    renderComboPacks(data.combos); // <<< NEW FUNCTION CALL
     showMedia(0);
     setupSliderControls();
     setupImageModal();
@@ -208,7 +209,6 @@ function populateDataAndAttachListeners(data) {
     updateCartIcon();
     updateStickyActionBar();
 
-    // NEW: Add global event listener for quick-add buttons
     document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
 }
 
@@ -251,8 +251,6 @@ function setupActionControls() {
     setupShareButton();
 }
 
-
-// UPDATED: To auto-select the first variant option
 function renderVariantSelectors(variants) {
     const container = document.getElementById("variant-buttons-container");
     const section = document.getElementById("variant-selection-section");
@@ -273,14 +271,39 @@ function renderVariantSelectors(variants) {
             button.addEventListener("click", () => openVariantModal(variant));
             container.appendChild(button);
 
-            // --- AUTO-SELECT LOGIC ---
             const firstOptionName = variant.options[0].name;
             selectedVariants[variant.type] = firstOptionName;
             updateVariantButtonDisplay(variant.type, firstOptionName);
-            // -------------------------
         }
     });
 }
+
+// --- NEW FUNCTION TO RENDER COMBO PACKS ---
+function renderComboPacks(combos) {
+    const section = document.getElementById('combo-offers-section');
+    const container = document.getElementById('combo-offers-container');
+
+    // Check if valid combo data exists
+    if (!combos || !combos.quantityPacks || !Array.isArray(combos.quantityPacks) || combos.quantityPacks.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    container.innerHTML = ''; // Clear previous content
+    combos.quantityPacks.forEach(pack => {
+        const card = document.createElement('div');
+        card.className = 'combo-pack-card';
+        card.innerHTML = `
+            <p class="combo-name">${pack.name}</p>
+            <p class="combo-price">₹${pack.price.toLocaleString("en-IN")}</p>
+        `;
+        // TODO: Add click listener to handle price update and selection state
+        container.appendChild(card);
+    });
+
+    section.style.display = 'block'; // Show the section
+}
+
 
 // UPDATED: Card creation functions to include quick-add button
 function createHandpickedCard(product) {
@@ -388,3 +411,4 @@ function loadHandpickedSimilarProducts(similarIds) { const section = document.ge
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e);n&&(container.innerHTML+=createCarouselCard(n),t++)}),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
+
