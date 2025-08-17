@@ -1,5 +1,6 @@
 <!-- Product Info, Price, Description Section -->
 <div class="flex flex-col p-4 sm:p-6 lg:p-8">
+    <!-- Product Title & Share Button -->
     <div class="flex justify-between items-start mb-2">
         <h1 id="product-title" class="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight"></h1>
         <button id="share-button" title="Share Product" class="flex-shrink-0 bg-gray-100 rounded-full w-11 h-11 flex items-center justify-center hover:bg-gray-200 transition">
@@ -7,23 +8,20 @@
         </button>
     </div>
     
+    <!-- Rating & Seller Info -->
     <div id="rating-section" class="flex items-center gap-2 text-sm text-gray-500 mb-1" style="display: none;">
         <div id="product-rating-stars" class="rating-stars"></div>
         <span id="product-review-count"></span>
     </div>
+    <div id="seller-info" class="text-sm font-semibold text-gray-600 mt-1" style="display: none;"></div>
 
-    <div id="seller-info" class="text-sm font-semibold text-gray-600 mt-1 mb-4" style="display: none;"></div>
-
-    <div id="variant-selection-section" class="mb-4" style="display: none;">
-        <div id="variant-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-    </div>
-    
-    <div class="space-y-3 border-t border-b border-gray-200 py-3 my-3">
+    <!-- UPDATED: Price Section with reduced spacing -->
+    <div class="border-t border-b border-gray-200 py-3 my-3">
         <div id="new-price-section">
              <div id="lowest-price-tag-container" style="display: none;">
                 <div class="lowest-price-tag">Lowest Price since Launch</div>
              </div>
-            <div class="flex items-center gap-3 mb-2">
+            <div class="flex items-center gap-3">
                 <span id="price-percentage-discount" class="text-2xl font-bold text-green-600 flex items-center"></span>
                 <span id="price-original" class="text-xl text-gray-400 line-through"></span>
                 <span id="price-final" class="text-3xl font-extrabold text-gray-900"></span>
@@ -31,15 +29,19 @@
         </div>
     </div>
 
-    <!-- NEW: Highlights Section Container -->
+    <!-- Container for all selectable options (Variants and Combos) -->
+    <div id="options-container" class="space-y-3 my-4">
+        <!-- Variants and Combos will be dynamically inserted here by JS -->
+    </div>
+
+    <!-- Highlights Section Container -->
     <div id="advanced-highlights-section" style="display: none;"></div>
 
     <!-- Product Details / Description Section -->
     <div id="description-section" class="pt-4" style="display: none;">
         <h2 class="text-xl font-bold text-gray-900 mb-4">Product Details</h2>
-        
         <div id="return-policy-info" class="flex items-center gap-3 text-sm text-gray-800 bg-gray-100 p-3 rounded-lg mb-4" style="display: none;"></div>
-        
         <div id="product-description" class="space-y-6"></div>
     </div>
 </div>
+

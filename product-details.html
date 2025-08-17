@@ -73,6 +73,24 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="product-details-main.js"></script>
+
+    <!-- NEW: Bundle Details Modal -->
+<div id="bundle-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
+    <div id="bundle-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h3 class="text-lg font-bold">Bundle Offer</h3>
+            <button id="bundle-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+        </div>
+        <div id="bundle-modal-body" class="p-4 sm:p-6 overflow-y-auto">
+            <!-- Bundle details will be injected here by JS -->
+        </div>
+        <div id="bundle-modal-footer" class="p-4 bg-gray-50 border-t">
+             <!-- Footer content like Add to Cart button will be here -->
+        </div>
+    </div>
+</div>
+
+    
 </body>
 </html>
 
