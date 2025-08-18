@@ -10,7 +10,7 @@ let activeListeners = [];
 let allTransactionsSnapshot = {};
 // Add other global variables as needed
 
-// --- DOM Element References ---
+// --- COMPLETE DOM Element References ---
 const DOMElements = {
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
@@ -22,24 +22,31 @@ const DOMElements = {
     loginErrorMsg: document.getElementById('login-error-msg'),
     registerErrorMsg: document.getElementById('register-error-msg'),
     userNameDisplay: document.getElementById('user-name-display'),
+    userMobileDisplay: document.getElementById('user-mobile'),
     walletBalance: document.getElementById('wallet-balance'),
-    // Add all other element IDs from your HTML here
+    creditLimit: document.getElementById('credit-limit'),
+    lifetimeEarning: document.getElementById('lifetime-earning'),
+    dueAmount: document.getElementById('due-amount'),
+    userReferralId: document.getElementById('user-referral-id'),
+    openCashbackModalBtn: document.getElementById('open-cashback-modal'),
+    scanAndPayBtn: document.getElementById('scan-and-pay-btn'),
+    openCouponsModalBtn: document.getElementById('open-coupons-modal'),
+    openProfileModalBtn: document.getElementById('open-profile-modal'),
+    openClaimModalBtn: document.getElementById('open-claim-modal'),
+    // Add other element IDs as you create them
 };
 
 // --- CORE INITIALIZATION ---
 async function initializeFirebaseApp() {
     try {
-        // >>> VERCEL CONFIG SYSTEM IS BACK <<<
-        // Yeh code Vercel ke /api/cashback-config se API keys laega
         const response = await fetch('/api/cashback-config');
         if (!response.ok) {
             throw new Error(`API call failed with status: ${response.status}`);
         }
         const firebaseConfig = await response.json();
 
-        // Check if any key is missing
         if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
-            throw new Error("Firebase config keys are missing from the API response. Check Vercel Environment Variables.");
+            throw new Error("Firebase config keys are missing. Check Vercel Environment Variables.");
         }
 
         const app = initializeApp(firebaseConfig);
@@ -63,7 +70,13 @@ function setupApplication() {
     DOMElements.showLoginLink.addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
     DOMElements.refreshBtn.addEventListener('click', refreshData);
-    // Add all other event listeners for your dashboard buttons here
+    
+    // Add event listeners for all dashboard buttons
+    DOMElements.openCashbackModalBtn.addEventListener('click', () => openModal(document.getElementById('cashback-modal')));
+    DOMElements.scanAndPayBtn.addEventListener('click', () => openModal(document.getElementById('scan-pay-modal')));
+    DOMElements.openCouponsModalBtn.addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
+    DOMElements.openProfileModalBtn.addEventListener('click', () => openModal(document.getElementById('profile-modal')));
+    DOMElements.openClaimModalBtn.addEventListener('click', () => openModal(document.getElementById('claim-modal')));
 }
 
 function setupAuthentication() {
@@ -151,12 +164,12 @@ function detachAllListeners() {
 
 function updateDashboardUI(dbData, authUser) {
     DOMElements.userNameDisplay.textContent = authUser.displayName;
+    DOMElements.userMobileDisplay.textContent = `Mobile: ${dbData.mobile}`;
     DOMElements.walletBalance.textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
-    document.getElementById('user-mobile').textContent = `Mobile: ${dbData.mobile}`;
-    document.getElementById('credit-limit').textContent = `₹${((dbData.wallet || 0) + (dbData.dueAmount || 0)).toFixed(2)}`;
-    document.getElementById('lifetime-earning').textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
-    document.getElementById('due-amount').textContent = `- ₹${(dbData.dueAmount || 0).toFixed(2)}`;
-    document.getElementById('user-referral-id').textContent = dbData.referralId || 'N/A';
+    DOMElements.creditLimit.textContent = `₹${((dbData.wallet || 0) + (dbData.dueAmount || 0)).toFixed(2)}`;
+    DOMElements.lifetimeEarning.textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+    DOMElements.dueAmount.textContent = `- ₹${(dbData.dueAmount || 0).toFixed(2)}`;
+    DOMElements.userReferralId.textContent = dbData.referralId || 'N/A';
 }
 
 function refreshData() {
@@ -177,6 +190,9 @@ function showToast(message) {
 function toggleView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(viewId)?.classList.add('active');
+}
+function openModal(modalElement) {
+    if (modalElement) modalElement.classList.add('active');
 }
 function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
 function hideErrorMessage(element) { element.style.display = 'none'; }
