@@ -6,118 +6,138 @@ import { getDatabase, ref, get, set, push, onValue, runTransaction, query, order
 const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
 const MASTER_REFERRAL_ID = "RMZC000B001";
 let auth, database;
-let imageApiKey = null;
-
-// --- DOM Element References ---
-// This object should contain all your element IDs
-const DOMElements = {
-    loginForm: document.getElementById('login-form'),
-    registerForm: document.getElementById('register-form'),
-    logoutBtn: document.getElementById('logout-btn'),
-    refreshBtn: document.getElementById('refresh-btn'),
-    notificationBtn: document.getElementById('notification-btn'),
-    showRegisterLink: document.getElementById('show-register-link'),
-    showLoginLink: document.getElementById('show-login-link'),
-    // ... add all other element IDs here for consistency
-};
-
-// --- Function to display error directly on the screen ---
-function showFatalError(message, details = '') {
-    document.body.innerHTML = `<div style="text-align: center; padding: 40px; color: #B91C1C; font-family: sans-serif; background-color: #FEF2F2; min-height: 100vh;">
-        <h2 style="margin-bottom: 15px;">Application Error</h2>
-        <p style="font-size: 16px; color: #374151;">${message}</p>
-        <p style="font-size: 14px; color: #9CA3AF; margin-top: 20px; word-break: break-all;">${details}</p>
-    </div>`;
-    console.error(message, details); // Also log to console for good measure
-}
-
 
 // --- CORE INITIALIZATION ---
-async function initializeFirebaseApp() {
+function initializeFirebaseApp() {
     try {
-        const response = await fetch('/api/cashback-config');
-        if (!response.ok) {
-            throw new Error(`API call failed with status: ${response.status}`);
-        }
-        const firebaseConfig = await response.json();
+        // >>> APNI API KEYS YAHAN PASTE KAREIN <<<
+        // Firebase se copy kiya hua pura 'firebaseConfig' object yahan daalein
+        const firebaseConfig = {
+  apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+  authDomain: "tipsplit-e3wes.firebaseapp.com",
+  databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tipsplit-e3wes",
+  storageBucket: "tipsplit-e3wes.firebasestorage.app",
+  messagingSenderId: "984733883633",
+  appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+};
+        // >>> YAHAN TAK <<<
 
-        // >>> NEW AGGRESSIVE CHECKING <<<
-        // This will check each key and show an error on screen if one is missing.
-        const requiredKeys = [
-            "apiKey", "authDomain", "databaseURL", "projectId", 
-            "storageBucket", "messagingSenderId", "appId"
-        ];
-        
-        for (const key of requiredKeys) {
-            if (!firebaseConfig[key]) {
-                // Find the corresponding environment variable name
-                const envVarName = `CASHBACK_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
-                throw new Error(`Firebase config key '${key}' is missing. Please check the Environment Variable named '${envVarName}' in Vercel.`);
-            }
+        // Check if keys are placeholders
+        if (firebaseConfig.apiKey.startsWith("AIzaSyXXX")) {
+            throw new Error("Firebase config keys are placeholders. Please replace them with your actual keys.");
         }
 
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         database = getDatabase(app);
         
-        // Now that Firebase is initialized, we can safely set up the application
+        // Firebase safaltapoorvak shuru ho gaya hai
         setupApplication();
         
     } catch (error) {
-        showFatalError(error.message, "Please double-check your Vercel Environment Variables and redeploy the project.");
+        // Agar yahan error aata hai, to matlab API keys galat copy hui hain
+        document.body.innerHTML = `<div style="text-align: center; padding: 40px; color: #B91C1C; font-family: sans-serif;"><h2>Application Error</h2><p>${error.message}</p></div>`;
+        console.error("FATAL: Firebase initialization failed.", error);
     }
 }
 
 // --- All other functions (Authentication, UI, etc.) ---
 
 function setupApplication() {
-    // This function now runs ONLY if Firebase initialization is successful.
-    
-    // Setup page navigation
-    DOMElements.showRegisterLink.addEventListener('click', e => {
+    // Buttons ko kaam karne layak banayein
+    document.getElementById('show-register-link').addEventListener('click', e => {
         e.preventDefault();
         toggleView('registration-view');
     });
     
-    DOMElements.showLoginLink.addEventListener('click', e => {
+    document.getElementById('show-login-link').addEventListener('click', e => {
         e.preventDefault();
         toggleView('login-view');
     });
 
-    // Setup Authentication listeners
+    // Authentication listeners ko setup karein
     setupAuthentication();
     
-    // ... rest of your setup code (modal buttons, etc.)
+    // ... baaki sabhi buttons aur features ka setup code yahan aayega
 }
 
 function setupAuthentication() {
     onAuthStateChanged(auth, user => {
         if (user) {
             toggleView('dashboard-view');
-            // attachRealtimeListeners(user); // This would be called here
+            // attachRealtimeListeners(user); 
         } else {
             toggleView('login-view');
-            // detachAllListeners(); // This would be called here
+            // detachAllListeners();
         }
     });
 
-    DOMElements.loginForm.addEventListener('submit', e => {
+    document.getElementById('login-form').addEventListener('submit', e => {
         e.preventDefault();
-        // ... login logic
+        const mobile = document.getElementById('login-mobile').value;
+        const password = document.getElementById('login-password').value;
+        signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
+            .catch((error) => {
+                console.error("Login Error:", error);
+                document.getElementById('login-error-msg').textContent = "Galat mobile number ya password.";
+                document.getElementById('login-error-msg').style.display = 'block';
+            });
     });
 
-    DOMElements.registerForm.addEventListener('submit', async e => {
+    document.getElementById('register-form').addEventListener('submit', async e => {
         e.preventDefault();
-        // ... registration logic
-    });
+        const errorMsgElement = document.getElementById('register-error-msg');
+        hideErrorMessage(errorMsgElement);
 
-    // ... other auth listeners
+        const name = document.getElementById('reg-name').value.trim();
+        const mobile = document.getElementById('reg-mobile').value.trim();
+        const password = document.getElementById('reg-password').value.trim();
+        const referralId = document.getElementById('reg-referral').value.trim().toUpperCase();
+
+        if (!name || !/^\d{10}$/.test(mobile) || password.length < 6 || !referralId) {
+            showErrorMessage(errorMsgElement, "Kripya sabhi details sahi se bharein.");
+            return;
+        }
+
+        try {
+            const referralUserSnapshot = await get(query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralId)));
+            if (!referralUserSnapshot.exists() && referralId !== MASTER_REFERRAL_ID) {
+                showErrorMessage(errorMsgElement, "Invalid Referral ID.");
+                return;
+            }
+            const referrerUid = referralUserSnapshot.exists() ? Object.keys(referralUserSnapshot.val())[0] : 'master';
+
+            const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+            const user = userCredential.user;
+            await updateProfile(user, { displayName: name });
+
+            const newUserReferralId = generateReferralId();
+            await set(ref(database, 'users/' + user.uid), {
+                uid: user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
+                profilePictureUrl: '', referralId: newUserReferralId, referredBy: referrerUid,
+                createdAt: new Date().toISOString()
+            });
+
+            alert("Registration safal hua! Ab aap login kar sakte hain.");
+            toggleView('login-view');
+            document.getElementById('register-form').reset();
+
+        } catch (error) {
+            console.error("Registration Error Details:", error);
+            const msg = error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : `Registration fail ho gaya. (Error: ${error.code})`;
+            showErrorMessage(errorMsgElement, msg);
+        }
+    });
 }
 
 function toggleView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(viewId)?.classList.add('active');
 }
+function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
+function hideErrorMessage(element) { element.style.display = 'none'; }
+function generateReferralId() { const randomPart1 = Math.floor(100 + Math.random() * 900); const randomPart2 = Math.floor(1000 + Math.random() * 9000); return `RMZC${randomPart1}B${randomPart2}`; }
 
 // --- Start the application ---
 document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
