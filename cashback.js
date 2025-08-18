@@ -1,9 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getDatabase, ref, get, set, push, onValue, runTransaction, query, orderByChild, equalTo, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
 // --- Constants and Global Variables ---
-const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
 const MASTER_REFERRAL_ID = "RMZC000B001";
 let auth, database;
 
@@ -11,7 +10,6 @@ let auth, database;
 function initializeFirebaseApp() {
     try {
         // >>> APNI API KEYS YAHAN PASTE KAREIN <<<
-        // Firebase se copy kiya hua pura 'firebaseConfig' object yahan daalein
         const firebaseConfig = {
   apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
   authDomain: "tipsplit-e3wes.firebaseapp.com",
@@ -23,7 +21,6 @@ function initializeFirebaseApp() {
 };
         // >>> YAHAN TAK <<<
 
-        // Check if keys are placeholders
         if (firebaseConfig.apiKey.startsWith("AIzaSyXXX")) {
             throw new Error("Firebase config keys are placeholders. Please replace them with your actual keys.");
         }
@@ -32,11 +29,9 @@ function initializeFirebaseApp() {
         auth = getAuth(app);
         database = getDatabase(app);
         
-        // Firebase safaltapoorvak shuru ho gaya hai
         setupApplication();
         
     } catch (error) {
-        // Agar yahan error aata hai, to matlab API keys galat copy hui hain
         document.body.innerHTML = `<div style="text-align: center; padding: 40px; color: #B91C1C; font-family: sans-serif;"><h2>Application Error</h2><p>${error.message}</p></div>`;
         console.error("FATAL: Firebase initialization failed.", error);
     }
@@ -45,7 +40,6 @@ function initializeFirebaseApp() {
 // --- All other functions (Authentication, UI, etc.) ---
 
 function setupApplication() {
-    // Buttons ko kaam karne layak banayein
     document.getElementById('show-register-link').addEventListener('click', e => {
         e.preventDefault();
         toggleView('registration-view');
@@ -56,20 +50,15 @@ function setupApplication() {
         toggleView('login-view');
     });
 
-    // Authentication listeners ko setup karein
     setupAuthentication();
-    
-    // ... baaki sabhi buttons aur features ka setup code yahan aayega
 }
 
 function setupAuthentication() {
     onAuthStateChanged(auth, user => {
         if (user) {
             toggleView('dashboard-view');
-            // attachRealtimeListeners(user); 
         } else {
             toggleView('login-view');
-            // detachAllListeners();
         }
     });
 
@@ -79,9 +68,7 @@ function setupAuthentication() {
         const password = document.getElementById('login-password').value;
         signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
             .catch((error) => {
-                console.error("Login Error:", error);
-                document.getElementById('login-error-msg').textContent = "Galat mobile number ya password.";
-                document.getElementById('login-error-msg').style.display = 'block';
+                showErrorMessage(document.getElementById('login-error-msg'), "Galat mobile number ya password.");
             });
     });
 
@@ -101,21 +88,18 @@ function setupAuthentication() {
         }
 
         try {
-            const referralUserSnapshot = await get(query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralId)));
-            if (!referralUserSnapshot.exists() && referralId !== MASTER_REFERRAL_ID) {
-                showErrorMessage(errorMsgElement, "Invalid Referral ID.");
-                return;
-            }
-            const referrerUid = referralUserSnapshot.exists() ? Object.keys(referralUserSnapshot.val())[0] : 'master';
-
+            // >>> TEMPORARY CHANGE: Skipping the referral check <<<
+            // Hum referral check ko baad mein theek karenge. Abhi direct account banate hain.
+            
             const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
             const user = userCredential.user;
             await updateProfile(user, { displayName: name });
 
             const newUserReferralId = generateReferralId();
+            // Hum abhi referredBy ko 'master' set kar rahe hain testing ke liye
             await set(ref(database, 'users/' + user.uid), {
                 uid: user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
-                profilePictureUrl: '', referralId: newUserReferralId, referredBy: referrerUid,
+                profilePictureUrl: '', referralId: newUserReferralId, referredBy: 'master',
                 createdAt: new Date().toISOString()
             });
 
@@ -124,8 +108,11 @@ function setupAuthentication() {
             document.getElementById('register-form').reset();
 
         } catch (error) {
+            // Is baar humein asli error message milega
             console.error("Registration Error Details:", error);
-            const msg = error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : `Registration fail ho gaya. (Error: ${error.code})`;
+            const msg = error.code === 'auth/email-already-in-use' 
+                ? "Is mobile number se account pehle se hai." 
+                : `Registration fail ho gaya. (Error: ${error.message})`; // Using error.message
             showErrorMessage(errorMsgElement, msg);
         }
     });
