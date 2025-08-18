@@ -13,13 +13,49 @@
 
     <div class="container">
         
-        <!-- Login and Registration Views (No Changes) -->
-        <div id="login-view" class="view active"><!-- ... --></div>
-        <div id="registration-view" class="view"><!-- ... --></div>
+        <!-- Login View -->
+        <div id="login-view" class="view active">
+            <div class="auth-card">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/FFFFFF/000000?text=Ramazone';">
+                <h1>Welcome Back!</h1>
+                <p class="auth-subtitle">Login to continue your journey.</p>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-mobile">Mobile Number</label>
+                        <input type="tel" id="login-mobile" inputmode="numeric" pattern="[0-9]{10}" required placeholder="10-digit mobile number">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                    <p id="login-error-msg" class="error-message"></p>
+                </form>
+                <p class="form-link">Naye user? <a href="#" id="show-register-link">Yahan register karein</a></p>
+            </div>
+        </div>
+
+        <!-- Registration View -->
+        <div id="registration-view" class="view">
+            <div class="auth-card">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/FFFFFF/000000?text=Ramazone';">
+                <h1>Create Account</h1>
+                <p class="auth-subtitle">Join us and start saving today!</p>
+                <form id="register-form">
+                    <div class="form-group"><label for="reg-name">Poora Naam (Full Name)</label><input type="text" id="reg-name" required></div>
+                    <div class="form-group"><label for="reg-mobile">Mobile Number (10 अंक)</label><input type="tel" id="reg-mobile" inputmode="numeric" pattern="[0-9]{10}" required></div>
+                    <div class="form-group"><label for="reg-password">Password Banayein</label><input type="password" id="reg-password" required placeholder="Kam se kam 6 akshar"></div>
+                    <div class="form-group"><label for="reg-referral">Referral ID</label><input type="text" id="reg-referral" required placeholder="RMZCXXXBXXX"></div>
+                    <button type="submit" class="btn-primary">Register Karein</button>
+                    <p id="register-error-msg" class="error-message"></p>
+                </form>
+                <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
+            </div>
+        </div>
 
         <!-- Dashboard View -->
         <div id="dashboard-view" class="view">
-            <!-- >>> HEADER UPDATED HERE <<< -->
+            <!-- Header Section -->
             <header class="header">
                 <div class="header-left">
                     <button id="notification-btn" class="header-icon" title="Notifications">
@@ -40,17 +76,75 @@
                 </div>
             </header>
             
-            <!-- Rest of the dashboard content remains the same -->
-            <!-- ... Wallet Card, Referral Card, Actions, etc. ... -->
+            <!-- Wallet Card -->
+            <div class="wallet-card">
+                <div class="wallet-card-header">
+                    <div class="user-info">
+                        <h2 id="user-name-display">User Name</h2>
+                        <p id="user-mobile">Mobile: 0000000000</p>
+                    </div>
+                    <img id="profile-display" src="https://placehold.co/50x50/e0e0e0/333333?text=R" alt="Profile Picture">
+                </div>
+                <div class="wallet-card-body">
+                    <p class="wallet-balance-label">Available Balance</p>
+                    <p id="wallet-balance">₹ 0.00</p>
+                </div>
+                <div class="wallet-card-footer">
+                    <div class="footer-item">
+                        <span>Credit Limit</span>
+                        <strong id="credit-limit">₹0.00</strong>
+                    </div>
+                    <div class="footer-item">
+                        <span>Lifetime Earning</span>
+                        <strong id="lifetime-earning">₹0.00</strong>
+                    </div>
+                    <div class="footer-item" id="due-amount-container">
+                        <span>Total Due</span>
+                        <strong id="due-amount" class="due">- ₹0.00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Info Card -->
+            <div class="referral-card">
+                <p>Your Referral ID</p>
+                <div class="referral-id-wrapper">
+                    <strong id="user-referral-id">RMZCXXXXBXXX</strong>
+                    <button id="wallet-share-btn" title="Share Referral ID">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Actions -->
+            <div class="dashboard-actions">
+                <button id="open-cashback-modal" class="action-card"><span>Cashback Request</span></button>
+                <button id="scan-and-pay-btn" class="action-card"><span>Scan & Pay</span></button>
+                <button id="open-coupons-modal" class="action-card"><span>My Coupons</span></button>
+                <button id="open-profile-modal" class="action-card"><span>My Profile</span></button>
+                <a href="#" id="whatsapp-support-link" target="_blank" class="action-card"><span>Support</span></a>
+                <button id="open-claim-modal" class="action-card"><span>Claim From Wallet</span></button>
+            </div>
+
+            <!-- Transactions Section -->
+            <div class="section">
+                <h2 class="section-title">All Transactions</h2>
+                <div id="unified-history-list" class="history-list"></div>
+            </div>
         </div>
     </div>
 
-    <!-- All Modals (No Changes) -->
+    <!-- All Modals -->
+    <div id="cashback-modal" class="modal-overlay"><!-- ... cashback modal content ... --></div>
+    <div id="scan-pay-modal" class="modal-overlay"><!-- ... scan & pay modal content ... --></div>
+    <div id="coupons-modal" class="modal-overlay"><!-- ... coupons modal content ... --></div>
+    <div id="profile-modal" class="modal-overlay"><!-- ... profile modal content ... --></div>
+    <div id="claim-modal" class="modal-overlay"><!-- ... claim modal content ... --></div>
+    <div id="toast-notification" class="toast-notification"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script type="module" src="cashback.js"></script>
 
 </body>
 </html>
-
 
