@@ -8,9 +8,8 @@ let auth, database;
 let currentUserData = null;
 let activeListeners = [];
 let allTransactionsSnapshot = {};
-// Add other global variables as needed
 
-// --- COMPLETE DOM Element References ---
+// --- DOM Element References ---
 const DOMElements = {
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
@@ -22,31 +21,29 @@ const DOMElements = {
     loginErrorMsg: document.getElementById('login-error-msg'),
     registerErrorMsg: document.getElementById('register-error-msg'),
     userNameDisplay: document.getElementById('user-name-display'),
-    userMobileDisplay: document.getElementById('user-mobile'),
     walletBalance: document.getElementById('wallet-balance'),
-    creditLimit: document.getElementById('credit-limit'),
-    lifetimeEarning: document.getElementById('lifetime-earning'),
-    dueAmount: document.getElementById('due-amount'),
-    userReferralId: document.getElementById('user-referral-id'),
-    openCashbackModalBtn: document.getElementById('open-cashback-modal'),
-    scanAndPayBtn: document.getElementById('scan-and-pay-btn'),
-    openCouponsModalBtn: document.getElementById('open-coupons-modal'),
-    openProfileModalBtn: document.getElementById('open-profile-modal'),
-    openClaimModalBtn: document.getElementById('open-claim-modal'),
-    // Add other element IDs as you create them
+    // Add all other element IDs here
 };
 
 // --- CORE INITIALIZATION ---
-async function initializeFirebaseApp() {
+function initializeFirebaseApp() {
     try {
-        const response = await fetch('/api/cashback-config');
-        if (!response.ok) {
-            throw new Error(`API call failed with status: ${response.status}`);
-        }
-        const firebaseConfig = await response.json();
+        // >>> APNI API KEYS YAHAN PASTE KAREIN <<<
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+  authDomain: "re-store-8e5b3.firebaseapp.com",
+  databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "re-store-8e5b3",
+  storageBucket: "re-store-8e5b3.firebasestorage.app",
+  messagingSenderId: "747691299697",
+  appId: "1:747691299697:web:20dda42f47c7b39d495cd0",
+  measurementId: "G-V405ZGH8VZ"
+};
+        // >>> YAHAN TAK <<<
 
-        if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
-            throw new Error("Firebase config keys are missing. Check Vercel Environment Variables.");
+        if (firebaseConfig.apiKey.startsWith("AIzaSyXXX")) {
+            throw new Error("API Keys are placeholders. Please add your actual Firebase keys.");
         }
 
         const app = initializeApp(firebaseConfig);
@@ -70,13 +67,7 @@ function setupApplication() {
     DOMElements.showLoginLink.addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
     DOMElements.refreshBtn.addEventListener('click', refreshData);
-    
-    // Add event listeners for all dashboard buttons
-    DOMElements.openCashbackModalBtn.addEventListener('click', () => openModal(document.getElementById('cashback-modal')));
-    DOMElements.scanAndPayBtn.addEventListener('click', () => openModal(document.getElementById('scan-pay-modal')));
-    DOMElements.openCouponsModalBtn.addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
-    DOMElements.openProfileModalBtn.addEventListener('click', () => openModal(document.getElementById('profile-modal')));
-    DOMElements.openClaimModalBtn.addEventListener('click', () => openModal(document.getElementById('claim-modal')));
+    // Add other button listeners here
 }
 
 function setupAuthentication() {
@@ -153,7 +144,7 @@ function attachRealtimeListeners(user) {
             updateDashboardUI(currentUserData, user);
         }
     }));
-    // Add other listeners for transactions here
+    // Add listeners for transactions, etc. here
 }
 
 function detachAllListeners() {
@@ -164,12 +155,12 @@ function detachAllListeners() {
 
 function updateDashboardUI(dbData, authUser) {
     DOMElements.userNameDisplay.textContent = authUser.displayName;
-    DOMElements.userMobileDisplay.textContent = `Mobile: ${dbData.mobile}`;
     DOMElements.walletBalance.textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
-    DOMElements.creditLimit.textContent = `₹${((dbData.wallet || 0) + (dbData.dueAmount || 0)).toFixed(2)}`;
-    DOMElements.lifetimeEarning.textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
-    DOMElements.dueAmount.textContent = `- ₹${(dbData.dueAmount || 0).toFixed(2)}`;
-    DOMElements.userReferralId.textContent = dbData.referralId || 'N/A';
+    document.getElementById('user-mobile').textContent = `Mobile: ${dbData.mobile}`;
+    document.getElementById('credit-limit').textContent = `₹${((dbData.wallet || 0) + (dbData.dueAmount || 0)).toFixed(2)}`;
+    document.getElementById('lifetime-earning').textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+    document.getElementById('due-amount').textContent = `- ₹${(dbData.dueAmount || 0).toFixed(2)}`;
+    document.getElementById('user-referral-id').textContent = dbData.referralId || 'N/A';
 }
 
 function refreshData() {
@@ -190,9 +181,6 @@ function showToast(message) {
 function toggleView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(viewId)?.classList.add('active');
-}
-function openModal(modalElement) {
-    if (modalElement) modalElement.classList.add('active');
 }
 function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
 function hideErrorMessage(element) { element.style.display = 'none'; }
