@@ -86,7 +86,7 @@ input:focus { outline: none; border-color: var(--primary-brand); box-shadow: 0 0
     background-color: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 6px;
 }
 
-/* --- UPDATED Dashboard Header --- */
+/* --- Dashboard Header --- */
 .header {
     display: flex;
     justify-content: space-between;
@@ -115,11 +115,68 @@ input:focus { outline: none; border-color: var(--primary-brand); box-shadow: 0 0
 }
 .notification-dot.active { display: block; }
 .btn-logout {
-    display: flex; align-items: center; gap: 8px; background: none; color: var(--secondary-text);
-    padding: 8px; border-radius: 50%; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: none;
+    background: none; border: none; color: var(--secondary-text); cursor: pointer; padding: 8px;
+    border-radius: 50%; transition: background-color 0.2s, color 0.2s;
 }
 .btn-logout:hover { background-color: #FEE2E2; color: var(--primary-brand); }
 .btn-logout svg { width: 22px; height: 22px; }
 
-/* ... (Rest of the CSS is the same as before) ... */
+/* --- Wallet Card --- */
+.wallet-card {
+    background: linear-gradient(135deg, #1E3A8A, #3B82F6);
+    color: white; padding: 24px; border-radius: 20px; margin-bottom: 24px;
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+}
+.wallet-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.user-info h2 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+.user-info p { font-size: 14px; opacity: 0.8; }
+#profile-display { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); }
+.wallet-card-body { text-align: left; }
+.wallet-balance-label { font-size: 14px; opacity: 0.8; margin-bottom: 4px; }
+#wallet-balance { font-size: 40px; font-weight: 800; line-height: 1; }
+.wallet-card-footer { display: flex; justify-content: space-between; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 16px; margin-top: 20px; }
+.footer-item { text-align: center; flex: 1; }
+.footer-item span { font-size: 12px; opacity: 0.8; display: block; margin-bottom: 4px; }
+.footer-item strong { font-size: 16px; font-weight: 700; }
+.footer-item strong.due { color: #FFD6D6; }
+#due-amount-container { display: none; }
+
+/* --- Referral Card --- */
+.referral-card {
+    background-color: var(--card-background); padding: 16px 20px; border-radius: 12px; margin-bottom: 24px;
+    border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;
+}
+.referral-card p { font-size: 14px; color: var(--secondary-text); }
+.referral-id-wrapper { display: flex; align-items: center; gap: 12px; background-color: var(--input-background); padding: 4px 4px 4px 12px; border-radius: 20px; }
+#user-referral-id { font-weight: 700; font-size: 16px; color: var(--primary-text); }
+#wallet-share-btn {
+    background-color: var(--primary-brand); color: white; border: none; width: 32px; height: 32px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s, transform 0.2s;
+}
+#wallet-share-btn:hover { background-color: var(--primary-brand-hover); transform: scale(1.1); }
+#wallet-share-btn svg { width: 16px; height: 16px; }
+
+/* --- Dashboard Actions --- */
+.dashboard-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.action-card {
+    background-color: var(--card-background); padding: 20px; border-radius: 12px; text-align: center; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; border: 1px solid var(--border-color);
+    text-decoration: none; color: var(--primary-text); font-weight: 600; font-size: 14px;
+}
+.action-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: var(--primary-brand); }
+
+/* --- Transactions Section --- */
+.section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+.history-list { display: flex; flex-direction: column; gap: 12px; }
+
+/* --- Modals and other styles from previous versions --- */
+/* (This includes styles for modals, empty-state, toast, etc.) */
+
+@media (max-width: 500px) {
+    body { padding: 0; }
+    .container { padding: 0; }
+    .view { min-height: 100vh; }
+    .auth-card { margin-top: 0; border-radius: 0; box-shadow: none; padding: 30px 20px; }
+    #dashboard-view { padding: 16px; }
+}
 
