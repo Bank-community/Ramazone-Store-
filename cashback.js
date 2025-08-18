@@ -8,6 +8,7 @@ let auth, database;
 let currentUserData = null;
 let activeListeners = [];
 let allTransactionsSnapshot = {};
+// Add other global variables as needed
 
 // --- DOM Element References ---
 const DOMElements = {
@@ -22,26 +23,23 @@ const DOMElements = {
     registerErrorMsg: document.getElementById('register-error-msg'),
     userNameDisplay: document.getElementById('user-name-display'),
     walletBalance: document.getElementById('wallet-balance'),
-    // Add all other element IDs here
+    // Add all other element IDs from your HTML here
 };
 
 // --- CORE INITIALIZATION ---
-function initializeFirebaseApp() {
+async function initializeFirebaseApp() {
     try {
-        // >>> APNI API KEYS YAHAN PASTE KAREIN <<<
-        const firebaseConfig = {
-            apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXX",
-            authDomain: "your-project-id.firebaseapp.com",
-            databaseURL: "https://your-project-id.firebaseio.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project-id.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:XXXXXXXXXXXXXXXX"
-        };
-        // >>> YAHAN TAK <<<
+        // >>> VERCEL CONFIG SYSTEM IS BACK <<<
+        // Yeh code Vercel ke /api/cashback-config se API keys laega
+        const response = await fetch('/api/cashback-config');
+        if (!response.ok) {
+            throw new Error(`API call failed with status: ${response.status}`);
+        }
+        const firebaseConfig = await response.json();
 
-        if (firebaseConfig.apiKey.startsWith("AIzaSyXXX")) {
-            throw new Error("API Keys are placeholders. Please add your actual Firebase keys.");
+        // Check if any key is missing
+        if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
+            throw new Error("Firebase config keys are missing from the API response. Check Vercel Environment Variables.");
         }
 
         const app = initializeApp(firebaseConfig);
@@ -65,7 +63,7 @@ function setupApplication() {
     DOMElements.showLoginLink.addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
     DOMElements.refreshBtn.addEventListener('click', refreshData);
-    // Add other button listeners here
+    // Add all other event listeners for your dashboard buttons here
 }
 
 function setupAuthentication() {
@@ -142,7 +140,7 @@ function attachRealtimeListeners(user) {
             updateDashboardUI(currentUserData, user);
         }
     }));
-    // Add listeners for transactions, etc. here
+    // Add other listeners for transactions here
 }
 
 function detachAllListeners() {
