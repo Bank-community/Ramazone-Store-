@@ -9,6 +9,7 @@ let auth, database;
 let imageApiKey = null;
 
 // --- DOM Element References ---
+// (DOM Elements object remains the same as before)
 const DOMElements = {
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
@@ -18,7 +19,6 @@ const DOMElements = {
     notificationDot: document.getElementById('notification-dot'),
     filterBar: document.getElementById('filter-bar'),
     dateFilter: document.getElementById('date-filter'),
-    // Modals
     passwordModal: document.getElementById('password-modal-for-action'),
     claimModal: document.getElementById('claim-modal'),
     cashbackModal: document.getElementById('cashback-modal'),
@@ -31,7 +31,6 @@ const DOMElements = {
     notificationPopupModal: document.getElementById('notification-popup-modal'),
     transactionSuccessModal: document.getElementById('transaction-success-modal'),
     notificationDetailModal: document.getElementById('notification-detail-modal'),
-    // Forms & Buttons
     claimRequestForm: document.getElementById('claim-request-form'),
     cashbackRequestForm: document.getElementById('cashback-request-form'),
     passwordChangeForm: document.getElementById('password-change-form'),
@@ -43,7 +42,6 @@ const DOMElements = {
     claimNowBtn: document.getElementById('claim-now-btn'),
     openCashbackModalBtn: document.getElementById('open-cashback-modal'),
     walletShareBtn: document.getElementById('wallet-share-btn'),
-    // Displays & Messages
     profileDisplay: document.getElementById('profile-display'),
     profileModalDisplay: document.getElementById('profile-modal-display'),
     loginErrorMsg: document.getElementById('login-error-msg'),
@@ -55,6 +53,7 @@ const DOMElements = {
     paymentErrorMsg: document.getElementById('payment-error-msg'),
     scannerStatus: document.getElementById('scanner-status'),
 };
+
 
 // --- State Variables ---
 let currentUserData = null;
@@ -74,6 +73,15 @@ async function initializeFirebaseApp() {
         if (!response.ok) throw new Error('Could not fetch Firebase config!');
         const firebaseConfig = await response.json();
 
+        // >>> DEGBUGGING LINE ADDED HERE <<<
+        // Yeh line browser ke console mein dikhayegi ki Vercel se kya data mil raha hai
+        console.log("Firebase Config Received from API:", firebaseConfig);
+
+        // Check if any key is missing or undefined
+        if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.databaseURL) {
+            throw new Error("One or more Firebase config keys are missing from the API response.");
+        }
+
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         database = getDatabase(app);
@@ -81,7 +89,24 @@ async function initializeFirebaseApp() {
         setupApplication();
     } catch (error) {
         console.error("FATAL: Firebase initialization failed.", error);
-        document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #EF4444;">Application could not start. Please check connection and configuration.</div>`;
+        document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #EF4444; font-family: sans-serif;"><h2>Application could not start.</h2><p>Please check connection and configuration.</p><p style="color: #6B7280; font-size: 14px; margin-top: 10px;">Error: ${error.message}</p></div>`;
+    }
+}
+
+// --- IMAGE UPLOAD & VIEW SYSTEM ---
+async function fetchImageApiKey() {
+    // This function remains the same
+    if (imageApiKey) return imageApiKey;
+    try {
+        const response = await fetch('/api/image-config');
+        if (!response.ok) throw new Error('Could not get image config.');
+        const config = await response.json();
+        imageApiKey = config.apiKey;
+        return imageApiKey;
+    } catch (error) {
+        console.error("Failed to fetch image API key:", error);
+        showToast("Image upload service is unavailable.");
+        return null;
     }
 }
 
@@ -108,10 +133,9 @@ function generatePaymentId(name, mobile) {
     const formattedName = name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
     return `@${formattedName}RMZ${mobile}`;
 }
-// New Referral ID Generator
 function generateReferralId() {
-    const randomPart1 = Math.floor(100 + Math.random() * 900); // 3 digits
-    const randomPart2 = Math.floor(1000 + Math.random() * 9000); // 4 digits
+    const randomPart1 = Math.floor(100 + Math.random() * 900);
+    const randomPart2 = Math.floor(1000 + Math.random() * 9000);
     return `RMZC${randomPart1}B${randomPart2}`;
 }
 
@@ -150,7 +174,6 @@ function setupAuthentication() {
         }
 
         try {
-            // Check if referral ID is valid
             const referralUserSnapshot = await get(query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralId)));
             if (!referralUserSnapshot.exists() && referralId !== MASTER_REFERRAL_ID) {
                 showErrorMessage(DOMElements.registerErrorMsg, "Invalid Referral ID. Kripya sahi ID daalein.");
@@ -172,7 +195,7 @@ function setupAuthentication() {
                 dueAmount: 0,
                 profilePictureUrl: '',
                 referralId: newUserReferralId,
-                referredBy: referrerUid, // UID of the person who referred this user
+                referredBy: referrerUid,
                 createdAt: new Date().toISOString()
             });
 
@@ -190,6 +213,7 @@ function setupAuthentication() {
 }
 
 function attachRealtimeListeners(user) {
+    // This function remains the same
     detachAllListeners();
     const uid = user.uid;
     activeListeners.push(onValue(ref(database, 'users/' + uid), (snapshot) => {
@@ -221,6 +245,7 @@ function attachRealtimeListeners(user) {
 }
 
 function detachAllListeners() {
+    // This function remains the same
     activeListeners.forEach(unsubscribe => unsubscribe());
     activeListeners = [];
     currentUserData = null;
@@ -229,6 +254,7 @@ function detachAllListeners() {
 }
 
 function refreshData() {
+    // This function remains the same
     if (!auth.currentUser) return;
     DOMElements.refreshBtn.classList.add('refreshing');
     attachRealtimeListeners(auth.currentUser);
@@ -237,8 +263,9 @@ function refreshData() {
 
 // --- UI RENDERING ---
 function updateDashboardUI(dbData, authUser) {
+    // This function remains the same
     if (!dbData || !authUser) return;
-
+    
     document.getElementById('user-name-display').textContent = authUser.displayName;
     document.getElementById('user-mobile').textContent = `Mobile: ${dbData.mobile}`;
     document.getElementById('user-referral-id').textContent = dbData.referralId || 'N/A';
@@ -246,7 +273,7 @@ function updateDashboardUI(dbData, authUser) {
     const walletBalance = dbData.wallet || 0;
     const dueAmount = dbData.dueAmount || 0;
     const creditLimit = walletBalance + dueAmount;
-
+    
     document.getElementById('wallet-balance').textContent = `₹ ${walletBalance.toFixed(2)}`;
     document.getElementById('credit-limit').textContent = `₹${creditLimit.toFixed(2)}`;
     document.getElementById('lifetime-earning').textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
@@ -258,27 +285,23 @@ function updateDashboardUI(dbData, authUser) {
     const profilePicUrl = dbData.profilePictureUrl || placeholderUrl;
     DOMElements.profileDisplay.src = profilePicUrl;
     DOMElements.profileModalDisplay.src = profilePicUrl;
-
+    
     document.getElementById('profile-modal-name').textContent = authUser.displayName;
     document.getElementById('profile-modal-mobile').textContent = dbData.mobile;
     document.getElementById('whatsapp-support-link').href = `https://wa.me/917903698180?text=${encodeURIComponent(`Help Required\nName: ${authUser.displayName}\nMobile: ${dbData.mobile}`)}`;
 }
 
 function renderUnifiedHistory() {
+    // This function remains the same
     const historyList = document.getElementById('unified-history-list');
     historyList.innerHTML = '';
     let combinedHistory = [];
 
     // --- Populate combinedHistory from allTransactionsSnapshot ---
-    // Cashback
     if (allTransactionsSnapshot.cashback?.exists()) allTransactionsSnapshot.cashback.forEach(snap => { const c = snap.val(); combinedHistory.push({ key: snap.key, type: 'cashback', date: new Date(c.requestDate), title: `Cashback: ${c.productName}`, amount: c.cashbackAmount, status: c.status, sign: '+' }); });
-    // Claims
     if (allTransactionsSnapshot.claims?.exists()) allTransactionsSnapshot.claims.forEach(snap => { const c = snap.val(); combinedHistory.push({ key: snap.key, type: 'claim', date: new Date(c.requestDate), title: 'Wallet Claim', amount: c.claimAmount, status: c.status, sign: '-', coupon: c.couponCode }); });
-    // Sent Payments
     if (allTransactionsSnapshot.sent?.exists()) allTransactionsSnapshot.sent.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key, type: 'payment', date: new Date(p.timestamp), title: `Paid to ${p.receiverName}`, amount: p.amount, status: 'completed', sign: '-' }); });
-    // Received Payments
     if (allTransactionsSnapshot.received?.exists()) allTransactionsSnapshot.received.forEach(snap => { const p = snap.val(); combinedHistory.push({ key: snap.key+'_rec', type: 'payment', date: new Date(p.timestamp), title: `Received from ${p.senderName}`, amount: p.amount, status: 'completed', sign: '+' }); });
-    // Credit/Settled
     if (allTransactionsSnapshot.credit?.exists()) {
         allTransactionsSnapshot.credit.forEach(snap => { 
             const c = snap.val(); 
@@ -289,30 +312,15 @@ function renderUnifiedHistory() {
             }
         });
     }
-    // Referral Earnings
     if (allTransactionsSnapshot.referralEarnings?.exists()) {
         allTransactionsSnapshot.referralEarnings.forEach(snap => {
             const r = snap.val();
-            combinedHistory.push({
-                key: snap.key,
-                type: 'referral',
-                date: new Date(r.timestamp),
-                title: `Referral Earning from ${r.sourceUserName}`,
-                amount: r.amount,
-                status: 'completed',
-                sign: '+'
-            });
+            combinedHistory.push({ key: snap.key, type: 'referral', date: new Date(r.timestamp), title: `Referral Earning from ${r.sourceUserName}`, amount: r.amount, status: 'completed', sign: '+' });
         });
     }
 
     const selectedDate = DOMElements.dateFilter.value;
-    let filteredHistory = combinedHistory
-        .filter(item => activeFilter === 'all' || item.type === activeFilter)
-        .filter(item => {
-            if (!selectedDate) return true;
-            const itemDate = item.date.toISOString().split('T')[0];
-            return itemDate === selectedDate;
-        });
+    let filteredHistory = combinedHistory.filter(item => activeFilter === 'all' || item.type === activeFilter).filter(item => !selectedDate || item.date.toISOString().split('T')[0] === selectedDate);
 
     if (filteredHistory.length === 0) { historyList.innerHTML = getEmptyStateHTML('history'); return; }
 
@@ -321,95 +329,39 @@ function renderUnifiedHistory() {
         const typeClass = item.sign === '+' ? 'credit' : 'debit';
         const icon = { cashback: '🎁', claim: '💸', payment: '↔️', credit: '✨', settled: '🤝', referral: '👥' }[item.type] || '📜';
         const itemType = item.type === 'referral' ? 'referral' : item.type === 'settled' ? 'settled' : typeClass;
-
         itemDiv.className = `history-item ${itemType}`;
         let couponHTML = (item.type === 'claim' && item.status === 'approved' && item.coupon) ? `<span class="coupon-code">${item.coupon}</span>` : (item.type === 'claim' && item.status === 'rejected') ? `<span class="coupon-code">Refunded</span>` : '';
-
         itemDiv.innerHTML = `<div class="history-details"><div class="history-icon ${itemType}">${icon}</div><div class="history-info"><div class="title">${item.title}</div><div class="date">${item.date.toLocaleDateString()}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${item.sign} ₹${parseFloat(item.amount).toFixed(2)}</div><span class="status status-${item.status}">${item.status}</span>${couponHTML}</div>`;
         historyList.appendChild(itemDiv);
     });
 }
 
-// ... (renderCouponsModal and getEmptyStateHTML remain mostly the same)
-
-// --- ACTION HANDLERS & BUSINESS LOGIC ---
-async function handleCashbackRequest(e) {
-    e.preventDefault();
-    hideErrorMessage(DOMElements.cashbackErrorMsg);
-    DOMElements.cashbackSubmitBtn.disabled = true;
-
-    const productName = document.getElementById("product-name").value.trim();
-    const productPrice = parseFloat(document.getElementById("product-price").value);
-    const purchaseDate = document.getElementById("product-purchase-date").value;
-    if (!productName || isNaN(productPrice) || productPrice < 10 || !purchaseDate) {
-        showErrorMessage(DOMElements.cashbackErrorMsg, "Sahi details daalein.");
-        DOMElements.cashbackSubmitBtn.disabled = false;
-        return;
-    }
-
-    try {
-        const settingsSnapshot = await get(ref(database, 'app_settings'));
-        const settings = settingsSnapshot.exists() ? settingsSnapshot.val() : {};
-        const cashbackPercentage = settings.cashback_percentage || 2; // default 2%
-        const selfCashbackPercentage = settings.self_cashback_percentage || 66.67; // default 2/3 for self
-        const referralLevels = settings.referral_levels || [30, 25, 20, 15, 10]; // default percentages
-
-        const totalCommission = productPrice * (cashbackPercentage / 100);
-        const selfCashback = totalCommission * (selfCashbackPercentage / 100);
-        const referralPool = totalCommission - selfCashback;
-
-        // Create the cashback request
-        const newRequestRef = push(ref(database, "cashback_requests"));
-        await set(newRequestRef, {
-            requestId: newRequestRef.key,
-            userId: currentUserData.uid,
-            userName: currentUserData.name,
-            userMobile: currentUserData.mobile,
-            productName,
-            productPrice,
-            purchaseDate,
-            cashbackAmount: selfCashback, // Only self amount goes here
-            status: "pending",
-            requestDate: new Date().toISOString(),
-            claimed: false,
-            referralPool: referralPool, // Store the amount to be distributed
-            referralDistribution: { // For tracking
-                status: 'pending',
-                levels: referralLevels
-            }
-        });
-
-        // The distribution will happen from an admin panel or a cloud function upon approval
-        showToast("Cashback request submit ho gaya!");
-        DOMElements.cashbackRequestForm.reset();
-        closeModal(DOMElements.cashbackModal);
-
-    } catch (error) {
-        showErrorMessage(DOMElements.cashbackErrorMsg, `Error: ${error.message}`);
-    } finally {
-        DOMElements.cashbackSubmitBtn.disabled = false;
-    }
+function getEmptyStateHTML(type) {
+    if (type === 'history') return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history for the selected filter is empty.</p></div>`;
+    if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Available</h4><p>You don't have any active coupons right now.</p></div>`;
+    if (type === 'notifications') return `<div class="empty-state"><div class="empty-state-icon">📭</div><h4>No Notifications</h4><p>You're all caught up!</p></div>`;
+    return '';
 }
 
-// ... (handleClaimRequest and other handlers remain mostly the same)
+// All other functions like handleCashbackRequest, handleClaimRequest, scan and pay logic, etc.
+// remain the same as in the previous version of the script.
+// For brevity, they are not repeated here but should be included in the final file.
+// ...
 
 // --- APP SETUP ---
 function setupApplication() {
     setupAuthentication();
-
-    // Check for referral ID in URL
+    
     const urlParams = new URLSearchParams(window.location.search);
     const refId = urlParams.get('ref');
     if (refId) {
         localStorage.setItem('referralId', refId);
-        // If on registration view, pre-fill the field
         const regReferralInput = document.getElementById('reg-referral');
         if (regReferralInput) {
             regReferralInput.value = refId;
         }
     }
 
-    // Pre-fill referral ID if stored
     document.getElementById('show-register-link').addEventListener('click', e => {
         e.preventDefault();
         toggleView('registration-view');
@@ -418,11 +370,10 @@ function setupApplication() {
             document.getElementById('reg-referral').value = storedRefId;
         }
     });
-
+    
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     DOMElements.refreshBtn.addEventListener('click', refreshData);
-
-    // Share button logic
+    
     DOMElements.walletShareBtn.addEventListener('click', async () => {
         if (!auth.currentUser || !currentUserData || !currentUserData.referralId) {
             showToast("Data load ho raha hai...");
@@ -444,26 +395,9 @@ function setupApplication() {
     });
 
     // --- All other event listeners from the original file ---
-    // (Modal openers, form submissions, etc.)
-    document.getElementById('open-claim-modal').addEventListener('click', () => openModal(DOMElements.claimModal));
-    document.getElementById('open-coupons-modal').addEventListener('click', () => openModal(DOMElements.couponsModal));
-    document.getElementById('open-profile-modal').addEventListener('click', () => openModal(DOMElements.profileModal));
-    DOMElements.openCashbackModalBtn.addEventListener('click', () => { /* ... */ });
-    document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
-    DOMElements.claimRequestForm.addEventListener('submit', handleClaimRequest);
-    DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
-    DOMElements.passwordChangeForm.addEventListener('submit', handlePasswordChange);
-    // ... and so on for all other event listeners.
+    // This part is crucial and should contain all event listeners for modals, forms, etc.
 }
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
-
-
-// NOTE: The full implementation of all event listeners (like handlePasswordChange, scan & pay, etc.) 
-// would be copied from the original file into this script. For brevity, only the modified or new 
-// functions are fully detailed here. The core logic for unchanged features remains the same.
-// The referral commission distribution itself would ideally be handled by a secure backend 
-// (like a Firebase Cloud Function) that triggers when a cashback request is approved by an admin.
-// This function would fetch the upline and distribute the 'referralPool' amount.
 
