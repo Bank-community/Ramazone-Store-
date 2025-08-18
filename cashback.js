@@ -9,99 +9,116 @@ let auth, database;
 let imageApiKey = null;
 
 // --- DOM Element References ---
+// This object should contain all your element IDs
 const DOMElements = {
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
     logoutBtn: document.getElementById('logout-btn'),
     refreshBtn: document.getElementById('refresh-btn'),
-    // ... (rest of the elements are the same)
-    registerErrorMsg: document.getElementById('register-error-msg'),
+    notificationBtn: document.getElementById('notification-btn'),
+    showRegisterLink: document.getElementById('show-register-link'),
+    showLoginLink: document.getElementById('show-login-link'),
+    // ... add all other element IDs here for consistency
 };
+
+// --- Function to display error directly on the screen ---
+function showFatalError(message, details = '') {
+    document.body.innerHTML = `<div style="text-align: center; padding: 40px; color: #B91C1C; font-family: sans-serif; background-color: #FEF2F2; min-height: 100vh;">
+        <h2 style="margin-bottom: 15px;">Application Error</h2>
+        <p style="font-size: 16px; color: #374151;">${message}</p>
+        <p style="font-size: 14px; color: #9CA3AF; margin-top: 20px; word-break: break-all;">${details}</p>
+    </div>`;
+    console.error(message, details); // Also log to console for good measure
+}
+
 
 // --- CORE INITIALIZATION ---
 async function initializeFirebaseApp() {
     try {
         const response = await fetch('/api/cashback-config');
-        if (!response.ok) throw new Error('Could not fetch Firebase config!');
-        const firebaseConfig = await response.json();
-        console.log("Firebase Config Received from API:", firebaseConfig);
-        if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.databaseURL) {
-            throw new Error("One or more Firebase config keys are missing.");
+        if (!response.ok) {
+            throw new Error(`API call failed with status: ${response.status}`);
         }
+        const firebaseConfig = await response.json();
+
+        // >>> NEW AGGRESSIVE CHECKING <<<
+        // This will check each key and show an error on screen if one is missing.
+        const requiredKeys = [
+            "apiKey", "authDomain", "databaseURL", "projectId", 
+            "storageBucket", "messagingSenderId", "appId"
+        ];
+        
+        for (const key of requiredKeys) {
+            if (!firebaseConfig[key]) {
+                // Find the corresponding environment variable name
+                const envVarName = `CASHBACK_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
+                throw new Error(`Firebase config key '${key}' is missing. Please check the Environment Variable named '${envVarName}' in Vercel.`);
+            }
+        }
+
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         database = getDatabase(app);
-        await fetchImageApiKey();
+        
+        // Now that Firebase is initialized, we can safely set up the application
         setupApplication();
+        
     } catch (error) {
-        console.error("FATAL: Firebase initialization failed.", error);
-        document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #EF4444; font-family: sans-serif;"><h2>Application could not start.</h2><p>Please check connection and configuration.</p><p style="color: #6B7280; font-size: 14px; margin-top: 10px;">Error: ${error.message}</p></div>`;
+        showFatalError(error.message, "Please double-check your Vercel Environment Variables and redeploy the project.");
     }
 }
 
-// --- AUTHENTICATION & DATA LISTENERS ---
-function setupAuthentication() {
-    // ... onAuthStateChanged and loginForm listener remain the same ...
+// --- All other functions (Authentication, UI, etc.) ---
 
-    DOMElements.registerForm.addEventListener('submit', async e => {
+function setupApplication() {
+    // This function now runs ONLY if Firebase initialization is successful.
+    
+    // Setup page navigation
+    DOMElements.showRegisterLink.addEventListener('click', e => {
         e.preventDefault();
-        hideErrorMessage(DOMElements.registerErrorMsg);
-        const name = document.getElementById('reg-name').value.trim();
-        const mobile = document.getElementById('reg-mobile').value.trim();
-        const password = document.getElementById('reg-password').value.trim();
-        const referralId = document.getElementById('reg-referral').value.trim().toUpperCase();
+        toggleView('registration-view');
+    });
+    
+    DOMElements.showLoginLink.addEventListener('click', e => {
+        e.preventDefault();
+        toggleView('login-view');
+    });
 
-        if (!name || !/^\d{10}$/.test(mobile) || password.length < 6 || !referralId) {
-            showErrorMessage(DOMElements.registerErrorMsg, "Kripya sabhi details sahi se bharein.");
-            return;
-        }
+    // Setup Authentication listeners
+    setupAuthentication();
+    
+    // ... rest of your setup code (modal buttons, etc.)
+}
 
-        try {
-            const referralUserSnapshot = await get(query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralId)));
-            if (!referralUserSnapshot.exists() && referralId !== MASTER_REFERRAL_ID) {
-                showErrorMessage(DOMElements.registerErrorMsg, "Invalid Referral ID. Kripya sahi ID daalein.");
-                return;
-            }
-            const referrerUid = referralUserSnapshot.exists() ? Object.keys(referralUserSnapshot.val())[0] : 'master';
-
-            const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
-            const user = userCredential.user;
-            await updateProfile(user, { displayName: name });
-
-            const newUserReferralId = generateReferralId();
-            await set(ref(database, 'users/' + user.uid), {
-                uid: user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
-                profilePictureUrl: '', referralId: newUserReferralId, referredBy: referrerUid,
-                createdAt: new Date().toISOString()
-            });
-
-            alert("Registration safal hua! Ab aap login kar sakte hain.");
+function setupAuthentication() {
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            toggleView('dashboard-view');
+            // attachRealtimeListeners(user); // This would be called here
+        } else {
             toggleView('login-view');
-            DOMElements.registerForm.reset();
-
-        } catch (error) {
-            // >>> DEGBUGGING LINE ADDED HERE <<<
-            // Yeh line browser ke console mein asli error dikhayegi
-            console.error("Registration Error Details:", error); 
-            
-            const msg = error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : "Registration fail ho gaya. Dobara koshish karein.";
-            showErrorMessage(DOMElements.registerErrorMsg, msg);
+            // detachAllListeners(); // This would be called here
         }
     });
 
-    // ... logoutBtn listener remains the same ...
+    DOMElements.loginForm.addEventListener('submit', e => {
+        e.preventDefault();
+        // ... login logic
+    });
+
+    DOMElements.registerForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        // ... registration logic
+    });
+
+    // ... other auth listeners
 }
 
-// --- All other functions (utility, UI rendering, etc.) remain the same ---
-// NOTE: For brevity, only the changed function is shown. You should replace the whole file.
-// Make sure to include all the other functions from the previous version in your final file.
+function toggleView(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId)?.classList.add('active');
+}
 
-// --- UTILITY FUNCTIONS ---
-function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
-function hideErrorMessage(element) { element.style.display = 'none'; }
-function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId)?.classList.add('active'); }
-function generateReferralId() { const randomPart1 = Math.floor(100 + Math.random() * 900); const randomPart2 = Math.floor(1000 + Math.random() * 9000); return `RMZC${randomPart1}B${randomPart2}`; }
-async function fetchImageApiKey() { if (imageApiKey) return imageApiKey; try { const response = await fetch('/api/image-config'); if (!response.ok) throw new Error('Could not get image config.'); const config = await response.json(); imageApiKey = config.apiKey; return imageApiKey; } catch (error) { console.error("Failed to fetch image API key:", error); return null; } }
-function setupApplication() { setupAuthentication(); /* ... other setup code ... */ }
+// --- Start the application ---
 document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
 
