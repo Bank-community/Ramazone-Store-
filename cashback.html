@@ -16,13 +16,13 @@
         <!-- Login View -->
         <div id="login-view" class="view active">
             <div class="auth-card">
-                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/FFFFFF/000000?text=Ramazone';">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
                 <h1>Welcome Back!</h1>
                 <p class="auth-subtitle">Login to continue your journey.</p>
                 <form id="login-form">
                     <div class="form-group">
                         <label for="login-mobile">Mobile Number</label>
-                        <input type="tel" id="login-mobile" inputmode="numeric" pattern="[0-9]{10}" required placeholder="10-digit mobile number">
+                        <input type="tel" id="login-mobile" required placeholder="10-digit mobile number">
                     </div>
                     <div class="form-group">
                         <label for="login-password">Password</label>
@@ -38,12 +38,12 @@
         <!-- Registration View -->
         <div id="registration-view" class="view">
             <div class="auth-card">
-                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo" onerror="this.onerror=null;this.src='https://placehold.co/440x100/FFFFFF/000000?text=Ramazone';">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
                 <h1>Create Account</h1>
                 <p class="auth-subtitle">Join us and start saving today!</p>
                 <form id="register-form">
                     <div class="form-group"><label for="reg-name">Poora Naam (Full Name)</label><input type="text" id="reg-name" required></div>
-                    <div class="form-group"><label for="reg-mobile">Mobile Number (10 अंक)</label><input type="tel" id="reg-mobile" inputmode="numeric" pattern="[0-9]{10}" required></div>
+                    <div class="form-group"><label for="reg-mobile">Mobile Number (10 अंक)</label><input type="tel" id="reg-mobile" required></div>
                     <div class="form-group"><label for="reg-password">Password Banayein</label><input type="password" id="reg-password" required placeholder="Kam se kam 6 akshar"></div>
                     <div class="form-group"><label for="reg-referral">Referral ID</label><input type="text" id="reg-referral" required placeholder="RMZCXXXBXXX"></div>
                     <button type="submit" class="btn-primary">Register Karein</button>
@@ -55,7 +55,6 @@
 
         <!-- Dashboard View -->
         <div id="dashboard-view" class="view">
-            <!-- Header Section -->
             <header class="header">
                 <div class="header-left">
                     <button id="notification-btn" class="header-icon" title="Notifications">
@@ -67,56 +66,43 @@
                     <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone" class="header-logo">
                 </div>
                 <div class="header-right">
-                    <button id="refresh-btn" class="header-icon" title="Refresh Data">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                    </button>
-                    <button id="logout-btn" class="btn-logout">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <button id="logout-btn" class="btn-logout" title="Logout">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     </button>
                 </div>
             </header>
             
-            <!-- Wallet Card -->
             <div class="wallet-card">
                 <div class="wallet-card-header">
                     <div class="user-info">
                         <h2 id="user-name-display">User Name</h2>
                         <p id="user-mobile">Mobile: 0000000000</p>
                     </div>
-                    <img id="profile-display" src="https://placehold.co/50x50/e0e0e0/333333?text=R" alt="Profile Picture">
+                    <div class="wallet-header-actions">
+                        <button id="refresh-btn" class="header-icon" title="Refresh Data">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                        <img id="profile-display" src="https://placehold.co/50x50/e0e0e0/333333?text=R" alt="Profile Picture">
+                    </div>
                 </div>
-                <div class="wallet-card-body">
-                    <p class="wallet-balance-label">Available Balance</p>
-                    <p id="wallet-balance">₹ 0.00</p>
-                </div>
+                <div class="wallet-card-body"><p class="wallet-balance-label">Available Balance</p><p id="wallet-balance">₹ 0.00</p></div>
                 <div class="wallet-card-footer">
-                    <div class="footer-item">
-                        <span>Credit Limit</span>
-                        <strong id="credit-limit">₹0.00</strong>
-                    </div>
-                    <div class="footer-item">
-                        <span>Lifetime Earning</span>
-                        <strong id="lifetime-earning">₹0.00</strong>
-                    </div>
-                    <div class="footer-item" id="due-amount-container">
-                        <span>Total Due</span>
-                        <strong id="due-amount" class="due">- ₹0.00</strong>
-                    </div>
+                    <div class="footer-item"><span>Credit Limit</span><strong id="credit-limit">₹0.00</strong></div>
+                    <div class="footer-item"><span>Lifetime Earning</span><strong id="lifetime-earning">₹0.00</strong></div>
+                    <div class="footer-item" id="due-amount-container"><span>Total Due</span><strong id="due-amount" class="due">- ₹0.00</strong></div>
                 </div>
             </div>
 
-            <!-- Referral Info Card -->
             <div class="referral-card">
                 <p>Your Referral ID</p>
                 <div class="referral-id-wrapper">
                     <strong id="user-referral-id">RMZCXXXXBXXX</strong>
                     <button id="wallet-share-btn" title="Share Referral ID">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Dashboard Actions -->
             <div class="dashboard-actions">
                 <button id="open-cashback-modal" class="action-card"><span>Cashback Request</span></button>
                 <button id="scan-and-pay-btn" class="action-card"><span>Scan & Pay</span></button>
@@ -126,20 +112,16 @@
                 <button id="open-claim-modal" class="action-card"><span>Claim From Wallet</span></button>
             </div>
 
-            <!-- Transactions Section -->
-            <div class="section">
-                <h2 class="section-title">All Transactions</h2>
-                <div id="unified-history-list" class="history-list"></div>
-            </div>
+            <div class="section"><h2 class="section-title">All Transactions</h2><div id="unified-history-list" class="history-list"></div></div>
         </div>
     </div>
 
     <!-- All Modals -->
-    <div id="cashback-modal" class="modal-overlay"><!-- ... cashback modal content ... --></div>
-    <div id="scan-pay-modal" class="modal-overlay"><!-- ... scan & pay modal content ... --></div>
-    <div id="coupons-modal" class="modal-overlay"><!-- ... coupons modal content ... --></div>
-    <div id="profile-modal" class="modal-overlay"><!-- ... profile modal content ... --></div>
-    <div id="claim-modal" class="modal-overlay"><!-- ... claim modal content ... --></div>
+    <div id="cashback-modal" class="modal-overlay"><!-- ... modal content ... --></div>
+    <div id="scan-pay-modal" class="modal-overlay"><!-- ... modal content ... --></div>
+    <div id="coupons-modal" class="modal-overlay"><!-- ... modal content ... --></div>
+    <div id="profile-modal" class="modal-overlay"><!-- ... modal content ... --></div>
+    <div id="claim-modal" class="modal-overlay"><!-- ... modal content ... --></div>
     <div id="toast-notification" class="toast-notification"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
