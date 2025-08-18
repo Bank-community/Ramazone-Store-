@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getDatabase, ref, get, set, push, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-// This event listener ensures that the entire HTML is loaded before any JavaScript runs.
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Constants and Global Variables ---
@@ -34,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openCouponsModalBtn: document.getElementById('open-coupons-modal'),
         openProfileModalBtn: document.getElementById('open-profile-modal'),
         openClaimModalBtn: document.getElementById('open-claim-modal'),
+        regReferralInput: document.getElementById('reg-referral'),
     };
 
     // --- CORE INITIALIZATION ---
@@ -50,7 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             setupApplication();
         } catch (error) {
-            document.body.innerHTML = `<h2>Application Error</h2><p>${error.message}</p>`;
+            // Non-destructive error display
+            const loginView = document.getElementById('login-view');
+            if(loginView) {
+                loginView.innerHTML = `<div class="auth-card"><h2>Application Error</h2><p>${error.message}</p></div>`;
+            }
+            console.error("FATAL: Firebase initialization failed.", error);
         }
     }
 
@@ -63,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
         DOMElements.refreshBtn.addEventListener('click', refreshData);
         
+        // Setup all modal buttons
         DOMElements.openCashbackModalBtn.addEventListener('click', () => openModal(document.getElementById('cashback-modal')));
         DOMElements.scanAndPayBtn.addEventListener('click', () => openModal(document.getElementById('scan-pay-modal')));
         DOMElements.openCouponsModalBtn.addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
@@ -70,6 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
         DOMElements.openClaimModalBtn.addEventListener('click', () => openModal(document.getElementById('claim-modal')));
         
         DOMElements.walletShareBtn.addEventListener('click', shareReferralLink);
+
+        // --- NEW: Referral Link Logic ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const refId = urlParams.get('ref');
+        if (refId) {
+            // If referral ID is in the URL, go directly to registration
+            toggleView('registration-view');
+            DOMElements.regReferralInput.value = refId;
+        }
     }
 
     function setupAuthentication() {
@@ -78,7 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleView('dashboard-view');
                 attachRealtimeListeners(user); 
             } else {
-                toggleView('login-view');
+                // If not logged in, and no referral in URL, show login
+                const urlParams = new URLSearchParams(window.location.search);
+                if (!urlParams.has('ref')) {
+                    toggleView('login-view');
+                }
                 detachAllListeners();
             }
         });
@@ -95,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
         } catch (error) {
-            console.error("Login Error:", error); // For debugging
             showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile ya password.");
         }
     }
@@ -106,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('reg-name').value.trim();
         const mobile = document.getElementById('reg-mobile').value.trim();
         const password = document.getElementById('reg-password').value.trim();
-        const referralId = document.getElementById('reg-referral').value.trim().toUpperCase();
+        const referralId = DOMElements.regReferralInput.value.trim().toUpperCase();
         
         if (!name || !/^\d{10}$/.test(mobile) || password.length < 6 || !referralId) {
             showErrorMessage(DOMElements.registerErrorMsg, "Sabhi details bharein.");
@@ -129,7 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 referralId: generateReferralId(), referredBy: referrerUid, createdAt: new Date().toISOString()
             });
             
-            alert("Registration safal hua!");
+            alert("Registration safal hua! Ab aap login kar sakte hain.");
+            // After successful registration, remove the ref parameter and go to login page
+            window.history.replaceState({}, document.title, window.location.pathname);
             toggleView('login-view');
         } catch (error) {
             const msg = error.code === 'auth/email-already-in-use' ? "Yeh mobile number pehle se register hai." : "Registration fail ho gaya.";
@@ -164,27 +184,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function refreshData() {
         if (auth.currentUser) {
+            showToast("Refreshing data...");
             attachRealtimeListeners(auth.currentUser);
-            showToast("Data refreshed!");
         }
     }
     
     async function shareReferralLink() {
+        if (!currentUserData || !currentUserData.referralId) {
+            showToast("Please wait, data is loading.");
+            return;
+        }
         const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralId}`;
         const shareMessage = `Join me on Ramazone Cashback! Use my referral ID. Link: ${shareUrl}`;
         try {
             if (navigator.share) await navigator.share({ text: shareMessage });
-            else { navigator.clipboard.writeText(shareMessage); showToast('Link copied!'); }
+            else { navigator.clipboard.writeText(shareUrl); showToast('Referral Link copied!'); }
         } catch { showToast('Could not share.'); }
     }
 
+    // --- Helper Functions ---
     function showToast(message) {
         const toast = document.getElementById('toast-notification');
+        if(!toast) return;
         toast.textContent = message;
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
-
     function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId).classList.add('active'); }
     function openModal(modal) { if (modal) modal.classList.add('active'); }
     function showErrorMessage(el, msg) { el.textContent = msg; el.style.display = 'block'; }
