@@ -376,24 +376,9 @@
     <div id="toast-notification" class="toast-notification"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- Link to the external JavaScript file -->
+    <script src="cashback.js" type="module"></script>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, writeBatch, serverTimestamp, orderBy, limit, runTransaction as firestoreTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
-            authDomain: "tipsplit-e3wes.firebaseapp.com",
-            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "tipsplit-e3wes",
-            storageBucket: "tipsplit-e3wes.appspot.com",
-            messagingSenderId: "984733883633",
-            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
-        };
-        
-        // ... (The rest of the JS code is below) ...
-    </script>
 </body>
 </html>
-
