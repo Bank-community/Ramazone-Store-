@@ -126,27 +126,65 @@ function setupAuthentication() {
 
     DOMElements.registerForm.addEventListener('submit', async e => {
         e.preventDefault();
+        hideErrorMessage(DOMElements.registerErrorMsg);
         const name = document.getElementById('reg-name').value.trim();
         const mobile = document.getElementById('reg-mobile').value.trim();
         const password = document.getElementById('reg-password').value.trim();
         const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
 
         if (!name || !/^\d{10}$/.test(mobile) || password.length < 6) {
-            return showErrorMessage(DOMElements.registerErrorMsg, "Sahi details bharein.");
+            return showErrorMessage(DOMElements.registerErrorMsg, "Kripya sabhi details sahi se bharein.");
         }
-        // ... (rest of registration logic is fine)
+        
+        let referredBy = "none";
+        let upline = [];
+
+        if (referralCode) {
+            if (referralCode === MASTER_REFERRAL_ID) {
+                referredBy = "master";
+            } else {
+                const q = query(collection(db, 'users'), where('referralId', '==', referralCode));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const referrerDoc = querySnapshot.docs[0];
+                    referredBy = referrerDoc.id;
+                    upline = (referrerDoc.data().upline || []).slice(0, 4);
+                    upline.unshift(referredBy);
+                } else {
+                    return showErrorMessage(DOMElements.registerErrorMsg, "Aमान्य रेफरल कोड।");
+                }
+            }
+        }
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+            const newUserRef = doc(db, 'users', userCredential.user.uid);
+            await updateProfile(userCredential.user, { displayName: name });
+            
+            const newReferralId = `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`;
+
+            await setDoc(newUserRef, {
+                uid: userCredential.user.uid, name, mobile, wallet: 0, lifetimeEarning: 0,
+                referralId: newReferralId, referredBy: referredBy,
+                upline: upline, createdAt: serverTimestamp()
+            });
+
+            showToast("Registration safal hua! Ab aap login kar sakte hain.");
+            toggleView('login-view');
+            DOMElements.registerForm.reset();
+        } catch (error) { 
+            showErrorMessage(DOMElements.registerErrorMsg, error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : "Registration fail ho gaya."); 
+        }
     });
 
     DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
 }
 
-// **LOADER FIX:** This function is now async and handles initial load separately.
 async function attachRealtimeListeners(user) {
     detachAllListeners();
     const uid = user.uid;
 
     try {
-        // Step 1: Fetch initial user data once.
         const userDocRef = doc(db, 'users', uid);
         const userDoc = await getDoc(userDocRef);
 
@@ -156,14 +194,11 @@ async function attachRealtimeListeners(user) {
         } else {
             console.error("User document not found. Logging out.");
             signOut(auth);
-            return; // Stop execution
+            return;
         }
 
-        // Step 2: Hide the loader now that initial data is loaded.
         hideLoader();
 
-        // Step 3: Now, attach all real-time listeners for updates.
-        // Listener for user data (for real-time wallet updates etc.)
         const userUnsubscribe = onSnapshot(userDocRef, (doc) => {
             if (doc.exists()) {
                 currentUserData = { id: doc.id, ...doc.data() };
@@ -172,7 +207,6 @@ async function attachRealtimeListeners(user) {
         });
         activeListeners.push(userUnsubscribe);
 
-        // Listener for completed transactions
         const transactionsQuery = query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc"));
         const transUnsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
             allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -180,7 +214,6 @@ async function attachRealtimeListeners(user) {
         });
         activeListeners.push(transUnsubscribe);
 
-        // Listener for all cashback requests
         const requestsQuery = query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc"));
         const requestsUnsubscribe = onSnapshot(requestsQuery, (snapshot) => {
             cashbackRequests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -188,7 +221,6 @@ async function attachRealtimeListeners(user) {
         });
         activeListeners.push(requestsUnsubscribe);
 
-        // Listener for claimable cashback
         const claimableQuery = query(collection(db, 'cashback_requests'), where('userId', '==', uid), where('status', '==', 'approved'), where('claimed', '==', false));
         const claimableUnsubscribe = onSnapshot(claimableQuery, (snapshot) => {
             if (!snapshot.empty) {
@@ -208,7 +240,6 @@ async function attachRealtimeListeners(user) {
         signOut(auth);
     }
 }
-
 
 function detachAllListeners() {
     activeListeners.forEach(unsubscribe => unsubscribe());
@@ -250,10 +281,43 @@ function renderUnifiedHistory(historyItems) {
     const filtered = historyItems.filter(item => activeFilter === 'all' || item.type === activeFilter);
 
     if (filtered.length === 0) {
-        historyList.innerHTML = `<div class="empty-state"><h4>No History Found</h4></div>`;
+        historyList.innerHTML = `<div class="empty-state" style="text-align:center; padding: 20px;"><h4>No History Found</h4></div>`;
         return;
     }
-    // ... (rendering logic remains the same)
+
+    filtered.forEach(item => {
+        const itemDiv = document.createElement('div');
+        let typeClass, sign, icon, statusClass;
+
+        if (item.isTransaction) {
+            sign = item.amount >= 0 ? '+' : '-';
+            typeClass = item.amount >= 0 ? 'credit' : 'debit';
+            icon = { cashback: '🎁', commission: '🏆', payment: '↔️', claim: '💸' }[item.type] || '📜';
+            statusClass = 'status-completed';
+        } else {
+            sign = '+';
+            typeClass = 'credit';
+            icon = '🕒';
+            statusClass = `status-${item.status}`;
+        }
+        
+        const dateString = item.date ? item.date.toLocaleDateString() : 'No date';
+
+        itemDiv.className = `history-item ${item.type === 'commission' ? 'commission' : typeClass}`;
+        itemDiv.innerHTML = `
+            <div class="history-details">
+                <div class="history-icon ${typeClass}">${icon}</div>
+                <div class="history-info">
+                    <div class="title">${item.description || 'N/A'}</div>
+                    <div class="date">${dateString}</div>
+                </div>
+            </div>
+            <div class="history-amount">
+                <div class="amount ${typeClass}">${sign} ₹${Math.abs(item.amount || 0).toFixed(2)}</div>
+                <span class="status ${statusClass}">${item.status}</span>
+            </div>`;
+        historyList.appendChild(itemDiv);
+    });
 }
 
 function setupApplication() {
@@ -278,6 +342,10 @@ function setupApplication() {
 
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
     
+    DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
+    DOMElements.claimNowBtn.addEventListener('click', handleCashbackClaim);
+    DOMElements.passwordChangeForm.addEventListener('submit', handlePasswordChange);
+
     DOMElements.filterBar.addEventListener('click', e => {
         const target = e.target.closest('.filter-btn');
         if (!target) return;
@@ -286,7 +354,115 @@ function setupApplication() {
         activeFilter = target.dataset.filter;
         combineAndRenderHistory();
     });
-    // ... (other event listeners and form submission handlers)
+
+    DOMElements.userReferralId.addEventListener('click', () => {
+        const referralId = DOMElements.userReferralId.textContent;
+        if (referralId && referralId !== 'N/A') {
+            navigator.clipboard.writeText(referralId).then(() => showToast('Referral ID Copied!'));
+        }
+    });
+
+    DOMElements.walletShareBtn.addEventListener('click', () => {
+        if (!currentUserData?.referralId) return showToast("Data load ho raha hai...");
+        const referralLink = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralId}`;
+        const shareMessage = `Ramazone Cashback app par har khareed par paise bachayein. Mera code ${currentUserData.referralId} use karein. Join karein: ${referralLink}`;
+        if (navigator.share) {
+            navigator.share({ text: shareMessage });
+        } else {
+            navigator.clipboard.writeText(shareMessage).then(() => showToast('Share message copy ho gaya!'));
+        }
+    });
+}
+
+async function handleCashbackRequest(e) {
+    e.preventDefault();
+    DOMElements.cashbackSubmitBtn.disabled = true;
+    const productName = document.getElementById("product-name").value.trim();
+    const productPrice = parseFloat(document.getElementById("product-price").value);
+    const purchaseDate = document.getElementById("product-purchase-date").value;
+
+    if(!productName || isNaN(productPrice) || productPrice < 10 || !purchaseDate){ 
+        showErrorMessage(DOMElements.cashbackErrorMsg,"Sahi details daalein."); 
+        DOMElements.cashbackSubmitBtn.disabled = false;
+        return; 
+    }
+    
+    try {
+        await addDoc(collection(db, "cashback_requests"), { 
+            userId: currentUserData.id, 
+            userName: currentUserData.name, 
+            userMobile: currentUserData.mobile, 
+            productName, productPrice, 
+            purchaseDate: new Date(purchaseDate), 
+            requestDate: serverTimestamp(), 
+            status: "pending", 
+            claimed: false 
+        });
+        showToast("Cashback request submit ho gaya!");
+        closeModal(DOMElements.cashbackModal);
+    } catch (error) {
+        showErrorMessage(DOMElements.cashbackErrorMsg, `Error: ${error.message}`);
+    } finally {
+        DOMElements.cashbackSubmitBtn.disabled = false;
+    }
+}
+
+async function handleCashbackClaim() {
+    if (!pendingCashbackClaim || !currentUserData) return;
+    DOMElements.claimNowBtn.disabled = true;
+
+    const requestRef = doc(db, "cashback_requests", pendingCashbackClaim.id);
+    const userRef = doc(db, "users", currentUserData.id);
+
+    try {
+        const batch = writeBatch(db);
+        const amountToClaim = pendingCashbackClaim.cashbackAmount;
+        
+        batch.update(userRef, {
+            wallet: increment(amountToClaim),
+            lifetimeEarning: increment(amountToClaim)
+        });
+        batch.update(requestRef, { claimed: true, status: 'completed' });
+        
+        const transRef = doc(collection(db, "transactions"));
+        batch.set(transRef, {
+            involvedUsers: [currentUserData.id],
+            type: 'cashback', amount: amountToClaim,
+            description: `Claimed cashback for ${pendingCashbackClaim.productName}`,
+            status: 'completed', timestamp: serverTimestamp()
+        });
+        
+        await batch.commit();
+        showToast("Cashback claimed successfully!");
+        closeModal(DOMElements.cashbackClaimModal);
+    } catch (error) {
+        console.error("Claim Error:", error);
+        showToast(`Error: ${error.message}`);
+    } finally {
+        DOMElements.claimNowBtn.disabled = false;
+    }
+}
+
+async function handlePasswordChange(e) {
+    e.preventDefault();
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+
+    if (newPassword.length < 6) {
+        return showErrorMessage(DOMElements.passwordChangeErrorMsg, "Naya password kam se kam 6 akshar ka hona chahiye.");
+    }
+
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+    try {
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, newPassword);
+        showToast("Password safaltapoorvak badal gaya!");
+        closeModal(DOMElements.profileModal);
+    } catch (error) {
+        showErrorMessage(DOMElements.passwordChangeErrorMsg, "Purana password galat hai.");
+    }
 }
 
 // --- Start the App ---
