@@ -1,55 +1,307 @@
-:root {
-    --primary-brand: #E50914; --primary-text: #111827; --secondary-text: #6B7280;
-    --background-light: #F9FAFB; --card-background: #FFFFFF; --border-color: #E5E7EB;
-    --input-background: #F3F4F6; --font-family: 'Inter', sans-serif;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: var(--font-family); background-color: var(--background-light); color: var(--primary-text); display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
-.container { width: 100%; max-width: 500px; padding: 20px; }
-.view { display: none; }
-.view.active { display: block; animation: fadeIn 0.5s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.auth-card { background-color: var(--card-background); padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); margin-top: 5vh; text-align: center; }
-.main-logo { max-width: 200px; margin-bottom: 24px; }
-.auth-card h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-.auth-subtitle { color: var(--secondary-text); margin-bottom: 32px; }
-.form-group { margin-bottom: 20px; text-align: left; }
-label { font-weight: 500; font-size: 14px; margin-bottom: 8px; display: block; }
-input, .btn-secondary { width: 100%; padding: 14px; background-color: var(--input-background); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; }
-input:focus { outline: none; border-color: var(--primary-brand); box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.15); }
-.btn-primary { width: 100%; padding: 15px; background: var(--primary-brand); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
-.form-link { text-align: center; margin-top: 25px; font-size: 14px; }
-.form-link a { color: var(--primary-brand); text-decoration: none; font-weight: 600; }
-.error-message { color: #EF4444; font-size: 14px; text-align: center; margin-top: 15px; display: none; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 4px; }
-.header-left, .header-right { display: flex; align-items: center; gap: 8px; flex: 1; }
-.header-left { justify-content: flex-start; }
-.header-center { flex: 2; text-align: center; }
-.header-right { justify-content: flex-end; }
-.header-logo { height: 35px; }
-.header-icon { background: none; border: none; color: var(--secondary-text); cursor: pointer; padding: 8px; border-radius: 50%; position: relative; }
-.notification-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background-color: var(--primary-brand); border-radius: 50%; border: 2px solid var(--background-light); display: none; }
-.btn-logout { background: none; border: none; color: var(--secondary-text); cursor: pointer; padding: 8px; border-radius: 50%; }
-.wallet-card { background: linear-gradient(135deg, #1E3A8A, #3B82F6); color: white; padding: 24px; border-radius: 20px; margin-bottom: 24px; }
-.wallet-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.wallet-header-actions { display: flex; align-items: center; gap: 8px; }
-.wallet-header-actions .header-icon { background-color: rgba(255, 255, 255, 0.1); color: white; border-radius: 50%; padding: 8px; }
-#profile-display { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); }
-.wallet-balance-label { font-size: 14px; opacity: 0.8; }
-#wallet-balance { font-size: 40px; font-weight: 800; }
-.wallet-card-footer { display: flex; justify-content: space-between; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 16px; margin-top: 20px; }
-.footer-item { text-align: center; flex: 1; }
-.footer-item span { font-size: 12px; display: block; }
-.referral-card { background-color: var(--card-background); padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-.referral-id-wrapper { display: flex; align-items: center; gap: 12px; background-color: var(--input-background); padding: 4px 4px 4px 12px; border-radius: 20px; }
-#wallet-share-btn { background-color: var(--primary-brand); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.dashboard-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
-.action-card { background-color: var(--card-background); padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid var(--border-color); text-decoration: none; color: var(--primary-text); font-weight: 600; }
-.section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
-.toast-notification { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(17, 24, 39, 0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; opacity: 0; transition: opacity 0.3s ease-in-out; pointer-events: none; }
-.toast-notification.show { opacity: 1; }
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-.modal-overlay.active { display: flex; }
-.modal-content { background-color: var(--card-background); padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; }
-.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Ramazone Cashback</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #f4f7f9;
+            --bg-card: #ffffff;
+            --text-primary: #1c2028;
+            --text-secondary: #5a647e;
+            --border-color: #e8eef3;
+            --brand-red: #e50914;
+            --accent-green: #2ecc71;
+            --accent-yellow: #f1c40f;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #login-view, #admin-view {
+            display: none;
+        }
+        #login-view.active, #admin-view.active {
+            display: block;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-secondary); }
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .request-list {
+            margin-top: 20px;
+        }
+        .request-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+        }
+        .request-details p {
+            margin: 0 0 8px 0;
+        }
+        .request-details strong {
+            color: var(--text-primary);
+        }
+        .request-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+        }
+        .request-actions button {
+            padding: 8px 12px;
+            font-size: 14px;
+            width: 100px;
+        }
+        .btn-approve {
+            background-color: var(--accent-green);
+        }
+        .btn-reject {
+            background-color: var(--brand-red);
+        }
+        #logout-btn {
+            background: var(--text-secondary);
+            width: auto;
+            padding: 8px 15px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="login-view" class="active">
+            <h1>Admin Login</h1>
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label for="admin-email">Email (Mobile No.)</label>
+                    <input type="tel" id="admin-email" required placeholder="Enter your 10-digit mobile number">
+                </div>
+                <div class="form-group">
+                    <label for="admin-password">Password</label>
+                    <input type="password" id="admin-password" required>
+                </div>
+                <button type="submit">Login</button>
+                <p id="admin-login-error" style="color: red; text-align: center; margin-top: 10px;"></p>
+            </form>
+        </div>
+
+        <div id="admin-view">
+            <button id="logout-btn">Logout</button>
+            <h1>Pending Cashback Requests</h1>
+            <div id="request-list" class="request-list">
+                <p>Loading requests...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, writeBatch, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+            authDomain: "tipsplit-e3wes.firebaseapp.com",
+            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tipsplit-e3wes",
+            storageBucket: "tipsplit-e3wes.appspot.com",
+            messagingSenderId: "984733883633",
+            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loginView = document.getElementById('login-view');
+        const adminView = document.getElementById('admin-view');
+        const adminLoginForm = document.getElementById('admin-login-form');
+        const adminLoginError = document.getElementById('admin-login-error');
+        const requestList = document.getElementById('request-list');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        let unsubscribeRequests;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists() && userDoc.data().isAdmin === true) {
+                    loginView.classList.remove('active');
+                    adminView.classList.add('active');
+                    loadPendingRequests();
+                } else {
+                    alert("You are not authorized to access this page.");
+                    signOut(auth);
+                }
+            } else {
+                loginView.classList.add('active');
+                adminView.classList.remove('active');
+                if (unsubscribeRequests) unsubscribeRequests();
+            }
+        });
+
+        adminLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const mobile = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            const email = `${mobile}@ramazone.com`;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .catch(err => {
+                    adminLoginError.textContent = "Login failed. Check credentials.";
+                });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        function loadPendingRequests() {
+            const q = query(collection(db, 'cashback_requests'), where('status', '==', 'pending'));
+            unsubscribeRequests = onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    requestList.innerHTML = '<p>No pending requests found.</p>';
+                    return;
+                }
+                requestList.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const request = { id: doc.id, ...doc.data() };
+                    const item = document.createElement('div');
+                    item.className = 'request-item';
+                    item.innerHTML = `
+                        <div class="request-details">
+                            <p><strong>User:</strong> ${request.userName} (${request.userMobile})</p>
+                            <p><strong>Product:</strong> ${request.productName}</p>
+                            <p><strong>Price:</strong> ₹${request.productPrice}</p>
+                            <p><strong>Cashback Amount:</strong> ₹${request.cashbackAmount.toFixed(2)}</p>
+                            <p><strong>Date:</strong> ${request.purchaseDate.toDate().toLocaleDateString()}</p>
+                        </div>
+                        <div class="request-actions">
+                            <button class="btn-approve" data-id="${request.id}">Approve</button>
+                            <button class="btn-reject" data-id="${request.id}">Reject</button>
+                        </div>
+                    `;
+                    requestList.appendChild(item);
+                });
+            });
+        }
+
+        requestList.addEventListener('click', async (e) => {
+            const target = e.target;
+            const requestId = target.dataset.id;
+            if (!requestId) return;
+
+            target.disabled = true;
+
+            const requestDocRef = doc(db, 'cashback_requests', requestId);
+            
+            if (target.classList.contains('btn-approve')) {
+                try {
+                    await approveRequest(requestDocRef);
+                    alert('Request approved and commission distributed!');
+                } catch (error) {
+                    console.error("Approval Error: ", error);
+                    alert(`Error approving request: ${error.message}`);
+                }
+            } else if (target.classList.contains('btn-reject')) {
+                const batch = writeBatch(db);
+                batch.update(requestDocRef, { status: 'rejected' });
+                await batch.commit();
+                alert('Request rejected.');
+            }
+            target.disabled = false;
+        });
+
+        async function approveRequest(requestDocRef) {
+            const requestDoc = await getDoc(requestDocRef);
+            if (!requestDoc.exists()) throw new Error("Request not found.");
+            
+            const requestData = requestDoc.data();
+            const userRef = doc(db, 'users', requestData.userId);
+            const userDoc = await getDoc(userRef);
+            if (!userDoc.exists()) throw new Error("User not found.");
+
+            const userData = userDoc.data();
+            const totalCashback = requestData.cashbackAmount;
+
+            // Your commission logic
+            const selfAmount = totalCashback * (2/3); // 2 rupaiya
+            const distributionAmount = totalCashback * (1/3); // 1 rupaiya
+
+            const batch = writeBatch(db);
+
+            // 1. Update user's wallet and lifetime earning
+            batch.update(userRef, {
+                wallet: increment(selfAmount),
+                lifetimeEarning: increment(selfAmount)
+            });
+
+            // 2. Distribute to upline
+            const upline = userData.upline || [];
+            const percentages = [0.30, 0.25, 0.20, 0.15, 0.10]; // 30%, 25%...
+
+            for (let i = 0; i < upline.length && i < 5; i++) {
+                const uplineUserId = upline[i];
+                const commission = distributionAmount * percentages[i];
+                const uplineUserRef = doc(db, 'users', uplineUserId);
+                batch.update(uplineUserRef, {
+                    wallet: increment(commission),
+                    lifetimeEarning: increment(commission)
+                });
+            }
+
+            // 3. Update request status
+            batch.update(requestDocRef, { status: 'approved' });
+
+            // Commit all changes at once
+            await batch.commit();
+        }
+
+    </script>
+</body>
+</html>
 
