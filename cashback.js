@@ -3,6 +3,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, on
 import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, writeBatch, serverTimestamp, orderBy, limit, runTransaction as firestoreTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- START: Firebase Configuration ---
+// जरूरी: अपनी Firebase कॉन्फ़िगरेशन जानकारी यहाँ डालें
 const firebaseConfig = {
     apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
     authDomain: "tipsplit-e3wes.firebaseapp.com",
@@ -14,66 +15,54 @@ const firebaseConfig = {
 };
 // --- END: Firebase Configuration ---
 
-const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
 const MASTER_REFERRAL_ID = "RMZC000B001";
 let auth, db;
 
+// --- DOM Elements Cache ---
 const DOMElements = {
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
     logoutBtn: document.getElementById('logout-btn'),
-    notificationBtn: document.getElementById('notification-btn'),
-    notificationDot: document.getElementById('notification-dot'),
     filterBar: document.getElementById('filter-bar'),
-    dateFilter: document.getElementById('date-filter'),
-    passwordModal: document.getElementById('password-modal-for-action'),
-    claimModal: document.getElementById('claim-modal'),
+    
+    // Modals
     cashbackModal: document.getElementById('cashback-modal'),
     profileModal: document.getElementById('profile-modal'),
-    scanPayModal: document.getElementById('scan-pay-modal'),
     cashbackClaimModal: document.getElementById('cashback-claim-modal'),
-    imageViewModal: document.getElementById('image-view-modal'),
-    couponsModal: document.getElementById('coupons-modal'),
-    notificationsListModal: document.getElementById('notifications-list-modal'),
-    notificationPopupModal: document.getElementById('notification-popup-modal'),
-    transactionSuccessModal: document.getElementById('transaction-success-modal'), 
-    notificationDetailModal: document.getElementById('notification-detail-modal'), 
-    claimRequestForm: document.getElementById('claim-request-form'),
+    
+    // Forms
     cashbackRequestForm: document.getElementById('cashback-request-form'),
     passwordChangeForm: document.getElementById('password-change-form'),
-    profilePictureInput: document.getElementById('profile-picture-input'),
-    modalConfirmBtn: document.getElementById('modal-confirm-btn'),
-    claimSubmitBtn: document.getElementById('claim-submit-btn'),
-    cashbackSubmitBtn: document.getElementById('cashback-submit-btn'),
-    paySubmitBtn: document.getElementById('pay-submit-btn'),
-    claimNowBtn: document.getElementById('claim-now-btn'),
+    
+    // Buttons
     openCashbackModalBtn: document.getElementById('open-cashback-modal'),
+    openProfileModalBtn: document.getElementById('open-profile-modal'),
+    claimNowBtn: document.getElementById('claim-now-btn'),
+    cashbackSubmitBtn: document.getElementById('cashback-submit-btn'),
     walletShareBtn: document.getElementById('wallet-share-btn'),
-    profileDisplay: document.getElementById('profile-display'),
-    profileModalDisplay: document.getElementById('profile-modal-display'),
+    
+    // Displays & Containers
     userReferralContainer: document.getElementById('user-referral-container'),
     userReferralId: document.getElementById('user-referral-id'),
+    profileDisplay: document.getElementById('profile-display'),
+    profileModalDisplay: document.getElementById('profile-modal-display'),
     profileReferralId: document.getElementById('profile-referral-id'),
+
+    // Error Messages
     loginErrorMsg: document.getElementById('login-error-msg'),
     registerErrorMsg: document.getElementById('register-error-msg'),
-    claimErrorMsg: document.getElementById('claim-error-msg'),
     cashbackErrorMsg: document.getElementById('cashback-error-msg'),
-    modalErrorMsg: document.getElementById('modal-error-msg'),
     passwordChangeErrorMsg: document.getElementById('password-change-error-msg'),
-    paymentErrorMsg: document.getElementById('payment-error-msg'),
-    scannerStatus: document.getElementById('scanner-status'),
 };
 
+// --- Application State ---
 let currentUserData = null;
 let activeListeners = [];
 let allTransactions = [];
-let allNotifications = [];
 let activeFilter = 'all';
-let scanner = null;
-let tempActionData = {};
 let pendingCashbackClaim = null;
-let currentPopupNotification = null;
 
+// --- Initialization ---
 function initializeFirebaseApp() {
     try {
         const app = initializeApp(firebaseConfig);
@@ -86,39 +75,20 @@ function initializeFirebaseApp() {
     }
 }
 
-function handleProfilePictureUpload(event) {
-    showToast("Profile picture upload is currently disabled.");
-}
-
-function showFullImage(src) {
-    if (!src || src.includes('placehold.co')) return;
-    document.getElementById('full-view-image').src = src;
-    openModal(DOMElements.imageViewModal);
-}
-
-function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
-function hideErrorMessage(element) { element.style.display = 'none'; }
+// --- UI Helper Functions ---
+function showErrorMessage(element, message) { if(element) { element.textContent = message; element.style.display = 'block'; } }
+function hideErrorMessage(element) { if(element) { element.style.display = 'none'; } }
 function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId)?.classList.add('active'); }
 function openModal(modalElement) { modalElement?.classList.add('active'); }
-function closeModal(modalElement) { 
-    modalElement?.classList.remove('active');
-    if (scanner && modalElement === DOMElements.scanPayModal) { 
-        scanner.getTracks().forEach(track => track.stop()); 
-        scanner = null; 
-    }
-}
+function closeModal(modalElement) { modalElement?.classList.remove('active'); }
 function showToast(message) {
     const toast = document.getElementById('toast-notification');
     toast.textContent = message;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
-function generatePaymentId(name, mobile) {
-    if (!name || !mobile) return '';
-    const formattedName = name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
-    return `@${formattedName}RMZ${mobile}`;
-}
 
+// --- Core Logic ---
 function generateReferralCode() {
     const part1 = Math.floor(100 + Math.random() * 900);
     const part2 = Math.floor(100 + Math.random() * 900);
@@ -129,45 +99,53 @@ async function getUpline(userRefId, levels = 5) {
     let upline = [];
     let currentUserId = userRefId;
     for (let i = 0; i < levels; i++) {
-        if (!currentUserId || currentUserId === 'master' || currentUserId === 'none') {
-            break;
-        }
-        const userDocRef = doc(db, 'users', currentUserId);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            upline.push(currentUserId);
-            currentUserId = userData.referredBy;
-        } else {
+        if (!currentUserId || currentUserId === 'master' || currentUserId === 'none') break;
+        
+        try {
+            const userDocRef = doc(db, 'users', currentUserId);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                upline.push(currentUserId);
+                currentUserId = userData.referredBy;
+            } else {
+                break;
+            }
+        } catch (error) {
+            console.error("Error getting upline:", error);
             break;
         }
     }
     return upline;
 }
 
+// --- Authentication ---
 function setupAuthentication() {
-    const params = new URLSearchParams(window.location.search);
-    const refCode = params.get('ref');
-
     onAuthStateChanged(auth, user => {
+        const params = new URLSearchParams(window.location.search);
+        const refCode = params.get('ref');
+
         if (user) { 
             toggleView('dashboard-view'); 
             attachRealtimeListeners(user); 
         } else { 
-            if (refCode) {
+            detachAllListeners();
+            if (refCode && !sessionStorage.getItem('logout_initiated')) {
                 toggleView('registration-view');
                 document.getElementById('reg-referral').value = refCode;
             } else {
                 toggleView('login-view');
             }
-            detachAllListeners(); 
+            sessionStorage.removeItem('logout_initiated');
         }
     });
 
     DOMElements.loginForm.addEventListener('submit', e => {
         e.preventDefault();
         hideErrorMessage(DOMElements.loginErrorMsg);
-        signInWithEmailAndPassword(auth, `${document.getElementById('login-mobile').value}@ramazone.com`, document.getElementById('login-password').value)
+        const mobile = document.getElementById('login-mobile').value;
+        const password = document.getElementById('login-password').value;
+        signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
         .catch(() => showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile number ya password."));
     });
 
@@ -198,7 +176,7 @@ function setupAuthentication() {
                     referredBy = referrerDoc.id;
                     upline = await getUpline(referredBy);
                 } else {
-                    showErrorMessage(DOMElements.registerErrorMsg, "Invalid referral code.");
+                    showErrorMessage(DOMElements.registerErrorMsg, "Aमान्य रेफरल कोड।");
                     return;
                 }
             }
@@ -212,11 +190,10 @@ function setupAuthentication() {
             await setDoc(newUserRef, {
                 uid: userCredential.user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
                 profilePictureUrl: '', referralId: generateReferralCode(), referredBy: referredBy,
-                upline: upline,
-                createdAt: serverTimestamp()
+                upline: upline, createdAt: serverTimestamp()
             });
 
-            alert("Registration safal hua! Ab aap login kar sakte hain.");
+            showToast("Registration safal hua! Ab aap login kar sakte hain.");
             toggleView('login-view');
             DOMElements.registerForm.reset();
         } catch (error) { 
@@ -224,9 +201,16 @@ function setupAuthentication() {
         }
     });
 
-    DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
+    DOMElements.logoutBtn.addEventListener('click', () => {
+        sessionStorage.setItem('logout_initiated', 'true');
+        signOut(auth).catch(error => {
+            console.error("Logout Error:", error);
+            showToast("Logout fail hua. Kripya dobara koshish karein.");
+        });
+    });
 }
 
+// --- Realtime Data Handling ---
 function attachRealtimeListeners(user) {
     detachAllListeners();
     const uid = user.uid;
@@ -237,9 +221,11 @@ function attachRealtimeListeners(user) {
             currentUserData = { id: doc.id, ...doc.data() };
             updateDashboardUI(currentUserData, user);
         } else {
-            console.error("User document not found, but user is authenticated. Logging out to prevent issues.");
-            signOut(auth);
+            // **FIX:** Removed automatic logout to prevent race conditions on registration.
+            console.warn("User document not found, but user is authenticated. Data might be inconsistent.");
         }
+    }, (error) => {
+        console.error("Error listening to user document:", error);
     });
     activeListeners.push(userUnsubscribe);
 
@@ -247,6 +233,8 @@ function attachRealtimeListeners(user) {
     const transUnsubscribe = onSnapshot(transactionsQuery, (querySnapshot) => {
         allTransactions = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
         renderUnifiedHistory();
+    }, (error) => {
+        console.error("Error listening to transactions:", error);
     });
     activeListeners.push(transUnsubscribe);
     
@@ -262,15 +250,10 @@ function attachRealtimeListeners(user) {
             pendingCashbackClaim = null;
             DOMElements.openCashbackModalBtn.classList.remove("has-claim");
         }
+    }, (error) => {
+        console.error("Error listening to cashback requests:", error);
     });
     activeListeners.push(cashbackUnsubscribe);
-
-    const notificationsQuery = query(collection(db, "notifications"), orderBy("timestamp", "desc"), limit(20));
-    const notifUnsubscribe = onSnapshot(notificationsQuery, (querySnapshot) => {
-        allNotifications = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        // processNotifications(); // Simplified for now
-    });
-    activeListeners.push(notifUnsubscribe);
 }
 
 function detachAllListeners() {
@@ -278,23 +261,17 @@ function detachAllListeners() {
     activeListeners = [];
     currentUserData = null;
     allTransactions = [];
-    allNotifications = [];
 }
 
+// --- UI Updates ---
 function updateDashboardUI(dbData, authUser) {
     if (!dbData || !authUser) return;
     
     DOMElements.userReferralId.textContent = dbData.referralId || 'N/A';
     document.getElementById('user-name-display').textContent = authUser.displayName;
-    const walletBalance = dbData.wallet || 0;
-    const dueAmount = dbData.dueAmount || 0;
-    const creditLimit = walletBalance + dueAmount;
-    document.getElementById('wallet-balance').textContent = `₹ ${walletBalance.toFixed(2)}`;
-    document.getElementById('credit-limit').textContent = `₹${creditLimit.toFixed(2)}`;
-    document.getElementById('lifetime-earning').textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
-    document.getElementById('due-amount').textContent = `- ₹${dueAmount.toFixed(2)}`;
-    document.querySelector('.wallet-footer-item .due').parentElement.style.display = dueAmount > 0 ? 'block' : 'none';
-
+    document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
+    document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+    
     const initial = authUser.displayName ? authUser.displayName.charAt(0).toUpperCase() : 'R';
     const placeholderUrl = `https://placehold.co/80x80/ffffff/2980b9?text=${initial}`;
     const profilePicUrl = dbData.profilePictureUrl || placeholderUrl;
@@ -303,8 +280,6 @@ function updateDashboardUI(dbData, authUser) {
     
     document.getElementById('profile-modal-name').textContent = authUser.displayName;
     document.getElementById('profile-modal-mobile').textContent = dbData.mobile;
-    document.getElementById('whatsapp-support-link').href = `https://wa.me/917903698180?text=${encodeURIComponent(`Help Required\nName: ${authUser.displayName}\nMobile: ${dbData.mobile}`)}`;
-    document.getElementById('profile-payment-id').textContent = generatePaymentId(authUser.displayName, dbData.mobile);
     DOMElements.profileReferralId.textContent = dbData.referralId || 'N/A';
 }
 
@@ -312,13 +287,10 @@ function renderUnifiedHistory() {
     const historyList = document.getElementById('unified-history-list');
     historyList.innerHTML = '';
 
-    const filtered = allTransactions.filter(item => {
-        if (activeFilter === 'all') return true;
-        return item.type === activeFilter;
-    });
+    const filtered = allTransactions.filter(item => activeFilter === 'all' || item.type === activeFilter);
 
     if (filtered.length === 0) {
-        historyList.innerHTML = getEmptyStateHTML('history');
+        historyList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Is filter ke liye aapka transaction history khaali hai.</p></div>`;
         return;
     }
 
@@ -328,14 +300,18 @@ function renderUnifiedHistory() {
         const typeClass = sign === '+' ? 'credit' : 'debit';
         const icon = { cashback: '🎁', commission: '🏆', payment: '↔️', claim: '💸' }[trans.type] || '📜';
         
+        // **FIX:** Added check for timestamp to prevent errors
+        const dateString = trans.timestamp && typeof trans.timestamp.toDate === 'function' 
+            ? trans.timestamp.toDate().toLocaleDateString() 
+            : 'No date';
+
         itemDiv.className = `history-item ${trans.type === 'commission' ? 'commission' : typeClass}`;
-        
         itemDiv.innerHTML = `
             <div class="history-details">
                 <div class="history-icon ${trans.type === 'commission' ? 'commission' : typeClass}">${icon}</div>
                 <div class="history-info">
-                    <div class="title">${trans.description}</div>
-                    <div class="date">${trans.timestamp.toDate().toLocaleDateString()}</div>
+                    <div class="title">${trans.description || 'N/A'}</div>
+                    <div class="date">${dateString}</div>
                 </div>
             </div>
             <div class="history-amount">
@@ -346,13 +322,7 @@ function renderUnifiedHistory() {
     });
 }
 
-function getEmptyStateHTML(type) {
-    if (type === 'history') return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history for the selected filter is empty.</p></div>`;
-    if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Available</h4><p>You don't have any active coupons right now.</p></div>`;
-    if (type === 'notifications') return `<div class="empty-state"><div class="empty-state-icon">📭</div><h4>No Notifications</h4><p>You're all caught up!</p></div>`;
-    return '';
-}
-
+// --- Event Handlers ---
 async function handleCashbackClaim() {
     if (!pendingCashbackClaim || !currentUserData) return;
     DOMElements.claimNowBtn.disabled = true;
@@ -374,23 +344,18 @@ async function handleCashbackClaim() {
                 lifetimeEarning: increment(amountToClaim)
             });
 
-            transaction.update(requestDocRef, {
-                claimed: true,
-                status: 'completed'
-            });
+            transaction.update(requestDocRef, { claimed: true, status: 'completed' });
 
             const newTransactionRef = doc(transactionsColRef);
             transaction.set(newTransactionRef, {
-                type: 'cashback',
-                amount: amountToClaim,
-                description: `Claimed cashback for ${pendingCashbackClaim.productName}`,
-                status: 'completed',
-                timestamp: serverTimestamp(),
+                type: 'cashback', amount: amountToClaim,
+                description: `Cashback for ${pendingCashbackClaim.productName}`,
+                status: 'completed', timestamp: serverTimestamp(),
                 involvedUsers: [currentUserData.id]
             });
         });
 
-        showToast("Cashback claimed successfully!");
+        showToast("Cashback safaltapoorvak claim kiya gaya!");
         closeModal(DOMElements.cashbackClaimModal);
         pendingCashbackClaim = null;
     } catch (error) {
@@ -423,18 +388,10 @@ async function handleCashbackRequest(e) {
         const cashbackPercentage = configDoc.exists() ? configDoc.data().cashback_percentage : 3;
         const cashbackAmount = productPrice * (cashbackPercentage / 100);
         
-        const requestsCol = collection(db, "cashback_requests");
-        await addDoc(requestsCol, { 
-            userId: currentUserData.id, 
-            userName: currentUserData.name, 
-            userMobile: currentUserData.mobile, 
-            productName, 
-            productPrice, 
-            purchaseDate: new Date(purchaseDate), 
-            cashbackAmount, 
-            status: "pending", 
-            requestDate: serverTimestamp(), 
-            claimed: false 
+        await addDoc(collection(db, "cashback_requests"), { 
+            userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile, 
+            productName, productPrice, purchaseDate: new Date(purchaseDate), cashbackAmount, 
+            status: "pending", requestDate: serverTimestamp(), claimed: false 
         });
         showToast("Cashback request submit ho gaya!");
         DOMElements.cashbackRequestForm.reset();
@@ -446,8 +403,41 @@ async function handleCashbackRequest(e) {
     }
 }
 
+async function handlePasswordChange(e) {
+    e.preventDefault();
+    hideErrorMessage(DOMElements.passwordChangeErrorMsg);
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword.length < 6) {
+        showErrorMessage(DOMElements.passwordChangeErrorMsg, "Naya password kam se kam 6 akshar ka hona chahiye.");
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        showErrorMessage(DOMElements.passwordChangeErrorMsg, "Naya password match nahi ho raha hai.");
+        return;
+    }
+
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+    try {
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, newPassword);
+        showToast("Password safaltapoorvak badal gaya!");
+        DOMElements.passwordChangeForm.reset();
+        closeModal(DOMElements.profileModal);
+    } catch (error) {
+        console.error("Password change error:", error);
+        showErrorMessage(DOMElements.passwordChangeErrorMsg, "Purana password galat hai ya koi error aayi.");
+    }
+}
+
+// --- Application Setup ---
 function setupApplication() {
     setupAuthentication();
+    
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     
@@ -455,17 +445,30 @@ function setupApplication() {
         if (pendingCashbackClaim) { 
             openModal(DOMElements.cashbackClaimModal); 
         } else { 
-            DOMElements.cashbackSubmitBtn.disabled = false;
+            DOMElements.cashbackRequestForm.reset();
             hideErrorMessage(DOMElements.cashbackErrorMsg);
             document.getElementById('product-purchase-date').valueAsDate = new Date();
             openModal(DOMElements.cashbackModal); 
         }
     });
 
+    // **FIX:** Added event listener for profile modal
+    DOMElements.openProfileModalBtn.addEventListener('click', () => {
+        if (!currentUserData || !auth.currentUser) {
+            showToast("User data load ho raha hai...");
+            return;
+        }
+        DOMElements.passwordChangeForm.reset();
+        hideErrorMessage(DOMElements.passwordChangeErrorMsg);
+        openModal(DOMElements.profileModal);
+    });
+
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
     
     DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
     DOMElements.claimNowBtn.addEventListener('click', handleCashbackClaim);
+    // **FIX:** Added event listener for password change form
+    DOMElements.passwordChangeForm.addEventListener('submit', handlePasswordChange);
 
     DOMElements.walletShareBtn.addEventListener('click', async () => { 
         if (!auth.currentUser || !currentUserData?.referralId) { 
@@ -473,13 +476,13 @@ function setupApplication() {
             return; 
         } 
         const referralLink = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralId}`;
-        const shareMessage = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMaine, *${auth.currentUser.displayName}*, Ramazone Cashback app se ab tak *₹${(currentUserData.lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${currentUserData.referralId}*\n\nAbhi join karein: ${referralLink}`; 
+        const shareMessage = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMera code *${currentUserData.referralId}* use karein aur Ramazone Cashback app par har khareed par dher saare paise bachayein.\n\nAbhi join karein: ${referralLink}`; 
         try { 
             if (navigator.share) {
                 await navigator.share({ text: shareMessage });
             } else { 
                 navigator.clipboard.writeText(shareMessage); 
-                showToast('Share message copied!'); 
+                showToast('Share message copy ho gaya!'); 
             } 
         } catch (err) { 
             if (err.name !== 'AbortError') showToast('Share karne mein error aayi.'); 
@@ -497,7 +500,7 @@ function setupApplication() {
 
     DOMElements.filterBar.addEventListener('click', e => { 
         const target = e.target.closest('.filter-btn'); 
-        if (!target || target.type === 'date') return; 
+        if (!target) return; 
         DOMElements.filterBar.querySelector('.active')?.classList.remove('active'); 
         target.classList.add('active'); 
         activeFilter = target.dataset.filter; 
@@ -505,5 +508,6 @@ function setupApplication() {
     });
 }
 
+// --- Start the App ---
 document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
 
