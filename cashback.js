@@ -427,7 +427,9 @@ async function handleCashbackRequest(e) {
 
     try {
         const configDoc = await getDoc(doc(db, "app_settings", "config"));
-        const cashbackPercentage = configDoc.exists() ? configDoc.data().cashback_percentage : 3;
+        // --- CHANGE MADE HERE ---
+        // Changed the default fallback percentage from 3 to 2.
+        const cashbackPercentage = configDoc.exists() ? configDoc.data().cashback_percentage : 2;
         const cashbackAmount = productPrice * (cashbackPercentage / 100);
 
         await addDoc(collection(db, "cashback_requests"), {
@@ -472,3 +474,4 @@ async function handlePasswordChange(e) {
 
 // --- Start the App ---
 document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
+
