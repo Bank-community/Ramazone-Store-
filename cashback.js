@@ -17,7 +17,7 @@ const firebaseConfig = {
 const MASTER_REFERRAL_ID = "RMZC000B001";
 let auth, db;
 
-// --- DOM Elements Cache ---
+// --- DOM Elements Cache (Fully Synced with HTML) ---
 const DOMElements = {
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
@@ -36,6 +36,8 @@ const DOMElements = {
     userReferralId: document.getElementById('user-referral-id'),
     profileDisplay: document.getElementById('profile-display'),
     profileModalDisplay: document.getElementById('profile-modal-display'),
+    profileModalName: document.getElementById('profile-modal-name'),
+    profileModalMobile: document.getElementById('profile-modal-mobile'),
     profileReferralId: document.getElementById('profile-referral-id'),
     loginErrorMsg: document.getElementById('login-error-msg'),
     registerErrorMsg: document.getElementById('register-error-msg'),
@@ -189,10 +191,9 @@ function attachRealtimeListeners(user) {
             if (!isInitialDataLoaded) {
                 isInitialDataLoaded = true;
                 hideLoader();
-                attachSecondaryListeners(uid); // Attach other listeners only after main data is loaded
+                attachSecondaryListeners(uid);
             }
         } else {
-             // Wait a bit, then check again. If still not there, logout.
              setTimeout(() => {
                 getDoc(doc(db, 'users', uid)).then(checkDoc => {
                     if (!checkDoc.exists()) {
@@ -253,9 +254,10 @@ function updateDashboardUI(dbData, authUser) {
     const placeholderUrl = `https://placehold.co/50x50/ffffff/2980b9?text=${initial}`;
     DOMElements.profileDisplay.src = dbData.profilePictureUrl || placeholderUrl;
     DOMElements.profileModalDisplay.src = dbData.profilePictureUrl || placeholderUrl;
-    document.getElementById('profile-modal-name').textContent = authUser.displayName;
-    document.getElementById('profile-modal-mobile').textContent = dbData.mobile;
-    DOMElements.profileReferralId.textContent = dbData.referralId || 'N/A';
+    // **FIX:** Added missing elements to prevent errors
+    if (DOMElements.profileModalName) DOMElements.profileModalName.textContent = authUser.displayName;
+    if (DOMElements.profileModalMobile) DOMElements.profileModalMobile.textContent = dbData.mobile;
+    if (DOMElements.profileReferralId) DOMElements.profileReferralId.textContent = dbData.referralId || 'N/A';
 }
 
 function combineAndRenderHistory() {
@@ -439,4 +441,3 @@ async function handlePasswordChange(e) {
 
 // --- Start the App ---
 document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
-
