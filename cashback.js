@@ -237,8 +237,6 @@ function attachRealtimeListeners(user) {
             currentUserData = { id: doc.id, ...doc.data() };
             updateDashboardUI(currentUserData, user);
         } else {
-            // This might happen if user is authenticated but document creation failed.
-            // It can cause a logout loop.
             console.error("User document not found, but user is authenticated. Logging out to prevent issues.");
             signOut(auth);
         }
@@ -342,7 +340,7 @@ function renderUnifiedHistory() {
             </div>
             <div class="history-amount">
                 <div class="amount ${typeClass}">${sign} ₹${Math.abs(trans.amount).toFixed(2)}</div>
-                <span class="status status-${trans.status}">${trans.status}</span>
+                <span class="status status-completed">completed</span>
             </div>`;
         historyList.appendChild(itemDiv);
     });
@@ -353,6 +351,55 @@ function getEmptyStateHTML(type) {
     if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Available</h4><p>You don't have any active coupons right now.</p></div>`;
     if (type === 'notifications') return `<div class="empty-state"><div class="empty-state-icon">📭</div><h4>No Notifications</h4><p>You're all caught up!</p></div>`;
     return '';
+}
+
+async function handleCashbackClaim() {
+    if (!pendingCashbackClaim || !currentUserData) return;
+    DOMElements.claimNowBtn.disabled = true;
+    DOMElements.claimNowBtn.textContent = "Claiming...";
+
+    const requestDocRef = doc(db, "cashback_requests", pendingCashbackClaim.id);
+    const userDocRef = doc(db, "users", currentUserData.id);
+    const transactionsColRef = collection(db, "transactions");
+
+    try {
+        await firestoreTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userDocRef);
+            if (!userDoc.exists()) throw "User does not exist!";
+
+            const amountToClaim = pendingCashbackClaim.cashbackAmount;
+            
+            transaction.update(userDocRef, {
+                wallet: increment(amountToClaim),
+                lifetimeEarning: increment(amountToClaim)
+            });
+
+            transaction.update(requestDocRef, {
+                claimed: true,
+                status: 'completed'
+            });
+
+            const newTransactionRef = doc(transactionsColRef);
+            transaction.set(newTransactionRef, {
+                type: 'cashback',
+                amount: amountToClaim,
+                description: `Claimed cashback for ${pendingCashbackClaim.productName}`,
+                status: 'completed',
+                timestamp: serverTimestamp(),
+                involvedUsers: [currentUserData.id]
+            });
+        });
+
+        showToast("Cashback claimed successfully!");
+        closeModal(DOMElements.cashbackClaimModal);
+        pendingCashbackClaim = null;
+    } catch (error) {
+        console.error("Claim Error:", error);
+        showToast(`Error: ${error}`);
+    } finally {
+        DOMElements.claimNowBtn.disabled = false;
+        DOMElements.claimNowBtn.textContent = "Claim Now";
+    }
 }
 
 async function handleCashbackRequest(e) {
@@ -418,6 +465,7 @@ function setupApplication() {
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
     
     DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
+    DOMElements.claimNowBtn.addEventListener('click', handleCashbackClaim);
 
     DOMElements.walletShareBtn.addEventListener('click', async () => { 
         if (!auth.currentUser || !currentUserData?.referralId) { 
