@@ -1,222 +1,461 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getDatabase, ref, get, set, push, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, writeBatch, serverTimestamp, orderBy, limit, runTransaction as firestoreTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', () => {
+// --- START: Firebase Configuration ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+    authDomain: "tipsplit-e3wes.firebaseapp.com",
+    databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tipsplit-e3wes",
+    storageBucket: "tipsplit-e3wes.appspot.com",
+    messagingSenderId: "984733883633",
+    appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+};
+// --- END: Firebase Configuration ---
 
-    // --- Constants and Global Variables ---
-    const MASTER_REFERRAL_ID = "RMZC000B001";
-    let auth, database;
-    let currentUserData = null;
-    let activeListeners = [];
+const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
+const MASTER_REFERRAL_ID = "RMZC000B001";
+let auth, db;
 
-    // --- COMPLETE DOM Element References ---
-    const DOMElements = {
-        loginForm: document.getElementById('login-form'),
-        registerForm: document.getElementById('register-form'),
-        logoutBtn: document.getElementById('logout-btn'),
-        refreshBtn: document.getElementById('refresh-btn'),
-        showRegisterLink: document.getElementById('show-register-link'),
-        showLoginLink: document.getElementById('show-login-link'),
-        loginErrorMsg: document.getElementById('login-error-msg'),
-        registerErrorMsg: document.getElementById('register-error-msg'),
-        userNameDisplay: document.getElementById('user-name-display'),
-        userMobileDisplay: document.getElementById('user-mobile'),
-        walletBalance: document.getElementById('wallet-balance'),
-        creditLimit: document.getElementById('credit-limit'),
-        lifetimeEarning: document.getElementById('lifetime-earning'),
-        dueAmount: document.getElementById('due-amount'),
-        userReferralId: document.getElementById('user-referral-id'),
-        walletShareBtn: document.getElementById('wallet-share-btn'),
-        openCashbackModalBtn: document.getElementById('open-cashback-modal'),
-        scanAndPayBtn: document.getElementById('scan-and-pay-btn'),
-        openCouponsModalBtn: document.getElementById('open-coupons-modal'),
-        openProfileModalBtn: document.getElementById('open-profile-modal'),
-        openClaimModalBtn: document.getElementById('open-claim-modal'),
-        regReferralInput: document.getElementById('reg-referral'),
-    };
+const DOMElements = {
+    loginForm: document.getElementById('login-form'),
+    registerForm: document.getElementById('register-form'),
+    logoutBtn: document.getElementById('logout-btn'),
+    notificationBtn: document.getElementById('notification-btn'),
+    notificationDot: document.getElementById('notification-dot'),
+    filterBar: document.getElementById('filter-bar'),
+    dateFilter: document.getElementById('date-filter'),
+    passwordModal: document.getElementById('password-modal-for-action'),
+    claimModal: document.getElementById('claim-modal'),
+    cashbackModal: document.getElementById('cashback-modal'),
+    profileModal: document.getElementById('profile-modal'),
+    scanPayModal: document.getElementById('scan-pay-modal'),
+    cashbackClaimModal: document.getElementById('cashback-claim-modal'),
+    imageViewModal: document.getElementById('image-view-modal'),
+    couponsModal: document.getElementById('coupons-modal'),
+    notificationsListModal: document.getElementById('notifications-list-modal'),
+    notificationPopupModal: document.getElementById('notification-popup-modal'),
+    transactionSuccessModal: document.getElementById('transaction-success-modal'), 
+    notificationDetailModal: document.getElementById('notification-detail-modal'), 
+    claimRequestForm: document.getElementById('claim-request-form'),
+    cashbackRequestForm: document.getElementById('cashback-request-form'),
+    passwordChangeForm: document.getElementById('password-change-form'),
+    profilePictureInput: document.getElementById('profile-picture-input'),
+    modalConfirmBtn: document.getElementById('modal-confirm-btn'),
+    claimSubmitBtn: document.getElementById('claim-submit-btn'),
+    cashbackSubmitBtn: document.getElementById('cashback-submit-btn'),
+    paySubmitBtn: document.getElementById('pay-submit-btn'),
+    claimNowBtn: document.getElementById('claim-now-btn'),
+    openCashbackModalBtn: document.getElementById('open-cashback-modal'),
+    walletShareBtn: document.getElementById('wallet-share-btn'),
+    profileDisplay: document.getElementById('profile-display'),
+    profileModalDisplay: document.getElementById('profile-modal-display'),
+    userReferralContainer: document.getElementById('user-referral-container'),
+    userReferralId: document.getElementById('user-referral-id'),
+    profileReferralId: document.getElementById('profile-referral-id'),
+    loginErrorMsg: document.getElementById('login-error-msg'),
+    registerErrorMsg: document.getElementById('register-error-msg'),
+    claimErrorMsg: document.getElementById('claim-error-msg'),
+    cashbackErrorMsg: document.getElementById('cashback-error-msg'),
+    modalErrorMsg: document.getElementById('modal-error-msg'),
+    passwordChangeErrorMsg: document.getElementById('password-change-error-msg'),
+    paymentErrorMsg: document.getElementById('payment-error-msg'),
+    scannerStatus: document.getElementById('scanner-status'),
+};
 
-    // --- CORE INITIALIZATION ---
-    async function initializeFirebaseApp() {
-        try {
-            const response = await fetch('/api/cashback-config');
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
-            const firebaseConfig = await response.json();
-            if (!firebaseConfig.apiKey) throw new Error("API Keys missing.");
-            
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            database = getDatabase(app);
-            
-            setupApplication();
-        } catch (error) {
-            // Non-destructive error display
-            const loginView = document.getElementById('login-view');
-            if(loginView) {
-                loginView.innerHTML = `<div class="auth-card"><h2>Application Error</h2><p>${error.message}</p></div>`;
-            }
-            console.error("FATAL: Firebase initialization failed.", error);
+let currentUserData = null;
+let activeListeners = [];
+let allTransactions = [];
+let allNotifications = [];
+let activeFilter = 'all';
+let scanner = null;
+let tempActionData = {};
+let pendingCashbackClaim = null;
+let currentPopupNotification = null;
+
+function initializeFirebaseApp() {
+    try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        setupApplication();
+    } catch (error) {
+        console.error("FATAL: Firebase initialization failed.", error);
+        document.body.innerHTML = `<div style="text-align: center; padding: 50px; color: #ff6b6b;">Application could not start. Please check connection and configuration.</div>`;
+    }
+}
+
+function handleProfilePictureUpload(event) {
+    showToast("Profile picture upload is currently disabled.");
+}
+
+function showFullImage(src) {
+    if (!src || src.includes('placehold.co')) return;
+    document.getElementById('full-view-image').src = src;
+    openModal(DOMElements.imageViewModal);
+}
+
+function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
+function hideErrorMessage(element) { element.style.display = 'none'; }
+function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId)?.classList.add('active'); }
+function openModal(modalElement) { modalElement?.classList.add('active'); }
+function closeModal(modalElement) { 
+    modalElement?.classList.remove('active');
+    if (scanner && modalElement === DOMElements.scanPayModal) { 
+        scanner.getTracks().forEach(track => track.stop()); 
+        scanner = null; 
+    }
+}
+function showToast(message) {
+    const toast = document.getElementById('toast-notification');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+function generatePaymentId(name, mobile) {
+    if (!name || !mobile) return '';
+    const formattedName = name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+    return `@${formattedName}RMZ${mobile}`;
+}
+
+function generateReferralCode() {
+    const part1 = Math.floor(100 + Math.random() * 900);
+    const part2 = Math.floor(100 + Math.random() * 900);
+    return `RMZC${part1}B${part2}`;
+}
+
+async function getUpline(userRefId, levels = 5) {
+    let upline = [];
+    let currentUserId = userRefId;
+    for (let i = 0; i < levels; i++) {
+        if (!currentUserId || currentUserId === 'master' || currentUserId === 'none') {
+            break;
+        }
+        const userDocRef = doc(db, 'users', currentUserId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            upline.push(currentUserId);
+            currentUserId = userData.referredBy;
+        } else {
+            break;
         }
     }
+    return upline;
+}
 
-    // --- FULL APPLICATION LOGIC ---
-    function setupApplication() {
-        setupAuthentication();
-        
-        DOMElements.showRegisterLink.addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
-        DOMElements.showLoginLink.addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
-        DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
-        DOMElements.refreshBtn.addEventListener('click', refreshData);
-        
-        // Setup all modal buttons
-        DOMElements.openCashbackModalBtn.addEventListener('click', () => openModal(document.getElementById('cashback-modal')));
-        DOMElements.scanAndPayBtn.addEventListener('click', () => openModal(document.getElementById('scan-pay-modal')));
-        DOMElements.openCouponsModalBtn.addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
-        DOMElements.openProfileModalBtn.addEventListener('click', () => openModal(document.getElementById('profile-modal')));
-        DOMElements.openClaimModalBtn.addEventListener('click', () => openModal(document.getElementById('claim-modal')));
-        
-        DOMElements.walletShareBtn.addEventListener('click', shareReferralLink);
+function setupAuthentication() {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
 
-        // --- NEW: Referral Link Logic ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const refId = urlParams.get('ref');
-        if (refId) {
-            // If referral ID is in the URL, go directly to registration
-            toggleView('registration-view');
-            DOMElements.regReferralInput.value = refId;
-        }
-    }
-
-    function setupAuthentication() {
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                toggleView('dashboard-view');
-                attachRealtimeListeners(user); 
+    onAuthStateChanged(auth, user => {
+        if (user) { 
+            toggleView('dashboard-view'); 
+            attachRealtimeListeners(user); 
+        } else { 
+            if (refCode) {
+                toggleView('registration-view');
+                document.getElementById('reg-referral').value = refCode;
             } else {
-                // If not logged in, and no referral in URL, show login
-                const urlParams = new URLSearchParams(window.location.search);
-                if (!urlParams.has('ref')) {
-                    toggleView('login-view');
-                }
-                detachAllListeners();
+                toggleView('login-view');
             }
-        });
-        
-        DOMElements.loginForm.addEventListener('submit', handleLogin);
-        DOMElements.registerForm.addEventListener('submit', handleRegistration);
-    }
+            detachAllListeners(); 
+        }
+    });
 
-    async function handleLogin(e) {
+    DOMElements.loginForm.addEventListener('submit', e => {
         e.preventDefault();
         hideErrorMessage(DOMElements.loginErrorMsg);
-        const mobile = document.getElementById('login-mobile').value;
-        const password = document.getElementById('login-password').value;
-        try {
-            await signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
-        } catch (error) {
-            showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile ya password.");
-        }
-    }
+        signInWithEmailAndPassword(auth, `${document.getElementById('login-mobile').value}@ramazone.com`, document.getElementById('login-password').value)
+        .catch(() => showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile number ya password."));
+    });
 
-    async function handleRegistration(e) {
+    DOMElements.registerForm.addEventListener('submit', async e => {
         e.preventDefault();
         hideErrorMessage(DOMElements.registerErrorMsg);
         const name = document.getElementById('reg-name').value.trim();
         const mobile = document.getElementById('reg-mobile').value.trim();
         const password = document.getElementById('reg-password').value.trim();
-        const referralId = DOMElements.regReferralInput.value.trim().toUpperCase();
-        
-        if (!name || !/^\d{10}$/.test(mobile) || password.length < 6 || !referralId) {
-            showErrorMessage(DOMElements.registerErrorMsg, "Sabhi details bharein.");
-            return;
+        const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
+
+        if (!name || !/^\d{10}$/.test(mobile) || password.length < 6) { 
+            showErrorMessage(DOMElements.registerErrorMsg, "Kripya sabhi details sahi se bharein."); 
+            return; 
         }
         
+        let referredBy = "none";
+        let upline = [];
+
+        if (referralCode) {
+            if (referralCode === MASTER_REFERRAL_ID) {
+                referredBy = "master";
+            } else {
+                const q = query(collection(db, 'users'), where('referralId', '==', referralCode));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const referrerDoc = querySnapshot.docs[0];
+                    referredBy = referrerDoc.id;
+                    upline = await getUpline(referredBy);
+                } else {
+                    showErrorMessage(DOMElements.registerErrorMsg, "Invalid referral code.");
+                    return;
+                }
+            }
+        }
+
         try {
-            const snapshot = await get(query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralId)));
-            if (!snapshot.exists() && referralId !== MASTER_REFERRAL_ID) {
-                showErrorMessage(DOMElements.registerErrorMsg, "Invalid Referral ID.");
-                return;
-            }
-            const referrerUid = snapshot.exists() ? Object.keys(snapshot.val())[0] : 'master';
+            const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+            const newUserRef = doc(db, 'users', userCredential.user.uid);
+            await updateProfile(userCredential.user, { displayName: name });
             
-            const cred = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
-            await updateProfile(cred.user, { displayName: name });
-            
-            await set(ref(database, 'users/' + cred.user.uid), {
-                uid: cred.user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
-                referralId: generateReferralId(), referredBy: referrerUid, createdAt: new Date().toISOString()
+            await setDoc(newUserRef, {
+                uid: userCredential.user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
+                profilePictureUrl: '', referralId: generateReferralCode(), referredBy: referredBy,
+                upline: upline,
+                createdAt: serverTimestamp()
             });
-            
+
             alert("Registration safal hua! Ab aap login kar sakte hain.");
-            // After successful registration, remove the ref parameter and go to login page
-            window.history.replaceState({}, document.title, window.location.pathname);
             toggleView('login-view');
-        } catch (error) {
-            const msg = error.code === 'auth/email-already-in-use' ? "Yeh mobile number pehle se register hai." : "Registration fail ho gaya.";
-            showErrorMessage(DOMElements.registerErrorMsg, msg);
+            DOMElements.registerForm.reset();
+        } catch (error) { 
+            showErrorMessage(DOMElements.registerErrorMsg, error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : "Registration fail ho gaya."); 
         }
-    }
+    });
 
-    function attachRealtimeListeners(user) {
-        detachAllListeners();
-        activeListeners.push(onValue(ref(database, 'users/' + user.uid), (snapshot) => {
-            if (snapshot.exists()) {
-                currentUserData = { uid: user.uid, ...snapshot.val() };
-                updateDashboardUI(currentUserData, user);
-            }
-        }));
-    }
+    DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
+}
 
-    function detachAllListeners() {
-        activeListeners.forEach(unsubscribe => unsubscribe());
-        activeListeners = [];
-    }
+function attachRealtimeListeners(user) {
+    detachAllListeners();
+    const uid = user.uid;
 
-    function updateDashboardUI(dbData, authUser) {
-        DOMElements.userNameDisplay.textContent = authUser.displayName;
-        DOMElements.userMobileDisplay.textContent = `Mobile: ${dbData.mobile}`;
-        DOMElements.walletBalance.textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
-        DOMElements.creditLimit.textContent = `₹${((dbData.wallet || 0) + (dbData.dueAmount || 0)).toFixed(2)}`;
-        DOMElements.lifetimeEarning.textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
-        DOMElements.dueAmount.textContent = `- ₹${(dbData.dueAmount || 0).toFixed(2)}`;
-        DOMElements.userReferralId.textContent = dbData.referralId || 'N/A';
-    }
-
-    function refreshData() {
-        if (auth.currentUser) {
-            showToast("Refreshing data...");
-            attachRealtimeListeners(auth.currentUser);
+    const userDocRef = doc(db, 'users', uid);
+    const userUnsubscribe = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+            currentUserData = { id: doc.id, ...doc.data() };
+            updateDashboardUI(currentUserData, user);
+        } else {
+            // This might happen if user is authenticated but document creation failed.
+            // It can cause a logout loop.
+            console.error("User document not found, but user is authenticated. Logging out to prevent issues.");
+            signOut(auth);
         }
+    });
+    activeListeners.push(userUnsubscribe);
+
+    const transactionsQuery = query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc"));
+    const transUnsubscribe = onSnapshot(transactionsQuery, (querySnapshot) => {
+        allTransactions = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        renderUnifiedHistory();
+    });
+    activeListeners.push(transUnsubscribe);
+    
+    const cashbackQuery = query(collection(db, 'cashback_requests'), where('userId', '==', uid), where('status', '==', 'approved'), where('claimed', '==', false));
+    const cashbackUnsubscribe = onSnapshot(cashbackQuery, (snapshot) => {
+        if (!snapshot.empty) {
+            const claimable = {id: snapshot.docs[0].id, ...snapshot.docs[0].data()};
+            pendingCashbackClaim = claimable;
+            document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(claimable.cashbackAmount).toFixed(2)}`;
+            openModal(DOMElements.cashbackClaimModal);
+            DOMElements.openCashbackModalBtn.classList.add("has-claim");
+        } else {
+            pendingCashbackClaim = null;
+            DOMElements.openCashbackModalBtn.classList.remove("has-claim");
+        }
+    });
+    activeListeners.push(cashbackUnsubscribe);
+
+    const notificationsQuery = query(collection(db, "notifications"), orderBy("timestamp", "desc"), limit(20));
+    const notifUnsubscribe = onSnapshot(notificationsQuery, (querySnapshot) => {
+        allNotifications = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        // processNotifications(); // Simplified for now
+    });
+    activeListeners.push(notifUnsubscribe);
+}
+
+function detachAllListeners() {
+    activeListeners.forEach(unsubscribe => unsubscribe());
+    activeListeners = [];
+    currentUserData = null;
+    allTransactions = [];
+    allNotifications = [];
+}
+
+function updateDashboardUI(dbData, authUser) {
+    if (!dbData || !authUser) return;
+    
+    DOMElements.userReferralId.textContent = dbData.referralId || 'N/A';
+    document.getElementById('user-name-display').textContent = authUser.displayName;
+    const walletBalance = dbData.wallet || 0;
+    const dueAmount = dbData.dueAmount || 0;
+    const creditLimit = walletBalance + dueAmount;
+    document.getElementById('wallet-balance').textContent = `₹ ${walletBalance.toFixed(2)}`;
+    document.getElementById('credit-limit').textContent = `₹${creditLimit.toFixed(2)}`;
+    document.getElementById('lifetime-earning').textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+    document.getElementById('due-amount').textContent = `- ₹${dueAmount.toFixed(2)}`;
+    document.querySelector('.wallet-footer-item .due').parentElement.style.display = dueAmount > 0 ? 'block' : 'none';
+
+    const initial = authUser.displayName ? authUser.displayName.charAt(0).toUpperCase() : 'R';
+    const placeholderUrl = `https://placehold.co/80x80/ffffff/2980b9?text=${initial}`;
+    const profilePicUrl = dbData.profilePictureUrl || placeholderUrl;
+    DOMElements.profileDisplay.src = profilePicUrl;
+    DOMElements.profileModalDisplay.src = profilePicUrl;
+    
+    document.getElementById('profile-modal-name').textContent = authUser.displayName;
+    document.getElementById('profile-modal-mobile').textContent = dbData.mobile;
+    document.getElementById('whatsapp-support-link').href = `https://wa.me/917903698180?text=${encodeURIComponent(`Help Required\nName: ${authUser.displayName}\nMobile: ${dbData.mobile}`)}`;
+    document.getElementById('profile-payment-id').textContent = generatePaymentId(authUser.displayName, dbData.mobile);
+    DOMElements.profileReferralId.textContent = dbData.referralId || 'N/A';
+}
+
+function renderUnifiedHistory() {
+    const historyList = document.getElementById('unified-history-list');
+    historyList.innerHTML = '';
+
+    const filtered = allTransactions.filter(item => {
+        if (activeFilter === 'all') return true;
+        return item.type === activeFilter;
+    });
+
+    if (filtered.length === 0) {
+        historyList.innerHTML = getEmptyStateHTML('history');
+        return;
+    }
+
+    filtered.forEach(trans => {
+        const itemDiv = document.createElement('div');
+        const sign = trans.amount > 0 ? '+' : '-';
+        const typeClass = sign === '+' ? 'credit' : 'debit';
+        const icon = { cashback: '🎁', commission: '🏆', payment: '↔️', claim: '💸' }[trans.type] || '📜';
+        
+        itemDiv.className = `history-item ${trans.type === 'commission' ? 'commission' : typeClass}`;
+        
+        itemDiv.innerHTML = `
+            <div class="history-details">
+                <div class="history-icon ${trans.type === 'commission' ? 'commission' : typeClass}">${icon}</div>
+                <div class="history-info">
+                    <div class="title">${trans.description}</div>
+                    <div class="date">${trans.timestamp.toDate().toLocaleDateString()}</div>
+                </div>
+            </div>
+            <div class="history-amount">
+                <div class="amount ${typeClass}">${sign} ₹${Math.abs(trans.amount).toFixed(2)}</div>
+                <span class="status status-${trans.status}">${trans.status}</span>
+            </div>`;
+        historyList.appendChild(itemDiv);
+    });
+}
+
+function getEmptyStateHTML(type) {
+    if (type === 'history') return `<div class="empty-state"><div class="empty-state-icon">📂</div><h4>No Transactions Found</h4><p>Your transaction history for the selected filter is empty.</p></div>`;
+    if (type === 'coupons') return `<div class="empty-state"><div class="empty-state-icon">🎟️</div><h4>No Coupons Available</h4><p>You don't have any active coupons right now.</p></div>`;
+    if (type === 'notifications') return `<div class="empty-state"><div class="empty-state-icon">📭</div><h4>No Notifications</h4><p>You're all caught up!</p></div>`;
+    return '';
+}
+
+async function handleCashbackRequest(e) {
+    e.preventDefault();
+    hideErrorMessage(DOMElements.cashbackErrorMsg);
+    DOMElements.cashbackSubmitBtn.disabled = true;
+    
+    const productName = document.getElementById("product-name").value.trim();
+    const productPrice = parseFloat(document.getElementById("product-price").value);
+    const purchaseDate = document.getElementById("product-purchase-date").value;
+
+    if(!productName || isNaN(productPrice) || productPrice < 10 || !purchaseDate){ 
+        showErrorMessage(DOMElements.cashbackErrorMsg,"Sahi details daalein."); 
+        DOMElements.cashbackSubmitBtn.disabled = false;
+        return; 
     }
     
-    async function shareReferralLink() {
-        if (!currentUserData || !currentUserData.referralId) {
-            showToast("Please wait, data is loading.");
-            return;
+    try {
+        const configDocRef = doc(db, "app_settings", "config");
+        const configDoc = await getDoc(configDocRef);
+        const cashbackPercentage = configDoc.exists() ? configDoc.data().cashback_percentage : 3;
+        const cashbackAmount = productPrice * (cashbackPercentage / 100);
+        
+        const requestsCol = collection(db, "cashback_requests");
+        await addDoc(requestsCol, { 
+            userId: currentUserData.id, 
+            userName: currentUserData.name, 
+            userMobile: currentUserData.mobile, 
+            productName, 
+            productPrice, 
+            purchaseDate: new Date(purchaseDate), 
+            cashbackAmount, 
+            status: "pending", 
+            requestDate: serverTimestamp(), 
+            claimed: false 
+        });
+        showToast("Cashback request submit ho gaya!");
+        DOMElements.cashbackRequestForm.reset();
+        closeModal(DOMElements.cashbackModal);
+    } catch (error) {
+        showErrorMessage(DOMElements.cashbackErrorMsg, `Error: ${error.message}`);
+    } finally {
+        DOMElements.cashbackSubmitBtn.disabled = false;
+    }
+}
+
+function setupApplication() {
+    setupAuthentication();
+    document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
+    document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
+    
+    DOMElements.openCashbackModalBtn.addEventListener('click', () => {
+        if (pendingCashbackClaim) { 
+            openModal(DOMElements.cashbackClaimModal); 
+        } else { 
+            DOMElements.cashbackSubmitBtn.disabled = false;
+            hideErrorMessage(DOMElements.cashbackErrorMsg);
+            document.getElementById('product-purchase-date').valueAsDate = new Date();
+            openModal(DOMElements.cashbackModal); 
         }
-        const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralId}`;
-        const shareMessage = `Join me on Ramazone Cashback! Use my referral ID. Link: ${shareUrl}`;
-        try {
-            if (navigator.share) await navigator.share({ text: shareMessage });
-            else { navigator.clipboard.writeText(shareUrl); showToast('Referral Link copied!'); }
-        } catch { showToast('Could not share.'); }
-    }
+    });
 
-    // --- Helper Functions ---
-    function showToast(message) {
-        const toast = document.getElementById('toast-notification');
-        if(!toast) return;
-        toast.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-    function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId).classList.add('active'); }
-    function openModal(modal) { if (modal) modal.classList.add('active'); }
-    function showErrorMessage(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-    function hideErrorMessage(el) { el.style.display = 'none'; }
-    function generateReferralId() { return `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(1000+Math.random()*9000)}`; }
+    document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
+    
+    DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
 
-    // --- Start the application ---
-    initializeFirebaseApp();
-});
+    DOMElements.walletShareBtn.addEventListener('click', async () => { 
+        if (!auth.currentUser || !currentUserData?.referralId) { 
+            showToast("Data load ho raha hai..."); 
+            return; 
+        } 
+        const referralLink = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralId}`;
+        const shareMessage = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMaine, *${auth.currentUser.displayName}*, Ramazone Cashback app se ab tak *₹${(currentUserData.lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${currentUserData.referralId}*\n\nAbhi join karein: ${referralLink}`; 
+        try { 
+            if (navigator.share) {
+                await navigator.share({ text: shareMessage });
+            } else { 
+                navigator.clipboard.writeText(shareMessage); 
+                showToast('Share message copied!'); 
+            } 
+        } catch (err) { 
+            if (err.name !== 'AbortError') showToast('Share karne mein error aayi.'); 
+        } 
+    });
+
+    DOMElements.userReferralContainer.addEventListener('click', () => {
+        const referralId = DOMElements.userReferralId.textContent;
+        if (referralId && referralId !== 'N/A') {
+            navigator.clipboard.writeText(referralId).then(() => {
+                showToast('Referral ID Copied!');
+            });
+        }
+    });
+
+    DOMElements.filterBar.addEventListener('click', e => { 
+        const target = e.target.closest('.filter-btn'); 
+        if (!target || target.type === 'date') return; 
+        DOMElements.filterBar.querySelector('.active')?.classList.remove('active'); 
+        target.classList.add('active'); 
+        activeFilter = target.dataset.filter; 
+        renderUnifiedHistory(); 
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
 
