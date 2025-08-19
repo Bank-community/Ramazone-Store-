@@ -148,8 +148,8 @@ function setupAuthentication() {
                 if (!querySnapshot.empty) {
                     const referrerDoc = querySnapshot.docs[0];
                     referredBy = referrerDoc.id;
-                    upline = (referrerDoc.data().upline || []).slice(0, 4);
-                    upline.unshift(referredBy);
+                    const referrerUpline = referrerDoc.data().upline || [];
+                    upline = [referredBy, ...referrerUpline].slice(0, 5);
                 } else {
                     return showErrorMessage(DOMElements.registerErrorMsg, "Aमान्य रेफरल कोड।");
                 }
@@ -158,9 +158,9 @@ function setupAuthentication() {
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
-            const newUserRef = doc(db, 'users', userCredential.user.uid);
             await updateProfile(userCredential.user, { displayName: name });
             
+            const newUserRef = doc(db, 'users', userCredential.user.uid);
             const newReferralId = `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`;
 
             await setDoc(newUserRef, {
@@ -170,8 +170,8 @@ function setupAuthentication() {
             });
 
             showToast("Registration safal hua! Ab aap login kar sakte hain.");
-            toggleView('login-view');
             DOMElements.registerForm.reset();
+            toggleView('login-view');
         } catch (error) { 
             showErrorMessage(DOMElements.registerErrorMsg, error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : "Registration fail ho gaya."); 
         }
@@ -186,19 +186,31 @@ async function attachRealtimeListeners(user) {
 
     try {
         const userDocRef = doc(db, 'users', uid);
-        const userDoc = await getDoc(userDocRef);
+        let userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists()) {
-            currentUserData = { id: userDoc.id, ...userDoc.data() };
-            updateDashboardUI(currentUserData, user);
-        } else {
-            console.error("User document not found. Logging out.");
-            signOut(auth);
-            return;
+        // **SELF-HEALING LOGIC**
+        if (!userDoc.exists()) {
+            console.warn("User document not found. Attempting to self-heal by creating one.");
+            const mobile = user.email.split('@')[0];
+            const newReferralId = `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`;
+            const newUserDocData = {
+                uid: user.uid,
+                name: user.displayName || `User ${mobile.slice(-4)}`,
+                mobile: mobile,
+                wallet: 0, lifetimeEarning: 0,
+                referralId: newReferralId, referredBy: "none",
+                upline: [], createdAt: serverTimestamp()
+            };
+            await setDoc(userDocRef, newUserDocData);
+            userDoc = await getDoc(userDocRef); // Re-fetch the newly created document
+            console.log("Successfully created missing user document.");
         }
 
+        currentUserData = { id: userDoc.id, ...userDoc.data() };
+        updateDashboardUI(currentUserData, user);
         hideLoader();
 
+        // Attach real-time listeners after initial load
         const userUnsubscribe = onSnapshot(userDocRef, (doc) => {
             if (doc.exists()) {
                 currentUserData = { id: doc.id, ...doc.data() };
@@ -223,18 +235,16 @@ async function attachRealtimeListeners(user) {
 
         const claimableQuery = query(collection(db, 'cashback_requests'), where('userId', '==', uid), where('status', '==', 'approved'), where('claimed', '==', false));
         const claimableUnsubscribe = onSnapshot(claimableQuery, (snapshot) => {
-            if (!snapshot.empty) {
-                pendingCashbackClaim = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+            pendingCashbackClaim = snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+            if (pendingCashbackClaim) {
                 document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(pendingCashbackClaim.cashbackAmount).toFixed(2)}`;
                 openModal(DOMElements.cashbackClaimModal);
-            } else {
-                pendingCashbackClaim = null;
             }
         });
         activeListeners.push(claimableUnsubscribe);
 
     } catch (error) {
-        console.error("Error during initial data load:", error);
+        console.error("CRITICAL ERROR during data load:", error);
         hideLoader();
         showToast("Error loading your account data.");
         signOut(auth);
@@ -396,7 +406,8 @@ async function handleCashbackRequest(e) {
             purchaseDate: new Date(purchaseDate), 
             requestDate: serverTimestamp(), 
             status: "pending", 
-            claimed: false 
+            claimed: false,
+            cashbackAmount: 0 // Will be calculated on approval
         });
         showToast("Cashback request submit ho gaya!");
         closeModal(DOMElements.cashbackModal);
@@ -415,24 +426,29 @@ async function handleCashbackClaim() {
     const userRef = doc(db, "users", currentUserData.id);
 
     try {
-        const batch = writeBatch(db);
-        const amountToClaim = pendingCashbackClaim.cashbackAmount;
-        
-        batch.update(userRef, {
-            wallet: increment(amountToClaim),
-            lifetimeEarning: increment(amountToClaim)
+        await firestoreTransaction(db, async (transaction) => {
+            const requestDoc = await transaction.get(requestRef);
+            if (!requestDoc.exists() || requestDoc.data().claimed) {
+                throw new Error("Request already claimed or does not exist.");
+            }
+
+            const amountToClaim = requestDoc.data().cashbackAmount;
+            
+            transaction.update(userRef, {
+                wallet: increment(amountToClaim),
+                lifetimeEarning: increment(amountToClaim)
+            });
+            transaction.update(requestRef, { claimed: true, status: 'completed' });
+            
+            const transRef = doc(collection(db, "transactions"));
+            transaction.set(transRef, {
+                involvedUsers: [currentUserData.id],
+                type: 'cashback', amount: amountToClaim,
+                description: `Claimed cashback for ${pendingCashbackClaim.productName}`,
+                status: 'completed', timestamp: serverTimestamp()
+            });
         });
-        batch.update(requestRef, { claimed: true, status: 'completed' });
         
-        const transRef = doc(collection(db, "transactions"));
-        batch.set(transRef, {
-            involvedUsers: [currentUserData.id],
-            type: 'cashback', amount: amountToClaim,
-            description: `Claimed cashback for ${pendingCashbackClaim.productName}`,
-            status: 'completed', timestamp: serverTimestamp()
-        });
-        
-        await batch.commit();
         showToast("Cashback claimed successfully!");
         closeModal(DOMElements.cashbackClaimModal);
     } catch (error) {
