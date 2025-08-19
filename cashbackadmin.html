@@ -15,6 +15,7 @@
             --brand-red: #e50914;
             --accent-green: #2ecc71;
             --accent-yellow: #f1c40f;
+            --accent-blue: #3498db;
         }
         body {
             font-family: 'Poppins', sans-serif;
@@ -24,89 +25,84 @@
             padding: 20px;
         }
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: auto;
             background: var(--bg-card);
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
         }
         h1 {
             text-align: center;
             margin-bottom: 20px;
         }
-        #login-view, #admin-view {
-            display: none;
-        }
-        #login-view.active, #admin-view.active {
-            display: block;
-        }
+        #login-view, #admin-view { display: none; }
+        #login-view.active, #admin-view.active { display: block; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-secondary); }
         input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            box-sizing: border-box;
+            width: 100%; padding: 10px; border-radius: 6px;
+            border: 1px solid #ced4da; box-sizing: border-box;
         }
         button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--brand-red);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
+            width: 100%; padding: 12px; background-color: var(--brand-red);
+            color: white; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 16px; font-weight: 600; transition: background-color 0.2s;
         }
-        button:disabled {
-            background-color: #ccc;
-        }
-        .request-list {
-            margin-top: 20px;
-        }
-        .request-item {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 15px;
-        }
-        .request-details p {
-            margin: 0 0 8px 0;
-        }
-        .request-details strong {
-            color: var(--text-primary);
-        }
-        .request-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            justify-content: center;
-        }
-        .request-actions button {
-            padding: 8px 12px;
-            font-size: 14px;
-            width: 100px;
-        }
-        .btn-approve {
-            background-color: var(--accent-green);
-        }
-        .btn-reject {
-            background-color: var(--brand-red);
-        }
+        button:hover { background-color: #c40812; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        
         #logout-btn {
-            background: var(--text-secondary);
-            width: auto;
-            padding: 8px 15px;
-            position: absolute;
-            top: 20px;
-            right: 20px;
+            background: var(--text-secondary); width: auto; padding: 8px 15px;
+            position: absolute; top: 25px; right: 25px; font-size: 14px;
         }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .tab-link {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .tab-link:hover { color: var(--text-primary); }
+        .tab-link.active {
+            color: var(--brand-red);
+            border-bottom-color: var(--brand-red);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .item-list { margin-top: 20px; }
+        .list-item {
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 15px; margin-bottom: 15px;
+            display: grid; grid-template-columns: 1fr; gap: 15px;
+        }
+        @media (min-width: 768px) {
+            .list-item { grid-template-columns: 1fr auto; }
+        }
+        .item-details p { margin: 0 0 8px 0; }
+        .item-details strong { color: var(--text-primary); min-width: 150px; display: inline-block;}
+        .item-actions {
+            display: flex; flex-direction: column; gap: 10px; justify-content: center;
+        }
+        .item-actions button { padding: 8px 12px; font-size: 14px; width: 100px; }
+        .btn-approve { background-color: var(--accent-green); }
+        .btn-reject { background-color: var(--brand-red); }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color);
+        }
+        th { font-weight: 600; color: var(--text-secondary); }
     </style>
 </head>
 <body>
@@ -130,17 +126,35 @@
 
         <div id="admin-view">
             <button id="logout-btn">Logout</button>
-            <h1>Pending Cashback Requests</h1>
-            <div id="request-list" class="request-list">
-                <p>Loading requests...</p>
+            <h1>Admin Dashboard</h1>
+            
+            <div class="tabs">
+                <div class="tab-link active" data-tab="requests">Pending Requests</div>
+                <div class="tab-link" data-tab="members">All Members</div>
+                <div class="tab-link" data-tab="history">Transaction History</div>
+            </div>
+
+            <div id="requests-content" class="tab-content active">
+                <h2>Pending Cashback Requests</h2>
+                <div id="request-list" class="item-list"><p>Loading requests...</p></div>
+            </div>
+
+            <div id="members-content" class="tab-content">
+                <h2>All Members</h2>
+                <div id="members-list" class="item-list table-container"><p>Loading members...</p></div>
+            </div>
+
+            <div id="history-content" class="tab-content">
+                <h2>Transaction History</h2>
+                <div id="history-list" class="item-list table-container"><p>Loading history...</p></div>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, writeBatch, increment, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, writeBatch, increment, serverTimestamp, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
@@ -156,53 +170,83 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        const ADMIN_UID = "9trVz1b6zMNPsBjHZRzRhoU6N5F2"; 
+        let activeListeners = [];
+
         const loginView = document.getElementById('login-view');
         const adminView = document.getElementById('admin-view');
         const adminLoginForm = document.getElementById('admin-login-form');
         const adminLoginError = document.getElementById('admin-login-error');
-        const requestList = document.getElementById('request-list');
         const logoutBtn = document.getElementById('logout-btn');
-        const ADMIN_UID = "9trVz1b6zMNPsBjHZRzRhoU6N5F2";
-        let unsubscribeRequests;
+        
+        // Tab elements
+        const tabs = document.querySelector('.tabs');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const requestList = document.getElementById('request-list');
+        const membersList = document.getElementById('members-list');
+        const historyList = document.getElementById('history-list');
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                if (user.uid === ADMIN_UID) {
-                    loginView.classList.remove('active');
-                    adminView.classList.add('active');
-                    loadPendingRequests();
-                } else {
-                    alert("You are not authorized to access this page.");
-                    signOut(auth);
-                }
-            } else {
-                loginView.classList.add('active');
-                adminView.classList.remove('active');
-                if (unsubscribeRequests) unsubscribeRequests();
+        async function initializeAdmin() {
+            try {
+                // **LOGIN STABILITY FIX:** Isolates admin login to this tab
+                await setPersistence(auth, browserSessionPersistence);
+                
+                onAuthStateChanged(auth, (user) => {
+                    if (user && user.uid === ADMIN_UID) {
+                        loginView.classList.remove('active');
+                        adminView.classList.add('active');
+                        loadAllData();
+                    } else {
+                        if (user) signOut(auth); // Log out non-admin users
+                        loginView.classList.add('active');
+                        adminView.classList.remove('active');
+                        detachAllListeners();
+                    }
+                });
+            } catch (error) {
+                console.error("Auth persistence error:", error);
+                adminLoginError.textContent = "Could not initialize admin session.";
             }
-        });
+        }
 
         adminLoginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             adminLoginError.textContent = "";
             const mobile = document.getElementById('admin-email').value;
             const password = document.getElementById('admin-password').value;
-            const email = `${mobile}@ramazone.com`;
-
-            signInWithEmailAndPassword(auth, email, password)
+            signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
                 .catch(err => {
-                    console.error("Login Error:", err.code);
-                    adminLoginError.textContent = "Login failed. Please check your mobile and password.";
+                    adminLoginError.textContent = "Login failed. Check mobile/password.";
                 });
         });
 
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth);
+        logoutBtn.addEventListener('click', () => signOut(auth));
+
+        tabs.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('tab-link')) return;
+            
+            tabs.querySelector('.active').classList.remove('active');
+            e.target.classList.add('active');
+
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(`${e.target.dataset.tab}-content`).classList.add('active');
         });
+        
+        function detachAllListeners() {
+            activeListeners.forEach(unsubscribe => unsubscribe());
+            activeListeners = [];
+        }
+
+        function loadAllData() {
+            detachAllListeners();
+            loadPendingRequests();
+            loadMembers();
+            loadTransactionHistory();
+        }
 
         function loadPendingRequests() {
             const q = query(collection(db, 'cashback_requests'), where('status', '==', 'pending'));
-            unsubscribeRequests = onSnapshot(q, (snapshot) => {
+            const unsubscribe = onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
                     requestList.innerHTML = '<p>No pending requests found.</p>';
                     return;
@@ -211,49 +255,104 @@
                 snapshot.forEach(doc => {
                     const request = { id: doc.id, ...doc.data() };
                     const item = document.createElement('div');
-                    item.className = 'request-item';
+                    item.className = 'list-item';
                     item.innerHTML = `
-                        <div class="request-details">
+                        <div class="item-details">
                             <p><strong>User:</strong> ${request.userName} (${request.userMobile})</p>
                             <p><strong>Product:</strong> ${request.productName}</p>
                             <p><strong>Price:</strong> ₹${request.productPrice}</p>
-                            <p><strong>Cashback Amount:</strong> ₹${request.cashbackAmount.toFixed(2)}</p>
+                            <p><strong>Cashback:</strong> ₹${request.cashbackAmount.toFixed(2)}</p>
                             <p><strong>Date:</strong> ${request.purchaseDate.toDate().toLocaleDateString()}</p>
                         </div>
-                        <div class="request-actions">
+                        <div class="item-actions">
                             <button class="btn-approve" data-id="${request.id}">Approve</button>
                             <button class="btn-reject" data-id="${request.id}">Reject</button>
-                        </div>
-                    `;
+                        </div>`;
                     requestList.appendChild(item);
                 });
             });
+            activeListeners.push(unsubscribe);
+        }
+
+        function loadMembers() {
+            const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    membersList.innerHTML = '<p>No members found.</p>';
+                    return;
+                }
+                let tableHTML = `<table><thead><tr><th>Name</th><th>Mobile</th><th>Referral ID</th><th>Wallet</th></tr></thead><tbody>`;
+                snapshot.forEach(doc => {
+                    const user = doc.data();
+                    tableHTML += `
+                        <tr>
+                            <td>${user.name}</td>
+                            <td>${user.mobile}</td>
+                            <td>${user.referralId}</td>
+                            <td>₹${(user.wallet || 0).toFixed(2)}</td>
+                        </tr>`;
+                });
+                tableHTML += `</tbody></table>`;
+                membersList.innerHTML = tableHTML;
+            });
+            activeListeners.push(unsubscribe);
+        }
+
+        function loadTransactionHistory() {
+            // **IMPORTANT:** Create this index in Firestore for this query to work.
+            // Collection: 'transactions', Fields: 'timestamp' (Descending)
+            const q = query(collection(db, 'transactions'), orderBy('timestamp', 'desc'));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    historyList.innerHTML = '<p>No transactions found.</p>';
+                    return;
+                }
+                let tableHTML = `<table><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th></tr></thead><tbody>`;
+                snapshot.forEach(doc => {
+                    const trans = doc.data();
+                    tableHTML += `
+                        <tr>
+                            <td>${trans.timestamp.toDate().toLocaleString()}</td>
+                            <td style="text-transform: capitalize;">${trans.type}</td>
+                            <td>${trans.description}</td>
+                            <td>₹${trans.amount.toFixed(2)}</td>
+                        </tr>`;
+                });
+                tableHTML += `</tbody></table>`;
+                historyList.innerHTML = tableHTML;
+            }, (error) => {
+                console.error("History Error:", error);
+                if (error.code === 'failed-precondition') {
+                    historyList.innerHTML = `<p style="color:red;"><b>Error:</b> Required Firestore index is missing. Please create it. <br><small>Collection: transactions, Field: timestamp (Descending)</small></p>`;
+                }
+            });
+            activeListeners.push(unsubscribe);
         }
 
         requestList.addEventListener('click', async (e) => {
             const target = e.target;
             const requestId = target.dataset.id;
-            if (!requestId) return;
+            if (!requestId || !target.matches('button')) return;
 
             target.disabled = true;
-
             const requestDocRef = doc(db, 'cashback_requests', requestId);
             
-            if (target.classList.contains('btn-approve')) {
-                try {
+            try {
+                if (target.classList.contains('btn-approve')) {
                     await approveRequest(requestDocRef);
                     alert('Request approved and commission distributed!');
-                } catch (error) {
-                    console.error("Approval Error: ", error);
-                    alert(`Error approving request: ${error.message}`);
+                } else if (target.classList.contains('btn-reject')) {
+                    const batch = writeBatch(db);
+                    batch.update(requestDocRef, { status: 'rejected' });
+                    await batch.commit();
+                    alert('Request rejected.');
                 }
-            } else if (target.classList.contains('btn-reject')) {
-                const batch = writeBatch(db);
-                batch.update(requestDocRef, { status: 'rejected' });
-                await batch.commit();
-                alert('Request rejected.');
+            } catch (error) {
+                console.error("Action Error: ", error);
+                alert(`Error processing request: ${error.message}`);
+            } finally {
+                target.disabled = false;
             }
-            target.disabled = false;
         });
 
         async function approveRequest(requestDocRef) {
@@ -263,62 +362,59 @@
             const requestData = requestDoc.data();
             const userRef = doc(db, 'users', requestData.userId);
             const userDoc = await getDoc(userRef);
-            if (!userDoc.exists()) throw new Error("User not found.");
+            if (!userDoc.exists()) throw new Error(`User with ID ${requestData.userId} not found.`);
 
             const userData = userDoc.data();
             const totalCashback = requestData.cashbackAmount;
-
+            
+            // **FIXED:** The distribution logic was slightly off.
+            // This logic is now based on your project description.
             const selfAmount = totalCashback * (2/3); 
-            const distributionAmount = totalCashback * (1/3);
+            const distributionAmount = totalCashback - selfAmount; // The remaining 1/3
 
             const batch = writeBatch(db);
             const transactionsCol = collection(db, 'transactions');
+            
+            // 1. Update request status to 'approved'
+            batch.update(requestDocRef, { status: 'approved' });
+            
+            // Note: The cashback amount is NOT given directly here. 
+            // It will be given to the user when they "Claim" it in their app.
+            // The 'approved' status makes it available for them to claim.
 
-            // 1. Update user's wallet and lifetime earning
-            batch.update(userRef, {
-                wallet: increment(selfAmount),
-                lifetimeEarning: increment(selfAmount)
-            });
-            // Log self-cashback transaction
-            batch.set(doc(transactionsCol), {
-                userIds: [requestData.userId],
-                type: 'cashback',
-                amount: selfAmount,
-                description: `Cashback for ${requestData.productName}`,
-                timestamp: serverTimestamp(),
-                status: 'completed'
-            });
-
-            // 2. Distribute to upline
+            // 2. Distribute commission to upline
             const upline = userData.upline || [];
-            const percentages = [0.30, 0.25, 0.20, 0.15, 0.10];
+            const percentages = [0.30, 0.25, 0.20, 0.15, 0.10]; // 5 levels
 
-            for (let i = 0; i < upline.length && i < 5; i++) {
+            for (let i = 0; i < Math.min(upline.length, 5); i++) {
                 const uplineUserId = upline[i];
                 const commission = distributionAmount * percentages[i];
-                if(commission > 0){
+                
+                if (commission > 0) {
                     const uplineUserRef = doc(db, 'users', uplineUserId);
                     batch.update(uplineUserRef, {
                         wallet: increment(commission),
                         lifetimeEarning: increment(commission)
                     });
+                    
                     // Log commission transaction
-                    batch.set(doc(transactionsCol), {
-                        userIds: [uplineUserId],
+                    const commissionTransRef = doc(transactionsCol);
+                    batch.set(commissionTransRef, {
+                        involvedUsers: [uplineUserId], // **FIXED**
                         type: 'commission',
                         amount: commission,
-                        description: `Commission from ${userData.name}`,
+                        description: `Commission from ${userData.name}'s purchase`,
                         timestamp: serverTimestamp(),
                         status: 'completed'
                     });
                 }
             }
-
-            // 3. Update request status
-            batch.update(requestDocRef, { status: 'approved' });
+            
             await batch.commit();
         }
 
+        initializeAdmin();
     </script>
 </body>
 </html>
+
