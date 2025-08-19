@@ -4,60 +4,86 @@ import { getDatabase, ref, get, set, push, onValue, query, orderByChild, equalTo
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- Constants and Global Variables ---
     const MASTER_REFERRAL_ID = "RMZC000B001";
-    let auth, database, currentUserData, activeListeners = [], tempActionData = {};
+    let auth, database;
+    let currentUserData = null;
+    let activeListeners = [];
 
+    // --- COMPLETE DOM Element References ---
     const DOMElements = {
-        loginForm: document.getElementById('login-form'), registerForm: document.getElementById('register-form'),
-        logoutBtn: document.getElementById('logout-btn'), refreshBtn: document.getElementById('refresh-btn'),
-        showRegisterLink: document.getElementById('show-register-link'), showLoginLink: document.getElementById('show-login-link'),
-        loginErrorMsg: document.getElementById('login-error-msg'), registerErrorMsg: document.getElementById('register-error-msg'),
-        userNameDisplay: document.getElementById('user-name-display'), userMobileDisplay: document.getElementById('user-mobile'),
-        walletBalance: document.getElementById('wallet-balance'), creditLimit: document.getElementById('credit-limit'),
-        lifetimeEarning: document.getElementById('lifetime-earning'), dueAmount: document.getElementById('due-amount'),
-        userReferralId: document.getElementById('user-referral-id'), walletShareBtn: document.getElementById('wallet-share-btn'),
-        openCashbackModalBtn: document.getElementById('open-cashback-modal'), scanAndPayBtn: document.getElementById('scan-and-pay-btn'),
-        openCouponsModalBtn: document.getElementById('open-coupons-modal'), openProfileModalBtn: document.getElementById('open-profile-modal'),
-        openClaimModalBtn: document.getElementById('open-claim-modal'), regReferralInput: document.getElementById('reg-referral'),
-        cashbackRequestForm: document.getElementById('cashback-request-form'), claimRequestForm: document.getElementById('claim-request-form'),
-        modalConfirmBtn: document.getElementById('modal-confirm-btn'), unifiedHistoryList: document.getElementById('unified-history-list'),
+        loginForm: document.getElementById('login-form'),
+        registerForm: document.getElementById('register-form'),
+        logoutBtn: document.getElementById('logout-btn'),
+        refreshBtn: document.getElementById('refresh-btn'),
+        showRegisterLink: document.getElementById('show-register-link'),
+        showLoginLink: document.getElementById('show-login-link'),
+        loginErrorMsg: document.getElementById('login-error-msg'),
+        registerErrorMsg: document.getElementById('register-error-msg'),
+        userNameDisplay: document.getElementById('user-name-display'),
+        userMobileDisplay: document.getElementById('user-mobile'),
+        walletBalance: document.getElementById('wallet-balance'),
+        creditLimit: document.getElementById('credit-limit'),
+        lifetimeEarning: document.getElementById('lifetime-earning'),
+        dueAmount: document.getElementById('due-amount'),
+        userReferralId: document.getElementById('user-referral-id'),
+        walletShareBtn: document.getElementById('wallet-share-btn'),
+        openCashbackModalBtn: document.getElementById('open-cashback-modal'),
+        scanAndPayBtn: document.getElementById('scan-and-pay-btn'),
+        openCouponsModalBtn: document.getElementById('open-coupons-modal'),
+        openProfileModalBtn: document.getElementById('open-profile-modal'),
+        openClaimModalBtn: document.getElementById('open-claim-modal'),
+        regReferralInput: document.getElementById('reg-referral'),
     };
 
+    // --- CORE INITIALIZATION ---
     async function initializeFirebaseApp() {
         try {
             const response = await fetch('/api/cashback-config');
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
             const firebaseConfig = await response.json();
             if (!firebaseConfig.apiKey) throw new Error("API Keys missing.");
+            
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             database = getDatabase(app);
+            
             setupApplication();
         } catch (error) {
-            document.body.innerHTML = `<div class="auth-card"><h2>Application Error</h2><p>${error.message}</p></div>`;
+            // Non-destructive error display
+            const loginView = document.getElementById('login-view');
+            if(loginView) {
+                loginView.innerHTML = `<div class="auth-card"><h2>Application Error</h2><p>${error.message}</p></div>`;
+            }
+            console.error("FATAL: Firebase initialization failed.", error);
         }
     }
 
+    // --- FULL APPLICATION LOGIC ---
     function setupApplication() {
         setupAuthentication();
+        
         DOMElements.showRegisterLink.addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
         DOMElements.showLoginLink.addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
         DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
         DOMElements.refreshBtn.addEventListener('click', refreshData);
+        
+        // Setup all modal buttons
         DOMElements.openCashbackModalBtn.addEventListener('click', () => openModal(document.getElementById('cashback-modal')));
         DOMElements.scanAndPayBtn.addEventListener('click', () => openModal(document.getElementById('scan-pay-modal')));
         DOMElements.openCouponsModalBtn.addEventListener('click', () => openModal(document.getElementById('coupons-modal')));
         DOMElements.openProfileModalBtn.addEventListener('click', () => openModal(document.getElementById('profile-modal')));
         DOMElements.openClaimModalBtn.addEventListener('click', () => openModal(document.getElementById('claim-modal')));
+        
         DOMElements.walletShareBtn.addEventListener('click', shareReferralLink);
-        DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
-        DOMElements.claimRequestForm.addEventListener('submit', handleClaimRequest);
-        DOMElements.modalConfirmBtn.addEventListener('click', handlePasswordConfirmation);
-        document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
+
+        // --- NEW: Referral Link Logic ---
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('ref')) {
+        const refId = urlParams.get('ref');
+        if (refId) {
+            // If referral ID is in the URL, go directly to registration
             toggleView('registration-view');
-            DOMElements.regReferralInput.value = urlParams.get('ref');
+            DOMElements.regReferralInput.value = refId;
         }
     }
 
@@ -67,78 +93,130 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleView('dashboard-view');
                 attachRealtimeListeners(user); 
             } else {
-                if (!new URLSearchParams(window.location.search).has('ref')) toggleView('login-view');
+                // If not logged in, and no referral in URL, show login
+                const urlParams = new URLSearchParams(window.location.search);
+                if (!urlParams.has('ref')) {
+                    toggleView('login-view');
+                }
                 detachAllListeners();
             }
         });
+        
         DOMElements.loginForm.addEventListener('submit', handleLogin);
         DOMElements.registerForm.addEventListener('submit', handleRegistration);
     }
 
-    async function handleLogin(e) { /* ... (logic from previous correct version) ... */ }
-    async function handleRegistration(e) { /* ... (logic from previous correct version) ... */ }
-
-    async function handleCashbackRequest(e) {
+    async function handleLogin(e) {
         e.preventDefault();
-        const productName = document.getElementById("product-name").value.trim();
-        const productPrice = parseFloat(document.getElementById("product-price").value);
-        const purchaseDate = document.getElementById("product-purchase-date").value;
-        if (!productName || isNaN(productPrice) || !purchaseDate) {
-            showErrorMessage(document.getElementById('cashback-error-msg'), "Sabhi details bharein.");
-            return;
-        }
+        hideErrorMessage(DOMElements.loginErrorMsg);
+        const mobile = document.getElementById('login-mobile').value;
+        const password = document.getElementById('login-password').value;
         try {
-            const settings = (await get(ref(database, 'app_settings'))).val() || {};
-            const totalPercent = settings.cashback_percentage || 3;
-            const selfPercent = settings.self_cashback_percentage || 66.67;
-            const totalCommission = productPrice * (totalPercent / 100);
-            const selfCashback = totalCommission * (selfPercent / 100);
-            const referralPool = totalCommission - selfCashback;
-
-            await push(ref(database, "cashback_requests"), { 
-                userId: currentUserData.uid, userName: currentUserData.name, productName, productPrice, purchaseDate, 
-                cashbackAmount: selfCashback, referralPool, status: "pending", requestDate: new Date().toISOString()
-            });
-            showToast("Cashback request submit ho gaya!");
-            closeModal(document.getElementById('cashback-modal'));
+            await signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
         } catch (error) {
-            showErrorMessage(document.getElementById('cashback-error-msg'), "Request fail ho gaya.");
+            showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile ya password.");
         }
     }
 
-    async function handleClaimRequest(e) {
+    async function handleRegistration(e) {
         e.preventDefault();
-        const amount = parseFloat(document.getElementById("claim-amount").value);
-        if (isNaN(amount) || amount < 10 || amount > currentUserData.wallet) {
-            showErrorMessage(document.getElementById('claim-error-msg'), "Sahi amount daalein.");
+        hideErrorMessage(DOMElements.registerErrorMsg);
+        const name = document.getElementById('reg-name').value.trim();
+        const mobile = document.getElementById('reg-mobile').value.trim();
+        const password = document.getElementById('reg-password').value.trim();
+        const referralId = DOMElements.regReferralInput.value.trim().toUpperCase();
+        
+        if (!name || !/^\d{10}$/.test(mobile) || password.length < 6 || !referralId) {
+            showErrorMessage(DOMElements.registerErrorMsg, "Sabhi details bharein.");
             return;
         }
-        tempActionData = { type: 'claim', amount };
-        closeModal(document.getElementById('claim-modal'));
-        openModal(document.getElementById('password-modal-for-action'));
+        
+        try {
+            const snapshot = await get(query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralId)));
+            if (!snapshot.exists() && referralId !== MASTER_REFERRAL_ID) {
+                showErrorMessage(DOMElements.registerErrorMsg, "Invalid Referral ID.");
+                return;
+            }
+            const referrerUid = snapshot.exists() ? Object.keys(snapshot.val())[0] : 'master';
+            
+            const cred = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+            await updateProfile(cred.user, { displayName: name });
+            
+            await set(ref(database, 'users/' + cred.user.uid), {
+                uid: cred.user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
+                referralId: generateReferralId(), referredBy: referrerUid, createdAt: new Date().toISOString()
+            });
+            
+            alert("Registration safal hua! Ab aap login kar sakte hain.");
+            // After successful registration, remove the ref parameter and go to login page
+            window.history.replaceState({}, document.title, window.location.pathname);
+            toggleView('login-view');
+        } catch (error) {
+            const msg = error.code === 'auth/email-already-in-use' ? "Yeh mobile number pehle se register hai." : "Registration fail ho gaya.";
+            showErrorMessage(DOMElements.registerErrorMsg, msg);
+        }
     }
 
-    async function handlePasswordConfirmation() {
-        if (tempActionData.type === 'claim') {
-            // ... (Logic to verify password and process claim) ...
-            showToast("Claim request sent!");
+    function attachRealtimeListeners(user) {
+        detachAllListeners();
+        activeListeners.push(onValue(ref(database, 'users/' + user.uid), (snapshot) => {
+            if (snapshot.exists()) {
+                currentUserData = { uid: user.uid, ...snapshot.val() };
+                updateDashboardUI(currentUserData, user);
+            }
+        }));
+    }
+
+    function detachAllListeners() {
+        activeListeners.forEach(unsubscribe => unsubscribe());
+        activeListeners = [];
+    }
+
+    function updateDashboardUI(dbData, authUser) {
+        DOMElements.userNameDisplay.textContent = authUser.displayName;
+        DOMElements.userMobileDisplay.textContent = `Mobile: ${dbData.mobile}`;
+        DOMElements.walletBalance.textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
+        DOMElements.creditLimit.textContent = `₹${((dbData.wallet || 0) + (dbData.dueAmount || 0)).toFixed(2)}`;
+        DOMElements.lifetimeEarning.textContent = `₹${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+        DOMElements.dueAmount.textContent = `- ₹${(dbData.dueAmount || 0).toFixed(2)}`;
+        DOMElements.userReferralId.textContent = dbData.referralId || 'N/A';
+    }
+
+    function refreshData() {
+        if (auth.currentUser) {
+            showToast("Refreshing data...");
+            attachRealtimeListeners(auth.currentUser);
         }
-        closeModal(document.getElementById('password-modal-for-action'));
     }
     
-    function attachRealtimeListeners(user) { /* ... (logic from previous correct version) ... */ }
-    function detachAllListeners() { /* ... (logic from previous correct version) ... */ }
-    function updateDashboardUI(dbData, authUser) { /* ... (logic from previous correct version) ... */ }
-    function refreshData() { /* ... (logic from previous correct version) ... */ }
-    async function shareReferralLink() { /* ... (logic from previous correct version) ... */ }
-    function toggleView(viewId) { /* ... (logic from previous correct version) ... */ }
-    function openModal(modal) { if(modal) modal.classList.add('active'); }
-    function closeModal(modal) { if(modal) modal.classList.remove('active'); }
-    function showToast(message) { /* ... (logic from previous correct version) ... */ }
+    async function shareReferralLink() {
+        if (!currentUserData || !currentUserData.referralId) {
+            showToast("Please wait, data is loading.");
+            return;
+        }
+        const shareUrl = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralId}`;
+        const shareMessage = `Join me on Ramazone Cashback! Use my referral ID. Link: ${shareUrl}`;
+        try {
+            if (navigator.share) await navigator.share({ text: shareMessage });
+            else { navigator.clipboard.writeText(shareUrl); showToast('Referral Link copied!'); }
+        } catch { showToast('Could not share.'); }
+    }
+
+    // --- Helper Functions ---
+    function showToast(message) {
+        const toast = document.getElementById('toast-notification');
+        if(!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId).classList.add('active'); }
+    function openModal(modal) { if (modal) modal.classList.add('active'); }
     function showErrorMessage(el, msg) { el.textContent = msg; el.style.display = 'block'; }
     function hideErrorMessage(el) { el.style.display = 'none'; }
     function generateReferralId() { return `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(1000+Math.random()*9000)}`; }
 
+    // --- Start the application ---
     initializeFirebaseApp();
 });
 
