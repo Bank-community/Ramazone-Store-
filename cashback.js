@@ -3,7 +3,6 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, on
 import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, writeBatch, serverTimestamp, orderBy, limit, runTransaction as firestoreTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- START: Firebase Configuration ---
-// जरूरी: अपनी Firebase कॉन्फ़िगरेशन जानकारी यहाँ डालें
 const firebaseConfig = {
     apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
     authDomain: "tipsplit-e3wes.firebaseapp.com",
@@ -68,7 +67,6 @@ function initializeFirebaseApp() {
 
 // --- UI Helper Functions ---
 function showLoader() {
-    // एक लोडर एलिमेंट बनाएँ और दिखाएँ
     let loader = document.getElementById('app-loader');
     if (!loader) {
         loader = document.createElement('div');
@@ -216,8 +214,6 @@ function attachRealtimeListeners(user) {
                 hideLoader();
             }
         } else {
-            // अगर डॉक्यूमेंट मौजूद नहीं है, तो कुछ सेकंड प्रतीक्षा करें, फिर लॉगआउट करें।
-            // यह रजिस्ट्रेशन के दौरान रेस कंडीशन से बचने में मदद करता है।
             setTimeout(() => {
                 getDoc(userDocRef).then(checkDoc => {
                     if (!checkDoc.exists()) {
@@ -234,15 +230,21 @@ function attachRealtimeListeners(user) {
     });
     activeListeners.push(userUnsubscribe);
 
-    // जरूरी: Firestore में इस क्वेरी के लिए एक इंडेक्स बनाएँ।
-    // Collection: transactions, Fields: involvedUsers (Array), timestamp (Descending)
     const transactionsQuery = query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc"));
     const transUnsubscribe = onSnapshot(transactionsQuery, (querySnapshot) => {
         allTransactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderUnifiedHistory();
     }, (error) => {
-        console.error("Error listening to transactions:", error);
-        showToast("Could not load transaction history.");
+        // **IMPROVEMENT:** Better error handling for missing index
+        if (error.code === 'failed-precondition') {
+            console.error("Firestore Error: Missing Index. Please create the required index in your Firebase console.", error.message);
+            showToast("Error: Database index missing. Contact support.");
+        } else {
+            console.error("Error listening to transactions:", error);
+            showToast("Could not load transaction history.");
+        }
+        // Render empty state on error
+        document.getElementById('unified-history-list').innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><h4>Could Not Load History</h4><p>There was an error fetching your transactions.</p></div>`;
     });
     activeListeners.push(transUnsubscribe);
 
@@ -296,7 +298,6 @@ function renderUnifiedHistory() {
     }
 
     filtered.forEach(trans => {
-        // Robust checks for transaction data
         const amount = typeof trans.amount === 'number' ? trans.amount : 0;
         const description = trans.description || 'No description';
         const dateString = trans.timestamp && typeof trans.timestamp.toDate === 'function'
