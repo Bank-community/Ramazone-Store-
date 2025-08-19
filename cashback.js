@@ -32,10 +32,11 @@ const DOMElements = {
     openProfileModalBtn: document.getElementById('open-profile-modal'),
     claimNowBtn: document.getElementById('claim-now-btn'),
     cashbackSubmitBtn: document.getElementById('cashback-submit-btn'),
-    userReferralId: document.getElementById('user-referral-id'),
     walletShareBtn: document.getElementById('wallet-share-btn'),
+    userReferralId: document.getElementById('user-referral-id'),
     profileDisplay: document.getElementById('profile-display'),
     profileModalDisplay: document.getElementById('profile-modal-display'),
+    profileReferralId: document.getElementById('profile-referral-id'),
     loginErrorMsg: document.getElementById('login-error-msg'),
     registerErrorMsg: document.getElementById('register-error-msg'),
     cashbackErrorMsg: document.getElementById('cashback-error-msg'),
@@ -49,6 +50,7 @@ let allTransactions = [];
 let cashbackRequests = [];
 let activeFilter = 'all';
 let pendingCashbackClaim = null;
+let isInitialDataLoaded = false;
 
 // --- Initialization ---
 async function initializeFirebaseApp() {
@@ -115,13 +117,14 @@ function setupAuthentication() {
             if (refCode) document.getElementById('reg-referral').value = refCode;
         }
     });
-    
+
     DOMElements.loginForm.addEventListener('submit', e => {
         e.preventDefault();
+        hideErrorMessage(DOMElements.loginErrorMsg);
         const mobile = document.getElementById('login-mobile').value;
         const password = document.getElementById('login-password').value;
         signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
-            .catch(() => showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile/password."));
+            .catch(() => showErrorMessage(DOMElements.loginErrorMsg, "Galat mobile number ya password."));
     });
 
     DOMElements.registerForm.addEventListener('submit', async e => {
@@ -135,10 +138,8 @@ function setupAuthentication() {
         if (!name || !/^\d{10}$/.test(mobile) || password.length < 6) {
             return showErrorMessage(DOMElements.registerErrorMsg, "Kripya sabhi details sahi se bharein.");
         }
-        
-        let referredBy = "none";
-        let upline = [];
 
+        let referredBy = "none", upline = [];
         if (referralCode) {
             if (referralCode === MASTER_REFERRAL_ID) {
                 referredBy = "master";
@@ -159,102 +160,87 @@ function setupAuthentication() {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
             await updateProfile(userCredential.user, { displayName: name });
-            
             const newUserRef = doc(db, 'users', userCredential.user.uid);
             const newReferralId = `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`;
-
             await setDoc(newUserRef, {
                 uid: userCredential.user.uid, name, mobile, wallet: 0, lifetimeEarning: 0,
-                referralId: newReferralId, referredBy: referredBy,
-                upline: upline, createdAt: serverTimestamp()
+                referralId: newReferralId, referredBy, upline, createdAt: serverTimestamp()
             });
-
             showToast("Registration safal hua! Ab aap login kar sakte hain.");
-            DOMElements.registerForm.reset();
             toggleView('login-view');
-        } catch (error) { 
-            showErrorMessage(DOMElements.registerErrorMsg, error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : "Registration fail ho gaya."); 
+            DOMElements.registerForm.reset();
+        } catch (error) {
+            showErrorMessage(DOMElements.registerErrorMsg, error.code === 'auth/email-already-in-use' ? "Is mobile number se account pehle se hai." : "Registration fail ho gaya.");
         }
     });
 
     DOMElements.logoutBtn.addEventListener('click', () => signOut(auth));
 }
 
-async function attachRealtimeListeners(user) {
+function attachRealtimeListeners(user) {
     detachAllListeners();
     const uid = user.uid;
+    isInitialDataLoaded = false;
 
-    try {
-        const userDocRef = doc(db, 'users', uid);
-        let userDoc = await getDoc(userDocRef);
-
-        // **SELF-HEALING LOGIC**
-        if (!userDoc.exists()) {
-            console.warn("User document not found. Attempting to self-heal by creating one.");
-            const mobile = user.email.split('@')[0];
-            const newReferralId = `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`;
-            const newUserDocData = {
-                uid: user.uid,
-                name: user.displayName || `User ${mobile.slice(-4)}`,
-                mobile: mobile,
-                wallet: 0, lifetimeEarning: 0,
-                referralId: newReferralId, referredBy: "none",
-                upline: [], createdAt: serverTimestamp()
-            };
-            await setDoc(userDocRef, newUserDocData);
-            userDoc = await getDoc(userDocRef); // Re-fetch the newly created document
-            console.log("Successfully created missing user document.");
+    const userUnsubscribe = onSnapshot(doc(db, 'users', uid), (doc) => {
+        if (doc.exists()) {
+            currentUserData = { id: doc.id, ...doc.data() };
+            updateDashboardUI(currentUserData, user);
+            if (!isInitialDataLoaded) {
+                isInitialDataLoaded = true;
+                hideLoader();
+                attachSecondaryListeners(uid); // Attach other listeners only after main data is loaded
+            }
+        } else {
+             // Wait a bit, then check again. If still not there, logout.
+             setTimeout(() => {
+                getDoc(doc(db, 'users', uid)).then(checkDoc => {
+                    if (!checkDoc.exists()) {
+                        console.error("User document not found after delay. Logging out.");
+                        signOut(auth);
+                    }
+                })
+             }, 5000);
         }
-
-        currentUserData = { id: userDoc.id, ...userDoc.data() };
-        updateDashboardUI(currentUserData, user);
-        hideLoader();
-
-        // Attach real-time listeners after initial load
-        const userUnsubscribe = onSnapshot(userDocRef, (doc) => {
-            if (doc.exists()) {
-                currentUserData = { id: doc.id, ...doc.data() };
-                updateDashboardUI(currentUserData, user);
-            }
-        });
-        activeListeners.push(userUnsubscribe);
-
-        const transactionsQuery = query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc"));
-        const transUnsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
-            allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            combineAndRenderHistory();
-        });
-        activeListeners.push(transUnsubscribe);
-
-        const requestsQuery = query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc"));
-        const requestsUnsubscribe = onSnapshot(requestsQuery, (snapshot) => {
-            cashbackRequests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            combineAndRenderHistory();
-        });
-        activeListeners.push(requestsUnsubscribe);
-
-        const claimableQuery = query(collection(db, 'cashback_requests'), where('userId', '==', uid), where('status', '==', 'approved'), where('claimed', '==', false));
-        const claimableUnsubscribe = onSnapshot(claimableQuery, (snapshot) => {
-            pendingCashbackClaim = snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-            if (pendingCashbackClaim) {
-                document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(pendingCashbackClaim.cashbackAmount).toFixed(2)}`;
-                openModal(DOMElements.cashbackClaimModal);
-            }
-        });
-        activeListeners.push(claimableUnsubscribe);
-
-    } catch (error) {
-        console.error("CRITICAL ERROR during data load:", error);
-        hideLoader();
+    }, error => {
+        console.error("User listener error:", error);
         showToast("Error loading your account data.");
+        hideLoader();
         signOut(auth);
-    }
+    });
+    activeListeners.push(userUnsubscribe);
+}
+
+function attachSecondaryListeners(uid) {
+    const transactionsQuery = query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc"));
+    const transUnsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
+        allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        combineAndRenderHistory();
+    });
+    activeListeners.push(transUnsubscribe);
+
+    const requestsQuery = query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc"));
+    const requestsUnsubscribe = onSnapshot(requestsQuery, (snapshot) => {
+        cashbackRequests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        combineAndRenderHistory();
+    });
+    activeListeners.push(requestsUnsubscribe);
+
+    const claimableQuery = query(collection(db, 'cashback_requests'), where('userId', '==', uid), where('status', '==', 'approved'), where('claimed', '==', false));
+    const claimableUnsubscribe = onSnapshot(claimableQuery, (snapshot) => {
+        pendingCashbackClaim = snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+        if (pendingCashbackClaim) {
+            document.getElementById('claim-amount-display').textContent = `₹ ${parseFloat(pendingCashbackClaim.cashbackAmount).toFixed(2)}`;
+            openModal(DOMElements.cashbackClaimModal);
+        }
+    });
+    activeListeners.push(claimableUnsubscribe);
 }
 
 function detachAllListeners() {
     activeListeners.forEach(unsubscribe => unsubscribe());
     activeListeners = [];
-    currentUserData = null; allTransactions = []; cashbackRequests = [];
+    currentUserData = null; allTransactions = []; cashbackRequests = []; isInitialDataLoaded = false;
 }
 
 function updateDashboardUI(dbData, authUser) {
@@ -267,9 +253,13 @@ function updateDashboardUI(dbData, authUser) {
     const placeholderUrl = `https://placehold.co/50x50/ffffff/2980b9?text=${initial}`;
     DOMElements.profileDisplay.src = dbData.profilePictureUrl || placeholderUrl;
     DOMElements.profileModalDisplay.src = dbData.profilePictureUrl || placeholderUrl;
+    document.getElementById('profile-modal-name').textContent = authUser.displayName;
+    document.getElementById('profile-modal-mobile').textContent = dbData.mobile;
+    DOMElements.profileReferralId.textContent = dbData.referralId || 'N/A';
 }
 
 function combineAndRenderHistory() {
+    if (!isInitialDataLoaded) return;
     const formattedTransactions = allTransactions.map(t => ({
         id: t.id, description: t.description, amount: t.amount,
         date: t.timestamp?.toDate(), status: 'completed', type: t.type, isTransaction: true
@@ -298,34 +288,18 @@ function renderUnifiedHistory(historyItems) {
     filtered.forEach(item => {
         const itemDiv = document.createElement('div');
         let typeClass, sign, icon, statusClass;
-
         if (item.isTransaction) {
-            sign = item.amount >= 0 ? '+' : '-';
-            typeClass = item.amount >= 0 ? 'credit' : 'debit';
+            sign = item.amount >= 0 ? '+' : '-'; typeClass = item.amount >= 0 ? 'credit' : 'debit';
             icon = { cashback: '🎁', commission: '🏆', payment: '↔️', claim: '💸' }[item.type] || '📜';
             statusClass = 'status-completed';
         } else {
-            sign = '+';
-            typeClass = 'credit';
-            icon = '🕒';
-            statusClass = `status-${item.status}`;
+            sign = '+'; typeClass = 'credit'; icon = '🕒'; statusClass = `status-${item.status}`;
         }
-        
         const dateString = item.date ? item.date.toLocaleDateString() : 'No date';
-
         itemDiv.className = `history-item ${item.type === 'commission' ? 'commission' : typeClass}`;
         itemDiv.innerHTML = `
-            <div class="history-details">
-                <div class="history-icon ${typeClass}">${icon}</div>
-                <div class="history-info">
-                    <div class="title">${item.description || 'N/A'}</div>
-                    <div class="date">${dateString}</div>
-                </div>
-            </div>
-            <div class="history-amount">
-                <div class="amount ${typeClass}">${sign} ₹${Math.abs(item.amount || 0).toFixed(2)}</div>
-                <span class="status ${statusClass}">${item.status}</span>
-            </div>`;
+            <div class="history-details"><div class="history-icon ${typeClass}">${icon}</div><div class="history-info"><div class="title">${item.description || 'N/A'}</div><div class="date">${dateString}</div></div></div>
+            <div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(item.amount || 0).toFixed(2)}</div><span class="status ${statusClass}">${item.status}</span></div>`;
         historyList.appendChild(itemDiv);
     });
 }
@@ -393,21 +367,14 @@ async function handleCashbackRequest(e) {
 
     if(!productName || isNaN(productPrice) || productPrice < 10 || !purchaseDate){ 
         showErrorMessage(DOMElements.cashbackErrorMsg,"Sahi details daalein."); 
-        DOMElements.cashbackSubmitBtn.disabled = false;
-        return; 
+        DOMElements.cashbackSubmitBtn.disabled = false; return; 
     }
     
     try {
         await addDoc(collection(db, "cashback_requests"), { 
-            userId: currentUserData.id, 
-            userName: currentUserData.name, 
-            userMobile: currentUserData.mobile, 
-            productName, productPrice, 
-            purchaseDate: new Date(purchaseDate), 
-            requestDate: serverTimestamp(), 
-            status: "pending", 
-            claimed: false,
-            cashbackAmount: 0 // Will be calculated on approval
+            userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile, 
+            productName, productPrice, purchaseDate: new Date(purchaseDate), requestDate: serverTimestamp(), 
+            status: "pending", claimed: false, cashbackAmount: 0
         });
         showToast("Cashback request submit ho gaya!");
         closeModal(DOMElements.cashbackModal);
@@ -421,7 +388,6 @@ async function handleCashbackRequest(e) {
 async function handleCashbackClaim() {
     if (!pendingCashbackClaim || !currentUserData) return;
     DOMElements.claimNowBtn.disabled = true;
-
     const requestRef = doc(db, "cashback_requests", pendingCashbackClaim.id);
     const userRef = doc(db, "users", currentUserData.id);
 
@@ -431,24 +397,16 @@ async function handleCashbackClaim() {
             if (!requestDoc.exists() || requestDoc.data().claimed) {
                 throw new Error("Request already claimed or does not exist.");
             }
-
             const amountToClaim = requestDoc.data().cashbackAmount;
-            
-            transaction.update(userRef, {
-                wallet: increment(amountToClaim),
-                lifetimeEarning: increment(amountToClaim)
-            });
+            transaction.update(userRef, { wallet: increment(amountToClaim), lifetimeEarning: increment(amountToClaim) });
             transaction.update(requestRef, { claimed: true, status: 'completed' });
-            
             const transRef = doc(collection(db, "transactions"));
             transaction.set(transRef, {
-                involvedUsers: [currentUserData.id],
-                type: 'cashback', amount: amountToClaim,
+                involvedUsers: [currentUserData.id], type: 'cashback', amount: amountToClaim,
                 description: `Claimed cashback for ${pendingCashbackClaim.productName}`,
                 status: 'completed', timestamp: serverTimestamp()
             });
         });
-        
         showToast("Cashback claimed successfully!");
         closeModal(DOMElements.cashbackClaimModal);
     } catch (error) {
@@ -467,10 +425,8 @@ async function handlePasswordChange(e) {
     if (newPassword.length < 6) {
         return showErrorMessage(DOMElements.passwordChangeErrorMsg, "Naya password kam se kam 6 akshar ka hona chahiye.");
     }
-
     const user = auth.currentUser;
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
-
     try {
         await reauthenticateWithCredential(user, credential);
         await updatePassword(user, newPassword);
