@@ -110,15 +110,15 @@
         #user-name-display { font-size: 22px; font-weight: 600; margin-bottom: 5px; color: white; }
         .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 5px; }
         #wallet-balance { font-size: 44px; font-weight: 800; line-height: 1; }
-        #user-mobile { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 5px; }
         .wallet-card-footer { display: flex; justify-content: space-around; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 15px; margin-top: 5px; }
         .wallet-footer-item { text-align: center; }
         .wallet-footer-item p { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.8); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .wallet-footer-item .amount { font-size: 16px; font-weight: 700; color: white; }
         .wallet-footer-item .amount.credit { font-size: 20px; font-weight: 800; color: var(--accent-yellow) !important; }
-        .wallet-footer-item .amount.earning { color: var(--accent-blue); } 
+        /* UPDATED: Lifetime Earning Color */
+        .wallet-footer-item .amount.earning { color: white !important; } 
         .wallet-footer-item .amount.due { color: var(--due-red) !important; }
-        #wallet-share-btn { position: absolute; bottom: 100px; right: 20px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; }
+        #wallet-share-btn { position: absolute; bottom: 20px; right: 20px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; }
         #wallet-share-btn:hover { opacity: 1; transform: scale(1.1); }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
 
@@ -283,7 +283,6 @@
                 <div class="form-group"><label for="reg-name">Poora Naam (Full Name)</label><input type="text" id="reg-name" required></div>
                 <div class="form-group"><label for="reg-mobile">Mobile Number (10 अंक)</label><input type="tel" id="reg-mobile" inputmode="numeric" pattern="[0-9]{10}" required></div>
                 <div class="form-group"><label for="reg-password">Password Banayein</label><input type="password" id="reg-password" required placeholder="Kam se kam 6 akshar"></div>
-                <!-- NEW: Referral Code Input -->
                 <div class="form-group"><label for="reg-referral">Referral Code (Optional)</label><input type="text" id="reg-referral"></div>
                 <button type="submit">Register Karein</button>
                 <p id="register-error-msg" class="error-message"></p>
@@ -312,7 +311,11 @@
                     <h2 id="user-name-display">User Name</h2>
                     <p class="wallet-balance-label">Available Balance</p>
                     <p id="wallet-balance">₹ 0.00</p>
-                    <p id="user-mobile">Mobile: 0000000000</p>
+                    <!-- UPDATED: Replaced Mobile No. with Referral ID -->
+                    <div id="user-referral-container" style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 5px; cursor: pointer; padding: 5px; border-radius: 8px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+                        <span id="user-referral-id" style="font-weight: 600; font-size: 16px; color: rgba(255,255,255,0.9); letter-spacing: 1px;"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
                 </div>
                 <div class="wallet-card-footer">
                     <div class="wallet-footer-item">
@@ -370,7 +373,6 @@
     <div id="coupons-modal" class="modal-overlay"> <div class="modal-content"> <h3>Aapke Coupons</h3> <div class="modal-body" id="coupons-list"></div> <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> </div> </div>
     <div id="scan-pay-modal" class="modal-overlay"> <div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div> <input type="file" id="qr-file-input" accept="image/*" style="display: none;"> <button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button> <p id="scanner-status" class="mt-4">Scanning for QR code...</p> <div id="payment-form" style="display: none;"> <div class="scanned-info"><p>Paying to: <span id="receiver-name-display"></span></p><p>ID: <span id="receiver-id-display"></span></p></div> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" step="0.01" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div> </div>
     <div id="profile-modal" class="modal-overlay"> <div class="modal-content"> <div class="profile-info"> <img id="profile-modal-display" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture"> <h3 id="profile-modal-name"></h3><p id="profile-modal-mobile"></p> 
-    <!-- UPDATED: Added Referral ID display -->
     <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; margin-bottom: 5px; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id"></div></div> 
     <div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; margin-bottom: 5px; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="cursor: pointer;"></div></div>
     </div> <div class="modal-body"> <div class="profile-upload-section"> <input type="file" id="profile-picture-input" accept="image/*"> <button type="button" class="btn-secondary" onclick="document.getElementById('profile-picture-input').click();">Change Picture</button> <p id="upload-status"></p> </div> <form id="password-change-form"> <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div> <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div> <div class="form-group"><label for="confirm-password">Naya Password Confirm Karein</label><input type="password" id="confirm-password" required></div> <button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p> </form> </div> <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> </div> </div>
@@ -397,13 +399,10 @@
         };
         // --- END: Firebase Configuration ---
 
-        // Constants and Global Variables
         const ADMIN_PAYMENT_ID = "@RamazoneStoreCashback";
         const MASTER_REFERRAL_ID = "RMZC000B001";
         let auth, database;
-        let imageApiKey = null;
 
-        // DOM Elements
         const DOMElements = {
             loginForm: document.getElementById('login-form'),
             registerForm: document.getElementById('register-form'),
@@ -437,6 +436,8 @@
             walletShareBtn: document.getElementById('wallet-share-btn'),
             profileDisplay: document.getElementById('profile-display'),
             profileModalDisplay: document.getElementById('profile-modal-display'),
+            userReferralContainer: document.getElementById('user-referral-container'),
+            userReferralId: document.getElementById('user-referral-id'),
             profileReferralId: document.getElementById('profile-referral-id'),
             loginErrorMsg: document.getElementById('login-error-msg'),
             registerErrorMsg: document.getElementById('register-error-msg'),
@@ -448,7 +449,6 @@
             scannerStatus: document.getElementById('scanner-status'),
         };
 
-        // State Variables
         let currentUserData = null;
         let activeListeners = [];
         let allTransactionsSnapshot = {};
@@ -459,7 +459,6 @@
         let pendingCashbackClaim = null;
         let currentPopupNotification = null;
 
-        // --- CORE INITIALIZATION ---
         function initializeFirebaseApp() {
             try {
                 const app = initializeApp(firebaseConfig);
@@ -472,10 +471,7 @@
             }
         }
 
-        // --- IMAGE UPLOAD & VIEW SYSTEM ---
-        async function handleProfilePictureUpload(event) {
-            // This function requires an API key for an image hosting service like ImgBB.
-            // For now, it's disabled to prevent errors.
+        function handleProfilePictureUpload(event) {
             showToast("Profile picture upload is currently disabled.");
         }
 
@@ -485,7 +481,6 @@
             openModal(DOMElements.imageViewModal);
         }
 
-        // --- UTILITY & REFERRAL FUNCTIONS ---
         function showErrorMessage(element, message) { element.textContent = message; element.style.display = 'block'; }
         function hideErrorMessage(element) { element.style.display = 'none'; }
         function toggleView(viewId) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(viewId)?.classList.add('active'); }
@@ -515,22 +510,21 @@
             return `RMZC${part1}B${part2}`;
         }
 
-        function checkForReferralInUrl() {
+        function setupAuthentication() {
             const params = new URLSearchParams(window.location.search);
             const refCode = params.get('ref');
-            if (refCode) {
-                document.getElementById('reg-referral').value = refCode;
-            }
-        }
 
-        // --- AUTHENTICATION & DATA LISTENERS ---
-        function setupAuthentication() {
             onAuthStateChanged(auth, user => {
                 if (user) { 
                     toggleView('dashboard-view'); 
                     attachRealtimeListeners(user); 
                 } else { 
-                    toggleView('login-view'); 
+                    if (refCode) {
+                        toggleView('registration-view');
+                        document.getElementById('reg-referral').value = refCode;
+                    } else {
+                        toggleView('login-view');
+                    }
                     detachAllListeners(); 
                 }
             });
@@ -557,13 +551,13 @@
                 
                 let referredBy = "none";
                 if (referralCode) {
-                    if (referralCode === MASTER_REFERRAL_ID) {
+                    if (referralCode.toUpperCase() === MASTER_REFERRAL_ID) {
                         referredBy = "master";
                     } else {
-                        const q = query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralCode));
+                        const q = query(ref(database, 'users'), orderByChild('referralId'), equalTo(referralCode.toUpperCase()));
                         const snapshot = await get(q);
                         if (snapshot.exists()) {
-                            referredBy = Object.keys(snapshot.val())[0]; // Get the UID of the referrer
+                            referredBy = Object.keys(snapshot.val())[0];
                         } else {
                             showErrorMessage(DOMElements.registerErrorMsg, "Invalid referral code.");
                             return;
@@ -574,22 +568,12 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
                     const newUserRef = ref(database, 'users/' + userCredential.user.uid);
-                    
                     await updateProfile(userCredential.user, { displayName: name });
-                    
                     await set(newUserRef, {
-                        uid: userCredential.user.uid,
-                        name,
-                        mobile,
-                        wallet: 0,
-                        lifetimeEarning: 0,
-                        dueAmount: 0,
-                        profilePictureUrl: '',
-                        referralId: generateReferralCode(),
-                        referredBy: referredBy,
+                        uid: userCredential.user.uid, name, mobile, wallet: 0, lifetimeEarning: 0, dueAmount: 0,
+                        profilePictureUrl: '', referralId: generateReferralCode(), referredBy: referredBy,
                         createdAt: new Date().toISOString()
                     });
-
                     alert("Registration safal hua! Ab aap login kar sakte hain.");
                     toggleView('login-view');
                     DOMElements.registerForm.reset();
@@ -646,12 +630,11 @@
             allNotifications = [];
         }
 
-        // --- UI RENDERING ---
         function updateDashboardUI(dbData, authUser) {
             if (!dbData || !authUser) return;
             
+            DOMElements.userReferralId.textContent = dbData.referralId || 'N/A';
             document.getElementById('user-name-display').textContent = authUser.displayName;
-            document.getElementById('user-mobile').textContent = `Mobile: ${dbData.mobile}`;
             const walletBalance = dbData.wallet || 0;
             const dueAmount = dbData.dueAmount || 0;
             const creditLimit = walletBalance + dueAmount;
@@ -730,8 +713,6 @@
             return '';
         }
 
-        // --- All other functions (Cashback Claim, Notifications, Payments, etc.) remain the same ---
-        // ... (The rest of the JS code from the previous version is unchanged)
         function checkForApprovedCashback(){if(!allTransactionsSnapshot.cashback?.exists()){DOMElements.openCashbackModalBtn.classList.remove("has-claim");return}let a=!1;allTransactionsSnapshot.cashback.forEach(b=>{const c=b.val();if("approved"===c.status&&!c.claimed){pendingCashbackClaim={id:b.key,...c};document.getElementById("claim-amount-display").textContent=`\u20b9 ${parseFloat(c.cashbackAmount).toFixed(2)}`;openModal(DOMElements.cashbackClaimModal);a=!0;return}}),DOMElements.openCashbackModalBtn.classList.toggle("has-claim",a)}async function handleCashbackClaim(){if(!pendingCashbackClaim||!currentUserData)return;DOMElements.claimNowBtn.disabled=!0,DOMElements.claimNowBtn.textContent="Claiming...";const a=ref(database,"users/"+currentUserData.uid),b=ref(database,"cashback_requests/"+pendingCashbackClaim.id),c=parseFloat(pendingCashbackClaim.cashbackAmount);try{const d=await runTransaction(a,e=>{if(e)e.lifetimeEarning=(e.lifetimeEarning||0)+c;return e});if(d.committed)await update(b,{claimed:!0,status:"completed"}),showToast("Lifetime Earning update ho gayi hai!"),closeModal(DOMElements.cashbackClaimModal),pendingCashbackClaim=null;else throw new Error("Transaction fail ho gaya.")}catch(d){showToast(`Error: ${d.message}`)}finally{DOMElements.claimNowBtn.disabled=!1,DOMElements.claimNowBtn.textContent="Claim Now"}}
         function getSeenNotifications(){const a=localStorage.getItem("ramazone_notifications_seen");return a?JSON.parse(a):[]}function getDismissedNotifications(){const a=localStorage.getItem("ramazone_notifications_dismissed");return a?JSON.parse(a):{}}
         function processNotifications(){const a=getSeenNotifications(),b=allNotifications.filter(c=>!a.includes(c.id)).length;DOMElements.notificationDot.classList.toggle("active",0<b);const c=getDismissedNotifications(),d=allNotifications.find(e=>!a.includes(e.id));if(d){const e=c[d.id];864E5;if(!e||Date.now()-e>864E5)showNotificationPopup(d)}}
@@ -760,18 +741,13 @@
         async function handlePasswordConfirmation(){const a=document.getElementById("modal-password");hideErrorMessage(DOMElements.modalErrorMsg);DOMElements.modalConfirmBtn.disabled=!0;DOMElements.modalConfirmBtn.textContent="Verifying...";const b=a.value;if(!b){showErrorMessage(DOMElements.modalErrorMsg,"Kripya password daalein.");DOMElements.modalConfirmBtn.disabled=!1;DOMElements.modalConfirmBtn.textContent="Confirm";return}const c=EmailAuthProvider.credential(`${currentUserData.mobile}@ramazone.com`,b);try{await reauthenticateWithCredential(auth.currentUser,c);DOMElements.modalConfirmBtn.textContent="Processing...";"claim"===tempActionData.type?await processClaimConfirmation():"payment"===tempActionData.type&&await processPaymentConfirmation()}catch(d){showErrorMessage(DOMElements.modalErrorMsg,"Galat password ya koi anya error.")}finally{DOMElements.modalConfirmBtn.disabled=!1;DOMElements.modalConfirmBtn.textContent="Confirm";a.value="";tempActionData={}}}
         async function handlePasswordChange(a){a.preventDefault();hideErrorMessage(DOMElements.passwordChangeErrorMsg);const b=document.getElementById("current-password").value,c=document.getElementById("new-password").value,d=document.getElementById("confirm-password").value;if(c!==d){showErrorMessage(DOMElements.passwordChangeErrorMsg,"Naya password match nahi ho raha.");return}if(c.length<6){showErrorMessage(DOMElements.passwordChangeErrorMsg,"Naya password kam se kam 6 akshar ka hona chahiye.");return}const e=auth.currentUser,f=EmailAuthProvider.credential(`${currentUserData.mobile}@ramazone.com`,b);try{await reauthenticateWithCredential(e,f),await updatePassword(e,c),showToast("Password safaltapoorvak badal gaya hai!"),DOMElements.passwordChangeForm.reset(),closeModal(DOMElements.profileModal)}catch(g){showErrorMessage(DOMElements.passwordChangeErrorMsg,"Purana password galat hai ya koi aur error aayi.")}}
 
-        // --- EVENT BINDING & APP SETUP ---
         function setupApplication() {
             setupAuthentication();
-            checkForReferralInUrl(); // Check for ref code in URL on page load
-
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
-            
             document.getElementById('open-claim-modal').addEventListener('click', () => openModal(DOMElements.claimModal));
             document.getElementById('open-coupons-modal').addEventListener('click', () => openModal(DOMElements.couponsModal));
             document.getElementById('open-profile-modal').addEventListener('click', () => openModal(DOMElements.profileModal));
-            
             DOMElements.openCashbackModalBtn.addEventListener('click', () => {
                 if (pendingCashbackClaim) { openModal(DOMElements.cashbackClaimModal); } 
                 else { 
@@ -781,29 +757,24 @@
                     openModal(DOMElements.cashbackModal); 
                 }
             });
-
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay'))));
-            
             DOMElements.claimRequestForm.addEventListener('submit', handleClaimRequest);
             DOMElements.cashbackRequestForm.addEventListener('submit', handleCashbackRequest);
             DOMElements.passwordChangeForm.addEventListener('submit', handlePasswordChange);
             DOMElements.profilePictureInput.addEventListener('change', handleProfilePictureUpload);
             DOMElements.claimNowBtn.addEventListener('click', handleCashbackClaim);
             DOMElements.modalConfirmBtn.addEventListener('click', handlePasswordConfirmation);
-
             DOMElements.profileDisplay.addEventListener('click', (e) => showFullImage(e.target.src));
             DOMElements.profileModalDisplay.addEventListener('click', (e) => showFullImage(e.target.src));
             DOMElements.imageViewModal.addEventListener('click', () => closeModal(DOMElements.imageViewModal));
-
             document.getElementById('coupons-list').addEventListener('click', e => { if (e.target?.classList.contains('copy-btn')) { navigator.clipboard.writeText(e.target.dataset.coupon).then(() => { e.target.textContent = '✅ Copied!'; setTimeout(() => { e.target.textContent = '📋 Copy'; }, 2000); }); } });
             
-            // UPDATED: Share button logic
             DOMElements.walletShareBtn.addEventListener('click', async () => { 
                 if (!auth.currentUser || !currentUserData?.referralId) { 
                     showToast("Data load ho raha hai..."); 
                     return; 
                 } 
-                const referralLink = `https://ramazone.in/cashback.html?ref=${currentUserData.referralId}`;
+                const referralLink = `${window.location.origin}${window.location.pathname}?ref=${currentUserData.referralId}`;
                 const shareMessage = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMaine, *${auth.currentUser.displayName}*, Ramazone Cashback app se ab tak *₹${(currentUserData.lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${currentUserData.referralId}*\n\nAbhi join karein: ${referralLink}`; 
                 try { 
                     if (navigator.share) {
@@ -817,7 +788,15 @@
                 } 
             });
 
-            // NEW: Copy referral ID from profile
+            DOMElements.userReferralContainer.addEventListener('click', () => {
+                const referralId = DOMElements.userReferralId.textContent;
+                if (referralId && referralId !== 'N/A') {
+                    navigator.clipboard.writeText(referralId).then(() => {
+                        showToast('Referral ID Copied!');
+                    });
+                }
+            });
+
             DOMElements.profileReferralId.addEventListener('click', (e) => {
                 if (e.target.textContent && e.target.textContent !== 'N/A') {
                     navigator.clipboard.writeText(e.target.textContent).then(() => {
@@ -859,7 +838,6 @@
             document.getElementById('notification-popup-view').addEventListener('click', handlePopupView);
         }
 
-        // Initialize the app after the DOM is fully loaded.
         document.addEventListener('DOMContentLoaded', initializeFirebaseApp);
     </script>
 </body>
