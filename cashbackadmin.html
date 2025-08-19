@@ -9,39 +9,55 @@
         :root {
             --bg-page: #f0f2f5; --bg-card: #ffffff; --text-primary: #1c2028;
             --text-secondary: #5a647e; --border-color: #e8eef3; --brand-red: #e50914;
-            --accent-green: #2ecc71; --accent-purple: #8e44ad; --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --accent-green: #2ecc71; --accent-red: #ff4d4d; --shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-page); color: var(--text-primary); }
-        .admin-container { max-width: 1400px; margin: 20px auto; padding: 20px; }
-        .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .login-box { width: 100%; max-width: 400px; padding: 40px; background: var(--bg-card); border-radius: 12px; box-shadow: var(--shadow); text-align: center; }
+        html { font-size: 14px; }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--bg-page);
+            color: var(--text-primary); -webkit-font-smoothing: antialiased;
+        }
+        .admin-container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 15px; }
+        .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .login-box { width: 100%; max-width: 350px; padding: 30px; background: var(--bg-card); border-radius: 12px; box-shadow: var(--shadow); text-align: center; }
+        .login-box h1 { font-size: 1.5rem; }
         #login-view.active, #admin-view.active { display: block; }
         #login-view, #admin-view { display: none; }
-        .form-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); font-size: 14px; }
-        input, .input-like { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #ced4da; font-size: 16px; }
-        button { width: 100%; padding: 14px; background-color: var(--brand-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        #logout-btn { background: var(--text-secondary); width: auto; padding: 10px 20px; font-size: 14px; }
-        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--bg-card); padding: 25px; border-radius: 12px; box-shadow: var(--shadow); }
-        .card h3 { margin: 0 0 10px 0; color: var(--text-secondary); font-size: 16px; }
-        .card .stat-number { font-size: 36px; font-weight: 700; }
-        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; }
-        .tab-link { padding: 12px 25px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: var(--text-secondary); }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-secondary); font-size: 0.9rem; }
+        input, .input-like { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ced4da; font-size: 1rem; }
+        button { width: 100%; padding: 12px; background-color: var(--brand-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.2s; }
+        button:hover { background-color: #c40812; }
+        button:disabled { background-color: #999; cursor: not-allowed; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { font-size: 1.4rem; }
+        #logout-btn { background: var(--text-secondary); width: auto; padding: 8px 15px; font-size: 0.9rem; }
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background: var(--bg-card); padding: 15px; border-radius: 8px; box-shadow: var(--shadow); }
+        .card h3 { margin: 0 0 8px 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; }
+        .card .stat-number { font-size: 1.8rem; font-weight: 700; line-height: 1.2; word-break: break-all; }
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-link { padding: 10px 15px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap; }
         .tab-link.active { color: var(--brand-red); border-bottom-color: var(--brand-red); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .content-box { background: var(--bg-card); padding: 25px; border-radius: 12px; box-shadow: var(--shadow); }
-        .request-item { border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 15px; display: grid; grid-template-columns: 1fr auto; gap: 15px; }
-        .request-details p { margin: 0 0 10px 0; }
+        .content-box { background: var(--bg-card); padding: 20px; border-radius: 8px; box-shadow: var(--shadow); }
+        .content-box h2 { font-size: 1.2rem; margin-bottom: 15px; }
+        .request-item { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px; }
+        .request-details p { margin: 0 0 5px 0; font-size: 0.9rem; line-height: 1.4; }
+        .request-details p strong { color: var(--text-primary); }
         .request-actions { display: flex; gap: 10px; align-items: center; }
+        .request-actions button { width: auto; flex-grow: 1; padding: 8px 12px; font-size: 0.9rem; }
         .btn-approve { background-color: var(--accent-green); }
-        .btn-reject { background-color: var(--brand-red); }
+        .btn-reject { background-color: var(--accent-red); }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 14px; border-bottom: 1px solid var(--border-color); }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; white-space: nowrap; }
+        th { font-weight: 600; color: var(--text-secondary); }
+        .filter-container { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .filter-container label { margin-bottom: 0; }
+        .filter-container input[type="date"] { width: auto; padding: 8px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -51,7 +67,7 @@
             <h1>Admin Panel</h1>
             <form id="admin-login-form">
                 <div class="form-group"><label for="admin-email">Mobile Number</label><input type="tel" id="admin-email" required></div>
-                <div class="form-group"><label for="admin-password">Password</label><input type="password" id="admin-password" required></div>
+                <div class="form-group"><label for="admin-password">Password</label><input type="number" id="admin-password" required></div>
                 <button type="submit">Login</button>
                 <p id="admin-login-error" style="color: red; margin-top: 15px;"></p>
             </form>
@@ -60,29 +76,36 @@
 
     <div id="admin-view">
         <div class="admin-container">
-            <div class="header"><h1>Admin Dashboard</h1><button id="logout-btn">Logout</button></div>
+            <div class="header"><h1>Dashboard</h1><button id="logout-btn">Logout</button></div>
             <div class="stat-cards">
                 <div class="card"><h3>Pending Requests</h3><p class="stat-number" id="pending-requests-stat">0</p></div>
                 <div class="card"><h3>Total Members</h3><p class="stat-number" id="total-members-stat">0</p></div>
                 <div class="card"><h3>Universal Wallet</h3><p class="stat-number" id="universal-wallet-stat">₹0</p></div>
+                <div class="card"><h3>RMZ Wallet</h3><p class="stat-number" id="rmz-wallet-stat">₹0</p></div>
             </div>
             <div class="tabs">
-                <div class="tab-link active" data-tab="requests">Pending Requests</div>
-                <div class="tab-link" data-tab="members">All Members</div>
-                <div class="tab-link" data-tab="univ-history">Universal History</div>
+                <div class="tab-link active" data-tab="requests">Requests</div>
+                <div class="tab-link" data-tab="members">Members</div>
+                <div class="tab-link" data-tab="univ-history">Universal</div>
+                <div class="tab-link" data-tab="rmz-history">RMZ Wallet</div>
                 <div class="tab-link" data-tab="settings">Settings</div>
             </div>
             <div class="content-box">
                 <div id="requests-content" class="tab-content active"><h2>Pending Requests</h2><div id="request-list"></div></div>
                 <div id="members-content" class="tab-content"><h2>All Members</h2><div id="members-list" class="table-container"></div></div>
                 <div id="univ-history-content" class="tab-content"><h2>Universal Wallet History</h2><div id="univ-history-list" class="table-container"></div></div>
+                <div id="rmz-history-content" class="tab-content">
+                    <h2>RMZ Wallet History</h2>
+                    <div class="filter-container">
+                        <label for="rmz-date-filter">Filter by Date:</label>
+                        <input type="date" id="rmz-date-filter">
+                    </div>
+                    <div id="rmz-history-list" class="table-container"></div>
+                </div>
                 <div id="settings-content" class="tab-content">
                     <h2>App Settings</h2>
-                    <div class="form-group">
-                        <label for="cashback-percentage">Self Cashback Percentage (%)</label>
-                        <input type="number" id="cashback-percentage" step="0.1">
-                    </div>
-                    <button id="save-settings-btn" style="width: 200px;">Save Settings</button>
+                    <div class="form-group"><label for="cashback-percentage">Self Cashback Percentage (%)</label><input type="number" id="cashback-percentage" step="0.1" placeholder="e.g., 2.5"></div>
+                    <button id="save-settings-btn" style="width: 100%; max-width: 200px;">Save Settings</button>
                 </div>
             </div>
         </div>
@@ -108,43 +131,35 @@
         const db = getFirestore(app);
         const ADMIN_UID = "9trVz1b6zMNPsBjHZRzRhoU6N5F2";
         let activeListeners = [];
+        let allRmzTransactions = [];
 
         const ui = {
-            loginView: document.getElementById('login-view'),
-            adminView: document.getElementById('admin-view'),
-            adminLoginForm: document.getElementById('admin-login-form'),
-            adminLoginError: document.getElementById('admin-login-error'),
-            logoutBtn: document.getElementById('logout-btn'),
-            tabs: document.querySelector('.tabs'),
-            tabContents: document.querySelectorAll('.tab-content'),
-            requestList: document.getElementById('request-list'),
-            membersList: document.getElementById('members-list'),
-            univHistoryList: document.getElementById('univ-history-list'),
+            loginView: document.getElementById('login-view'), adminView: document.getElementById('admin-view'),
+            adminLoginForm: document.getElementById('admin-login-form'), adminLoginError: document.getElementById('admin-login-error'),
+            logoutBtn: document.getElementById('logout-btn'), tabs: document.querySelector('.tabs'),
+            tabContents: document.querySelectorAll('.tab-content'), requestList: document.getElementById('request-list'),
+            membersList: document.getElementById('members-list'), univHistoryList: document.getElementById('univ-history-list'),
+            rmzHistoryList: document.getElementById('rmz-history-list'), rmzDateFilter: document.getElementById('rmz-date-filter'),
             stats: {
-                pending: document.getElementById('pending-requests-stat'),
-                members: document.getElementById('total-members-stat'),
-                universalWallet: document.getElementById('universal-wallet-stat'),
+                pending: document.getElementById('pending-requests-stat'), members: document.getElementById('total-members-stat'),
+                universalWallet: document.getElementById('universal-wallet-stat'), rmzWallet: document.getElementById('rmz-wallet-stat'),
             },
-            settings: {
-                cashbackPercent: document.getElementById('cashback-percentage'),
-                saveBtn: document.getElementById('save-settings-btn'),
-            }
+            settings: { cashbackPercent: document.getElementById('cashback-percentage'), saveBtn: document.getElementById('save-settings-btn'), }
         };
 
         async function init() {
             await setPersistence(auth, browserSessionPersistence);
             onAuthStateChanged(auth, user => {
                 if (user && user.uid === ADMIN_UID) {
-                    ui.loginView.classList.remove('active');
-                    ui.adminView.classList.add('active');
+                    ui.loginView.classList.remove('active'); ui.adminView.classList.add('active');
                     loadAllData();
                 } else {
                     if (user) signOut(auth);
-                    ui.loginView.classList.add('active');
-                    ui.adminView.classList.remove('active');
+                    ui.loginView.classList.add('active'); ui.adminView.classList.remove('active');
                     activeListeners.forEach(unsub => unsub());
                 }
             });
+            addEventListeners();
         }
 
         function loadAllData() {
@@ -153,7 +168,8 @@
                 onSnapshot(query(collection(db, 'cashback_requests'), where('status', '==', 'pending')), renderRequests),
                 onSnapshot(query(collection(db, 'users'), orderBy('createdAt', 'desc')), renderMembers),
                 onSnapshot(doc(db, 'app_settings', 'config'), renderSettingsAndStats),
-                onSnapshot(query(collection(db, 'universal_wallet_transactions'), orderBy('timestamp', 'desc')), renderUnivHistory)
+                onSnapshot(query(collection(db, 'universal_wallet_transactions'), orderBy('timestamp', 'desc')), renderUnivHistory),
+                onSnapshot(query(collection(db, 'rmz_wallet_transactions'), orderBy('timestamp', 'desc')), renderRmzHistory)
             ];
         }
 
@@ -162,70 +178,93 @@
             ui.requestList.innerHTML = snapshot.empty ? '<p>No pending requests.</p>' : '';
             snapshot.forEach(doc => {
                 const r = { id: doc.id, ...doc.data() };
-                ui.requestList.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Product:</strong> ${r.productName} (₹${r.productPrice})</p><p><strong>Date:</strong> ${r.requestDate.toDate().toLocaleDateString()}</p></div><div class="request-actions"><button class="btn-approve" data-id="${r.id}">Approve</button><button class="btn-reject" data-id="${r.id}">Reject</button></div></div>`;
+                const requestDiv = document.createElement('div');
+                requestDiv.className = 'request-item';
+                requestDiv.innerHTML = `<div class="request-details"><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Product:</strong> ${r.productName} (₹${r.productPrice})</p><p><strong>Date:</strong> ${r.requestDate.toDate().toLocaleDateString()}</p></div><div class="request-actions"><button class="btn-approve" data-id="${r.id}">Approve</button><button class="btn-reject" data-id="${r.id}">Reject</button></div>`;
+                ui.requestList.appendChild(requestDiv);
             });
         }
+
         function renderMembers(snapshot) {
             ui.stats.members.textContent = snapshot.size;
             let table = `<table><thead><tr><th>Name</th><th>Mobile</th><th>Wallet</th></tr></thead><tbody>`;
-            snapshot.forEach(doc => {
-                const u = doc.data();
-                table += `<tr><td>${u.name}</td><td>${u.mobile}</td><td>₹${(u.wallet || 0).toFixed(2)}</td></tr>`;
-            });
+            snapshot.forEach(doc => { const u = doc.data(); table += `<tr><td>${u.name}</td><td>${u.mobile}</td><td>₹${(u.wallet || 0).toFixed(2)}</td></tr>`; });
             ui.membersList.innerHTML = table + `</tbody></table>`;
         }
+
         function renderSettingsAndStats(doc) {
             if (doc.exists()) {
                 const config = doc.data();
                 ui.stats.universalWallet.textContent = `₹${(config.universal_wallet_balance || 0).toFixed(2)}`;
-                ui.settings.cashbackPercent.value = config.cashback_percentage || 0;
+                ui.stats.rmzWallet.textContent = `₹${(config.rmz_wallet_balance || 0).toFixed(2)}`;
+                ui.settings.cashbackPercent.value = config.cashback_percentage || '';
             }
         }
+
         function renderUnivHistory(snapshot) {
             let table = `<table><thead><tr><th>Date</th><th>Amount</th><th>Reason</th></tr></thead><tbody>`;
-            snapshot.forEach(doc => {
-                const t = doc.data();
-                table += `<tr><td>${t.timestamp.toDate().toLocaleString()}</td><td>₹${t.amount.toFixed(2)}</td><td>${t.reason}</td></tr>`;
-            });
+            snapshot.forEach(doc => { const t = doc.data(); table += `<tr><td>${t.timestamp.toDate().toLocaleString()}</td><td>₹${t.amount.toFixed(2)}</td><td>${t.reason}</td></tr>`; });
             ui.univHistoryList.innerHTML = table + `</tbody></table>`;
+        }
+
+        function renderRmzHistory(snapshot) {
+            allRmzTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            displayFilteredRmzHistory();
+        }
+
+        function displayFilteredRmzHistory() {
+            const selectedDate = ui.rmzDateFilter.value;
+            let filteredTransactions = allRmzTransactions;
+
+            if (selectedDate) {
+                filteredTransactions = allRmzTransactions.filter(t => {
+                    const transactionDate = t.timestamp.toDate().toISOString().split('T')[0];
+                    return transactionDate === selectedDate;
+                });
+            }
+
+            let table = `<table><thead><tr><th>Date</th><th>Amount</th><th>From Customer</th><th>Mobile</th></tr></thead><tbody>`;
+            if (filteredTransactions.length === 0) {
+                table += `<tr><td colspan="4" style="text-align:center;">No transactions found.</td></tr>`;
+            } else {
+                filteredTransactions.forEach(t => {
+                    table += `<tr>
+                        <td>${t.timestamp.toDate().toLocaleString()}</td>
+                        <td>₹${t.amount.toFixed(2)}</td>
+                        <td>${t.senderName || 'N/A'}</td>
+                        <td>${t.senderMobile || 'N/A'}</td>
+                    </tr>`;
+                });
+            }
+            ui.rmzHistoryList.innerHTML = table + `</tbody></table>`;
         }
         
         async function approveRequest(requestId) {
             const requestDocRef = doc(db, 'cashback_requests', requestId);
             const configDocRef = doc(db, 'app_settings', 'config');
-
             const [requestDoc, configDoc] = await Promise.all([getDoc(requestDocRef), getDoc(configDocRef)]);
-            if (!requestDoc.exists() || !configDoc.exists()) throw new Error("Request or config not found.");
-            
+            if (!requestDoc.exists()) throw new Error("Request not found.");
             const requestData = requestDoc.data();
-            const config = configDoc.data();
-            const cashbackPercent = config.cashback_percentage || 0;
-
+            const config = configDoc.exists() ? configDoc.data() : {};
+            const cashbackPercent = config.cashback_percentage || 2;
             const userDoc = await getDoc(doc(db, 'users', requestData.userId));
             if (!userDoc.exists()) throw new Error("User not found.");
             const userData = userDoc.data();
-
             const selfAmount = requestData.productPrice * (cashbackPercent / 100);
-            const distributionAmount = selfAmount * 0.50; // 50% of self amount
-
+            const distributionAmount = selfAmount * 0.50;
             const batch = writeBatch(db);
             batch.update(requestDocRef, { status: 'approved', cashbackAmount: selfAmount });
-
             const upline = userData.upline || [];
             const percentages = [0.30, 0.25, 0.20, 0.15, 0.10];
             let totalLapsedAmount = 0;
-
             for (let i = 0; i < 5; i++) {
                 const commission = distributionAmount * percentages[i];
                 if (upline[i]) {
                     const uplineUserRef = doc(db, 'users', upline[i]);
                     batch.update(uplineUserRef, { wallet: increment(commission), lifetimeEarning: increment(commission) });
                     batch.set(doc(collection(db, 'transactions')), { involvedUsers: [upline[i]], type: 'commission', amount: commission, description: `Commission from ${userData.name}`, timestamp: serverTimestamp(), status: 'completed' });
-                } else {
-                    totalLapsedAmount += commission;
-                }
+                } else { totalLapsedAmount += commission; }
             }
-
             if (totalLapsedAmount > 0) {
                 batch.update(configDocRef, { universal_wallet_balance: increment(totalLapsedAmount) });
                 batch.set(doc(collection(db, 'universal_wallet_transactions')), { amount: totalLapsedAmount, reason: `Lapsed commission from ${userData.name}'s request`, timestamp: serverTimestamp() });
@@ -233,28 +272,40 @@
             await batch.commit();
         }
 
-        ui.adminLoginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('admin-email').value}@ramazone.com`, document.getElementById('admin-password').value).catch(() => ui.adminLoginError.textContent = "Login failed."); });
-        ui.logoutBtn.addEventListener('click', () => signOut(auth));
-        ui.tabs.addEventListener('click', (e) => { if (!e.target.matches('.tab-link')) return; ui.tabs.querySelector('.active').classList.remove('active'); e.target.classList.add('active'); ui.tabContents.forEach(c => c.classList.remove('active')); document.getElementById(`${e.target.dataset.tab}-content`).classList.add('active'); });
-        ui.requestList.addEventListener('click', async (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-            btn.disabled = true;
-            try {
-                if (btn.matches('.btn-approve')) await approveRequest(btn.dataset.id);
-                else if (btn.matches('.btn-reject')) await writeBatch(db).update(doc(db, 'cashback_requests', btn.dataset.id), { status: 'rejected' }).commit();
-            } catch (error) { console.error(error); alert(`Error: ${error.message}`); }
-            finally { btn.disabled = false; }
-        });
-        ui.settings.saveBtn.addEventListener('click', async () => {
-            const newPercent = parseFloat(ui.settings.cashbackPercent.value);
-            if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage.");
-            await setDoc(doc(db, 'app_settings', 'config'), { cashback_percentage: newPercent }, { merge: true });
-            alert("Settings saved!");
-        });
-
+        function addEventListeners() {
+            ui.adminLoginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('admin-email').value}@ramazone.com`, document.getElementById('admin-password').value).catch(() => ui.adminLoginError.textContent = "Login failed."); });
+            ui.logoutBtn.addEventListener('click', () => signOut(auth));
+            ui.tabs.addEventListener('click', (e) => { 
+                if (!e.target.matches('.tab-link')) return; 
+                ui.tabs.querySelector('.active').classList.remove('active'); 
+                e.target.classList.add('active'); 
+                ui.tabContents.forEach(c => c.classList.remove('active')); 
+                document.getElementById(`${e.target.dataset.tab}-content`).classList.add('active'); 
+            });
+            ui.requestList.addEventListener('click', async (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                btn.disabled = true;
+                try {
+                    if (btn.matches('.btn-approve')) await approveRequest(btn.dataset.id);
+                    else if (btn.matches('.btn-reject')) {
+                        const rejectBatch = writeBatch(db);
+                        rejectBatch.update(doc(db, 'cashback_requests', btn.dataset.id), { status: 'rejected' });
+                        await rejectBatch.commit();
+                    }
+                } catch (error) { console.error(error); alert(`Error: ${error.message}`); }
+                finally { btn.disabled = false; }
+            });
+            ui.settings.saveBtn.addEventListener('click', async () => {
+                const newPercent = parseFloat(ui.settings.cashbackPercent.value);
+                if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage.");
+                await setDoc(doc(db, 'app_settings', 'config'), { cashback_percentage: newPercent }, { merge: true });
+                alert("Settings saved!");
+            });
+            ui.rmzDateFilter.addEventListener('change', displayFilteredRmzHistory);
+        }
+        
         init();
     </script>
 </body>
 </html>
-
