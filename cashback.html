@@ -41,7 +41,7 @@
         .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
         
-        /* --- New Dashboard UI --- */
+        /* --- Dashboard UI --- */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background-color: var(--bg-card); border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .header-logo { height: 35px; }
         .header-user { display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -94,17 +94,27 @@
         /* --- Modals --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
-        .modal-content { background-color: var(--bg-card); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; }
+        .modal-content { background-color: var(--bg-card); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; position: relative; }
         .modal-content h3 { text-align: center; font-size: 20px; margin-bottom: 20px; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .btn-secondary { background: #e8eef3; color: var(--text-primary); }
-        #password-verification-modal { z-index: 1001; } /* Ensure password modal is on top */
+        #password-verification-modal { z-index: 1001; }
         
         #profile-modal #logout-btn { background-color: var(--text-secondary); margin-top: 20px; }
         #scanner-container { width: 100%; max-width: 250px; aspect-ratio: 1/1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background: #000; }
         #scanner-video { width: 100%; height: 100%; object-fit: cover; }
-        .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
-        .toast-notification.show { bottom: 30px; }
+        
+        /* --- Success Popup --- */
+        #success-popup .modal-content { text-align: center; }
+        .success-icon { width: 60px; height: 60px; background-color: var(--accent-green); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 15px; }
+        #success-popup-message { font-size: 16px; color: var(--text-secondary); }
+        .modal-close-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #aaa; }
+        
+        /* --- Coupon Card --- */
+        .coupon-card { border: 2px dashed var(--brand-red); border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center; }
+        .coupon-code { font-size: 18px; font-weight: 700; color: var(--brand-red); letter-spacing: 1px; }
+        .coupon-amount { font-size: 24px; font-weight: 800; color: var(--accent-green); margin: 5px 0; }
+        .coupon-date { font-size: 12px; color: var(--text-secondary); }
     </style>
 </head>
 <body>
@@ -185,10 +195,11 @@
     </div>
 
     <!-- Modals -->
+    <div id="success-popup" class="modal-overlay"> <div class="modal-content"><button class="modal-close-btn" data-close-modal>&times;</button><div class="success-icon">✓</div><h3 id="success-popup-title">Success!</h3><p id="success-popup-message">Your action was successful.</p></div></div>
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
     <div id="claim-modal" class="modal-overlay"> <div class="modal-content"> <h3>Wallet Se Claim Karein</h3><form id="claim-request-form"><div class="form-group"><label for="claim-amount">Kitna Amount Claim Karna Hai? (min ₹10)</label><input type="number" id="claim-amount" min="10" required></div><p id="claim-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="claim-submit-btn">Request</button></div></form></div> </div>
-    <div id="coupons-modal" class="modal-overlay"> <div class="modal-content"> <h3>Aapke Coupons</h3> <div id="coupons-list"><div class="empty-state" style="border:none;"><h4>No Coupons</h4><p>Aapke paas abhi koi coupon nahi hai.</p></div></div> <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> </div> </div>
+    <div id="coupons-modal" class="modal-overlay"> <div class="modal-content"> <h3>Aapke Coupons</h3> <div id="coupons-list"></div> <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> </div> </div>
     <div id="scan-pay-modal" class="modal-overlay"> <div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div> </div>
     <div id="profile-modal" class="modal-overlay"> <div class="modal-content"> <h3>My Profile</h3> <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div> <div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div> <form id="password-change-form" style="margin-top: 20px;"> <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div> <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div> <button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p> </form> <button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button> <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> </div> </div>
     <div id="toast-notification" class="toast-notification"></div>
