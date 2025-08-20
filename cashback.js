@@ -22,6 +22,7 @@ let cashbackRequests = [];
 let userCoupons = [];
 let activeFilter = 'all';
 let pendingAction = null;
+let successPopupTimeout = null; // Timer for success popup
 
 // --- UI Helper Functions ---
 const showToast = (message) => {
@@ -39,13 +40,28 @@ const closeModal = (modalId) => {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
     if (modalId === 'scan-pay-modal') stopScanner();
+    // Agar success popup band ho raha hai, to timer clear kar do
+    if (modalId === 'success-popup' && successPopupTimeout) {
+        clearTimeout(successPopupTimeout);
+        successPopupTimeout = null;
+    }
 };
 const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
 const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
+
+// Updated showSuccessPopup function
 const showSuccessPopup = (title, message) => {
+    // Pehle se koi timer chal raha hai to use band kar do
+    if (successPopupTimeout) {
+        clearTimeout(successPopupTimeout);
+    }
     document.getElementById('success-popup-title').textContent = title;
     document.getElementById('success-popup-message').textContent = message;
     openModal('success-popup');
+    // 10 second ke baad popup ko automatic band karne ke liye timer set karo
+    successPopupTimeout = setTimeout(() => {
+        closeModal('success-popup');
+    }, 10000);
 };
 
 // --- Authentication ---
@@ -303,7 +319,39 @@ function handleWhatsAppSupport() { /* ... same as before ... */ }
 // --- Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('login-mobile').value}@ramazone.com`, document.getElementById('login-password').value).catch(() => showErrorMessage(document.getElementById('login-error-msg'), "Galat mobile/password.")); });
-    document.getElementById('register-form').addEventListener('submit', async e => { e.preventDefault(); try { const userCredential = await createUserWithEmailAndPassword(auth, `${document.getElementById('reg-mobile').value}@ramazone.com`, document.getElementById('reg-password').value); await updateProfile(userCredential.user, { displayName: document.getElementById('reg-name').value }); await setDoc(doc(db, 'users', userCredential.user.uid), { uid: userCredential.user.uid, name: document.getElementById('reg-name').value, mobile: document.getElementById('reg-mobile').value, wallet: 0, lifetimeEarning: 0, referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, referredBy: document.getElementById('reg-referral').value.trim().toUpperCase() || 'none', upline: [], createdAt: serverTimestamp() }); toggleView('login-view'); } catch (error) { showErrorMessage(document.getElementById('register-error-msg'), "Registration fail ho gaya."); } });
+    
+    // UPDATED: Registration form submit listener
+    document.getElementById('register-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const name = document.getElementById('reg-name').value;
+        const mobile = document.getElementById('reg-mobile').value;
+        const password = document.getElementById('reg-password').value;
+        const referral = document.getElementById('reg-referral').value.trim().toUpperCase() || 'none';
+        
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+            await updateProfile(userCredential.user, { displayName: name });
+            
+            // Storing user data including the password in Firestore
+            await setDoc(doc(db, 'users', userCredential.user.uid), {
+                uid: userCredential.user.uid,
+                name: name,
+                mobile: mobile,
+                password: password, // <-- PASSWORD SAVED HERE
+                wallet: 0,
+                lifetimeEarning: 0,
+                referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`,
+                referredBy: referral,
+                upline: [],
+                createdAt: serverTimestamp()
+            });
+            
+            toggleView('login-view');
+        } catch (error) {
+            showErrorMessage(document.getElementById('register-error-msg'), "Registration fail ho gaya. " + error.message);
+        }
+    });
+
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
@@ -329,6 +377,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.matches('.coupon-copy-btn')) {
             const code = e.target.dataset.code;
             navigator.clipboard.writeText(code).then(() => showToast(`Coupon ${code} copied!`));
+        }
+    });
+
+    // NEW: Click outside to close success popup
+    document.getElementById('success-popup').addEventListener('click', function(e) {
+        if (e.target === this) { // 'this' refers to the overlay itself
+            closeModal('success-popup');
         }
     });
 });
