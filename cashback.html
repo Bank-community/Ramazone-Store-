@@ -52,15 +52,20 @@
             background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
             color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(67, 100, 247, 0.3);
+            text-align: center;
         }
-        .wallet-balance-section { text-align: center; margin-bottom: 20px; }
+        #wallet-user-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; }
         .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); }
-        #wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; }
+        #wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; margin-bottom: 15px; }
         .wallet-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 15px; }
         .wallet-footer-item { text-align: center; }
         .wallet-footer-item p { font-size: 12px; color: rgba(255,255,255,0.8); }
         .wallet-footer-item .amount { font-size: 16px; font-weight: 600; }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
+        #wallet-referral-container { margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; background-color: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 15px; }
+        #wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
+        #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; }
+        #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
 
         .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         .action-card { 
@@ -142,14 +147,17 @@
             </div>
             
             <div class="wallet-card">
-                <div class="wallet-balance-section">
-                    <p class="wallet-balance-label">Available Balance</p>
-                    <p id="wallet-balance">₹ 0.00</p>
-                </div>
+                <h3 id="wallet-user-name">User Name</h3>
+                <p class="wallet-balance-label">Available Balance</p>
+                <p id="wallet-balance">₹ 0.00</p>
                 <div class="wallet-footer">
                     <div class="wallet-footer-item"><p>Credit Limit</p><span id="credit-limit" class="amount">₹0.00</span></div>
                     <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
                     <div class="wallet-footer-item"><p>Lifetime Earning</p><span id="lifetime-earning" class="amount">₹0.00</span></div>
+                </div>
+                <div id="wallet-referral-container">
+                    <span id="wallet-referral-id">REF-CODE</span>
+                    <button id="copy-referral-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
                 </div>
             </div>
 
