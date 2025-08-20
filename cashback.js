@@ -107,7 +107,7 @@ function updateDashboardUI(dbData, authUser) {
 function combineAndRenderHistory() {
     const formattedTransactions = allTransactions.map(t => ({ ...t, date: t.timestamp?.toDate(), isTransaction: true }));
     const formattedRequests = cashbackRequests
-        .filter(r => r.status === 'pending' || r.status === 'rejected') // Only show pending/rejected requests here
+        .filter(r => r.status === 'pending' || r.status === 'rejected')
         .map(r => ({ ...r, description: `Request for ${r.productName}`, date: r.requestDate?.toDate(), type: 'cashback', isTransaction: false }));
     
     const combined = [...formattedTransactions, ...formattedRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
@@ -127,7 +127,10 @@ function renderUnifiedHistory(items) {
         itemDiv.className = 'history-item';
         const amount = item.amount || item.cashbackAmount || 0;
         const sign = amount >= 0 ? '+' : '-';
-        const typeClass = amount >= 0 ? 'credit' : 'debit';
+        let typeClass = amount >= 0 ? 'credit' : 'debit';
+        if (item.status === 'rejected' || item.status === 'refunded') {
+            typeClass = 'rejected';
+        }
         itemDiv.innerHTML = `
             <div class="history-details">
                 <div class="history-info">
@@ -155,7 +158,10 @@ function renderCoupons() {
         couponCard.className = 'coupon-card';
         const date = coupon.createdAt ? coupon.createdAt.toDate().toLocaleDateString() : 'N/A';
         couponCard.innerHTML = `
-            <p class="coupon-amount">₹${coupon.amount}</p>
+            <div class="coupon-header">
+                <span class="coupon-amount">₹${coupon.amount}</span>
+                <button class="coupon-copy-btn" data-code="${coupon.code}">Copy</button>
+            </div>
             <p class="coupon-code">${coupon.code}</p>
             <p class="coupon-date">Issued on: ${date}</p>
         `;
@@ -197,75 +203,10 @@ async function handleVerificationConfirm() {
 }
 
 // --- QR Scanner ---
-function startScanner() {
-    stopScanner();
-    const video = document.getElementById('scanner-video');
-    const statusEl = document.getElementById('scanner-status');
-    document.getElementById('payment-form').style.display = 'none';
-    document.getElementById('scan-pay-initial-actions').style.display = 'flex';
-    statusEl.textContent = 'Starting camera...';
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            statusEl.textContent = 'Scanning for QR code...';
-            scannerAnimation = requestAnimationFrame(tick);
-        }).catch(() => statusEl.textContent = 'Could not access camera.');
-    const tick = () => {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-            if (code && code.data === '@RamazoneStoreCashback') {
-                handleSuccessfulScan(code.data);
-                return;
-            }
-        }
-        if(scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
-    };
-}
-
-function stopScanner() {
-    if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
-    scannerAnimation = null;
-    const video = document.getElementById('scanner-video');
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-    }
-}
-
-function handleSuccessfulScan(data) {
-    stopScanner();
-    document.getElementById('receiver-id-display').textContent = data;
-    document.getElementById('payment-form').style.display = 'block';
-    document.getElementById('scan-pay-initial-actions').style.display = 'none';
-    document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
-}
-
-function handleQrUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const image = new Image();
-        image.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = image.width;
-            canvas.height = image.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-            if (code && code.data === '@RamazoneStoreCashback') handleSuccessfulScan(code.data);
-            else showToast("No valid QR code found.");
-        };
-        image.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
+function startScanner() { /* ... same as before ... */ }
+function stopScanner() { /* ... same as before ... */ }
+function handleSuccessfulScan(data) { /* ... same as before ... */ }
+function handleQrUpload(event) { /* ... same as before ... */ }
 
 // --- Core Functionalities ---
 function handlePayment() {
@@ -310,7 +251,6 @@ function handleClaimRequest(e) {
                     userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
                     amount, status: "pending", requestDate: serverTimestamp()
                 });
-                // This transaction is created so the user sees the deduction immediately.
                 t.set(doc(collection(db, "transactions")), {
                     type: 'claim', amount: -amount, description: `Claim request for ₹${amount}`,
                     status: 'pending', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id], originalRequestId: claimRef.id
@@ -357,22 +297,8 @@ async function handleCashbackRequest(e) {
 }
 
 // --- Other Functions (Share, WhatsApp, etc.) ---
-function handleShare() {
-    if (!currentUserData) return;
-    const { referralId, name, lifetimeEarning } = currentUserData;
-    const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
-    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
-    if (navigator.share) navigator.share({ text: shareText });
-    else navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!"));
-}
-
-function handleWhatsAppSupport() {
-    if (!currentUserData) return showToast("Please wait for your data to load.");
-    const { name, referralId, lifetimeEarning, mobile } = currentUserData;
-    const message = `Name: ${name}\nMobile: ${mobile}\nReferral ID: ${referralId}\nLifetime Earning: ₹${(lifetimeEarning || 0).toFixed(2)}\n\nHelp Me`;
-    const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-}
+function handleShare() { /* ... same as before ... */ }
+function handleWhatsAppSupport() { /* ... same as before ... */ }
 
 // --- Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -399,5 +325,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
     document.getElementById('filter-bar').addEventListener('click', e => { const target = e.target.closest('.filter-btn'); if (!target) return; document.querySelector('#filter-bar .active')?.classList.remove('active'); target.classList.add('active'); activeFilter = target.dataset.filter; combineAndRenderHistory(); });
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
+    document.getElementById('coupons-list').addEventListener('click', (e) => {
+        if (e.target.matches('.coupon-copy-btn')) {
+            const code = e.target.dataset.code;
+            navigator.clipboard.writeText(code).then(() => showToast(`Coupon ${code} copied!`));
+        }
+    });
 });
+
+// --- Functions copied from previous versions for completeness ---
+startScanner = () => { stopScanner(); const video = document.getElementById('scanner-video'); const statusEl = document.getElementById('scanner-status'); document.getElementById('payment-form').style.display = 'none'; document.getElementById('scan-pay-initial-actions').style.display = 'flex'; statusEl.textContent = 'Starting camera...'; navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => { video.srcObject = stream; video.play(); statusEl.textContent = 'Scanning for QR code...'; scannerAnimation = requestAnimationFrame(tick); }).catch(() => statusEl.textContent = 'Could not access camera.'); const tick = () => { if (video.readyState === video.HAVE_ENOUGH_DATA) { const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height); const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height); if (code && code.data === '@RamazoneStoreCashback') { handleSuccessfulScan(code.data); return; } } if(scannerAnimation) scannerAnimation = requestAnimationFrame(tick); }; };
+stopScanner = () => { if (scannerAnimation) cancelAnimationFrame(scannerAnimation); scannerAnimation = null; const video = document.getElementById('scanner-video'); if (video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); video.srcObject = null; } };
+handleSuccessfulScan = (data) => { stopScanner(); document.getElementById('receiver-id-display').textContent = data; document.getElementById('payment-form').style.display = 'block'; document.getElementById('scan-pay-initial-actions').style.display = 'none'; document.getElementById('scanner-status').textContent = 'QR Code Scanned!'; };
+handleQrUpload = (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = e => { const image = new Image(); image.onload = () => { const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0, canvas.width, canvas.height); const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height); if (code && code.data === '@RamazoneStoreCashback') handleSuccessfulScan(code.data); else showToast("No valid QR code found."); }; image.src = e.target.result; }; reader.readAsDataURL(file); };
+handleShare = () => { if (!currentUserData) return; const { referralId, name, lifetimeEarning } = currentUserData; const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`; const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`; if (navigator.share) navigator.share({ text: shareText }); else navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!")); };
+handleWhatsAppSupport = () => { if (!currentUserData) return showToast("Please wait for your data to load."); const { name, referralId, lifetimeEarning, mobile } = currentUserData; const message = `Name: ${name}\nMobile: ${mobile}\nReferral ID: ${referralId}\nLifetime Earning: ₹${(lifetimeEarning || 0).toFixed(2)}\n\nHelp Me`; const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`; window.open(whatsappUrl, '_blank'); };
 
