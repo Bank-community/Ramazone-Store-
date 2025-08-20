@@ -22,6 +22,7 @@ let scannerAnimation = null;
 let allTransactions = [];
 let cashbackRequests = [];
 let activeFilter = 'all';
+let pendingAction = null;
 
 // --- UI Helper Functions ---
 const showToast = (message) => {
@@ -87,7 +88,6 @@ function detachAllListeners() {
 }
 
 function updateDashboardUI(dbData, authUser) {
-    document.getElementById('header-user-name').textContent = authUser.displayName;
     document.getElementById('wallet-user-name').textContent = authUser.displayName;
     document.getElementById('header-profile-img').src = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
     document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
@@ -133,6 +133,39 @@ function renderUnifiedHistory(items) {
     });
 }
 
+// --- Password Verification ---
+function verifyPasswordAndExecute(action) {
+    pendingAction = action;
+    openModal('password-verification-modal');
+}
+
+async function handleVerificationConfirm() {
+    const password = document.getElementById('verification-password').value;
+    const errorMsg = document.getElementById('verification-error-msg');
+    const confirmBtn = document.getElementById('verification-confirm-btn');
+    hideErrorMessage(errorMsg);
+    if (!password) return showErrorMessage(errorMsg, "Password is required.");
+
+    confirmBtn.disabled = true;
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, password);
+
+    try {
+        await reauthenticateWithCredential(user, credential);
+        closeModal('password-verification-modal');
+        if (pendingAction) {
+            pendingAction();
+            pendingAction = null;
+        }
+    } catch (error) {
+        showErrorMessage(errorMsg, "Incorrect password.");
+    } finally {
+        confirmBtn.disabled = false;
+        document.getElementById('verification-password').value = '';
+    }
+}
+
+// --- QR Scanner ---
 function startScanner() {
     stopScanner();
     const video = document.getElementById('scanner-video');
@@ -203,30 +236,34 @@ function handleQrUpload(event) {
     reader.readAsDataURL(file);
 }
 
-async function handlePayment() {
+// --- Core Functionalities ---
+function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
-    const btn = document.getElementById('pay-submit-btn');
     const errorMsg = document.getElementById('payment-error-msg');
     hideErrorMessage(errorMsg);
     if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
-    btn.disabled = true;
-    try {
-        await runTransaction(db, async (t) => {
-            const userRef = doc(db, "users", currentUserData.id);
-            const configRef = doc(db, "app_settings", "config");
-            t.update(userRef, { wallet: increment(-amount) });
-            t.update(configRef, { rmz_wallet_balance: increment(amount) });
-            t.set(doc(collection(db, "transactions")), { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id] });
-            t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.id, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
-        });
-        showToast(`₹${amount.toFixed(2)} paid successfully!`);
-        closeModal('scan-pay-modal');
-    } catch (error) {
-        showErrorMessage(errorMsg, "Payment failed.");
-    } finally {
-        btn.disabled = false;
-    }
+    
+    verifyPasswordAndExecute(async () => {
+        const btn = document.getElementById('pay-submit-btn');
+        btn.disabled = true;
+        try {
+            await runTransaction(db, async (t) => {
+                const userRef = doc(db, "users", currentUserData.id);
+                const configRef = doc(db, "app_settings", "config");
+                t.update(userRef, { wallet: increment(-amount) });
+                t.update(configRef, { rmz_wallet_balance: increment(amount) });
+                t.set(doc(collection(db, "transactions")), { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id] });
+                t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.id, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
+            });
+            showToast(`₹${amount.toFixed(2)} paid successfully!`);
+            closeModal('scan-pay-modal');
+        } catch (error) {
+            showErrorMessage(errorMsg, "Payment failed.");
+        } finally {
+            btn.disabled = false;
+        }
+    });
 }
 
 function handleShare() {
@@ -246,28 +283,42 @@ function handleWhatsAppSupport() {
     window.open(whatsappUrl, '_blank');
 }
 
-async function handleClaimRequest(e) {
+function handleClaimRequest(e) {
     e.preventDefault();
-    const btn = document.getElementById('claim-submit-btn');
     const errorMsg = document.getElementById('claim-error-msg');
     const amount = parseFloat(document.getElementById('claim-amount').value);
     hideErrorMessage(errorMsg);
     if (isNaN(amount) || amount < 10) return showErrorMessage(errorMsg, "Minimum claim is ₹10.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
-    btn.disabled = true;
-    try {
-        await addDoc(collection(db, "claim_requests"), {
-            userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
-            amount, status: "pending", requestDate: serverTimestamp()
-        });
-        showToast("Claim request sent successfully!");
-        closeModal('claim-modal');
-        document.getElementById('claim-request-form').reset();
-    } catch (error) {
-        showErrorMessage(errorMsg, "Failed to send request.");
-    } finally {
-        btn.disabled = false;
-    }
+    
+    verifyPasswordAndExecute(async () => {
+        const btn = document.getElementById('claim-submit-btn');
+        btn.disabled = true;
+        try {
+            await runTransaction(db, async (t) => {
+                const userRef = doc(db, "users", currentUserData.id);
+                // Deduct amount from wallet
+                t.update(userRef, { wallet: increment(-amount) });
+                // Create a claim request for admin
+                t.set(doc(collection(db, "claim_requests")), {
+                    userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
+                    amount, status: "pending", requestDate: serverTimestamp()
+                });
+                // Create a transaction record for user
+                t.set(doc(collection(db, "transactions")), {
+                    type: 'claim', amount: -amount, description: `Claim request for ₹${amount}`,
+                    status: 'pending', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id]
+                });
+            });
+            showToast("Claim request sent successfully!");
+            closeModal('claim-modal');
+            document.getElementById('claim-request-form').reset();
+        } catch (error) {
+            showErrorMessage(errorMsg, "Failed to send request.");
+        } finally {
+            btn.disabled = false;
+        }
+    });
 }
 
 async function handleCashbackRequest(e) {
@@ -325,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('claim-request-form').addEventListener('submit', handleClaimRequest);
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
+    document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
     document.getElementById('filter-bar').addEventListener('click', e => { const target = e.target.closest('.filter-btn'); if (!target) return; document.querySelector('#filter-bar .active')?.classList.remove('active'); target.classList.add('active'); activeFilter = target.dataset.filter; combineAndRenderHistory(); });
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 });
