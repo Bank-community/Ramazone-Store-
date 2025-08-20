@@ -56,9 +56,9 @@
         #wallet-user-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; }
         .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); }
         #wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; margin-bottom: 15px; }
-        .wallet-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 15px; }
+        .wallet-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 15px; }
         .wallet-footer-item { text-align: center; }
-        .wallet-footer-item p { font-size: 12px; color: rgba(255,255,255,0.8); }
+        .wallet-footer-item p { font-size: 12px; color: rgba(255,255,255,0.8); margin: 0; }
         .wallet-footer-item .amount { font-size: 16px; font-weight: 600; }
         #wallet-share-btn { cursor: pointer; }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
@@ -66,6 +66,7 @@
         #wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
         #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
         #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
+        .wallet-sub-items { grid-column: 1 / -1; display: flex; justify-content: space-around; margin-top: 15px; }
 
         .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         .action-card { 
@@ -89,7 +90,7 @@
         .history-info .date { font-size: 13px; color: var(--text-secondary); }
         .history-amount .amount.credit { color: var(--accent-green); }
         .history-amount .amount.debit { color: var(--due-red); }
-        .history-amount .amount.rejected { color: var(--due-red); } /* Style for rejected amounts */
+        .history-amount .amount.rejected { color: var(--due-red); }
         .history-amount .status { font-size: 12px; text-transform: capitalize; }
         
         /* --- Modals --- */
@@ -172,9 +173,12 @@
                 <p class="wallet-balance-label">Available Balance</p>
                 <p id="wallet-balance">₹ 0.00</p>
                 <div class="wallet-footer">
-                    <div class="wallet-footer-item"><p>Credit Limit</p><span id="credit-limit" class="amount">₹0.00</span></div>
-                    <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
                     <div class="wallet-footer-item"><p>Lifetime Earning</p><span id="lifetime-earning" class="amount">₹0.00</span></div>
+                    <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
+                    <div class="wallet-footer-item"><p>Total Credit</p><span id="credit-limit" class="amount">₹0.00</span></div>
+                    <div class="wallet-sub-items">
+                        <div class="wallet-footer-item"><p>Due Amount</p><span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span></div>
+                    </div>
                 </div>
                 <div id="wallet-referral-container">
                     <span id="wallet-referral-id">REF-CODE</span>
@@ -199,6 +203,8 @@
                     <button class="filter-btn" data-filter="commission">Commission</button>
                     <button class="filter-btn" data-filter="payment">Payments</button>
                     <button class="filter-btn" data-filter="claim">Claims</button>
+                    <button class="filter-btn" data-filter="credit">Credit</button>
+                    <button class="filter-btn" data-filter="due_payment">Due Paid</button>
                 </div>
                 <div id="unified-history-list" class="history-list"></div>
             </div>
