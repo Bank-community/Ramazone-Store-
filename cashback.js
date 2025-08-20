@@ -88,11 +88,13 @@ function detachAllListeners() {
 
 function updateDashboardUI(dbData, authUser) {
     document.getElementById('header-user-name').textContent = authUser.displayName;
+    document.getElementById('wallet-user-name').textContent = authUser.displayName;
     document.getElementById('header-profile-img').src = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
     document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
     document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
     document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
     document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
+    document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
 }
 
 function combineAndRenderHistory() {
@@ -315,6 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rescan-btn').addEventListener('click', startScanner);
     document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
+    document.getElementById('copy-referral-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!"));
+    });
     document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
     document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
     document.getElementById('claim-request-form').addEventListener('submit', handleClaimRequest);
