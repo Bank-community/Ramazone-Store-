@@ -5,10 +5,8 @@ import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, quer
 const firebaseConfig = {
     apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
     authDomain: "tipsplit-e3wes.firebaseapp.com",
-    databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "tipsplit-e3wes",
     storageBucket: "tipsplit-e3wes.appspot.com",
-    messagingSenderId: "984733883633",
     appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
 };
 
@@ -154,7 +152,7 @@ async function handleVerificationConfirm() {
         await reauthenticateWithCredential(user, credential);
         closeModal('password-verification-modal');
         if (pendingAction) {
-            pendingAction();
+            await pendingAction(); // Await the action to complete
             pendingAction = null;
         }
     } catch (error) {
@@ -244,6 +242,7 @@ function handlePayment() {
     if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
     
+    closeModal('scan-pay-modal'); // Close scanner modal first
     verifyPasswordAndExecute(async () => {
         const btn = document.getElementById('pay-submit-btn');
         btn.disabled = true;
@@ -257,9 +256,8 @@ function handlePayment() {
                 t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.id, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
             });
             showToast(`₹${amount.toFixed(2)} paid successfully!`);
-            closeModal('scan-pay-modal');
         } catch (error) {
-            showErrorMessage(errorMsg, "Payment failed.");
+            showToast("Payment failed. Please try again.");
         } finally {
             btn.disabled = false;
         }
@@ -291,30 +289,28 @@ function handleClaimRequest(e) {
     if (isNaN(amount) || amount < 10) return showErrorMessage(errorMsg, "Minimum claim is ₹10.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
     
+    closeModal('claim-modal'); // Close claim modal first
     verifyPasswordAndExecute(async () => {
         const btn = document.getElementById('claim-submit-btn');
         btn.disabled = true;
         try {
             await runTransaction(db, async (t) => {
                 const userRef = doc(db, "users", currentUserData.id);
-                // Deduct amount from wallet
                 t.update(userRef, { wallet: increment(-amount) });
-                // Create a claim request for admin
-                t.set(doc(collection(db, "claim_requests")), {
+                const claimRef = doc(collection(db, "claim_requests"));
+                t.set(claimRef, {
                     userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
                     amount, status: "pending", requestDate: serverTimestamp()
                 });
-                // Create a transaction record for user
                 t.set(doc(collection(db, "transactions")), {
                     type: 'claim', amount: -amount, description: `Claim request for ₹${amount}`,
-                    status: 'pending', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id]
+                    status: 'pending', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id], originalRequestId: claimRef.id
                 });
             });
             showToast("Claim request sent successfully!");
-            closeModal('claim-modal');
             document.getElementById('claim-request-form').reset();
         } catch (error) {
-            showErrorMessage(errorMsg, "Failed to send request.");
+            showToast("Failed to send request.");
         } finally {
             btn.disabled = false;
         }
@@ -331,8 +327,7 @@ async function handleCashbackRequest(e) {
     const productPrice = parseFloat(document.getElementById("product-price").value);
     if (!productName || isNaN(productPrice) || productPrice < 10) {
         showErrorMessage(errorMsg, "Sahi details daalein.");
-        btn.disabled = false;
-        return;
+        btn.disabled = false; return;
     }
     try {
         const configDoc = await getDoc(doc(db, "app_settings", "config"));
@@ -358,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('register-form').addEventListener('submit', async e => { e.preventDefault(); try { const userCredential = await createUserWithEmailAndPassword(auth, `${document.getElementById('reg-mobile').value}@ramazone.com`, document.getElementById('reg-password').value); await updateProfile(userCredential.user, { displayName: document.getElementById('reg-name').value }); await setDoc(doc(db, 'users', userCredential.user.uid), { uid: userCredential.user.uid, name: document.getElementById('reg-name').value, mobile: document.getElementById('reg-mobile').value, wallet: 0, lifetimeEarning: 0, referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, referredBy: document.getElementById('reg-referral').value.trim().toUpperCase() || 'none', upline: [], createdAt: serverTimestamp() }); toggleView('login-view'); } catch (error) { showErrorMessage(document.getElementById('register-error-msg'), "Registration fail ho gaya."); } });
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
-    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+    document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
     document.getElementById('open-profile-modal-header').addEventListener('click', () => openModal('profile-modal'));
     document.getElementById('open-profile-modal').addEventListener('click', () => openModal('profile-modal'));
     document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
@@ -368,9 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rescan-btn').addEventListener('click', startScanner);
     document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
-    document.getElementById('copy-referral-btn').addEventListener('click', () => {
-        navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!"));
-    });
+    document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
     document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
     document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
     document.getElementById('claim-request-form').addEventListener('submit', handleClaimRequest);
