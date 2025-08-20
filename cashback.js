@@ -107,7 +107,7 @@ function renderUnifiedHistory(items) {
     listEl.innerHTML = '';
     const filtered = items.filter(item => activeFilter === 'all' || item.type === activeFilter);
     if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="empty-state" style="border:none; padding: 20px 0;"><h4>No Transactions</h4></div>`;
+        listEl.innerHTML = `<div class="empty-state" style="border:none; padding: 20px 0; text-align:center; color: var(--text-secondary);"><h4>No Transactions</h4></div>`;
         return;
     }
     filtered.forEach(item => {
@@ -158,7 +158,7 @@ function startScanner() {
                 return;
             }
         }
-        scannerAnimation = requestAnimationFrame(tick);
+        if(scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
     };
 }
 
@@ -260,6 +260,7 @@ async function handleClaimRequest(e) {
         });
         showToast("Claim request sent successfully!");
         closeModal('claim-modal');
+        document.getElementById('claim-request-form').reset();
     } catch (error) {
         showErrorMessage(errorMsg, "Failed to send request.");
     } finally {
@@ -282,7 +283,7 @@ async function handleCashbackRequest(e) {
     }
     try {
         const configDoc = await getDoc(doc(db, "app_settings", "config"));
-        const cashbackPercentage = configDoc.exists() ? configDoc.data().cashback_percentage : 2;
+        const cashbackPercentage = configDoc.exists() && configDoc.data().cashback_percentage ? configDoc.data().cashback_percentage : 2;
         const cashbackAmount = productPrice * (cashbackPercentage / 100);
         await addDoc(collection(db, "cashback_requests"), {
             userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
@@ -290,6 +291,7 @@ async function handleCashbackRequest(e) {
         });
         showToast("Cashback request submitted!");
         closeModal('cashback-modal');
+        document.getElementById('cashback-request-form').reset();
     } catch (error) {
         showErrorMessage(errorMsg, `Error: ${error.message}`);
     } finally {
