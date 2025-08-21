@@ -16,9 +16,11 @@ const db = getFirestore(app);
 
 const container = document.getElementById('network-container');
 const loader = document.getElementById('loader');
+let currentUser = null;
 
 onAuthStateChanged(auth, user => {
     if (user) {
+        currentUser = user;
         buildNetworkTree(user.uid, container, 1);
     } else {
         loader.textContent = 'Please login to see your network.';
@@ -26,7 +28,7 @@ onAuthStateChanged(auth, user => {
 });
 
 async function buildNetworkTree(userId, parentElement, level) {
-    if (level > 5) return; // We only go 5 levels deep
+    if (level > 5) return;
 
     const referrals = await getDirectReferrals(userId);
     if (level === 1) loader.style.display = 'none';
@@ -38,11 +40,8 @@ async function buildNetworkTree(userId, parentElement, level) {
         return;
     }
 
-    const levelContainer = document.createElement('div');
-    levelContainer.className = 'level';
-
     for (const member of referrals) {
-        const commissionFromThisMember = await calculateCommissionFromMember(auth.currentUser.uid, member.uid);
+        const commissionFromThisMember = await calculateCommissionFromMember(currentUser.uid, member.name);
 
         const node = document.createElement('div');
         node.className = 'member-node';
@@ -59,13 +58,13 @@ async function buildNetworkTree(userId, parentElement, level) {
         `;
         
         const subLevelContainer = document.createElement('div');
-        subLevelContainer.style.display = 'none'; // Initially hidden
+        subLevelContainer.className = 'level';
+        subLevelContainer.style.display = 'none';
 
         node.addEventListener('click', () => {
-             if (subLevelContainer.innerHTML === '') { // Load sub-network only once
+             if (subLevelContainer.innerHTML === '') {
                 buildNetworkTree(member.uid, subLevelContainer, level + 1);
              }
-             // Toggle visibility
              subLevelContainer.style.display = subLevelContainer.style.display === 'none' ? 'block' : 'none';
         });
 
@@ -79,30 +78,44 @@ async function getDirectReferrals(userId) {
     if (!userDoc.exists()) return [];
     
     const referralId = userDoc.data().referralId;
+    if (!referralId) return [];
+
     const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
     const snapshot = await getDocs(q);
     
     return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
 }
 
-async function calculateCommissionFromMember(currentUserId, downlineMemberId) {
+async function calculateCommissionFromMember(currentUserId, downlineMemberName) {
     let totalCommission = 0;
     const q = query(
         collection(db, 'transactions'),
         where('involvedUsers', 'array-contains', currentUserId),
-        where('type', '==', 'commission')
+        where('type', '==', 'commission'),
+        where('description', 'includes', downlineMemberName) // More efficient query
     );
-    const snapshot = await getDocs(q);
-
-    for (const doc of snapshot.docs) {
-        const transaction = doc.data();
-        // This is a simplified logic. A more robust way would be to store the source of commission.
-        // For now, we assume the description contains the name of the original user.
-        const downlineMemberDoc = await getDoc(doc(db, 'users', downlineMemberId));
-        if (downlineMemberDoc.exists() && transaction.description.includes(downlineMemberDoc.data().name)) {
-            totalCommission += transaction.amount;
-        }
+    
+    try {
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            totalCommission += doc.data().amount;
+        });
+    } catch(e) {
+        // Firestore doesn't support 'includes' or 'contains' for queries.
+        // We have to fetch all commissions and filter client-side.
+        const allCommissionsQuery = query(
+            collection(db, 'transactions'),
+            where('involvedUsers', 'array-contains', currentUserId),
+            where('type', '==', 'commission')
+        );
+        const allSnapshot = await getDocs(allCommissionsQuery);
+        allSnapshot.forEach(doc => {
+            if (doc.data().description.includes(downlineMemberName)) {
+                totalCommission += doc.data().amount;
+            }
+        });
     }
+    
     return totalCommission;
 }
 
