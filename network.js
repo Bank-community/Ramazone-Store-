@@ -17,19 +17,26 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- DOM Elements ---
-const loader = document.getElementById('loader');
 const networkTreeContainer = document.getElementById('network-tree');
 const uplineListContainer = document.getElementById('upline-list');
+const downlineLoader = document.getElementById('downline-loader');
+const uplineLoader = document.getElementById('upline-loader');
 let currentUser = null;
+let currentUserData = null;
 
 // --- Authentication ---
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
     if (user) {
         currentUser = user;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+            currentUserData = userDoc.data();
+        }
         // Load downline by default
         loadDownline();
     } else {
-        loader.innerHTML = 'Please login to see your network.';
+        downlineLoader.innerHTML = 'Please login to see your network.';
+        uplineLoader.style.display = 'none';
     }
 });
 
@@ -50,42 +57,40 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 // --- Upline Logic ---
 async function loadUpline() {
-    uplineListContainer.innerHTML = '<div id="loader">Loading your upline...</div>';
-    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-    if (!userDoc.exists()) {
-        uplineListContainer.innerHTML = '<div class="empty-state">Could not find user data.</div>';
-        return;
-    }
-
-    const uplineUIDs = userDoc.data().upline || [];
+    uplineLoader.style.display = 'block';
+    const uplineUIDs = currentUserData.upline || [];
     if (uplineUIDs.length === 0) {
         uplineListContainer.innerHTML = '<div class="empty-state">You do not have an upline.</div>';
+        uplineLoader.style.display = 'none';
         return;
     }
 
-    uplineListContainer.innerHTML = ''; // Clear loader
+    uplineListContainer.innerHTML = ''; // Clear for content
     for (let i = 0; i < uplineUIDs.length; i++) {
         const uplineId = uplineUIDs[i];
         const uplineDoc = await getDoc(doc(db, 'users', uplineId));
         if (uplineDoc.exists()) {
             const uplineData = uplineDoc.data();
+            // NEW: Calculate commission paid to this upline member
+            const commissionPaid = await calculateCommissionPaidToUpline(uplineId);
             const node = createMemberNode({
                 name: uplineData.name,
                 level: i + 1,
-                commission: null, // We don't show commission for upline
-                isExpandable: false
+                amount: commissionPaid,
+                type: 'upline'
             });
             uplineListContainer.appendChild(node);
         }
     }
+    uplineLoader.style.display = 'none';
 }
 
 // --- Downline Logic ---
 async function loadDownline() {
-    loader.style.display = 'block';
+    downlineLoader.style.display = 'block';
     networkTreeContainer.innerHTML = '';
     await buildNetworkTree(currentUser.uid, networkTreeContainer, 1);
-    loader.style.display = 'none';
+    downlineLoader.style.display = 'none';
     if (networkTreeContainer.innerHTML === '') {
         networkTreeContainer.innerHTML = '<div class="empty-state">You have no members in your network yet.</div>';
     }
@@ -104,7 +109,8 @@ async function buildNetworkTree(userId, parentElement, level) {
         const node = createMemberNode({
             name: member.name,
             level: level,
-            commission: commissionFromThisMember,
+            amount: commissionFromThisMember,
+            type: 'downline',
             isExpandable: hasSubReferrals
         });
         
@@ -113,39 +119,54 @@ async function buildNetworkTree(userId, parentElement, level) {
         if (hasSubReferrals) {
             const subLevelContainer = document.createElement('div');
             subLevelContainer.className = 'level';
-            subLevelContainer.style.display = 'none'; // Initially hidden
             parentElement.appendChild(subLevelContainer);
 
             node.addEventListener('click', () => {
                 node.classList.toggle('expanded');
+                subLevelContainer.classList.toggle('expanded');
                 if (subLevelContainer.innerHTML === '') { // Load sub-network only once
-                    buildNetworkTree(member.uid, subLevelContainer, level + 1);
+                    subLevelContainer.innerHTML = `<div id="loader" style="padding: 10px;">Loading...</div>`;
+                    buildNetworkTree(member.uid, subLevelContainer, level + 1).then(() => {
+                        subLevelContainer.querySelector('#loader').remove();
+                    });
                 }
-                subLevelContainer.style.display = subLevelContainer.style.display === 'none' ? 'block' : 'none';
             });
         }
     }
 }
 
-// --- Helper Functions ---
-function createMemberNode({ name, level, commission, isExpandable }) {
+// --- Helper & Calculation Functions ---
+function createMemberNode({ name, level, amount, type, isExpandable = false }) {
     const node = document.createElement('div');
     node.className = 'member-node';
-    if (isExpandable) {
-        node.classList.add('expandable');
+    if (isExpandable) node.classList.add('expandable');
+
+    let amountHTML, levelHTML, avatarColor;
+
+    if (type === 'downline') {
+        amountHTML = `<div class="amount income">+ ₹${amount.toFixed(2)}</div><div class="label">Total Earning</div>`;
+        levelHTML = `<div class="member-level"><span>🏅</span> Level ${level}</div>`;
+        avatarColor = `var(--brand-red)`;
+    } else { // upline
+        amountHTML = `<div class="amount expense">- ₹${amount.toFixed(2)}</div><div class="label">Commission Paid</div>`;
+        levelHTML = `<div class="member-level"><span>🔼</span> Level ${level} Upline</div>`;
+        avatarColor = `#3498db`;
     }
 
-    const commissionHTML = commission !== null ? `<div class="commission">+ ₹${commission.toFixed(2)}</div>` : '';
+    const expandIconHTML = isExpandable ? `<div class="expand-icon">›</div>` : '';
 
     node.innerHTML = `
-        <div class="member-info">
-            <div class="member-avatar">${name.charAt(0).toUpperCase()}</div>
-            <div class="member-details">
-                <div class="member-name">${name}</div>
-                <div class="member-level">Level ${level}</div>
+        <div class="member-header">
+            <div class="member-info">
+                <div class="member-avatar" style="background-color: ${avatarColor};">${name.charAt(0).toUpperCase()}</div>
+                <div class="member-details">
+                    <div class="member-name">${name}</div>
+                    ${levelHTML}
+                </div>
             </div>
+            <div class="member-stats">${amountHTML}</div>
+            ${expandIconHTML}
         </div>
-        <div class="member-stats">${commissionHTML}</div>
     `;
     return node;
 }
@@ -179,16 +200,39 @@ async function calculateCommissionFromMember(currentUserId, downlineMemberName) 
         const q = query(
             collection(db, 'transactions'),
             where('involvedUsers', 'array-contains', currentUserId),
-            where('type', '==', 'commission')
+            where('type', '==', 'commission'),
+            where('description', '>', `Commission from ${downlineMemberName}`),
+            where('description', '<', `Commission from ${downlineMemberName}~`)
         );
         const snapshot = await getDocs(q);
         snapshot.forEach(doc => {
-            if (doc.data().description.includes(downlineMemberName)) {
-                totalCommission += doc.data().amount;
-            }
+            totalCommission += doc.data().amount;
         });
     } catch (error) {
-        console.error("Error calculating commission:", error);
+        console.error("Error calculating commission from member:", error);
+    }
+    return totalCommission;
+}
+
+// NEW FUNCTION to calculate commission paid to upline
+async function calculateCommissionPaidToUpline(uplineMemberId) {
+    let totalCommission = 0;
+    if (!currentUserData || !currentUserData.name) return 0;
+
+    try {
+        const q = query(
+            collection(db, 'transactions'),
+            where('involvedUsers', 'array-contains', uplineMemberId),
+            where('type', '==', 'commission'),
+            where('description', '>', `Commission from ${currentUserData.name}`),
+            where('description', '<', `Commission from ${currentUserData.name}~`)
+        );
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            totalCommission += doc.data().amount;
+        });
+    } catch (error) {
+        console.error("Error calculating commission paid to upline:", error);
     }
     return totalCommission;
 }
