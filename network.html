@@ -9,45 +9,58 @@
         :root {
             --bg-page: #f4f7f9; --bg-card: #ffffff; --text-primary: #1c2028;
             --text-secondary: #5a647e; --border-color: #e8eef3; --brand-red: #e50914;
-            --accent-green: #2ecc71; --accent-blue: #3498db;
+            --accent-green: #27ae60; --accent-red-light: #c0392b;
         }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-page); margin: 0; padding: 15px; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-page); margin: 0; padding: 15px; color: var(--text-primary); }
         .header { display: flex; align-items: center; gap: 15px; background: var(--bg-card); padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .header h1 { font-size: 18px; margin: 0; }
+        .header h1 { font-size: 18px; font-weight: 600; margin: 0; }
         #back-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
-        #back-btn svg { width: 24px; height: 24px; }
+        #back-btn svg { width: 24px; height: 24px; stroke: var(--text-primary); }
         
         .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; }
+        .tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
         .tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
 
-        .content-container { padding: 20px; background: var(--bg-card); border-radius: 12px; min-height: 300px; }
+        .content-container { background: var(--bg-card); border-radius: 12px; padding: 15px; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .level { margin-left: 15px; border-left: 2px solid var(--border-color); padding-left: 15px; }
-        .member-node { background-color: #fafafa; display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s; border: 1px solid var(--border-color); }
-        .member-node.expandable::after { content: '›'; font-size: 24px; color: var(--text-secondary); transition: transform 0.2s; }
-        .member-node.expanded::after { transform: rotate(90deg); }
-        
+        .level { margin-left: 20px; border-left: 2px solid var(--border-color); padding-left: 15px; overflow: hidden; max-height: 0; transition: max-height 0.5s ease-in-out; }
+        .level.expanded { max-height: 1000px; /* Adjust as needed */ }
+
+        .member-node {
+            background-color: var(--bg-page); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 12px; margin-bottom: 10px;
+            transition: box-shadow 0.2s;
+        }
+        .member-node.expandable { cursor: pointer; }
+        .member-node.expandable:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+        .member-header { display: flex; align-items: center; justify-content: space-between; }
         .member-info { display: flex; align-items: center; gap: 12px; }
         .member-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--brand-red); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
-        .member-details { display: flex; flex-direction: column; }
-        .member-name { font-weight: 500; }
-        .member-level { font-size: 12px; color: var(--text-secondary); }
-        .member-stats .commission { font-size: 14px; font-weight: 600; color: var(--accent-green); }
-        
-        .upline-list .member-node { cursor: default; }
-        .upline-list .member-node::after { display: none; }
+        .member-details .member-name { font-weight: 600; font-size: 15px; }
+        .member-details .member-level {
+            font-size: 11px; color: var(--text-secondary); background: #e8eef3;
+            padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .member-stats { text-align: right; }
+        .member-stats .amount { font-size: 16px; font-weight: 700; }
+        .member-stats .amount.income { color: var(--accent-green); }
+        .member-stats .amount.expense { color: var(--accent-red-light); }
+        .member-stats .label { font-size: 11px; color: var(--text-secondary); }
 
-        #loader { text-align: center; padding: 30px; }
-        .empty-state { text-align: center; padding: 30px; color: var(--text-secondary); }
+        .expand-icon { transition: transform 0.3s ease; }
+        .member-node.expanded .expand-icon { transform: rotate(90deg); }
+
+        #loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
     </style>
 </head>
 <body>
     <div class="header">
-        <button id="back-btn" onclick="window.history.back()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <button id="back-btn" onclick="window.location.href='index.html'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </button>
         <h1>My Network</h1>
     </div>
@@ -59,10 +72,11 @@
 
     <div class="content-container">
         <div id="downline-content" class="tab-content active">
-            <div id="loader">Loading your network...</div>
+            <div id="downline-loader">Loading your network...</div>
             <div id="network-tree"></div>
         </div>
         <div id="upline-content" class="tab-content">
+            <div id="upline-loader">Loading your upline...</div>
             <div id="upline-list"></div>
         </div>
     </div>
