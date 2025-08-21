@@ -241,8 +241,7 @@ function renderCoupons() {
     });
 }
 
-// --- Core Logic Functions (Unchanged) ---
-// ... (All functions like verifyPasswordAndExecute, handlePayment, handleClaimRequest, etc. remain here)
+// --- Core Logic Functions ---
 function verifyPasswordAndExecute(action, sourceModalId) {
     if (sourceModalId) closeModal(sourceModalId);
     pendingAction = action;
@@ -362,7 +361,7 @@ async function handleCashbackRequest(e) {
     }
 }
 
-// --- Scanner and Utility Functions (Unchanged) ---
+// --- Scanner and Utility Functions ---
 function startScanner() {
     stopScanner();
     const video = document.getElementById('scanner-video');
@@ -444,7 +443,7 @@ function handleWhatsAppSupport() {
     window.open(whatsappUrl, '_blank');
 }
 
-// --- NEW: Network Modal Logic ---
+// --- Network Modal Logic ---
 const networkTreeContainer = document.getElementById('network-tree');
 const uplineListContainer = document.getElementById('upline-list');
 const networkLoader = document.getElementById('network-loader');
@@ -465,7 +464,7 @@ async function loadUpline() {
         const uplineDoc = await getDoc(doc(db, 'users', uplineId));
         if (uplineDoc.exists()) {
             const uplineData = uplineDoc.data();
-            const commissionPaid = await calculateCommissionPaidToUpline(uplineId);
+            const commissionPaid = await calculateCommissionPaidToUpline(uplineId, currentUserData.name);
             const node = createMemberNode({
                 name: uplineData.name,
                 level: i + 1,
@@ -495,8 +494,7 @@ async function buildNetworkTree(userId, parentElement, level) {
     if (referrals.length === 0) return;
 
     for (const member of referrals) {
-        // BUG FIX: Passing member's UID for accurate calculation
-        const commissionFromThisMember = await calculateCommissionFromMember(currentUser.uid, member.uid);
+        const commissionFromThisMember = await calculateCommissionFromMember(currentUser.uid, member.uid, member.name);
         const hasSubReferrals = await checkSubReferrals(member.uid);
 
         const node = createMemberNode({
@@ -586,50 +584,47 @@ async function checkSubReferrals(userId) {
     return referrals.length > 0;
 }
 
-// --- BUG FIX: Commission calculation is now based on UID, not name ---
-// NOTE: For this to work, your commission transaction documents in Firestore
-// MUST have a field named 'commissionFromUid' containing the UID of the user
-// who generated the commission (e.g., the person who made the purchase).
-async function calculateCommissionFromMember(currentUserId, downlineMemberUID) {
+// --- UPDATED & FIXED: Commission Calculation Logic ---
+async function calculateCommission(baseQuery, fallbackName) {
     let totalCommission = 0;
     try {
-        const q = query(
-            collection(db, 'transactions'),
-            where('involvedUsers', 'array-contains', currentUserId),
-            where('type', '==', 'commission'),
-            where('commissionFromUid', '==', downlineMemberUID) // More reliable query
-        );
-        const snapshot = await getDocs(q);
+        // First, try the new, more reliable method (with commissionFromUid)
+        const newQuery = query(baseQuery, where('commissionFromUid', '==', fallbackName.uid));
+        let snapshot = await getDocs(newQuery);
+
+        // If new method yields no results, try the old method (with description)
+        if (snapshot.empty) {
+            const oldQuery = query(baseQuery, where('description', '==', `Commission from ${fallbackName.name}`));
+            snapshot = await getDocs(oldQuery);
+        }
+
         snapshot.forEach(doc => {
             totalCommission += doc.data().amount;
         });
     } catch (error) {
-        console.error("Error calculating commission from member:", error);
+        console.error("Error calculating commission:", error);
     }
     return totalCommission;
 }
 
-// --- BUG FIX: Commission calculation is now based on UID ---
-// NOTE: This also requires the 'commissionFromUid' field.
-async function calculateCommissionPaidToUpline(uplineMemberId) {
-    let totalCommission = 0;
-    if (!currentUser) return 0;
+async function calculateCommissionFromMember(currentUserId, downlineMemberUID, downlineMemberName) {
+    const baseQuery = query(
+        collection(db, 'transactions'),
+        where('involvedUsers', 'array-contains', currentUserId),
+        where('type', '==', 'commission')
+    );
+    // Use a combined object for fallback
+    return await calculateCommission(baseQuery, { uid: downlineMemberUID, name: downlineMemberName });
+}
 
-    try {
-        const q = query(
-            collection(db, 'transactions'),
-            where('involvedUsers', 'array-contains', uplineMemberId),
-            where('type', '==', 'commission'),
-            where('commissionFromUid', '==', currentUser.uid) // More reliable query
-        );
-        const snapshot = await getDocs(q);
-        snapshot.forEach(doc => {
-            totalCommission += doc.data().amount;
-        });
-    } catch (error) {
-        console.error("Error calculating commission paid to upline:", error);
-    }
-    return totalCommission;
+async function calculateCommissionPaidToUpline(uplineMemberId, currentUserName) {
+     const baseQuery = query(
+        collection(db, 'transactions'),
+        where('involvedUsers', 'array-contains', uplineMemberId),
+        where('type', '==', 'commission')
+    );
+    // Use a combined object for fallback
+    return await calculateCommission(baseQuery, { uid: currentUser.uid, name: currentUserName });
 }
 
 
@@ -762,12 +757,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- NEW: Network Modal Listeners ---
+    // Network Modal Listeners
     document.getElementById('open-network-modal').addEventListener('click', () => {
         openModal('network-modal');
         if (!isNetworkLoaded) {
             loadDownline();
-            isNetworkLoaded = true; // Load only once per session
+            isNetworkLoaded = true;
         }
     });
 
