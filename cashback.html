@@ -6,7 +6,7 @@
     <title>Ramazone Cashback</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;7.00;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-page: #f4f7f9; --bg-card: #ffffff; --text-primary: #1c2028;
@@ -73,7 +73,7 @@
             background-color: var(--bg-card); padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; 
             transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border-color);
             display: flex; flex-direction: column; justify-content: center; align-items: center; aspect-ratio: 1/1;
-            position: relative; /* Added for badge positioning */
+            position: relative;
         }
         .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.07); }
         .action-card .icon { margin-bottom: 8px; width: 30px; height: 30px; }
@@ -92,10 +92,9 @@
         .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
         
-        /* --- NEW: Transaction Summary Box --- */
         #transaction-summary {
             background-color: var(--bg-page); border-radius: 10px; padding: 12px 15px;
-            margin-bottom: 15px; display: none; /* Hidden by default */
+            margin-bottom: 15px; display: none;
             justify-content: space-between; align-items: center;
             border: 1px solid var(--border-color);
         }
@@ -214,16 +213,19 @@
                 <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">Scan & Pay</span></div>
                 <div id="open-claim-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/279390/money-cash.svg"><span class="card-text">Claim</span></div>
                 <div id="open-coupons-modal" class="action-card">
-                    <span class="coupon-count-badge">0</span> <!-- Coupon Count Badge -->
+                    <span class="coupon-count-badge">0</span>
                     <img class="icon" src="https://www.svgrepo.com/show/301726/coupon.svg"><span class="card-text">Coupons</span>
                 </div>
-                <div id="open-profile-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/512729/profile-round-1342.svg"><span class="card-text">Profile</span></div>
+                <!-- UPDATED: Profile button is now Network button -->
+                <div id="open-network-page" class="action-card">
+                    <img class="icon" src="https://www.svgrepo.com/show/512729/profile-round-1342.svg">
+                    <span class="card-text">Network</span>
+                </div>
                 <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
             </div>
 
             <div class="section">
                 <h2 class="section-title">All Transactions</h2>
-                <!-- NEW: Transaction Summary Box -->
                 <div id="transaction-summary">
                     <span class="summary-label">Total Amount</span>
                     <span class="summary-amount">₹0.00</span>
@@ -234,7 +236,7 @@
                     <button class="filter-btn" data-filter="commission">Commission</button>
                     <button class="filter-btn" data-filter="payment">Payments</button>
                     <button class="filter-btn" data-filter="claim">Claims</button>
-                    <button class="filter-btn" data-filter="coupon_redeem">Redeemed</button> <!-- Added filter -->
+                    <button class="filter-btn" data-filter="coupon_redeem">Redeemed</button>
                     <button class="filter-btn" data-filter="credit">Credit</button>
                     <button class="filter-btn" data-filter="due_payment">Due Paid</button>
                 </div>
