@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, writeBatch, serverTimestamp, orderBy, limit, runTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
     authDomain: "tipsplit-e3wes.firebaseapp.com",
@@ -10,11 +11,12 @@ const firebaseConfig = {
     appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
 };
 
+// --- Initialize Firebase ---
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Global variables
+// --- Global Variables ---
 let currentUserData = null;
 let activeListeners = [];
 let scannerAnimation = null;
@@ -56,7 +58,7 @@ const showSuccessPopup = (title, message) => {
     successPopupTimeout = setTimeout(() => closeModal('success-popup'), 10000);
 };
 
-// --- Authentication ---
+// --- Authentication State Manager ---
 onAuthStateChanged(auth, user => {
     if (user && user.displayName) {
         toggleView('dashboard-view');
@@ -116,7 +118,6 @@ function updateDashboardUI(dbData, authUser) {
     document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
 }
 
-// FULLY FUNCTIONAL: Combines and renders history
 function combineAndRenderHistory() {
     const formattedTransactions = allTransactions.map(t => ({ ...t, date: t.timestamp?.toDate(), isTransaction: true }));
     const formattedRequests = cashbackRequests
@@ -127,16 +128,11 @@ function combineAndRenderHistory() {
     renderUnifiedHistory(combined);
 }
 
-// FULLY FUNCTIONAL: Renders the combined history list
 function renderUnifiedHistory(items) {
     const listEl = document.getElementById('unified-history-list');
     listEl.innerHTML = '';
     const filtered = items.filter(item => {
         if (activeFilter === 'all') return true;
-        if (item.isTransaction) {
-            return item.type === activeFilter;
-        }
-        // This handles cashback requests which are not transactions yet
         return item.type === activeFilter;
     });
 
@@ -154,7 +150,7 @@ function renderUnifiedHistory(items) {
         
         if(item.type === 'due_payment') {
             typeClass = 'debit';
-            sign = ''; // Amount is already negative
+            sign = '';
         }
 
         if (item.status === 'rejected' || item.status === 'refunded') {
@@ -175,7 +171,6 @@ function renderUnifiedHistory(items) {
     });
 }
 
-// FULLY FUNCTIONAL: Renders coupons
 function renderCoupons() {
     const listEl = document.getElementById('coupons-list');
     listEl.innerHTML = '';
@@ -200,14 +195,12 @@ function renderCoupons() {
 }
 
 // --- Core Logic Functions ---
-// FULLY FUNCTIONAL: Password verification
 function verifyPasswordAndExecute(action, sourceModalId) {
     if (sourceModalId) closeModal(sourceModalId);
     pendingAction = action;
     openModal('password-verification-modal');
 }
 
-// FULLY FUNCTIONAL: Handles password confirmation
 async function handleVerificationConfirm() {
     const password = document.getElementById('verification-password').value;
     const errorMsg = document.getElementById('verification-error-msg');
@@ -234,7 +227,6 @@ async function handleVerificationConfirm() {
     }
 }
 
-// FULLY FUNCTIONAL: Handles Scan & Pay
 function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
@@ -259,7 +251,6 @@ function handlePayment() {
     }, 'scan-pay-modal');
 }
 
-// FULLY FUNCTIONAL: Handles claim requests
 function handleClaimRequest(e) {
     e.preventDefault();
     const errorMsg = document.getElementById('claim-error-msg');
@@ -291,7 +282,6 @@ function handleClaimRequest(e) {
     }, 'claim-modal');
 }
 
-// FULLY FUNCTIONAL: Handles cashback requests
 async function handleCashbackRequest(e) {
     e.preventDefault();
     const btn = document.getElementById('cashback-submit-btn');
@@ -324,12 +314,100 @@ async function handleCashbackRequest(e) {
     }
 }
 
-// --- Event Listeners ---
+// --- Scanner and Utility Functions ---
+function startScanner() {
+    stopScanner();
+    const video = document.getElementById('scanner-video');
+    const statusEl = document.getElementById('scanner-status');
+    document.getElementById('payment-form').style.display = 'none';
+    document.getElementById('scan-pay-initial-actions').style.display = 'flex';
+    statusEl.textContent = 'Starting camera...';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
+        video.srcObject = stream;
+        video.play();
+        statusEl.textContent = 'Scanning for QR code...';
+        scannerAnimation = requestAnimationFrame(tick);
+    }).catch(() => statusEl.textContent = 'Could not access camera.');
+    const tick = () => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+            if (code && code.data === '@RamazoneStoreCashback') {
+                handleSuccessfulScan(code.data);
+                return;
+            }
+        }
+        if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
+    };
+}
+function stopScanner() {
+    if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
+    scannerAnimation = null;
+    const video = document.getElementById('scanner-video');
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+}
+function handleSuccessfulScan(data) {
+    stopScanner();
+    document.getElementById('receiver-id-display').textContent = data;
+    document.getElementById('payment-form').style.display = 'block';
+    document.getElementById('scan-pay-initial-actions').style.display = 'none';
+    document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
+}
+function handleQrUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const image = new Image();
+        image.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+            if (code && code.data === '@RamazoneStoreCashback') handleSuccessfulScan(code.data);
+            else showToast("No valid QR code found.");
+        };
+        image.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+function handleShare() {
+    if (!currentUserData) return;
+    const { referralId, name, lifetimeEarning } = currentUserData;
+    const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
+    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
+    if (navigator.share) navigator.share({ text: shareText });
+    else navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!"));
+}
+function handleWhatsAppSupport() {
+    if (!currentUserData) return showToast("Please wait for your data to load.");
+    const { name, referralId, lifetimeEarning, mobile } = currentUserData;
+    const message = `Name: ${name}\nMobile: ${mobile}\nReferral ID: ${referralId}\nLifetime Earning: ₹${(lifetimeEarning || 0).toFixed(2)}\n\nHelp Me`;
+    const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+}
+
+// --- Main Event Listener Setup ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Login
-    document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('login-mobile').value}@ramazone.com`, document.getElementById('login-password').value).catch(() => showErrorMessage(document.getElementById('login-error-msg'), "Galat mobile/password.")); });
+    // Login Form
+    document.getElementById('login-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const mobile = document.getElementById('login-mobile').value;
+        const password = document.getElementById('login-password').value;
+        signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
+            .catch(() => showErrorMessage(document.getElementById('login-error-msg'), "Galat mobile/password."));
+    });
     
-    // Registration (FIXED)
+    // Registration Form
     document.getElementById('register-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const registerButton = e.target.querySelector('button');
@@ -407,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Other UI Listeners
+    // All other buttons and links
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
@@ -427,7 +505,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
     document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
-    document.getElementById('filter-bar').addEventListener('click', e => { const target = e.target.closest('.filter-btn'); if (!target) return; document.querySelector('#filter-bar .active')?.classList.remove('active'); target.classList.add('active'); activeFilter = target.dataset.filter; combineAndRenderHistory(); });
+    document.getElementById('filter-bar').addEventListener('click', e => {
+        const target = e.target.closest('.filter-btn');
+        if (!target) return;
+        document.querySelector('#filter-bar .active')?.classList.remove('active');
+        target.classList.add('active');
+        activeFilter = target.dataset.filter;
+        combineAndRenderHistory();
+    });
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
     document.getElementById('coupons-list').addEventListener('click', (e) => {
         if (e.target.matches('.coupon-copy-btn')) {
@@ -441,12 +526,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-// --- Scanner and Share Functions ---
-startScanner = () => { stopScanner(); const video = document.getElementById('scanner-video'); const statusEl = document.getElementById('scanner-status'); document.getElementById('payment-form').style.display = 'none'; document.getElementById('scan-pay-initial-actions').style.display = 'flex'; statusEl.textContent = 'Starting camera...'; navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => { video.srcObject = stream; video.play(); statusEl.textContent = 'Scanning for QR code...'; scannerAnimation = requestAnimationFrame(tick); }).catch(() => statusEl.textContent = 'Could not access camera.'); const tick = () => { if (video.readyState === video.HAVE_ENOUGH_DATA) { const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height); const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height); if (code && code.data === '@RamazoneStoreCashback') { handleSuccessfulScan(code.data); return; } } if(scannerAnimation) scannerAnimation = requestAnimationFrame(tick); }; };
-stopScanner = () => { if (scannerAnimation) cancelAnimationFrame(scannerAnimation); scannerAnimation = null; const video = document.getElementById('scanner-video'); if (video.srcObject) { video.srcObject.getTracks().forEach(track => track.stop()); video.srcObject = null; } };
-handleSuccessfulScan = (data) => { stopScanner(); document.getElementById('receiver-id-display').textContent = data; document.getElementById('payment-form').style.display = 'block'; document.getElementById('scan-pay-initial-actions').style.display = 'none'; document.getElementById('scanner-status').textContent = 'QR Code Scanned!'; };
-handleQrUpload = (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = e => { const image = new Image(); image.onload = () => { const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0, canvas.width, canvas.height); const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height); if (code && code.data === '@RamazoneStoreCashback') handleSuccessfulScan(code.data); else showToast("No valid QR code found."); }; image.src = e.target.result; }; reader.readAsDataURL(file); };
-handleShare = () => { if (!currentUserData) return; const { referralId, name, lifetimeEarning } = currentUserData; const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`; const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`; if (navigator.share) navigator.share({ text: shareText }); else navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!")); };
-handleWhatsAppSupport = () => { if (!currentUserData) return showToast("Please wait for your data to load."); const { name, referralId, lifetimeEarning, mobile } = currentUserData; const message = `Name: ${name}\nMobile: ${mobile}\nReferral ID: ${referralId}\nLifetime Earning: ₹${(lifetimeEarning || 0).toFixed(2)}\n\nHelp Me`; const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`; window.open(whatsappUrl, '_blank'); };
 
