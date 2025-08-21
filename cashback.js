@@ -17,6 +17,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- Global Variables ---
+let currentUser = null;
 let currentUserData = null;
 let activeListeners = [];
 let scannerAnimation = null;
@@ -26,6 +27,7 @@ let userCoupons = [];
 let activeFilter = 'all';
 let pendingAction = null;
 let successPopupTimeout = null;
+let isNetworkLoaded = false; // To prevent reloading network data
 
 // --- UI Helper Functions ---
 const showToast = (message) => {
@@ -61,17 +63,12 @@ const showSuccessPopup = (title, message) => {
 // --- Authentication State Manager ---
 onAuthStateChanged(auth, user => {
     if (user && user.displayName) {
+        currentUser = user;
         toggleView('dashboard-view');
         attachRealtimeListeners(user);
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('ref')) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
     } else if (!user) {
         detachAllListeners();
-        const refCode = new URLSearchParams(window.location.search).get('ref');
-        toggleView(refCode ? 'registration-view' : 'login-view');
-        if (refCode) document.getElementById('reg-referral').value = refCode;
+        toggleView('login-view');
     }
 });
 
@@ -105,7 +102,7 @@ function detachAllListeners() {
     activeListeners = [];
 }
 
-// --- UI Update Functions ---
+// --- UI Update Functions (Dashboard) ---
 function updateDashboardUI(dbData, authUser) {
     document.getElementById('wallet-user-name').textContent = authUser.displayName;
     document.getElementById('header-profile-img').src = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
@@ -244,7 +241,8 @@ function renderCoupons() {
     });
 }
 
-// --- Core Logic Functions ---
+// --- Core Logic Functions (Unchanged) ---
+// ... (All functions like verifyPasswordAndExecute, handlePayment, handleClaimRequest, etc. remain here)
 function verifyPasswordAndExecute(action, sourceModalId) {
     if (sourceModalId) closeModal(sourceModalId);
     pendingAction = action;
@@ -364,7 +362,7 @@ async function handleCashbackRequest(e) {
     }
 }
 
-// --- Scanner and Utility Functions ---
+// --- Scanner and Utility Functions (Unchanged) ---
 function startScanner() {
     stopScanner();
     const video = document.getElementById('scanner-video');
@@ -428,7 +426,7 @@ function handleQrUpload(event) {
         };
         image.src = e.target.result;
     };
-    reader.readAsURL(file);
+    reader.readAsDataURL(file);
 }
 function handleShare() {
     if (!currentUserData) return;
@@ -445,6 +443,195 @@ function handleWhatsAppSupport() {
     const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
 }
+
+// --- NEW: Network Modal Logic ---
+const networkTreeContainer = document.getElementById('network-tree');
+const uplineListContainer = document.getElementById('upline-list');
+const networkLoader = document.getElementById('network-loader');
+const uplineLoader = document.getElementById('upline-loader');
+
+async function loadUpline() {
+    uplineLoader.style.display = 'block';
+    uplineListContainer.innerHTML = '';
+    const uplineUIDs = currentUserData.upline || [];
+    if (uplineUIDs.length === 0) {
+        uplineListContainer.innerHTML = '<div class="empty-state">Aapke paas koi upline nahi hai.</div>';
+        uplineLoader.style.display = 'none';
+        return;
+    }
+
+    for (let i = 0; i < uplineUIDs.length; i++) {
+        const uplineId = uplineUIDs[i];
+        const uplineDoc = await getDoc(doc(db, 'users', uplineId));
+        if (uplineDoc.exists()) {
+            const uplineData = uplineDoc.data();
+            const commissionPaid = await calculateCommissionPaidToUpline(uplineId);
+            const node = createMemberNode({
+                name: uplineData.name,
+                level: i + 1,
+                amount: commissionPaid,
+                type: 'upline'
+            });
+            uplineListContainer.appendChild(node);
+        }
+    }
+    uplineLoader.style.display = 'none';
+}
+
+async function loadDownline() {
+    networkLoader.style.display = 'block';
+    networkTreeContainer.innerHTML = '';
+    await buildNetworkTree(currentUser.uid, networkTreeContainer, 1);
+    networkLoader.style.display = 'none';
+    if (networkTreeContainer.innerHTML === '') {
+        networkTreeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
+    }
+}
+
+async function buildNetworkTree(userId, parentElement, level) {
+    if (level > 5) return;
+
+    const referrals = await getDirectReferrals(userId);
+    if (referrals.length === 0) return;
+
+    for (const member of referrals) {
+        // BUG FIX: Passing member's UID for accurate calculation
+        const commissionFromThisMember = await calculateCommissionFromMember(currentUser.uid, member.uid);
+        const hasSubReferrals = await checkSubReferrals(member.uid);
+
+        const node = createMemberNode({
+            name: member.name,
+            level: level,
+            amount: commissionFromThisMember,
+            type: 'downline',
+            isExpandable: hasSubReferrals
+        });
+        
+        parentElement.appendChild(node);
+
+        if (hasSubReferrals) {
+            const subLevelContainer = document.createElement('div');
+            subLevelContainer.className = 'level';
+            parentElement.appendChild(subLevelContainer);
+
+            node.addEventListener('click', () => {
+                node.classList.toggle('expanded');
+                subLevelContainer.classList.toggle('expanded');
+                if (subLevelContainer.innerHTML === '') {
+                    subLevelContainer.innerHTML = `<div id="loader" style="padding: 10px;">Loading...</div>`;
+                    buildNetworkTree(member.uid, subLevelContainer, level + 1).then(() => {
+                        subLevelContainer.querySelector('#loader').remove();
+                    });
+                }
+            });
+        }
+    }
+}
+
+function createMemberNode({ name, level, amount, type, isExpandable = false }) {
+    const node = document.createElement('div');
+    node.className = 'member-node';
+    if (isExpandable) node.classList.add('expandable');
+
+    let amountHTML, levelHTML, avatarColor;
+
+    if (type === 'downline') {
+        amountHTML = `<div class="amount income">+ ₹${amount.toFixed(2)}</div><div class="label">Total Earning</div>`;
+        levelHTML = `<div class="member-level"><span>🏅</span> Level ${level}</div>`;
+        avatarColor = `var(--brand-red)`;
+    } else { // upline
+        amountHTML = `<div class="amount expense">- ₹${amount.toFixed(2)}</div><div class="label">Commission Paid</div>`;
+        levelHTML = `<div class="member-level"><span>🔼</span> Level ${level} Upline</div>`;
+        avatarColor = `#3498db`;
+    }
+
+    const expandIconHTML = isExpandable ? `<div class="expand-icon">›</div>` : '';
+
+    node.innerHTML = `
+        <div class="member-header">
+            <div class="member-info">
+                <div class="member-avatar" style="background-color: ${avatarColor};">${name.charAt(0).toUpperCase()}</div>
+                <div class="member-details">
+                    <div class="member-name">${name}</div>
+                    ${levelHTML}
+                </div>
+            </div>
+            <div class="member-stats">${amountHTML}</div>
+            ${expandIconHTML}
+        </div>
+    `;
+    return node;
+}
+
+async function getDirectReferrals(userId) {
+    try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (!userDoc.exists()) return [];
+        
+        const referralId = userDoc.data().referralId;
+        if (!referralId) return [];
+
+        const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
+        const snapshot = await getDocs(q);
+        
+        return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Error getting direct referrals:", error);
+        return [];
+    }
+}
+
+async function checkSubReferrals(userId) {
+    const referrals = await getDirectReferrals(userId);
+    return referrals.length > 0;
+}
+
+// --- BUG FIX: Commission calculation is now based on UID, not name ---
+// NOTE: For this to work, your commission transaction documents in Firestore
+// MUST have a field named 'commissionFromUid' containing the UID of the user
+// who generated the commission (e.g., the person who made the purchase).
+async function calculateCommissionFromMember(currentUserId, downlineMemberUID) {
+    let totalCommission = 0;
+    try {
+        const q = query(
+            collection(db, 'transactions'),
+            where('involvedUsers', 'array-contains', currentUserId),
+            where('type', '==', 'commission'),
+            where('commissionFromUid', '==', downlineMemberUID) // More reliable query
+        );
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            totalCommission += doc.data().amount;
+        });
+    } catch (error) {
+        console.error("Error calculating commission from member:", error);
+    }
+    return totalCommission;
+}
+
+// --- BUG FIX: Commission calculation is now based on UID ---
+// NOTE: This also requires the 'commissionFromUid' field.
+async function calculateCommissionPaidToUpline(uplineMemberId) {
+    let totalCommission = 0;
+    if (!currentUser) return 0;
+
+    try {
+        const q = query(
+            collection(db, 'transactions'),
+            where('involvedUsers', 'array-contains', uplineMemberId),
+            where('type', '==', 'commission'),
+            where('commissionFromUid', '==', currentUser.uid) // More reliable query
+        );
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            totalCommission += doc.data().amount;
+        });
+    } catch (error) {
+        console.error("Error calculating commission paid to upline:", error);
+    }
+    return totalCommission;
+}
+
 
 // --- Main Event Listener Setup ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -540,12 +727,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
     document.getElementById('open-profile-modal-header').addEventListener('click', () => openModal('profile-modal'));
-    
-    // UPDATED: This button now opens the network page
-    document.getElementById('open-network-page').addEventListener('click', () => {
-        window.location.href = 'network.html';
-    });
-
     document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
     document.getElementById('open-claim-modal').addEventListener('click', () => openModal('claim-modal'));
     document.getElementById('open-coupons-modal').addEventListener('click', () => openModal('coupons-modal'));
@@ -578,6 +759,30 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('success-popup').addEventListener('click', function(e) {
         if (e.target === this) {
             closeModal('success-popup');
+        }
+    });
+
+    // --- NEW: Network Modal Listeners ---
+    document.getElementById('open-network-modal').addEventListener('click', () => {
+        openModal('network-modal');
+        if (!isNetworkLoaded) {
+            loadDownline();
+            isNetworkLoaded = true; // Load only once per session
+        }
+    });
+
+    document.querySelector('#network-modal .network-tabs').addEventListener('click', e => {
+        const target = e.target.closest('.network-tab-btn');
+        if (!target) return;
+
+        document.querySelector('#network-modal .network-tab-btn.active').classList.remove('active');
+        target.classList.add('active');
+        
+        document.querySelectorAll('#network-modal .network-tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
+
+        if (target.dataset.tab === 'upline' && uplineListContainer.innerHTML === '') {
+            loadUpline();
         }
     });
 });
