@@ -509,21 +509,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // All other buttons and links
+    // Dashboard Action Buttons
+    document.getElementById('open-cashback-modal-btn').addEventListener('click', () => openModal('cashback-modal'));
+    document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
+    document.getElementById('open-claim-modal-btn').addEventListener('click', () => openModal('claim-modal'));
+    document.getElementById('open-coupons-modal-btn').addEventListener('click', () => openModal('coupons-modal'));
+    document.getElementById('open-profile-modal-btn').addEventListener('click', () => openModal('profile-modal'));
+    document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
+
+    // Other UI Listeners
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
     document.getElementById('open-profile-modal-header').addEventListener('click', () => openModal('profile-modal'));
-    document.getElementById('open-profile-modal').addEventListener('click', () => openModal('profile-modal'));
-    document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
-    document.getElementById('open-claim-modal').addEventListener('click', () => openModal('claim-modal'));
-    document.getElementById('open-coupons-modal').addEventListener('click', () => openModal('coupons-modal'));
-    document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
-    document.getElementById('rescan-btn').addEventListener('click', startScanner);
-    document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
+    document.getElementById('copy-referral-btn').addEventListener('click', () => {
+        if (currentUserData && currentUserData.referralId) {
+            navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!"));
+        }
+    });
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
-    document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
-    document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
     document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
     document.getElementById('claim-request-form').addEventListener('submit', handleClaimRequest);
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
