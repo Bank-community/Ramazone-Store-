@@ -47,7 +47,7 @@
         .side-menu-nav a:hover { background-color: var(--bg-page); }
         .side-menu-nav a svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
 
-        /* --- Wallet Card --- */
+        /* --- Wallet Card & Other Styles --- */
         .wallet-card { background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(67, 100, 247, 0.3); text-align: center; }
         #wallet-user-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; }
         .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); }
@@ -64,13 +64,12 @@
         #wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
         #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
         #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
-
-        /* --- Transactions Section --- */
         .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .section-title { font-size: 18px; font-weight: 600; margin: 0; }
         #transaction-total-box { background-color: var(--bg-page); color: var(--text-primary); font-weight: 600; font-size: 14px; padding: 5px 12px; border-radius: 8px; }
-        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .filter-bar::-webkit-scrollbar { display: none; }
         .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; }
         .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         .history-list { display: flex; flex-direction: column; gap: 12px; }
@@ -82,9 +81,24 @@
         .history-amount .amount.debit { color: var(--due-red); }
         .history-amount .amount.rejected { color: var(--due-red); }
         .history-amount .status { font-size: 12px; text-transform: capitalize; }
-        
-        /* Other styles remain the same */
-        .auth-container, .dashboard-actions, .modal-overlay, .coupon-card, .toast-notification { /* ... existing styles ... */ }
+        .auth-container { padding: 20px; border-radius: 16px; margin-top: 40px; background-color: var(--bg-card); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .main-logo { max-width: 200px; margin: 0 auto 30px auto; display: block; }
+        h1 { text-align: center; font-size: 22px; font-weight: 600; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: 500; color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; display: block; }
+        input[type="text"], input[type="tel"], input[type="password"], input[type="number"] { width: 100%; padding: 12px; background-color: var(--bg-page); border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: var(--brand-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
+        .form-link { text-align: center; margin-top: 25px; color: var(--text-secondary); font-size: 14px; }
+        .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
+        .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background-color: var(--bg-card); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; position: relative; }
+        .modal-content h3 { text-align: center; font-size: 20px; margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-secondary { background: #e8eef3; color: var(--text-primary); }
+        .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
+        .toast-notification.show { bottom: 30px; }
     </style>
 </head>
 <body>
@@ -110,7 +124,7 @@
                     Scan & Pay
                 </a>
                 <a href="#" class="menu-action-btn" data-action="claim">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                     Claim
                 </a>
                 <a href="#" class="menu-action-btn" data-action="coupons">
@@ -126,10 +140,30 @@
 
         <!-- Main Views -->
         <div id="login-view" class="view">
-            <!-- Login form content... -->
+            <div class="auth-container">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
+                <h1>Customer Login</h1>
+                <form id="login-form">
+                    <div class="form-group"><label for="login-mobile">Mobile Number</label><input type="tel" id="login-mobile" required></div>
+                    <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
+                    <button type="submit">Login</button><p id="login-error-msg" class="error-message"></p>
+                </form>
+                <p class="form-link">Naye user? <a href="#" id="show-register-link">Yahan register karein</a></p>
+            </div>
         </div>
         <div id="registration-view" class="view">
-            <!-- Registration form content... -->
+             <div class="auth-container">
+                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
+                 <h1>Register New Account</h1>
+                <form id="register-form">
+                    <div class="form-group"><label for="reg-name">Poora Naam</label><input type="text" id="reg-name" required></div>
+                    <div class="form-group"><label for="reg-mobile">Mobile Number</label><input type="tel" id="reg-mobile" required></div>
+                    <div class="form-group"><label for="reg-password">Password</label><input type="password" id="reg-password" required></div>
+                    <div class="form-group"><label for="reg-referral">Referral Code (Optional)</label><input type="text" id="reg-referral"></div>
+                    <button type="submit">Register Karein</button><p id="register-error-msg" class="error-message"></p>
+                </form>
+                <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
+            </div>
         </div>
 
         <div id="dashboard-view" class="view active">
@@ -163,10 +197,6 @@
                 </div>
             </div>
 
-            <div class="dashboard-actions">
-                <!-- These are now secondary, menu is primary -->
-            </div>
-
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">All Transactions</h2>
@@ -186,8 +216,15 @@
         </div>
     </div>
 
-    <!-- Modals (unchanged) -->
-    <!-- ... all modals like success-popup, password-verification, etc. ... -->
+    <!-- All Modals are here -->
+    <div id="success-popup" class="modal-overlay"> <!-- ... --> </div>
+    <div id="password-verification-modal" class="modal-overlay"> <!-- ... --> </div>
+    <div id="cashback-modal" class="modal-overlay"> <!-- ... --> </div>
+    <div id="claim-modal" class="modal-overlay"> <!-- ... --> </div>
+    <div id="coupons-modal" class="modal-overlay"> <!-- ... --> </div>
+    <div id="scan-pay-modal" class="modal-overlay"> <!-- ... --> </div>
+    <div id="profile-modal" class="modal-overlay"> <!-- ... --> </div>
+    <div id="toast-notification" class="toast-notification"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="cashback.js" type="module"></script>
