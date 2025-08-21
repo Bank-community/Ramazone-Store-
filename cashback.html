@@ -64,6 +64,13 @@
         #wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
         #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
         #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
+        
+        .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .action-card { background-color: var(--bg-card); padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; align-items: center; aspect-ratio: 1/1; }
+        .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.07); }
+        .action-card .icon { margin-bottom: 8px; width: 30px; height: 30px; }
+        .action-card .card-text { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+
         .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .section-title { font-size: 18px; font-weight: 600; margin: 0; }
@@ -195,6 +202,15 @@
                     <span id="wallet-referral-id">REF-CODE</span>
                     <button id="copy-referral-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
                 </div>
+            </div>
+
+            <div class="dashboard-actions">
+                <div id="open-cashback-modal-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
+                <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">Scan & Pay</span></div>
+                <div id="open-claim-modal-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/279390/money-cash.svg"><span class="card-text">Claim</span></div>
+                <div id="open-coupons-modal-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/301726/coupon.svg"><span class="card-text">Coupons</span></div>
+                <div id="open-profile-modal-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/512729/profile-round-1342.svg"><span class="card-text">Profile</span></div>
+                <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
             </div>
 
             <div class="section">
