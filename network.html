@@ -9,22 +9,39 @@
         :root {
             --bg-page: #f4f7f9; --bg-card: #ffffff; --text-primary: #1c2028;
             --text-secondary: #5a647e; --border-color: #e8eef3; --brand-red: #e50914;
-            --accent-green: #2ecc71;
+            --accent-green: #2ecc71; --accent-blue: #3498db;
         }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg-page); margin: 0; padding: 15px; }
-        .header { display: flex; align-items: center; gap: 15px; background: var(--bg-card); padding: 10px 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .header { display: flex; align-items: center; gap: 15px; background: var(--bg-card); padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .header h1 { font-size: 18px; margin: 0; }
         #back-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
         #back-btn svg { width: 24px; height: 24px; }
-        .network-container { padding: 20px; background: var(--bg-card); border-radius: 12px; }
-        .level { margin-left: 20px; border-left: 2px solid var(--border-color); padding-left: 20px; }
-        .member-node { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s; }
-        .member-node:hover { background-color: #f9f9f9; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; }
+        .tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
+
+        .content-container { padding: 20px; background: var(--bg-card); border-radius: 12px; min-height: 300px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .level { margin-left: 15px; border-left: 2px solid var(--border-color); padding-left: 15px; }
+        .member-node { background-color: #fafafa; display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s; border: 1px solid var(--border-color); }
+        .member-node.expandable::after { content: '›'; font-size: 24px; color: var(--text-secondary); transition: transform 0.2s; }
+        .member-node.expanded::after { transform: rotate(90deg); }
+        
         .member-info { display: flex; align-items: center; gap: 12px; }
         .member-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--brand-red); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
+        .member-details { display: flex; flex-direction: column; }
         .member-name { font-weight: 500; }
+        .member-level { font-size: 12px; color: var(--text-secondary); }
         .member-stats .commission { font-size: 14px; font-weight: 600; color: var(--accent-green); }
+        
+        .upline-list .member-node { cursor: default; }
+        .upline-list .member-node::after { display: none; }
+
         #loader { text-align: center; padding: 30px; }
+        .empty-state { text-align: center; padding: 30px; color: var(--text-secondary); }
     </style>
 </head>
 <body>
@@ -35,8 +52,19 @@
         <h1>My Network</h1>
     </div>
 
-    <div id="network-container" class="network-container">
-        <div id="loader">Loading your network...</div>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="downline">My Downline</button>
+        <button class="tab-btn" data-tab="upline">My Upline</button>
+    </div>
+
+    <div class="content-container">
+        <div id="downline-content" class="tab-content active">
+            <div id="loader">Loading your network...</div>
+            <div id="network-tree"></div>
+        </div>
+        <div id="upline-content" class="tab-content">
+            <div id="upline-list"></div>
+        </div>
     </div>
 
     <script src="network.js" type="module"></script>
