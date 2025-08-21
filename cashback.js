@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, writeBatch, serverTimestamp, orderBy, limit, runTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
@@ -93,9 +93,10 @@ function attachRealtimeListeners(user) {
         cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         combineAndRenderHistory();
     });
+    // UPDATED: Coupon listener now directly calls renderCoupons to update count and list
     const couponsUnsubscribe = onSnapshot(query(collection(db, "coupons"), where("userId", "==", uid), where("isUsed", "==", false), orderBy("createdAt", "desc")), (snapshot) => {
         userCoupons = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        renderCoupons();
+        renderCoupons(); // This will update the list and the counts
     });
     activeListeners.push(userUnsubscribe, transUnsubscribe, requestsUnsubscribe, couponsUnsubscribe);
 }
@@ -128,39 +129,83 @@ function combineAndRenderHistory() {
     renderUnifiedHistory(combined);
 }
 
+// --- MAJOR UPDATE: Renders history and calculates total ---
 function renderUnifiedHistory(items) {
     const listEl = document.getElementById('unified-history-list');
-    const totalBox = document.getElementById('transaction-total-box');
+    const summaryEl = document.getElementById('transaction-summary');
+    const summaryAmountEl = summaryEl.querySelector('.summary-amount');
+    const summaryLabelEl = summaryEl.querySelector('.summary-label');
     listEl.innerHTML = '';
-    
+
     const filtered = items.filter(item => {
-        if (activeFilter === 'all') return true;
+        if (activeFilter === 'all') return false; // Don't show summary for 'all'
+        // Special handling for cashback requests which aren't transactions yet
+        if (activeFilter === 'cashback' && item.type === 'cashback' && !item.isTransaction) return true;
         return item.type === activeFilter;
     });
 
-    if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="empty-state" style="padding: 20px; text-align: center; color: var(--text-secondary);"><h4>No Transactions</h4></div>`;
-        totalBox.textContent = '₹0.00';
+    // Calculate and display total for the filtered view
+    if (filtered.length > 0 && activeFilter !== 'all') {
+        const total = filtered.reduce((sum, item) => {
+            const amount = item.amount || item.cashbackAmount || 0;
+            return sum + amount;
+        }, 0);
+        
+        const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
+        summaryLabelEl.textContent = `Total ${filterText}`;
+        summaryAmountEl.textContent = `₹ ${total.toFixed(2)}`;
+        summaryEl.style.display = 'flex';
+    } else {
+        summaryEl.style.display = 'none';
+    }
+
+    // Render the list for the active filter (including 'all')
+    const itemsToRender = activeFilter === 'all' 
+        ? items 
+        : items.filter(item => {
+            if (item.type === activeFilter) return true;
+            if (activeFilter === 'cashback' && !item.isTransaction) return true;
+            return false;
+          });
+
+    if (itemsToRender.length === 0) {
+        listEl.innerHTML = `<div class="empty-state" style="border:none; padding: 20px 0; text-align:center; color: var(--text-secondary);"><h4>No Transactions</h4></div>`;
         return;
     }
 
-    let totalAmount = 0;
-    filtered.forEach(item => {
-        const amount = item.amount || item.cashbackAmount || 0;
-        if (item.status !== 'pending' && item.status !== 'rejected') {
-            totalAmount += amount;
-        }
-        
+    itemsToRender.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
+        const amount = item.amount || item.cashbackAmount || 0;
         let sign = amount >= 0 ? '+' : '-';
         let typeClass = amount >= 0 ? 'credit' : 'debit';
-        if(item.type === 'due_payment') { typeClass = 'debit'; sign = ''; }
-        if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
+        
+        if(item.type === 'due_payment' || item.type === 'claim') {
+            typeClass = 'debit';
+            sign = '';
+        }
+
+        if(item.type === 'coupon_redeem' || item.type === 'commission' || item.type === 'cashback'){
+            typeClass = 'credit';
+            sign = '+';
+        }
+
+        if (item.status === 'rejected' || item.status === 'refunded') {
+            typeClass = 'rejected';
+        }
+
+        // Use a more descriptive title for coupon redemption
+        let description = item.description;
+        if (item.type === 'coupon_redeem' && item.couponCode) {
+            description = `Coupon Redeemed: ${item.couponCode}`;
+        }
+
         itemDiv.innerHTML = `
-            <div class="history-info">
-                <div class="title">${item.description}</div>
-                <div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div>
+            <div class="history-details">
+                <div class="history-info">
+                    <div class="title">${description}</div>
+                    <div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div>
+                </div>
             </div>
             <div class="history-amount">
                 <div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div>
@@ -168,15 +213,28 @@ function renderUnifiedHistory(items) {
             </div>`;
         listEl.appendChild(itemDiv);
     });
-
-    totalBox.textContent = `₹${totalAmount.toFixed(2)}`;
 }
 
+// --- MAJOR UPDATE: Renders coupons and updates counts ---
 function renderCoupons() {
     const listEl = document.getElementById('coupons-list');
+    const badgeEl = document.querySelector('#open-coupons-modal .coupon-count-badge');
+    const modalCountEl = document.getElementById('coupons-modal-count');
+    const count = userCoupons.length;
+
+    // Update counts
+    badgeEl.textContent = count;
+    modalCountEl.textContent = `(${count} Available)`;
+    if (count > 0) {
+        badgeEl.classList.add('visible');
+    } else {
+        badgeEl.classList.remove('visible');
+    }
+
+    // Render list
     listEl.innerHTML = '';
-    if (userCoupons.length === 0) {
-        listEl.innerHTML = `<div class="empty-state" style="padding: 20px; text-align: center; color: var(--text-secondary);"><h4>No Coupons</h4><p>Aapke paas abhi koi coupon nahi hai.</p></div>`;
+    if (count === 0) {
+        listEl.innerHTML = `<div class="empty-state" style="border:none; text-align:center; color: var(--text-secondary);"><h4>No Coupons</h4><p>Aapke paas abhi koi coupon nahi hai.</p></div>`;
         return;
     }
     userCoupons.forEach(coupon => {
@@ -195,7 +253,7 @@ function renderCoupons() {
     });
 }
 
-// --- Core Logic Functions ---
+// --- Core Logic Functions (remain mostly unchanged) ---
 function verifyPasswordAndExecute(action, sourceModalId) {
     if (sourceModalId) closeModal(sourceModalId);
     pendingAction = action;
@@ -315,7 +373,7 @@ async function handleCashbackRequest(e) {
     }
 }
 
-// --- Scanner and Utility Functions ---
+// --- Scanner and Utility Functions (Unchanged) ---
 function startScanner() {
     stopScanner();
     const video = document.getElementById('scanner-video');
@@ -397,7 +455,7 @@ function handleWhatsAppSupport() {
     window.open(whatsappUrl, '_blank');
 }
 
-// --- Main Event Listener Setup ---
+// --- Main Event Listener Setup (Unchanged) ---
 document.addEventListener('DOMContentLoaded', () => {
     // Login Form
     document.getElementById('login-form').addEventListener('submit', e => {
@@ -486,48 +544,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Menu Logic
-    const menuBtn = document.getElementById('menu-btn');
-    const sideMenu = document.getElementById('side-menu');
-    const menuOverlay = document.getElementById('side-menu-overlay');
-    const openMenu = () => { sideMenu.classList.add('active'); menuOverlay.classList.add('active'); };
-    const closeMenu = () => { sideMenu.classList.remove('active'); menuOverlay.classList.remove('active'); };
-    menuBtn.addEventListener('click', openMenu);
-    menuOverlay.addEventListener('click', closeMenu);
-    document.querySelectorAll('.menu-action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const action = e.currentTarget.dataset.action;
-            switch(action) {
-                case 'cashback': openModal('cashback-modal'); break;
-                case 'scan': openModal('scan-pay-modal'); startScanner(); break;
-                case 'claim': openModal('claim-modal'); break;
-                case 'coupons': openModal('coupons-modal'); break;
-                case 'profile': openModal('profile-modal'); break;
-            }
-            closeMenu();
-        });
-    });
-
-    // Dashboard Action Buttons
-    document.getElementById('open-cashback-modal-btn').addEventListener('click', () => openModal('cashback-modal'));
-    document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
-    document.getElementById('open-claim-modal-btn').addEventListener('click', () => openModal('claim-modal'));
-    document.getElementById('open-coupons-modal-btn').addEventListener('click', () => openModal('coupons-modal'));
-    document.getElementById('open-profile-modal-btn').addEventListener('click', () => openModal('profile-modal'));
-    document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
-
-    // Other UI Listeners
+    // All other buttons and links
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
     document.getElementById('open-profile-modal-header').addEventListener('click', () => openModal('profile-modal'));
-    document.getElementById('copy-referral-btn').addEventListener('click', () => {
-        if (currentUserData && currentUserData.referralId) {
-            navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!"));
-        }
-    });
+    document.getElementById('open-profile-modal').addEventListener('click', () => openModal('profile-modal'));
+    document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
+    document.getElementById('open-claim-modal').addEventListener('click', () => openModal('claim-modal'));
+    document.getElementById('open-coupons-modal').addEventListener('click', () => openModal('coupons-modal'));
+    document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
+    document.getElementById('rescan-btn').addEventListener('click', startScanner);
+    document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
+    document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
+    document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
     document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
     document.getElementById('claim-request-form').addEventListener('submit', handleClaimRequest);
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
