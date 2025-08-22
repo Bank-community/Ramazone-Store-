@@ -9,10 +9,10 @@
         :root {
             --bg-page: #f0f2f5; --bg-card: #ffffff; --text-primary: #1c2028;
             --text-secondary: #5a647e; --border-color: #e8eef3; --brand-red: #e50914;
-            --accent-green: #2ecc71; --accent-red: #ff4d4d; --accent-blue: #3498db; --shadow: 0 2px 8px rgba(0,0,0,0.06);
+            --accent-green: #2ecc71; --accent-red: #ff4d4d; --accent-blue: #3498db; --accent-orange: #f39c12; --shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { font-size: 14px; }
+        html { font-size: 14px; scroll-behavior: smooth; }
         body {
             font-family: 'Poppins', sans-serif; background-color: var(--bg-page);
             color: var(--text-primary); -webkit-font-smoothing: antialiased;
@@ -24,13 +24,16 @@
         #login-view, #admin-view { display: none; }
         .form-group { margin-bottom: 15px; text-align: left; }
         label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-secondary); font-size: 0.9rem; }
-        input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ced4da; font-size: 1rem; }
-        button { width: 100%; padding: 12px; background-color: var(--brand-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+        input, select { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ced4da; font-size: 1rem; }
+        input[type="color"] { padding: 5px; height: 45px; }
+        button { width: 100%; padding: 12px; background-color: var(--brand-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.2s; }
+        button:hover { opacity: 0.9; }
         button:disabled { background-color: #999; cursor: not-allowed; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         #logout-btn { background: var(--text-secondary); width: auto; padding: 8px 15px; font-size: 0.9rem; }
         .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card { background: var(--bg-card); padding: 15px; border-radius: 8px; box-shadow: var(--shadow); }
+        .card { background: var(--bg-card); padding: 15px; border-radius: 8px; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .card h3 { margin: 0 0 8px 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; }
         .card .stat-number { font-size: 1.8rem; font-weight: 700; line-height: 1.2; word-break: break-all; }
         .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; overflow-x: auto; scrollbar-width: none; }
@@ -43,13 +46,17 @@
         .content-box h2 { font-size: 1.2rem; margin-bottom: 15px; }
         .request-item { border-bottom: 1px solid var(--border-color); padding: 15px 0; display: flex; flex-direction: column; gap: 12px; }
         .request-item:last-child { border-bottom: none; }
-        .request-actions { display: flex; gap: 10px; align-items: center; }
+        .request-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .request-actions button { width: auto; flex-grow: 1; padding: 8px 12px; font-size: 0.9rem; }
         .btn-approve { background-color: var(--accent-green); } .btn-reject { background-color: var(--accent-red); }
+        .btn-average { background-color: var(--accent-orange); }
+        .btn-edit { background-color: var(--accent-blue); }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; white-space: nowrap; }
         .member-row { cursor: pointer; } .member-row:hover { background-color: #f9f9f9; }
+        .data-management-actions, .filter-controls, .redeem-form-container { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .notification-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
         /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -65,6 +72,14 @@
         .credit-form .form-group { display: flex; gap: 10px; }
         .credit-form input { flex-grow: 1; }
         .credit-form button { width: auto; }
+
+        /* NEW: Coupon Redeem Styles */
+        #coupon-check-result { margin-top: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; display: none; }
+        #coupon-check-result p { margin: 0 0 10px 0; }
+        #coupon-check-result p:last-child { margin-bottom: 0; }
+        .status-available { color: var(--accent-green); font-weight: bold; }
+        .status-redeemed { color: var(--accent-red); font-weight: bold; }
+        .status-invalid { color: var(--accent-orange); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -73,7 +88,7 @@
         <div class="login-wrapper"><div class="login-box">
             <h1>Admin Panel</h1>
             <form id="admin-login-form">
-                <div class="form-group"><label for="admin-email">Mobile Number</label><input type="tel" id="admin-email" required></div>
+                <div class="form-group"><label for="admin-email">Mobile Number</label><input type="tel" id="admin-email" value="7903698180" required></div>
                 <div class="form-group"><label for="admin-password">Password</label><input type="password" id="admin-password" required></div>
                 <button type="submit">Login</button><p id="admin-login-error" style="color: red; margin-top: 15px;"></p>
             </form>
@@ -83,27 +98,78 @@
     <div id="admin-view">
         <div class="admin-container">
             <div class="header"><h1>Dashboard</h1><button id="logout-btn">Logout</button></div>
-            <div class="stat-cards">
-                <div class="card"><h3>Cashback Req.</h3><p class="stat-number" id="cashback-requests-stat">0</p></div>
-                <div class="card"><h3>Claim Req.</h3><p class="stat-number" id="claim-requests-stat">0</p></div>
-                <div class="card"><h3>Total Members</h3><p class="stat-number" id="total-members-stat">0</p></div>
-                <div class="card"><h3>RMZ Wallet</h3><p class="stat-number" id="rmz-wallet-stat">₹0</p></div>
-                <div class="card"><h3>Universal Wallet</h3><p class="stat-number" id="universal-wallet-stat">₹0</p></div>
+            <div class="stat-cards" id="stat-cards-container">
+                <div class="card" data-tab="cashback-requests"><h3>Cashback Req.</h3><p class="stat-number" id="cashback-requests-stat">0</p></div>
+                <div class="card" data-tab="claim-requests"><h3>Claim Req.</h3><p class="stat-number" id="claim-requests-stat">0</p></div>
+                <div class="card" data-tab="members"><h3>Total Members</h3><p class="stat-number" id="total-members-stat">0</p></div>
+                <div class="card" data-tab="rmz-history"><h3>RMZ Wallet</h3><p class="stat-number" id="rmz-wallet-stat">₹0</p></div>
+                <div class="card" data-tab="univ-history"><h3>Universal Wallet</h3><p class="stat-number" id="universal-wallet-stat">₹0</p></div>
+                <div class="card" data-tab="notifications"><h3>Notifications</h3><p class="stat-number" id="notifications-stat">0</p></div>
             </div>
-            <div class="tabs">
+            <div class="tabs" id="tabs-container">
                 <div class="tab-link active" data-tab="cashback-requests">Cashback <span id="cashback-requests-count" class="tab-count" style="display:none;">0</span></div>
                 <div class="tab-link" data-tab="claim-requests">Claims <span id="claim-requests-count" class="tab-count" style="display:none;">0</span></div>
                 <div class="tab-link" data-tab="members">Members</div>
+                <!-- NEW: Redeem Coupon Tab -->
+                <div class="tab-link" data-tab="redeem-coupon">Redeem Coupon</div>
                 <div class="tab-link" data-tab="rmz-history">RMZ Wallet</div>
                 <div class="tab-link" data-tab="univ-history">Universal</div>
+                <div class="tab-link" data-tab="cashback-history">Cashback History</div>
+                <div class="tab-link" data-tab="data-management">Data Management</div>
+                <div class="tab-link" data-tab="notifications">Notifications</div>
                 <div class="tab-link" data-tab="settings">Settings</div>
             </div>
             <div class="content-box">
                 <div id="cashback-requests-content" class="tab-content active"><h2>Pending Cashback Requests</h2><div id="cashback-request-list"></div></div>
                 <div id="claim-requests-content" class="tab-content"><h2>Pending Claim Requests</h2><div id="claim-request-list"></div></div>
                 <div id="members-content" class="tab-content"><h2>All Members</h2><div id="members-list" class="table-container"></div></div>
-                <div id="rmz-history-content" class="tab-content"><h2>RMZ Wallet History</h2><div id="rmz-history-list" class="table-container"></div></div>
+                <!-- NEW: Redeem Coupon Content -->
+                <div id="redeem-coupon-content" class="tab-content">
+                    <h2>Check & Redeem Coupon</h2>
+                    <div class="redeem-form-container">
+                        <div class="form-group" style="flex-grow: 1; margin-bottom: 0;">
+                            <label for="coupon-code-input">Enter Coupon Code</label>
+                            <input type="text" id="coupon-code-input" placeholder="e.g., RMZABCD123">
+                        </div>
+                        <button id="check-coupon-btn" style="width: auto; padding: 10px 15px; margin-top: 15px;">Check Code</button>
+                    </div>
+                    <div id="coupon-check-result"></div>
+                    <h2 style="margin-top: 30px;">All Generated Coupons History</h2>
+                    <div id="all-coupons-history-list" class="table-container"></div>
+                </div>
+                <div id="rmz-history-content" class="tab-content">
+                    <h2>RMZ Wallet History</h2>
+                    <div class="filter-controls">
+                        <div class="form-group"><label for="rmz-start-date">Start Date</label><input type="date" id="rmz-start-date"></div>
+                        <div class="form-group"><label for="rmz-end-date">End Date</label><input type="date" id="rmz-end-date"></div>
+                        <button id="rmz-filter-btn" style="width: auto; padding: 10px 15px; margin-top: 15px;">Filter</button>
+                    </div>
+                    <div id="rmz-history-list" class="table-container"></div>
+                </div>
                 <div id="univ-history-content" class="tab-content"><h2>Universal Wallet History</h2><div id="univ-history-list" class="table-container"></div></div>
+                <div id="cashback-history-content" class="tab-content"><h2>Completed & Rejected Cashback History</h2><div id="cashback-history-list" class="table-container"></div></div>
+                <div id="data-management-content" class="tab-content">
+                    <h2>Data Management (30+ Days Old)</h2>
+                    <div class="data-management-actions">
+                        <button id="select-all-old-btn">Select All</button>
+                        <button id="delete-selected-btn" class="btn-reject">Delete Selected</button>
+                    </div>
+                    <div id="old-data-list" class="table-container"></div>
+                </div>
+                <div id="notifications-content" class="tab-content">
+                    <h2>Send Notification</h2>
+                    <form id="notification-form">
+                        <div class="form-group"><label for="notification-title">Title</label><input type="text" id="notification-title" required></div>
+                        <div class="form-group"><label for="notification-percentage">Percentage Rate (%)</label><input type="number" id="notification-percentage" step="0.1" required></div>
+                        <div class="notification-form-grid">
+                            <div class="form-group"><label for="notification-text-color">Text Color</label><input type="color" id="notification-text-color" value="#FFFFFF"></div>
+                            <div class="form-group"><label for="notification-bg-color">Background Color</label><input type="color" id="notification-bg-color" value="#E50914"></div>
+                        </div>
+                        <button type="submit" style="max-width: 200px;">Send Notification</button>
+                    </form>
+                    <h2 style="margin-top: 20px;">Sent Notifications</h2>
+                    <div id="notifications-list" class="table-container"></div>
+                </div>
                 <div id="settings-content" class="tab-content"><h2>App Settings</h2><div class="form-group"><label for="cashback-percentage">Self Cashback Percentage (%)</label><input type="number" id="cashback-percentage" step="0.1"></div><button id="save-settings-btn" style="max-width: 200px;">Save</button></div>
             </div>
         </div>
@@ -113,34 +179,38 @@
         <div class="modal-content">
             <h3>Member Details</h3>
             <dl id="member-details-content" class="detail-grid"></dl>
-            
             <div id="credit-management-section">
-                <div class="credit-form">
-                    <h4>Give Credit</h4>
-                    <form id="give-credit-form" class="form-group">
-                        <input type="number" id="give-credit-amount" placeholder="Amount" min="1" required>
-                        <button type="submit" style="background-color: var(--accent-blue);">Give</button>
-                    </form>
-                </div>
-                <div class="credit-form">
-                    <h4>Clear Due</h4>
-                    <form id="clear-due-form" class="form-group">
-                        <input type="number" id="clear-due-amount" placeholder="Amount" min="1" required>
-                        <button type="submit" style="background-color: var(--accent-green);">Clear</button>
-                    </form>
-                </div>
+                <div class="credit-form"><h4>Give Credit</h4><form id="give-credit-form" class="form-group"><input type="number" id="give-credit-amount" placeholder="Amount" min="1" required><button type="submit" style="background-color: var(--accent-blue);">Give</button></form></div>
+                <div class="credit-form"><h4>Clear Due</h4><form id="clear-due-form" class="form-group"><input type="number" id="clear-due-amount" placeholder="Amount" min="1" required><button type="submit" style="background-color: var(--accent-green);">Clear</button></form></div>
             </div>
-
-            <div class="modal-actions" style="margin-top: 20px; justify-content: flex-end;">
-                <button data-close-modal class="btn-secondary">Close</button>
-            </div>
+            <div class="modal-actions" style="margin-top: 20px; text-align: right;"><button data-close-modal class="btn-secondary">Close</button></div>
         </div>
     </div>
+
+    <div id="edit-notification-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Edit Notification</h3>
+            <form id="edit-notification-form">
+                <input type="hidden" id="edit-notification-id">
+                <div class="form-group"><label for="edit-notification-title">Title</label><input type="text" id="edit-notification-title" required></div>
+                <div class="form-group"><label for="edit-notification-percentage">Percentage Rate (%)</label><input type="number" id="edit-notification-percentage" step="0.1" required></div>
+                <div class="notification-form-grid">
+                    <div class="form-group"><label for="edit-notification-text-color">Text Color</label><input type="color" id="edit-notification-text-color"></div>
+                    <div class="form-group"><label for="edit-notification-bg-color">Background Color</label><input type="color" id="edit-notification-bg-color"></div>
+                </div>
+                <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" data-close-modal class="btn-secondary">Cancel</button>
+                    <button type="submit">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, getDocs, writeBatch, increment, serverTimestamp, orderBy, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, getDocs, writeBatch, increment, serverTimestamp, orderBy, setDoc, runTransaction, Timestamp, deleteDoc, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
@@ -156,6 +226,7 @@
         const ADMIN_UID = "9trVz1b6zMNPsBjHZRzRhoU6N5F2";
         let activeListeners = [];
         let currentMemberUid = null;
+        let allRmzTransactions = [];
 
         async function init() {
             await setPersistence(auth, browserSessionPersistence);
@@ -176,13 +247,23 @@
 
         function loadAllData() {
             activeListeners.forEach(unsub => unsub());
+            const thirtyDaysAgo = Timestamp.fromDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+
             const listeners = [
-                onSnapshot(query(collection(db, 'cashback_requests'), where('status', '==', 'pending')), renderCashbackRequests),
-                onSnapshot(query(collection(db, 'claim_requests'), where('status', '==', 'pending')), renderClaimRequests),
-                onSnapshot(query(collection(db, 'users'), orderBy('createdAt', 'desc')), renderMembers),
-                onSnapshot(doc(db, 'app_settings', 'config'), renderStatsAndSettings),
-                onSnapshot(query(collection(db, 'rmz_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => renderHistoryTable(snap, 'rmz-history-list')),
-                onSnapshot(query(collection(db, 'universal_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => renderHistoryTable(snap, 'univ-history-list'))
+                onSnapshot(query(collection(db, 'cashback_requests'), where('status', '==', 'pending')), renderCashbackRequests, console.error),
+                onSnapshot(query(collection(db, 'claim_requests'), where('status', '==', 'pending')), renderClaimRequests, console.error),
+                onSnapshot(query(collection(db, 'users'), orderBy('createdAt', 'desc')), renderMembers, console.error),
+                onSnapshot(doc(db, 'app_settings', 'config'), renderStatsAndSettings, console.error),
+                onSnapshot(query(collection(db, 'rmz_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => {
+                    allRmzTransactions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderRmzHistoryTable();
+                }, console.error),
+                onSnapshot(query(collection(db, 'universal_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => renderHistoryTable(snap, 'univ-history-list'), console.error),
+                onSnapshot(query(collection(db, 'cashback_requests'), where('status', 'in', ['completed', 'rejected'])), renderCashbackHistory, console.error),
+                onSnapshot(query(collection(db, 'cashback_requests'), where('status', 'in', ['completed', 'rejected']), where('requestDate', '<', thirtyDaysAgo)), renderOldDataList, console.error),
+                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc')), renderNotifications, console.error),
+                // NEW: Listener for all coupons
+                onSnapshot(query(collection(db, 'coupons'), orderBy('createdAt', 'desc')), renderAllCouponsHistory, console.error)
             ];
             activeListeners.push(...listeners);
         }
@@ -199,7 +280,7 @@
             listEl.innerHTML = snapshot.empty ? '<p>No pending cashback requests.</p>' : '';
             snapshot.forEach(doc => {
                 const r = { id: doc.id, ...doc.data() };
-                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Product:</strong> ${r.productName} (₹${r.productPrice})</p></div><div class="request-actions"><button class="btn-approve" data-type="cashback" data-id="${r.id}">Approve</button><button class="btn-reject" data-type="cashback" data-id="${r.id}">Reject</button></div></div>`;
+                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Product:</strong> ${r.productName} (₹${r.productPrice})</p></div><div class="request-actions"><button class="btn-approve" data-action="approve-cashback" data-id="${r.id}">Approve</button><button class="btn-average" data-action="approve-cashback-avg" data-id="${r.id}">Avg. Accept</button><button class="btn-reject" data-action="reject-cashback" data-id="${r.id}">Reject</button></div></div>`;
             });
         }
 
@@ -210,7 +291,7 @@
             listEl.innerHTML = snapshot.empty ? '<p>No pending claim requests.</p>' : '';
             snapshot.forEach(doc => {
                 const r = { id: doc.id, ...doc.data() };
-                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Amount:</strong> ₹${r.amount}</p></div><div class="request-actions"><button class="btn-approve" data-type="claim" data-id="${r.id}">Approve</button><button class="btn-reject" data-type="claim" data-id="${r.id}">Reject</button></div></div>`;
+                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Amount:</strong> ₹${r.amount}</p></div><div class="request-actions"><button class="btn-approve" data-action="approve-claim" data-id="${r.id}">Approve</button><button class="btn-reject" data-action="reject-claim" data-id="${r.id}">Reject</button></div></div>`;
             });
         }
 
@@ -233,12 +314,12 @@
         }
 
         function renderHistoryTable(snapshot, elementId) {
+            const data = snapshot.docs.map(doc => doc.data());
             const headers = elementId === 'rmz-history-list' 
                 ? `<th>Date</th><th>Amount</th><th>From</th><th>Mobile</th>`
                 : `<th>Date</th><th>Amount</th><th>Reason</th>`;
             let table = `<table><thead><tr>${headers}</tr></thead><tbody>`;
-            snapshot.forEach(doc => {
-                const t = doc.data();
+            data.forEach(t => {
                 const date = t.timestamp ? t.timestamp.toDate().toLocaleString() : 'N/A';
                 if (elementId === 'rmz-history-list') {
                     table += `<tr><td>${date}</td><td>₹${t.amount.toFixed(2)}</td><td>${t.senderName}</td><td>${t.senderMobile}</td></tr>`;
@@ -249,177 +330,143 @@
             document.getElementById(elementId).innerHTML = table + `</tbody></table>`;
         }
 
-        async function showMemberDetails(uid) {
-            currentMemberUid = uid;
-            const userDoc = await getDoc(doc(db, 'users', uid));
-            if (!userDoc.exists()) return alert("User not found.");
-            const user = userDoc.data();
-            const detailsEl = document.getElementById('member-details-content');
-            detailsEl.innerHTML = '';
+        function renderRmzHistoryTable() {
+            const startDateInput = document.getElementById('rmz-start-date').value;
+            const endDateInput = document.getElementById('rmz-end-date').value;
             
-            const displayOrder = ['name', 'mobile', 'password', 'wallet', 'totalCreditGiven', 'dueAmount', 'referralId', 'referredBy', 'lifetimeEarning', 'uid', 'upline', 'createdAt'];
+            const startDate = startDateInput ? new Date(startDateInput) : null;
+            if(startDate) startDate.setHours(0, 0, 0, 0);
 
-            displayOrder.forEach(key => {
-                if (user.hasOwnProperty(key) || (key === 'totalCreditGiven' || key === 'dueAmount')) {
-                    const value = user[key] || 0; // Default to 0 if not present
-                    let displayValue = Array.isArray(value) ? value.join(', ') || 'N/A' : value;
-                    if (value && typeof value.toDate === 'function') {
-                        displayValue = value.toDate().toLocaleString();
+            const endDate = endDateInput ? new Date(endDateInput) : null;
+            if(endDate) endDate.setHours(23, 59, 59, 999);
+
+            const filteredData = allRmzTransactions.filter(t => {
+                if (!t.timestamp) return false;
+                const transactionDate = t.timestamp.toDate();
+                if (startDate && transactionDate < startDate) return false;
+                if (endDate && transactionDate > endDate) return false;
+                return true;
+            });
+
+            const listEl = document.getElementById('rmz-history-list');
+            if (filteredData.length === 0) {
+                listEl.innerHTML = '<p>No transactions found for the selected date range.</p>';
+                return;
+            }
+
+            let table = `<table><thead><tr><th>Date</th><th>Amount</th><th>From</th><th>Mobile</th></tr></thead><tbody>`;
+            filteredData.forEach(t => {
+                const date = t.timestamp.toDate().toLocaleString();
+                table += `<tr><td>${date}</td><td>₹${t.amount.toFixed(2)}</td><td>${t.senderName}</td><td>${t.senderMobile}</td></tr>`;
+            });
+            listEl.innerHTML = table + `</tbody></table>`;
+        }
+        
+        function renderCashbackHistory(snapshot) {
+            const listEl = document.getElementById('cashback-history-list');
+            if (snapshot.empty) {
+                listEl.innerHTML = '<p>No history found.</p>';
+                return;
+            }
+            const historyItems = [];
+            snapshot.forEach(doc => historyItems.push(doc.data()));
+            historyItems.sort((a, b) => (b.requestDate?.toDate() || 0) - (a.requestDate?.toDate() || 0));
+
+            let table = `<table><thead><tr><th>Date</th><th>User</th><th>Product</th><th>Status</th><th>Amount</th></tr></thead><tbody>`;
+            historyItems.forEach(r => {
+                const date = r.requestDate ? r.requestDate.toDate().toLocaleDateString() : 'N/A';
+                table += `<tr><td>${date}</td><td>${r.userName}</td><td>${r.productName}</td><td>${r.status}</td><td>₹${(r.cashbackAmount || 0).toFixed(2)}</td></tr>`;
+            });
+            listEl.innerHTML = table + `</tbody></table>`;
+        }
+
+        function renderOldDataList(snapshot) {
+            const listEl = document.getElementById('old-data-list');
+            if (snapshot.empty) {
+                listEl.innerHTML = '<p>No data older than 30 days found.</p>';
+                return;
+            }
+            let table = `<table><thead><tr><th><input type="checkbox" id="select-all-checkbox"></th><th>Date</th><th>User</th><th>Product</th><th>Status</th></tr></thead><tbody>`;
+            snapshot.forEach(doc => {
+                const r = {id: doc.id, ...doc.data()};
+                const date = r.requestDate ? r.requestDate.toDate().toLocaleDateString() : 'N/A';
+                table += `<tr><td><input type="checkbox" class="old-data-checkbox" data-id="${r.id}"></td><td>${date}</td><td>${r.userName}</td><td>${r.productName}</td><td>${r.status}</td></tr>`;
+            });
+            listEl.innerHTML = table + `</tbody></table>`;
+        }
+
+        function renderNotifications(snapshot) {
+            document.getElementById('notifications-stat').textContent = snapshot.size;
+            const listEl = document.getElementById('notifications-list');
+            if (snapshot.empty) {
+                listEl.innerHTML = '<p>No notifications sent yet.</p>';
+                return;
+            }
+            let table = `<table><thead><tr><th>Date</th><th>Title</th><th>Percentage</th><th>Colors</th><th>Actions</th></tr></thead><tbody>`;
+            snapshot.forEach(doc => {
+                const n = { id: doc.id, ...doc.data() };
+                const date = n.createdAt ? n.createdAt.toDate().toLocaleString() : 'N/A';
+                const colorPreview = `<span style="background-color:${n.bgColor}; color:${n.textColor}; padding: 2px 8px; border-radius: 4px; border: 1px solid #ccc;">Preview</span>`;
+                table += `<tr>
+                    <td>${date}</td>
+                    <td>${n.title}</td>
+                    <td>${n.percentage}%</td>
+                    <td>${colorPreview}</td>
+                    <td>
+                        <button class="btn-edit" data-action="edit-notification" data-id="${n.id}" style="width:auto; padding: 5px 10px; font-size: 0.8rem;">Edit</button>
+                        <button class="btn-reject" data-action="delete-notification" data-id="${n.id}" style="width:auto; padding: 5px 10px; font-size: 0.8rem;">Delete</button>
+                    </td>
+                </tr>`;
+            });
+            listEl.innerHTML = table + `</tbody></table>`;
+        }
+
+        // NEW: Render all coupons history table
+        async function renderAllCouponsHistory(snapshot) {
+            const listEl = document.getElementById('all-coupons-history-list');
+            if (snapshot.empty) {
+                listEl.innerHTML = '<p>No coupons have been generated yet.</p>';
+                return;
+            }
+            
+            const userCache = {};
+            const coupons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            let table = `<table><thead><tr><th>Code</th><th>Amount</th><th>Member Name</th><th>Status</th><th>Issued On</th><th>Redeemed On</th></tr></thead><tbody>`;
+            
+            for (const coupon of coupons) {
+                let userName = 'N/A';
+                if (userCache[coupon.userId]) {
+                    userName = userCache[coupon.userId];
+                } else {
+                    const userDoc = await getDoc(doc(db, 'users', coupon.userId));
+                    if (userDoc.exists()) {
+                        userName = userDoc.data().name;
+                        userCache[coupon.userId] = userName;
                     }
-                    if (typeof value === 'number' && (key === 'wallet' || key === 'totalCreditGiven' || key === 'dueAmount' || key === 'lifetimeEarning')) {
-                        displayValue = `₹${value.toFixed(2)}`;
-                    }
-                    detailsEl.innerHTML += `<dt>${key}</dt><dd>${displayValue}</dd>`;
                 }
-            });
-            
-            document.getElementById('member-details-modal').classList.add('active');
-        }
-        
-        async function approveCashbackRequest(id) {
-            // ... (code unchanged)
-        }
-        
-        async function approveClaimRequest(id) {
-            // ... (code unchanged)
-        }
 
-        async function rejectClaimRequest(id) {
-            // ... (code unchanged)
-        }
-        
-        async function handleGiveCredit(e) {
-            e.preventDefault();
-            const amountInput = document.getElementById('give-credit-amount');
-            const amount = parseFloat(amountInput.value);
-            if (isNaN(amount) || amount <= 0 || !currentMemberUid) return;
+                const status = coupon.isUsed ? `<span class="status-redeemed">Redeemed</span>` : `<span class="status-available">Available</span>`;
+                const issuedDate = coupon.createdAt ? coupon.createdAt.toDate().toLocaleString() : 'N/A';
+                const redeemedDate = coupon.redeemedAt ? coupon.redeemedAt.toDate().toLocaleString() : '—';
 
-            const btn = e.target.querySelector('button');
-            btn.disabled = true;
-
-            const userRef = doc(db, 'users', currentMemberUid);
-            try {
-                await runTransaction(db, async (transaction) => {
-                    transaction.update(userRef, {
-                        wallet: increment(amount),
-                        totalCreditGiven: increment(amount),
-                        dueAmount: increment(amount)
-                    });
-                    
-                    const transRef = doc(collection(db, 'transactions'));
-                    transaction.set(transRef, {
-                        involvedUsers: [currentMemberUid],
-                        type: 'credit',
-                        amount: amount,
-                        description: `Credit of ₹${amount.toFixed(2)} received`,
-                        status: 'completed',
-                        timestamp: serverTimestamp()
-                    });
-                });
-                alert(`₹${amount.toFixed(2)} credit given successfully!`);
-                amountInput.value = '';
-                showMemberDetails(currentMemberUid); // Refresh details
-            } catch (error) {
-                console.error("Error giving credit:", error);
-                alert("Failed to give credit.");
-            } finally {
-                btn.disabled = false;
+                table += `<tr>
+                    <td>${coupon.code}</td>
+                    <td>₹${coupon.amount}</td>
+                    <td>${userName}</td>
+                    <td>${status}</td>
+                    <td>${issuedDate}</td>
+                    <td>${redeemedDate}</td>
+                </tr>`;
             }
+            listEl.innerHTML = table + `</tbody></table>`;
         }
 
-        async function handleClearDue(e) {
-            e.preventDefault();
-            const amountInput = document.getElementById('clear-due-amount');
-            const amount = parseFloat(amountInput.value);
-            if (isNaN(amount) || amount <= 0 || !currentMemberUid) return;
-            
-            const btn = e.target.querySelector('button');
-            btn.disabled = true;
 
-            const userRef = doc(db, 'users', currentMemberUid);
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const userDoc = await transaction.get(userRef);
-                    if (!userDoc.exists()) throw "User not found!";
-                    
-                    const currentDue = userDoc.data().dueAmount || 0;
-                    if (amount > currentDue) throw "Clear amount cannot be more than due amount.";
-
-                    transaction.update(userRef, {
-                        dueAmount: increment(-amount)
-                    });
-
-                    const transRef = doc(collection(db, 'transactions'));
-                    transaction.set(transRef, {
-                        involvedUsers: [currentMemberUid],
-                        type: 'due_payment',
-                        amount: -amount, // Negative because it's a payment from user
-                        description: `Due payment of ₹${amount.toFixed(2)} received`,
-                        status: 'completed',
-                        timestamp: serverTimestamp()
-                    });
-                });
-                alert(`₹${amount.toFixed(2)} due cleared successfully!`);
-                amountInput.value = '';
-                showMemberDetails(currentMemberUid); // Refresh details
-            } catch (error) {
-                console.error("Error clearing due:", error);
-                alert(`Failed to clear due: ${error}`);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function addEventListeners() {
-            document.getElementById('admin-login-form').addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('admin-email').value}@ramazone.com`, document.getElementById('admin-password').value).catch(() => document.getElementById('admin-login-error').textContent = "Login failed."); });
-            document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-            document.querySelector('.tabs').addEventListener('click', (e) => { if (!e.target.matches('.tab-link')) return; document.querySelector('.tabs .active').classList.remove('active'); e.target.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.getElementById(`${e.target.dataset.tab}-content`).classList.add('active'); });
-            
-            document.getElementById('admin-view').addEventListener('click', async (e) => {
-                const btn = e.target.closest('button.btn-approve, button.btn-reject');
-                if (!btn) return;
-                const id = btn.dataset.id;
-                const type = btn.dataset.type;
-                const isApprove = btn.matches('.btn-approve');
-                btn.disabled = true;
-                try {
-                    if (type === 'cashback') {
-                        if (isApprove) await approveCashbackRequest(id);
-                        else {
-                            const batch = writeBatch(db);
-                            batch.update(doc(db, 'cashback_requests', id), { status: 'rejected' });
-                            await batch.commit();
-                            alert('Request rejected.');
-                        }
-                    } else if (type === 'claim') {
-                        if (isApprove) await approveClaimRequest(id);
-                        else await rejectClaimRequest(id);
-                    }
-                } catch (error) { console.error(error); alert(`Error: ${error.message}`); }
-                finally { btn.disabled = false; }
-            });
-
-            document.getElementById('members-list').addEventListener('click', (e) => {
-                const row = e.target.closest('.member-row');
-                if (row) showMemberDetails(row.dataset.id);
-            });
-            
-            document.getElementById('give-credit-form').addEventListener('submit', handleGiveCredit);
-            document.getElementById('clear-due-form').addEventListener('submit', handleClearDue);
-
-            document.querySelector('[data-close-modal]').addEventListener('click', (e) => {
-                e.target.closest('.modal-overlay').classList.remove('active');
-                currentMemberUid = null; // Reset current member on modal close
-            });
-            document.getElementById('save-settings-btn').addEventListener('click', async () => { const newPercent = parseFloat(document.getElementById('cashback-percentage').value); if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage."); await setDoc(doc(db, 'app_settings', 'config'), { cashback_percentage: newPercent }, { merge: true }); alert("Settings saved!"); });
-        }
-        
-        // --- Re-adding unchanged functions for completeness ---
-        approveCashbackRequest = async (id) => {
+        async function approveCashbackRequest(id, isAverage = false) {
             const requestDocRef = doc(db, 'cashback_requests', id);
             const configDocRef = doc(db, 'app_settings', 'config');
-            const batch = writeBatch(db);
-
+            
             const [requestDoc, configDoc] = await Promise.all([getDoc(requestDocRef), getDoc(configDocRef)]);
             if (!requestDoc.exists()) throw new Error("Request not found.");
             
@@ -430,14 +477,18 @@
             
             const userData = userDoc.data();
             const config = configDoc.exists() ? configDoc.data() : {};
-            const cashbackPercent = config.cashback_percentage || 2;
-            const selfAmount = requestData.productPrice * (cashbackPercent / 100);
+            const baseCashbackPercent = config.cashback_percentage || 2;
+            
+            const finalCashbackPercent = isAverage ? baseCashbackPercent / 2 : baseCashbackPercent;
+            const selfAmount = requestData.productPrice * (finalCashbackPercent / 100);
             const distributionAmount = selfAmount * 0.50;
 
+            const batch = writeBatch(db);
             batch.update(userRef, { wallet: increment(selfAmount), lifetimeEarning: increment(selfAmount) });
             batch.set(doc(collection(db, 'transactions')), {
                 involvedUsers: [requestData.userId], type: 'cashback', amount: selfAmount,
-                description: `Cashback for ${requestData.productName}`, status: 'completed', timestamp: serverTimestamp()
+                description: `Cashback for ${requestData.productName}`, status: 'completed', timestamp: serverTimestamp(),
+                commissionFromUid: requestData.userId
             });
             batch.update(requestDocRef, { status: 'completed', cashbackAmount: selfAmount, claimed: true });
 
@@ -448,7 +499,11 @@
                 const commission = distributionAmount * percentages[i];
                 if (upline[i]) {
                     batch.update(doc(db, 'users', upline[i]), { wallet: increment(commission), lifetimeEarning: increment(commission) });
-                    batch.set(doc(collection(db, 'transactions')), { involvedUsers: [upline[i]], type: 'commission', amount: commission, description: `Commission from ${userData.name}`, timestamp: serverTimestamp(), status: 'completed' });
+                    batch.set(doc(collection(db, 'transactions')), { 
+                        involvedUsers: [upline[i]], type: 'commission', amount: commission, 
+                        description: `Commission from ${userData.name}`, timestamp: serverTimestamp(), status: 'completed',
+                        commissionFromUid: requestData.userId
+                    });
                 } else { totalLapsedAmount += commission; }
             }
 
@@ -458,55 +513,406 @@
             }
             
             await batch.commit();
-            alert('Cashback approved and credited to user wallet.');
+            alert(`Cashback ${isAverage ? '(Average)' : ''} approved and credited.`);
         }
-        approveClaimRequest = async (id) => {
+        
+        async function handleDeleteOldData() {
+            const checkboxes = document.querySelectorAll('.old-data-checkbox:checked');
+            if (checkboxes.length === 0) return alert("Please select items to delete.");
+            if (!confirm(`Are you sure you want to permanently delete ${checkboxes.length} records? This cannot be undone.`)) return;
+
+            const btn = document.getElementById('delete-selected-btn');
+            btn.disabled = true;
+            btn.textContent = 'Deleting...';
+
+            try {
+                const batch = writeBatch(db);
+                checkboxes.forEach(box => {
+                    const docRef = doc(db, 'cashback_requests', box.dataset.id);
+                    batch.delete(docRef);
+                });
+                await batch.commit();
+                alert(`${checkboxes.length} records deleted successfully.`);
+            } catch (error) {
+                console.error("Error deleting old data:", error);
+                alert("An error occurred while deleting data.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Delete Selected';
+            }
+        }
+
+        async function handleSendNotification(e) {
+            e.preventDefault();
+            const title = document.getElementById('notification-title').value.trim();
+            const percentage = parseFloat(document.getElementById('notification-percentage').value);
+            const textColor = document.getElementById('notification-text-color').value;
+            const bgColor = document.getElementById('notification-bg-color').value;
+
+            if (!title || isNaN(percentage)) return alert("Please fill all fields correctly.");
+
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = "Sending...";
+
+            try {
+                await addDoc(collection(db, 'notifications'), {
+                    title: title,
+                    percentage: percentage,
+                    textColor: textColor,
+                    bgColor: bgColor,
+                    createdAt: serverTimestamp()
+                });
+                alert("Notification sent successfully!");
+                e.target.reset();
+            } catch (error) {
+                console.error("Error sending notification:", error);
+                alert("Failed to send notification. Check console for details.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Send Notification";
+            }
+        }
+
+        function addEventListeners() {
+            document.getElementById('admin-login-form').addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('admin-email').value}@ramazone.com`, document.getElementById('admin-password').value).catch(() => document.getElementById('admin-login-error').textContent = "Login failed."); });
+            document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+            
+            document.getElementById('stat-cards-container').addEventListener('click', (e) => {
+                const card = e.target.closest('.card');
+                if (!card || !card.dataset.tab) return;
+                const tabLink = document.querySelector(`.tab-link[data-tab="${card.dataset.tab}"]`);
+                if (tabLink) {
+                    tabLink.click();
+                    document.getElementById('tabs-container').scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+
+            document.querySelector('.tabs').addEventListener('click', (e) => { if (!e.target.matches('.tab-link')) return; document.querySelector('.tabs .active').classList.remove('active'); e.target.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.getElementById(`${e.target.dataset.tab}-content`).classList.add('active'); });
+            
+            document.getElementById('admin-view').addEventListener('click', async (e) => {
+                const target = e.target.closest('button[data-action]');
+                if (!target) return;
+
+                const id = target.dataset.id;
+                const action = target.dataset.action;
+                target.disabled = true;
+
+                try {
+                    switch (action) {
+                        case 'approve-cashback': await approveCashbackRequest(id, false); break;
+                        case 'approve-cashback-avg': await approveCashbackRequest(id, true); break;
+                        case 'reject-cashback':
+                            await updateDoc(doc(db, 'cashback_requests', id), { status: 'rejected' });
+                            alert('Request rejected.');
+                            break;
+                        case 'approve-claim': await approveClaimRequest(id); break;
+                        case 'reject-claim': await rejectClaimRequest(id); break;
+                        case 'edit-notification': await showEditNotificationModal(id); break;
+                        case 'delete-notification': await deleteNotification(id); break;
+                        // NEW: Redeem Coupon Action
+                        case 'redeem-coupon': await redeemCoupon(id); break;
+                    }
+                } catch (error) {
+                    console.error(`Error performing action '${action}':`, error);
+                    alert(`Error: ${error.message}`);
+                } finally {
+                    if(target) target.disabled = false;
+                }
+            });
+
+            document.getElementById('members-list').addEventListener('click', (e) => {
+                const row = e.target.closest('.member-row');
+                if (row) showMemberDetails(row.dataset.id);
+            });
+            
+            document.getElementById('give-credit-form').addEventListener('submit', handleGiveCredit);
+            document.getElementById('clear-due-form').addEventListener('submit', handleClearDue);
+            
+            document.querySelectorAll('[data-close-modal]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.target.closest('.modal-overlay').classList.remove('active');
+                    currentMemberUid = null;
+                });
+            });
+
+            document.getElementById('save-settings-btn').addEventListener('click', async () => { const newPercent = parseFloat(document.getElementById('cashback-percentage').value); if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage."); await setDoc(doc(db, 'app_settings', 'config'), { cashback_percentage: newPercent }, { merge: true }); alert("Settings saved!"); });
+            
+            document.getElementById('old-data-list').addEventListener('change', (e) => {
+                if (e.target.id === 'select-all-checkbox') {
+                    document.querySelectorAll('.old-data-checkbox').forEach(box => box.checked = e.target.checked);
+                }
+            });
+            document.getElementById('select-all-old-btn').addEventListener('click', () => {
+                document.querySelectorAll('.old-data-checkbox').forEach(box => box.checked = true);
+            });
+            document.getElementById('delete-selected-btn').addEventListener('click', handleDeleteOldData);
+            document.getElementById('notification-form').addEventListener('submit', handleSendNotification);
+            document.getElementById('rmz-filter-btn').addEventListener('click', renderRmzHistoryTable);
+            document.getElementById('edit-notification-form').addEventListener('submit', handleUpdateNotification);
+            // NEW: Listener for checking coupon
+            document.getElementById('check-coupon-btn').addEventListener('click', handleCheckCoupon);
+        }
+        
+        async function showEditNotificationModal(id) {
+            const modal = document.getElementById('edit-notification-modal');
+            const form = document.getElementById('edit-notification-form');
+            try {
+                const docRef = doc(db, 'notifications', id);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    throw new Error("Notification not found.");
+                }
+                const data = docSnap.data();
+                form.querySelector('#edit-notification-id').value = id;
+                form.querySelector('#edit-notification-title').value = data.title;
+                form.querySelector('#edit-notification-percentage').value = data.percentage;
+                form.querySelector('#edit-notification-text-color').value = data.textColor;
+                form.querySelector('#edit-notification-bg-color').value = data.bgColor;
+                modal.classList.add('active');
+            } catch (error) {
+                console.error("Error fetching notification for edit:", error);
+                alert("Could not load notification details.");
+            }
+        }
+
+        async function handleUpdateNotification(e) {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.querySelector('#edit-notification-id').value;
+            const btn = form.querySelector('button[type="submit"]');
+
+            const updatedData = {
+                title: form.querySelector('#edit-notification-title').value.trim(),
+                percentage: parseFloat(form.querySelector('#edit-notification-percentage').value),
+                textColor: form.querySelector('#edit-notification-text-color').value,
+                bgColor: form.querySelector('#edit-notification-bg-color').value,
+            };
+
+            if (!updatedData.title || isNaN(updatedData.percentage)) {
+                return alert("Please fill all fields correctly.");
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Saving...";
+
+            try {
+                await updateDoc(doc(db, 'notifications', id), updatedData);
+                alert("Notification updated successfully!");
+                form.closest('.modal-overlay').classList.remove('active');
+            } catch (error) {
+                console.error("Error updating notification:", error);
+                alert("Failed to update notification.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Save Changes";
+            }
+        }
+
+        async function deleteNotification(id) {
+            if (!confirm("Are you sure you want to delete this notification permanently?")) {
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, "notifications", id));
+                alert("Notification deleted successfully.");
+            } catch (error) {
+                console.error("Error deleting notification:", error);
+                alert("Failed to delete notification.");
+            }
+        }
+
+        // --- NEW: Coupon Redeem Functions ---
+        async function handleCheckCoupon() {
+            const codeInput = document.getElementById('coupon-code-input');
+            const code = codeInput.value.trim().toUpperCase();
+            const resultEl = document.getElementById('coupon-check-result');
+            
+            if (!code) {
+                resultEl.innerHTML = `<p class="status-invalid">Please enter a coupon code.</p>`;
+                resultEl.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('check-coupon-btn');
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+
+            try {
+                const q = query(collection(db, 'coupons'), where('code', '==', code));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    resultEl.innerHTML = `<p class="status-invalid">Invalid Coupon Code.</p>`;
+                } else {
+                    const couponDoc = snapshot.docs[0];
+                    const coupon = { id: couponDoc.id, ...couponDoc.data() };
+                    const userDoc = await getDoc(doc(db, 'users', coupon.userId));
+                    const userName = userDoc.exists() ? userDoc.data().name : 'Unknown User';
+                    const userMobile = userDoc.exists() ? userDoc.data().mobile : 'N/A';
+                    
+                    let html = `<p><strong>Code:</strong> ${coupon.code}</p>
+                                <p><strong>Amount:</strong> ₹${coupon.amount}</p>
+                                <p><strong>Member:</strong> ${userName} (${userMobile})</p>`;
+
+                    if (coupon.isUsed) {
+                        const redeemedDate = coupon.redeemedAt ? coupon.redeemedAt.toDate().toLocaleString() : 'N/A';
+                        html += `<p><strong>Status:</strong> <span class="status-redeemed">Already Redeemed</span> on ${redeemedDate}</p>`;
+                    } else {
+                        html += `<p><strong>Status:</strong> <span class="status-available">Available for Redemption</span></p>
+                                 <button class="btn-approve" data-action="redeem-coupon" data-id="${coupon.id}" style="width:auto; margin-top:10px;">Redeem Now</button>`;
+                    }
+                    resultEl.innerHTML = html;
+                }
+            } catch (error) {
+                console.error("Error checking coupon:", error);
+                resultEl.innerHTML = `<p class="status-invalid">An error occurred. Please try again.</p>`;
+            } finally {
+                resultEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Check Code';
+            }
+        }
+
+        async function redeemCoupon(couponId) {
+            if (!confirm("Are you sure you want to redeem this coupon? This action cannot be undone.")) {
+                return;
+            }
+            
+            try {
+                const couponRef = doc(db, 'coupons', couponId);
+                const couponDoc = await getDoc(couponRef);
+                if (!couponDoc.exists() || couponDoc.data().isUsed) {
+                    throw new Error("Coupon is already used or invalid.");
+                }
+                const couponData = couponDoc.data();
+
+                const batch = writeBatch(db);
+                batch.update(couponRef, {
+                    isUsed: true,
+                    redeemedAt: serverTimestamp()
+                });
+                
+                // Add a transaction for the user's history
+                batch.set(doc(collection(db, 'transactions')), {
+                    involvedUsers: [couponData.userId],
+                    type: 'coupon_redeem',
+                    amount: couponData.amount,
+                    description: `Coupon redeemed: ${couponData.code}`,
+                    status: 'completed',
+                    timestamp: serverTimestamp(),
+                    couponCode: couponData.code
+                });
+
+                await batch.commit();
+                alert(`Coupon ${couponData.code} redeemed successfully!`);
+                // Re-check the code to show updated status
+                document.getElementById('coupon-code-input').value = couponData.code;
+                handleCheckCoupon();
+
+            } catch (error) {
+                console.error("Error redeeming coupon:", error);
+                alert(`Failed to redeem coupon: ${error.message}`);
+            }
+        }
+
+        let showMemberDetails = async (uid) => {
+            currentMemberUid = uid;
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            if (!userDoc.exists()) return alert("User not found.");
+            const user = userDoc.data();
+            const detailsEl = document.getElementById('member-details-content');
+            detailsEl.innerHTML = '';
+            const displayOrder = ['name', 'mobile', 'password', 'wallet', 'totalCreditGiven', 'dueAmount', 'referralId', 'referredBy', 'lifetimeEarning', 'uid', 'upline', 'createdAt'];
+            displayOrder.forEach(key => {
+                if (user.hasOwnProperty(key) || (key === 'totalCreditGiven' || key === 'dueAmount')) {
+                    const value = user[key] || 0;
+                    let displayValue = Array.isArray(value) ? value.join(', ') || 'N/A' : value;
+                    if (value && typeof value.toDate === 'function') { displayValue = value.toDate().toLocaleString(); }
+                    if (typeof value === 'number' && (key === 'wallet' || key === 'totalCreditGiven' || key === 'dueAmount' || key === 'lifetimeEarning')) { displayValue = `₹${value.toFixed(2)}`; }
+                    detailsEl.innerHTML += `<dt>${key}</dt><dd>${displayValue}</dd>`;
+                }
+            });
+            document.getElementById('member-details-modal').classList.add('active');
+        };
+        let approveClaimRequest = async (id) => {
             const reqRef = doc(db, 'claim_requests', id);
             const reqDoc = await getDoc(reqRef);
             if (!reqDoc.exists()) throw new Error("Request not found.");
-            
             const reqData = reqDoc.data();
             const couponCode = `RMZ${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-            
             const batch = writeBatch(db);
             batch.update(reqRef, { status: 'approved', couponCode });
-            batch.set(doc(collection(db, 'coupons')), {
-                userId: reqData.userId, code: couponCode, amount: reqData.amount,
-                isUsed: false, createdAt: serverTimestamp(), claimId: id
-            });
-            
+            batch.set(doc(collection(db, 'coupons')), { userId: reqData.userId, code: couponCode, amount: reqData.amount, isUsed: false, createdAt: serverTimestamp(), claimId: id });
             const q = query(collection(db, "transactions"), where("originalRequestId", "==", id));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
                 const transactionRef = querySnapshot.docs[0].ref;
                 batch.update(transactionRef, { status: 'completed', description: `Claim approved. Coupon: ${couponCode}` });
             }
-
             await batch.commit();
             alert(`Request approved. Coupon ${couponCode} generated.`);
-        }
-        rejectClaimRequest = async (id) => {
+        };
+        let rejectClaimRequest = async (id) => {
             const reqRef = doc(db, 'claim_requests', id);
             const reqDoc = await getDoc(reqRef);
             if (!reqDoc.exists()) throw new Error("Request not found.");
-
             const reqData = reqDoc.data();
             const userRef = doc(db, 'users', reqData.userId);
-            
             const batch = writeBatch(db);
             batch.update(reqRef, { status: 'rejected' });
             batch.update(userRef, { wallet: increment(reqData.amount) }); // Refund
-            
             const q = query(collection(db, "transactions"), where("originalRequestId", "==", id));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
                 const transactionRef = querySnapshot.docs[0].ref;
                 batch.update(transactionRef, { status: 'rejected', description: `Claim rejected. ₹${reqData.amount} refunded.` });
             }
-
             await batch.commit();
             alert(`Request rejected. Amount refunded to user.`);
-        }
+        };
+        let handleGiveCredit = async (e) => {
+            e.preventDefault();
+            const amountInput = document.getElementById('give-credit-amount');
+            const amount = parseFloat(amountInput.value);
+            if (isNaN(amount) || amount <= 0 || !currentMemberUid) return;
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            const userRef = doc(db, 'users', currentMemberUid);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    transaction.update(userRef, { wallet: increment(amount), totalCreditGiven: increment(amount), dueAmount: increment(amount) });
+                    const transRef = doc(collection(db, 'transactions'));
+                    transaction.set(transRef, { involvedUsers: [currentMemberUid], type: 'credit', amount: amount, description: `Credit of ₹${amount.toFixed(2)} received`, status: 'completed', timestamp: serverTimestamp() });
+                });
+                alert(`₹${amount.toFixed(2)} credit given successfully!`);
+                amountInput.value = '';
+                showMemberDetails(currentMemberUid);
+            } catch (error) { console.error("Error giving credit:", error); alert("Failed to give credit."); } finally { btn.disabled = false; }
+        };
+        let handleClearDue = async (e) => {
+            e.preventDefault();
+            const amountInput = document.getElementById('clear-due-amount');
+            const amount = parseFloat(amountInput.value);
+            if (isNaN(amount) || amount <= 0 || !currentMemberUid) return;
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            const userRef = doc(db, 'users', currentMemberUid);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists()) throw "User not found!";
+                    const currentDue = userDoc.data().dueAmount || 0;
+                    if (amount > currentDue) throw "Clear amount cannot be more than due amount.";
+                    transaction.update(userRef, { dueAmount: increment(-amount) });
+                    const transRef = doc(collection(db, 'transactions'));
+                    transaction.set(transRef, { involvedUsers: [currentMemberUid], type: 'due_payment', amount: -amount, description: `Due payment of ₹${amount.toFixed(2)} received`, status: 'completed', timestamp: serverTimestamp() });
+                });
+                alert(`₹${amount.toFixed(2)} due cleared successfully!`);
+                amountInput.value = '';
+                showMemberDetails(currentMemberUid);
+            } catch (error) { console.error("Error clearing due:", error); alert(`Failed to clear due: ${error}`); } finally { btn.disabled = false; }
+        };
 
         init();
     </script>
