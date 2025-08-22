@@ -129,7 +129,12 @@
         .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; }
         .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         .history-list { display: flex; flex-direction: column; gap: 12px; }
-        .history-item { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .history-item { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
+            cursor: pointer; transition: background-color 0.2s;
+        }
+        .history-item:hover { background-color: #fafafa; }
         .history-item:last-child { border-bottom: none; }
         .history-info .title { font-weight: 500; font-size: 15px; }
         .history-info .date { font-size: 13px; color: var(--text-secondary); }
@@ -139,9 +144,19 @@
         .history-amount .status { font-size: 12px; text-transform: capitalize; }
         
         /* --- Modals --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.6); display: none; 
+            justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+        }
         .modal-overlay.active { display: flex; }
-        .modal-content { background-color: var(--bg-card); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; position: relative; }
+        .modal-content { 
+            background-color: var(--bg-card); padding: 25px; border-radius: 16px; 
+            width: 100%; max-width: 400px; position: relative;
+            animation: fadeInScale 0.3s ease-out;
+        }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
         .modal-content h3 { text-align: center; font-size: 20px; margin-bottom: 20px; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .btn-secondary { background: #e8eef3; color: var(--text-primary); }
@@ -167,9 +182,36 @@
         #scanner-container { width: 100%; max-width: 250px; aspect-ratio: 1/1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background: #000; }
         #scanner-video { width: 100%; height: 100%; object-fit: cover; }
         
-        #success-popup .modal-content { text-align: center; }
-        .success-icon { width: 60px; height: 60px; background-color: var(--accent-green); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 15px; }
-        #success-popup-message { font-size: 16px; color: var(--text-secondary); }
+        /* --- Professional Success & Details Modals --- */
+        .professional-modal .modal-content { padding: 30px; max-width: 380px; text-align: center; }
+        .professional-modal .success-icon {
+            width: 80px; height: 80px; background-color: var(--accent-green);
+            border-radius: 50%; margin: 0 auto 20px auto; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .professional-modal .success-icon svg { width: 40px; height: 40px; stroke: white; stroke-width: 4; }
+        .professional-modal h2 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+        .professional-modal .amount { font-size: 36px; font-weight: 700; color: var(--brand-red); margin-bottom: 25px; }
+        .professional-modal .details-box {
+            background-color: var(--bg-page); border-radius: 12px; padding: 15px;
+            text-align: left; margin-bottom: 30px;
+        }
+        .professional-modal .detail-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; }
+        .professional-modal .detail-item:last-child { margin-bottom: 0; }
+        .professional-modal .detail-item .label { color: var(--text-secondary); }
+        .professional-modal .detail-item .value { font-weight: 600; }
+        .professional-modal .action-btn { width: 100%; }
+        
+        #transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
+        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 30px; }
+        #transaction-details-modal .status-badge {
+            background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px;
+            border-radius: 15px; font-size: 13px; font-weight: 600;
+        }
+        #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
+        #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
+        #transaction-details-modal .action-btn { background-color: var(--text-secondary); }
+
         .modal-close-btn { 
             position: absolute; top: 10px; right: 15px; 
             background: transparent; border: none; 
@@ -187,136 +229,87 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- NEW: Network Modal Styles --- */
-        #network-modal .modal-content {
+        /* --- Network Modal Styles --- */
+        #network-modal .modal-content, #member-detail-modal .modal-content {
             width: 100%; height: 100%; max-width: 100%; max-height: 100%;
             border-radius: 0; padding: 0; display: flex; flex-direction: column;
             background-color: var(--bg-page);
         }
         .network-header {
-            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
             gap: 15px; padding: 10px 15px;
             border-bottom: 1px solid var(--border-color); flex-shrink: 0;
             background-color: var(--bg-card);
         }
-        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; grid-column: 2; }
+        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; }
         .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
-        .network-header #network-refresh-btn { grid-column: 1; justify-self: start; }
-        .network-header #network-close-btn { grid-column: 3; justify-self: end; font-size: 28px; line-height: 1; color: #aaa; }
-        .network-header #network-refresh-btn svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
+        .network-header .close-btn { font-size: 28px; line-height: 1; color: #aaa; }
+        .network-header .refresh-btn svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
         
         .network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
         .network-tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
         .network-tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         
-        .network-content-container {
-            flex-grow: 1; overflow: hidden; /* Changed to hidden for custom pan/zoom */
-            position: relative;
-        }
-        .network-tab-content { display: none; width: 100%; height: 100%; }
+        .network-content-container { flex-grow: 1; overflow: auto; position: relative; padding: 20px 15px; }
+        .network-tab-content { display: none; }
         .network-tab-content.active { display: block; }
-
-        /* Downline Tree Styles */
-        #downline-content { cursor: grab; }
-        #downline-content:active { cursor: grabbing; }
-        #network-tree-container {
-            width: 100%; height: 100%;
-            transform-origin: 0 0;
-            transition: transform 0.2s ease-out;
+        
+        /* --- NEW: Professional Network Tree Styles --- */
+        .network-tree { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .network-node { display: flex; flex-direction: column; align-items: center; position: relative; width: 100%; }
+        .node-card {
+            background-color: var(--bg-card); border-radius: 12px; padding: 12px;
+            display: flex; align-items: center; width: 100%; max-width: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color);
+            position: relative; cursor: pointer; transition: transform 0.2s;
         }
-        .network-tree {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px;
-            min-width: 100%;
-            min-height: 100%;
-        }
-        .network-node {
-            display: flex; flex-direction: column; align-items: center;
-            position: relative; padding: 20px 5px 0 5px;
-        }
-        .network-node > .node-content {
-            display: flex; flex-direction: column; align-items: center;
-            text-align: center;
-        }
+        .node-card:hover { transform: scale(1.02); }
         .node-avatar {
-            width: 60px; height: 60px; border-radius: 50%;
+            width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
             background-color: var(--brand-red); color: white;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: 600;
-            border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            margin-bottom: 8px;
-            overflow: hidden; /* For profile picture */
+            font-size: 22px; font-weight: 600; overflow: hidden; margin-right: 12px;
         }
         .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .node-name { font-weight: 600; font-size: 14px; }
-        .node-earning { font-size: 12px; color: var(--accent-green); font-weight: 500;}
-        
-        .node-children { display: flex; justify-content: center; position: relative; padding-top: 50px; }
-        /* --- Drawing lines --- */
-        /* Vertical line from parent */
-        .network-node::before {
-            content: ''; position: absolute;
-            top: 0; left: 50%;
-            width: 2px; height: 20px;
-            background-color: #ccc;
+        .node-info { flex-grow: 1; }
+        .node-name { font-weight: 600; font-size: 15px; }
+        .node-earning { font-size: 13px; color: var(--accent-green); font-weight: 500; }
+        .node-meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+        .node-team-size { font-size: 12px; color: var(--text-secondary); background: var(--bg-page); padding: 2px 8px; border-radius: 10px; }
+        .commission-tag {
+            position: absolute; top: -8px; right: 10px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white; padding: 3px 8px; font-size: 11px;
+            border-radius: 6px; font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        /* Horizontal line connecting children */
+        .node-children { display: flex; flex-direction: column; gap: 20px; width: 90%; margin-left: 10%; margin-top: 20px; position: relative; }
         .node-children::before {
-            content: ''; position: absolute;
-            top: 0; left: 50%; height: 2px;
-            background-color: #ccc;
-            width: calc(100% - 40px); /* Adjust width based on node padding */
-            transform: translateX(-50%);
+            content: ''; position: absolute; top: -20px; left: -20px;
+            width: 2px; height: calc(100% + 20px); background-color: #dbe2ea;
         }
-        /* Vertical line from child to horizontal line */
-        .network-node:not(:first-child)::after, .network-node:not(:last-child)::after {
-            content: ''; position: absolute;
-            top: 0; left: 50%;
-            width: 2px; height: 20px;
-            background-color: #ccc;
+        .network-node .node-children .network-node::before {
+            content: ''; position: absolute; top: 30px; left: -20px;
+            width: 20px; height: 2px; background-color: #dbe2ea;
         }
-        .network-node:only-child::after { display: none; }
-        .commission-badge {
-            position: absolute; top: 25px; left: calc(50% + 5px);
-            background-color: var(--text-secondary); color: white;
-            padding: 2px 6px; font-size: 10px; border-radius: 5px;
-            font-weight: 600; z-index: 1;
-        }
-        /* Root node should not have an incoming line */
-        .network-tree > .network-node::before { display: none; }
+        .network-tree > .network-node { padding-left: 0; }
+        .network-tree > .network-node > .node-children { margin-left: 0; }
 
-        /* Upline Ladder Styles */
-        #upline-list {
-            display: flex; flex-direction: column-reverse; /* Show current user at bottom */
-            align-items: center; padding: 20px; gap: 15px;
-        }
-        .upline-member {
-            display: flex; flex-direction: column; align-items: center;
-            position: relative;
-        }
-        .upline-member .node-content { text-align: center; }
-        .upline-member .node-avatar {
-            width: 70px; height: 70px; font-size: 28px;
-        }
+        #upline-list { display: flex; flex-direction: column; align-items: center; gap: 25px; }
+        .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .upline-member .node-card { width: 100%; max-width: 320px; flex-direction: column; text-align: center; padding: 20px 15px; }
+        .upline-member .node-avatar { margin-right: 0; margin-bottom: 10px; width: 65px; height: 65px; font-size: 28px; }
         .upline-member.current-user .node-avatar { background-color: var(--brand-blue); }
-        .upline-member .node-name { font-size: 15px; }
+        .upline-member .node-name { font-size: 16px; }
         .upline-member .node-earning { font-size: 13px; color: var(--text-secondary); }
-
-        /* Vertical connector for upline */
-        .upline-member:not(:first-child)::after {
-            content: ''; width: 2px; height: 15px;
-            background-color: #ccc;
-            position: absolute; bottom: -15px;
-        }
-        .upline-commission {
-            position: absolute; bottom: -28px; left: 10px;
-            font-size: 12px; color: var(--text-secondary);
-            font-weight: 600;
+        .upline-member:not(:last-child)::after {
+            content: '↓'; font-size: 24px; color: #ccc;
+            position: absolute; bottom: -25px; font-weight: bold;
         }
 
-        #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+        #network-loader, #upline-loader, #member-detail-loader { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+        #member-detail-modal .network-header h1 { font-size: 16px; }
 
         #popup-notification {
             position: fixed; top: -200px; left: 50%;
@@ -440,7 +433,6 @@
     </div>
 
     <!-- All Modals -->
-    <div id="success-popup" class="modal-overlay"> <div class="modal-content"><button class="modal-close-btn" data-close-modal>&times;</button><div class="success-icon">✓</div><h3 id="success-popup-title">Success!</h3><p id="success-popup-message">Your action was successful.</p></div></div>
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
     <div id="claim-modal" class="modal-overlay"> <div class="modal-content"> <h3>Wallet Se Claim Karein</h3><form id="claim-request-form"><div class="form-group"><label for="claim-amount">Kitna Amount Claim Karna Hai? (min ₹10)</label><input type="number" id="claim-amount" min="10" required></div><p id="claim-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="claim-submit-btn">Request</button></div></form></div> </div>
@@ -474,33 +466,42 @@
         </div> 
     </div>
     
-    <!-- UPDATED NETWORK MODAL -->
+    <!-- Network Modal (Main) -->
     <div id="network-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="network-header">
-                <div id="network-refresh-btn" class="header-action" title="Refresh Network">
+                <div id="network-refresh-btn" class="header-action refresh-btn" title="Refresh Network">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
                 </div>
                 <h1>My Network</h1>
-                <button id="network-close-btn" class="header-action" data-close-modal>&times;</button>
+                <button id="network-close-btn" class="header-action close-btn" data-close-modal>&times;</button>
             </div>
             <div class="network-tabs">
                 <button class="network-tab-btn active" data-tab="downline">My Team</button>
                 <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
             </div>
+            <div id="downline-content" class="network-tab-content active network-content-container">
+                <div id="network-tree-container"></div>
+                <div id="network-loader">Loading your network...</div>
+            </div>
+            <div id="upline-content" class="network-tab-content network-content-container">
+                <div id="upline-list"></div>
+                <div id="upline-loader">Loading your upline...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Member Detail Modal (Popup) -->
+    <div id="member-detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="network-header">
+                <div class="header-action"></div> <!-- Spacer -->
+                <h1 id="member-detail-title">Member's Team</h1>
+                <button class="header-action close-btn" data-close-modal>&times;</button>
+            </div>
             <div class="network-content-container">
-                <div id="downline-content" class="network-tab-content active">
-                    <div id="network-tree-container">
-                        <!-- Downline tree will be generated here by JS -->
-                    </div>
-                    <div id="network-loader">Loading your network...</div>
-                </div>
-                <div id="upline-content" class="network-tab-content">
-                    <div id="upline-list">
-                        <!-- Upline ladder will be generated here by JS -->
-                    </div>
-                    <div id="upline-loader">Loading your upline...</div>
-                </div>
+                <div id="member-detail-tree-container"></div>
+                <div id="member-detail-loader">Loading member's team...</div>
             </div>
         </div>
     </div>
@@ -509,6 +510,63 @@
         <div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;">
             <button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button>
             <img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;">
+        </div>
+    </div>
+
+    <!-- Professional Success Modal -->
+    <div id="payment-success-modal" class="modal-overlay professional-modal">
+        <div class="modal-content">
+            <div class="success-icon">
+                <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h2>Payment Successful!</h2>
+            <p class="amount" id="success-modal-amount"></p>
+            <div class="details-box">
+                <div class="detail-item">
+                    <span class="label">Paid to</span>
+                    <span class="value" id="success-modal-receiver"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="success-modal-txn-id"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Date & Time</span>
+                    <span class="value" id="success-modal-datetime"></span>
+                </div>
+            </div>
+            <button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button>
+        </div>
+    </div>
+
+    <!-- Professional Transaction Details Modal -->
+    <div id="transaction-details-modal" class="modal-overlay professional-modal">
+        <div class="modal-content">
+            <p class="amount" id="details-modal-amount"></p>
+            <hr>
+            <div class="details-list">
+                <div class="detail-item">
+                    <span class="label">Status</span>
+                    <span class="value status-badge" id="details-modal-status"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Description</span>
+                    <span class="value" id="details-modal-desc"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Date</span>
+                    <span class="value" id="details-modal-date"></span>
+                </div>
+                 <div class="detail-item">
+                    <span class="label">Time</span>
+                    <span class="value" id="details-modal-time"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="details-modal-txn-id"></span>
+                </div>
+            </div>
+            <button class="action-btn" data-close-modal>Close</button>
         </div>
     </div>
 
@@ -534,7 +592,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
             authDomain: "tipsplit-e3wes.firebaseapp.com",
@@ -543,12 +600,10 @@
             appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
         };
 
-        // --- Initialize Firebase ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- Global Variables ---
         let currentUser = null;
         let currentUserData = null;
         let activeListeners = [];
@@ -558,14 +613,12 @@
         let userCoupons = [];
         let activeFilter = 'all';
         let pendingAction = null;
-        let successPopupTimeout = null;
         let isDownlineLoaded = false;
         let isUplineLoaded = false;
         let lastShownNotificationId = null;
         let popupTimeout = null;
-        const commissionRates = [30, 25, 20, 15, 10]; // Level 1 to 5
+        const commissionRates = [30, 25, 20, 15, 10];
 
-        // --- UI Helper Functions ---
         const showToast = (message) => {
             const toast = document.getElementById('toast-notification');
             toast.textContent = message;
@@ -581,22 +634,39 @@
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.remove('active');
             if (modalId === 'scan-pay-modal') stopScanner();
-            if (modalId === 'success-popup' && successPopupTimeout) {
-                clearTimeout(successPopupTimeout);
-                successPopupTimeout = null;
-            }
         };
         const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
         const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
-        const showSuccessPopup = (title, message) => {
-            if (successPopupTimeout) clearTimeout(successPopupTimeout);
-            document.getElementById('success-popup-title').textContent = title;
-            document.getElementById('success-popup-message').textContent = message;
-            openModal('success-popup');
-            successPopupTimeout = setTimeout(() => closeModal('success-popup'), 10000);
+        
+        const showSuccessPopup = (details) => {
+            document.getElementById('success-modal-amount').textContent = `- ₹${details.amount.toFixed(2)}`;
+            document.getElementById('success-modal-receiver').textContent = details.receiver;
+            document.getElementById('success-modal-txn-id').textContent = details.txnId;
+            document.getElementById('success-modal-datetime').textContent = details.datetime;
+            openModal('payment-success-modal');
         };
 
-        // --- Authentication State Manager ---
+        const showTransactionDetails = (item) => {
+            const amount = item.amount || item.cashbackAmount || 0;
+            const sign = amount >= 0 ? '+' : '-';
+            const typeClass = amount >= 0 ? 'credit' : 'debit';
+            
+            document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
+            document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
+            
+            const statusEl = document.getElementById('details-modal-status');
+            statusEl.textContent = item.status || 'Completed';
+            statusEl.className = 'value status-badge';
+            if (item.status) statusEl.classList.add(item.status);
+
+            document.getElementById('details-modal-desc').textContent = item.description;
+            document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+            document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+            document.getElementById('details-modal-txn-id').textContent = item.id;
+            
+            openModal('transaction-details-modal');
+        };
+
         onAuthStateChanged(auth, user => {
             if (user && user.displayName) {
                 currentUser = user;
@@ -604,11 +674,10 @@
                 attachRealtimeListeners(user);
             } else if (!user) {
                 detachAllListeners();
-                toggleView('login-view');
+                handleReferralLink(); // Check for referral link even when logged out
             }
         });
 
-        // --- Realtime Data Listeners ---
         function attachRealtimeListeners(user) {
             detachAllListeners();
             const uid = user.uid;
@@ -644,7 +713,6 @@
             activeListeners = [];
         }
 
-        // --- UI Update Functions ---
         function updateDashboardUI(dbData, authUser) {
             const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/80x80/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
             document.getElementById('wallet-user-name').textContent = authUser.displayName;
@@ -742,28 +810,18 @@
             itemsToRender.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'history-item';
+                itemDiv.addEventListener('click', () => showTransactionDetails(item));
+
                 const amount = item.amount || item.cashbackAmount || 0;
                 let sign = amount >= 0 ? '+' : '-';
                 let typeClass = amount >= 0 ? 'credit' : 'debit';
                 
-                if(item.type === 'due_payment' || item.type === 'claim' || item.type === 'payment') {
-                    typeClass = 'debit';
-                    sign = '-';
-                }
-
-                if(item.type === 'coupon_redeem' || item.type === 'commission' || item.type === 'cashback' || item.type === 'credit'){
-                    typeClass = 'credit';
-                    sign = '+';
-                }
-
-                if (item.status === 'rejected' || item.status === 'refunded') {
-                    typeClass = 'rejected';
-                }
+                if(item.type === 'due_payment' || item.type === 'claim' || item.type === 'payment') { typeClass = 'debit'; sign = '-'; }
+                if(item.type === 'coupon_redeem' || item.type === 'commission' || item.type === 'cashback' || item.type === 'credit'){ typeClass = 'credit'; sign = '+'; }
+                if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
 
                 let description = item.description;
-                if (item.type === 'coupon_redeem' && item.couponCode) {
-                    description = `Coupon Redeemed: ${item.couponCode}`;
-                }
+                if (item.type === 'coupon_redeem' && item.couponCode) { description = `Coupon Redeemed: ${item.couponCode}`; }
 
                 itemDiv.innerHTML = `
                     <div class="history-details">
@@ -811,14 +869,11 @@
             });
         }
 
-        // --- Profile Picture Upload Logic ---
         async function handleProfilePictureUpload(event) {
             const file = event.target.files[0];
             if (!file || !currentUser) return;
             const imgbbApiKey = "432d6a433181e46445ce5c5f643ba4d0"; 
-            if (imgbbApiKey === "YOUR_IMGBB_API_KEY") {
-                showToast("Image hosting is not configured."); return;
-            }
+            if (imgbbApiKey === "YOUR_IMGBB_API_KEY") { showToast("Image hosting is not configured."); return; }
             showToast("Uploading picture...");
             const formData = new FormData();
             formData.append("image", file);
@@ -836,7 +891,6 @@
             } finally { event.target.value = ''; }
         }
 
-        // --- Core Logic Functions ---
         function verifyPasswordAndExecute(action, sourceModalId) {
             if (sourceModalId) closeModal(sourceModalId);
             pendingAction = action;
@@ -876,15 +930,22 @@
             
             verifyPasswordAndExecute(async () => {
                 try {
+                    const newTxnRef = doc(collection(db, "transactions"));
                     await runTransaction(db, async (t) => {
                         const userRef = doc(db, "users", currentUserData.id);
                         const configRef = doc(db, "app_settings", "config");
                         t.update(userRef, { wallet: increment(-amount) });
                         t.update(configRef, { rmz_wallet_balance: increment(amount) });
-                        t.set(doc(collection(db, "transactions")), { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id] });
+                        t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id] });
                         t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.id, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
                     });
-                    showSuccessPopup("Payment Successful!", `You have paid ₹${amount.toFixed(2)} to the store.`);
+                    const now = new Date();
+                    showSuccessPopup({
+                        amount: amount,
+                        receiver: 'Ramazone Store',
+                        txnId: newTxnRef.id,
+                        datetime: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
+                    });
                 } catch (error) { showToast("Payment failed. Please try again."); }
             }, 'scan-pay-modal');
         }
@@ -912,7 +973,7 @@
                             status: 'pending', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id], originalRequestId: claimRef.id
                         });
                     });
-                    showSuccessPopup("Request Sent!", `Your request to claim ₹${amount.toFixed(2)} has been sent for approval.`);
+                    showToast(`Your request to claim ₹${amount.toFixed(2)} has been sent.`);
                     document.getElementById('claim-request-form').reset();
                 } catch (error) { showToast("Failed to send request."); }
             }, 'claim-modal');
@@ -938,7 +999,7 @@
                     userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
                     productName, productPrice, cashbackAmount, status: "pending", requestDate: serverTimestamp(), claimed: false
                 });
-                showSuccessPopup("Request Sent!", `Your cashback request for ₹${cashbackAmount.toFixed(2)} has been submitted.`);
+                showToast(`Your cashback request for ₹${cashbackAmount.toFixed(2)} has been submitted.`);
                 document.getElementById('cashback-request-form').reset();
             } catch (error) { showErrorMessage(errorMsg, `Error: ${error.message}`);
             } finally {
@@ -947,7 +1008,6 @@
             }
         }
 
-        // --- Scanner and Utility Functions ---
         function startScanner() {
             stopScanner();
             const video = document.getElementById('scanner-video');
@@ -1008,14 +1068,20 @@
             };
             reader.readAsDataURL(file);
         }
+        
         function handleShare() {
             if (!currentUserData) return;
             const { referralId, name, lifetimeEarning } = currentUserData;
+            // Construct the full URL with the referral parameter
             const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
             const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
-            if (navigator.share) navigator.share({ text: shareText });
-            else navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!"));
+            if (navigator.share) {
+                navigator.share({ text: shareText, url: referralLink }).catch(err => console.log("Share failed", err));
+            } else {
+                navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!"));
+            }
         }
+
         function handleWhatsAppSupport() {
             if (!currentUserData) return showToast("Please wait for your data to load.");
             const { name, referralId, lifetimeEarning, mobile } = currentUserData;
@@ -1024,19 +1090,16 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // --- NEW/UPDATED Network Modal Logic ---
-        const networkLoader = document.getElementById('network-loader');
-        const uplineLoader = document.getElementById('upline-loader');
-        const downlineContainer = document.getElementById('downline-content');
-        const treeContainer = document.getElementById('network-tree-container');
+        // --- NETWORK LOGIC (UPDATED) ---
 
         async function loadUpline() {
-            uplineLoader.style.display = 'block';
             const uplineListContainer = document.getElementById('upline-list');
+            const loader = document.getElementById('upline-loader');
+            loader.style.display = 'block';
             uplineListContainer.innerHTML = '';
             isUplineLoaded = false;
             try {
-                // Add current user at the bottom
+                // Add current user first
                 const currentUserNode = createUplineNode({
                     name: currentUserData.name,
                     lifetimeEarning: currentUserData.lifetimeEarning,
@@ -1047,7 +1110,7 @@
 
                 const uplineUIDs = currentUserData.upline || [];
                 if (uplineUIDs.length === 0) {
-                    uplineListContainer.insertAdjacentHTML('beforeend', '<div class="empty-state">Aapke paas koi upline nahi hai.</div>');
+                    uplineListContainer.insertAdjacentHTML('afterbegin', '<div class="empty-state" style="order: 1;">Aapke paas koi upline nahi hai.</div>');
                     return;
                 }
                 
@@ -1055,96 +1118,128 @@
                     const uplineDoc = await getDoc(doc(db, 'users', uplineId));
                     if (uplineDoc.exists()) {
                         const uplineData = uplineDoc.data();
-                        const commissionPaid = await calculateCommissionPaidToUpline(uplineId);
                         return createUplineNode({
                             name: uplineData.name,
-                            lifetimeEarning: commissionPaid,
                             profilePictureUrl: uplineData.profilePictureUrl,
-                            level: i + 1
+                            level: i + 1,
+                            isCurrentUser: false
                         });
                     }
                     return null;
                 });
-                const uplineNodes = await Promise.all(uplinePromises);
-                uplineNodes.forEach(node => { if (node) uplineListContainer.appendChild(node); });
+                const uplineNodes = (await Promise.all(uplinePromises)).filter(Boolean).reverse();
+                uplineNodes.forEach(node => uplineListContainer.prepend(node));
                 isUplineLoaded = true;
             } catch (error) {
                 console.error("Error loading upline:", error);
                 uplineListContainer.innerHTML = '<div class="empty-state">Upline load karne mein error hua.</div>';
             } finally {
-                uplineLoader.style.display = 'none';
+                loader.style.display = 'none';
             }
         }
 
-        function createUplineNode({ name, lifetimeEarning, profilePictureUrl, level, isCurrentUser = false }) {
+        function createUplineNode({ name, lifetimeEarning, profilePictureUrl, level, isCurrentUser }) {
             const node = document.createElement('div');
             node.className = 'upline-member';
             if (isCurrentUser) node.classList.add('current-user');
 
-            const avatarHTML = profilePictureUrl
-                ? `<img src="${profilePictureUrl}" alt="${name}">`
-                : name.charAt(0).toUpperCase();
-            
-            let earningHTML = '';
-            if (isCurrentUser) {
-                earningHTML = `<div class="node-earning">Aap (Your Earning: ₹${(lifetimeEarning || 0).toFixed(2)})</div>`;
-            } else {
-                earningHTML = `<div class="node-earning">Commission Paid: ₹${(lifetimeEarning || 0).toFixed(2)}</div>`;
-            }
+            const avatarHTML = profilePictureUrl ? `<img src="${profilePictureUrl}" alt="${name}">` : name.charAt(0).toUpperCase();
+            let earningHTML = isCurrentUser ? `<div class="node-earning">Aap (Your Earning: ₹${(lifetimeEarning || 0).toFixed(2)})</div>` : '';
 
             node.innerHTML = `
-                <div class="node-content">
+                <div class="node-card">
                     <div class="node-avatar">${avatarHTML}</div>
-                    <div class="node-name">${name}</div>
-                    ${earningHTML}
+                    <div class="node-info">
+                        <div class="node-name">${name}</div>
+                        ${earningHTML}
+                    </div>
+                    ${!isCurrentUser ? `<div class="commission-tag">${commissionRates[level-1]}%</div>` : ''}
                 </div>
-                ${!isCurrentUser ? `<div class="upline-commission"><sup>${commissionRates[level-1]}%</sup></div>` : ''}
             `;
             return node;
         }
 
-        async function loadDownline() {
-            networkLoader.style.display = 'block';
+        async function loadInitialDownline() {
+            const treeContainer = document.getElementById('network-tree-container');
+            const loader = document.getElementById('network-loader');
+            loader.style.display = 'block';
             treeContainer.innerHTML = '';
             isDownlineLoaded = false;
             try {
                 const treeRoot = document.createElement('div');
                 treeRoot.className = 'network-tree';
                 
-                const rootNode = await buildNetworkTree(currentUser.uid, 0);
-                treeRoot.appendChild(rootNode);
-
-                treeContainer.appendChild(treeRoot);
-
-                if (!rootNode.querySelector('.node-children')) {
-                     treeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
+                // Fetch only direct referrals for the initial view
+                const referrals = await getDirectReferrals(currentUser.uid);
+                if (referrals.length === 0) {
+                    treeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
+                    return;
                 }
+                
+                const referralPromises = referrals.map(member => createDownlineNode(member, 1));
+                const childNodes = await Promise.all(referralPromises);
+
+                childNodes.forEach(childNode => {
+                    if (childNode) treeRoot.appendChild(childNode);
+                });
+                
+                treeContainer.appendChild(treeRoot);
                 isDownlineLoaded = true;
             } catch (error) {
                 console.error("Error loading downline:", error);
                 treeContainer.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
             } finally {
-                networkLoader.style.display = 'none';
+                loader.style.display = 'none';
+            }
+        }
+        
+        async function openMemberDetailModal(userId, userName) {
+            const modal = document.getElementById('member-detail-modal');
+            const treeContainer = document.getElementById('member-detail-tree-container');
+            const loader = document.getElementById('member-detail-loader');
+            
+            document.getElementById('member-detail-title').textContent = `${userName}'s Team`;
+            loader.style.display = 'block';
+            treeContainer.innerHTML = '';
+            openModal('member-detail-modal');
+
+            try {
+                const treeRoot = document.createElement('div');
+                treeRoot.className = 'network-tree';
+                // Build a sub-tree starting from the clicked user, up to 2 levels deep
+                const rootNode = await buildSubTree(userId, 0, 2); 
+                
+                if (rootNode) {
+                    treeRoot.appendChild(rootNode);
+                    treeContainer.appendChild(treeRoot);
+                } else {
+                    treeContainer.innerHTML = '<div class="empty-state">This member has no team.</div>';
+                }
+            } catch(error) {
+                console.error("Error loading member detail:", error);
+                treeContainer.innerHTML = '<div class="empty-state">Could not load team.</div>';
+            } finally {
+                loader.style.display = 'none';
             }
         }
 
-        async function buildNetworkTree(userId, level) {
-            if (level > 4) return null; // Stop at level 5
+        async function buildSubTree(userId, level, maxLevel) {
+            if (level >= maxLevel) return null;
 
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (!userDoc.exists()) return null;
-            const userData = userDoc.data();
 
-            const node = createDownlineNode(userData, level);
-            
+            const userData = { uid: userDoc.id, ...userDoc.data() };
+            const node = await createDownlineNode(userData, level + 1, true); // `true` indicates it's for the popup
+
             const referrals = await getDirectReferrals(userId);
             if (referrals.length > 0) {
                 const childrenContainer = document.createElement('div');
                 childrenContainer.className = 'node-children';
                 
-                const referralPromises = referrals.map(member => buildNetworkTree(member.uid, level + 1));
+                const referralPromises = referrals.map(member => buildSubTree(member.uid, level + 1, maxLevel));
                 const childNodes = await Promise.all(referralPromises);
-
+                
                 childNodes.forEach(childNode => {
                     if (childNode) childrenContainer.appendChild(childNode);
                 });
@@ -1156,62 +1251,41 @@
             return node;
         }
 
-        function createDownlineNode(userData, level) {
-            const node = document.createElement('div');
-            node.className = 'network-node';
+        async function createDownlineNode(userData, level, isPopupNode = false) {
+            const nodeWrapper = document.createElement('div');
+            nodeWrapper.className = 'network-node';
 
-            const avatarHTML = userData.profilePictureUrl
-                ? `<img src="${userData.profilePictureUrl}" alt="${userData.name}">`
-                : userData.name.charAt(0).toUpperCase();
+            const nodeCard = document.createElement('div');
+            nodeCard.className = 'node-card';
 
-            const earning = userData.uid === currentUser.uid 
-                ? userData.lifetimeEarning || 0 
-                : userData.lifetimeEarning || 0; // In a real scenario, you might calculate commission from this user. Here we show their total earning.
+            const avatarHTML = userData.profilePictureUrl ? `<img src="${userData.profilePictureUrl}" alt="${userData.name}">` : userData.name.charAt(0).toUpperCase();
+            
+            // Get team size
+            const referrals = await getDirectReferrals(userData.uid);
+            const teamSize = referrals.length;
 
-            node.innerHTML = `
-                <div class="node-content">
-                    <div class="node-avatar">${avatarHTML}</div>
+            nodeCard.innerHTML = `
+                <div class="node-avatar">${avatarHTML}</div>
+                <div class="node-info">
                     <div class="node-name">${userData.name}</div>
-                    <div class="node-earning">Earning: ₹${earning.toFixed(2)}</div>
+                    <div class="node-earning">Earning: ₹${(userData.lifetimeEarning || 0).toFixed(2)}</div>
+                    <div class="node-meta">
+                        ${teamSize > 0 ? `<div class="node-team-size">Team: ${teamSize}</div>` : ''}
+                    </div>
                 </div>
-                ${level > 0 ? `<div class="commission-badge"><sup>${commissionRates[level-1]}%</sup></div>` : ''}
+                ${level > 0 ? `<div class="commission-tag">${commissionRates[level-1]}%</div>` : ''}
             `;
-            return node;
+            
+            // Only add click listener for main downline, not for the popup tree
+            if (!isPopupNode && teamSize > 0) {
+                nodeCard.addEventListener('click', () => openMemberDetailModal(userData.uid, userData.name));
+            } else {
+                nodeCard.style.cursor = 'default';
+            }
+            
+            nodeWrapper.appendChild(nodeCard);
+            return nodeWrapper;
         }
-        
-        // Pan and Zoom Logic for Downline Tree
-        let scale = 1, panning = false,
-        pointX = 0, pointY = 0, start = { x: 0, y: 0 };
-
-        function setTransform() {
-            treeContainer.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
-        }
-
-        downlineContainer.onmousedown = function (e) {
-            e.preventDefault();
-            start = { x: e.clientX - pointX, y: e.clientY - pointY };
-            panning = true;
-        };
-        downlineContainer.onmouseup = function () { panning = false; };
-        downlineContainer.onmouseleave = function () { panning = false; };
-        downlineContainer.onmousemove = function (e) {
-            e.preventDefault();
-            if (!panning) return;
-            pointX = (e.clientX - start.x);
-            pointY = (e.clientY - start.y);
-            setTransform();
-        };
-        downlineContainer.onwheel = function (e) {
-            e.preventDefault();
-            const xs = (e.clientX - pointX) / scale;
-            const ys = (e.clientY - pointY) / scale;
-            const delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
-            (delta > 0) ? (scale *= 1.2) : (scale /= 1.2);
-            scale = Math.min(Math.max(0.2, scale), 3); // Clamp scale
-            pointX = e.clientX - xs * scale;
-            pointY = e.clientY - ys * scale;
-            setTransform();
-        };
 
         async function getDirectReferrals(userId) {
             try {
@@ -1222,29 +1296,33 @@
                 const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
                 const snapshot = await getDocs(q);
                 return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-            } catch (error) {
-                console.error("Error getting direct referrals:", error);
-                return [];
+            } catch (error) { console.error("Error getting direct referrals:", error); return []; }
+        }
+        
+        function handleReferralLink() {
+            const params = new URLSearchParams(window.location.search);
+            const refCode = params.get('ref');
+            if (refCode) {
+                // If a referral code is in the URL, switch to the registration view
+                toggleView('registration-view');
+                // And fill the input field
+                const referralInput = document.getElementById('reg-referral');
+                if (referralInput) {
+                    referralInput.value = refCode.toUpperCase();
+                }
+            } else {
+                // If no ref code, default to login view
+                toggleView('login-view');
             }
         }
 
-        async function calculateCommissionPaidToUpline(uplineMemberId) {
-            let totalCommission = 0;
-            try {
-                const q = query(collection(db, 'transactions'), 
-                    where('involvedUsers', 'array-contains', uplineMemberId), 
-                    where('type', '==', 'commission'),
-                    where('commissionFromUid', '==', currentUser.uid)
-                );
-                const snapshot = await getDocs(q);
-                snapshot.forEach(doc => { totalCommission += doc.data().amount; });
-            } catch (error) { console.error("Error calculating commission paid:", error); }
-            return totalCommission;
-        }
 
-        // --- Main Event Listener Setup ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Login Form
+            // Check for referral link as soon as the page loads
+            if (!auth.currentUser) {
+                handleReferralLink();
+            }
+
             document.getElementById('login-form').addEventListener('submit', e => {
                 e.preventDefault();
                 const mobile = document.getElementById('login-mobile').value;
@@ -1253,30 +1331,25 @@
                     .catch(() => showErrorMessage(document.getElementById('login-error-msg'), "Galat mobile/password."));
             });
             
-            // Registration Form
             document.getElementById('register-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const registerButton = e.target.querySelector('button');
                 const errorMsgEl = document.getElementById('register-error-msg');
                 hideErrorMessage(errorMsgEl);
                 registerButton.disabled = true; registerButton.textContent = 'Registering...';
-
                 const name = document.getElementById('reg-name').value.trim();
                 const mobile = document.getElementById('reg-mobile').value.trim();
                 const password = document.getElementById('reg-password').value;
                 const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
-
                 if (!name || !mobile || password.length < 6) {
                     showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
                     registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
                 }
-
                 let tempUser = null;
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
                     tempUser = userCredential.user;
                     let upline = []; let referredBy = 'none';
-
                     if (referralCode) {
                         registerButton.textContent = 'Verifying Code...';
                         const q = query(collection(db, 'users'), where("referralId", "==", referralCode));
@@ -1291,7 +1364,6 @@
                         referredBy = referralCode;
                         upline = [referrerDoc.id, ...(referrerData.upline || [])].slice(0, 5);
                     }
-
                     registerButton.textContent = 'Saving Data...';
                     await updateProfile(tempUser, { displayName: name });
                     const newUserDoc = {
@@ -1316,27 +1388,16 @@
                 }
             });
 
-            // Page links
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
-            
-            // Profile Event Listeners
             document.getElementById('wallet-profile-icon-container').addEventListener('click', () => openModal('profile-modal'));
-            
             document.getElementById('modal-profile-img').addEventListener('click', () => {
-                const profileImgSrc = document.getElementById('modal-profile-img').src;
-                document.getElementById('full-profile-img').src = profileImgSrc;
+                document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src;
                 openModal('profile-picture-modal');
             });
-            
-            document.getElementById('edit-profile-pic-icon').addEventListener('click', () => {
-                document.getElementById('profile-picture-input').click();
-            });
+            document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
-
-
-            // Dashboard actions
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
             document.getElementById('open-claim-modal').addEventListener('click', () => openModal('claim-modal'));
             document.getElementById('open-coupons-modal').addEventListener('click', () => openModal('coupons-modal'));
@@ -1352,7 +1413,6 @@
             document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
             document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
             
-            // Filters and generic modal close
             document.getElementById('filter-bar').addEventListener('click', e => {
                 const target = e.target.closest('.filter-btn');
                 if (!target) return;
@@ -1368,23 +1428,17 @@
                     navigator.clipboard.writeText(code).then(() => showToast(`Coupon ${code} copied!`));
                 }
             });
-            document.getElementById('success-popup').addEventListener('click', function(e) { if (e.target === this) closeModal('success-popup'); });
 
-            // Network Modal Listeners
             document.getElementById('open-network-modal').addEventListener('click', () => {
                 openModal('network-modal');
-                const downlineTab = document.querySelector('.network-tab-btn[data-tab="downline"]');
-                if (downlineTab.classList.contains('active') && !isDownlineLoaded) {
-                    loadDownline();
+                if (document.querySelector('.network-tab-btn[data-tab="downline"]').classList.contains('active') && !isDownlineLoaded) {
+                    loadInitialDownline();
                 }
             });
             document.getElementById('network-refresh-btn').addEventListener('click', () => {
                 const activeTab = document.querySelector('.network-tab-btn.active').dataset.tab;
-                if (activeTab === 'downline') {
-                    isDownlineLoaded = false; loadDownline();
-                } else {
-                    isUplineLoaded = false; loadUpline();
-                }
+                if (activeTab === 'downline') { isDownlineLoaded = false; loadInitialDownline(); } 
+                else { isUplineLoaded = false; loadUpline(); }
             });
             document.querySelector('#network-modal .network-tabs').addEventListener('click', e => {
                 const target = e.target.closest('.network-tab-btn');
@@ -1393,13 +1447,8 @@
                 target.classList.add('active');
                 document.querySelectorAll('#network-modal .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
-                
-                if (target.dataset.tab === 'upline' && !isUplineLoaded) {
-                    loadUpline();
-                }
-                if (target.dataset.tab === 'downline' && !isDownlineLoaded) {
-                    loadDownline();
-                }
+                if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
+                if (target.dataset.tab === 'downline' && !isDownlineLoaded) { loadInitialDownline(); }
             });
         });
     </script>
