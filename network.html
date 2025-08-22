@@ -42,24 +42,20 @@
         .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
         
-        /* --- UPDATED: Dashboard UI --- */
+        /* --- Dashboard UI --- */
         .header {
-            display: flex; /* Changed from grid */
-            justify-content: space-between; /* Align items */
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             padding: 10px; background-color: var(--bg-card); border-radius: 16px;
             margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         .header-center { flex-grow: 1; text-align: center; }
         .header-logo { height: 35px; }
-        /* Removed .header-right and .header-user as they are no longer in the header */
 
-        /* --- NEW: Static Notification Card --- */
         #static-notification-card {
             display: flex; align-items: center; gap: 8px;
             padding: 5px 10px; border-radius: 10px;
             background-color: var(--brand-red); color: white;
-            transition: all 0.3s ease; display: none; /* Hidden by default */
+            transition: all 0.3s ease; display: none;
         }
         #static-notification-card.visible { display: flex; }
         #static-notification-title { font-size: 10px; font-weight: 500; line-height: 1.2; }
@@ -69,22 +65,13 @@
             background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
             color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(67, 100, 247, 0.3);
-            text-align: center;
-            position: relative; /* Make it a positioning context */
+            text-align: center; position: relative;
         }
-        /* UPDATED: Wallet user name is now clickable */
-        #wallet-user-name { 
-            font-size: 18px; font-weight: 600; margin-bottom: 5px; 
-            cursor: pointer; display: inline-block; transition: opacity 0.2s;
-        }
-        #wallet-user-name:hover { opacity: 0.8; }
+        #wallet-user-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; }
         
-        /* NEW: Profile Icon inside Wallet Card */
+        /* Profile Icon inside Wallet Card */
         #wallet-profile-icon-container {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            cursor: pointer;
+            position: absolute; top: 15px; right: 15px; cursor: pointer;
         }
         #wallet-profile-img {
             width: 45px; height: 45px; border-radius: 50%;
@@ -161,11 +148,19 @@
         .btn-secondary { background: #e8eef3; color: var(--text-primary); }
         #password-verification-modal { z-index: 1001; }
         
+        /* UPDATED: Profile Modal Styles */
+        #profile-modal .modal-content { padding-top: 15px; }
+        #modal-profile-img-container { text-align: center; margin-bottom: 15px; }
+        #modal-profile-img {
+            width: 80px; height: 80px; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--brand-red);
+            cursor: pointer; transition: transform 0.2s;
+        }
+        #modal-profile-img:hover { transform: scale(1.05); }
         #profile-modal #logout-btn { background-color: var(--text-secondary); margin-top: 20px; }
         #scanner-container { width: 100%; max-width: 250px; aspect-ratio: 1/1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background: #000; }
         #scanner-video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* --- Success Popup --- */
         #success-popup .modal-content { text-align: center; }
         .success-icon { width: 60px; height: 60px; background-color: var(--accent-green); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 15px; }
         #success-popup-message { font-size: 16px; color: var(--text-secondary); }
@@ -177,7 +172,6 @@
         }
         .modal-close-btn:hover { color: #000; }
         
-        /* --- Coupon Card --- */
         .coupon-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 10px; }
         .coupon-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .coupon-amount { font-size: 24px; font-weight: 800; color: var(--accent-green); }
@@ -187,7 +181,7 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- UPDATED: Network Modal Styles --- */
+        /* Network Modal Styles */
         #network-modal .modal-content {
             width: 100%; height: 100%; max-width: 100%; max-height: 100%;
             border-radius: 0; padding: 0; display: flex; flex-direction: column;
@@ -229,7 +223,7 @@
         .member-stats .label { font-size: 11px; color: var(--text-secondary); }
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
-        /* --- NEW: Pop-up Notification --- */
+        /* Pop-up Notification */
         #popup-notification {
             position: fixed; top: -200px; left: 50%;
             transform: translateX(-50%);
@@ -282,7 +276,6 @@
 
         <!-- Dashboard View -->
         <div id="dashboard-view" class="view">
-            <!-- UPDATED: Header with centered logo -->
             <div class="header">
                 <div id="static-notification-card">
                     <div id="static-notification-title"></div>
@@ -293,11 +286,9 @@
                         <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone" class="header-logo">
                     </a>
                 </div>
-                <!-- Profile icon has been moved to the wallet card -->
             </div>
             
             <div class="wallet-card">
-                <!-- NEW: Profile Icon Container -->
                 <div id="wallet-profile-icon-container">
                     <img id="wallet-profile-img" src="https://placehold.co/45x45/ffffff/e50914?text=R" alt="Profile">
                 </div>
@@ -367,9 +358,26 @@
         </div>
     </div>
     <div id="scan-pay-modal" class="modal-overlay"> <div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div> </div>
-    <div id="profile-modal" class="modal-overlay"> <div class="modal-content"> <h3>My Profile</h3> <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div> <div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div> <form id="password-change-form" style="margin-top: 20px;"> <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div> <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div> <button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p> </form> <button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button> <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> </div> </div>
     
-    <!-- UPDATED: Network Modal with new header -->
+    <!-- UPDATED: Profile Modal with Image -->
+    <div id="profile-modal" class="modal-overlay"> 
+        <div class="modal-content"> 
+            <div id="modal-profile-img-container">
+                <img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture">
+            </div>
+            <h3>My Profile</h3> 
+            <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div> 
+            <div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div> 
+            <form id="password-change-form" style="margin-top: 20px;"> 
+                <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div> 
+                <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div> 
+                <button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p> 
+            </form> 
+            <button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button> 
+            <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> 
+        </div> 
+    </div>
+    
     <div id="network-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="network-header">
@@ -396,7 +404,7 @@
         </div>
     </div>
 
-    <!-- NEW: Profile Picture Full View Modal -->
+    <!-- Profile Picture Full View Modal -->
     <div id="profile-picture-modal" class="modal-overlay">
         <div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;">
             <button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button>
@@ -406,7 +414,6 @@
 
     <div id="toast-notification" class="toast-notification"></div>
 
-    <!-- NEW: Pop-up Notification Element -->
     <div id="popup-notification">
         <div class="popup-notification-content">
             <div class="popup-notification-icon">🔥</div>
@@ -451,8 +458,8 @@
         let pendingAction = null;
         let successPopupTimeout = null;
         let isNetworkLoaded = false;
-        let lastShownNotificationId = null; // To track pop-up
-        let popupTimeout = null; // To manage pop-up timer
+        let lastShownNotificationId = null;
+        let popupTimeout = null;
 
         // --- UI Helper Functions ---
         const showToast = (message) => {
@@ -535,9 +542,11 @@
 
         // --- UI Update Functions ---
         function updateDashboardUI(dbData, authUser) {
+            const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/80x80/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
             document.getElementById('wallet-user-name').textContent = authUser.displayName;
-            // UPDATED: Set profile image in the wallet card
-            document.getElementById('wallet-profile-img').src = dbData.profilePictureUrl || `https://placehold.co/45x45/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
+            document.getElementById('wallet-profile-img').src = profilePicUrl;
+            // UPDATED: Also set the profile image inside the modal
+            document.getElementById('modal-profile-img').src = profilePicUrl;
             document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
             document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
             document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
@@ -547,7 +556,6 @@
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
         }
 
-        // --- Notification UI Functions ---
         function updateNotificationUI(notifData) {
             const staticCard = document.getElementById('static-notification-card');
             staticCard.style.backgroundColor = notifData.bgColor;
@@ -555,7 +563,6 @@
             document.getElementById('static-notification-title').textContent = notifData.title;
             document.getElementById('static-notification-percentage').textContent = `${notifData.percentage}%`;
             staticCard.classList.add('visible');
-
             if (notifData.id !== lastShownNotificationId) {
                 lastShownNotificationId = notifData.id;
                 showPopupNotification(notifData);
@@ -678,11 +685,7 @@
 
             badgeEl.textContent = count;
             modalCountEl.textContent = `(${count} Available)`;
-            if (count > 0) {
-                badgeEl.classList.add('visible');
-            } else {
-                badgeEl.classList.remove('visible');
-            }
+            badgeEl.classList.toggle('visible', count > 0);
 
             listEl.innerHTML = '';
             if (count === 0) {
@@ -907,7 +910,7 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // --- Network Modal Logic ---
+        // --- UPDATED & ROBUST: Network Modal Logic ---
         const networkTreeContainer = document.getElementById('network-tree');
         const uplineListContainer = document.getElementById('upline-list');
         const networkLoader = document.getElementById('network-loader');
@@ -916,59 +919,57 @@
         async function loadUpline() {
             uplineLoader.style.display = 'block';
             uplineListContainer.innerHTML = '';
-            const uplineUIDs = currentUserData.upline || [];
-            if (uplineUIDs.length === 0) {
-                uplineListContainer.innerHTML = '<div class="empty-state">Aapke paas koi upline nahi hai.</div>';
-                uplineLoader.style.display = 'none';
-                return;
-            }
-
-            for (let i = 0; i < uplineUIDs.length; i++) {
-                const uplineId = uplineUIDs[i];
-                const uplineDoc = await getDoc(doc(db, 'users', uplineId));
-                if (uplineDoc.exists()) {
-                    const uplineData = uplineDoc.data();
-                    const commissionPaid = await calculateCommissionPaidToUpline(uplineId, currentUserData.name);
-                    const node = createMemberNode({
-                        name: uplineData.name,
-                        level: i + 1,
-                        amount: commissionPaid,
-                        type: 'upline'
-                    });
-                    uplineListContainer.appendChild(node);
+            try {
+                const uplineUIDs = currentUserData.upline || [];
+                if (uplineUIDs.length === 0) {
+                    uplineListContainer.innerHTML = '<div class="empty-state">Aapke paas koi upline nahi hai.</div>';
+                    return;
                 }
+                const uplinePromises = uplineUIDs.map(async (uplineId, i) => {
+                    const uplineDoc = await getDoc(doc(db, 'users', uplineId));
+                    if (uplineDoc.exists()) {
+                        const uplineData = uplineDoc.data();
+                        const commissionPaid = await calculateCommissionPaidToUpline(uplineId, currentUserData.name);
+                        return createMemberNode({ name: uplineData.name, level: i + 1, amount: commissionPaid, type: 'upline' });
+                    }
+                    return null;
+                });
+                const uplineNodes = await Promise.all(uplinePromises);
+                uplineNodes.forEach(node => { if (node) uplineListContainer.appendChild(node); });
+            } catch (error) {
+                console.error("Error loading upline:", error);
+                uplineListContainer.innerHTML = '<div class="empty-state">Upline load karne mein error hua.</div>';
+            } finally {
+                uplineLoader.style.display = 'none';
             }
-            uplineLoader.style.display = 'none';
         }
 
         async function loadDownline() {
             networkLoader.style.display = 'block';
             networkTreeContainer.innerHTML = '';
-            isNetworkLoaded = false; // Reset flag
-            await buildNetworkTree(currentUser.uid, networkTreeContainer, 1);
-            networkLoader.style.display = 'none';
-            if (networkTreeContainer.innerHTML === '') {
-                networkTreeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
+            isNetworkLoaded = false;
+            try {
+                await buildNetworkTree(currentUser.uid, networkTreeContainer, 1);
+                if (networkTreeContainer.innerHTML === '') {
+                    networkTreeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
+                }
+                isNetworkLoaded = true;
+            } catch (error) {
+                console.error("Error loading downline:", error);
+                networkTreeContainer.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
+            } finally {
+                networkLoader.style.display = 'none';
             }
-            isNetworkLoaded = true;
         }
 
         async function buildNetworkTree(userId, parentElement, level) {
             if (level > 5) return;
-
             const referrals = await getDirectReferrals(userId);
             if (referrals.length === 0) return;
 
             for (const member of referrals) {
                 const commissionFromThisMember = await calculateCommissionFromMember(currentUser.uid, member.uid, member.name);
-                
-                const node = createMemberNode({
-                    name: member.name,
-                    level: level,
-                    amount: commissionFromThisMember,
-                    type: 'downline',
-                });
-                
+                const node = createMemberNode({ name: member.name, level: level, amount: commissionFromThisMember, type: 'downline' });
                 parentElement.appendChild(node);
                 const subLevelContainer = document.createElement('div');
                 subLevelContainer.className = 'level';
@@ -1119,20 +1120,20 @@
                 }
             });
 
-            // All other buttons and links
+            // Page links
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
             
-            // UPDATED: Event listeners for profile
-            document.getElementById('wallet-user-name').addEventListener('click', () => openModal('profile-modal'));
-            document.getElementById('wallet-profile-icon-container').addEventListener('click', () => {
-                const profileImgSrc = currentUserData?.profilePictureUrl;
-                const placeholderSrc = `https://placehold.co/400x400/e50914/FFFFFF?text=${currentUser?.displayName?.charAt(0) || 'R'}`;
-                document.getElementById('full-profile-img').src = profileImgSrc || placeholderSrc;
+            // UPDATED: Profile Event Listeners
+            document.getElementById('wallet-profile-icon-container').addEventListener('click', () => openModal('profile-modal'));
+            document.getElementById('modal-profile-img').addEventListener('click', () => {
+                const profileImgSrc = document.getElementById('modal-profile-img').src;
+                document.getElementById('full-profile-img').src = profileImgSrc;
                 openModal('profile-picture-modal');
             });
 
+            // Dashboard actions
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
             document.getElementById('open-claim-modal').addEventListener('click', () => openModal('claim-modal'));
             document.getElementById('open-coupons-modal').addEventListener('click', () => openModal('coupons-modal'));
@@ -1147,6 +1148,8 @@
             document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
             document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
             document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
+            
+            // Filters and generic modal close
             document.getElementById('filter-bar').addEventListener('click', e => {
                 const target = e.target.closest('.filter-btn');
                 if (!target) return;
@@ -1180,7 +1183,6 @@
                     loadUpline();
                 }
             });
-
             document.querySelector('#network-modal .network-tabs').addEventListener('click', e => {
                 const target = e.target.closest('.network-tab-btn');
                 if (!target) return;
@@ -1188,7 +1190,7 @@
                 target.classList.add('active');
                 document.querySelectorAll('#network-modal .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
-                if (target.dataset.tab === 'upline' && uplineListContainer.innerHTML === '') {
+                if (target.dataset.tab === 'upline' && uplineListContainer.innerHTML.includes('empty-state')) {
                     loadUpline();
                 }
                 if (target.dataset.tab === 'downline' && !isNetworkLoaded) {
