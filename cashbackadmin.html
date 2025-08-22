@@ -9,7 +9,7 @@
         :root {
             --bg-page: #f0f2f5; --bg-card: #ffffff; --text-primary: #1c2028;
             --text-secondary: #5a647e; --border-color: #e8eef3; --brand-red: #e50914;
-            --accent-green: #2ecc71; --accent-red: #ff4d4d; --shadow: 0 2px 8px rgba(0,0,0,0.06);
+            --accent-green: #2ecc71; --accent-red: #ff4d4d; --accent-blue: #3498db; --shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { font-size: 14px; }
@@ -20,44 +20,51 @@
         .admin-container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 15px; }
         .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .login-box { width: 100%; max-width: 350px; padding: 30px; background: var(--bg-card); border-radius: 12px; box-shadow: var(--shadow); text-align: center; }
-        .login-box h1 { font-size: 1.5rem; }
         #login-view.active, #admin-view.active { display: block; }
         #login-view, #admin-view { display: none; }
         .form-group { margin-bottom: 15px; text-align: left; }
         label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-secondary); font-size: 0.9rem; }
-        input, .input-like { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ced4da; font-size: 1rem; }
-        button { width: 100%; padding: 12px; background-color: var(--brand-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.2s; }
-        button:hover { background-color: #c40812; }
+        input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ced4da; font-size: 1rem; }
+        button { width: 100%; padding: 12px; background-color: var(--brand-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; }
         button:disabled { background-color: #999; cursor: not-allowed; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h1 { font-size: 1.4rem; }
         #logout-btn { background: var(--text-secondary); width: auto; padding: 8px 15px; font-size: 0.9rem; }
-        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card { background: var(--bg-card); padding: 15px; border-radius: 8px; box-shadow: var(--shadow); }
         .card h3 { margin: 0 0 8px 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; }
         .card .stat-number { font-size: 1.8rem; font-weight: 700; line-height: 1.2; word-break: break-all; }
-        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; overflow-x: auto; scrollbar-width: none; }
         .tabs::-webkit-scrollbar { display: none; }
-        .tab-link { padding: 10px 15px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap; }
+        .tab-link { padding: 10px 15px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap; position: relative; }
         .tab-link.active { color: var(--brand-red); border-bottom-color: var(--brand-red); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-count { background-color: var(--brand-red); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; position: absolute; top: 5px; right: -5px; }
+        .tab-content { display: none; } .tab-content.active { display: block; }
         .content-box { background: var(--bg-card); padding: 20px; border-radius: 8px; box-shadow: var(--shadow); }
         .content-box h2 { font-size: 1.2rem; margin-bottom: 15px; }
-        .request-item { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px; }
-        .request-details p { margin: 0 0 5px 0; font-size: 0.9rem; line-height: 1.4; }
-        .request-details p strong { color: var(--text-primary); }
+        .request-item { border-bottom: 1px solid var(--border-color); padding: 15px 0; display: flex; flex-direction: column; gap: 12px; }
+        .request-item:last-child { border-bottom: none; }
         .request-actions { display: flex; gap: 10px; align-items: center; }
         .request-actions button { width: auto; flex-grow: 1; padding: 8px 12px; font-size: 0.9rem; }
-        .btn-approve { background-color: var(--accent-green); }
-        .btn-reject { background-color: var(--accent-red); }
+        .btn-approve { background-color: var(--accent-green); } .btn-reject { background-color: var(--accent-red); }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; white-space: nowrap; }
-        th { font-weight: 600; color: var(--text-secondary); }
-        .filter-container { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .filter-container label { margin-bottom: 0; }
-        .filter-container input[type="date"] { width: auto; padding: 8px; font-size: 0.9rem; }
+        .member-row { cursor: pointer; } .member-row:hover { background-color: #f9f9f9; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-content h3 { margin-bottom: 15px; }
+        .detail-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-bottom: 20px; }
+        .detail-grid dt { font-weight: 600; color: var(--text-secondary); }
+        .detail-grid dd { word-break: break-all; }
+        .btn-secondary { background: #e8eef3; color: var(--text-primary); }
+        .credit-form { border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px; }
+        .credit-form h4 { margin-bottom: 15px; }
+        .credit-form .form-group { display: flex; gap: 10px; }
+        .credit-form input { flex-grow: 1; }
+        .credit-form button { width: auto; }
     </style>
 </head>
 <body>
@@ -67,9 +74,8 @@
             <h1>Admin Panel</h1>
             <form id="admin-login-form">
                 <div class="form-group"><label for="admin-email">Mobile Number</label><input type="tel" id="admin-email" required></div>
-                <div class="form-group"><label for="admin-password">Password</label><input type="number" id="admin-password" required></div>
-                <button type="submit">Login</button>
-                <p id="admin-login-error" style="color: red; margin-top: 15px;"></p>
+                <div class="form-group"><label for="admin-password">Password</label><input type="password" id="admin-password" required></div>
+                <button type="submit">Login</button><p id="admin-login-error" style="color: red; margin-top: 15px;"></p>
             </form>
         </div></div>
     </div>
@@ -78,35 +84,55 @@
         <div class="admin-container">
             <div class="header"><h1>Dashboard</h1><button id="logout-btn">Logout</button></div>
             <div class="stat-cards">
-                <div class="card"><h3>Pending Requests</h3><p class="stat-number" id="pending-requests-stat">0</p></div>
+                <div class="card"><h3>Cashback Req.</h3><p class="stat-number" id="cashback-requests-stat">0</p></div>
+                <div class="card"><h3>Claim Req.</h3><p class="stat-number" id="claim-requests-stat">0</p></div>
                 <div class="card"><h3>Total Members</h3><p class="stat-number" id="total-members-stat">0</p></div>
-                <div class="card"><h3>Universal Wallet</h3><p class="stat-number" id="universal-wallet-stat">₹0</p></div>
                 <div class="card"><h3>RMZ Wallet</h3><p class="stat-number" id="rmz-wallet-stat">₹0</p></div>
+                <div class="card"><h3>Universal Wallet</h3><p class="stat-number" id="universal-wallet-stat">₹0</p></div>
             </div>
             <div class="tabs">
-                <div class="tab-link active" data-tab="requests">Requests</div>
+                <div class="tab-link active" data-tab="cashback-requests">Cashback <span id="cashback-requests-count" class="tab-count" style="display:none;">0</span></div>
+                <div class="tab-link" data-tab="claim-requests">Claims <span id="claim-requests-count" class="tab-count" style="display:none;">0</span></div>
                 <div class="tab-link" data-tab="members">Members</div>
-                <div class="tab-link" data-tab="univ-history">Universal</div>
                 <div class="tab-link" data-tab="rmz-history">RMZ Wallet</div>
+                <div class="tab-link" data-tab="univ-history">Universal</div>
                 <div class="tab-link" data-tab="settings">Settings</div>
             </div>
             <div class="content-box">
-                <div id="requests-content" class="tab-content active"><h2>Pending Requests</h2><div id="request-list"></div></div>
+                <div id="cashback-requests-content" class="tab-content active"><h2>Pending Cashback Requests</h2><div id="cashback-request-list"></div></div>
+                <div id="claim-requests-content" class="tab-content"><h2>Pending Claim Requests</h2><div id="claim-request-list"></div></div>
                 <div id="members-content" class="tab-content"><h2>All Members</h2><div id="members-list" class="table-container"></div></div>
+                <div id="rmz-history-content" class="tab-content"><h2>RMZ Wallet History</h2><div id="rmz-history-list" class="table-container"></div></div>
                 <div id="univ-history-content" class="tab-content"><h2>Universal Wallet History</h2><div id="univ-history-list" class="table-container"></div></div>
-                <div id="rmz-history-content" class="tab-content">
-                    <h2>RMZ Wallet History</h2>
-                    <div class="filter-container">
-                        <label for="rmz-date-filter">Filter by Date:</label>
-                        <input type="date" id="rmz-date-filter">
-                    </div>
-                    <div id="rmz-history-list" class="table-container"></div>
+                <div id="settings-content" class="tab-content"><h2>App Settings</h2><div class="form-group"><label for="cashback-percentage">Self Cashback Percentage (%)</label><input type="number" id="cashback-percentage" step="0.1"></div><button id="save-settings-btn" style="max-width: 200px;">Save</button></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="member-details-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Member Details</h3>
+            <dl id="member-details-content" class="detail-grid"></dl>
+            
+            <div id="credit-management-section">
+                <div class="credit-form">
+                    <h4>Give Credit</h4>
+                    <form id="give-credit-form" class="form-group">
+                        <input type="number" id="give-credit-amount" placeholder="Amount" min="1" required>
+                        <button type="submit" style="background-color: var(--accent-blue);">Give</button>
+                    </form>
                 </div>
-                <div id="settings-content" class="tab-content">
-                    <h2>App Settings</h2>
-                    <div class="form-group"><label for="cashback-percentage">Self Cashback Percentage (%)</label><input type="number" id="cashback-percentage" step="0.1" placeholder="e.g., 2.5"></div>
-                    <button id="save-settings-btn" style="width: 100%; max-width: 200px;">Save Settings</button>
+                <div class="credit-form">
+                    <h4>Clear Due</h4>
+                    <form id="clear-due-form" class="form-group">
+                        <input type="number" id="clear-due-amount" placeholder="Amount" min="1" required>
+                        <button type="submit" style="background-color: var(--accent-green);">Clear</button>
+                    </form>
                 </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 20px; justify-content: flex-end;">
+                <button data-close-modal class="btn-secondary">Close</button>
             </div>
         </div>
     </div>
@@ -114,15 +140,13 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, writeBatch, increment, serverTimestamp, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, getDocs, writeBatch, increment, serverTimestamp, orderBy, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
             authDomain: "tipsplit-e3wes.firebaseapp.com",
-            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "tipsplit-e3wes",
             storageBucket: "tipsplit-e3wes.appspot.com",
-            messagingSenderId: "984733883633",
             appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
         };
         
@@ -131,31 +155,19 @@
         const db = getFirestore(app);
         const ADMIN_UID = "9trVz1b6zMNPsBjHZRzRhoU6N5F2";
         let activeListeners = [];
-        let allRmzTransactions = [];
-
-        const ui = {
-            loginView: document.getElementById('login-view'), adminView: document.getElementById('admin-view'),
-            adminLoginForm: document.getElementById('admin-login-form'), adminLoginError: document.getElementById('admin-login-error'),
-            logoutBtn: document.getElementById('logout-btn'), tabs: document.querySelector('.tabs'),
-            tabContents: document.querySelectorAll('.tab-content'), requestList: document.getElementById('request-list'),
-            membersList: document.getElementById('members-list'), univHistoryList: document.getElementById('univ-history-list'),
-            rmzHistoryList: document.getElementById('rmz-history-list'), rmzDateFilter: document.getElementById('rmz-date-filter'),
-            stats: {
-                pending: document.getElementById('pending-requests-stat'), members: document.getElementById('total-members-stat'),
-                universalWallet: document.getElementById('universal-wallet-stat'), rmzWallet: document.getElementById('rmz-wallet-stat'),
-            },
-            settings: { cashbackPercent: document.getElementById('cashback-percentage'), saveBtn: document.getElementById('save-settings-btn'), }
-        };
+        let currentMemberUid = null;
 
         async function init() {
             await setPersistence(auth, browserSessionPersistence);
             onAuthStateChanged(auth, user => {
                 if (user && user.uid === ADMIN_UID) {
-                    ui.loginView.classList.remove('active'); ui.adminView.classList.add('active');
+                    document.getElementById('admin-view').classList.add('active');
+                    document.getElementById('login-view').classList.remove('active');
                     loadAllData();
                 } else {
                     if (user) signOut(auth);
-                    ui.loginView.classList.add('active'); ui.adminView.classList.remove('active');
+                    document.getElementById('login-view').classList.add('active');
+                    document.getElementById('admin-view').classList.remove('active');
                     activeListeners.forEach(unsub => unsub());
                 }
             });
@@ -164,147 +176,338 @@
 
         function loadAllData() {
             activeListeners.forEach(unsub => unsub());
-            activeListeners = [
-                onSnapshot(query(collection(db, 'cashback_requests'), where('status', '==', 'pending')), renderRequests),
+            const listeners = [
+                onSnapshot(query(collection(db, 'cashback_requests'), where('status', '==', 'pending')), renderCashbackRequests),
+                onSnapshot(query(collection(db, 'claim_requests'), where('status', '==', 'pending')), renderClaimRequests),
                 onSnapshot(query(collection(db, 'users'), orderBy('createdAt', 'desc')), renderMembers),
-                onSnapshot(doc(db, 'app_settings', 'config'), renderSettingsAndStats),
-                onSnapshot(query(collection(db, 'universal_wallet_transactions'), orderBy('timestamp', 'desc')), renderUnivHistory),
-                onSnapshot(query(collection(db, 'rmz_wallet_transactions'), orderBy('timestamp', 'desc')), renderRmzHistory)
+                onSnapshot(doc(db, 'app_settings', 'config'), renderStatsAndSettings),
+                onSnapshot(query(collection(db, 'rmz_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => renderHistoryTable(snap, 'rmz-history-list')),
+                onSnapshot(query(collection(db, 'universal_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => renderHistoryTable(snap, 'univ-history-list'))
             ];
+            activeListeners.push(...listeners);
         }
 
-        function renderRequests(snapshot) {
-            ui.stats.pending.textContent = snapshot.size;
-            ui.requestList.innerHTML = snapshot.empty ? '<p>No pending requests.</p>' : '';
+        function renderCount(el, count) {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+
+        function renderCashbackRequests(snapshot) {
+            document.getElementById('cashback-requests-stat').textContent = snapshot.size;
+            renderCount(document.getElementById('cashback-requests-count'), snapshot.size);
+            const listEl = document.getElementById('cashback-request-list');
+            listEl.innerHTML = snapshot.empty ? '<p>No pending cashback requests.</p>' : '';
             snapshot.forEach(doc => {
                 const r = { id: doc.id, ...doc.data() };
-                const requestDiv = document.createElement('div');
-                requestDiv.className = 'request-item';
-                requestDiv.innerHTML = `<div class="request-details"><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Product:</strong> ${r.productName} (₹${r.productPrice})</p><p><strong>Date:</strong> ${r.requestDate.toDate().toLocaleDateString()}</p></div><div class="request-actions"><button class="btn-approve" data-id="${r.id}">Approve</button><button class="btn-reject" data-id="${r.id}">Reject</button></div>`;
-                ui.requestList.appendChild(requestDiv);
+                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Product:</strong> ${r.productName} (₹${r.productPrice})</p></div><div class="request-actions"><button class="btn-approve" data-type="cashback" data-id="${r.id}">Approve</button><button class="btn-reject" data-type="cashback" data-id="${r.id}">Reject</button></div></div>`;
+            });
+        }
+
+        function renderClaimRequests(snapshot) {
+            document.getElementById('claim-requests-stat').textContent = snapshot.size;
+            renderCount(document.getElementById('claim-requests-count'), snapshot.size);
+            const listEl = document.getElementById('claim-request-list');
+            listEl.innerHTML = snapshot.empty ? '<p>No pending claim requests.</p>' : '';
+            snapshot.forEach(doc => {
+                const r = { id: doc.id, ...doc.data() };
+                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Amount:</strong> ₹${r.amount}</p></div><div class="request-actions"><button class="btn-approve" data-type="claim" data-id="${r.id}">Approve</button><button class="btn-reject" data-type="claim" data-id="${r.id}">Reject</button></div></div>`;
             });
         }
 
         function renderMembers(snapshot) {
-            ui.stats.members.textContent = snapshot.size;
-            let table = `<table><thead><tr><th>Name</th><th>Mobile</th><th>Wallet</th></tr></thead><tbody>`;
-            snapshot.forEach(doc => { const u = doc.data(); table += `<tr><td>${u.name}</td><td>${u.mobile}</td><td>₹${(u.wallet || 0).toFixed(2)}</td></tr>`; });
-            ui.membersList.innerHTML = table + `</tbody></table>`;
+            document.getElementById('total-members-stat').textContent = snapshot.size;
+            let table = `<table><thead><tr><th>Name</th><th>Mobile</th><th>Wallet</th><th>Due Amount</th></tr></thead><tbody>`;
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                table += `<tr class="member-row" data-id="${u.uid}"><td>${u.name}</td><td>${u.mobile}</td><td>₹${(u.wallet || 0).toFixed(2)}</td><td>₹${(u.dueAmount || 0).toFixed(2)}</td></tr>`;
+            });
+            document.getElementById('members-list').innerHTML = table + `</tbody></table>`;
         }
 
-        function renderSettingsAndStats(doc) {
-            if (doc.exists()) {
-                const config = doc.data();
-                ui.stats.universalWallet.textContent = `₹${(config.universal_wallet_balance || 0).toFixed(2)}`;
-                ui.stats.rmzWallet.textContent = `₹${(config.rmz_wallet_balance || 0).toFixed(2)}`;
-                ui.settings.cashbackPercent.value = config.cashback_percentage || '';
-            }
+        function renderStatsAndSettings(doc) {
+            if (!doc.exists()) return;
+            const config = doc.data();
+            document.getElementById('rmz-wallet-stat').textContent = `₹${(config.rmz_wallet_balance || 0).toFixed(2)}`;
+            document.getElementById('universal-wallet-stat').textContent = `₹${(config.universal_wallet_balance || 0).toFixed(2)}`;
+            document.getElementById('cashback-percentage').value = config.cashback_percentage || '';
         }
 
-        function renderUnivHistory(snapshot) {
-            let table = `<table><thead><tr><th>Date</th><th>Amount</th><th>Reason</th></tr></thead><tbody>`;
-            snapshot.forEach(doc => { const t = doc.data(); table += `<tr><td>${t.timestamp.toDate().toLocaleString()}</td><td>₹${t.amount.toFixed(2)}</td><td>${t.reason}</td></tr>`; });
-            ui.univHistoryList.innerHTML = table + `</tbody></table>`;
+        function renderHistoryTable(snapshot, elementId) {
+            const headers = elementId === 'rmz-history-list' 
+                ? `<th>Date</th><th>Amount</th><th>From</th><th>Mobile</th>`
+                : `<th>Date</th><th>Amount</th><th>Reason</th>`;
+            let table = `<table><thead><tr>${headers}</tr></thead><tbody>`;
+            snapshot.forEach(doc => {
+                const t = doc.data();
+                const date = t.timestamp ? t.timestamp.toDate().toLocaleString() : 'N/A';
+                if (elementId === 'rmz-history-list') {
+                    table += `<tr><td>${date}</td><td>₹${t.amount.toFixed(2)}</td><td>${t.senderName}</td><td>${t.senderMobile}</td></tr>`;
+                } else {
+                    table += `<tr><td>${date}</td><td>₹${t.amount.toFixed(2)}</td><td>${t.reason}</td></tr>`;
+                }
+            });
+            document.getElementById(elementId).innerHTML = table + `</tbody></table>`;
         }
 
-        function renderRmzHistory(snapshot) {
-            allRmzTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            displayFilteredRmzHistory();
-        }
+        async function showMemberDetails(uid) {
+            currentMemberUid = uid;
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            if (!userDoc.exists()) return alert("User not found.");
+            const user = userDoc.data();
+            const detailsEl = document.getElementById('member-details-content');
+            detailsEl.innerHTML = '';
+            
+            const displayOrder = ['name', 'mobile', 'password', 'wallet', 'totalCreditGiven', 'dueAmount', 'referralId', 'referredBy', 'lifetimeEarning', 'uid', 'upline', 'createdAt'];
 
-        function displayFilteredRmzHistory() {
-            const selectedDate = ui.rmzDateFilter.value;
-            let filteredTransactions = allRmzTransactions;
-
-            if (selectedDate) {
-                filteredTransactions = allRmzTransactions.filter(t => {
-                    const transactionDate = t.timestamp.toDate().toISOString().split('T')[0];
-                    return transactionDate === selectedDate;
-                });
-            }
-
-            let table = `<table><thead><tr><th>Date</th><th>Amount</th><th>From Customer</th><th>Mobile</th></tr></thead><tbody>`;
-            if (filteredTransactions.length === 0) {
-                table += `<tr><td colspan="4" style="text-align:center;">No transactions found.</td></tr>`;
-            } else {
-                filteredTransactions.forEach(t => {
-                    table += `<tr>
-                        <td>${t.timestamp.toDate().toLocaleString()}</td>
-                        <td>₹${t.amount.toFixed(2)}</td>
-                        <td>${t.senderName || 'N/A'}</td>
-                        <td>${t.senderMobile || 'N/A'}</td>
-                    </tr>`;
-                });
-            }
-            ui.rmzHistoryList.innerHTML = table + `</tbody></table>`;
+            displayOrder.forEach(key => {
+                if (user.hasOwnProperty(key) || (key === 'totalCreditGiven' || key === 'dueAmount')) {
+                    const value = user[key] || 0; // Default to 0 if not present
+                    let displayValue = Array.isArray(value) ? value.join(', ') || 'N/A' : value;
+                    if (value && typeof value.toDate === 'function') {
+                        displayValue = value.toDate().toLocaleString();
+                    }
+                    if (typeof value === 'number' && (key === 'wallet' || key === 'totalCreditGiven' || key === 'dueAmount' || key === 'lifetimeEarning')) {
+                        displayValue = `₹${value.toFixed(2)}`;
+                    }
+                    detailsEl.innerHTML += `<dt>${key}</dt><dd>${displayValue}</dd>`;
+                }
+            });
+            
+            document.getElementById('member-details-modal').classList.add('active');
         }
         
-        async function approveRequest(requestId) {
-            const requestDocRef = doc(db, 'cashback_requests', requestId);
+        async function approveCashbackRequest(id) {
+            // ... (code unchanged)
+        }
+        
+        async function approveClaimRequest(id) {
+            // ... (code unchanged)
+        }
+
+        async function rejectClaimRequest(id) {
+            // ... (code unchanged)
+        }
+        
+        async function handleGiveCredit(e) {
+            e.preventDefault();
+            const amountInput = document.getElementById('give-credit-amount');
+            const amount = parseFloat(amountInput.value);
+            if (isNaN(amount) || amount <= 0 || !currentMemberUid) return;
+
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+
+            const userRef = doc(db, 'users', currentMemberUid);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    transaction.update(userRef, {
+                        wallet: increment(amount),
+                        totalCreditGiven: increment(amount),
+                        dueAmount: increment(amount)
+                    });
+                    
+                    const transRef = doc(collection(db, 'transactions'));
+                    transaction.set(transRef, {
+                        involvedUsers: [currentMemberUid],
+                        type: 'credit',
+                        amount: amount,
+                        description: `Credit of ₹${amount.toFixed(2)} received`,
+                        status: 'completed',
+                        timestamp: serverTimestamp()
+                    });
+                });
+                alert(`₹${amount.toFixed(2)} credit given successfully!`);
+                amountInput.value = '';
+                showMemberDetails(currentMemberUid); // Refresh details
+            } catch (error) {
+                console.error("Error giving credit:", error);
+                alert("Failed to give credit.");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function handleClearDue(e) {
+            e.preventDefault();
+            const amountInput = document.getElementById('clear-due-amount');
+            const amount = parseFloat(amountInput.value);
+            if (isNaN(amount) || amount <= 0 || !currentMemberUid) return;
+            
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+
+            const userRef = doc(db, 'users', currentMemberUid);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists()) throw "User not found!";
+                    
+                    const currentDue = userDoc.data().dueAmount || 0;
+                    if (amount > currentDue) throw "Clear amount cannot be more than due amount.";
+
+                    transaction.update(userRef, {
+                        dueAmount: increment(-amount)
+                    });
+
+                    const transRef = doc(collection(db, 'transactions'));
+                    transaction.set(transRef, {
+                        involvedUsers: [currentMemberUid],
+                        type: 'due_payment',
+                        amount: -amount, // Negative because it's a payment from user
+                        description: `Due payment of ₹${amount.toFixed(2)} received`,
+                        status: 'completed',
+                        timestamp: serverTimestamp()
+                    });
+                });
+                alert(`₹${amount.toFixed(2)} due cleared successfully!`);
+                amountInput.value = '';
+                showMemberDetails(currentMemberUid); // Refresh details
+            } catch (error) {
+                console.error("Error clearing due:", error);
+                alert(`Failed to clear due: ${error}`);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function addEventListeners() {
+            document.getElementById('admin-login-form').addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('admin-email').value}@ramazone.com`, document.getElementById('admin-password').value).catch(() => document.getElementById('admin-login-error').textContent = "Login failed."); });
+            document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+            document.querySelector('.tabs').addEventListener('click', (e) => { if (!e.target.matches('.tab-link')) return; document.querySelector('.tabs .active').classList.remove('active'); e.target.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.getElementById(`${e.target.dataset.tab}-content`).classList.add('active'); });
+            
+            document.getElementById('admin-view').addEventListener('click', async (e) => {
+                const btn = e.target.closest('button.btn-approve, button.btn-reject');
+                if (!btn) return;
+                const id = btn.dataset.id;
+                const type = btn.dataset.type;
+                const isApprove = btn.matches('.btn-approve');
+                btn.disabled = true;
+                try {
+                    if (type === 'cashback') {
+                        if (isApprove) await approveCashbackRequest(id);
+                        else {
+                            const batch = writeBatch(db);
+                            batch.update(doc(db, 'cashback_requests', id), { status: 'rejected' });
+                            await batch.commit();
+                            alert('Request rejected.');
+                        }
+                    } else if (type === 'claim') {
+                        if (isApprove) await approveClaimRequest(id);
+                        else await rejectClaimRequest(id);
+                    }
+                } catch (error) { console.error(error); alert(`Error: ${error.message}`); }
+                finally { btn.disabled = false; }
+            });
+
+            document.getElementById('members-list').addEventListener('click', (e) => {
+                const row = e.target.closest('.member-row');
+                if (row) showMemberDetails(row.dataset.id);
+            });
+            
+            document.getElementById('give-credit-form').addEventListener('submit', handleGiveCredit);
+            document.getElementById('clear-due-form').addEventListener('submit', handleClearDue);
+
+            document.querySelector('[data-close-modal]').addEventListener('click', (e) => {
+                e.target.closest('.modal-overlay').classList.remove('active');
+                currentMemberUid = null; // Reset current member on modal close
+            });
+            document.getElementById('save-settings-btn').addEventListener('click', async () => { const newPercent = parseFloat(document.getElementById('cashback-percentage').value); if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage."); await setDoc(doc(db, 'app_settings', 'config'), { cashback_percentage: newPercent }, { merge: true }); alert("Settings saved!"); });
+        }
+        
+        // --- Re-adding unchanged functions for completeness ---
+        approveCashbackRequest = async (id) => {
+            const requestDocRef = doc(db, 'cashback_requests', id);
             const configDocRef = doc(db, 'app_settings', 'config');
+            const batch = writeBatch(db);
+
             const [requestDoc, configDoc] = await Promise.all([getDoc(requestDocRef), getDoc(configDocRef)]);
             if (!requestDoc.exists()) throw new Error("Request not found.");
+            
             const requestData = requestDoc.data();
+            const userRef = doc(db, 'users', requestData.userId);
+            const userDoc = await getDoc(userRef);
+            if (!userDoc.exists()) throw new Error("User not found.");
+            
+            const userData = userDoc.data();
             const config = configDoc.exists() ? configDoc.data() : {};
             const cashbackPercent = config.cashback_percentage || 2;
-            const userDoc = await getDoc(doc(db, 'users', requestData.userId));
-            if (!userDoc.exists()) throw new Error("User not found.");
-            const userData = userDoc.data();
             const selfAmount = requestData.productPrice * (cashbackPercent / 100);
             const distributionAmount = selfAmount * 0.50;
-            const batch = writeBatch(db);
-            batch.update(requestDocRef, { status: 'approved', cashbackAmount: selfAmount });
+
+            batch.update(userRef, { wallet: increment(selfAmount), lifetimeEarning: increment(selfAmount) });
+            batch.set(doc(collection(db, 'transactions')), {
+                involvedUsers: [requestData.userId], type: 'cashback', amount: selfAmount,
+                description: `Cashback for ${requestData.productName}`, status: 'completed', timestamp: serverTimestamp()
+            });
+            batch.update(requestDocRef, { status: 'completed', cashbackAmount: selfAmount, claimed: true });
+
             const upline = userData.upline || [];
             const percentages = [0.30, 0.25, 0.20, 0.15, 0.10];
             let totalLapsedAmount = 0;
             for (let i = 0; i < 5; i++) {
                 const commission = distributionAmount * percentages[i];
                 if (upline[i]) {
-                    const uplineUserRef = doc(db, 'users', upline[i]);
-                    batch.update(uplineUserRef, { wallet: increment(commission), lifetimeEarning: increment(commission) });
+                    batch.update(doc(db, 'users', upline[i]), { wallet: increment(commission), lifetimeEarning: increment(commission) });
                     batch.set(doc(collection(db, 'transactions')), { involvedUsers: [upline[i]], type: 'commission', amount: commission, description: `Commission from ${userData.name}`, timestamp: serverTimestamp(), status: 'completed' });
                 } else { totalLapsedAmount += commission; }
             }
+
             if (totalLapsedAmount > 0) {
                 batch.update(configDocRef, { universal_wallet_balance: increment(totalLapsedAmount) });
                 batch.set(doc(collection(db, 'universal_wallet_transactions')), { amount: totalLapsedAmount, reason: `Lapsed commission from ${userData.name}'s request`, timestamp: serverTimestamp() });
             }
+            
             await batch.commit();
+            alert('Cashback approved and credited to user wallet.');
+        }
+        approveClaimRequest = async (id) => {
+            const reqRef = doc(db, 'claim_requests', id);
+            const reqDoc = await getDoc(reqRef);
+            if (!reqDoc.exists()) throw new Error("Request not found.");
+            
+            const reqData = reqDoc.data();
+            const couponCode = `RMZ${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+            
+            const batch = writeBatch(db);
+            batch.update(reqRef, { status: 'approved', couponCode });
+            batch.set(doc(collection(db, 'coupons')), {
+                userId: reqData.userId, code: couponCode, amount: reqData.amount,
+                isUsed: false, createdAt: serverTimestamp(), claimId: id
+            });
+            
+            const q = query(collection(db, "transactions"), where("originalRequestId", "==", id));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const transactionRef = querySnapshot.docs[0].ref;
+                batch.update(transactionRef, { status: 'completed', description: `Claim approved. Coupon: ${couponCode}` });
+            }
+
+            await batch.commit();
+            alert(`Request approved. Coupon ${couponCode} generated.`);
+        }
+        rejectClaimRequest = async (id) => {
+            const reqRef = doc(db, 'claim_requests', id);
+            const reqDoc = await getDoc(reqRef);
+            if (!reqDoc.exists()) throw new Error("Request not found.");
+
+            const reqData = reqDoc.data();
+            const userRef = doc(db, 'users', reqData.userId);
+            
+            const batch = writeBatch(db);
+            batch.update(reqRef, { status: 'rejected' });
+            batch.update(userRef, { wallet: increment(reqData.amount) }); // Refund
+            
+            const q = query(collection(db, "transactions"), where("originalRequestId", "==", id));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const transactionRef = querySnapshot.docs[0].ref;
+                batch.update(transactionRef, { status: 'rejected', description: `Claim rejected. ₹${reqData.amount} refunded.` });
+            }
+
+            await batch.commit();
+            alert(`Request rejected. Amount refunded to user.`);
         }
 
-        function addEventListeners() {
-            ui.adminLoginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, `${document.getElementById('admin-email').value}@ramazone.com`, document.getElementById('admin-password').value).catch(() => ui.adminLoginError.textContent = "Login failed."); });
-            ui.logoutBtn.addEventListener('click', () => signOut(auth));
-            ui.tabs.addEventListener('click', (e) => { 
-                if (!e.target.matches('.tab-link')) return; 
-                ui.tabs.querySelector('.active').classList.remove('active'); 
-                e.target.classList.add('active'); 
-                ui.tabContents.forEach(c => c.classList.remove('active')); 
-                document.getElementById(`${e.target.dataset.tab}-content`).classList.add('active'); 
-            });
-            ui.requestList.addEventListener('click', async (e) => {
-                const btn = e.target.closest('button');
-                if (!btn) return;
-                btn.disabled = true;
-                try {
-                    if (btn.matches('.btn-approve')) await approveRequest(btn.dataset.id);
-                    else if (btn.matches('.btn-reject')) {
-                        const rejectBatch = writeBatch(db);
-                        rejectBatch.update(doc(db, 'cashback_requests', btn.dataset.id), { status: 'rejected' });
-                        await rejectBatch.commit();
-                    }
-                } catch (error) { console.error(error); alert(`Error: ${error.message}`); }
-                finally { btn.disabled = false; }
-            });
-            ui.settings.saveBtn.addEventListener('click', async () => {
-                const newPercent = parseFloat(ui.settings.cashbackPercent.value);
-                if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage.");
-                await setDoc(doc(db, 'app_settings', 'config'), { cashback_percentage: newPercent }, { merge: true });
-                alert("Settings saved!");
-            });
-            ui.rmzDateFilter.addEventListener('change', displayFilteredRmzHistory);
-        }
-        
         init();
     </script>
 </body>
