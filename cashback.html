@@ -38,6 +38,7 @@
             border-radius: 8px; font-size: 16px;
         }
         button { width: 100%; padding: 14px; background: var(--brand-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
         .form-link { text-align: center; margin-top: 25px; color: var(--text-secondary); font-size: 14px; }
         .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
@@ -102,16 +103,6 @@
         .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.07); }
         .action-card .icon { margin-bottom: 8px; width: 30px; height: 30px; }
         .action-card .card-text { font-size: 12px; font-weight: 500; color: var(--text-primary); }
-        .coupon-count-badge {
-            position: absolute; top: 5px; right: 5px;
-            background-color: var(--brand-red); color: white;
-            width: 22px; height: 22px; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 12px; font-weight: 600;
-            border: 2px solid var(--bg-card);
-            transform: scale(0); transition: transform 0.3s ease;
-        }
-        .coupon-count-badge.visible { transform: scale(1); }
 
         .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
@@ -182,7 +173,7 @@
         #scanner-container { width: 100%; max-width: 250px; aspect-ratio: 1/1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background: #000; }
         #scanner-video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* --- NEW: Professional Success & Details Modals --- */
+        /* --- Professional Success & Details Modals --- */
         .professional-modal .modal-content { padding: 30px; max-width: 380px; text-align: center; }
         .professional-modal .success-icon {
             width: 80px; height: 80px; background-color: var(--accent-green);
@@ -220,12 +211,6 @@
         }
         .modal-close-btn:hover { color: #000; }
         
-        .coupon-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 10px; }
-        .coupon-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .coupon-amount { font-size: 24px; font-weight: 800; color: var(--accent-green); }
-        .coupon-copy-btn { background: var(--bg-page); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
-        .coupon-code { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: 1px; text-align: center; background: var(--bg-page); padding: 8px; border-radius: 8px; margin-bottom: 5px; }
-        .coupon-date { font-size: 12px; color: var(--text-secondary); text-align: center; }
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
@@ -380,11 +365,6 @@
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
                 <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">Scan & Pay</span></div>
-                <div id="open-claim-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/279390/money-cash.svg"><span class="card-text">Claim</span></div>
-                <div id="open-coupons-modal" class="action-card">
-                    <span class="coupon-count-badge">0</span>
-                    <img class="icon" src="https://www.svgrepo.com/show/301726/coupon.svg"><span class="card-text">Coupons</span>
-                </div>
                 <div id="open-network-modal" class="action-card">
                     <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
                     <span class="card-text">Network</span>
@@ -403,8 +383,6 @@
                     <button class="filter-btn" data-filter="cashback">Cashback</button>
                     <button class="filter-btn" data-filter="commission">Commission</button>
                     <button class="filter-btn" data-filter="payment">Payments</button>
-                    <button class="filter-btn" data-filter="claim">Claims</button>
-                    <button class="filter-btn" data-filter="coupon_redeem">Redeemed</button>
                     <button class="filter-btn" data-filter="credit">Credit</button>
                     <button class="filter-btn" data-filter="due_payment">Due Paid</button>
                 </div>
@@ -416,14 +394,6 @@
     <!-- All Modals -->
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
-    <div id="claim-modal" class="modal-overlay"> <div class="modal-content"> <h3>Wallet Se Claim Karein</h3><form id="claim-request-form"><div class="form-group"><label for="claim-amount">Kitna Amount Claim Karna Hai? (min ₹10)</label><input type="number" id="claim-amount" min="10" required></div><p id="claim-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="claim-submit-btn">Request</button></div></form></div> </div>
-    <div id="coupons-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Aapke Coupons <span id="coupons-modal-count" style="font-weight: 500; color: var(--text-secondary);"></span></h3>
-            <div id="coupons-list"></div>
-            <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Close</button></div>
-        </div>
-    </div>
     <div id="scan-pay-modal" class="modal-overlay"> <div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div> </div>
     
     <div id="profile-modal" class="modal-overlay"> 
@@ -480,7 +450,7 @@
         </div>
     </div>
 
-    <!-- NEW: Professional Success Modal -->
+    <!-- Professional Success Modal -->
     <div id="payment-success-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
             <div class="success-icon">
@@ -506,7 +476,7 @@
         </div>
     </div>
 
-    <!-- NEW: Professional Transaction Details Modal -->
+    <!-- Professional Transaction Details Modal -->
     <div id="transaction-details-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
             <p class="amount" id="details-modal-amount"></p>
@@ -577,7 +547,6 @@
         let scannerAnimation = null;
         let allTransactions = [];
         let cashbackRequests = [];
-        let userCoupons = [];
         let activeFilter = 'all';
         let pendingAction = null;
         let isDownlineLoaded = false;
@@ -605,7 +574,6 @@
         const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
         const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
         
-        // --- NEW: Professional Success Popup Function ---
         const showSuccessPopup = (details) => {
             document.getElementById('success-modal-amount').textContent = `- ₹${details.amount.toFixed(2)}`;
             document.getElementById('success-modal-receiver').textContent = details.receiver;
@@ -614,7 +582,6 @@
             openModal('payment-success-modal');
         };
 
-        // --- NEW: Transaction Details Popup Function ---
         const showTransactionDetails = (item) => {
             const amount = item.amount || item.cashbackAmount || 0;
             const sign = amount >= 0 ? '+' : '-';
@@ -664,17 +631,13 @@
                 cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 combineAndRenderHistory();
             });
-            const couponsUnsubscribe = onSnapshot(query(collection(db, "coupons"), where("userId", "==", uid), where("isUsed", "==", false), orderBy("createdAt", "desc")), (snapshot) => {
-                userCoupons = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                renderCoupons();
-            });
             const notificationUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
                 if (!snapshot.empty) {
                     const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
                     updateNotificationUI(latestNotif);
                 }
             });
-            activeListeners.push(userUnsubscribe, transUnsubscribe, requestsUnsubscribe, couponsUnsubscribe, notificationUnsubscribe);
+            activeListeners.push(userUnsubscribe, transUnsubscribe, requestsUnsubscribe, notificationUnsubscribe);
         }
 
         function detachAllListeners() {
@@ -779,19 +742,17 @@
             itemsToRender.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'history-item';
-                // Attach data to the element for the details modal
                 itemDiv.addEventListener('click', () => showTransactionDetails(item));
 
                 const amount = item.amount || item.cashbackAmount || 0;
                 let sign = amount >= 0 ? '+' : '-';
                 let typeClass = amount >= 0 ? 'credit' : 'debit';
                 
-                if(item.type === 'due_payment' || item.type === 'claim' || item.type === 'payment') { typeClass = 'debit'; sign = '-'; }
-                if(item.type === 'coupon_redeem' || item.type === 'commission' || item.type === 'cashback' || item.type === 'credit'){ typeClass = 'credit'; sign = '+'; }
+                if(item.type === 'due_payment' || item.type === 'payment') { typeClass = 'debit'; sign = '-'; }
+                if(item.type === 'commission' || item.type === 'cashback' || item.type === 'credit'){ typeClass = 'credit'; sign = '+'; }
                 if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
 
                 let description = item.description;
-                if (item.type === 'coupon_redeem' && item.couponCode) { description = `Coupon Redeemed: ${item.couponCode}`; }
 
                 itemDiv.innerHTML = `
                     <div class="history-details">
@@ -805,37 +766,6 @@
                         <span class="status">${item.status || ''}</span>
                     </div>`;
                 listEl.appendChild(itemDiv);
-            });
-        }
-
-        function renderCoupons() {
-            const listEl = document.getElementById('coupons-list');
-            const badgeEl = document.querySelector('#open-coupons-modal .coupon-count-badge');
-            const modalCountEl = document.getElementById('coupons-modal-count');
-            const count = userCoupons.length;
-
-            badgeEl.textContent = count;
-            modalCountEl.textContent = `(${count} Available)`;
-            badgeEl.classList.toggle('visible', count > 0);
-
-            listEl.innerHTML = '';
-            if (count === 0) {
-                listEl.innerHTML = `<div class="empty-state" style="border:none; text-align:center; color: var(--text-secondary);"><h4>No Coupons</h4><p>Aapke paas abhi koi coupon nahi hai.</p></div>`;
-                return;
-            }
-            userCoupons.forEach(coupon => {
-                const couponCard = document.createElement('div');
-                couponCard.className = 'coupon-card';
-                const date = coupon.createdAt ? coupon.createdAt.toDate().toLocaleDateString() : 'N/A';
-                couponCard.innerHTML = `
-                    <div class="coupon-header">
-                        <span class="coupon-amount">₹${coupon.amount}</span>
-                        <button class="coupon-copy-btn" data-code="${coupon.code}">Copy</button>
-                    </div>
-                    <p class="coupon-code">${coupon.code}</p>
-                    <p class="coupon-date">Issued on: ${date}</p>
-                `;
-                listEl.appendChild(couponCard);
             });
         }
 
@@ -920,35 +850,6 @@
             }, 'scan-pay-modal');
         }
 
-        function handleClaimRequest(e) {
-            e.preventDefault();
-            const errorMsg = document.getElementById('claim-error-msg');
-            const amount = parseFloat(document.getElementById('claim-amount').value);
-            hideErrorMessage(errorMsg);
-            if (isNaN(amount) || amount < 10) return showErrorMessage(errorMsg, "Minimum claim is ₹10.");
-            if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
-            
-            verifyPasswordAndExecute(async () => {
-                try {
-                    await runTransaction(db, async (t) => {
-                        const userRef = doc(db, "users", currentUserData.id);
-                        t.update(userRef, { wallet: increment(-amount) });
-                        const claimRef = doc(collection(db, "claim_requests"));
-                        t.set(claimRef, {
-                            userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
-                            amount, status: "pending", requestDate: serverTimestamp()
-                        });
-                        t.set(doc(collection(db, "transactions")), {
-                            type: 'claim', amount: -amount, description: `Claim request for ₹${amount}`,
-                            status: 'pending', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id], originalRequestId: claimRef.id
-                        });
-                    });
-                    showToast(`Your request to claim ₹${amount.toFixed(2)} has been sent.`);
-                    document.getElementById('claim-request-form').reset();
-                } catch (error) { showToast("Failed to send request."); }
-            }, 'claim-modal');
-        }
-
         async function handleCashbackRequest(e) {
             e.preventDefault();
             const btn = document.getElementById('cashback-submit-btn');
@@ -975,6 +876,56 @@
             } finally {
                 btn.disabled = false; btn.textContent = "Request";
                 closeModal('cashback-modal');
+            }
+        }
+
+        // --- NEW: Password Change Function ---
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            const form = document.getElementById('password-change-form');
+            const btn = document.getElementById('password-change-btn');
+            const errorMsgEl = document.getElementById('password-change-error-msg');
+            hideErrorMessage(errorMsgEl);
+
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+
+            if (newPassword.length < 6) {
+                showErrorMessage(errorMsgEl, "Naya password kam se kam 6 character ka hona chahiye.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Updating...";
+
+            const user = auth.currentUser;
+            const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+            try {
+                // Step 1: Re-authenticate user with their old password
+                await reauthenticateWithCredential(user, credential);
+                
+                // Step 2: If successful, update the password in Firebase Auth
+                await updatePassword(user, newPassword);
+                
+                // Step 3: Also update the password in the Firestore database
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, { password: newPassword });
+
+                showToast("Password safaltapoorvak badal gaya!");
+                form.reset();
+                closeModal('profile-modal');
+
+            } catch (error) {
+                console.error("Password change failed:", error);
+                if (error.code === 'auth/wrong-password') {
+                    showErrorMessage(errorMsgEl, "Aapka purana password galat hai.");
+                } else {
+                    showErrorMessage(errorMsgEl, "Ek error aayi. Dobara try karein.");
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Password Badlein";
             }
         }
 
@@ -1294,8 +1245,6 @@
             document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
-            document.getElementById('open-claim-modal').addEventListener('click', () => openModal('claim-modal'));
-            document.getElementById('open-coupons-modal').addEventListener('click', () => openModal('coupons-modal'));
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
             document.getElementById('rescan-btn').addEventListener('click', startScanner);
             document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
@@ -1303,11 +1252,13 @@
             document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
             document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
             document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
-            document.getElementById('claim-request-form').addEventListener('submit', handleClaimRequest);
             document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
             document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
             document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
             
+            // --- NEW: Event listener for password change form ---
+            document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
+
             document.getElementById('filter-bar').addEventListener('click', e => {
                 const target = e.target.closest('.filter-btn');
                 if (!target) return;
@@ -1317,12 +1268,6 @@
                 combineAndRenderHistory();
             });
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
-            document.getElementById('coupons-list').addEventListener('click', (e) => {
-                if (e.target.matches('.coupon-copy-btn')) {
-                    const code = e.target.dataset.code;
-                    navigator.clipboard.writeText(code).then(() => showToast(`Coupon ${code} copied!`));
-                }
-            });
 
             document.getElementById('open-network-modal').addEventListener('click', () => {
                 openModal('network-modal');
