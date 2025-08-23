@@ -49,12 +49,15 @@
         /* --- Dashboard UI --- */
         .header {
     display: flex;
-    flex-direction: row-reverse; /* <-- Yeh badlaav karein */
-    justify-content: space-between;
+    justify-content: space-between; /* <-- Is line ko badalna hai */
     align-items: center;
     padding: 8px;
-    /* ... baki sab waisa hi rahega ... */
+    background-color: var(--bg-card);
+    border-radius: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
+
 
 #static-notification-card {
     flex-grow: 1;
@@ -69,7 +72,7 @@
         .header-logo { height: 33px; }
 
         #static-notification-card {
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 4px;
             padding: 5px 10px; border-radius: 8px;
             background-color: var(--brand-red); color: white;
             transition: all 0.3s ease; display: none;
