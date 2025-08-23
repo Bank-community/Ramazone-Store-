@@ -55,7 +55,7 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; white-space: nowrap; }
         .member-row { cursor: pointer; } .member-row:hover { background-color: #f9f9f9; }
-        .data-management-actions, .filter-controls, .redeem-form-container { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .data-management-actions, .filter-controls { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .notification-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
         /* Modal Styles */
@@ -72,14 +72,6 @@
         .credit-form .form-group { display: flex; gap: 10px; }
         .credit-form input { flex-grow: 1; }
         .credit-form button { width: auto; }
-
-        /* NEW: Coupon Redeem Styles */
-        #coupon-check-result { margin-top: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; display: none; }
-        #coupon-check-result p { margin: 0 0 10px 0; }
-        #coupon-check-result p:last-child { margin-bottom: 0; }
-        .status-available { color: var(--accent-green); font-weight: bold; }
-        .status-redeemed { color: var(--accent-red); font-weight: bold; }
-        .status-invalid { color: var(--accent-orange); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -100,7 +92,6 @@
             <div class="header"><h1>Dashboard</h1><button id="logout-btn">Logout</button></div>
             <div class="stat-cards" id="stat-cards-container">
                 <div class="card" data-tab="cashback-requests"><h3>Cashback Req.</h3><p class="stat-number" id="cashback-requests-stat">0</p></div>
-                <div class="card" data-tab="claim-requests"><h3>Claim Req.</h3><p class="stat-number" id="claim-requests-stat">0</p></div>
                 <div class="card" data-tab="members"><h3>Total Members</h3><p class="stat-number" id="total-members-stat">0</p></div>
                 <div class="card" data-tab="rmz-history"><h3>RMZ Wallet</h3><p class="stat-number" id="rmz-wallet-stat">₹0</p></div>
                 <div class="card" data-tab="univ-history"><h3>Universal Wallet</h3><p class="stat-number" id="universal-wallet-stat">₹0</p></div>
@@ -108,10 +99,7 @@
             </div>
             <div class="tabs" id="tabs-container">
                 <div class="tab-link active" data-tab="cashback-requests">Cashback <span id="cashback-requests-count" class="tab-count" style="display:none;">0</span></div>
-                <div class="tab-link" data-tab="claim-requests">Claims <span id="claim-requests-count" class="tab-count" style="display:none;">0</span></div>
                 <div class="tab-link" data-tab="members">Members</div>
-                <!-- NEW: Redeem Coupon Tab -->
-                <div class="tab-link" data-tab="redeem-coupon">Redeem Coupon</div>
                 <div class="tab-link" data-tab="rmz-history">RMZ Wallet</div>
                 <div class="tab-link" data-tab="univ-history">Universal</div>
                 <div class="tab-link" data-tab="cashback-history">Cashback History</div>
@@ -121,22 +109,7 @@
             </div>
             <div class="content-box">
                 <div id="cashback-requests-content" class="tab-content active"><h2>Pending Cashback Requests</h2><div id="cashback-request-list"></div></div>
-                <div id="claim-requests-content" class="tab-content"><h2>Pending Claim Requests</h2><div id="claim-request-list"></div></div>
                 <div id="members-content" class="tab-content"><h2>All Members</h2><div id="members-list" class="table-container"></div></div>
-                <!-- NEW: Redeem Coupon Content -->
-                <div id="redeem-coupon-content" class="tab-content">
-                    <h2>Check & Redeem Coupon</h2>
-                    <div class="redeem-form-container">
-                        <div class="form-group" style="flex-grow: 1; margin-bottom: 0;">
-                            <label for="coupon-code-input">Enter Coupon Code</label>
-                            <input type="text" id="coupon-code-input" placeholder="e.g., RMZABCD123">
-                        </div>
-                        <button id="check-coupon-btn" style="width: auto; padding: 10px 15px; margin-top: 15px;">Check Code</button>
-                    </div>
-                    <div id="coupon-check-result"></div>
-                    <h2 style="margin-top: 30px;">All Generated Coupons History</h2>
-                    <div id="all-coupons-history-list" class="table-container"></div>
-                </div>
                 <div id="rmz-history-content" class="tab-content">
                     <h2>RMZ Wallet History</h2>
                     <div class="filter-controls">
@@ -251,7 +224,6 @@
 
             const listeners = [
                 onSnapshot(query(collection(db, 'cashback_requests'), where('status', '==', 'pending')), renderCashbackRequests, console.error),
-                onSnapshot(query(collection(db, 'claim_requests'), where('status', '==', 'pending')), renderClaimRequests, console.error),
                 onSnapshot(query(collection(db, 'users'), orderBy('createdAt', 'desc')), renderMembers, console.error),
                 onSnapshot(doc(db, 'app_settings', 'config'), renderStatsAndSettings, console.error),
                 onSnapshot(query(collection(db, 'rmz_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => {
@@ -262,8 +234,6 @@
                 onSnapshot(query(collection(db, 'cashback_requests'), where('status', 'in', ['completed', 'rejected'])), renderCashbackHistory, console.error),
                 onSnapshot(query(collection(db, 'cashback_requests'), where('status', 'in', ['completed', 'rejected']), where('requestDate', '<', thirtyDaysAgo)), renderOldDataList, console.error),
                 onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc')), renderNotifications, console.error),
-                // NEW: Listener for all coupons
-                onSnapshot(query(collection(db, 'coupons'), orderBy('createdAt', 'desc')), renderAllCouponsHistory, console.error)
             ];
             activeListeners.push(...listeners);
         }
@@ -281,17 +251,6 @@
             snapshot.forEach(doc => {
                 const r = { id: doc.id, ...doc.data() };
                 listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Product:</strong> ${r.productName} (₹${r.productPrice})</p></div><div class="request-actions"><button class="btn-approve" data-action="approve-cashback" data-id="${r.id}">Approve</button><button class="btn-average" data-action="approve-cashback-avg" data-id="${r.id}">Avg. Accept</button><button class="btn-reject" data-action="reject-cashback" data-id="${r.id}">Reject</button></div></div>`;
-            });
-        }
-
-        function renderClaimRequests(snapshot) {
-            document.getElementById('claim-requests-stat').textContent = snapshot.size;
-            renderCount(document.getElementById('claim-requests-count'), snapshot.size);
-            const listEl = document.getElementById('claim-request-list');
-            listEl.innerHTML = snapshot.empty ? '<p>No pending claim requests.</p>' : '';
-            snapshot.forEach(doc => {
-                const r = { id: doc.id, ...doc.data() };
-                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Amount:</strong> ₹${r.amount}</p></div><div class="request-actions"><button class="btn-approve" data-action="approve-claim" data-id="${r.id}">Approve</button><button class="btn-reject" data-action="reject-claim" data-id="${r.id}">Reject</button></div></div>`;
             });
         }
 
@@ -420,48 +379,6 @@
             });
             listEl.innerHTML = table + `</tbody></table>`;
         }
-
-        // NEW: Render all coupons history table
-        async function renderAllCouponsHistory(snapshot) {
-            const listEl = document.getElementById('all-coupons-history-list');
-            if (snapshot.empty) {
-                listEl.innerHTML = '<p>No coupons have been generated yet.</p>';
-                return;
-            }
-            
-            const userCache = {};
-            const coupons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            let table = `<table><thead><tr><th>Code</th><th>Amount</th><th>Member Name</th><th>Status</th><th>Issued On</th><th>Redeemed On</th></tr></thead><tbody>`;
-            
-            for (const coupon of coupons) {
-                let userName = 'N/A';
-                if (userCache[coupon.userId]) {
-                    userName = userCache[coupon.userId];
-                } else {
-                    const userDoc = await getDoc(doc(db, 'users', coupon.userId));
-                    if (userDoc.exists()) {
-                        userName = userDoc.data().name;
-                        userCache[coupon.userId] = userName;
-                    }
-                }
-
-                const status = coupon.isUsed ? `<span class="status-redeemed">Redeemed</span>` : `<span class="status-available">Available</span>`;
-                const issuedDate = coupon.createdAt ? coupon.createdAt.toDate().toLocaleString() : 'N/A';
-                const redeemedDate = coupon.redeemedAt ? coupon.redeemedAt.toDate().toLocaleString() : '—';
-
-                table += `<tr>
-                    <td>${coupon.code}</td>
-                    <td>₹${coupon.amount}</td>
-                    <td>${userName}</td>
-                    <td>${status}</td>
-                    <td>${issuedDate}</td>
-                    <td>${redeemedDate}</td>
-                </tr>`;
-            }
-            listEl.innerHTML = table + `</tbody></table>`;
-        }
-
 
         async function approveCashbackRequest(id, isAverage = false) {
             const requestDocRef = doc(db, 'cashback_requests', id);
@@ -606,12 +523,8 @@
                             await updateDoc(doc(db, 'cashback_requests', id), { status: 'rejected' });
                             alert('Request rejected.');
                             break;
-                        case 'approve-claim': await approveClaimRequest(id); break;
-                        case 'reject-claim': await rejectClaimRequest(id); break;
                         case 'edit-notification': await showEditNotificationModal(id); break;
                         case 'delete-notification': await deleteNotification(id); break;
-                        // NEW: Redeem Coupon Action
-                        case 'redeem-coupon': await redeemCoupon(id); break;
                     }
                 } catch (error) {
                     console.error(`Error performing action '${action}':`, error);
@@ -650,8 +563,6 @@
             document.getElementById('notification-form').addEventListener('submit', handleSendNotification);
             document.getElementById('rmz-filter-btn').addEventListener('click', renderRmzHistoryTable);
             document.getElementById('edit-notification-form').addEventListener('submit', handleUpdateNotification);
-            // NEW: Listener for checking coupon
-            document.getElementById('check-coupon-btn').addEventListener('click', handleCheckCoupon);
         }
         
         async function showEditNotificationModal(id) {
@@ -722,100 +633,6 @@
             }
         }
 
-        // --- NEW: Coupon Redeem Functions ---
-        async function handleCheckCoupon() {
-            const codeInput = document.getElementById('coupon-code-input');
-            const code = codeInput.value.trim().toUpperCase();
-            const resultEl = document.getElementById('coupon-check-result');
-            
-            if (!code) {
-                resultEl.innerHTML = `<p class="status-invalid">Please enter a coupon code.</p>`;
-                resultEl.style.display = 'block';
-                return;
-            }
-
-            const btn = document.getElementById('check-coupon-btn');
-            btn.disabled = true;
-            btn.textContent = 'Checking...';
-
-            try {
-                const q = query(collection(db, 'coupons'), where('code', '==', code));
-                const snapshot = await getDocs(q);
-
-                if (snapshot.empty) {
-                    resultEl.innerHTML = `<p class="status-invalid">Invalid Coupon Code.</p>`;
-                } else {
-                    const couponDoc = snapshot.docs[0];
-                    const coupon = { id: couponDoc.id, ...couponDoc.data() };
-                    const userDoc = await getDoc(doc(db, 'users', coupon.userId));
-                    const userName = userDoc.exists() ? userDoc.data().name : 'Unknown User';
-                    const userMobile = userDoc.exists() ? userDoc.data().mobile : 'N/A';
-                    
-                    let html = `<p><strong>Code:</strong> ${coupon.code}</p>
-                                <p><strong>Amount:</strong> ₹${coupon.amount}</p>
-                                <p><strong>Member:</strong> ${userName} (${userMobile})</p>`;
-
-                    if (coupon.isUsed) {
-                        const redeemedDate = coupon.redeemedAt ? coupon.redeemedAt.toDate().toLocaleString() : 'N/A';
-                        html += `<p><strong>Status:</strong> <span class="status-redeemed">Already Redeemed</span> on ${redeemedDate}</p>`;
-                    } else {
-                        html += `<p><strong>Status:</strong> <span class="status-available">Available for Redemption</span></p>
-                                 <button class="btn-approve" data-action="redeem-coupon" data-id="${coupon.id}" style="width:auto; margin-top:10px;">Redeem Now</button>`;
-                    }
-                    resultEl.innerHTML = html;
-                }
-            } catch (error) {
-                console.error("Error checking coupon:", error);
-                resultEl.innerHTML = `<p class="status-invalid">An error occurred. Please try again.</p>`;
-            } finally {
-                resultEl.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = 'Check Code';
-            }
-        }
-
-        async function redeemCoupon(couponId) {
-            if (!confirm("Are you sure you want to redeem this coupon? This action cannot be undone.")) {
-                return;
-            }
-            
-            try {
-                const couponRef = doc(db, 'coupons', couponId);
-                const couponDoc = await getDoc(couponRef);
-                if (!couponDoc.exists() || couponDoc.data().isUsed) {
-                    throw new Error("Coupon is already used or invalid.");
-                }
-                const couponData = couponDoc.data();
-
-                const batch = writeBatch(db);
-                batch.update(couponRef, {
-                    isUsed: true,
-                    redeemedAt: serverTimestamp()
-                });
-                
-                // Add a transaction for the user's history
-                batch.set(doc(collection(db, 'transactions')), {
-                    involvedUsers: [couponData.userId],
-                    type: 'coupon_redeem',
-                    amount: couponData.amount,
-                    description: `Coupon redeemed: ${couponData.code}`,
-                    status: 'completed',
-                    timestamp: serverTimestamp(),
-                    couponCode: couponData.code
-                });
-
-                await batch.commit();
-                alert(`Coupon ${couponData.code} redeemed successfully!`);
-                // Re-check the code to show updated status
-                document.getElementById('coupon-code-input').value = couponData.code;
-                handleCheckCoupon();
-
-            } catch (error) {
-                console.error("Error redeeming coupon:", error);
-                alert(`Failed to redeem coupon: ${error.message}`);
-            }
-        }
-
         let showMemberDetails = async (uid) => {
             currentMemberUid = uid;
             const userDoc = await getDoc(doc(db, 'users', uid));
@@ -835,42 +652,7 @@
             });
             document.getElementById('member-details-modal').classList.add('active');
         };
-        let approveClaimRequest = async (id) => {
-            const reqRef = doc(db, 'claim_requests', id);
-            const reqDoc = await getDoc(reqRef);
-            if (!reqDoc.exists()) throw new Error("Request not found.");
-            const reqData = reqDoc.data();
-            const couponCode = `RMZ${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-            const batch = writeBatch(db);
-            batch.update(reqRef, { status: 'approved', couponCode });
-            batch.set(doc(collection(db, 'coupons')), { userId: reqData.userId, code: couponCode, amount: reqData.amount, isUsed: false, createdAt: serverTimestamp(), claimId: id });
-            const q = query(collection(db, "transactions"), where("originalRequestId", "==", id));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const transactionRef = querySnapshot.docs[0].ref;
-                batch.update(transactionRef, { status: 'completed', description: `Claim approved. Coupon: ${couponCode}` });
-            }
-            await batch.commit();
-            alert(`Request approved. Coupon ${couponCode} generated.`);
-        };
-        let rejectClaimRequest = async (id) => {
-            const reqRef = doc(db, 'claim_requests', id);
-            const reqDoc = await getDoc(reqRef);
-            if (!reqDoc.exists()) throw new Error("Request not found.");
-            const reqData = reqDoc.data();
-            const userRef = doc(db, 'users', reqData.userId);
-            const batch = writeBatch(db);
-            batch.update(reqRef, { status: 'rejected' });
-            batch.update(userRef, { wallet: increment(reqData.amount) }); // Refund
-            const q = query(collection(db, "transactions"), where("originalRequestId", "==", id));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const transactionRef = querySnapshot.docs[0].ref;
-                batch.update(transactionRef, { status: 'rejected', description: `Claim rejected. ₹${reqData.amount} refunded.` });
-            }
-            await batch.commit();
-            alert(`Request rejected. Amount refunded to user.`);
-        };
+        
         let handleGiveCredit = async (e) => {
             e.preventDefault();
             const amountInput = document.getElementById('give-credit-amount');
@@ -890,6 +672,7 @@
                 showMemberDetails(currentMemberUid);
             } catch (error) { console.error("Error giving credit:", error); alert("Failed to give credit."); } finally { btn.disabled = false; }
         };
+        
         let handleClearDue = async (e) => {
             e.preventDefault();
             const amountInput = document.getElementById('clear-due-amount');
@@ -904,7 +687,13 @@
                     if (!userDoc.exists()) throw "User not found!";
                     const currentDue = userDoc.data().dueAmount || 0;
                     if (amount > currentDue) throw "Clear amount cannot be more than due amount.";
-                    transaction.update(userRef, { dueAmount: increment(-amount) });
+                    
+                    // UPDATE: Also decrement totalCreditGiven along with dueAmount
+                    transaction.update(userRef, { 
+                        dueAmount: increment(-amount),
+                        totalCreditGiven: increment(-amount) 
+                    });
+
                     const transRef = doc(collection(db, 'transactions'));
                     transaction.set(transRef, { involvedUsers: [currentMemberUid], type: 'due_payment', amount: -amount, description: `Due payment of ₹${amount.toFixed(2)} received`, status: 'completed', timestamp: serverTimestamp() });
                 });
