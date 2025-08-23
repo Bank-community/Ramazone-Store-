@@ -229,87 +229,86 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- Network Modal Styles --- */
-        #network-modal .modal-content, #member-detail-modal .modal-content {
+        /* --- NEW: Professional Network Modal Styles --- */
+        #network-modal .modal-content {
             width: 100%; height: 100%; max-width: 100%; max-height: 100%;
             border-radius: 0; padding: 0; display: flex; flex-direction: column;
             background-color: var(--bg-page);
         }
         .network-header {
-            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
-            gap: 15px; padding: 10px 15px;
+            display: flex; align-items: center;
+            gap: 10px; padding: 10px 15px;
             border-bottom: 1px solid var(--border-color); flex-shrink: 0;
             background-color: var(--bg-card);
         }
-        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; }
-        .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
-        .network-header .close-btn { font-size: 28px; line-height: 1; color: #aaa; }
-        .network-header .refresh-btn svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
-        
-        .network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
-        .network-tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
-        .network-tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
-        
-        .network-content-container { flex-grow: 1; overflow: auto; position: relative; padding: 20px 15px; }
-        .network-tab-content { display: none; }
-        .network-tab-content.active { display: block; }
-        
-        /* --- NEW: Professional Network Tree Styles --- */
-        .network-tree { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .network-node { display: flex; flex-direction: column; align-items: center; position: relative; width: 100%; }
-        .node-card {
-            background-color: var(--bg-card); border-radius: 12px; padding: 12px;
-            display: flex; align-items: center; width: 100%; max-width: 350px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid var(--border-color);
-            position: relative; cursor: pointer; transition: transform 0.2s;
+        .network-header .header-action {
+            display: flex; cursor: pointer; align-items: center; justify-content: center;
+            background: none; border: none; padding: 5px;
         }
-        .node-card:hover { transform: scale(1.02); }
+        .network-header .close-btn { font-size: 28px; line-height: 1; color: #aaa; }
+        .network-header .back-btn svg { width: 22px; height: 22px; stroke: var(--text-primary); }
+        #network-breadcrumb { flex-grow: 1; text-align: center; font-weight: 600; font-size: 16px; }
+        
+        .network-content-container { flex-grow: 1; overflow: auto; position: relative; }
+        .network-tree-wrapper { padding: 30px 15px; text-align: center; }
+        .network-tree { display: inline-flex; flex-direction: column; align-items: center; gap: 50px; position: relative; }
+        
+        .network-node { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .node-content { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
         .node-avatar {
-            width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
+            width: 60px; height: 60px; border-radius: 50%;
             background-color: var(--brand-red); color: white;
             display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 600; overflow: hidden; margin-right: 12px;
+            font-size: 24px; font-weight: 600;
+            border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 8px; overflow: hidden;
         }
         .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .node-info { flex-grow: 1; }
-        .node-name { font-weight: 600; font-size: 15px; }
-        .node-earning { font-size: 13px; color: var(--accent-green); font-weight: 500; }
-        .node-meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
-        .node-team-size { font-size: 12px; color: var(--text-secondary); background: var(--bg-page); padding: 2px 8px; border-radius: 10px; }
-        .commission-tag {
-            position: absolute; top: -8px; right: 10px;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: white; padding: 3px 8px; font-size: 11px;
-            border-radius: 6px; font-weight: 700;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .node-children { display: flex; flex-direction: column; gap: 20px; width: 90%; margin-left: 10%; margin-top: 20px; position: relative; }
+        .node-name { font-weight: 600; font-size: 15px; color: var(--text-primary); }
+        .node-earning { font-size: 12px; color: var(--text-secondary); }
+        .node-children { display: flex; justify-content: center; gap: 30px; position: relative; margin-top: 50px; }
+        
+        /* --- Connecting Lines --- */
         .node-children::before {
-            content: ''; position: absolute; top: -20px; left: -20px;
-            width: 2px; height: calc(100% + 20px); background-color: #dbe2ea;
+            content: ''; position: absolute; top: -50px; left: 50%;
+            transform: translateX(-50%);
+            width: 2px; height: 50px; background-color: #dbe2ea;
         }
-        .network-node .node-children .network-node::before {
-            content: ''; position: absolute; top: 30px; left: -20px;
-            width: 20px; height: 2px; background-color: #dbe2ea;
+        .network-node:not(:only-child) .node-children::after {
+            content: ''; position: absolute; top: -50px;
+            left: calc(50% - (var(--child-width, 0px) / 2) - 15px);
+            width: calc(var(--child-width, 0px) + 30px);
+            height: 2px; background-color: #dbe2ea;
         }
-        .network-tree > .network-node { padding-left: 0; }
-        .network-tree > .network-node > .node-children { margin-left: 0; }
-
-        #upline-list { display: flex; flex-direction: column; align-items: center; gap: 25px; }
+        .network-node:not(:first-child) .node-children .network-node::before {
+             content: ''; position: absolute; top: -50px; left: 50%;
+             transform: translateX(-50%);
+             width: 2px; height: 50px; background-color: #dbe2ea;
+        }
+        .commission-on-line {
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%) translateY(-50%);
+            background-color: var(--bg-page); padding: 2px 6px;
+            color: var(--brand-red); font-weight: 600; font-size: 12px;
+            border-radius: 4px;
+        }
+        
+        #upline-list { display: flex; flex-direction: column; align-items: center; gap: 25px; padding: 20px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .upline-member .node-card { width: 100%; max-width: 320px; flex-direction: column; text-align: center; padding: 20px 15px; }
-        .upline-member .node-avatar { margin-right: 0; margin-bottom: 10px; width: 65px; height: 65px; font-size: 28px; }
+        .upline-member .node-content { text-align: center; cursor: default; }
+        .upline-member .node-avatar { width: 70px; height: 70px; font-size: 28px; }
         .upline-member.current-user .node-avatar { background-color: var(--brand-blue); }
         .upline-member .node-name { font-size: 16px; }
-        .upline-member .node-earning { font-size: 13px; color: var(--text-secondary); }
         .upline-member:not(:last-child)::after {
             content: '↓'; font-size: 24px; color: #ccc;
             position: absolute; bottom: -25px; font-weight: bold;
         }
+        .commission-tag-upline {
+             position: absolute; bottom: -28px; left: calc(50% + 40px);
+             font-size: 14px; color: var(--brand-red); font-weight: 600;
+        }
 
-        #network-loader, #upline-loader, #member-detail-loader { text-align: center; padding: 40px; color: var(--text-secondary); }
+        #network-loader, #upline-loader { text-align: center; padding: 40px; color: var(--text-secondary); }
         .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
-        #member-detail-modal .network-header h1 { font-size: 16px; }
 
         #popup-notification {
             position: fixed; top: -200px; left: 50%;
@@ -466,42 +465,18 @@
         </div> 
     </div>
     
-    <!-- Network Modal (Main) -->
+    <!-- Network Modal (Full Screen) -->
     <div id="network-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="network-header">
-                <div id="network-refresh-btn" class="header-action refresh-btn" title="Refresh Network">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                </div>
-                <h1>My Network</h1>
-                <button id="network-close-btn" class="header-action close-btn" data-close-modal>&times;</button>
-            </div>
-            <div class="network-tabs">
-                <button class="network-tab-btn active" data-tab="downline">My Team</button>
-                <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
-            </div>
-            <div id="downline-content" class="network-tab-content active network-content-container">
-                <div id="network-tree-container"></div>
-                <div id="network-loader">Loading your network...</div>
-            </div>
-            <div id="upline-content" class="network-tab-content network-content-container">
-                <div id="upline-list"></div>
-                <div id="upline-loader">Loading your upline...</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Member Detail Modal (Popup) -->
-    <div id="member-detail-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="network-header">
-                <div class="header-action"></div> <!-- Spacer -->
-                <h1 id="member-detail-title">Member's Team</h1>
+                <button id="network-back-btn" class="header-action back-btn" title="Go Back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div id="network-breadcrumb">My Team</div>
                 <button class="header-action close-btn" data-close-modal>&times;</button>
             </div>
-            <div class="network-content-container">
-                <div id="member-detail-tree-container"></div>
-                <div id="member-detail-loader">Loading member's team...</div>
+            <div id="network-content-container" class="network-content-container">
+                <div id="network-loader">Loading network...</div>
             </div>
         </div>
     </div>
@@ -613,11 +588,10 @@
         let userCoupons = [];
         let activeFilter = 'all';
         let pendingAction = null;
-        let isDownlineLoaded = false;
-        let isUplineLoaded = false;
         let lastShownNotificationId = null;
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
+        let networkHistory = []; // To manage navigation in the network tree
 
         const showToast = (message) => {
             const toast = document.getElementById('toast-notification');
@@ -674,7 +648,7 @@
                 attachRealtimeListeners(user);
             } else if (!user) {
                 detachAllListeners();
-                handleReferralLink(); // Check for referral link even when logged out
+                handleReferralLink();
             }
         });
 
@@ -1072,8 +1046,10 @@
         function handleShare() {
             if (!currentUserData) return;
             const { referralId, name, lifetimeEarning } = currentUserData;
-            // Construct the full URL with the referral parameter
-            const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
+            const url = new URL(window.location.href);
+            url.searchParams.set('ref', referralId);
+            const referralLink = url.toString();
+            
             const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
             if (navigator.share) {
                 navigator.share({ text: shareText, url: referralLink }).catch(err => console.log("Share failed", err));
@@ -1090,201 +1066,118 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // --- NETWORK LOGIC (UPDATED) ---
+        // --- NEW PROFESSIONAL NETWORK LOGIC ---
 
-        async function loadUpline() {
-            const uplineListContainer = document.getElementById('upline-list');
-            const loader = document.getElementById('upline-loader');
-            loader.style.display = 'block';
-            uplineListContainer.innerHTML = '';
-            isUplineLoaded = false;
-            try {
-                // Add current user first
-                const currentUserNode = createUplineNode({
-                    name: currentUserData.name,
-                    lifetimeEarning: currentUserData.lifetimeEarning,
-                    profilePictureUrl: currentUserData.profilePictureUrl,
-                    isCurrentUser: true
-                });
-                uplineListContainer.appendChild(currentUserNode);
-
-                const uplineUIDs = currentUserData.upline || [];
-                if (uplineUIDs.length === 0) {
-                    uplineListContainer.insertAdjacentHTML('afterbegin', '<div class="empty-state" style="order: 1;">Aapke paas koi upline nahi hai.</div>');
-                    return;
-                }
-                
-                const uplinePromises = uplineUIDs.map(async (uplineId, i) => {
-                    const uplineDoc = await getDoc(doc(db, 'users', uplineId));
-                    if (uplineDoc.exists()) {
-                        const uplineData = uplineDoc.data();
-                        return createUplineNode({
-                            name: uplineData.name,
-                            profilePictureUrl: uplineData.profilePictureUrl,
-                            level: i + 1,
-                            isCurrentUser: false
-                        });
-                    }
-                    return null;
-                });
-                const uplineNodes = (await Promise.all(uplinePromises)).filter(Boolean).reverse();
-                uplineNodes.forEach(node => uplineListContainer.prepend(node));
-                isUplineLoaded = true;
-            } catch (error) {
-                console.error("Error loading upline:", error);
-                uplineListContainer.innerHTML = '<div class="empty-state">Upline load karne mein error hua.</div>';
-            } finally {
-                loader.style.display = 'none';
-            }
-        }
-
-        function createUplineNode({ name, lifetimeEarning, profilePictureUrl, level, isCurrentUser }) {
-            const node = document.createElement('div');
-            node.className = 'upline-member';
-            if (isCurrentUser) node.classList.add('current-user');
-
-            const avatarHTML = profilePictureUrl ? `<img src="${profilePictureUrl}" alt="${name}">` : name.charAt(0).toUpperCase();
-            let earningHTML = isCurrentUser ? `<div class="node-earning">Aap (Your Earning: ₹${(lifetimeEarning || 0).toFixed(2)})</div>` : '';
-
-            node.innerHTML = `
-                <div class="node-card">
-                    <div class="node-avatar">${avatarHTML}</div>
-                    <div class="node-info">
-                        <div class="node-name">${name}</div>
-                        ${earningHTML}
-                    </div>
-                    ${!isCurrentUser ? `<div class="commission-tag">${commissionRates[level-1]}%</div>` : ''}
-                </div>
-            `;
-            return node;
-        }
-
-        async function loadInitialDownline() {
-            const treeContainer = document.getElementById('network-tree-container');
+        async function renderNetworkTree(userId, userName) {
+            const container = document.getElementById('network-content-container');
             const loader = document.getElementById('network-loader');
+            const breadcrumb = document.getElementById('network-breadcrumb');
+            const backBtn = document.getElementById('network-back-btn');
+
             loader.style.display = 'block';
-            treeContainer.innerHTML = '';
-            isDownlineLoaded = false;
+            container.innerHTML = ''; // Clear previous tree
+            container.appendChild(loader);
+            breadcrumb.textContent = userName;
+            backBtn.style.visibility = networkHistory.length > 0 ? 'visible' : 'hidden';
+
             try {
-                const treeRoot = document.createElement('div');
-                treeRoot.className = 'network-tree';
+                const rootUserDoc = await getDoc(doc(db, 'users', userId));
+                if (!rootUserDoc.exists()) throw new Error("User not found");
+                const rootUserData = { uid: rootUserDoc.id, ...rootUserDoc.data() };
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'network-tree-wrapper';
                 
-                // Fetch only direct referrals for the initial view
-                const referrals = await getDirectReferrals(currentUser.uid);
-                if (referrals.length === 0) {
-                    treeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
-                    return;
+                const tree = document.createElement('div');
+                tree.className = 'network-tree';
+
+                // Create the root node for the current view
+                const rootNode = createNodeElement(rootUserData, 0, true); // isRoot = true
+                tree.appendChild(rootNode);
+
+                // Get direct referrals
+                const referrals = await getDirectReferrals(userId);
+                if (referrals.length > 0) {
+                    const childrenContainer = document.createElement('div');
+                    childrenContainer.className = 'node-children';
+                    
+                    const referralPromises = referrals.map(member => createNodeElement(member, 1));
+                    const childNodes = await Promise.all(referralPromises);
+                    
+                    childNodes.forEach(childNode => childrenContainer.appendChild(childNode));
+                    rootNode.appendChild(childrenContainer);
+
+                    // For horizontal line styling
+                    setTimeout(() => {
+                        const width = childrenContainer.offsetWidth;
+                        childrenContainer.style.setProperty('--child-width', `${width}px`);
+                    }, 0);
                 }
                 
-                const referralPromises = referrals.map(member => createDownlineNode(member, 1));
-                const childNodes = await Promise.all(referralPromises);
+                wrapper.appendChild(tree);
+                container.innerHTML = '';
+                container.appendChild(wrapper);
 
-                childNodes.forEach(childNode => {
-                    if (childNode) treeRoot.appendChild(childNode);
-                });
-                
-                treeContainer.appendChild(treeRoot);
-                isDownlineLoaded = true;
             } catch (error) {
-                console.error("Error loading downline:", error);
-                treeContainer.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
-            } finally {
-                loader.style.display = 'none';
-            }
-        }
-        
-        async function openMemberDetailModal(userId, userName) {
-            const modal = document.getElementById('member-detail-modal');
-            const treeContainer = document.getElementById('member-detail-tree-container');
-            const loader = document.getElementById('member-detail-loader');
-            
-            document.getElementById('member-detail-title').textContent = `${userName}'s Team`;
-            loader.style.display = 'block';
-            treeContainer.innerHTML = '';
-            openModal('member-detail-modal');
-
-            try {
-                const treeRoot = document.createElement('div');
-                treeRoot.className = 'network-tree';
-                // Build a sub-tree starting from the clicked user, up to 2 levels deep
-                const rootNode = await buildSubTree(userId, 0, 2); 
-                
-                if (rootNode) {
-                    treeRoot.appendChild(rootNode);
-                    treeContainer.appendChild(treeRoot);
-                } else {
-                    treeContainer.innerHTML = '<div class="empty-state">This member has no team.</div>';
-                }
-            } catch(error) {
-                console.error("Error loading member detail:", error);
-                treeContainer.innerHTML = '<div class="empty-state">Could not load team.</div>';
+                console.error("Error rendering network tree:", error);
+                container.innerHTML = '<div class="empty-state">Could not load network.</div>';
             } finally {
                 loader.style.display = 'none';
             }
         }
 
-        async function buildSubTree(userId, level, maxLevel) {
-            if (level >= maxLevel) return null;
-
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (!userDoc.exists()) return null;
-
-            const userData = { uid: userDoc.id, ...userDoc.data() };
-            const node = await createDownlineNode(userData, level + 1, true); // `true` indicates it's for the popup
-
-            const referrals = await getDirectReferrals(userId);
-            if (referrals.length > 0) {
-                const childrenContainer = document.createElement('div');
-                childrenContainer.className = 'node-children';
-                
-                const referralPromises = referrals.map(member => buildSubTree(member.uid, level + 1, maxLevel));
-                const childNodes = await Promise.all(referralPromises);
-                
-                childNodes.forEach(childNode => {
-                    if (childNode) childrenContainer.appendChild(childNode);
-                });
-
-                if (childrenContainer.hasChildNodes()) {
-                    node.appendChild(childrenContainer);
-                }
-            }
-            return node;
-        }
-
-        async function createDownlineNode(userData, level, isPopupNode = false) {
-            const nodeWrapper = document.createElement('div');
-            nodeWrapper.className = 'network-node';
-
-            const nodeCard = document.createElement('div');
-            nodeCard.className = 'node-card';
+        async function createNodeElement(userData, level, isRoot = false) {
+            const node = document.createElement('div');
+            node.className = 'network-node';
 
             const avatarHTML = userData.profilePictureUrl ? `<img src="${userData.profilePictureUrl}" alt="${userData.name}">` : userData.name.charAt(0).toUpperCase();
             
-            // Get team size
-            const referrals = await getDirectReferrals(userData.uid);
-            const teamSize = referrals.length;
-
-            nodeCard.innerHTML = `
+            const content = document.createElement('div');
+            content.className = 'node-content';
+            content.innerHTML = `
                 <div class="node-avatar">${avatarHTML}</div>
-                <div class="node-info">
-                    <div class="node-name">${userData.name}</div>
-                    <div class="node-earning">Earning: ₹${(userData.lifetimeEarning || 0).toFixed(2)}</div>
-                    <div class="node-meta">
-                        ${teamSize > 0 ? `<div class="node-team-size">Team: ${teamSize}</div>` : ''}
-                    </div>
-                </div>
-                ${level > 0 ? `<div class="commission-tag">${commissionRates[level-1]}%</div>` : ''}
+                <div class="node-name">${userData.name}</div>
+                <div class="node-earning">Earning: ₹${(userData.lifetimeEarning || 0).toFixed(2)}</div>
             `;
             
-            // Only add click listener for main downline, not for the popup tree
-            if (!isPopupNode && teamSize > 0) {
-                nodeCard.addEventListener('click', () => openMemberDetailModal(userData.uid, userData.name));
+            // Add click listener to navigate deeper, but not for the root node of the current view
+            if (!isRoot) {
+                const referrals = await getDirectReferrals(userData.uid);
+                if (referrals.length > 0) {
+                    content.addEventListener('click', () => {
+                        networkHistory.push({ id: userData.uid, name: userData.name });
+                        renderNetworkTree(userData.uid, userData.name);
+                    });
+                } else {
+                    content.style.cursor = 'default';
+                }
             } else {
-                nodeCard.style.cursor = 'default';
+                 content.style.cursor = 'default';
             }
-            
-            nodeWrapper.appendChild(nodeCard);
-            return nodeWrapper;
+
+            node.appendChild(content);
+
+            // Add commission percentage on the connecting line
+            if (level > 0) {
+                const commissionEl = document.createElement('div');
+                commissionEl.className = 'commission-on-line';
+                commissionEl.textContent = `${commissionRates[level-1]}%`;
+                node.appendChild(commissionEl);
+            }
+
+            return node;
+        }
+
+        function handleNetworkBack() {
+            if (networkHistory.length > 1) {
+                networkHistory.pop(); // Remove current
+                const previous = networkHistory[networkHistory.length - 1];
+                renderNetworkTree(previous.id, previous.name);
+            } else {
+                // Go back to the initial user's view
+                networkHistory = [];
+                renderNetworkTree(currentUser.uid, 'My Team');
+            }
         }
 
         async function getDirectReferrals(userId) {
@@ -1303,22 +1196,22 @@
             const params = new URLSearchParams(window.location.search);
             const refCode = params.get('ref');
             if (refCode) {
-                // If a referral code is in the URL, switch to the registration view
                 toggleView('registration-view');
-                // And fill the input field
                 const referralInput = document.getElementById('reg-referral');
                 if (referralInput) {
                     referralInput.value = refCode.toUpperCase();
                 }
+                // Clean the URL
+                const url = new URL(window.location);
+                url.searchParams.delete('ref');
+                window.history.replaceState({}, document.title, url);
             } else {
-                // If no ref code, default to login view
                 toggleView('login-view');
             }
         }
 
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Check for referral link as soon as the page loads
             if (!auth.currentUser) {
                 handleReferralLink();
             }
@@ -1430,26 +1323,12 @@
             });
 
             document.getElementById('open-network-modal').addEventListener('click', () => {
+                networkHistory = [{id: currentUser.uid, name: 'My Team'}];
+                renderNetworkTree(currentUser.uid, 'My Team');
                 openModal('network-modal');
-                if (document.querySelector('.network-tab-btn[data-tab="downline"]').classList.contains('active') && !isDownlineLoaded) {
-                    loadInitialDownline();
-                }
             });
-            document.getElementById('network-refresh-btn').addEventListener('click', () => {
-                const activeTab = document.querySelector('.network-tab-btn.active').dataset.tab;
-                if (activeTab === 'downline') { isDownlineLoaded = false; loadInitialDownline(); } 
-                else { isUplineLoaded = false; loadUpline(); }
-            });
-            document.querySelector('#network-modal .network-tabs').addEventListener('click', e => {
-                const target = e.target.closest('.network-tab-btn');
-                if (!target) return;
-                document.querySelector('#network-modal .network-tab-btn.active').classList.remove('active');
-                target.classList.add('active');
-                document.querySelectorAll('#network-modal .network-tab-content').forEach(content => content.classList.remove('active'));
-                document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
-                if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
-                if (target.dataset.tab === 'downline' && !isDownlineLoaded) { loadInitialDownline(); }
-            });
+            
+            document.getElementById('network-back-btn').addEventListener('click', handleNetworkBack);
         });
     </script>
 </body>
