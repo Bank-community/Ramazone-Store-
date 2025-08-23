@@ -364,12 +364,16 @@
 
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
-                <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">Scan & Pay</span></div>
+                <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
                 <div id="open-network-modal" class="action-card">
                     <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
                     <span class="card-text">Network</span>
                 </div>
                 <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
+                <div id="open-credit-request-modal" class="action-card">
+                    <img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg">
+                    <span class="card-text">Credit Request</span>
+                </div>
             </div>
 
             <div class="section">
@@ -394,6 +398,25 @@
     <!-- All Modals -->
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
+    
+    <div id="credit-request-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Credit Request</h3>
+            <form id="credit-request-form">
+                <div class="form-group">
+                    <label for="credit-amount">Amount (₹)</label>
+                    <input type="number" id="credit-amount" min="1" max="100" required>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Pehli baar maximum ₹100 ka anurodh kar sakte hain.</p>
+                </div>
+                <p id="credit-error-msg" class="error-message"></p>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+                    <button type="submit" id="credit-submit-btn">Request Credit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="scan-pay-modal" class="modal-overlay"> <div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div> </div>
     
     <div id="profile-modal" class="modal-overlay"> 
@@ -527,7 +550,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
@@ -547,6 +570,7 @@
         let scannerAnimation = null;
         let allTransactions = [];
         let cashbackRequests = [];
+        let creditRequests = []; // NEW: For storing credit requests
         let activeFilter = 'all';
         let pendingAction = null;
         let isDownlineLoaded = false;
@@ -614,6 +638,7 @@
             }
         });
 
+        // --- UPDATED: attachRealtimeListeners to include credit_requests ---
         function attachRealtimeListeners(user) {
             detachAllListeners();
             const uid = user.uid;
@@ -627,8 +652,13 @@
                 allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 combineAndRenderHistory();
             });
-            const requestsUnsubscribe = onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+            const cashbackRequestsUnsubscribe = onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
                 cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                combineAndRenderHistory();
+            });
+            // NEW: Listener for credit requests
+            const creditRequestsUnsubscribe = onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+                creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 combineAndRenderHistory();
             });
             const notificationUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
@@ -637,7 +667,7 @@
                     updateNotificationUI(latestNotif);
                 }
             });
-            activeListeners.push(userUnsubscribe, transUnsubscribe, requestsUnsubscribe, notificationUnsubscribe);
+            activeListeners.push(userUnsubscribe, transUnsubscribe, cashbackRequestsUnsubscribe, creditRequestsUnsubscribe, notificationUnsubscribe);
         }
 
         function detachAllListeners() {
@@ -689,16 +719,24 @@
             document.getElementById('popup-notification').classList.remove('show');
         });
 
+        // --- UPDATED: combineAndRenderHistory to include credit requests ---
         function combineAndRenderHistory() {
             const formattedTransactions = allTransactions.map(t => ({ ...t, date: t.timestamp?.toDate(), isTransaction: true }));
-            const formattedRequests = cashbackRequests
-                .filter(r => r.status === 'pending' || r.status === 'rejected')
-                .map(r => ({ ...r, description: `Request for ${r.productName}`, date: r.requestDate?.toDate(), type: 'cashback', isTransaction: false }));
             
-            const combined = [...formattedTransactions, ...formattedRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
+            const formattedCashbackRequests = cashbackRequests
+                .filter(r => r.status === 'pending' || r.status === 'rejected')
+                .map(r => ({ ...r, description: `Cashback Request: ${r.productName}`, date: r.requestDate?.toDate(), type: 'cashback', isTransaction: false }));
+            
+            // NEW: Format credit requests
+            const formattedCreditRequests = creditRequests
+                .filter(r => r.status === 'pending' || r.status === 'rejected')
+                .map(r => ({ ...r, description: `Credit Request`, date: r.requestDate?.toDate(), type: 'credit_request', isTransaction: false, amount: r.amount }));
+
+            const combined = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
             renderUnifiedHistory(combined);
         }
 
+        // --- UPDATED: renderUnifiedHistory with new filter logic ---
         function renderUnifiedHistory(items) {
             const listEl = document.getElementById('unified-history-list');
             const summaryEl = document.getElementById('transaction-summary');
@@ -706,14 +744,21 @@
             const summaryLabelEl = summaryEl.querySelector('.summary-label');
             listEl.innerHTML = '';
 
-            const filtered = items.filter(item => {
-                if (activeFilter === 'all') return false;
-                if (activeFilter === 'cashback' && item.type === 'cashback' && !item.isTransaction) return true;
+            const itemsToRender = items.filter(item => {
+                if (activeFilter === 'all') return true;
+                if (activeFilter === 'cashback') {
+                    return item.type === 'cashback';
+                }
+                if (activeFilter === 'credit') {
+                    // Show approved credits AND due payments
+                    return item.type === 'credit' || item.type === 'due_payment';
+                }
+                // For other filters like 'commission', 'payment', 'due_payment'
                 return item.type === activeFilter;
             });
 
-            if (filtered.length > 0 && activeFilter !== 'all') {
-                const total = filtered.reduce((sum, item) => {
+            if (itemsToRender.length > 0 && activeFilter !== 'all') {
+                const total = itemsToRender.reduce((sum, item) => {
                     const amount = item.amount || item.cashbackAmount || 0;
                     return sum + Math.abs(amount);
                 }, 0);
@@ -726,14 +771,6 @@
                 summaryEl.style.display = 'none';
             }
 
-            const itemsToRender = activeFilter === 'all' 
-                ? items 
-                : items.filter(item => {
-                    if (item.type === activeFilter) return true;
-                    if (activeFilter === 'cashback' && !item.isTransaction) return true;
-                    return false;
-                  });
-
             if (itemsToRender.length === 0) {
                 listEl.innerHTML = `<div class="empty-state" style="border:none; padding: 20px 0; text-align:center; color: var(--text-secondary);"><h4>No Transactions</h4></div>`;
                 return;
@@ -745,19 +782,21 @@
                 itemDiv.addEventListener('click', () => showTransactionDetails(item));
 
                 const amount = item.amount || item.cashbackAmount || 0;
-                let sign = amount >= 0 ? '+' : '-';
-                let typeClass = amount >= 0 ? 'credit' : 'debit';
+                let sign = '+';
+                let typeClass = 'credit';
                 
-                if(item.type === 'due_payment' || item.type === 'payment') { typeClass = 'debit'; sign = '-'; }
-                if(item.type === 'commission' || item.type === 'cashback' || item.type === 'credit'){ typeClass = 'credit'; sign = '+'; }
-                if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
-
-                let description = item.description;
+                if(item.type === 'due_payment' || item.type === 'payment' || item.amount < 0) { 
+                    typeClass = 'debit'; 
+                    sign = '-'; 
+                }
+                if (item.status === 'rejected' || item.status === 'refunded') { 
+                    typeClass = 'rejected'; 
+                }
 
                 itemDiv.innerHTML = `
                     <div class="history-details">
                         <div class="history-info">
-                            <div class="title">${description}</div>
+                            <div class="title">${item.description}</div>
                             <div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div>
                         </div>
                     </div>
@@ -872,14 +911,55 @@
                 });
                 showToast(`Your cashback request for ₹${cashbackAmount.toFixed(2)} has been submitted.`);
                 document.getElementById('cashback-request-form').reset();
-            } catch (error) { showErrorMessage(errorMsg, `Error: ${error.message}`);
+                closeModal('cashback-modal');
+            } catch (error) { 
+                showErrorMessage(errorMsg, `Error: ${error.message}`);
             } finally {
                 btn.disabled = false; btn.textContent = "Request";
-                closeModal('cashback-modal');
             }
         }
 
-        // --- NEW: Password Change Function ---
+        async function handleCreditRequest(e) {
+            e.preventDefault();
+            const btn = document.getElementById('credit-submit-btn');
+            const errorMsg = document.getElementById('credit-error-msg');
+            const amountInput = document.getElementById('credit-amount');
+            hideErrorMessage(errorMsg);
+            
+            const amount = parseFloat(amountInput.value);
+            if (isNaN(amount) || amount <= 0 || amount > 100) {
+                showErrorMessage(errorMsg, "Amount 1 se 100 ke beech hona chahiye.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Submitting...";
+
+            verifyPasswordAndExecute(async () => {
+                try {
+                    await addDoc(collection(db, "credit_requests"), {
+                        userId: currentUserData.id,
+                        userName: currentUserData.name,
+                        userMobile: currentUserData.mobile,
+                        amount: amount,
+                        status: "pending",
+                        requestDate: serverTimestamp()
+                    });
+                    showToast(`₹${amount.toFixed(2)} ka credit request bhej diya gaya hai.`);
+                    document.getElementById('credit-request-form').reset();
+                } catch (error) {
+                    showToast("Request fail ho gaya. Dobara try karein.");
+                    console.error("Credit request error:", error);
+                } finally {
+                    closeModal('credit-request-modal');
+                }
+            }, 'credit-request-modal');
+            
+            btn.disabled = false;
+            btn.textContent = "Request Credit";
+        }
+
+
         async function handlePasswordChange(e) {
             e.preventDefault();
             const form = document.getElementById('password-change-form');
@@ -902,20 +982,13 @@
             const credential = EmailAuthProvider.credential(user.email, currentPassword);
 
             try {
-                // Step 1: Re-authenticate user with their old password
                 await reauthenticateWithCredential(user, credential);
-                
-                // Step 2: If successful, update the password in Firebase Auth
                 await updatePassword(user, newPassword);
-                
-                // Step 3: Also update the password in the Firestore database
                 const userRef = doc(db, "users", user.uid);
                 await updateDoc(userRef, { password: newPassword });
-
                 showToast("Password safaltapoorvak badal gaya!");
                 form.reset();
                 closeModal('profile-modal');
-
             } catch (error) {
                 console.error("Password change failed:", error);
                 if (error.code === 'auth/wrong-password') {
@@ -995,7 +1068,7 @@
             const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
             const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
             if (navigator.share) navigator.share({ text: shareText });
-            else navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!"));
+            else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
         }
         function handleWhatsAppSupport() {
             if (!currentUserData) return showToast("Please wait for your data to load.");
@@ -1245,6 +1318,10 @@
             document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
+            
+            document.getElementById('open-credit-request-modal').addEventListener('click', () => openModal('credit-request-modal'));
+            document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
+
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
             document.getElementById('rescan-btn').addEventListener('click', startScanner);
             document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
@@ -1256,7 +1333,6 @@
             document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
             document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
             
-            // --- NEW: Event listener for password change form ---
             document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
 
             document.getElementById('filter-bar').addEventListener('click', e => {
