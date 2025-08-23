@@ -44,13 +44,15 @@
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
         
         /* --- Dashboard UI --- */
-        /* UPDATED: Header Layout */
+        /* UPDATED: Header Layout for better spacing */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px; background-color: var(--bg-card); border-radius: 16px;
+            padding: 8px; background-color: var(--bg-card); border-radius: 16px;
             margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-        .header-logo { height: 35px; }
+        .header-logo { height: 35px; flex-shrink: 0; }
+        #static-notification-card { flex-grow: 1; margin-right: 10px; }
+
 
         /* --- UPDATED: Top Notification Bar Styles & Animations --- */
         #static-notification-card {
@@ -58,12 +60,11 @@
             padding: 5px 10px; border-radius: 10px;
             background-color: var(--brand-red); color: white;
             transition: all 0.3s ease; display: none;
-            /* NEW: CSS variables for border */
             border: var(--notification-border-width, 0px) solid var(--notification-border-color, transparent);
         }
         #static-notification-card.visible { display: flex; }
         
-        .notification-content-wrapper { opacity: 0; }
+        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
         .notification-content-wrapper.animate { animation: full-sequence 5s infinite; }
         .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
         .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
@@ -71,10 +72,10 @@
 
         /* NEW: Full Animation Sequence */
         @keyframes full-sequence {
-            0% { opacity: 1; } /* Start visible */
-            5% { opacity: 1; } /* Stay visible for typing */
-            80% { opacity: 1; } /* Hold */
-            95%, 100% { opacity: 0; } /* Fade out and stay hidden */
+            0%, 100% { opacity: 0; }
+            5% { opacity: 1; }
+            80% { opacity: 1; }
+            95% { opacity: 0; }
         }
         
         .animate .notification-text-line1 { animation: typing 1s steps(20, end) 0.5s forwards; }
@@ -129,17 +130,20 @@
         .action-card .icon { margin-bottom: 8px; width: 30px; height: 30px; }
         .action-card .card-text { font-size: 12px; font-weight: 500; color: var(--text-primary); }
 
-        /* --- NEW: Live Notification Card Styles --- */
+        /* --- UPDATED: Live Notification Card Styles for Vertical Layout --- */
         #open-notification-center-btn { 
-            padding: 0; justify-content: center; align-items: center;
-            /* NEW: CSS variables for border */
+            padding: 10px;
             border: var(--thumbnail-border-width, 1px) solid var(--thumbnail-border-color, var(--border-color));
         }
         #open-notification-center-btn .notification-content-wrapper {
-             display: flex; align-items: center; gap: 8px;
+             flex-direction: column; justify-content: center; align-items: center; gap: 4px;
         }
-        #open-notification-center-btn .notification-text-container { font-size: 11px; font-weight: 500; }
-        #open-notification-center-btn .notification-percentage { font-size: 24px; font-weight: 800; }
+        #open-notification-center-btn .notification-text-container { 
+            font-size: 12px; font-weight: 600; text-align: center;
+        }
+        #open-notification-center-btn .notification-percentage { 
+            font-size: 22px; font-weight: 800; margin-top: 4px;
+        }
 
         .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
@@ -757,7 +761,6 @@
                     updateNotificationUI(latestNotif);
                 }
             });
-            // UPDATED: Listener for top 5 notifications
             const allNotificationsUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(5)), (snapshot) => {
                 renderNotificationCenter(snapshot);
             });
@@ -783,41 +786,37 @@
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
         }
 
-        // --- UPDATED: updateNotificationUI with new animations and logic ---
+        // --- UPDATED: updateNotificationUI with new layouts and logic ---
         function updateNotificationUI(notifData) {
             const topNotifCard = document.getElementById('static-notification-card');
             const thumbNotifCard = document.getElementById('open-notification-center-btn');
 
-            // --- Data for Top Notification Bar ---
-            const topTitle = notifData.title || '';
-            const [topText1, topText2 = ''] = topTitle.split('|').map(t => t.trim()); // Split by '|' for two lines
+            // --- Data for Top Notification Bar (Horizontal) ---
+            const topTitle = notifData.title || 'Default|Text';
+            const [topText1, topText2 = ''] = topTitle.split('|').map(t => t.trim());
             
-            // --- Data for Dashboard Thumbnail ---
-            const thumbTitle = notifData.thumbnailTitle || notifData.title || '';
+            // --- Data for Dashboard Thumbnail (Vertical) ---
+            const thumbTitle = notifData.thumbnailTitle || notifData.title || 'Default|Text';
             const [thumbText1, thumbText2 = ''] = thumbTitle.split('|').map(t => t.trim());
-            const thumbAnimation = notifData.thumbnailAnimation === false ? false : true; // Animation is on by default
+            const thumbAnimation = notifData.thumbnailAnimation !== false; // Animation is on by default
 
             // --- Function to update a notification element ---
-            const updateElement = (card, wrapperSelector, text1, text2, percentage, animate) => {
-                const wrapper = card.querySelector(wrapperSelector);
+            const updateElement = (card, text1, text2, percentage, animate) => {
+                const wrapper = card.querySelector('.notification-content-wrapper');
                 const line1 = wrapper.querySelector('.notification-text-line1');
                 const line2 = wrapper.querySelector('.notification-text-line2');
                 const percentEl = wrapper.querySelector('.notification-percentage');
 
-                // Set content
                 line1.textContent = text1;
                 line2.textContent = text2;
                 percentEl.textContent = `${percentage}%`;
-
-                // Reset animation
+                
                 wrapper.classList.remove('animate');
-                void wrapper.offsetWidth; // Trigger reflow
+                void wrapper.offsetWidth;
 
-                // Apply animation if enabled
                 if (animate) {
                     wrapper.classList.add('animate');
                 } else {
-                    // If no animation, just show the content
                     wrapper.style.opacity = 1;
                     line1.style.width = 'auto';
                     line2.style.width = 'auto';
@@ -829,16 +828,16 @@
             topNotifCard.style.backgroundColor = notifData.bgColor || 'var(--brand-red)';
             topNotifCard.style.color = notifData.textColor || 'white';
             topNotifCard.style.setProperty('--notification-border-color', notifData.borderColor || 'transparent');
-            topNotifCard.style.setProperty('--notification-border-width', notifData.borderWidth || '0px');
-            updateElement(topNotifCard, '.notification-content-wrapper', topText1, topText2, notifData.percentage, true); // Top bar always animates
+            topNotifCard.style.setProperty('--notification-border-width', notifData.borderWidth ? `${notifData.borderWidth}px` : '0px');
+            updateElement(topNotifCard, topText1, topText2, notifData.percentage, true);
             topNotifCard.classList.add('visible');
 
             // --- Update Dashboard Thumbnail ---
-            thumbNotifCard.style.backgroundColor = notifData.bgColor || 'var(--bg-card)';
-            thumbNotifCard.style.color = notifData.textColor || 'var(--text-primary)';
-            thumbNotifCard.style.setProperty('--thumbnail-border-color', notifData.borderColor || 'var(--border-color)');
-            thumbNotifCard.style.setProperty('--thumbnail-border-width', notifData.borderWidth || '1px');
-            updateElement(thumbNotifCard, '.notification-content-wrapper', thumbText1, thumbText2, notifData.percentage, thumbAnimation);
+            thumbNotifCard.style.backgroundColor = notifData.thumbnailBgColor || 'var(--bg-card)';
+            thumbNotifCard.style.color = notifData.thumbnailTextColor || 'var(--text-primary)';
+            thumbNotifCard.style.setProperty('--thumbnail-border-color', notifData.thumbnailBorderColor || 'var(--border-color)');
+            thumbNotifCard.style.setProperty('--thumbnail-border-width', notifData.thumbnailBorderWidth ? `${notifData.thumbnailBorderWidth}px` : '1px');
+            updateElement(thumbNotifCard, thumbText1, thumbText2, notifData.percentage, thumbAnimation);
 
             // --- Show popup if it's a new notification ---
             if (notifData.id !== lastShownNotificationId) {
@@ -847,7 +846,7 @@
             }
         }
 
-        // --- UPDATED: Function to render the notification center popup ---
+        // --- UPDATED: Now shows 5 notifications ---
         function renderNotificationCenter(snapshot) {
             const listEl = document.getElementById('notification-center-list');
             listEl.innerHTML = ''; 
@@ -874,7 +873,7 @@
                 };
 
                 item.innerHTML = `
-                    <div class="title">${linkify(notif.title)}</div>
+                    <div class="title">${linkify(notif.title.replace('|', '<br>'))}</div>
                     <div class="percentage">${notif.percentage}%</div>
                 `;
                 listEl.appendChild(item);
@@ -1329,7 +1328,6 @@
                 const treeRoot = document.createElement('div');
                 treeRoot.className = 'network-tree';
                 const rootNode = await buildNetworkTree(currentUser.uid, 0);
-                treeRoot.appendChild(rootNode);
                 if (!rootNode || !rootNode.querySelector('.node-children')) {
                      treeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
                 } else {
