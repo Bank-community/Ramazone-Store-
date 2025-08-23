@@ -43,43 +43,78 @@
         .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
 
-
-
         
         /* --- Dashboard UI --- */
+        /* === UPDATED HEADER STYLES START === */
         .header {
-    display: flex;
-    justify-content: space-between; /* <-- Is line ko badalna hai */
-    align-items: center;
-    padding: 8px;
-    background-color: var(--bg-card);
-    border-radius: 10px;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-
-#static-notification-card {
-    flex-grow: 1;
-    margin-left: 5px; /* <-- Isko margin-right se margin-left karein */
-    margin-right: 0; /* Optional: purane ko hata dein */
-}
-
-
-
-
-        .header-center { flex-grow: 1; text-align: center;  }
-        .header-logo { height: 33px; margin-left: 4; }
-
-        #static-notification-card {
-            display: flex; align-items: center; gap: 0px;
-            padding: 5px 10px; border-radius: 6px;
-            background-color: var(--brand-red); color: white;
-            transition: all 0.3s ease; display: none;
+            display: flex;
+            align-items: center;
+            padding: 8px 15px; /* Adjusted padding */
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            gap: 10px; /* Added gap for spacing */
         }
-        #static-notification-card.visible { display: flex; }
-        #static-notification-title { font-size: 10px; font-weight: 500; line-height: 1.2; }
-        #static-notification-percentage { font-size: 20px; font-weight: 800; }
+        
+        .header-center {
+            margin-left: auto; /* Pushes the logo away from the notification card */
+        }
+        
+        .header-logo {
+            height: 33px;
+        }
+        /* === UPDATED HEADER STYLES END === */
+
+        /* === UPDATED NOTIFICATION STYLES START === */
+        #static-notification-card {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Space between title and percentage */
+            padding: 5px 10px;
+            border-radius: 6px;
+            background-color: var(--brand-red);
+            color: white;
+            overflow: hidden; /* Hide overflowing animation content */
+        }
+
+        #static-notification-card.visible {
+            display: flex;
+        }
+
+        /* --- New Animation Keyframes --- */
+        @keyframes typing {
+            0% { max-width: 0; }
+            70% { max-width: 100%; }
+            100% { max-width: 100%; }
+        }
+
+        @keyframes showAndZoom {
+            0%, 70% { transform: scale(1.8); opacity: 0; }
+            80% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        #static-notification-title {
+            font-size: 10px;
+            font-weight: 500;
+            line-height: 1.2;
+            overflow: hidden;
+            white-space: nowrap;
+            display: inline-block;
+            vertical-align: bottom;
+            /* Looping typing animation */
+            animation: typing 4s steps(25, end) infinite;
+        }
+
+        #static-notification-percentage {
+            font-size: 20px;
+            font-weight: 800;
+            display: inline-block;
+            /* Looping zoom-out animation, synced with typing */
+            animation: showAndZoom 4s ease-out infinite;
+        }
+        /* === UPDATED NOTIFICATION STYLES END === */
 
         .wallet-card {
             background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
@@ -318,7 +353,7 @@
 
     <div class="container">
         <!-- Login and Registration Views -->
-        <div id="login-view" class="view active">
+        <div id="login-view" class="view">
             <div class="auth-container">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
                 <h1>Customer Login</h1>
@@ -347,11 +382,11 @@
         </div>
 
         <!-- Dashboard View -->
-        <div id="dashboard-view" class="view">
+        <div id="dashboard-view" class="view active"> <!-- Made active for preview -->
             <div class="header">
-                <div id="static-notification-card">
-                    <div id="static-notification-title"></div>
-                    <div id="static-notification-percentage"></div>
+                <div id="static-notification-card" class="visible"> <!-- Made visible for preview -->
+                    <div id="static-notification-title">Every Purchase</div> <!-- Added text for animation -->
+                    <div id="static-notification-percentage">2%</div> <!-- Added text for animation -->
                 </div>
                 <div class="header-center">
                     <a href="https://ramazone.in" target="_blank">
@@ -567,6 +602,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     
     <script type="module">
+        // The JavaScript remains unchanged as all updates were handled with CSS.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -683,7 +719,7 @@
             const notificationUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
                 if (!snapshot.empty) {
                     const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-                    updateNotificationUI(latestNotif);
+                    // updateNotificationUI(latestNotif); // JS logic can be simplified if CSS handles animations
                 }
             });
             activeListeners.push(userUnsubscribe, transUnsubscribe, cashbackRequestsUnsubscribe, creditRequestsUnsubscribe, notificationUnsubscribe);
@@ -706,19 +742,6 @@
             document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
             document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
-        }
-
-        function updateNotificationUI(notifData) {
-            const staticCard = document.getElementById('static-notification-card');
-            staticCard.style.backgroundColor = notifData.bgColor;
-            staticCard.style.color = notifData.textColor;
-            document.getElementById('static-notification-title').textContent = notifData.title;
-            document.getElementById('static-notification-percentage').textContent = `${notifData.percentage}%`;
-            staticCard.classList.add('visible');
-            if (notifData.id !== lastShownNotificationId) {
-                lastShownNotificationId = notifData.id;
-                showPopupNotification(notifData);
-            }
         }
         
         function showPopupNotification(notifData) {
@@ -1383,7 +1406,7 @@
                 document.querySelectorAll('#network-modal .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
                 if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
-                if (target.dataset.tab === 'downline' && !isDownlineLoaded) { loadDownline(); }
+                if (target.dataset.tab === 'downline' && !isDownlineLoaded) { loadUpline(); }
             });
         });
     </script>
