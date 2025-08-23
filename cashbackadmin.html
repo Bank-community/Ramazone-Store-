@@ -26,6 +26,8 @@
         label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-secondary); font-size: 0.9rem; }
         input, select { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ced4da; font-size: 1rem; }
         input[type="color"] { padding: 5px; height: 45px; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; }
+        .checkbox-group input { width: auto; }
         button { width: 100%; padding: 12px; background-color: var(--brand-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.2s; }
         button:hover { opacity: 0.9; }
         button:disabled { background-color: #999; cursor: not-allowed; }
@@ -57,6 +59,8 @@
         .member-row { cursor: pointer; } .member-row:hover { background-color: #f9f9f9; }
         .data-management-actions, .filter-controls { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .notification-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-section { border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .form-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         
         /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -92,6 +96,7 @@
             <div class="header"><h1>Dashboard</h1><button id="logout-btn">Logout</button></div>
             <div class="stat-cards" id="stat-cards-container">
                 <div class="card" data-tab="cashback-requests"><h3>Cashback Req.</h3><p class="stat-number" id="cashback-requests-stat">0</p></div>
+                <div class="card" data-tab="credit-requests"><h3>Credit Req.</h3><p class="stat-number" id="credit-requests-stat">0</p></div>
                 <div class="card" data-tab="members"><h3>Total Members</h3><p class="stat-number" id="total-members-stat">0</p></div>
                 <div class="card" data-tab="rmz-history"><h3>RMZ Wallet</h3><p class="stat-number" id="rmz-wallet-stat">₹0</p></div>
                 <div class="card" data-tab="univ-history"><h3>Universal Wallet</h3><p class="stat-number" id="universal-wallet-stat">₹0</p></div>
@@ -99,6 +104,7 @@
             </div>
             <div class="tabs" id="tabs-container">
                 <div class="tab-link active" data-tab="cashback-requests">Cashback <span id="cashback-requests-count" class="tab-count" style="display:none;">0</span></div>
+                <div class="tab-link" data-tab="credit-requests">Credit <span id="credit-requests-count" class="tab-count" style="display:none;">0</span></div>
                 <div class="tab-link" data-tab="members">Members</div>
                 <div class="tab-link" data-tab="rmz-history">RMZ Wallet</div>
                 <div class="tab-link" data-tab="univ-history">Universal</div>
@@ -109,6 +115,7 @@
             </div>
             <div class="content-box">
                 <div id="cashback-requests-content" class="tab-content active"><h2>Pending Cashback Requests</h2><div id="cashback-request-list"></div></div>
+                <div id="credit-requests-content" class="tab-content"><h2>Pending Credit Requests</h2><div id="credit-request-list"></div></div>
                 <div id="members-content" class="tab-content"><h2>All Members</h2><div id="members-list" class="table-container"></div></div>
                 <div id="rmz-history-content" class="tab-content">
                     <h2>RMZ Wallet History</h2>
@@ -129,21 +136,66 @@
                     </div>
                     <div id="old-data-list" class="table-container"></div>
                 </div>
+                <!-- UPDATED: Notification Form -->
                 <div id="notifications-content" class="tab-content">
                     <h2>Send Notification</h2>
                     <form id="notification-form">
-                        <div class="form-group"><label for="notification-title">Title</label><input type="text" id="notification-title" required></div>
-                        <div class="form-group"><label for="notification-percentage">Percentage Rate (%)</label><input type="number" id="notification-percentage" step="0.1" required></div>
-                        <div class="notification-form-grid">
-                            <div class="form-group"><label for="notification-text-color">Text Color</label><input type="color" id="notification-text-color" value="#FFFFFF"></div>
-                            <div class="form-group"><label for="notification-bg-color">Background Color</label><input type="color" id="notification-bg-color" value="#E50914"></div>
+                        <div class="form-section">
+                            <h3>General Content</h3>
+                            <div class="form-group">
+                                <label for="notification-title">Top Bar & Popup Text (e.g., Every|Purchase)</label>
+                                <input type="text" id="notification-title" placeholder="Use '|' for a new line" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="notification-percentage">Percentage Rate (%)</label>
+                                <input type="number" id="notification-percentage" step="0.1" required>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Top Bar & Popup Style</h3>
+                            <div class="notification-form-grid">
+                                <div class="form-group"><label for="notification-text-color">Text Color</label><input type="color" id="notification-text-color" value="#FFFFFF"></div>
+                                <div class="form-group"><label for="notification-bg-color">Background Color</label><input type="color" id="notification-bg-color" value="#E50914"></div>
+                                <div class="form-group"><label for="notification-border-color">Border Color</label><input type="color" id="notification-border-color" value="#000000"></div>
+                                <div class="form-group"><label for="notification-border-width">Border Width (px)</label><input type="number" id="notification-border-width" value="0" min="0"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Dashboard Thumbnail Style</h3>
+                             <div class="form-group">
+                                <label for="thumbnail-title">Thumbnail Text (e.g., Every|Purchase)</label>
+                                <input type="text" id="thumbnail-title" placeholder="Leave blank to use main text">
+                            </div>
+                            <div class="notification-form-grid">
+                                <div class="form-group"><label for="thumbnail-text-color">Text Color</label><input type="color" id="thumbnail-text-color" value="#1c2028"></div>
+                                <div class="form-group"><label for="thumbnail-bg-color">Background Color</label><input type="color" id="thumbnail-bg-color" value="#ffffff"></div>
+                                <div class="form-group"><label for="thumbnail-border-color">Border Color</label><input type="color" id="thumbnail-border-color" value="#e8eef3"></div>
+                                <div class="form-group"><label for="thumbnail-border-width">Border Width (px)</label><input type="number" id="thumbnail-border-width" value="1" min="0"></div>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="thumbnail-animation" checked>
+                                <label for="thumbnail-animation">Enable Animation</label>
+                            </div>
                         </div>
                         <button type="submit" style="max-width: 200px;">Send Notification</button>
                     </form>
                     <h2 style="margin-top: 20px;">Sent Notifications</h2>
                     <div id="notifications-list" class="table-container"></div>
                 </div>
-                <div id="settings-content" class="tab-content"><h2>App Settings</h2><div class="form-group"><label for="cashback-percentage">Self Cashback Percentage (%)</label><input type="number" id="cashback-percentage" step="0.1"></div><button id="save-settings-btn" style="max-width: 200px;">Save</button></div>
+                <div id="settings-content" class="tab-content">
+                    <h2>App Settings</h2>
+                    <div class="form-group">
+                        <label for="cashback-percentage">Self Cashback Percentage (%)</label>
+                        <input type="number" id="cashback-percentage" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="cashback-limit">Cashback Calculation Limit (₹)</label>
+                        <input type="number" id="cashback-limit" step="1" placeholder="e.g., 500">
+                    </div>
+                    <button id="save-settings-btn" style="max-width: 200px;">Save</button>
+                </div>
             </div>
         </div>
     </div>
@@ -160,16 +212,48 @@
         </div>
     </div>
 
+    <!-- UPDATED: Edit Notification Modal -->
     <div id="edit-notification-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Edit Notification</h3>
             <form id="edit-notification-form">
                 <input type="hidden" id="edit-notification-id">
-                <div class="form-group"><label for="edit-notification-title">Title</label><input type="text" id="edit-notification-title" required></div>
-                <div class="form-group"><label for="edit-notification-percentage">Percentage Rate (%)</label><input type="number" id="edit-notification-percentage" step="0.1" required></div>
-                <div class="notification-form-grid">
-                    <div class="form-group"><label for="edit-notification-text-color">Text Color</label><input type="color" id="edit-notification-text-color"></div>
-                    <div class="form-group"><label for="edit-notification-bg-color">Background Color</label><input type="color" id="edit-notification-bg-color"></div>
+                <div class="form-section">
+                    <h3>General Content</h3>
+                    <div class="form-group">
+                        <label for="edit-notification-title">Top Bar & Popup Text</label>
+                        <input type="text" id="edit-notification-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-notification-percentage">Percentage Rate (%)</label>
+                        <input type="number" id="edit-notification-percentage" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h3>Top Bar & Popup Style</h3>
+                    <div class="notification-form-grid">
+                        <div class="form-group"><label for="edit-notification-text-color">Text Color</label><input type="color" id="edit-notification-text-color"></div>
+                        <div class="form-group"><label for="edit-notification-bg-color">Background Color</label><input type="color" id="edit-notification-bg-color"></div>
+                        <div class="form-group"><label for="edit-notification-border-color">Border Color</label><input type="color" id="edit-notification-border-color"></div>
+                        <div class="form-group"><label for="edit-notification-border-width">Border Width (px)</label><input type="number" id="edit-notification-border-width" min="0"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h3>Dashboard Thumbnail Style</h3>
+                    <div class="form-group">
+                        <label for="edit-thumbnail-title">Thumbnail Text</label>
+                        <input type="text" id="edit-thumbnail-title">
+                    </div>
+                    <div class="notification-form-grid">
+                        <div class="form-group"><label for="edit-thumbnail-text-color">Text Color</label><input type="color" id="edit-thumbnail-text-color"></div>
+                        <div class="form-group"><label for="edit-thumbnail-bg-color">Background Color</label><input type="color" id="edit-thumbnail-bg-color"></div>
+                        <div class="form-group"><label for="edit-thumbnail-border-color">Border Color</label><input type="color" id="edit-thumbnail-border-color"></div>
+                        <div class="form-group"><label for="edit-thumbnail-border-width">Border Width (px)</label><input type="number" id="edit-thumbnail-border-width" min="0"></div>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="edit-thumbnail-animation">
+                        <label for="edit-thumbnail-animation">Enable Animation</label>
+                    </div>
                 </div>
                 <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" data-close-modal class="btn-secondary">Cancel</button>
@@ -224,6 +308,7 @@
 
             const listeners = [
                 onSnapshot(query(collection(db, 'cashback_requests'), where('status', '==', 'pending')), renderCashbackRequests, console.error),
+                onSnapshot(query(collection(db, 'credit_requests'), where('status', '==', 'pending')), renderCreditRequests, console.error),
                 onSnapshot(query(collection(db, 'users'), orderBy('createdAt', 'desc')), renderMembers, console.error),
                 onSnapshot(doc(db, 'app_settings', 'config'), renderStatsAndSettings, console.error),
                 onSnapshot(query(collection(db, 'rmz_wallet_transactions'), orderBy('timestamp', 'desc')), (snap) => {
@@ -254,6 +339,17 @@
             });
         }
 
+        function renderCreditRequests(snapshot) {
+            document.getElementById('credit-requests-stat').textContent = snapshot.size;
+            renderCount(document.getElementById('credit-requests-count'), snapshot.size);
+            const listEl = document.getElementById('credit-request-list');
+            listEl.innerHTML = snapshot.empty ? '<p>No pending credit requests.</p>' : '';
+            snapshot.forEach(doc => {
+                const r = { id: doc.id, ...doc.data() };
+                listEl.innerHTML += `<div class="request-item"><div><p><strong>User:</strong> ${r.userName} (${r.userMobile})</p><p><strong>Amount:</strong> ₹${r.amount.toFixed(2)}</p></div><div class="request-actions"><button class="btn-approve" data-action="approve-credit" data-id="${r.id}">Approve</button><button class="btn-reject" data-action="reject-credit" data-id="${r.id}">Reject</button></div></div>`;
+            });
+        }
+
         function renderMembers(snapshot) {
             document.getElementById('total-members-stat').textContent = snapshot.size;
             let table = `<table><thead><tr><th>Name</th><th>Mobile</th><th>Wallet</th><th>Due Amount</th></tr></thead><tbody>`;
@@ -270,6 +366,7 @@
             document.getElementById('rmz-wallet-stat').textContent = `₹${(config.rmz_wallet_balance || 0).toFixed(2)}`;
             document.getElementById('universal-wallet-stat').textContent = `₹${(config.universal_wallet_balance || 0).toFixed(2)}`;
             document.getElementById('cashback-percentage').value = config.cashback_percentage || '';
+            document.getElementById('cashback-limit').value = config.cashback_calculation_limit || '';
         }
 
         function renderHistoryTable(snapshot, elementId) {
@@ -368,7 +465,7 @@
                 const colorPreview = `<span style="background-color:${n.bgColor}; color:${n.textColor}; padding: 2px 8px; border-radius: 4px; border: 1px solid #ccc;">Preview</span>`;
                 table += `<tr>
                     <td>${date}</td>
-                    <td>${n.title}</td>
+                    <td>${n.title.replace('|', ' ')}</td>
                     <td>${n.percentage}%</td>
                     <td>${colorPreview}</td>
                     <td>
@@ -395,9 +492,12 @@
             const userData = userDoc.data();
             const config = configDoc.exists() ? configDoc.data() : {};
             const baseCashbackPercent = config.cashback_percentage || 2;
+            const cashbackLimit = config.cashback_calculation_limit || 500;
             
+            const basePriceForCashback = Math.min(requestData.productPrice, cashbackLimit);
+
             const finalCashbackPercent = isAverage ? baseCashbackPercent / 2 : baseCashbackPercent;
-            const selfAmount = requestData.productPrice * (finalCashbackPercent / 100);
+            const selfAmount = basePriceForCashback * (finalCashbackPercent / 100);
             const distributionAmount = selfAmount * 0.50;
 
             const batch = writeBatch(db);
@@ -430,7 +530,44 @@
             }
             
             await batch.commit();
-            alert(`Cashback ${isAverage ? '(Average)' : ''} approved and credited.`);
+            alert(`Cashback ${isAverage ? '(Average)' : ''} approved and credited. Calculated on ₹${basePriceForCashback.toFixed(2)}.`);
+        }
+
+        async function approveCreditRequest(id) {
+            const requestDocRef = doc(db, 'credit_requests', id);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const requestDoc = await transaction.get(requestDocRef);
+                    if (!requestDoc.exists() || requestDoc.data().status !== 'pending') {
+                        throw new Error("Request not found or already processed.");
+                    }
+                    const requestData = requestDoc.data();
+                    const userRef = doc(db, 'users', requestData.userId);
+                    
+                    transaction.update(userRef, {
+                        wallet: increment(requestData.amount),
+                        totalCreditGiven: increment(requestData.amount),
+                        dueAmount: increment(requestData.amount)
+                    });
+
+                    const transRef = doc(collection(db, 'transactions'));
+                    transaction.set(transRef, {
+                        involvedUsers: [requestData.userId],
+                        type: 'credit',
+                        amount: requestData.amount,
+                        description: `Credit of ₹${requestData.amount.toFixed(2)} received (Request Approved)`,
+                        status: 'completed',
+                        timestamp: serverTimestamp()
+                    });
+
+                    transaction.update(requestDocRef, { status: 'completed' });
+                });
+                alert('Credit request approved and amount credited successfully!');
+            } catch (error) {
+                console.error("Error approving credit request:", error);
+                alert(`Failed to approve credit request: ${error.message}`);
+                throw error;
+            }
         }
         
         async function handleDeleteOldData() {
@@ -459,29 +596,42 @@
             }
         }
 
+        // --- UPDATED: handleSendNotification to include all new fields ---
         async function handleSendNotification(e) {
             e.preventDefault();
-            const title = document.getElementById('notification-title').value.trim();
-            const percentage = parseFloat(document.getElementById('notification-percentage').value);
-            const textColor = document.getElementById('notification-text-color').value;
-            const bgColor = document.getElementById('notification-bg-color').value;
+            const form = e.target;
+            const title = form.querySelector('#notification-title').value.trim();
+            const percentage = parseFloat(form.querySelector('#notification-percentage').value);
 
-            if (!title || isNaN(percentage)) return alert("Please fill all fields correctly.");
+            if (!title || isNaN(percentage)) return alert("Please fill all general fields correctly.");
 
-            const btn = e.target.querySelector('button');
+            const btn = form.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = "Sending...";
 
+            const notificationData = {
+                // General
+                title: title,
+                percentage: percentage,
+                createdAt: serverTimestamp(),
+                // Top Bar & Popup
+                textColor: form.querySelector('#notification-text-color').value,
+                bgColor: form.querySelector('#notification-bg-color').value,
+                borderColor: form.querySelector('#notification-border-color').value,
+                borderWidth: form.querySelector('#notification-border-width').value,
+                // Thumbnail
+                thumbnailTitle: form.querySelector('#thumbnail-title').value.trim(),
+                thumbnailTextColor: form.querySelector('#thumbnail-text-color').value,
+                thumbnailBgColor: form.querySelector('#thumbnail-bg-color').value,
+                thumbnailBorderColor: form.querySelector('#thumbnail-border-color').value,
+                thumbnailBorderWidth: form.querySelector('#thumbnail-border-width').value,
+                thumbnailAnimation: form.querySelector('#thumbnail-animation').checked,
+            };
+
             try {
-                await addDoc(collection(db, 'notifications'), {
-                    title: title,
-                    percentage: percentage,
-                    textColor: textColor,
-                    bgColor: bgColor,
-                    createdAt: serverTimestamp()
-                });
+                await addDoc(collection(db, 'notifications'), notificationData);
                 alert("Notification sent successfully!");
-                e.target.reset();
+                form.reset();
             } catch (error) {
                 console.error("Error sending notification:", error);
                 alert("Failed to send notification. Check console for details.");
@@ -523,6 +673,11 @@
                             await updateDoc(doc(db, 'cashback_requests', id), { status: 'rejected' });
                             alert('Request rejected.');
                             break;
+                        case 'approve-credit': await approveCreditRequest(id); break;
+                        case 'reject-credit':
+                            await updateDoc(doc(db, 'credit_requests', id), { status: 'rejected' });
+                            alert('Credit request rejected.');
+                            break;
                         case 'edit-notification': await showEditNotificationModal(id); break;
                         case 'delete-notification': await deleteNotification(id); break;
                     }
@@ -549,7 +704,21 @@
                 });
             });
 
-            document.getElementById('save-settings-btn').addEventListener('click', async () => { const newPercent = parseFloat(document.getElementById('cashback-percentage').value); if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage."); await setDoc(doc(db, 'app_settings', 'config'), { cashback_percentage: newPercent }, { merge: true }); alert("Settings saved!"); });
+            document.getElementById('save-settings-btn').addEventListener('click', async () => {
+                const newPercent = parseFloat(document.getElementById('cashback-percentage').value);
+                const newLimit = parseFloat(document.getElementById('cashback-limit').value);
+
+                if (isNaN(newPercent) || newPercent < 0) return alert("Invalid percentage.");
+                if (isNaN(newLimit) || newLimit <= 0) return alert("Invalid cashback limit.");
+
+                const settingsData = {
+                    cashback_percentage: newPercent,
+                    cashback_calculation_limit: newLimit
+                };
+
+                await setDoc(doc(db, 'app_settings', 'config'), settingsData, { merge: true });
+                alert("Settings saved!");
+            });
             
             document.getElementById('old-data-list').addEventListener('change', (e) => {
                 if (e.target.id === 'select-all-checkbox') {
@@ -565,21 +734,33 @@
             document.getElementById('edit-notification-form').addEventListener('submit', handleUpdateNotification);
         }
         
+        // --- UPDATED: showEditNotificationModal to populate all new fields ---
         async function showEditNotificationModal(id) {
             const modal = document.getElementById('edit-notification-modal');
             const form = document.getElementById('edit-notification-form');
             try {
                 const docRef = doc(db, 'notifications', id);
                 const docSnap = await getDoc(docRef);
-                if (!docSnap.exists()) {
-                    throw new Error("Notification not found.");
-                }
+                if (!docSnap.exists()) throw new Error("Notification not found.");
+                
                 const data = docSnap.data();
                 form.querySelector('#edit-notification-id').value = id;
-                form.querySelector('#edit-notification-title').value = data.title;
-                form.querySelector('#edit-notification-percentage').value = data.percentage;
-                form.querySelector('#edit-notification-text-color').value = data.textColor;
-                form.querySelector('#edit-notification-bg-color').value = data.bgColor;
+                // General
+                form.querySelector('#edit-notification-title').value = data.title || '';
+                form.querySelector('#edit-notification-percentage').value = data.percentage || 0;
+                // Top Bar & Popup
+                form.querySelector('#edit-notification-text-color').value = data.textColor || '#FFFFFF';
+                form.querySelector('#edit-notification-bg-color').value = data.bgColor || '#E50914';
+                form.querySelector('#edit-notification-border-color').value = data.borderColor || '#000000';
+                form.querySelector('#edit-notification-border-width').value = data.borderWidth || 0;
+                // Thumbnail
+                form.querySelector('#edit-thumbnail-title').value = data.thumbnailTitle || '';
+                form.querySelector('#edit-thumbnail-text-color').value = data.thumbnailTextColor || '#1c2028';
+                form.querySelector('#edit-thumbnail-bg-color').value = data.thumbnailBgColor || '#ffffff';
+                form.querySelector('#edit-thumbnail-border-color').value = data.thumbnailBorderColor || '#e8eef3';
+                form.querySelector('#edit-thumbnail-border-width').value = data.thumbnailBorderWidth || 1;
+                form.querySelector('#edit-thumbnail-animation').checked = data.thumbnailAnimation !== false;
+
                 modal.classList.add('active');
             } catch (error) {
                 console.error("Error fetching notification for edit:", error);
@@ -587,6 +768,7 @@
             }
         }
 
+        // --- UPDATED: handleUpdateNotification to save all new fields ---
         async function handleUpdateNotification(e) {
             e.preventDefault();
             const form = e.target;
@@ -594,14 +776,25 @@
             const btn = form.querySelector('button[type="submit"]');
 
             const updatedData = {
+                // General
                 title: form.querySelector('#edit-notification-title').value.trim(),
                 percentage: parseFloat(form.querySelector('#edit-notification-percentage').value),
+                // Top Bar & Popup
                 textColor: form.querySelector('#edit-notification-text-color').value,
                 bgColor: form.querySelector('#edit-notification-bg-color').value,
+                borderColor: form.querySelector('#edit-notification-border-color').value,
+                borderWidth: form.querySelector('#edit-notification-border-width').value,
+                // Thumbnail
+                thumbnailTitle: form.querySelector('#edit-thumbnail-title').value.trim(),
+                thumbnailTextColor: form.querySelector('#edit-thumbnail-text-color').value,
+                thumbnailBgColor: form.querySelector('#edit-thumbnail-bg-color').value,
+                thumbnailBorderColor: form.querySelector('#edit-thumbnail-border-color').value,
+                thumbnailBorderWidth: form.querySelector('#edit-thumbnail-border-width').value,
+                thumbnailAnimation: form.querySelector('#edit-thumbnail-animation').checked,
             };
 
             if (!updatedData.title || isNaN(updatedData.percentage)) {
-                return alert("Please fill all fields correctly.");
+                return alert("Please fill all general fields correctly.");
             }
 
             btn.disabled = true;
@@ -688,7 +881,6 @@
                     const currentDue = userDoc.data().dueAmount || 0;
                     if (amount > currentDue) throw "Clear amount cannot be more than due amount.";
                     
-                    // UPDATE: Also decrement totalCreditGiven along with dueAmount
                     transaction.update(userRef, { 
                         dueAmount: increment(-amount),
                         totalCreditGiven: increment(-amount) 
