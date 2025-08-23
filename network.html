@@ -52,6 +52,7 @@
         .header-center { flex-grow: 1; text-align: center; }
         .header-logo { height: 35px; }
 
+        /* --- UPDATED: Top Notification Bar Styles & Animations --- */
         #static-notification-card {
             display: flex; align-items: center; gap: 8px;
             padding: 5px 10px; border-radius: 10px;
@@ -59,8 +60,17 @@
             transition: all 0.3s ease; display: none;
         }
         #static-notification-card.visible { display: flex; }
-        #static-notification-title { font-size: 10px; font-weight: 500; line-height: 1.2; }
+        #static-notification-title { font-size: 10px; font-weight: 500; line-height: 1.2; overflow: hidden; white-space: nowrap; border-right: .15em solid orange; letter-spacing: .1em; }
         #static-notification-percentage { font-size: 20px; font-weight: 800; }
+        
+        /* Typing Animation */
+        .typing-animation { animation: typing 2.5s steps(30, end) infinite, blink-caret .75s step-end infinite; }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: orange; } }
+        
+        /* Pulse (Zoom) Animation */
+        .pulse-animation { animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
         .wallet-card {
             background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
@@ -98,11 +108,21 @@
             background-color: var(--bg-card); padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; 
             transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border-color);
             display: flex; flex-direction: column; justify-content: center; align-items: center; aspect-ratio: 1/1;
-            position: relative;
+            position: relative; overflow: hidden;
         }
         .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.07); }
         .action-card .icon { margin-bottom: 8px; width: 30px; height: 30px; }
         .action-card .card-text { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+
+        /* --- NEW: Live Notification Card Styles --- */
+        #open-notification-center-btn { padding: 0; justify-content: flex-start; align-items: stretch; }
+        .live-notification-content {
+            width: 100%; height: 100%; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 10px;
+            gap: 5px;
+        }
+        .live-notification-title { font-size: 11px; font-weight: 500; line-height: 1.2; overflow: hidden; white-space: nowrap; border-right: .15em solid orange; letter-spacing: .1em; }
+        .live-notification-percentage { font-size: 24px; font-weight: 800; }
 
         .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
@@ -277,6 +297,34 @@
 
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
+        /* --- NEW: Notification Center (Popup) Styles --- */
+        #notification-center-modal .modal-content {
+            width: 100%; height: 100%; max-width: 100%; max-height: 100%;
+            border-radius: 0; padding: 0; display: flex; flex-direction: column;
+            background-color: var(--bg-page);
+        }
+        .notification-center-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0; background-color: var(--bg-card);
+        }
+        .notification-center-header h1 { font-size: 18px; font-weight: 600; margin: 0; }
+        #notification-center-close-btn { font-size: 28px; line-height: 1; color: #aaa; background: none; border: none; padding: 0; cursor: pointer; }
+        #notification-center-list {
+            flex-grow: 1; overflow-y: auto; padding: 15px;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .notification-center-item {
+            padding: 20px; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center;
+        }
+        .notification-center-item .title { font-size: 18px; font-weight: 600; line-height: 1.3; }
+        .notification-center-item .title a { color: inherit; text-decoration: underline; }
+        .notification-center-item .percentage { font-size: 40px; font-weight: 800; margin-top: 10px; }
+
         #popup-notification {
             position: fixed; top: -200px; left: 50%;
             transform: translateX(-50%);
@@ -362,7 +410,6 @@
                 </div>
             </div>
 
-            <!-- UPDATED: Dashboard Actions Layout -->
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
                 <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
@@ -374,6 +421,13 @@
                 <div id="open-credit-request-modal" class="action-card">
                     <img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg">
                     <span class="card-text">Credit Request</span>
+                </div>
+                <!-- NEW: Live Notification Thumbnail Card -->
+                <div id="open-notification-center-btn" class="action-card">
+                    <div class="live-notification-content">
+                        <div class="live-notification-title"></div>
+                        <div class="live-notification-percentage"></div>
+                    </div>
                 </div>
             </div>
 
@@ -463,6 +517,19 @@
                     <div id="upline-list"></div>
                     <div id="upline-loader">Loading your upline...</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Notification Center Modal -->
+    <div id="notification-center-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="notification-center-header">
+                <h1>Latest Offers</h1>
+                <button id="notification-center-close-btn" data-close-modal>&times;</button>
+            </div>
+            <div id="notification-center-list">
+                <!-- Notifications will be dynamically inserted here -->
             </div>
         </div>
     </div>
@@ -571,6 +638,7 @@
         let scannerAnimation = null;
         let allTransactions = [];
         let cashbackRequests = [];
+        let creditRequests = [];
         let activeFilter = 'all';
         let pendingAction = null;
         let isDownlineLoaded = false;
@@ -616,7 +684,7 @@
             
             const statusEl = document.getElementById('details-modal-status');
             statusEl.textContent = item.status || 'Completed';
-            statusEl.className = 'value status-badge'; // Reset classes
+            statusEl.className = 'value status-badge';
             if (item.status) statusEl.classList.add(item.status);
 
             document.getElementById('details-modal-desc').textContent = item.description;
@@ -651,17 +719,26 @@
                 allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 combineAndRenderHistory();
             });
-            const requestsUnsubscribe = onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+            const cashbackRequestsUnsubscribe = onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
                 cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 combineAndRenderHistory();
             });
-            const notificationUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
+            const creditRequestsUnsubscribe = onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+                creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                combineAndRenderHistory();
+            });
+            // Listener for the latest notification (for top bar and dashboard card)
+            const latestNotificationUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
                 if (!snapshot.empty) {
                     const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
                     updateNotificationUI(latestNotif);
                 }
             });
-            activeListeners.push(userUnsubscribe, transUnsubscribe, requestsUnsubscribe, notificationUnsubscribe);
+            // NEW: Listener for top 3 notifications (for popup)
+            const allNotificationsUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(3)), (snapshot) => {
+                renderNotificationCenter(snapshot);
+            });
+            activeListeners.push(userUnsubscribe, transUnsubscribe, cashbackRequestsUnsubscribe, creditRequestsUnsubscribe, latestNotificationUnsubscribe, allNotificationsUnsubscribe);
         }
 
         function detachAllListeners() {
@@ -683,17 +760,84 @@
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
         }
 
+        // --- UPDATED: updateNotificationUI with animations and new card update ---
         function updateNotificationUI(notifData) {
+            // Update Top Bar Notification
             const staticCard = document.getElementById('static-notification-card');
+            const staticTitle = document.getElementById('static-notification-title');
+            const staticPercentage = document.getElementById('static-notification-percentage');
+            
             staticCard.style.backgroundColor = notifData.bgColor;
             staticCard.style.color = notifData.textColor;
-            document.getElementById('static-notification-title').textContent = notifData.title;
-            document.getElementById('static-notification-percentage').textContent = `${notifData.percentage}%`;
+            staticTitle.textContent = notifData.title;
+            staticPercentage.textContent = `${notifData.percentage}%`;
+
+            // Apply animations
+            staticTitle.classList.remove('typing-animation');
+            void staticTitle.offsetWidth; // Trigger reflow to restart animation
+            staticTitle.classList.add('typing-animation');
+            
+            staticPercentage.classList.remove('pulse-animation');
+            void staticPercentage.offsetWidth;
+            staticPercentage.classList.add('pulse-animation');
+
             staticCard.classList.add('visible');
+
+            // Update Dashboard Live Thumbnail Card
+            const liveCard = document.getElementById('open-notification-center-btn').querySelector('.live-notification-content');
+            const liveTitle = liveCard.querySelector('.live-notification-title');
+            const livePercentage = liveCard.querySelector('.live-notification-percentage');
+
+            liveCard.style.backgroundColor = notifData.bgColor;
+            liveCard.style.color = notifData.textColor;
+            liveTitle.textContent = notifData.title;
+            livePercentage.textContent = `${notifData.percentage}%`;
+
+            // Apply ONLY typing animation to live card
+            liveTitle.classList.remove('typing-animation');
+            void liveTitle.offsetWidth;
+            liveTitle.classList.add('typing-animation');
+
+            // Show popup if it's a new notification
             if (notifData.id !== lastShownNotificationId) {
                 lastShownNotificationId = notifData.id;
                 showPopupNotification(notifData);
             }
+        }
+
+        // --- NEW: Function to render the notification center popup ---
+        function renderNotificationCenter(snapshot) {
+            const listEl = document.getElementById('notification-center-list');
+            listEl.innerHTML = ''; // Clear previous notifications
+            if (snapshot.empty) {
+                listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
+                return;
+            }
+            snapshot.forEach(doc => {
+                const notif = doc.data();
+                const item = document.createElement('div');
+                item.className = 'notification-center-item';
+                item.style.backgroundColor = notif.bgColor;
+                item.style.color = notif.textColor;
+
+                // Function to find and replace URLs with anchor tags
+                const linkify = (text) => {
+                    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+                    return text.replace(urlRegex, (url) => {
+                        let href = url;
+                        if (!href.match(/^[a-zA-Z]+:\/\//)) {
+                            href = 'http://' + href;
+                        }
+                        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+                    });
+                };
+
+                item.innerHTML = `
+                    <div class="title">${linkify(notif.title)}</div>
+                    <div class="percentage">${notif.percentage}%</div>
+                `;
+                listEl.appendChild(item);
+            });
         }
         
         function showPopupNotification(notifData) {
@@ -715,11 +859,16 @@
 
         function combineAndRenderHistory() {
             const formattedTransactions = allTransactions.map(t => ({ ...t, date: t.timestamp?.toDate(), isTransaction: true }));
-            const formattedRequests = cashbackRequests
-                .filter(r => r.status === 'pending' || r.status === 'rejected')
-                .map(r => ({ ...r, description: `Request for ${r.productName}`, date: r.requestDate?.toDate(), type: 'cashback', isTransaction: false }));
             
-            const combined = [...formattedTransactions, ...formattedRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
+            const formattedCashbackRequests = cashbackRequests
+                .filter(r => r.status === 'pending' || r.status === 'rejected')
+                .map(r => ({ ...r, description: `Cashback Request: ${r.productName}`, date: r.requestDate?.toDate(), type: 'cashback', isTransaction: false }));
+            
+            const formattedCreditRequests = creditRequests
+                .filter(r => r.status === 'pending' || r.status === 'rejected')
+                .map(r => ({ ...r, description: `Credit Request`, date: r.requestDate?.toDate(), type: 'credit_request', isTransaction: false, amount: r.amount }));
+
+            const combined = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
             renderUnifiedHistory(combined);
         }
 
@@ -730,14 +879,19 @@
             const summaryLabelEl = summaryEl.querySelector('.summary-label');
             listEl.innerHTML = '';
 
-            const filtered = items.filter(item => {
-                if (activeFilter === 'all') return false;
-                if (activeFilter === 'cashback' && item.type === 'cashback' && !item.isTransaction) return true;
+            const itemsToRender = items.filter(item => {
+                if (activeFilter === 'all') return true;
+                if (activeFilter === 'cashback') {
+                    return item.type === 'cashback';
+                }
+                if (activeFilter === 'credit') {
+                    return item.type === 'credit' || item.type === 'due_payment';
+                }
                 return item.type === activeFilter;
             });
 
-            if (filtered.length > 0 && activeFilter !== 'all') {
-                const total = filtered.reduce((sum, item) => {
+            if (itemsToRender.length > 0 && activeFilter !== 'all') {
+                const total = itemsToRender.reduce((sum, item) => {
                     const amount = item.amount || item.cashbackAmount || 0;
                     return sum + Math.abs(amount);
                 }, 0);
@@ -750,14 +904,6 @@
                 summaryEl.style.display = 'none';
             }
 
-            const itemsToRender = activeFilter === 'all' 
-                ? items 
-                : items.filter(item => {
-                    if (item.type === activeFilter) return true;
-                    if (activeFilter === 'cashback' && !item.isTransaction) return true;
-                    return false;
-                  });
-
             if (itemsToRender.length === 0) {
                 listEl.innerHTML = `<div class="empty-state" style="border:none; padding: 20px 0; text-align:center; color: var(--text-secondary);"><h4>No Transactions</h4></div>`;
                 return;
@@ -769,19 +915,21 @@
                 itemDiv.addEventListener('click', () => showTransactionDetails(item));
 
                 const amount = item.amount || item.cashbackAmount || 0;
-                let sign = amount >= 0 ? '+' : '-';
-                let typeClass = amount >= 0 ? 'credit' : 'debit';
+                let sign = '+';
+                let typeClass = 'credit';
                 
-                if(item.type === 'due_payment' || item.type === 'payment') { typeClass = 'debit'; sign = '-'; }
-                if(item.type === 'commission' || item.type === 'cashback' || item.type === 'credit'){ typeClass = 'credit'; sign = '+'; }
-                if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
-
-                let description = item.description;
+                if(item.type === 'due_payment' || item.type === 'payment' || item.amount < 0) { 
+                    typeClass = 'debit'; 
+                    sign = '-'; 
+                }
+                if (item.status === 'rejected' || item.status === 'refunded') { 
+                    typeClass = 'rejected'; 
+                }
 
                 itemDiv.innerHTML = `
                     <div class="history-details">
                         <div class="history-info">
-                            <div class="title">${description}</div>
+                            <div class="title">${item.description}</div>
                             <div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div>
                         </div>
                     </div>
@@ -874,7 +1022,6 @@
             }, 'scan-pay-modal');
         }
 
-        // --- UPDATED: Cashback Request without Daily Limit ---
         async function handleCashbackRequest(e) {
             e.preventDefault();
             const btn = document.getElementById('cashback-submit-btn');
@@ -905,7 +1052,6 @@
             }
         }
 
-        // --- NEW: Credit Request Function ---
         async function handleCreditRequest(e) {
             e.preventDefault();
             const btn = document.getElementById('credit-submit-btn');
@@ -922,7 +1068,6 @@
             btn.disabled = true;
             btn.textContent = "Submitting...";
 
-            // This action requires password verification
             verifyPasswordAndExecute(async () => {
                 try {
                     await addDoc(collection(db, "credit_requests"), {
@@ -943,7 +1088,6 @@
                 }
             }, 'credit-request-modal');
             
-            // Re-enable button after initiating password check
             btn.disabled = false;
             btn.textContent = "Request Credit";
         }
@@ -1057,7 +1201,7 @@
             const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
             const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
             if (navigator.share) navigator.share({ text: shareText });
-            else navigator.clipboard.writeText(shareText).then(() => showToast("Offer link copied!"));
+            else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
         }
         function handleWhatsAppSupport() {
             if (!currentUserData) return showToast("Please wait for your data to load.");
@@ -1310,6 +1454,9 @@
             
             document.getElementById('open-credit-request-modal').addEventListener('click', () => openModal('credit-request-modal'));
             document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
+
+            // NEW: Event listener for the notification center card
+            document.getElementById('open-notification-center-btn').addEventListener('click', () => openModal('notification-center-modal'));
 
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
             document.getElementById('rescan-btn').addEventListener('click', startScanner);
