@@ -21,27 +21,25 @@
             color: var(--text-primary); display: flex; justify-content: center;
             align-items: flex-start; min-height: 100%; padding: 0;
         }
-        /* UPDATED: Body Layout Fix */
         .container { 
             width: 100%; 
-            max-width: 500px; /* Max-width for larger screens */
+            max-width: 500px;
         }
-        /* UPDATED: Reduced side padding */
         .view { 
             display: none; 
-            padding: 20px 8px; /* Reduced horizontal padding */
+            padding: 20px 8px;
             background-color: var(--bg-card); 
             min-height: 100vh; 
             width: 100%;
         }
         #dashboard-view { 
-            padding: 15px 8px; /* Reduced horizontal padding */
+            padding: 15px 8px;
             background-color: var(--bg-page); 
         }
         #network-view {
-            padding: 0; /* Full page view for network */
+            padding: 0;
             background-color: var(--bg-page);
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             height: 100vh;
         }
@@ -175,15 +173,14 @@
         #transaction-summary .summary-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
         #transaction-summary .summary-amount { font-size: 18px; font-weight: 700; color: var(--text-primary); }
 
-        /* UPDATED: Filter bar scroll fix */
         .filter-bar { 
             display: flex; gap: 10px; margin-bottom: 20px; 
-            overflow-x: auto; /* Allows horizontal scrolling */
+            overflow-x: auto;
             padding-bottom: 10px; 
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
-        .filter-bar::-webkit-scrollbar { display: none; } /* Hide scrollbar for Chrome, Safari and Opera */
+        .filter-bar::-webkit-scrollbar { display: none; }
         .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
         .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         .history-list { display: flex; flex-direction: column; gap: 12px; }
@@ -309,7 +306,7 @@
         
         .network-tree { display: inline-flex; flex-direction: column; align-items: center; padding: 40px; min-width: 100%; }
         .network-node { display: flex; flex-direction: column; align-items: center; position: relative; padding: 50px 15px 0 15px; }
-        .network-node > .node-content { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: transform 0.2s; }
+        .network-node > .node-content { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: transform 0.2s; position: relative; }
         .network-node > .node-content:hover { transform: scale(1.05); }
         .node-avatar {
             width: 60px; height: 60px; border-radius: 50%;
@@ -317,10 +314,10 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 24px; font-weight: 600;
             border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 8px; overflow: hidden; position: relative;
+            margin-bottom: 8px; overflow: visible; /* Changed for badge positioning */
         }
         .node-avatar.is-root { border-color: var(--brand-blue); }
-        .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .node-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
         .node-name { font-weight: 600; font-size: 14px; }
         .node-earning { font-size: 12px; color: var(--accent-green); font-weight: 500;}
         .node-children { display: flex; justify-content: center; position: relative; padding-top: 50px; }
@@ -328,37 +325,46 @@
         /* Professional Connecting Lines */
         .network-node:not(:first-child)::before {
             content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 2px; height: 50px; background-color: #ccc; z-index: -1;
+            width: 2px; height: 50px; background-color: #ccc; z-index: 0;
         }
         .node-children::before {
-            content: ''; position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-            height: 2px; background-color: #ccc; z-index: -1;
+            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            height: 2px; background-color: #ccc; z-index: 0;
             width: calc(100% - 60px); 
         }
         .node-children .network-node:first-child:last-child::before {
-             height: 25px; top: 25px;
+             display: none;
         }
         .network-tree > .network-node::before { display: none; }
         
         /* Attached Percentage Tag */
         .commission-badge {
-            position: absolute; top: -5px; right: -5px;
+            position: absolute; top: -10px; right: -10px;
             background-color: var(--text-primary); color: white;
             width: 28px; height: 28px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 10px; font-weight: 700; z-index: 2;
-            border: 2px solid white;
+            border: 2px solid var(--bg-page);
         }
-
-        #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 25px; }
+        
+        #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 35px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .upline-member .node-content { text-align: center; }
+        .upline-member .node-content { text-align: center; position: relative; }
         .upline-member .node-avatar { width: 70px; height: 70px; font-size: 28px; }
-        .upline-member.current-user .node-avatar { background-color: var(--brand-blue); }
+        .upline-member.current-user .node-avatar { 
+            border: 4px solid var(--brand-blue); 
+        }
         .upline-member .node-name { font-size: 15px; }
         .upline-member .node-earning { font-size: 13px; color: var(--text-secondary); }
-        .upline-member:not(:first-child)::after { content: ''; width: 2px; height: 25px; background-color: #ccc; position: absolute; bottom: -25px; }
-        .upline-commission { position: absolute; bottom: -35px; left: 10px; font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+        .upline-member:not(:last-child)::after { 
+            content: ''; width: 2px; height: 35px; background-color: #ccc; 
+            position: absolute; top: -35px;
+        }
+        .upline-commission {
+            position: absolute; top: -20px; left: calc(50% + 20px);
+            font-size: 12px; color: var(--text-secondary); font-weight: 600;
+            background-color: var(--bg-page); padding: 0 5px;
+        }
 
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
@@ -968,7 +974,7 @@
                     return item.type === 'cashback';
                 }
                 if (activeFilter === 'credit') {
-                    return item.type === 'credit' || item.type === 'due_payment';
+                    return item.type === 'credit' || item.type === 'due_payment' || item.type === 'credit_request';
                 }
                 return item.type === activeFilter;
             });
@@ -1388,8 +1394,8 @@
             nodeContent.innerHTML = `
                 <div class="node-avatar ${isRootOfCurrentView ? 'is-root' : ''}">
                     ${avatarHTML}
-                    ${commissionBadgeHTML}
                 </div>
+                ${commissionBadgeHTML}
                 <div class="node-name">${userData.name}</div>
                 <div class="node-earning">Earning: ₹${earning.toFixed(2)}</div>
             `;
@@ -1426,7 +1432,7 @@
                             name: uplineData.name,
                             lifetimeEarning: commissionPaid,
                             profilePictureUrl: uplineData.profilePictureUrl,
-                            level: i // index 0 is level 1 (30%)
+                            level: i 
                         });
                     }
                     return null;
@@ -1450,7 +1456,6 @@
             const avatarHTML = profilePictureUrl ? `<img src="${profilePictureUrl}" alt="${name}">` : name.charAt(0).toUpperCase();
             let earningHTML = isCurrentUser ? `<div class="node-earning">Aap (Your Earning: ₹${(lifetimeEarning || 0).toFixed(2)})</div>` : `<div class="node-earning">Commission Paid: ₹${(lifetimeEarning || 0).toFixed(2)}</div>`;
             
-            // UPDATED: Correct percentage logic for upline
             let commissionHTML = '';
             if (!isCurrentUser && level < commissionRates.length) {
                 commissionHTML = `<div class="upline-commission"><sup>${commissionRates[level]}%</sup></div>`;
