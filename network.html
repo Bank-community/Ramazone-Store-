@@ -21,10 +21,32 @@
             color: var(--text-primary); display: flex; justify-content: center;
             align-items: flex-start; min-height: 100%; padding: 0;
         }
-        .container { width: 100%; max-width: 500px; }
-        .view { display: none; padding: 20px; background-color: var(--bg-card); min-height: 100vh; }
-        #dashboard-view { padding: 15px; background-color: var(--bg-page); }
+        /* UPDATED: Body Layout Fix */
+        .container { 
+            width: 100%; 
+            max-width: 500px; /* Max-width for larger screens */
+        }
+        /* UPDATED: Reduced side padding */
+        .view { 
+            display: none; 
+            padding: 20px 8px; /* Reduced horizontal padding */
+            background-color: var(--bg-card); 
+            min-height: 100vh; 
+            width: 100%;
+        }
+        #dashboard-view { 
+            padding: 15px 8px; /* Reduced horizontal padding */
+            background-color: var(--bg-page); 
+        }
+        #network-view {
+            padding: 0; /* Full page view for network */
+            background-color: var(--bg-page);
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            height: 100vh;
+        }
         .view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        #network-view.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         /* --- Login/Register --- */
@@ -153,8 +175,16 @@
         #transaction-summary .summary-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
         #transaction-summary .summary-amount { font-size: 18px; font-weight: 700; color: var(--text-primary); }
 
-        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
-        .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+        /* UPDATED: Filter bar scroll fix */
+        .filter-bar { 
+            display: flex; gap: 10px; margin-bottom: 20px; 
+            overflow-x: auto; /* Allows horizontal scrolling */
+            padding-bottom: 10px; 
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .filter-bar::-webkit-scrollbar { display: none; } /* Hide scrollbar for Chrome, Safari and Opera */
+        .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
         .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item { 
@@ -251,12 +281,7 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- Network Modal Styles (UPDATED) --- */
-        #network-modal .modal-content {
-            width: 100%; height: 100%; max-width: 100%; max-height: 100%;
-            border-radius: 0; padding: 0; display: flex; flex-direction: column;
-            background-color: var(--bg-page);
-        }
+        /* --- Network Page Styles (ALL NEW/UPDATED) --- */
         .network-header {
             display: grid; grid-template-columns: auto 1fr auto; align-items: center;
             gap: 15px; padding: 10px 15px;
@@ -264,8 +289,8 @@
             background-color: var(--bg-card);
         }
         .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; }
-        .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
-        .network-header #network-back-btn { display: none; /* Hidden by default */ }
+        .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; background: none; border: none; padding: 0; }
+        .network-header #network-back-btn { display: none; }
         .network-header #network-back-btn svg { width: 24px; height: 24px; stroke: var(--text-primary); }
         .network-header #network-close-btn { font-size: 28px; line-height: 1; color: #aaa; }
         .network-header #network-refresh-btn svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
@@ -282,9 +307,8 @@
         #downline-content:active { cursor: grabbing; }
         #network-tree-container { width: 100%; height: 100%; transform-origin: 0 0; transition: transform 0.2s ease-out; }
         
-        /* New Network Tree Styles */
         .network-tree { display: inline-flex; flex-direction: column; align-items: center; padding: 40px; min-width: 100%; }
-        .network-node { display: flex; flex-direction: column; align-items: center; position: relative; padding: 50px 5px 0 5px; }
+        .network-node { display: flex; flex-direction: column; align-items: center; position: relative; padding: 50px 15px 0 15px; }
         .network-node > .node-content { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: transform 0.2s; }
         .network-node > .node-content:hover { transform: scale(1.05); }
         .node-avatar {
@@ -299,38 +323,42 @@
         .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .node-name { font-weight: 600; font-size: 14px; }
         .node-earning { font-size: 12px; color: var(--accent-green); font-weight: 500;}
-        .node-children { display: flex; justify-content: center; position: relative; padding-top: 50px; gap: 15px; }
+        .node-children { display: flex; justify-content: center; position: relative; padding-top: 50px; }
 
-        /* Connecting Lines */
+        /* Professional Connecting Lines */
         .network-node:not(:first-child)::before {
             content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 2px; height: 50px; background-color: #ccc;
+            width: 2px; height: 50px; background-color: #ccc; z-index: -1;
         }
         .node-children::before {
-            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            height: 2px; background-color: #ccc;
-            width: calc(100% - 40px);
+            content: ''; position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            height: 2px; background-color: #ccc; z-index: -1;
+            width: calc(100% - 60px); 
         }
-        .network-tree > .network-node::before { display: none; } /* No line above root */
+        .node-children .network-node:first-child:last-child::before {
+             height: 25px; top: 25px;
+        }
+        .network-tree > .network-node::before { display: none; }
         
+        /* Attached Percentage Tag */
         .commission-badge {
-            position: absolute; top: 45px; right: -5px;
+            position: absolute; top: -5px; right: -5px;
             background-color: var(--text-primary); color: white;
-            width: 30px; height: 30px; border-radius: 50%;
+            width: 28px; height: 28px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 700; z-index: 1;
+            font-size: 10px; font-weight: 700; z-index: 2;
             border: 2px solid white;
         }
 
-        #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 15px; }
+        #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 25px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
         .upline-member .node-content { text-align: center; }
         .upline-member .node-avatar { width: 70px; height: 70px; font-size: 28px; }
         .upline-member.current-user .node-avatar { background-color: var(--brand-blue); }
         .upline-member .node-name { font-size: 15px; }
         .upline-member .node-earning { font-size: 13px; color: var(--text-secondary); }
-        .upline-member:not(:first-child)::after { content: ''; width: 2px; height: 15px; background-color: #ccc; position: absolute; bottom: -15px; }
-        .upline-commission { position: absolute; bottom: -28px; left: 10px; font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+        .upline-member:not(:first-child)::after { content: ''; width: 2px; height: 25px; background-color: #ccc; position: absolute; bottom: -25px; }
+        .upline-commission { position: absolute; bottom: -35px; left: 10px; font-size: 12px; color: var(--text-secondary); font-weight: 600; }
 
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
@@ -461,7 +489,7 @@
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
                 <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                <div id="open-network-modal" class="action-card">
+                <div id="open-network-view" class="action-card">
                     <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
                     <span class="card-text">Network</span>
                 </div>
@@ -498,9 +526,39 @@
                 <div id="unified-history-list" class="history-list"></div>
             </div>
         </div>
+
+        <!-- NEW: Network View (Full Page) -->
+        <div id="network-view" class="view">
+            <div class="network-header">
+                <button id="network-back-btn" class="header-action" title="Go Back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                </button>
+                <h1>My Network</h1>
+                <div style="display: flex; gap: 15px; justify-self: end;">
+                    <button id="network-refresh-btn" class="header-action" title="Refresh Network">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    </button>
+                    <button id="network-close-btn" class="header-action">&times;</button>
+                </div>
+            </div>
+            <div class="network-tabs">
+                <button class="network-tab-btn active" data-tab="downline">My Team</button>
+                <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
+            </div>
+            <div class="network-content-container">
+                <div id="downline-content" class="network-tab-content active">
+                    <div id="network-tree-container"></div>
+                    <div id="network-loader" style="display: none;">Loading your network...</div>
+                </div>
+                <div id="upline-content" class="network-tab-content">
+                    <div id="upline-list"></div>
+                    <div id="upline-loader">Loading your upline...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- All Modals -->
+    <!-- All Modals (Kept for other functionalities) -->
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
     
@@ -545,49 +603,13 @@
         </div> 
     </div>
     
-    <div id="network-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="network-header">
-                <!-- UPDATED: Back button added -->
-                <div id="network-back-btn" class="header-action" title="Go Back">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                </div>
-                <h1>My Network</h1>
-                <!-- UPDATED: Refresh and Close buttons are now in a container for better layout -->
-                <div style="display: flex; gap: 15px; justify-self: end;">
-                    <div id="network-refresh-btn" class="header-action" title="Refresh Network">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    </div>
-                    <button id="network-close-btn" class="header-action" data-close-modal>&times;</button>
-                </div>
-            </div>
-            <div class="network-tabs">
-                <button class="network-tab-btn active" data-tab="downline">My Team</button>
-                <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
-            </div>
-            <div class="network-content-container">
-                <div id="downline-content" class="network-tab-content active">
-                    <div id="network-tree-container"></div>
-                    <div id="network-loader" style="display: none;">Loading your network...</div>
-                </div>
-                <div id="upline-content" class="network-tab-content">
-                    <div id="upline-list"></div>
-                    <div id="upline-loader">Loading your upline...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NEW: Notification Center Modal -->
     <div id="notification-center-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="notification-center-header">
                 <h1>Latest Offers</h1>
                 <button id="notification-center-close-btn" data-close-modal>&times;</button>
             </div>
-            <div id="notification-center-list">
-                <!-- Notifications will be dynamically inserted here -->
-            </div>
+            <div id="notification-center-list"></div>
         </div>
     </div>
 
@@ -598,7 +620,6 @@
         </div>
     </div>
 
-    <!-- Professional Success Modal -->
     <div id="payment-success-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
             <div class="success-icon">
@@ -624,7 +645,6 @@
         </div>
     </div>
 
-    <!-- Professional Transaction Details Modal -->
     <div id="transaction-details-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
             <p class="amount" id="details-modal-amount"></p>
@@ -703,9 +723,8 @@
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
         
-        // --- NEW: Network State Management ---
-        let networkHistory = []; // Stack to manage drill-down navigation
-        let isDownlineLoading = false; // Flag to prevent multiple loads
+        let networkHistory = []; 
+        let isDownlineLoading = false;
 
         const showToast = (message) => {
             const toast = document.getElementById('toast-notification');
@@ -722,7 +741,6 @@
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.remove('active');
             if (modalId === 'scan-pay-modal') stopScanner();
-            if (modalId === 'network-modal') networkHistory = []; // Reset history on close
         };
         const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
         const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
@@ -1276,7 +1294,7 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // --- REFACTORED AND NEW NETWORK FUNCTIONS ---
+        // --- UPDATED NETWORK FUNCTIONS ---
         const networkLoader = document.getElementById('network-loader');
         const uplineLoader = document.getElementById('upline-loader');
         const downlineContainer = document.getElementById('downline-content');
@@ -1293,8 +1311,7 @@
             try {
                 const treeRoot = document.createElement('div');
                 treeRoot.className = 'network-tree';
-                
-                const rootNode = await buildNetworkTree(userId, 0, userId === currentUser.uid);
+                const rootNode = await buildNetworkTree(userId, 0);
                 
                 if (rootNode) {
                     treeRoot.appendChild(rootNode);
@@ -1311,22 +1328,22 @@
             }
         }
 
-        async function buildNetworkTree(userId, level, isCurrentUserRoot) {
-            if (level > 4) return null; // 5 levels deep (0 to 4)
+        async function buildNetworkTree(userId, level) {
+            if (level > 4) return null;
 
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (!userDoc.exists()) return null;
             
             const userData = userDoc.data();
             const isRootOfCurrentView = networkHistory[networkHistory.length - 1] === userId;
-            const node = createDownlineNode(userData, level, isRootOfCurrentView, isCurrentUserRoot);
+            const node = createDownlineNode(userData, level, isRootOfCurrentView);
             
             const referrals = await getDirectReferrals(userId);
             if (referrals.length > 0) {
                 const childrenContainer = document.createElement('div');
                 childrenContainer.className = 'node-children';
                 
-                const referralPromises = referrals.map(member => buildNetworkTree(member.uid, level + 1, isCurrentUserRoot));
+                const referralPromises = referrals.map(member => buildNetworkTree(member.uid, level + 1));
                 const childNodes = await Promise.all(referralPromises);
                 
                 childNodes.forEach(childNode => { if (childNode) childrenContainer.appendChild(childNode); });
@@ -1344,13 +1361,12 @@
             return node;
         }
 
-        function createDownlineNode(userData, level, isRootOfCurrentView, isCurrentUserRoot) {
+        function createDownlineNode(userData, level, isRootOfCurrentView) {
             const node = document.createElement('div');
             node.className = 'network-node';
 
             const nodeContent = document.createElement('div');
             nodeContent.className = 'node-content';
-            // Only non-root nodes are clickable for drill-down
             if (!isRootOfCurrentView) {
                 nodeContent.dataset.uid = userData.uid;
                 nodeContent.addEventListener('click', (e) => {
@@ -1365,15 +1381,17 @@
             const earning = userData.lifetimeEarning || 0;
             
             let commissionBadgeHTML = '';
-            if (level > 0) { // No badge for the root user of the entire tree
+            if (!isRootOfCurrentView) {
                 commissionBadgeHTML = `<div class="commission-badge">${commissionRates[level-1]}%</div>`;
             }
 
             nodeContent.innerHTML = `
-                <div class="node-avatar ${isRootOfCurrentView ? 'is-root' : ''}">${avatarHTML}</div>
+                <div class="node-avatar ${isRootOfCurrentView ? 'is-root' : ''}">
+                    ${avatarHTML}
+                    ${commissionBadgeHTML}
+                </div>
                 <div class="node-name">${userData.name}</div>
                 <div class="node-earning">Earning: ₹${earning.toFixed(2)}</div>
-                ${commissionBadgeHTML}
             `;
             node.appendChild(nodeContent);
             return node;
@@ -1408,7 +1426,7 @@
                             name: uplineData.name,
                             lifetimeEarning: commissionPaid,
                             profilePictureUrl: uplineData.profilePictureUrl,
-                            level: i + 1
+                            level: i // index 0 is level 1 (30%)
                         });
                     }
                     return null;
@@ -1431,6 +1449,12 @@
 
             const avatarHTML = profilePictureUrl ? `<img src="${profilePictureUrl}" alt="${name}">` : name.charAt(0).toUpperCase();
             let earningHTML = isCurrentUser ? `<div class="node-earning">Aap (Your Earning: ₹${(lifetimeEarning || 0).toFixed(2)})</div>` : `<div class="node-earning">Commission Paid: ₹${(lifetimeEarning || 0).toFixed(2)}</div>`;
+            
+            // UPDATED: Correct percentage logic for upline
+            let commissionHTML = '';
+            if (!isCurrentUser && level < commissionRates.length) {
+                commissionHTML = `<div class="upline-commission"><sup>${commissionRates[level]}%</sup></div>`;
+            }
 
             node.innerHTML = `
                 <div class="node-content">
@@ -1438,7 +1462,7 @@
                     <div class="node-name">${name}</div>
                     ${earningHTML}
                 </div>
-                ${!isCurrentUser ? `<div class="upline-commission"><sup>${commissionRates[level-1]}%</sup></div>` : ''}
+                ${commissionHTML}
             `;
             return node;
         }
@@ -1587,12 +1611,14 @@
             });
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 
-            // --- UPDATED: Network Modal Event Listeners ---
-            document.getElementById('open-network-modal').addEventListener('click', () => {
-                openModal('network-modal');
-                // Reset and load the initial state
+            // --- UPDATED: Network View Event Listeners ---
+            document.getElementById('open-network-view').addEventListener('click', () => {
+                toggleView('network-view');
                 networkHistory = [currentUser.uid];
                 loadDownline(currentUser.uid);
+            });
+            document.getElementById('network-close-btn').addEventListener('click', () => {
+                toggleView('dashboard-view');
             });
             document.getElementById('network-refresh-btn').addEventListener('click', () => {
                 const activeTab = document.querySelector('.network-tab-btn.active').dataset.tab;
@@ -1611,12 +1637,12 @@
                     loadDownline(previousUserId);
                 }
             });
-            document.querySelector('#network-modal .network-tabs').addEventListener('click', e => {
+            document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
                 const target = e.target.closest('.network-tab-btn');
                 if (!target) return;
-                document.querySelector('#network-modal .network-tab-btn.active').classList.remove('active');
+                document.querySelector('#network-view .network-tab-btn.active').classList.remove('active');
                 target.classList.add('active');
-                document.querySelectorAll('#network-modal .network-tab-content').forEach(content => content.classList.remove('active'));
+                document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
                 
                 if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
