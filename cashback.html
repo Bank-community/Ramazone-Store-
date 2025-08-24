@@ -18,12 +18,18 @@
         html { height: 100%; }
         body {
             font-family: 'Poppins', sans-serif; background-color: var(--bg-page);
-            color: var(--text-primary); display: flex; justify-content: center;
-            align-items: flex-start; min-height: 100%; padding: 0;
+            color: var(--text-primary);
+            min-height: 100%; 
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
-        .container { width: 100%; max-width: 500px; }
-        .view { display: none; padding: 20px; background-color: var(--bg-card); min-height: 100vh; }
-        #dashboard-view { padding: 15px; background-color: var(--bg-page); }
+        .container { 
+            width: 100%; 
+            max-width: 500px; 
+            margin: 0 auto; /* Center the container and ensure stability */
+        }
+        .view { display: none; background-color: var(--bg-card); min-height: 100vh; }
+        #login-view, #registration-view { padding: 20px; }
+        #dashboard-view, #network-view { padding: 15px; background-color: var(--bg-page); }
         .view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
@@ -44,30 +50,29 @@
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
         
         /* --- Dashboard UI --- */
-        /* UPDATED: Header Layout for better spacing and border-radius */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 12px; /* Added horizontal padding */
+            padding: 8px 12px;
             background-color: var(--bg-card); 
-            border-radius: 8px; /* UPDATED */
+            border-radius: 8px;
             margin-bottom: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            gap: 10px; /* Added gap for spacing */
         }
         .header-logo { height: 35px; flex-shrink: 0; }
         #static-notification-card { flex-grow: 1; margin-right: 2px; }
 
 
-        /* --- UPDATED: Top Notification Bar Styles & Animations --- */
         #static-notification-card {
             display: flex; align-items: center; gap: 1px;
             padding: 5px 10px; 
-            border-radius: 8px; /* UPDATED */
+            border-radius: 8px;
             background-color: var(--brand-red); color: white;
             transition: all 0.3s ease; display: none;
             border: var(--notification-border-width, 0px) solid var(--notification-border-color, transparent);
         }
         #static-notification-card.visible { display: flex; }
         
-        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 3px; }
+        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; } /* Increased gap */
         .notification-content-wrapper.animate { animation: full-sequence 5s infinite; }
         .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
         .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
@@ -254,29 +259,23 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- Network Modal Styles --- */
-        #network-modal .modal-content {
-            width: 100%; height: 100%; max-width: 100%; max-height: 100%;
-            border-radius: 0; padding: 0; display: flex; flex-direction: column;
-            background-color: var(--bg-page);
-        }
+        /* --- Network View Styles --- */
+        #network-view { display: none; flex-direction: column; height: 100vh; padding: 0; }
         .network-header {
-            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
             gap: 15px; padding: 10px 15px;
             border-bottom: 1px solid var(--border-color); flex-shrink: 0;
             background-color: var(--bg-card);
         }
-        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; grid-column: 2; }
+        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; }
         .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
-        .network-header #network-refresh-btn { grid-column: 1; justify-self: start; }
-        .network-header #network-close-btn { grid-column: 3; justify-self: end; font-size: 28px; line-height: 1; color: #aaa; }
-        .network-header #network-refresh-btn svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
+        .network-header .header-action svg { width: 24px; height: 24px; stroke: var(--text-secondary); }
         
         .network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
         .network-tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
         .network-tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         
-        .network-content-container { flex-grow: 1; overflow: hidden; position: relative; }
+        .network-content-container { flex-grow: 1; overflow: hidden; position: relative; background-color: var(--bg-page); }
         .network-tab-content { display: none; width: 100%; height: 100%; }
         .network-tab-content.active { display: block; }
 
@@ -317,7 +316,7 @@
 
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
-        /* --- UPDATED: Notification Center (Popup) Styles --- */
+        /* --- Notification Center (Popup) Styles --- */
         #notification-center-modal .modal-content {
             width: 100%; height: 100%; max-width: 100%; max-height: 100%;
             border-radius: 0; padding: 0; display: flex; flex-direction: column;
@@ -342,13 +341,13 @@
             text-align: center;
         }
         .notification-center-item .title {
-            font-size: 16px; /* UPDATED: Font size reduced */
+            font-size: 16px;
             font-weight: 600;
             line-height: 1.4;
-            word-break: break-all; /* UPDATED: Ensures long links wrap */
+            word-break: break-all;
         }
         .notification-center-item .title a {
-            color: var(--link-blue) !important; /* UPDATED: Enforces blue color for links */
+            color: var(--link-blue) !important;
             text-decoration: underline;
         }
         .notification-center-item .percentage { font-size: 40px; font-weight: 800; margin-top: 10px; }
@@ -405,7 +404,6 @@
 
         <!-- Dashboard View -->
         <div id="dashboard-view" class="view">
-            <!-- UPDATED: Header Layout -->
             <div class="header">
                 <div id="static-notification-card">
                     <div class="notification-content-wrapper">
@@ -445,7 +443,7 @@
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
                 <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                <div id="open-network-modal" class="action-card">
+                <div id="open-network-view" class="action-card">
                     <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
                     <span class="card-text">Network</span>
                 </div>
@@ -454,7 +452,6 @@
                     <img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg">
                     <span class="card-text">Credit Request</span>
                 </div>
-                <!-- UPDATED: Live Notification Thumbnail Card -->
                 <div id="open-notification-center-btn" class="action-card">
                     <div class="notification-content-wrapper">
                         <div class="notification-text-container">
@@ -483,6 +480,34 @@
                 <div id="unified-history-list" class="history-list"></div>
             </div>
         </div>
+        
+        <!-- Network View -->
+        <div id="network-view" class="view">
+            <div class="network-header">
+                <div id="network-back-btn" class="header-action" title="Back to Dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </div>
+                <h1>My Network</h1>
+                <div id="network-refresh-btn" class="header-action" title="Refresh Network">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                </div>
+            </div>
+            <div class="network-tabs">
+                <button class="network-tab-btn active" data-tab="downline">My Team</button>
+                <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
+            </div>
+            <div class="network-content-container">
+                <div id="downline-content" class="network-tab-content active">
+                    <div id="network-tree-container"></div>
+                    <div id="network-loader">Loading your network...</div>
+                </div>
+                <div id="upline-content" class="network-tab-content">
+                    <div id="upline-list"></div>
+                    <div id="upline-loader">Loading your upline...</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- All Modals -->
@@ -529,34 +554,8 @@
             <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> 
         </div> 
     </div>
-    
-    <div id="network-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="network-header">
-                <div id="network-refresh-btn" class="header-action" title="Refresh Network">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                </div>
-                <h1>My Network</h1>
-                <button id="network-close-btn" class="header-action" data-close-modal>&times;</button>
-            </div>
-            <div class="network-tabs">
-                <button class="network-tab-btn active" data-tab="downline">My Team</button>
-                <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
-            </div>
-            <div class="network-content-container">
-                <div id="downline-content" class="network-tab-content active">
-                    <div id="network-tree-container"></div>
-                    <div id="network-loader">Loading your network...</div>
-                </div>
-                <div id="upline-content" class="network-tab-content">
-                    <div id="upline-list"></div>
-                    <div id="upline-loader">Loading your upline...</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- NEW: Notification Center Modal -->
+    <!-- Notification Center Modal -->
     <div id="notification-center-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="notification-center-header">
@@ -690,7 +689,12 @@
         };
         const toggleView = (viewId) => {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId)?.classList.add('active');
+            const view = document.getElementById(viewId);
+            if (view) {
+                view.classList.add('active');
+                // Ensure the main body is scrollable or not based on the view
+                document.body.style.overflowY = (viewId === 'network-view') ? 'hidden' : 'auto';
+            }
         };
         const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
         const closeModal = (modalId) => {
@@ -737,7 +741,18 @@
                 attachRealtimeListeners(user);
             } else if (!user) {
                 detachAllListeners();
-                toggleView('login-view');
+                // Check for referral code before showing login
+                const urlParams = new URLSearchParams(window.location.search);
+                const refCode = urlParams.get('ref');
+                if (refCode) {
+                    toggleView('registration-view');
+                    const referralInput = document.getElementById('reg-referral');
+                    if (referralInput) {
+                        referralInput.value = refCode.toUpperCase();
+                    }
+                } else {
+                    toggleView('login-view');
+                }
             }
         });
 
@@ -766,6 +781,8 @@
                 if (!snapshot.empty) {
                     const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
                     updateNotificationUI(latestNotif);
+                } else {
+                    updateNotificationUI(null); // Explicitly hide if no notifs
                 }
             });
             const allNotificationsUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(5)), (snapshot) => {
@@ -796,6 +813,12 @@
         function updateNotificationUI(notifData) {
             const topNotifCard = document.getElementById('static-notification-card');
             const thumbNotifCard = document.getElementById('open-notification-center-btn');
+
+            if (!notifData) {
+                topNotifCard.classList.remove('visible');
+                thumbNotifCard.querySelector('.notification-content-wrapper').style.opacity = 0;
+                return;
+            }
 
             const topTitle = notifData.title || 'Default|Text';
             const [topText1, topText2 = ''] = topTitle.split('|').map(t => t.trim());
@@ -1324,14 +1347,23 @@
             treeContainer.innerHTML = '';
             isDownlineLoaded = false;
             try {
+                const rootNode = await buildNetworkTree(currentUser.uid, 0);
                 const treeRoot = document.createElement('div');
                 treeRoot.className = 'network-tree';
-                const rootNode = await buildNetworkTree(currentUser.uid, 0);
-                if (!rootNode || !rootNode.querySelector('.node-children')) {
-                     treeContainer.innerHTML = '<div class="empty-state">Aapke network mein koi member nahi hai.</div>';
-                } else {
-                    treeContainer.appendChild(treeRoot);
+                
+                if (rootNode) {
+                    treeRoot.appendChild(rootNode);
                 }
+
+                if (!rootNode || !rootNode.querySelector('.node-children')) {
+                     const emptyMessage = document.createElement('div');
+                     emptyMessage.className = 'empty-state';
+                     emptyMessage.style.padding = '20px 0';
+                     emptyMessage.textContent = 'Aapke network mein koi member nahi hai.';
+                     treeRoot.appendChild(emptyMessage);
+                }
+                
+                treeContainer.appendChild(treeRoot);
                 isDownlineLoaded = true;
             } catch (error) {
                 console.error("Error loading downline:", error);
@@ -1519,24 +1551,37 @@
             });
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 
-            document.getElementById('open-network-modal').addEventListener('click', () => {
-                openModal('network-modal');
-                if (document.querySelector('.network-tab-btn[data-tab="downline"]').classList.contains('active') && !isDownlineLoaded) {
+            // --- NEW: Network View Logic ---
+            document.getElementById('open-network-view').addEventListener('click', () => {
+                toggleView('network-view');
+                // Load content only if it hasn't been loaded before
+                if (document.querySelector('.network-tab-btn.active').dataset.tab === 'downline' && !isDownlineLoaded) {
                     loadDownline();
+                } else if (document.querySelector('.network-tab-btn.active').dataset.tab === 'upline' && !isUplineLoaded) {
+                    loadUpline();
                 }
             });
+            
+            document.getElementById('network-back-btn').addEventListener('click', () => {
+                toggleView('dashboard-view');
+            });
+
             document.getElementById('network-refresh-btn').addEventListener('click', () => {
-                const activeTab = document.querySelector('.network-tab-btn.active').dataset.tab;
+                const activeTab = document.querySelector('#network-view .network-tab-btn.active').dataset.tab;
                 if (activeTab === 'downline') { isDownlineLoaded = false; loadDownline(); } 
                 else { isUplineLoaded = false; loadUpline(); }
             });
-            document.querySelector('#network-modal .network-tabs').addEventListener('click', e => {
+
+            document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
                 const target = e.target.closest('.network-tab-btn');
-                if (!target) return;
-                document.querySelector('#network-modal .network-tab-btn.active').classList.remove('active');
+                if (!target || target.classList.contains('active')) return;
+                
+                document.querySelector('#network-view .network-tab-btn.active').classList.remove('active');
                 target.classList.add('active');
-                document.querySelectorAll('#network-modal .network-tab-content').forEach(content => content.classList.remove('active'));
+                
+                document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
+                
                 if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
                 if (target.dataset.tab === 'downline' && !isDownlineLoaded) { loadDownline(); }
             });
