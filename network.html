@@ -21,30 +21,10 @@
             color: var(--text-primary); display: flex; justify-content: center;
             align-items: flex-start; min-height: 100%; padding: 0;
         }
-        .container { 
-            width: 100%; 
-            max-width: 500px;
-        }
-        .view { 
-            display: none; 
-            padding: 20px 8px;
-            background-color: var(--bg-card); 
-            min-height: 100vh; 
-            width: 100%;
-        }
-        #dashboard-view { 
-            padding: 15px 8px;
-            background-color: var(--bg-page); 
-        }
-        #network-view {
-            padding: 0;
-            background-color: var(--bg-page);
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-        }
+        .container { width: 100%; max-width: 500px; }
+        .view { display: none; padding: 20px; background-color: var(--bg-card); min-height: 100vh; }
+        #dashboard-view, #network-view { padding: 15px; background-color: var(--bg-page); } /* UPDATED */
         .view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        #network-view.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         /* --- Login/Register --- */
@@ -66,25 +46,28 @@
         /* --- Dashboard UI --- */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 12px; 
+            padding: 8px 12px;
             background-color: var(--bg-card); 
-            border-radius: 8px; 
+            border-radius: 8px;
             margin-bottom: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            gap: 10px; /* UPDATED: Added gap for spacing */
         }
         .header-logo { height: 35px; flex-shrink: 0; }
-        #static-notification-card { flex-grow: 1; margin-right: 2px; }
+        #static-notification-card { flex-grow: 1; }
+
 
         #static-notification-card {
             display: flex; align-items: center; gap: 1px;
             padding: 5px 10px; 
-            border-radius: 8px; 
+            border-radius: 8px;
             background-color: var(--brand-red); color: white;
             transition: all 0.3s ease; display: none;
             border: var(--notification-border-width, 0px) solid var(--notification-border-color, transparent);
         }
         #static-notification-card.visible { display: flex; }
         
-        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 3px; }
+        /* UPDATED: Increased gap for better spacing */
+        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
         .notification-content-wrapper.animate { animation: full-sequence 5s infinite; }
         .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
         .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
@@ -147,20 +130,6 @@
         .action-card .icon { margin-bottom: 8px; width: 30px; height: 30px; }
         .action-card .card-text { font-size: 12px; font-weight: 500; color: var(--text-primary); }
 
-        #open-notification-center-btn { 
-            padding: 10px;
-            border: var(--thumbnail-border-width, 1px) solid var(--thumbnail-border-color, var(--border-color));
-        }
-        #open-notification-center-btn .notification-content-wrapper {
-             flex-direction: column; justify-content: center; align-items: center; gap: 4px;
-        }
-        #open-notification-center-btn .notification-text-container { 
-            font-size: 12px; font-weight: 600; text-align: center;
-        }
-        #open-notification-center-btn .notification-percentage { 
-            font-size: 22px; font-weight: 800; margin-top: 4px;
-        }
-
         .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
         
@@ -173,15 +142,8 @@
         #transaction-summary .summary-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
         #transaction-summary .summary-amount { font-size: 18px; font-weight: 700; color: var(--text-primary); }
 
-        .filter-bar { 
-            display: flex; gap: 10px; margin-bottom: 20px; 
-            overflow-x: auto;
-            padding-bottom: 10px; 
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .filter-bar::-webkit-scrollbar { display: none; }
-        .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; }
         .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item { 
@@ -278,7 +240,14 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- Network Page Styles (ALL NEW/UPDATED) --- */
+        /* --- UPDATED: Network View Styles (from Modal to Page) --- */
+        #network-view {
+            padding: 0; /* Remove padding for full screen */
+            display: none; /* Hide by default */
+            flex-direction: column;
+            background-color: var(--bg-page);
+            min-height: 100vh;
+        }
         .network-header {
             display: grid; grid-template-columns: auto 1fr auto; align-items: center;
             gap: 15px; padding: 10px 15px;
@@ -286,10 +255,8 @@
             background-color: var(--bg-card);
         }
         .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; }
-        .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; background: none; border: none; padding: 0; }
-        .network-header #network-back-btn { display: none; }
+        .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
         .network-header #network-back-btn svg { width: 24px; height: 24px; stroke: var(--text-primary); }
-        .network-header #network-close-btn { font-size: 28px; line-height: 1; color: #aaa; }
         .network-header #network-refresh-btn svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
         
         .network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
@@ -297,74 +264,43 @@
         .network-tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
         
         .network-content-container { flex-grow: 1; overflow: hidden; position: relative; }
-        .network-tab-content { display: none; width: 100%; height: 100%; }
+        .network-tab-content { display: none; width: 100%; height: 100%; overflow: auto; } /* Allow scrolling */
         .network-tab-content.active { display: block; }
 
         #downline-content { cursor: grab; }
         #downline-content:active { cursor: grabbing; }
         #network-tree-container { width: 100%; height: 100%; transform-origin: 0 0; transition: transform 0.2s ease-out; }
-        
-        .network-tree { display: inline-flex; flex-direction: column; align-items: center; padding: 40px; min-width: 100%; }
-        .network-node { display: flex; flex-direction: column; align-items: center; position: relative; padding: 50px 15px 0 15px; }
-        .network-node > .node-content { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: transform 0.2s; position: relative; }
-        .network-node > .node-content:hover { transform: scale(1.05); }
+        .network-tree { display: inline-flex; flex-direction: column; align-items: center; padding: 40px; min-width: 100%; min-height: 100%; }
+        .network-node { display: flex; flex-direction: column; align-items: center; position: relative; padding: 20px 5px 0 5px; }
+        .network-node > .node-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .node-avatar {
             width: 60px; height: 60px; border-radius: 50%;
             background-color: var(--brand-red); color: white;
             display: flex; align-items: center; justify-content: center;
             font-size: 24px; font-weight: 600;
-            border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 8px; overflow: visible; /* Changed for badge positioning */
+            border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            margin-bottom: 8px; overflow: hidden;
         }
-        .node-avatar.is-root { border-color: var(--brand-blue); }
-        .node-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .node-name { font-weight: 600; font-size: 14px; }
         .node-earning { font-size: 12px; color: var(--accent-green); font-weight: 500;}
         .node-children { display: flex; justify-content: center; position: relative; padding-top: 50px; }
-
-        /* Professional Connecting Lines */
-        .network-node:not(:first-child)::before {
-            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 2px; height: 50px; background-color: #ccc; z-index: 0;
-        }
-        .node-children::before {
-            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            height: 2px; background-color: #ccc; z-index: 0;
-            width: calc(100% - 60px); 
-        }
-        .node-children .network-node:first-child:last-child::before {
-             display: none;
-        }
+        .network-node::before { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 20px; background-color: #ccc; }
+        .node-children::before { content: ''; position: absolute; top: 0; left: 50%; height: 2px; background-color: #ccc; width: calc(100% - 40px); transform: translateX(-50%); }
+        .network-node:not(:first-child)::after, .network-node:not(:last-child)::after { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 20px; background-color: #ccc; }
+        .network-node:only-child::after { display: none; }
+        .commission-badge { position: absolute; top: 25px; left: calc(50% + 5px); background-color: var(--text-secondary); color: white; padding: 2px 6px; font-size: 10px; border-radius: 5px; font-weight: 600; z-index: 1; }
         .network-tree > .network-node::before { display: none; }
-        
-        /* Attached Percentage Tag */
-        .commission-badge {
-            position: absolute; top: -10px; right: -10px;
-            background-color: var(--text-primary); color: white;
-            width: 28px; height: 28px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: 700; z-index: 2;
-            border: 2px solid var(--bg-page);
-        }
-        
-        #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 35px; }
+
+        #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 15px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .upline-member .node-content { text-align: center; position: relative; }
+        .upline-member .node-content { text-align: center; }
         .upline-member .node-avatar { width: 70px; height: 70px; font-size: 28px; }
-        .upline-member.current-user .node-avatar { 
-            border: 4px solid var(--brand-blue); 
-        }
+        .upline-member.current-user .node-avatar { background-color: var(--brand-blue); }
         .upline-member .node-name { font-size: 15px; }
         .upline-member .node-earning { font-size: 13px; color: var(--text-secondary); }
-        .upline-member:not(:last-child)::after { 
-            content: ''; width: 2px; height: 35px; background-color: #ccc; 
-            position: absolute; top: -35px;
-        }
-        .upline-commission {
-            position: absolute; top: -20px; left: calc(50% + 20px);
-            font-size: 12px; color: var(--text-secondary); font-weight: 600;
-            background-color: var(--bg-page); padding: 0 5px;
-        }
+        .upline-member:not(:first-child)::after { content: ''; width: 2px; height: 15px; background-color: #ccc; position: absolute; bottom: -15px; }
+        .upline-commission { position: absolute; bottom: -28px; left: 10px; font-size: 12px; color: var(--text-secondary); font-weight: 600; }
 
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
@@ -399,7 +335,7 @@
             word-break: break-all;
         }
         .notification-center-item .title a {
-            color: var(--link-blue) !important;
+            color: var(--link-blue) !important; 
             text-decoration: underline;
         }
         .notification-center-item .percentage { font-size: 40px; font-weight: 800; margin-top: 10px; }
@@ -425,7 +361,6 @@
 <body>
 
     <div class="container">
-        <!-- Login and Registration Views -->
         <div id="login-view" class="view active">
             <div class="auth-container">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
@@ -454,7 +389,6 @@
             </div>
         </div>
 
-        <!-- Dashboard View -->
         <div id="dashboard-view" class="view">
             <div class="header">
                 <div id="static-notification-card">
@@ -495,8 +429,7 @@
             <div class="dashboard-actions">
                 <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
                 <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                <div id="open-network-view" class="action-card">
-                    <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
+                <div id="open-network-view" class="action-card"> <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
                     <span class="card-text">Network</span>
                 </div>
                 <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
@@ -505,13 +438,8 @@
                     <span class="card-text">Credit Request</span>
                 </div>
                 <div id="open-notification-center-btn" class="action-card">
-                    <div class="notification-content-wrapper">
-                        <div class="notification-text-container">
-                            <span class="notification-text-line notification-text-line1"></span>
-                            <span class="notification-text-line notification-text-line2"></span>
-                        </div>
-                        <div class="notification-percentage"></div>
-                    </div>
+                     <img class="icon" src="https://www.svgrepo.com/show/403404/notification-bell.svg">
+                     <span class="card-text">Offers</span>
                 </div>
             </div>
 
@@ -533,18 +461,14 @@
             </div>
         </div>
 
-        <!-- NEW: Network View (Full Page) -->
         <div id="network-view" class="view">
             <div class="network-header">
-                <button id="network-back-btn" class="header-action" title="Go Back">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                </button>
+                <div id="network-back-btn" class="header-action" title="Back to Dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </div>
                 <h1>My Network</h1>
-                <div style="display: flex; gap: 15px; justify-self: end;">
-                    <button id="network-refresh-btn" class="header-action" title="Refresh Network">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    </button>
-                    <button id="network-close-btn" class="header-action">&times;</button>
+                <div id="network-refresh-btn" class="header-action" title="Refresh Network">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
                 </div>
             </div>
             <div class="network-tabs">
@@ -554,7 +478,7 @@
             <div class="network-content-container">
                 <div id="downline-content" class="network-tab-content active">
                     <div id="network-tree-container"></div>
-                    <div id="network-loader" style="display: none;">Loading your network...</div>
+                    <div id="network-loader">Loading your network...</div>
                 </div>
                 <div id="upline-content" class="network-tab-content">
                     <div id="upline-list"></div>
@@ -564,7 +488,6 @@
         </div>
     </div>
 
-    <!-- All Modals (Kept for other functionalities) -->
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
     
@@ -615,7 +538,8 @@
                 <h1>Latest Offers</h1>
                 <button id="notification-center-close-btn" data-close-modal>&times;</button>
             </div>
-            <div id="notification-center-list"></div>
+            <div id="notification-center-list">
+                </div>
         </div>
     </div>
 
@@ -724,13 +648,11 @@
         let creditRequests = [];
         let activeFilter = 'all';
         let pendingAction = null;
+        let isDownlineLoaded = false;
         let isUplineLoaded = false;
         let lastShownNotificationId = null;
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
-        
-        let networkHistory = []; 
-        let isDownlineLoading = false;
 
         const showToast = (message) => {
             const toast = document.getElementById('toast-notification');
@@ -816,6 +738,8 @@
                 if (!snapshot.empty) {
                     const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
                     updateNotificationUI(latestNotif);
+                } else {
+                    document.getElementById('static-notification-card').classList.remove('visible');
                 }
             });
             const allNotificationsUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(5)), (snapshot) => {
@@ -845,50 +769,30 @@
 
         function updateNotificationUI(notifData) {
             const topNotifCard = document.getElementById('static-notification-card');
-            const thumbNotifCard = document.getElementById('open-notification-center-btn');
-
+            if (!notifData) {
+                topNotifCard.classList.remove('visible');
+                return;
+            }
+        
             const topTitle = notifData.title || 'Default|Text';
             const [topText1, topText2 = ''] = topTitle.split('|').map(t => t.trim());
             
-            const thumbTitle = notifData.thumbnailTitle || notifData.title || 'Default|Text';
-            const [thumbText1, thumbText2 = ''] = thumbTitle.split('|').map(t => t.trim());
-            const thumbAnimation = notifData.thumbnailAnimation !== false;
+            const wrapper = topNotifCard.querySelector('.notification-content-wrapper');
+            const line1 = wrapper.querySelector('.notification-text-line1');
+            const line2 = wrapper.querySelector('.notification-text-line2');
+            const percentEl = wrapper.querySelector('.notification-percentage');
 
-            const updateElement = (card, text1, text2, percentage, animate) => {
-                const wrapper = card.querySelector('.notification-content-wrapper');
-                const line1 = wrapper.querySelector('.notification-text-line1');
-                const line2 = wrapper.querySelector('.notification-text-line2');
-                const percentEl = wrapper.querySelector('.notification-percentage');
-
-                line1.textContent = text1;
-                line2.textContent = text2;
-                percentEl.textContent = `${percentage}%`;
-                
-                wrapper.classList.remove('animate');
-                void wrapper.offsetWidth;
-
-                if (animate) {
-                    wrapper.classList.add('animate');
-                } else {
-                    wrapper.style.opacity = 1;
-                    line1.style.width = 'auto';
-                    line2.style.width = 'auto';
-                    percentEl.style.transform = 'scale(1)';
-                }
-            };
+            line1.textContent = text1;
+            line2.textContent = text2;
+            percentEl.textContent = `${notifData.percentage}%`;
+            
+            wrapper.classList.remove('animate');
+            void wrapper.offsetWidth; // Trigger reflow
+            wrapper.classList.add('animate');
             
             topNotifCard.style.backgroundColor = notifData.bgColor || 'var(--brand-red)';
             topNotifCard.style.color = notifData.textColor || 'white';
-            topNotifCard.style.setProperty('--notification-border-color', notifData.borderColor || 'transparent');
-            topNotifCard.style.setProperty('--notification-border-width', notifData.borderWidth ? `${notifData.borderWidth}px` : '0px');
-            updateElement(topNotifCard, topText1, topText2, notifData.percentage, true);
             topNotifCard.classList.add('visible');
-
-            thumbNotifCard.style.backgroundColor = notifData.thumbnailBgColor || 'var(--bg-card)';
-            thumbNotifCard.style.color = notifData.thumbnailTextColor || 'var(--text-primary)';
-            thumbNotifCard.style.setProperty('--thumbnail-border-color', notifData.thumbnailBorderColor || 'var(--border-color)');
-            thumbNotifCard.style.setProperty('--thumbnail-border-width', notifData.thumbnailBorderWidth ? `${notifData.thumbnailBorderWidth}px` : '1px');
-            updateElement(thumbNotifCard, thumbText1, thumbText2, notifData.percentage, thumbAnimation);
 
             if (notifData.id !== lastShownNotificationId) {
                 lastShownNotificationId = notifData.id;
@@ -974,7 +878,7 @@
                     return item.type === 'cashback';
                 }
                 if (activeFilter === 'credit') {
-                    return item.type === 'credit' || item.type === 'due_payment' || item.type === 'credit_request';
+                    return item.type === 'credit' || item.type === 'due_payment';
                 }
                 return item.type === activeFilter;
             });
@@ -1300,109 +1204,11 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // --- UPDATED NETWORK FUNCTIONS ---
         const networkLoader = document.getElementById('network-loader');
         const uplineLoader = document.getElementById('upline-loader');
         const downlineContainer = document.getElementById('downline-content');
         const treeContainer = document.getElementById('network-tree-container');
-        const backBtn = document.getElementById('network-back-btn');
 
-        async function loadDownline(userId) {
-            if (isDownlineLoading) return;
-            isDownlineLoading = true;
-            networkLoader.style.display = 'block';
-            treeContainer.innerHTML = '';
-            backBtn.style.display = networkHistory.length > 1 ? 'flex' : 'none';
-
-            try {
-                const treeRoot = document.createElement('div');
-                treeRoot.className = 'network-tree';
-                const rootNode = await buildNetworkTree(userId, 0);
-                
-                if (rootNode) {
-                    treeRoot.appendChild(rootNode);
-                    treeContainer.appendChild(treeRoot);
-                } else {
-                    treeContainer.innerHTML = '<div class="empty-state">Could not load user data.</div>';
-                }
-            } catch (error) {
-                console.error("Error loading downline:", error);
-                treeContainer.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
-            } finally {
-                networkLoader.style.display = 'none';
-                isDownlineLoading = false;
-            }
-        }
-
-        async function buildNetworkTree(userId, level) {
-            if (level > 4) return null;
-
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (!userDoc.exists()) return null;
-            
-            const userData = userDoc.data();
-            const isRootOfCurrentView = networkHistory[networkHistory.length - 1] === userId;
-            const node = createDownlineNode(userData, level, isRootOfCurrentView);
-            
-            const referrals = await getDirectReferrals(userId);
-            if (referrals.length > 0) {
-                const childrenContainer = document.createElement('div');
-                childrenContainer.className = 'node-children';
-                
-                const referralPromises = referrals.map(member => buildNetworkTree(member.uid, level + 1));
-                const childNodes = await Promise.all(referralPromises);
-                
-                childNodes.forEach(childNode => { if (childNode) childrenContainer.appendChild(childNode); });
-                
-                if (childrenContainer.hasChildNodes()) {
-                    node.appendChild(childrenContainer);
-                }
-            } else if (isRootOfCurrentView) {
-                 const emptyState = document.createElement('div');
-                 emptyState.className = 'empty-state';
-                 emptyState.textContent = 'Is sadasya ke network mein koi nahi hai.';
-                 emptyState.style.paddingTop = '50px';
-                 node.appendChild(emptyState);
-            }
-            return node;
-        }
-
-        function createDownlineNode(userData, level, isRootOfCurrentView) {
-            const node = document.createElement('div');
-            node.className = 'network-node';
-
-            const nodeContent = document.createElement('div');
-            nodeContent.className = 'node-content';
-            if (!isRootOfCurrentView) {
-                nodeContent.dataset.uid = userData.uid;
-                nodeContent.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const clickedUserId = e.currentTarget.dataset.uid;
-                    networkHistory.push(clickedUserId);
-                    loadDownline(clickedUserId);
-                });
-            }
-
-            const avatarHTML = userData.profilePictureUrl ? `<img src="${userData.profilePictureUrl}" alt="${userData.name}">` : userData.name.charAt(0).toUpperCase();
-            const earning = userData.lifetimeEarning || 0;
-            
-            let commissionBadgeHTML = '';
-            if (!isRootOfCurrentView) {
-                commissionBadgeHTML = `<div class="commission-badge">${commissionRates[level-1]}%</div>`;
-            }
-
-            nodeContent.innerHTML = `
-                <div class="node-avatar ${isRootOfCurrentView ? 'is-root' : ''}">
-                    ${avatarHTML}
-                </div>
-                ${commissionBadgeHTML}
-                <div class="node-name">${userData.name}</div>
-                <div class="node-earning">Earning: ₹${earning.toFixed(2)}</div>
-            `;
-            node.appendChild(nodeContent);
-            return node;
-        }
-        
         async function loadUpline() {
             uplineLoader.style.display = 'block';
             const uplineListContainer = document.getElementById('upline-list');
@@ -1432,7 +1238,7 @@
                             name: uplineData.name,
                             lifetimeEarning: commissionPaid,
                             profilePictureUrl: uplineData.profilePictureUrl,
-                            level: i 
+                            level: i + 1
                         });
                     }
                     return null;
@@ -1455,11 +1261,6 @@
 
             const avatarHTML = profilePictureUrl ? `<img src="${profilePictureUrl}" alt="${name}">` : name.charAt(0).toUpperCase();
             let earningHTML = isCurrentUser ? `<div class="node-earning">Aap (Your Earning: ₹${(lifetimeEarning || 0).toFixed(2)})</div>` : `<div class="node-earning">Commission Paid: ₹${(lifetimeEarning || 0).toFixed(2)}</div>`;
-            
-            let commissionHTML = '';
-            if (!isCurrentUser && level < commissionRates.length) {
-                commissionHTML = `<div class="upline-commission"><sup>${commissionRates[level]}%</sup></div>`;
-            }
 
             node.innerHTML = `
                 <div class="node-content">
@@ -1467,11 +1268,78 @@
                     <div class="node-name">${name}</div>
                     ${earningHTML}
                 </div>
-                ${commissionHTML}
+                ${!isCurrentUser ? `<div class="upline-commission"><sup>${commissionRates[level-1]}%</sup></div>` : ''}
             `;
             return node;
         }
 
+        // UPDATED: 'My Team' script fixed
+        async function loadDownline() {
+            networkLoader.style.display = 'block';
+            treeContainer.innerHTML = '';
+            isDownlineLoaded = false;
+            try {
+                const rootNode = await buildNetworkTree(currentUser.uid, 0);
+
+                if (rootNode) {
+                    const treeRoot = document.createElement('div');
+                    treeRoot.className = 'network-tree';
+                    treeRoot.appendChild(rootNode); 
+                    treeContainer.appendChild(treeRoot);
+
+                    if (!rootNode.querySelector('.node-children')) {
+                        const emptyMessage = document.createElement('div');
+                        emptyMessage.className = 'empty-state';
+                        emptyMessage.textContent = 'Aapke network mein koi member nahi hai.';
+                        emptyMessage.style.padding = '20px 0';
+                        treeContainer.appendChild(emptyMessage);
+                    }
+                } else {
+                     treeContainer.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
+                }
+                isDownlineLoaded = true;
+            } catch (error) {
+                console.error("Error loading downline:", error);
+                treeContainer.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
+            } finally {
+                networkLoader.style.display = 'none';
+            }
+        }
+
+        async function buildNetworkTree(userId, level) {
+            if (level > 4) return null;
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (!userDoc.exists()) return null;
+            const userData = userDoc.data();
+            const node = createDownlineNode(userData, level);
+            const referrals = await getDirectReferrals(userId);
+            if (referrals.length > 0) {
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'node-children';
+                const referralPromises = referrals.map(member => buildNetworkTree(member.uid, level + 1));
+                const childNodes = await Promise.all(referralPromises);
+                childNodes.forEach(childNode => { if (childNode) childrenContainer.appendChild(childNode); });
+                if (childrenContainer.hasChildNodes()) { node.appendChild(childrenContainer); }
+            }
+            return node;
+        }
+
+        function createDownlineNode(userData, level) {
+            const node = document.createElement('div');
+            node.className = 'network-node';
+            const avatarHTML = userData.profilePictureUrl ? `<img src="${userData.profilePictureUrl}" alt="${userData.name}">` : userData.name.charAt(0).toUpperCase();
+            const earning = userData.uid === currentUser.uid ? userData.lifetimeEarning || 0 : userData.lifetimeEarning || 0;
+            node.innerHTML = `
+                <div class="node-content">
+                    <div class="node-avatar">${avatarHTML}</div>
+                    <div class="node-name">${userData.name}</div>
+                    <div class="node-earning">Earning: ₹${earning.toFixed(2)}</div>
+                </div>
+                ${level > 0 ? `<div class="commission-badge"><sup>${commissionRates[level-1]}%</sup></div>` : ''}
+            `;
+            return node;
+        }
+        
         let scale = 1, panning = false, pointX = 0, pointY = 0, start = { x: 0, y: 0 };
         function setTransform() { treeContainer.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`; }
         downlineContainer.onmousedown = (e) => { e.preventDefault(); start = { x: e.clientX - pointX, y: e.clientY - pointY }; panning = true; };
@@ -1616,48 +1484,31 @@
             });
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 
-            // --- UPDATED: Network View Event Listeners ---
+            // UPDATED: Event listeners for new Network View
             document.getElementById('open-network-view').addEventListener('click', () => {
                 toggleView('network-view');
-                networkHistory = [currentUser.uid];
-                loadDownline(currentUser.uid);
+                if (document.querySelector('.network-tab-btn[data-tab="downline"]').classList.contains('active') && !isDownlineLoaded) {
+                    loadDownline();
+                }
             });
-            document.getElementById('network-close-btn').addEventListener('click', () => {
-                toggleView('dashboard-view');
-            });
+            document.getElementById('network-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
+
             document.getElementById('network-refresh-btn').addEventListener('click', () => {
                 const activeTab = document.querySelector('.network-tab-btn.active').dataset.tab;
-                if (activeTab === 'downline') {
-                    const currentUserId = networkHistory[networkHistory.length - 1];
-                    loadDownline(currentUserId);
-                } else { 
-                    isUplineLoaded = false; 
-                    loadUpline(); 
-                }
+                if (activeTab === 'downline') { isDownlineLoaded = false; loadDownline(); } 
+                else { isUplineLoaded = false; loadUpline(); }
             });
-            document.getElementById('network-back-btn').addEventListener('click', () => {
-                if (networkHistory.length > 1) {
-                    networkHistory.pop();
-                    const previousUserId = networkHistory[networkHistory.length - 1];
-                    loadDownline(previousUserId);
-                }
-            });
-            document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
+            document.querySelector('.network-tabs').addEventListener('click', e => {
                 const target = e.target.closest('.network-tab-btn');
                 if (!target) return;
-                document.querySelector('#network-view .network-tab-btn.active').classList.remove('active');
+                document.querySelector('.network-tab-btn.active').classList.remove('active');
                 target.classList.add('active');
-                document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
+                document.querySelectorAll('.network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
-                
                 if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
-                if (target.dataset.tab === 'downline' && networkHistory.length === 0) {
-                     networkHistory = [currentUser.uid];
-                     loadDownline(currentUser.uid);
-                }
+                if (target.dataset.tab === 'downline' && !isDownlineLoaded) { loadDownline(); }
             });
         });
     </script>
 </body>
 </html>
-
