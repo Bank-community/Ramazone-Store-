@@ -35,7 +35,6 @@
         
         #network-view.active {
             display: flex;
-            /* Override container constraints for desktop view */
             width: 100%;
             max-width: 100%;
         }
@@ -277,7 +276,7 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- NEW: Network View Styles for Desktop View --- */
+        /* --- FINAL Network View Styles --- */
         #network-view { 
             flex-direction: column; 
             height: 100vh; 
@@ -285,12 +284,9 @@
             background-color: var(--bg-page);
         }
         .network-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px; padding: 10px 15px;
-            border-bottom: 1px solid var(--border-color); flex-shrink: 0;
-            background-color: var(--bg-card);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; border-bottom: 1px solid var(--border-color); 
+            flex-shrink: 0; background-color: var(--bg-card);
         }
         .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; flex-grow: 1; }
         .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
@@ -305,102 +301,46 @@
         .network-tab-content.active { display: block; }
 
         #downline-content {
-            width: 100%;
-            height: 100%;
-            overflow: auto; /* Enable scrolling for desktop view */
-            text-align: center;
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            margin: 15px;
-            width: calc(100% - 30px);
-            height: calc(100% - 30px);
-        }
-
-        .tree-container {
-            position: relative;
-            display: inline-block;
-            padding: 40px;
-            white-space: nowrap;
-        }
-
-        #connector-svg {
-            position: absolute;
-            top: 0; left: 0;
             width: 100%; height: 100%;
-            z-index: 1;
-            overflow: visible;
+            overflow: auto; text-align: center;
+            background-color: #ffffff;
         }
-
-        .tree {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
+        .tree-container {
+            position: relative; display: inline-block;
+            padding: 40px; white-space: nowrap;
         }
-
-        .node-children {
-            display: flex;
-            justify-content: center;
-            padding-top: 80px; /* Increased space for tags */
-            position: relative;
+        #connector-svg {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1; overflow: visible;
         }
-        
-        .node-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0 20px;
-            position: relative;
-        }
-
+        .tree { display: inline-flex; flex-direction: column; align-items: center; }
+        .node-children { display: flex; justify-content: center; padding-top: 80px; position: relative; }
+        .node-wrapper { display: flex; flex-direction: column; align-items: center; padding: 0 20px; position: relative; }
         .node {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: white;
-            padding: 15px;
-            border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center;
+            background-color: white; padding: 15px; border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            width: 140px;
-            position: relative;
-            z-index: 2;
-            cursor: pointer;
-            border: 1px solid #e9ecef;
+            width: 140px; position: relative; z-index: 2;
+            cursor: pointer; border: 1px solid #e9ecef;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        
-        .node:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-        }
-
+        .node:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12); }
         .node-avatar {
-            width: 65px; height: 65px;
-            border-radius: 50%;
-            background-color: var(--brand-red);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 10px;
+            width: 65px; height: 65px; border-radius: 50%;
+            background-color: var(--brand-red); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; font-weight: 700; margin-bottom: 10px;
             overflow: hidden;
         }
         .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .node-name { font-weight: 600; font-size: 16px; }
         .node-earning { font-size: 13px; color: var(--accent-green); }
-        
         .commission-tag {
-            position: absolute;
-            background-color: var(--text-secondary);
-            color: white;
-            padding: 3px 8px;
-            font-size: 12px;
-            border-radius: 5px;
-            font-weight: 600;
-            z-index: 3;
-            transform: translate(-50%, -50%); /* Center the tag on the line */
+            position: absolute; background-color: var(--text-secondary);
+            color: white; padding: 3px 8px; font-size: 12px;
+            border-radius: 5px; font-weight: 600; z-index: 3;
+            transform: translate(-50%, -50%);
         }
 
         #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 15px; }
@@ -593,11 +533,11 @@
     <!-- Network View (Separate from .container for desktop view) -->
     <div id="network-view" class="view">
         <div class="network-header">
-            <div id="network-nav-btn" class="header-action" title="Back to Dashboard">
+            <div id="network-nav-btn" class="header-action" title="Back">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </div>
             <h1 id="network-title">My Network</h1>
-            <div id="network-refresh-btn" class="header-action" title="Refresh Network">
+            <div id="network-refresh-btn" class="header-action" title="Refresh">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             </div>
         </div>
@@ -791,9 +731,11 @@
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
         
-        let networkHistory = []; 
-        const networkTitleEl = document.getElementById('network-title');
+        // --- CORRECTED: 'historyStack' is now in the global scope ---
+        let historyStack = [];
+        
         const networkLoader = document.getElementById('network-loader');
+        const networkTitleEl = document.getElementById('network-title');
 
         const showToast = (message) => {
             const toast = document.getElementById('toast-notification');
@@ -803,10 +745,7 @@
         };
         const toggleView = (viewId) => {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            const view = document.getElementById(viewId);
-            if (view) {
-                view.classList.add('active');
-            }
+            document.getElementById(viewId)?.classList.add('active');
         };
         const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
         const closeModal = (modalId) => {
@@ -849,21 +788,11 @@
         onAuthStateChanged(auth, user => {
             if (user && user.displayName) {
                 currentUser = user;
-                toggleView('dashboard-view');
                 attachRealtimeListeners(user);
-            } else if (!user) {
+                toggleView('dashboard-view');
+            } else {
                 detachAllListeners();
-                const urlParams = new URLSearchParams(window.location.search);
-                const refCode = urlParams.get('ref');
-                if (refCode) {
-                    toggleView('registration-view');
-                    const referralInput = document.getElementById('reg-referral');
-                    if (referralInput) {
-                        referralInput.value = refCode.toUpperCase();
-                    }
-                } else {
-                    toggleView('login-view');
-                }
+                toggleView('login-view');
             }
         });
 
@@ -872,7 +801,7 @@
             const uid = user.uid;
             const userUnsubscribe = onSnapshot(doc(db, 'users', uid), (doc) => {
                 if (doc.exists()) {
-                    currentUserData = { id: doc.id, ...doc.data() };
+                    currentUserData = { uid: doc.id, ...doc.data() };
                     updateDashboardUI(currentUserData, user);
                 }
             });
@@ -1382,7 +1311,7 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // --- NETWORK VIEW LOGIC (FINAL VERSION) ---
+        // --- FINAL NETWORK VIEW LOGIC ---
         async function updateNetworkTreeView(userId, level = 0) {
             networkLoader.style.display = 'block';
             const treeRoot = document.getElementById('tree-root');
@@ -1393,9 +1322,9 @@
                 if (!rootUserDoc.exists()) throw new Error("User not found");
                 const rootUserData = { uid: rootUserDoc.id, ...rootUserDoc.data() };
                 
-                networkTitleEl.textContent = rootUserData.name === currentUser.displayName ? "My Network" : `${rootUserData.name}'s Network`;
+                networkTitleEl.textContent = `${rootUserData.name}'s Network`;
                 
-                const treeData = await buildTreeData(rootUserData, level, 4); // Fetch up to 4 levels deep
+                const treeData = await buildTreeData(rootUserData, level, 4);
                 treeRoot.innerHTML = createTreeHTML(treeData);
 
                 attachNodeClickListeners();
@@ -1405,6 +1334,7 @@
                     if (!treeData.children || treeData.children.length === 0) {
                         const emptyMessage = document.createElement('div');
                         emptyMessage.className = 'empty-state';
+                        emptyMessage.style.paddingTop = '20px';
                         emptyMessage.textContent = `${rootUserData.name} ke network mein koi member nahi hai.`;
                         treeRoot.querySelector('.tree').appendChild(emptyMessage);
                     }
@@ -1421,7 +1351,7 @@
         
         async function buildTreeData(userData, currentLevel, maxLevel) {
             if (currentLevel >= maxLevel) {
-                return { ...userData, children: [] };
+                return { ...userData, children: [], level: currentLevel };
             }
             const referrals = await getDirectReferrals(userData.uid);
             const children = await Promise.all(
@@ -1469,8 +1399,6 @@
                                 historyStack.push(userData);
                                 updateNetworkTreeView(userData.uid, 0);
                             }
-                        }).finally(() => {
-                            networkLoader.style.display = 'none';
                         });
                     }
                 });
@@ -1522,7 +1450,6 @@
                     
                     svg.appendChild(createPath(`M ${childX} ${horizontalLineY} V ${childY}`));
                     
-                    // Add Commission Tag
                     const level = parseInt(childWrapper.dataset.level);
                     if (!isNaN(level) && level > 0 && level <= commissionRates.length) {
                         const tag = document.createElement('div');
@@ -1548,9 +1475,9 @@
         function updateNetworkNavButton() {
             const navBtn = document.getElementById('network-nav-btn');
             if (historyStack.length > 1) {
-                navBtn.style.display = 'flex';
+                navBtn.title = "Go Back";
             } else {
-                navBtn.style.display = 'flex'; // Always show, but functionality changes
+                navBtn.title = "Back to Dashboard";
             }
         }
 
@@ -1563,14 +1490,21 @@
             const snapshot = await getDocs(q);
             return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
         }
-
+        
+        // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('login-form').addEventListener('submit', e => {
                 e.preventDefault();
                 const mobile = document.getElementById('login-mobile').value;
                 const password = document.getElementById('login-password').value;
+                const errorMsgEl = document.getElementById('login-error-msg');
+                errorMsgEl.style.display = 'none';
+
                 signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
-                    .catch(() => showErrorMessage(document.getElementById('login-error-msg'), "Galat mobile/password."));
+                    .catch(() => {
+                        errorMsgEl.textContent = "Galat mobile ya password.";
+                        errorMsgEl.style.display = 'block';
+                    });
             });
             
             document.getElementById('register-form').addEventListener('submit', async (e) => {
@@ -1714,4 +1648,3 @@
     </script>
 </body>
 </html>
-
