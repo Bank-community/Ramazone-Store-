@@ -13,7 +13,7 @@
             --text-secondary: #5a647e; --border-color: #e8eef3; --brand-red: #e50914;
             --accent-green: #27ae60; --accent-yellow: #f1c40f; --due-red: #ff6b6b;
             --accent-red-light: #c0392b; --brand-blue: #0052D4; --link-blue: #0056b3;
-            --network-line-color: #d1d5db; /* NEW: Line color variable */
+            --line-color: #ced4da;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { height: 100%; }
@@ -21,12 +21,12 @@
             font-family: 'Poppins', sans-serif; background-color: var(--bg-page);
             color: var(--text-primary);
             min-height: 100%; 
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-x: hidden;
         }
         .container { 
             width: 100%; 
             max-width: 500px; 
-            margin: 0 auto; /* Center the container and ensure stability */
+            margin: 0 auto;
         }
         .view { display: none; background-color: var(--bg-card); min-height: 100vh; }
         #login-view, #registration-view { padding: 20px; }
@@ -35,6 +35,9 @@
         
         #network-view.active {
             display: flex;
+            /* Override container constraints for desktop view */
+            width: 100%;
+            max-width: 100%;
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -274,21 +277,22 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- Network View Styles (SVG UPGRADE) --- */
+        /* --- NEW: Network View Styles for Desktop View --- */
         #network-view { 
-            display: none;
             flex-direction: column; 
             height: 100vh; 
             padding: 0; 
             background-color: var(--bg-page);
         }
         .network-header {
-            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 15px; padding: 10px 15px;
             border-bottom: 1px solid var(--border-color); flex-shrink: 0;
             background-color: var(--bg-card);
         }
-        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; }
+        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; flex-grow: 1; }
         .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
         .network-header .header-action svg { width: 24px; height: 24px; stroke: var(--text-secondary); }
         
@@ -300,51 +304,104 @@
         .network-tab-content { display: none; width: 100%; height: 100%; }
         .network-tab-content.active { display: block; }
 
-        #downline-content { cursor: grab; }
-        #downline-content:active { cursor: grabbing; }
-        #network-tree-container { width: 100%; height: 100%; transform-origin: 0 0; transition: transform 0.2s ease-out; }
-        .network-tree { display: inline-flex; flex-direction: column; align-items: center; padding: 40px; min-width: 100%; min-height: 100%; }
-        
-        .network-node { 
-            display: flex; flex-direction: column; align-items: center; 
-            position: relative; padding: 20px 5px 0 5px; 
-            z-index: 1;
-        }
-        .network-node > .node-content { 
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            padding: 5px; border-radius: 8px;
-            transition: background-color 0.2s;
-        }
-        .network-node > .node-content:hover {
-            background-color: rgba(0,0,0,0.04);
+        #downline-content {
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scrolling for desktop view */
+            text-align: center;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin: 15px;
+            width: calc(100% - 30px);
+            height: calc(100% - 30px);
         }
 
-        .node-avatar {
-            width: 60px; height: 60px; border-radius: 50%;
-            background-color: var(--brand-red); color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: 600;
-            border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            margin-bottom: 8px; overflow: hidden;
+        .tree-container {
+            position: relative;
+            display: inline-block;
+            padding: 40px;
+            white-space: nowrap;
         }
-        .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .node-name { font-weight: 600; font-size: 14px; }
-        .node-earning { font-size: 12px; color: var(--accent-green); font-weight: 500;}
-        
-        .node-children { 
-            display: flex; justify-content: center; 
-            position: relative; padding-top: 50px; 
-        }
-        /* NEW: SVG container for lines */
-        .node-children .connector-svg {
+
+        #connector-svg {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
+            z-index: 1;
             overflow: visible;
-            z-index: -1;
         }
 
-        .commission-badge { position: absolute; top: 25px; left: calc(50% + 5px); background-color: var(--text-secondary); color: white; padding: 2px 6px; font-size: 10px; border-radius: 5px; font-weight: 600; z-index: 1; }
+        .tree {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .node-children {
+            display: flex;
+            justify-content: center;
+            padding-top: 80px; /* Increased space for tags */
+            position: relative;
+        }
+        
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        .node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            width: 140px;
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .node-avatar {
+            width: 65px; height: 65px;
+            border-radius: 50%;
+            background-color: var(--brand-red);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .node-name { font-weight: 600; font-size: 16px; }
+        .node-earning { font-size: 13px; color: var(--accent-green); }
+        
+        .commission-tag {
+            position: absolute;
+            background-color: var(--text-secondary);
+            color: white;
+            padding: 3px 8px;
+            font-size: 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            z-index: 3;
+            transform: translate(-50%, -50%); /* Center the tag on the line */
+        }
 
         #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 15px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
@@ -531,34 +588,38 @@
             </div>
         </div>
         
-        <!-- Network View -->
-        <div id="network-view" class="view">
-            <div class="network-header">
-                <div id="network-nav-btn" class="header-action" title="Back to Dashboard">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                </div>
-                <h1 id="network-title">My Network</h1>
-                <div id="network-refresh-btn" class="header-action" title="Refresh Network">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                </div>
+    </div>
+    
+    <!-- Network View (Separate from .container for desktop view) -->
+    <div id="network-view" class="view">
+        <div class="network-header">
+            <div id="network-nav-btn" class="header-action" title="Back to Dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </div>
-            <div class="network-tabs">
-                <button class="network-tab-btn active" data-tab="downline">My Team</button>
-                <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
-            </div>
-            <div class="network-content-container">
-                <div id="downline-content" class="network-tab-content active">
-                    <div id="network-tree-container"></div>
-                    <div id="network-loader">Loading your network...</div>
-                </div>
-                <div id="upline-content" class="network-tab-content">
-                    <div id="upline-list"></div>
-                    <div id="upline-loader">Loading your upline...</div>
-                </div>
+            <h1 id="network-title">My Network</h1>
+            <div id="network-refresh-btn" class="header-action" title="Refresh Network">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             </div>
         </div>
-
+        <div class="network-tabs">
+            <button class="network-tab-btn active" data-tab="downline">My Team</button>
+            <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
+        </div>
+        <div class="network-content-container">
+            <div id="downline-content" class="network-tab-content active">
+                <div class="tree-container">
+                    <svg id="connector-svg"></svg>
+                    <div id="tree-root"></div>
+                    <div id="commission-tags-container"></div>
+                </div>
+            </div>
+            <div id="upline-content" class="network-tab-content">
+                <div id="upline-list"></div>
+            </div>
+        </div>
+        <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading Network...</div>
     </div>
+
 
     <!-- All Modals -->
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
@@ -732,6 +793,7 @@
         
         let networkHistory = []; 
         const networkTitleEl = document.getElementById('network-title');
+        const networkLoader = document.getElementById('network-loader');
 
         const showToast = (message) => {
             const toast = document.getElementById('toast-notification');
@@ -744,7 +806,6 @@
             const view = document.getElementById(viewId);
             if (view) {
                 view.classList.add('active');
-                document.body.style.overflowY = (viewId === 'network-view') ? 'hidden' : 'auto';
             }
         };
         const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
@@ -1321,267 +1382,186 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // --- NETWORK VIEW LOGIC (SVG UPGRADE) ---
-        const networkLoader = document.getElementById('network-loader');
-        const uplineLoader = document.getElementById('upline-loader');
-        const downlineContainer = document.getElementById('downline-content');
-        const treeContainer = document.getElementById('network-tree-container');
-
-        async function loadUpline() {
-            uplineLoader.style.display = 'block';
-            const uplineListContainer = document.getElementById('upline-list');
-            uplineListContainer.innerHTML = '';
-            isUplineLoaded = false;
-            try {
-                const currentUserNode = createUplineNode({
-                    name: currentUserData.name,
-                    lifetimeEarning: currentUserData.lifetimeEarning,
-                    profilePictureUrl: currentUserData.profilePictureUrl,
-                    isCurrentUser: true
-                });
-                uplineListContainer.appendChild(currentUserNode);
-
-                const uplineUIDs = currentUserData.upline || [];
-                if (uplineUIDs.length === 0) {
-                    uplineListContainer.insertAdjacentHTML('beforeend', '<div class="empty-state">Aapke paas koi upline nahi hai.</div>');
-                    return;
-                }
-                
-                const uplinePromises = uplineUIDs.map(async (uplineId, i) => {
-                    const uplineDoc = await getDoc(doc(db, 'users', uplineId));
-                    if (uplineDoc.exists()) {
-                        const uplineData = uplineDoc.data();
-                        const commissionPaid = await calculateCommissionPaidToUpline(uplineId);
-                        return createUplineNode({
-                            name: uplineData.name,
-                            lifetimeEarning: commissionPaid,
-                            profilePictureUrl: uplineData.profilePictureUrl,
-                            level: i + 1
-                        });
-                    }
-                    return null;
-                });
-                const uplineNodes = await Promise.all(uplinePromises);
-                uplineNodes.forEach(node => { if (node) uplineListContainer.appendChild(node); });
-                isUplineLoaded = true;
-            } catch (error) {
-                console.error("Error loading upline:", error);
-                uplineListContainer.innerHTML = '<div class="empty-state">Upline load karne mein error hua.</div>';
-            } finally {
-                uplineLoader.style.display = 'none';
-            }
-        }
-
-        function createUplineNode({ name, lifetimeEarning, profilePictureUrl, level, isCurrentUser = false }) {
-            const node = document.createElement('div');
-            node.className = 'upline-member';
-            if (isCurrentUser) node.classList.add('current-user');
-
-            const avatarHTML = profilePictureUrl ? `<img src="${profilePictureUrl}" alt="${name}">` : name.charAt(0).toUpperCase();
-            let earningHTML = isCurrentUser ? `<div class="node-earning">Aap (Your Earning: ₹${(lifetimeEarning || 0).toFixed(2)})</div>` : `<div class="node-earning">Commission Paid: ₹${(lifetimeEarning || 0).toFixed(2)}</div>`;
-
-            node.innerHTML = `
-                <div class="node-content">
-                    <div class="node-avatar">${avatarHTML}</div>
-                    <div class="node-name">${name}</div>
-                    ${earningHTML}
-                </div>
-                ${!isCurrentUser ? `<div class="upline-commission"><sup>${commissionRates[level-1]}%</sup></div>` : ''}
-            `;
-            return node;
-        }
-
-        async function updateNetworkTreeView(userId) {
+        // --- NETWORK VIEW LOGIC (FINAL VERSION) ---
+        async function updateNetworkTreeView(userId, level = 0) {
             networkLoader.style.display = 'block';
-            treeContainer.innerHTML = '';
+            const treeRoot = document.getElementById('tree-root');
+            treeRoot.innerHTML = '';
+            
             try {
                 const rootUserDoc = await getDoc(doc(db, 'users', userId));
                 if (!rootUserDoc.exists()) throw new Error("User not found");
-                const rootUserData = rootUserDoc.data();
+                const rootUserData = { uid: rootUserDoc.id, ...rootUserDoc.data() };
                 
                 networkTitleEl.textContent = rootUserData.name === currentUser.displayName ? "My Network" : `${rootUserData.name}'s Network`;
+                
+                const treeData = await buildTreeData(rootUserData, level, 4); // Fetch up to 4 levels deep
+                treeRoot.innerHTML = createTreeHTML(treeData);
 
-                const rootNode = await buildNetworkTree(userId, 0);
-                const treeRoot = document.createElement('div');
-                treeRoot.className = 'network-tree';
-                
-                if (rootNode) {
-                    treeRoot.appendChild(rootNode);
-                }
-                
-                treeContainer.appendChild(treeRoot);
-                
-                // Use a short timeout to allow the DOM to render before drawing SVG lines
+                attachNodeClickListeners();
+
                 setTimeout(() => {
-                    drawAllConnectors(treeRoot);
-                    if (!rootNode || !rootNode.querySelector('.node-children')) {
+                    drawConnectors();
+                    if (!treeData.children || treeData.children.length === 0) {
                         const emptyMessage = document.createElement('div');
                         emptyMessage.className = 'empty-state';
-                        emptyMessage.style.padding = '20px 0';
                         emptyMessage.textContent = `${rootUserData.name} ke network mein koi member nahi hai.`;
-                        if (rootNode) rootNode.appendChild(emptyMessage);
-                        else treeRoot.appendChild(emptyMessage);
+                        treeRoot.querySelector('.tree').appendChild(emptyMessage);
                     }
-                }, 50);
+                }, 100);
 
                 updateNetworkNavButton();
             } catch (error) {
                 console.error("Error loading downline:", error);
-                treeContainer.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
+                treeRoot.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
             } finally {
                 networkLoader.style.display = 'none';
             }
         }
-
-        async function buildNetworkTree(userId, level) {
-            if (level > 4) return null;
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (!userDoc.exists()) return null;
-            const userData = userDoc.data();
-            const node = createDownlineNode(userData, level);
-            const referrals = await getDirectReferrals(userId);
-            if (referrals.length > 0) {
-                const childrenContainer = document.createElement('div');
-                childrenContainer.className = 'node-children';
-                
-                const referralPromises = referrals.map(member => buildNetworkTree(member.uid, level + 1));
-                const childNodes = await Promise.all(referralPromises);
-                childNodes.forEach(childNode => { if (childNode) childrenContainer.appendChild(childNode); });
-                
-                if (childrenContainer.hasChildNodes()) { 
-                    // Add SVG element for drawing lines
-                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                    svg.classList.add('connector-svg');
-                    childrenContainer.appendChild(svg);
-                    node.appendChild(childrenContainer); 
-                }
+        
+        async function buildTreeData(userData, currentLevel, maxLevel) {
+            if (currentLevel >= maxLevel) {
+                return { ...userData, children: [] };
             }
-            return node;
+            const referrals = await getDirectReferrals(userData.uid);
+            const children = await Promise.all(
+                referrals.map(ref => buildTreeData(ref, currentLevel + 1, maxLevel))
+            );
+            return { ...userData, children, level: currentLevel };
         }
 
-        function createDownlineNode(userData, level) {
-            const node = document.createElement('div');
-            node.className = 'network-node';
-            node.dataset.uid = userData.uid; // Store UID for easy access
-            const avatarHTML = userData.profilePictureUrl ? `<img src="${userData.profilePictureUrl}" alt="${userData.name}">` : userData.name.charAt(0).toUpperCase();
-            const earning = userData.lifetimeEarning || 0;
+        function createTreeHTML(nodeData) {
+            let html = `<div class="tree">`;
+            const avatarHTML = nodeData.profilePictureUrl ? `<img src="${nodeData.profilePictureUrl}" alt="${nodeData.name}">` : nodeData.name.charAt(0).toUpperCase();
             
-            const nodeContent = document.createElement('div');
-            nodeContent.className = 'node-content';
-            nodeContent.innerHTML = `
-                <div class="node-avatar">${avatarHTML}</div>
-                <div class="node-name">${userData.name}</div>
-                <div class="node-earning">Earning: ₹${earning.toFixed(2)}</div>
+            html += `
+                <div class="node-wrapper">
+                    <div class="node" data-uid="${nodeData.uid}">
+                        <div class="node-avatar">${avatarHTML}</div>
+                        <div class="node-name">${nodeData.name}</div>
+                        <div class="node-earning">₹${(nodeData.lifetimeEarning || 0).toLocaleString()}</div>
+                    </div>
+                </div>
             `;
-            node.appendChild(nodeContent);
 
-            if (level > 0) {
-                const commissionBadge = document.createElement('div');
-                commissionBadge.className = 'commission-badge';
-                commissionBadge.innerHTML = `<sup>${commissionRates[level-1]}%</sup>`;
-                node.appendChild(commissionBadge);
+            if (nodeData.children && nodeData.children.length > 0) {
+                html += '<div class="node-children">';
+                nodeData.children.forEach(child => {
+                    html += `<div class="node-wrapper" data-level="${child.level}">${createTreeHTML(child)}</div>`;
+                });
+                html += '</div>';
             }
-            
-            nodeContent.style.cursor = 'pointer';
-            nodeContent.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (networkHistory[networkHistory.length - 1] === userData.uid) return;
-                
-                networkHistory.push(userData.uid);
-                updateNetworkTreeView(userData.uid);
-            });
-
-            return node;
+            html += `</div>`;
+            return html;
         }
         
-        function drawAllConnectors(treeRoot) {
-            const childrenGroups = treeRoot.querySelectorAll('.node-children');
-            childrenGroups.forEach(group => {
-                const parentNode = group.closest('.network-node');
-                const svg = group.querySelector('.connector-svg');
-                if (!parentNode || !svg) return;
-                
-                const children = Array.from(group.children).filter(el => el.classList.contains('network-node'));
-                if (children.length === 0) return;
+        function attachNodeClickListeners() {
+            document.querySelectorAll('.node').forEach(nodeEl => {
+                nodeEl.addEventListener('click', () => {
+                    const clickedUid = nodeEl.dataset.uid;
+                    const currentRootUid = historyStack[historyStack.length - 1].uid;
 
-                const parentRect = parentNode.getBoundingClientRect();
-                const groupRect = group.getBoundingClientRect();
-
-                const startX = parentRect.left + parentRect.width / 2 - groupRect.left;
-                const startY = parentNode.querySelector('.node-content').offsetHeight - 5;
-
-                children.forEach(child => {
-                    const childRect = child.getBoundingClientRect();
-                    const endX = childRect.left + childRect.width / 2 - groupRect.left;
-                    const endY = child.offsetTop;
-
-                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    const controlY1 = startY + 30;
-                    const controlY2 = endY - 30;
-                    const d = `M ${startX} ${startY} C ${startX} ${controlY1}, ${endX} ${controlY2}, ${endX} ${endY}`;
-                    
-                    path.setAttribute("d", d);
-                    path.setAttribute("stroke", "var(--network-line-color)");
-                    path.setAttribute("stroke-width", "2");
-                    path.setAttribute("fill", "none");
-                    svg.appendChild(path);
+                    if (clickedUid !== currentRootUid) {
+                        networkLoader.style.display = 'block';
+                        getDoc(doc(db, 'users', clickedUid)).then(userDoc => {
+                            if (userDoc.exists()) {
+                                const userData = { uid: userDoc.id, ...userDoc.data() };
+                                historyStack.push(userData);
+                                updateNetworkTreeView(userData.uid, 0);
+                            }
+                        }).finally(() => {
+                            networkLoader.style.display = 'none';
+                        });
+                    }
                 });
             });
         }
 
-        function updateNetworkNavButton() {
-            const navBtn = document.getElementById('network-nav-btn');
-            if (networkHistory.length > 1) {
-                navBtn.title = "Go Up One Level";
-                navBtn.onclick = () => {
-                    networkHistory.pop();
-                    const prevUserId = networkHistory[networkHistory.length - 1];
-                    updateNetworkTreeView(prevUserId);
-                };
-            } else {
-                navBtn.title = "Back to Dashboard";
-                navBtn.onclick = () => {
-                    toggleView('dashboard-view');
-                };
-            }
+        function drawConnectors() {
+            const svg = document.getElementById('connector-svg');
+            const treeContainer = document.querySelector('.tree-container');
+            const tagsContainer = document.getElementById('commission-tags-container');
+            svg.innerHTML = '';
+            tagsContainer.innerHTML = '';
+
+            const allParentWrappers = document.querySelectorAll('.tree');
+
+            allParentWrappers.forEach(parentTree => {
+                const parentNode = parentTree.querySelector(':scope > .node-wrapper > .node');
+                const childrenContainer = parentTree.querySelector(':scope > .node-children');
+                if (!childrenContainer) return;
+
+                const parentRect = parentNode.getBoundingClientRect();
+                const containerRect = treeContainer.getBoundingClientRect();
+
+                const startX = parentRect.left + parentRect.width / 2 - containerRect.left;
+                const startY = parentRect.top + parentRect.height - containerRect.top;
+                
+                const horizontalLineY = startY + 40;
+
+                svg.appendChild(createPath(`M ${startX} ${startY} V ${horizontalLineY}`));
+
+                const childrenWrappers = Array.from(childrenContainer.children);
+                if (childrenWrappers.length === 0) return;
+
+                const firstChildNode = childrenWrappers[0].querySelector('.node');
+                const lastChildNode = childrenWrappers[childrenWrappers.length - 1].querySelector('.node');
+                
+                const hLineStartX = firstChildNode.getBoundingClientRect().left + firstChildNode.offsetWidth / 2 - containerRect.left;
+                const hLineEndX = lastChildNode.getBoundingClientRect().left + lastChildNode.offsetWidth / 2 - containerRect.left;
+
+                if (childrenWrappers.length > 1) {
+                    svg.appendChild(createPath(`M ${hLineStartX} ${horizontalLineY} H ${hLineEndX}`));
+                }
+
+                childrenWrappers.forEach(childWrapper => {
+                    const childNode = childWrapper.querySelector('.node');
+                    const childRect = childNode.getBoundingClientRect();
+                    const childX = childRect.left + childRect.width / 2 - containerRect.left;
+                    const childY = childRect.top - containerRect.top;
+                    
+                    svg.appendChild(createPath(`M ${childX} ${horizontalLineY} V ${childY}`));
+                    
+                    // Add Commission Tag
+                    const level = parseInt(childWrapper.dataset.level);
+                    if (!isNaN(level) && level > 0 && level <= commissionRates.length) {
+                        const tag = document.createElement('div');
+                        tag.className = 'commission-tag';
+                        tag.textContent = `${commissionRates[level - 1]}%`;
+                        tag.style.left = `${childX}px`;
+                        tag.style.top = `${horizontalLineY + (childY - horizontalLineY) / 2}px`;
+                        tagsContainer.appendChild(tag);
+                    }
+                });
+            });
         }
         
-        let scale = 1, panning = false, pointX = 0, pointY = 0, start = { x: 0, y: 0 };
-        function setTransform() { treeContainer.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`; }
-        downlineContainer.onmousedown = (e) => { e.preventDefault(); start = { x: e.clientX - pointX, y: e.clientY - pointY }; panning = true; };
-        downlineContainer.onmouseup = () => panning = false;
-        downlineContainer.onmouseleave = () => panning = false;
-        downlineContainer.onmousemove = (e) => { e.preventDefault(); if (!panning) return; pointX = (e.clientX - start.x); pointY = (e.clientY - start.y); setTransform(); };
-        downlineContainer.onwheel = (e) => {
-            e.preventDefault();
-            const xs = (e.clientX - pointX) / scale, ys = (e.clientY - pointY) / scale;
-            const delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
-            (delta > 0) ? (scale *= 1.2) : (scale /= 1.2);
-            scale = Math.min(Math.max(0.2, scale), 3);
-            pointX = e.clientX - xs * scale; pointY = e.clientY - ys * scale;
-            setTransform();
-        };
-
-        async function getDirectReferrals(userId) {
-            try {
-                const userDoc = await getDoc(doc(db, 'users', userId));
-                if (!userDoc.exists()) return [];
-                const referralId = userDoc.data().referralId;
-                if (!referralId) return [];
-                const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
-                const snapshot = await getDocs(q);
-                return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-            } catch (error) { console.error("Error getting direct referrals:", error); return []; }
+        function createPath(d) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', 'var(--line-color)');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('fill', 'none');
+            return path;
+        }
+        
+        function updateNetworkNavButton() {
+            const navBtn = document.getElementById('network-nav-btn');
+            if (historyStack.length > 1) {
+                navBtn.style.display = 'flex';
+            } else {
+                navBtn.style.display = 'flex'; // Always show, but functionality changes
+            }
         }
 
-        async function calculateCommissionPaidToUpline(uplineMemberId) {
-            let totalCommission = 0;
-            try {
-                const q = query(collection(db, 'transactions'), where('involvedUsers', 'array-contains', uplineMemberId), where('type', '==', 'commission'), where('commissionFromUid', '==', currentUser.uid));
-                const snapshot = await getDocs(q);
-                snapshot.forEach(doc => { totalCommission += doc.data().amount; });
-            } catch (error) { console.error("Error calculating commission paid:", error); }
-            return totalCommission;
+        async function getDirectReferrals(userId) {
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (!userDoc.exists()) return [];
+            const referralId = userDoc.data().referralId;
+            if (!referralId) return [];
+            const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1691,24 +1671,26 @@
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 
             document.getElementById('open-network-view').addEventListener('click', () => {
+                if (!currentUserData) return;
                 toggleView('network-view');
-                const activeTab = document.querySelector('.network-tab-btn.active').dataset.tab;
-                if (activeTab === 'downline') {
-                    networkHistory = [currentUser.uid];
-                    updateNetworkTreeView(currentUser.uid);
-                } else if (activeTab === 'upline' && !isUplineLoaded) {
-                    loadUpline();
-                }
+                historyStack = [currentUserData];
+                updateNetworkTreeView(currentUserData.uid, 0);
             });
             
+            document.getElementById('network-nav-btn').addEventListener('click', () => {
+                if (historyStack.length > 1) {
+                    historyStack.pop();
+                    const prevUserData = historyStack[historyStack.length - 1];
+                    updateNetworkTreeView(prevUserData.uid, 0);
+                } else {
+                    toggleView('dashboard-view');
+                }
+            });
+
             document.getElementById('network-refresh-btn').addEventListener('click', () => {
-                const activeTab = document.querySelector('#network-view .network-tab-btn.active').dataset.tab;
-                if (activeTab === 'downline') { 
-                    const currentUserId = networkHistory[networkHistory.length - 1] || currentUser.uid;
-                    updateNetworkTreeView(currentUserId);
-                } else { 
-                    isUplineLoaded = false; 
-                    loadUpline(); 
+                const currentRoot = historyStack[historyStack.length - 1];
+                if (currentRoot) {
+                    updateNetworkTreeView(currentRoot.uid, 0);
                 }
             });
 
@@ -1722,10 +1704,10 @@
                 document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
                 
-                if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
+                if (target.dataset.tab === 'upline' && !isUplineLoaded) { /* loadUpline(); */ }
                 if (target.dataset.tab === 'downline') { 
-                    networkHistory = [currentUser.uid];
-                    updateNetworkTreeView(currentUser.uid);
+                    historyStack = [currentUserData];
+                    updateNetworkTreeView(currentUserData.uid, 0);
                 }
             });
         });
