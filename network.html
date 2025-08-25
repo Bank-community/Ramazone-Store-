@@ -33,7 +33,7 @@
         #dashboard-view { padding: 15px; background-color: var(--bg-page); }
         .view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         
-        #network-view.active {
+        #network-view.active, #notification-view.active {
             display: flex;
             width: 100%;
             max-width: 100%;
@@ -67,7 +67,7 @@
             gap: 10px;
         }
         .header-logo { height: 35px; flex-shrink: 0; }
-        #static-notification-card { flex-grow: 1; margin-right: 2px; }
+        #static-notification-card { flex-grow: 1; margin-right: 2px; cursor: pointer; }
 
         #static-notification-card {
             display: flex; align-items: center; gap: 1px;
@@ -276,21 +276,21 @@
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
 
-        /* --- FINAL Network View Styles --- */
-        #network-view { 
+        /* --- Network & Notification View Styles --- */
+        .fullscreen-view { 
             flex-direction: column; 
             height: 100vh; 
             padding: 0; 
             background-color: var(--bg-page);
         }
-        .network-header {
+        .fullscreen-header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px 15px; border-bottom: 1px solid var(--border-color); 
             flex-shrink: 0; background-color: var(--bg-card);
         }
-        .network-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; flex-grow: 1; }
-        .network-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
-        .network-header .header-action svg { width: 24px; height: 24px; stroke: var(--text-secondary); }
+        .fullscreen-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; flex-grow: 1; }
+        .fullscreen-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
+        .fullscreen-header .header-action svg { width: 24px; height: 24px; stroke: var(--text-secondary); }
         
         .network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
         .network-tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
@@ -370,19 +370,7 @@
 
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
-        /* --- Notification Center (Popup) Styles --- */
-        #notification-center-modal .modal-content {
-            width: 100%; height: 100%; max-width: 100%; max-height: 100%;
-            border-radius: 0; padding: 0; display: flex; flex-direction: column;
-            background-color: var(--bg-page);
-        }
-        .notification-center-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 15px; border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0; background-color: var(--bg-card);
-        }
-        .notification-center-header h1 { font-size: 18px; font-weight: 600; margin: 0; }
-        #notification-center-close-btn { font-size: 28px; line-height: 1; color: #aaa; background: none; border: none; padding: 0; cursor: pointer; }
+        /* --- Notification Center (Page) Styles --- */
         #notification-center-list {
             flex-grow: 1; overflow-y: auto; padding: 15px;
             display: flex; flex-direction: column; gap: 15px;
@@ -545,9 +533,9 @@
         
     </div>
     
-    <!-- Network View (Separate from .container for desktop view) -->
-    <div id="network-view" class="view">
-        <div class="network-header">
+    <!-- Network View -->
+    <div id="network-view" class="view fullscreen-view">
+        <div class="fullscreen-header">
             <div id="network-nav-btn" class="header-action" title="Back">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </div>
@@ -575,24 +563,49 @@
         <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
     </div>
 
+    <!-- Notification View (NEW) -->
+    <div id="notification-view" class="view fullscreen-view">
+        <div class="fullscreen-header">
+            <div id="notification-back-btn" class="header-action" title="Back to Dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </div>
+            <h1>Latest Offers</h1>
+            <!-- Empty div for spacing to center the title -->
+            <div class="header-action" style="width: 24px;"></div>
+        </div>
+        <div id="notification-center-list">
+            <!-- Notifications will be dynamically inserted here -->
+        </div>
+    </div>
+
 
     <!-- All Modals -->
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
     
+    <!-- UPDATED: Credit Request Modal -->
     <div id="credit-request-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Credit Request</h3>
             <form id="credit-request-form">
                 <div class="form-group">
                     <label for="credit-amount">Amount (₹)</label>
-                    <input type="number" id="credit-amount" min="1" max="100" required>
-                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Pehli baar maximum ₹100 ka anurodh kar sakte hain.</p>
+                    <input type="number" id="credit-amount" min="1" required>
                 </div>
+                
+                <div style="background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px; font-size: 13px; color: #8a6d3b; margin-bottom: 15px;">
+                    <b>Attention:</b> Every month, you must clear your due amount between the 1st and 7th. Failure to do so will result in a 10% penalty on the outstanding credit amount.
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="credit-tnc-checkbox" style="width: auto; height: 18px;">
+                    <label for="credit-tnc-checkbox" style="margin-bottom: 0;">I agree to the Terms & Conditions.</label>
+                </div>
+
                 <p id="credit-error-msg" class="error-message"></p>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-                    <button type="submit" id="credit-submit-btn">Request Credit</button>
+                    <button type="submit" id="credit-submit-btn" disabled>Request Credit</button>
                 </div>
             </form>
         </div>
@@ -619,19 +632,6 @@
             <button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button> 
             <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> 
         </div> 
-    </div>
-
-    <!-- Notification Center Modal -->
-    <div id="notification-center-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="notification-center-header">
-                <h1>Latest Offers</h1>
-                <button id="notification-center-close-btn" data-close-modal>&times;</button>
-            </div>
-            <div id="notification-center-list">
-                <!-- Notifications will be dynamically inserted here -->
-            </div>
-        </div>
     </div>
 
     <div id="profile-picture-modal" class="modal-overlay">
@@ -746,6 +746,9 @@
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
         
+        // UPDATE: Credit level definitions
+        const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
+
         let historyStack = [];
         
         const networkLoader = document.getElementById('network-loader');
@@ -814,7 +817,8 @@
                 toggleView('dashboard-view');
             } else {
                 detachAllListeners();
-                toggleView('login-view');
+                // UPDATE: Check for referral link on logout/initial load
+                handleReferralLink();
             }
         });
 
@@ -847,7 +851,7 @@
                     updateNotificationUI(null);
                 }
             });
-            const allNotificationsUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(5)), (snapshot) => {
+            const allNotificationsUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)), (snapshot) => {
                 renderNotificationCenter(snapshot);
             });
             activeListeners.push(userUnsubscribe, transUnsubscribe, cashbackRequestsUnsubscribe, creditRequestsUnsubscribe, latestNotificationUnsubscribe, allNotificationsUnsubscribe);
@@ -1160,7 +1164,6 @@
                 const configDoc = await getDoc(doc(db, "app_settings", "config"));
                 const cashbackPercentage = configDoc.exists() && configDoc.data().cashback_percentage ? configDoc.data().cashback_percentage : 2;
                 const cashbackAmount = productPrice * (cashbackPercentage / 100);
-                // --- BUG FIX: Use currentUserData.uid instead of currentUserData.id ---
                 await addDoc(collection(db, "cashback_requests"), {
                     userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
                     productName, productPrice, cashbackAmount, status: "pending", requestDate: serverTimestamp(), claimed: false
@@ -1183,8 +1186,10 @@
             hideErrorMessage(errorMsg);
             
             const amount = parseFloat(amountInput.value);
-            if (isNaN(amount) || amount <= 0 || amount > 100) {
-                showErrorMessage(errorMsg, "Amount 1 se 100 ke beech hona chahiye.");
+            const maxAmount = parseFloat(amountInput.max);
+
+            if (isNaN(amount) || amount <= 0 || amount > maxAmount) {
+                showErrorMessage(errorMsg, `Amount 1 se ${maxAmount} ke beech hona chahiye.`);
                 return;
             }
 
@@ -1203,6 +1208,8 @@
                     });
                     showToast(`₹${amount.toFixed(2)} ka credit request bhej diya gaya hai.`);
                     document.getElementById('credit-request-form').reset();
+                    document.getElementById('credit-tnc-checkbox').checked = false;
+                    btn.disabled = true;
                 } catch (error) {
                     showToast("Request fail ho gaya. Dobara try karein.");
                     console.error("Credit request error:", error);
@@ -1211,8 +1218,11 @@
                 }
             }, 'credit-request-modal');
             
-            btn.disabled = false;
-            btn.textContent = "Request Credit";
+            // Reset button state after verification modal is closed, regardless of outcome
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = "Request Credit";
+            }, 500);
         }
 
 
@@ -1333,8 +1343,20 @@
             const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
+        
+        // UPDATE: Function to handle referral link on page load
+        function handleReferralLink() {
+            const params = new URLSearchParams(window.location.search);
+            const refCode = params.get('ref');
+            if (refCode) {
+                toggleView('registration-view');
+                document.getElementById('reg-referral').value = refCode.toUpperCase();
+            } else {
+                toggleView('login-view');
+            }
+        }
 
-        // --- FINAL NETWORK VIEW LOGIC ---
+        // --- Network View Logic ---
         async function updateNetworkTreeView(userId, level = 0) {
             networkLoader.style.display = 'block';
             const treeRoot = document.getElementById('tree-root');
@@ -1526,7 +1548,6 @@
 
                 const uplineData = uplineDocs.map(doc => doc.exists() ? doc.data() : null).filter(Boolean);
                 
-                // Add current user at the end
                 uplineData.push(currentUserData);
 
                 uplineContainer.innerHTML = uplineData.reverse().map((member, index) => {
@@ -1613,7 +1634,7 @@
                     const newUserDoc = {
                         uid: tempUser.uid, name, mobile, password, wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0,
                         referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`,
-                        referredBy, upline, createdAt: serverTimestamp()
+                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 // UPDATE: Initialize creditLevel
                     };
                     await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
                     await signOut(auth);
@@ -1644,10 +1665,28 @@
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
             
-            document.getElementById('open-credit-request-modal').addEventListener('click', () => openModal('credit-request-modal'));
+            // UPDATE: Credit Request Modal Logic
+            document.getElementById('open-credit-request-modal').addEventListener('click', () => {
+                if (!currentUserData) return showToast("Please wait for data to load.");
+                if (currentUserData.dueAmount > 0) {
+                    return showToast(`Please clear your due amount of ₹${currentUserData.dueAmount.toFixed(2)} first.`);
+                }
+                const level = currentUserData.creditLevel || 0;
+                const maxAmount = creditLevels[level] || creditLevels[creditLevels.length - 1];
+                const amountInput = document.getElementById('credit-amount');
+                amountInput.max = maxAmount;
+                amountInput.placeholder = `Max ₹${maxAmount}`;
+                openModal('credit-request-modal');
+            });
             document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
+            document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => {
+                document.getElementById('credit-submit-btn').disabled = !e.target.checked;
+            });
 
-            document.getElementById('open-notification-center-btn').addEventListener('click', () => openModal('notification-center-modal'));
+            // UPDATE: Notification View Logic
+            document.getElementById('static-notification-card').addEventListener('click', () => toggleView('notification-view'));
+            document.getElementById('open-notification-center-btn').addEventListener('click', () => toggleView('notification-view'));
+            document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
 
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
             document.getElementById('rescan-btn').addEventListener('click', startScanner);
@@ -1716,3 +1755,4 @@
     </script>
 </body>
 </html>
+
