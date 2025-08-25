@@ -343,15 +343,30 @@
             transform: translate(-50%, -50%);
         }
 
-        #upline-list { display: flex; flex-direction: column-reverse; align-items: center; padding: 20px; gap: 15px; }
+        #upline-list { display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 25px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .upline-member .node-content { text-align: center; }
-        .upline-member .node-avatar { width: 70px; height: 70px; font-size: 28px; }
+        .upline-member .node { width: 160px; } /* Slightly wider for better look */
         .upline-member.current-user .node-avatar { background-color: var(--brand-blue); }
-        .upline-member .node-name { font-size: 15px; }
-        .upline-member .node-earning { font-size: 13px; color: var(--text-secondary); }
-        .upline-member:not(:first-child)::after { content: ''; width: 2px; height: 15px; background-color: #ccc; position: absolute; bottom: -15px; }
-        .upline-commission { position: absolute; bottom: -28px; left: 10px; font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+        .upline-member:not(:last-child)::after { 
+            content: ''; 
+            width: 2px; 
+            height: 25px; 
+            background-color: var(--line-color); 
+            position: absolute; 
+            top: -25px; 
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .upline-commission {
+            position: absolute;
+            top: -12px;
+            left: calc(50% + 20px);
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            background-color: var(--bg-page);
+            padding: 0 5px;
+        }
 
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
 
@@ -557,7 +572,7 @@
                 <div id="upline-list"></div>
             </div>
         </div>
-        <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading Network...</div>
+        <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
     </div>
 
 
@@ -731,7 +746,6 @@
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
         
-        // --- CORRECTED: 'historyStack' is now in the global scope ---
         let historyStack = [];
         
         const networkLoader = document.getElementById('network-loader');
@@ -766,8 +780,16 @@
 
         const showTransactionDetails = (item) => {
             const amount = item.amount || item.cashbackAmount || 0;
-            const sign = amount >= 0 ? '+' : '-';
-            const typeClass = amount >= 0 ? 'credit' : 'debit';
+            let sign = '+';
+            let typeClass = 'credit';
+
+            if (item.type === 'payment' || item.amount < 0) {
+                sign = '-';
+                typeClass = 'debit';
+            }
+             if (item.status === 'rejected' || item.status === 'refunded') { 
+                typeClass = 'rejected'; 
+            }
             
             document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
             document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
@@ -806,15 +828,15 @@
                 }
             });
             const transUnsubscribe = onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
-                allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
                 combineAndRenderHistory();
             });
             const cashbackRequestsUnsubscribe = onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-                cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
                 combineAndRenderHistory();
             });
             const creditRequestsUnsubscribe = onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-                creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
                 combineAndRenderHistory();
             });
             const latestNotificationUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
@@ -958,15 +980,15 @@
         });
 
         function combineAndRenderHistory() {
-            const formattedTransactions = allTransactions.map(t => ({ ...t, date: t.timestamp?.toDate(), isTransaction: true }));
+            const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
             
             const formattedCashbackRequests = cashbackRequests
                 .filter(r => r.status === 'pending' || r.status === 'rejected')
-                .map(r => ({ ...r, description: `Cashback Request: ${r.productName}`, date: r.requestDate?.toDate(), type: 'cashback', isTransaction: false }));
+                .map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
             
             const formattedCreditRequests = creditRequests
                 .filter(r => r.status === 'pending' || r.status === 'rejected')
-                .map(r => ({ ...r, description: `Credit Request`, date: r.requestDate?.toDate(), type: 'credit_request', isTransaction: false, amount: r.amount }));
+                .map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
 
             const combined = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
             renderUnifiedHistory(combined);
@@ -985,7 +1007,7 @@
                     return item.type === 'cashback';
                 }
                 if (activeFilter === 'credit') {
-                    return item.type === 'credit' || item.type === 'due_payment';
+                    return item.type === 'credit' || item.type === 'due_payment' || item.type === 'credit_request';
                 }
                 return item.type === activeFilter;
             });
@@ -1104,12 +1126,12 @@
                 try {
                     const newTxnRef = doc(collection(db, "transactions"));
                     await runTransaction(db, async (t) => {
-                        const userRef = doc(db, "users", currentUserData.id);
+                        const userRef = doc(db, "users", currentUserData.uid);
                         const configRef = doc(db, "app_settings", "config");
                         t.update(userRef, { wallet: increment(-amount) });
                         t.update(configRef, { rmz_wallet_balance: increment(amount) });
-                        t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.id] });
-                        t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.id, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
+                        t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.uid] });
+                        t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
                     });
                     const now = new Date();
                     showSuccessPopup({
@@ -1138,8 +1160,9 @@
                 const configDoc = await getDoc(doc(db, "app_settings", "config"));
                 const cashbackPercentage = configDoc.exists() && configDoc.data().cashback_percentage ? configDoc.data().cashback_percentage : 2;
                 const cashbackAmount = productPrice * (cashbackPercentage / 100);
+                // --- BUG FIX: Use currentUserData.uid instead of currentUserData.id ---
                 await addDoc(collection(db, "cashback_requests"), {
-                    userId: currentUserData.id, userName: currentUserData.name, userMobile: currentUserData.mobile,
+                    userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
                     productName, productPrice, cashbackAmount, status: "pending", requestDate: serverTimestamp(), claimed: false
                 });
                 showToast(`Your cashback request for ₹${cashbackAmount.toFixed(2)} has been submitted.`);
@@ -1171,7 +1194,7 @@
             verifyPasswordAndExecute(async () => {
                 try {
                     await addDoc(collection(db, "credit_requests"), {
-                        userId: currentUserData.id,
+                        userId: currentUserData.uid,
                         userName: currentUserData.name,
                         userMobile: currentUserData.mobile,
                         amount: amount,
@@ -1490,6 +1513,51 @@
             const snapshot = await getDocs(q);
             return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
         }
+
+        async function loadUpline() {
+            const uplineContainer = document.getElementById('upline-list');
+            uplineContainer.innerHTML = '';
+            networkLoader.style.display = 'block';
+
+            try {
+                const uplineUIDs = currentUserData.upline || [];
+                const uplinePromises = uplineUIDs.map(uid => getDoc(doc(db, 'users', uid)));
+                const uplineDocs = await Promise.all(uplinePromises);
+
+                const uplineData = uplineDocs.map(doc => doc.exists() ? doc.data() : null).filter(Boolean);
+                
+                // Add current user at the end
+                uplineData.push(currentUserData);
+
+                uplineContainer.innerHTML = uplineData.reverse().map((member, index) => {
+                    const isCurrentUser = member.uid === currentUserData.uid;
+                    const level = uplineData.length - 1 - index;
+                    const avatarHTML = member.profilePictureUrl ? `<img src="${member.profilePictureUrl}" alt="${member.name}">` : member.name.charAt(0).toUpperCase();
+
+                    return `
+                        <div class="upline-member ${isCurrentUser ? 'current-user' : ''}">
+                            ${!isCurrentUser && level < commissionRates.length ? `<div class="upline-commission">${commissionRates[level]}%</div>` : ''}
+                            <div class="node">
+                                <div class="node-avatar">${avatarHTML}</div>
+                                <div class="node-name">${member.name}</div>
+                                <div class="node-earning">${isCurrentUser ? `(Aap)` : ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                if (uplineData.length <= 1) {
+                     uplineContainer.innerHTML += '<div class="empty-state">Aapke paas koi sponsor nahi hai.</div>';
+                }
+
+                isUplineLoaded = true;
+            } catch (error) {
+                console.error("Error loading upline:", error);
+                uplineContainer.innerHTML = '<div class="empty-state">Sponsor load karne mein error hua.</div>';
+            } finally {
+                networkLoader.style.display = 'none';
+            }
+        }
         
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -1638,7 +1706,7 @@
                 document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
                 
-                if (target.dataset.tab === 'upline' && !isUplineLoaded) { /* loadUpline(); */ }
+                if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
                 if (target.dataset.tab === 'downline') { 
                     historyStack = [currentUserData];
                     updateNetworkTreeView(currentUserData.uid, 0);
