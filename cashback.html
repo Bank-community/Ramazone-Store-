@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- UPDATED: Viewport meta tag to force desktop view and enable zooming -->
-    <meta name="viewport" content="width=1200">
+    <!-- Reverted to the original viewport for mobile-first experience -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ramazone Cashback</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -303,13 +303,13 @@
 
         #downline-content {
             width: 100%; height: 100%;
-            overflow: auto; /* Enables scrolling for the desktop view on mobile */
+            overflow: auto; 
             text-align: center;
             background-color: #ffffff;
         }
         .tree-container {
             position: relative; display: inline-block;
-            padding: 40px; white-space: nowrap; /* Essential for horizontal layout */
+            padding: 40px; white-space: nowrap; 
         }
         #connector-svg {
             position: absolute; top: 0; left: 0;
@@ -751,7 +751,6 @@
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
         
-        // UPDATE: Credit level definitions
         const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
 
         let historyStack = [];
@@ -765,10 +764,25 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
+
+        // UPDATED: Central function to manage views and viewport meta tag
         const toggleView = (viewId) => {
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            // Set viewport for desktop-like experience ONLY for network view
+            if (viewId === 'network-view') {
+                viewportMeta.setAttribute('content', 'width=1200');
+            } else {
+                // Revert to mobile-friendly viewport for all other views
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+            }
+
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId)?.classList.add('active');
+            const viewElement = document.getElementById(viewId);
+            if(viewElement) {
+                viewElement.classList.add('active');
+            }
         };
+
         const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
         const closeModal = (modalId) => {
             const modal = document.getElementById(modalId);
@@ -822,7 +836,6 @@
                 toggleView('dashboard-view');
             } else {
                 detachAllListeners();
-                // UPDATE: Check for referral link on logout/initial load
                 handleReferralLink();
             }
         });
@@ -1349,7 +1362,6 @@
             window.open(whatsappUrl, '_blank');
         }
         
-        // UPDATE: Function to handle referral link on page load
         function handleReferralLink() {
             const params = new URLSearchParams(window.location.search);
             const refCode = params.get('ref');
@@ -1553,13 +1565,10 @@
 
                 const uplineData = uplineDocs.map(doc => doc.exists() ? {uid: doc.id, ...doc.data()} : null).filter(Boolean);
                 
-                // Add the current user to the end of the list before reversing
                 uplineData.push(currentUserData);
 
-                // Reverse the array so the current user is first, then map to HTML
                 uplineContainer.innerHTML = uplineData.reverse().map((member, index, arr) => {
                     const isCurrentUser = member.uid === currentUserData.uid;
-                    // Level is the distance from the current user (0 = direct sponsor)
                     const level = arr.length - 1 - index;
                     const avatarHTML = member.profilePictureUrl ? `<img src="${member.profilePictureUrl}" alt="${member.name}">` : member.name.charAt(0).toUpperCase();
 
@@ -1642,7 +1651,7 @@
                     const newUserDoc = {
                         uid: tempUser.uid, name, mobile, password, wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0,
                         referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`,
-                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 // UPDATE: Initialize creditLevel
+                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 
                     };
                     await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
                     await signOut(auth);
@@ -1673,7 +1682,6 @@
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
             
-            // UPDATE: Credit Request Modal Logic
             document.getElementById('open-credit-request-modal').addEventListener('click', () => {
                 if (!currentUserData) return showToast("Please wait for data to load.");
                 if (currentUserData.dueAmount > 0) {
@@ -1691,7 +1699,6 @@
                 document.getElementById('credit-submit-btn').disabled = !e.target.checked;
             });
 
-            // UPDATE: Notification View Logic
             document.getElementById('static-notification-card').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('open-notification-center-btn').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
