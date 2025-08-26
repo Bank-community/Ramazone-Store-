@@ -5,7 +5,77 @@ let database;
 // --- CART FUNCTIONS ---
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
 function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
-function addToCart(productId, quantityToAdd = 1) { const cart = getCart(); const existingItemIndex = cart.findIndex(item => item.id === productId); if (existingItemIndex > -1) { cart[existingItemIndex].quantity += quantityToAdd; } else { cart.push({ id: productId, quantity: quantityToAdd }); } saveCart(cart); const product = allProductsCache.find(p => p && p.id === productId); showToast(`${product ? product.name : 'Item'} added to cart!`); updateCartIcon(); }
+
+/**
+ * UPDATED addToCart Function
+ * --------------------------
+ * यह फंक्शन अब प्रोडक्ट्स के वेरिएंट्स को हैंडल करता है।
+ * जब "Quick Add to Cart" पर क्लिक किया जाता है:
+ * 1. यह जांचता है कि प्रोडक्ट में वेरिएंट्स (जैसे रंग, आकार) हैं या नहीं।
+ * 2. यदि वेरिएंट्स हैं, तो यह प्रत्येक प्रकार के लिए पहला विकल्प डिफ़ॉल्ट के रूप में चुनता है।
+ * 3. यह कार्ट में आइटम को वेरिएंट की जानकारी के साथ जोड़ता है।
+ * 4. यह सुनिश्चित करता है कि एक ही प्रोडक्ट के अलग-अलग वेरिएंट कार्ट में अलग-अलग आइटम के रूप में रहें।
+ * इस बदलाव से ऑर्डर पेज पर होने वाली समस्या ठीक हो जाएगी।
+ */
+function addToCart(productId, quantityToAdd = 1) {
+    const cart = getCart();
+    const product = allProductsCache.find(p => p && p.id === productId);
+
+    // यदि प्रोडक्ट नहीं मिलता है, तो कोई कार्रवाई न करें।
+    if (!product) {
+        console.error(`Product with ID ${productId} not found.`);
+        showToast('Could not add item to cart.', 'error');
+        return;
+    }
+
+    // --- नया लॉजिक: वेरिएंट्स को हैंडल करना ---
+    let selectedVariants = null;
+    // जांचें कि क्या प्रोडक्ट में वेरिएंट्स परिभाषित हैं।
+    if (product.variants && typeof product.variants === 'object' && Object.keys(product.variants).length > 0) {
+        selectedVariants = {};
+        // प्रत्येक वेरिएंट प्रकार (जैसे, "Color", "Size") पर पुनरावृति करें
+        for (const variantType in product.variants) {
+            // जांचें कि वेरिएंट प्रकार में विकल्प हैं और डिफ़ॉल्ट के रूप में पहला चुनें।
+            if (Array.isArray(product.variants[variantType]) && product.variants[variantType].length > 0) {
+                selectedVariants[variantType] = product.variants[variantType][0];
+            }
+        }
+    }
+    // --- नया लॉजिक समाप्त ---
+
+    // पता करें कि क्या कार्ट में पहले से ही एक समान आइटम (समान आईडी और समान वेरिएंट) मौजूद है।
+    const existingItemIndex = cart.findIndex(item => {
+        // मूल जांच: समान आईडी
+        if (item.id !== productId) return false;
+
+        // उन्नत जांच: वेरिएंट की तुलना करें।
+        // `JSON.stringify` वेरिएंट ऑब्जेक्ट्स की गहराई से तुलना करने का एक सरल तरीका है।
+        const variantsMatch = JSON.stringify(item.variants || null) === JSON.stringify(selectedVariants || null);
+
+        return variantsMatch;
+    });
+
+    if (existingItemIndex > -1) {
+        // आइटम मौजूद है, बस मात्रा बढ़ाएँ।
+        cart[existingItemIndex].quantity += quantityToAdd;
+    } else {
+        // आइटम मौजूद नहीं है, एक नया कार्ट आइटम ऑब्जेक्ट बनाएँ।
+        const newItem = {
+            id: productId,
+            quantity: quantityToAdd
+        };
+        // नए आइटम में वेरिएंट तभी जोड़ें जब वे चुने गए हों।
+        if (selectedVariants) {
+            newItem.variants = selectedVariants;
+        }
+        cart.push(newItem);
+    }
+
+    saveCart(cart);
+    showToast(`${product.name} added to cart!`);
+    updateCartIcon();
+}
+
 function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
 function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { if (totalQuantity > 0) { cartCountElement.textContent = totalQuantity; } else { cartCountElement.textContent = ''; } } }
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
