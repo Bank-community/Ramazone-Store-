@@ -256,7 +256,7 @@ header {
 
 .category-card { 
     flex-shrink: 0; 
-    width: 60px; 
+    width: 58px; 
     text-align: center; 
     text-decoration: none; 
     color: var(--text-dark); 
@@ -265,7 +265,7 @@ header {
 }
 
 .category-card--double { 
-    width: 132px; 
+    width: 130px; 
 }
 
 .category-card .img-wrapper { 
