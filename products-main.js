@@ -3,12 +3,71 @@ let allProducts = [];
 let allCategories = [];
 let currentCategory = 'All';
 let database;
-let searchScrollingTexts = []; // ADDED: To store texts for the placeholder
+let searchScrollingTexts = [];
 
 // --- CART FUNCTIONS ---
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
 function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
-function addToCart(productId, quantityToAdd = 1) { const cart = getCart(); const existingItemIndex = cart.findIndex(item => item.id === productId); if (existingItemIndex > -1) { cart[existingItemIndex].quantity += quantityToAdd; } else { cart.push({ id: productId, quantity: quantityToAdd }); } saveCart(cart); const product = allProducts.find(p => p && p.id === productId); showToast(`${product ? product.name : 'Item'} added to cart!`); updateCartIcon(); }
+
+/**
+ * FINAL FIXED addToCart Function
+ * --------------------------------
+ * यह फंक्शन अब main.js की तरह ही काम करता है।
+ * 1. यह प्रोडक्ट की पूरी जानकारी `allProducts` से प्राप्त करता है।
+ * 2. यह जांचता है कि प्रोडक्ट में `variants` हैं या नहीं।
+ * 3. यदि वेरिएंट्स हैं, तो यह प्रत्येक प्रकार के लिए पहले विकल्प को डिफ़ॉल्ट के रूप में चुनता है।
+ * 4. यह कार्ट में आइटम को पूरी जानकारी (id, quantity, variants) के साथ जोड़ता है।
+ */
+function addToCart(productId, quantityToAdd = 1) {
+    const cart = getCart();
+    // Use the correct cache variable 'allProducts'
+    const product = allProducts.find(p => p && p.id === productId);
+
+    if (!product) {
+        console.error(`Product with ID ${productId} not found.`);
+        showToast('Could not add item to cart.', 'error');
+        return;
+    }
+
+    // --- New and correct variant handling logic ---
+    let selectedVariants = {};
+    let hasVariants = false;
+
+    if (product.variants && Array.isArray(product.variants)) {
+        product.variants.forEach(variant => {
+            if (variant.type && Array.isArray(variant.options) && variant.options.length > 0) {
+                selectedVariants[variant.type] = variant.options[0].name;
+                hasVariants = true;
+            }
+        });
+    }
+
+    if (!hasVariants) {
+        selectedVariants = {};
+    }
+
+    const existingItemIndex = cart.findIndex(item => {
+        if (item.id !== productId) return false;
+        const variantsMatch = JSON.stringify(item.variants || {}) === JSON.stringify(selectedVariants);
+        return variantsMatch;
+    });
+
+    if (existingItemIndex > -1) {
+        cart[existingItemIndex].quantity += quantityToAdd;
+    } else {
+        const newItem = {
+            id: productId,
+            quantity: quantityToAdd,
+            variants: selectedVariants
+        };
+        cart.push(newItem);
+    }
+
+    saveCart(cart);
+    showToast(`${product.name} added to cart!`);
+    updateCartIcon();
+}
+
 function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
 function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { if (totalQuantity > 0) { cartCountElement.textContent = totalQuantity; } else { cartCountElement.textContent = ''; } } }
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
@@ -17,9 +76,6 @@ function showToast(message, type = "info") { const toast=document.getElementById
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
 
-/**
- * Fetches Firebase config securely, initializes Firebase, and starts the application.
- */
 async function initializeApp() {
     try {
         const response = await fetch('/api/firebase-config');
@@ -40,9 +96,6 @@ async function initializeApp() {
     }
 }
 
-/**
- * Loads all necessary data and then sets up the page.
- */
 async function loadPageData() {
     try {
         await fetchAllData(database);
@@ -55,7 +108,7 @@ async function loadPageData() {
         setupSearch();
         setupGlobalEventListeners();
         updateCartIcon();
-        setupDynamicPlaceholder(); // ADDED: Start the dynamic placeholder
+        setupDynamicPlaceholder();
 
         document.getElementById('loading-indicator').style.display = 'none';
 
@@ -69,10 +122,6 @@ async function loadPageData() {
     }
 }
 
-/**
- * Fetches and combines all product and category data from Firebase.
- * @param {object} db - The initialized Firebase database instance.
- */
 async function fetchAllData(db) {
     const dbRef = db.ref('ramazone');
     const snapshot = await dbRef.get();
@@ -80,7 +129,6 @@ async function fetchAllData(db) {
         const data = snapshot.val();
         const homepageData = data.homepage || {};
 
-        // ADDED: Fetch scrolling texts for search placeholder
         if (homepageData.search && homepageData.search.scrollingTexts) {
             searchScrollingTexts = homepageData.search.scrollingTexts;
         }
@@ -112,15 +160,11 @@ async function fetchAllData(db) {
     }
 }
 
-/**
- * ADDED: This function sets up the dynamic placeholder for the search input.
- */
 function setupDynamicPlaceholder() {
     const searchInput = document.getElementById('search-input');
     if (!searchInput || !searchScrollingTexts || searchScrollingTexts.length === 0) return;
 
     let currentIndex = 0;
-    // Set initial placeholder
     searchInput.placeholder = `Search for ${searchScrollingTexts[currentIndex]}...`;
     currentIndex++;
 
@@ -211,6 +255,7 @@ function createProductCardHTML(prod) {
         if(discount > 0) discountHTML = `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>`;
     }
 
+    // This logic correctly shows the button based on your requirements
     const displayPriceNum = Number(prod.displayPrice);
     const showAddButton = displayPriceNum < 500 || prod.category === 'grocery';
     const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
