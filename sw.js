@@ -1,6 +1,10 @@
 // Service Worker for Ramazone PWA
 
-const CACHE_NAME = 'ramazone-cache-v2';
+// --- STEP 1: UPDATE THE CACHE VERSION ---
+// Change this version number every time you deploy new updates.
+// For example, 'v2', 'v3', etc.
+const CACHE_NAME = 'ramazone-cache-v2'; 
+
 // List of files to cache. Start with the essentials.
 const urlsToCache = [
   '/',
@@ -10,20 +14,18 @@ const urlsToCache = [
   'https://i.ibb.co/CpBR4gjN/20250708-142020.png' // Logo
 ];
 
-// Install event: fires when the service worker is first installed.
+// Install event: fires when the new service worker is installed.
 self.addEventListener('install', event => {
-  // Perform install steps
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
-        // Add all essential files to the cache
+        console.log('Opened cache and caching new assets');
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-// Fetch event: fires for every network request.
+// Fetch event: serves assets from cache or network.
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
@@ -32,42 +34,26 @@ self.addEventListener('fetch', event => {
         if (response) {
           return response;
         }
-
         // Not in cache - fetch from network
-        return fetch(event.request).then(
-          response => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        );
+        return fetch(event.request); 
       })
   );
 });
 
-// Activate event: fires when the service worker is activated.
-// This is a good place to clean up old caches.
+// --- STEP 2: ADD LOGIC TO DELETE OLD CACHES ---
+// Activate event: fires when the new service worker is activated.
+// This is where we clean up old, unused caches.
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+  const cacheWhitelist = [CACHE_NAME]; // The only cache we want to keep
+
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
+          // If a cache is found that is not in our whitelist...
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            // ...delete it!
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
