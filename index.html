@@ -13,12 +13,16 @@
 </head>
 <body class="bg-white">
 
-    <!-- MODIFIED: Header updated with cart icon -->
+    <!-- === UPDATED HEADER === -->
     <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-2 flex items-center justify-between">
-                <!-- Left side can be a back button or menu, for now it's empty to center the logo -->
-                <div class="w-10"></div>
+                <!-- Left side: NEW Menu Button -->
+                <div class="w-10">
+                    <button id="menu-toggle-btn" class="p-2 -ml-2">
+                        <img src="https://www.svgrepo.com/show/532195/menu.svg" alt="Menu" class="h-6 w-6">
+                    </button>
+                </div>
                 
                 <!-- Center Logo -->
                 <div class="flex-grow text-center">
@@ -36,6 +40,35 @@
         </div>
     </header>
 
+    <!-- === NEW SIDE MENU STRUCTURE === -->
+    <div id="menu-overlay"></div>
+    <nav id="side-menu">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold">Menu</h2>
+        </div>
+        <div class="menu-items">
+            <a href="./index.html" class="menu-item active">
+                <img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span>
+            </a>
+            <a href="./order.html" class="menu-item" id="menu-cart-link">
+                <img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart"><span>Cart</span>
+            </a>
+            <a href="#" class="menu-item" id="menu-play-link" target="_blank">
+                <img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span>
+            </a>
+            <a href="#" class="menu-item" id="menu-cashback-link" target="_blank">
+                <img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback"><span>Cashback</span>
+            </a>
+            <div id="menu-follow-item" class="menu-item">
+                <img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span>
+                <i class="fas fa-chevron-down text-xs ml-auto"></i>
+            </div>
+            <div id="follow-submenu" class="submenu">
+                <!-- Social media links will be injected here by JS -->
+            </div>
+        </div>
+    </nav>
+    
     <div id="search-container">
          <a id="search-link" href="./products.html?focus=true">
             <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
@@ -50,21 +83,16 @@
         <div class="slider-dots" id="slider-dots-container"></div>
     </div>
     
-    <main id="main-content-area" class="mb-28 md:mb-0">
+    <!-- === UPDATED: Margin bottom adjusted for desktop view === -->
+    <main id="main-content-area" class="mb-16 md:mb-0">
         <!-- Dynamic content will be loaded here by main.js -->
     </main>
 
-    <div id="footer">
-        <a href="./index.html" class="active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a>
-        <a href="./order.html" id="footer-shop-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Shop"><span>Cart</span></a>
-        <a href="#" id="footer-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span></a>
-        <a href="#" id="footer-profile-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Profile"><span>Cashback</span></a>
-        <a href="#" onclick="toggleSocialMedia(event)"><img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span></a>
-    </div>
+    <!-- === REMOVED: Floating Footer div === -->
     
-    <div class="social-media-links" id="social-links-container"></div>
+    <!-- This container is now hidden and only used for logic, not display -->
+    <div class="social-media-links" id="social-links-container" style="display: none;"></div>
     
-    <!-- ADDED: Toast notification element -->
     <div id="toast-notification"></div>
 
     <footer id="desktop-footer">

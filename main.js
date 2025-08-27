@@ -141,6 +141,7 @@ function renderAllSections(data) {
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
     setupGlobalEventListeners();
+    setupSideMenu(); // <<< NEW function call for menu logic
     updateCartIcon();
     setupScrollAnimations();
 }
@@ -199,14 +200,11 @@ function getDealsOfTheDayProducts(maxCount) {
         const discountB = (b.originalPrice || 0) - (b.displayPrice || 0);
         if (discountB > discountA) return 1;
         if (discountA > discountB) return -1;
-        return (b.rating || 0) - (a.rating || 0);
+        return (b.rating || 0) - (b.rating || 0);
     }).slice(0, maxCount);
 }
 
-function toggleSocialMedia(event) {
-    event.preventDefault();
-    document.getElementById('social-links-container').classList.toggle('active');
-}
+// --- REMOVED toggleSocialMedia function as it's replaced by menu logic ---
 
 function setupGlobalEventListeners() {
     document.body.addEventListener('click', function(event) {
@@ -387,9 +385,58 @@ function renderHighlightedProducts() {
 function renderSearch(searchData) { if (!searchData || !searchData.scrollingTexts || searchData.scrollingTexts.length === 0) return; const texts = searchData.scrollingTexts; let i = 0; const el = document.getElementById("categoryText"); if (window.searchInterval) clearInterval(window.searchInterval); window.searchInterval = setInterval(() => { if (el) { el.style.opacity = 0; setTimeout(() => { el.innerText = texts[i]; el.style.opacity = 1; i = (i + 1) % texts.length; }, 300); } }, 2500); }
 function renderInfoMarquee(text) { const section = document.getElementById('info-marquee-section'); if (!text) { if(section) section.style.display = 'none'; return; } section.style.display = 'block'; section.querySelector('#info-marquee-text').innerHTML = text; }
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data || !data.front || !data.back) { if(section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
-function renderFooter(data) { if (!data) return; document.getElementById('footer-shop-link').href = './order.html'; document.getElementById('footer-play-link').href = data.playLink || '#'; document.getElementById('footer-profile-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const mobileContainer = document.getElementById('social-links-container'); const desktopContainer = document.getElementById('desktop-social-links'); mobileContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', color: '#FF1111' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', color: '#E4405F' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', color: '#1877F2' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', color: '#25D366' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; mobileContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="social-link" style="background-color:${p.color};"><img src="${p.icon}" alt="${key}"></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
+function renderFooter(data) { 
+    if (!data) return; 
+    // Update menu links instead of old footer links
+    document.getElementById('menu-play-link').href = data.playLink || '#'; 
+    document.getElementById('menu-cashback-link').href = data.profileLink || '#'; 
 
-// --- SLIDER LOGIC (UPDATED WITH A SIMPLER, MORE RELIABLE SWIPE FEATURE) ---
+    const links = data.followLinks; 
+    if (links) { 
+        const submenuContainer = document.getElementById('follow-submenu');
+        const desktopContainer = document.getElementById('desktop-social-links');
+        submenuContainer.innerHTML = ''; 
+        desktopContainer.innerHTML = ''; 
+        const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', color: '#FF1111', name: 'YouTube' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', color: '#E4405F', name: 'Instagram' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', color: '#1877F2', name: 'Facebook' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', color: '#25D366', name: 'WhatsApp' } }; 
+        Object.keys(platforms).forEach(key => { 
+            if (links[key]) { 
+                const p = platforms[key]; 
+                submenuContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="submenu-item"><img src="${p.icon}" alt="${key}"><span>${p.name}</span></a>`;
+                desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; 
+            } 
+        }); 
+    } 
+}
+
+// --- NEW: SIDE MENU LOGIC ---
+function setupSideMenu() {
+    const menuToggleBtn = document.getElementById('menu-toggle-btn');
+    const sideMenu = document.getElementById('side-menu');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const followItem = document.getElementById('menu-follow-item');
+    const followSubmenu = document.getElementById('follow-submenu');
+
+    if (menuToggleBtn && sideMenu && menuOverlay) {
+        menuToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('menu-open');
+        });
+
+        menuOverlay.addEventListener('click', () => {
+            document.body.classList.remove('menu-open');
+        });
+    }
+
+    if (followItem && followSubmenu) {
+        followItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            followItem.classList.toggle('open');
+            followSubmenu.classList.toggle('open');
+        });
+    }
+}
+
+
+// --- SLIDER LOGIC (UNCHANGED) ---
 let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
 function initializeSlider(count) {
     const slider = document.getElementById("main-slider");
@@ -414,37 +461,34 @@ function initializeSlider(count) {
         if (dot) goToSlide(parseInt(dot.dataset.slide));
     });
 
-    // --- NEW, SIMPLIFIED SWIPE LOGIC ---
     let startPos = 0;
-    const swipeThreshold = 50; // Min pixels to count as a swipe
+    const swipeThreshold = 50;
 
     const getPositionX = event => event.type.includes("mouse") ? event.pageX : event.touches[0].clientX;
 
     const swipeStart = e => {
         startPos = getPositionX(e);
-        clearInterval(sliderInterval); // Pause autoplay
+        clearInterval(sliderInterval);
     };
 
     const swipeEnd = e => {
-        // For touchend, we need to get the position from changedTouches
         const endPos = e.type.includes("touch") ? e.changedTouches[0].clientX : e.pageX;
         const deltaX = endPos - startPos;
 
         if (Math.abs(deltaX) > swipeThreshold) {
             if (deltaX < 0) {
-                moveSlide(1); // Swiped left
+                moveSlide(1);
             } else {
-                moveSlide(-1); // Swiped right
+                moveSlide(-1);
             }
         }
-        resetSliderInterval(); // Always resume autoplay
+        resetSliderInterval();
     };
 
     slider.addEventListener("mousedown", swipeStart);
     slider.addEventListener("touchstart", swipeStart, { passive: true });
     slider.addEventListener("mouseup", swipeEnd);
     slider.addEventListener("touchend", swipeEnd);
-    // --- END OF NEW SWIPE LOGIC ---
 
     slider.addEventListener("transitionend", () => {
         isTransitioning = false;
