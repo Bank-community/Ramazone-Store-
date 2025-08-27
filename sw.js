@@ -1,6 +1,6 @@
 // Service Worker for Ramazone PWA
 
-const CACHE_NAME = 'ramazone-cache-v1';
+const CACHE_NAME = 'ramazone-cache-v2';
 // List of files to cache. Start with the essentials.
 const urlsToCache = [
   '/',
