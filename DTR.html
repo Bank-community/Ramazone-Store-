@@ -11,25 +11,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* Using Inter font */
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Custom style for the preformatted text to ensure readability and indicate it's editable */
         pre {
-            white-space: pre-wrap;       /* Ensures text wraps */
-            word-wrap: break-word;       /* Breaks long words */
+            white-space: pre-wrap;
+            word-wrap: break-word;
             line-height: 1.7;
-            border: 1px dashed #cbd5e1; /* Dashed border to show it's editable */
             padding: 1rem;
             border-radius: 0.5rem;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+            border: 1px solid transparent; /* Default border is invisible */
         }
-        /* Style when the user clicks to edit */
+        /* Style for when edit mode is active */
+        pre.editable {
+            border-color: #4f46e5; /* Highlight with a solid color */
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            background-color: #fefcbf1a; /* Slight yellow tint */
+        }
         pre:focus {
             outline: none;
-            border-color: #4f46e5; /* Highlight with a solid color on focus */
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
         }
     </style>
 </head>
@@ -39,17 +40,20 @@
         
         <header class="text-center mb-6">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Daily Inward/Outward Report</h1>
-            <p class="text-gray-500 mt-1">इस रिपोर्ट को एडिट किया जा सकता है। बदलाव अपने आप सेव हो जाएँगे।</p>
+            <p class="text-gray-500 mt-1">रिपोर्ट बदलने के लिए "Edit Report" बटन दबाएँ।</p>
         </header>
+
+        <!-- Edit Mode Toggle Button -->
+        <div class="flex justify-between items-center mb-4">
+            <button id="editBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                ✏️ Edit Report
+            </button>
+            <p id="saveStatus" class="text-sm text-gray-500 h-4"></p>
+        </div>
 
         <!-- The main content area for the stock report -->
         <main class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-            <!-- 
-              - id="stockReportContent" is used by JavaScript.
-              - contenteditable="true" makes the text editable by the user.
-              - The extra spaces in the Wheat reports have been removed.
-            -->
-            <pre id="stockReportContent" class="text-gray-800 text-sm md:text-base">
+            <pre id="stockReportContent" class="text-gray-800 text-sm md:text-base" contenteditable="false">
 📦 *STOCK SUMMARY:*
 📅 Date: *27/08/2025*
 📝 Subject: Daily Inward/Outward Report
@@ -136,11 +140,7 @@
 ⚖️ Quantity: 0
 🏦 Bank: 0
 
-
-
-<br><br>
-
-
+-----------------------------------------------------
 
 📦 *STOCK SUMMARY:*
 📅 Date: *27/08/2025*
@@ -162,7 +162,6 @@
 ⚖️ Quantity: 0
 🏦 Bank: 0
             </pre>
-            <p id="saveStatus" class="text-right text-sm text-gray-400 mt-2 h-4"></p>
         </main>
 
         <!-- WhatsApp Share Button -->
@@ -179,45 +178,66 @@
 
             const reportElement = document.getElementById('stockReportContent');
             const saveStatusElement = document.getElementById('saveStatus');
-            const storageKey = 'savedStockReportText'; // Key to save data in localStorage
+            const editBtn = document.getElementById('editBtn');
+            const storageKey = 'savedStockReportText';
 
-            // --- Step 1: Load saved text from localStorage ---
-            const savedText = localStorage.getItem(storageKey);
-            if (savedText) {
-                // If text exists in storage, use it.
-                reportElement.innerText = savedText;
+            // Function to load and format the text
+            function loadAndFormatText() {
+                const savedText = localStorage.getItem(storageKey);
+                if (savedText) {
+                    reportElement.innerText = savedText;
+                }
+                
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+                const formattedDate = `${day}/${month}/${year}`;
+                
+                const oldDateRegex = /\d{2}\/\d{2}\/\d{4}/g;
+                reportElement.textContent = reportElement.textContent.replace(oldDateRegex, formattedDate);
             }
 
-            // --- Step 2: Automatically update the date ---
-            const today = new Date();
-            const day = String(today.getDate()).padStart(2, '0');
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const year = today.getFullYear();
-            const formattedDate = `${day}/${month}/${year}`;
-            
-            const oldDateRegex = /\d{2}\/\d{2}\/\d{4}/g;
-            // We get the current text (either default or from storage) and update its date
-            reportElement.textContent = reportElement.textContent.replace(oldDateRegex, formattedDate);
+            // Initial load
+            loadAndFormatText();
 
-            // --- Step 3: Save text to localStorage on every edit ---
-            let saveTimeout;
-            reportElement.addEventListener('input', function() {
-                // Show "Saving..." message immediately
-                saveStatusElement.textContent = 'Saving...';
-                
-                // Clear previous timeout to avoid saving on every keystroke
-                clearTimeout(saveTimeout);
-                
-                // Set a new timeout to save after 1 second of inactivity
-                saveTimeout = setTimeout(() => {
-                    localStorage.setItem(storageKey, reportElement.innerText);
-                    saveStatusElement.textContent = 'Saved!';
-                    // Make the "Saved!" message disappear after 2 seconds
-                    setTimeout(() => { saveStatusElement.textContent = ''; }, 2000);
-                }, 1000);
+            // --- Edit Mode Logic ---
+            editBtn.addEventListener('click', function() {
+                const isEditable = reportElement.getAttribute('contenteditable') === 'true';
+
+                if (isEditable) {
+                    // If it IS editable, turn editing OFF
+                    reportElement.setAttribute('contenteditable', 'false');
+                    reportElement.classList.remove('editable');
+                    editBtn.innerHTML = '✏️ Edit Report';
+                    editBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    editBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                } else {
+                    // If it is NOT editable, turn editing ON
+                    reportElement.setAttribute('contenteditable', 'true');
+                    reportElement.classList.add('editable');
+                    editBtn.innerHTML = '🔒 Lock and Save';
+                    editBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    editBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                    reportElement.focus(); // Automatically focus the text area
+                }
             });
 
-            // --- Step 4: Set up the WhatsApp share button ---
+            // --- Auto-Save Logic ---
+            let saveTimeout;
+            reportElement.addEventListener('input', function() {
+                if (reportElement.getAttribute('contenteditable') === 'true') {
+                    saveStatusElement.textContent = 'Saving...';
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(() => {
+                        localStorage.setItem(storageKey, reportElement.innerText);
+                        saveStatusElement.textContent = 'Saved!';
+                        setTimeout(() => { saveStatusElement.textContent = ''; }, 2000);
+                    }, 1000);
+                }
+            });
+
+            // --- WhatsApp Share Logic ---
             const shareButton = document.getElementById('whatsappShareBtn');
             shareButton.addEventListener('click', function() {
                 const reportText = reportElement.innerText;
@@ -225,7 +245,6 @@
                 const whatsappUrl = `https://wa.me/?text=${encodedText}`;
                 window.open(whatsappUrl, '_blank');
             });
-
         });
     </script>
 
