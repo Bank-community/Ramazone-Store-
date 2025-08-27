@@ -11,41 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* --- FINAL FIXED INVOICE STYLES --- */
-        /* This makes the dark background the main scroll container */
-        #invoice-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,.5); z-index: 100;
-            overflow-y: auto; /* Allow the whole modal to scroll */
-            padding: 1rem; /* Add some space from screen edges */
-            display: flex; /* Helps in centering the content */
-            opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility .3s ease;
-        }
-        #invoice-modal.active { opacity: 1; visibility: visible; }
-        
-        /* This is the main white box for the invoice */
-        #invoice-modal-content {
-            width: 100%;
-            max-width: 800px; /* Set a max width for larger screens */
-            margin: auto; /* Center the box vertically and horizontally */
-            background-color: #f3f4f6;
-            border-radius: 0.5rem;
-            overflow: hidden; /* Keeps everything inside the rounded corners */
-            transform: scale(.95); transition: transform .3s ease;
-        }
-        #invoice-modal.active #invoice-modal-content { transform: scale(1); }
-        
-        /* The viewer no longer needs to scroll itself */
-        #invoice-viewer {
-            padding: 0; /* Padding is now on the slip itself */
-        }
-
-        #invoice-slip-for-render {
-            background-color: #fff;
-            padding: 2rem;
-        }
-
-        /* --- Other Styles (Unchanged) --- */
         .order-item-card { position: relative; }
         .delete-item-btn {
             position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
@@ -82,6 +47,10 @@
         }
         .invoice-btn-red:hover {
             background-color: #dc2626;
+        }
+        .invoice-btn-red:disabled {
+            background-color: #fca5a5;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -123,7 +92,10 @@
             <div id="delivery-tracker-container" class="py-4"></div>
         </div>
         <div class="text-center">
-            <button id="view-invoice-btn" class="invoice-btn-red px-8 py-3 rounded-xl text-lg font-bold text-white shadow-lg"><i class="fas fa-receipt mr-2"></i>View Invoice</button>
+            <!-- This button will now trigger a direct download -->
+            <button id="view-invoice-btn" class="invoice-btn-red px-8 py-3 rounded-xl text-lg font-bold text-white shadow-lg">
+                <i class="fas fa-download mr-2"></i>Download Invoice
+            </button>
         </div>
     </div>
 
@@ -168,22 +140,7 @@
 
     <div id="toast-notification"></div>
     
-    <div id="invoice-modal">
-        <div id="invoice-modal-content">
-            <div class="bg-white shadow-sm p-3 flex justify-between items-center flex-shrink-0">
-                <h3 class="font-bold text-lg">Order Invoice</h3>
-                <button id="invoice-close-btn" class="text-gray-500 text-2xl">&times;</button>
-            </div>
-            <div id="invoice-viewer">
-                <div id="invoice-slip-for-render"></div>
-            </div>
-            <div class="bg-white shadow-t p-3 text-center flex-shrink-0">
-                <button id="download-invoice-btn" class="whatsapp-btn w-full max-w-xs mx-auto">
-                    <i class="fas fa-download mr-2"></i>Download Invoice
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- The invoice modal is no longer needed and has been removed -->
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>

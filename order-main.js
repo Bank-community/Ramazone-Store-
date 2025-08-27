@@ -159,9 +159,10 @@ function setupEventListeners() {
     document.getElementById('remove-coupon-btn').addEventListener('click', removeCoupon);
     document.getElementById('place-order-btn').addEventListener('click', placeOrder);
     document.getElementById('search-order-btn').addEventListener('click', searchOrder);
-    document.getElementById('view-invoice-btn').addEventListener('click', viewInvoice);
-    document.getElementById('invoice-close-btn').addEventListener('click', () => document.getElementById('invoice-modal').classList.remove('active'));
-    document.getElementById('download-invoice-btn').addEventListener('click', downloadInvoice);
+
+    // The button now calls the new direct download function
+    document.getElementById('view-invoice-btn').addEventListener('click', downloadInvoiceDirectly);
+
     document.getElementById('payment-option-group').addEventListener('click', e => { if (e.target.closest('.option-label')) { document.querySelectorAll('#payment-option-group .option-label').forEach(l => l.classList.remove('selected')); e.target.closest('.option-label').classList.add('selected'); } });
     document.getElementById('delivery-option-group').addEventListener('click', e => { if (e.target.closest('.option-label')) { document.querySelectorAll('#delivery-option-group .option-label').forEach(l => l.classList.remove('selected')); e.target.closest('.option-label').classList.add('selected'); updatePriceSummary(); } });
     document.body.addEventListener('click', e => { const copyBtn = e.target.closest('.copy-id-btn'); if (copyBtn) { navigator.clipboard.writeText(copyBtn.dataset.id).then(() => showToast(`Order ID ${copyBtn.dataset.id} copied!`, 'success')); } });
@@ -289,59 +290,66 @@ function renderSearchResult(orderData) { const searchResultEl = document.getElem
 function renderDeliveryTracker(status, container) { if (status === 'Rejected') { container.innerHTML = `<div class="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg"><i class="fas fa-times-circle text-red-500 text-3xl mr-4"></i><div><h3 class="font-bold text-red-700">Order Rejected</h3><p class="text-sm text-red-600">This order was rejected. Please contact support for more details.</p></div></div>`; return; } const statuses = ['Confirmed', 'Shipped', 'Out for Delivery', 'Delivered']; const icons = ['fa-check', 'fa-truck-fast', 'fa-truck-ramp-box', 'fa-star']; const currentStatusIndex = statuses.indexOf(status); let stepsHtml = statuses.map((s, index) => { const isCompleted = index <= currentStatusIndex; return `<div class="tracker-step ${isCompleted ? 'completed' : ''}"><div class="step-icon"><i class="fas ${icons[index]}"></i></div><p class="step-label">${s.replace(' ', '\n')}</p></div>`; }).join(''); const progressPercentage = currentStatusIndex >= 0 ? (currentStatusIndex / (statuses.length - 1)) * 100 : 0; container.innerHTML = `<div class="relative"><div class="tracker-line"><div class="tracker-progress-line" style="width: ${progressPercentage}%;"></div></div><div class="delivery-tracker">${stepsHtml}</div></div>`; }
 
 /**
- * FINAL FIXED viewInvoice Function
- * --------------------------------
- * This function now uses a simple, standard, and reliable way to make the table horizontally scrollable.
+ * NEW: downloadInvoiceDirectly Function
+ * -------------------------------------
+ * This function replaces the old viewInvoice. It generates the invoice in the background
+ * and triggers a download directly, without showing a modal.
  */
-async function viewInvoice() {
+async function downloadInvoiceDirectly(event) {
+    const btn = event.currentTarget;
     const orderId = document.getElementById('order-id-input').value.trim().toUpperCase();
-    if (!orderId) { showToast('No order loaded.', 'error'); return; }
-    const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get();
-    if (!snapshot.exists()) { showToast('Could not find order data.', 'error'); return; }
-    const orderData = snapshot.val();
-    const slipContent = document.getElementById('invoice-slip-for-render');
-    const summary = orderData.priceSummary;
-    const storeDetails = { name: 'Ramazone Online Store', owner: 'Prince Rama', address: 'Lalunagar, Begusarai, Bihar - 851129', phone: 'WhatsApp: 7903698180', email: 'ramazone007@gmail.com', website: 'www.ramazon.in' };
+    if (!orderId) {
+        showToast('No order loaded.', 'error');
+        return;
+    }
 
-    const mobileNumberHTML = orderData.customerDetails.mobile ? `<p style="margin: 4px 0 0; color: #666;"><strong>Mobile:</strong> ${orderData.customerDetails.mobile}</p>` : '';
+    // --- Show loading state on the button ---
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Downloading...`;
 
-    // The table is wrapped in a div with a simple overflow style. This is the most reliable method.
-    const tableHTML = `
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                <thead>
-                    <tr style="background-color: #DC2626; color: #FFFFFF;">
-                        <th style="padding: 0.8rem; text-align: left; white-space: nowrap;">SL.</th>
-                        <th style="padding: 0.8rem; text-align: left; white-space: nowrap;">DESCRIPTION</th>
-                        <th style="padding: 0.8rem; text-align: center; white-space: nowrap;">QTY</th>
-                        <th style="padding: 0.8rem; text-align: right; white-space: nowrap;">RATE</th>
-                        <th style="padding: 0.8rem; text-align: right; white-space: nowrap;">AMOUNT</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${orderData.items.map((item, index) => `
-                        <tr style="border-bottom: 1px solid #eee;">
-                            <td style="padding: 0.8rem;">${index + 1}</td>
-                            <td style="padding: 0.8rem;">
-                                <div style="display: flex; align-items: center; min-width: 200px;">
-                                    <img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 12px;" crossOrigin="anonymous">
-                                    <span style="font-weight: 500;">${item.name}</span>
-                                </div>
-                            </td>
-                            <td style="padding: 0.8rem; text-align: center;">${item.quantity}</td>
-                            <td style="padding: 0.8rem; text-align: right;">₹${item.displayPrice.toLocaleString('en-IN')}</td>
-                            <td style="padding: 0.8rem; text-align: right; font-weight: 500;">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
+    try {
+        const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get();
+        if (!snapshot.exists()) {
+            throw new Error('Could not find order data.');
+        }
+        const orderData = snapshot.val();
 
-    slipContent.innerHTML = `<div style="width: 210mm; min-height: 297mm; padding: 15mm; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; color: #333; font-size: 11pt; display: flex; flex-direction: column; margin: auto; background: white;"><header style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 4px solid #DC2626;"><div><h1 style="font-size: 2.5rem; font-weight: bold; color: #DC2626; margin: 0;">INVOICE</h1><p style="margin: 8px 0 0; font-size: 1rem; color: #555;"><strong>Invoice No:</strong> ${orderData.orderId}</p><p style="margin: 4px 0 0; font-size: 1rem; color: #555;"><strong>Invoice Date:</strong> ${new Date(orderData.createdAt).toLocaleDateString()}</p></div><div style="text-align: right;"><img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" style="height: 65px; margin-bottom: 8px; margin-left: auto;" crossOrigin="anonymous"><p style="margin: 0; font-weight: bold; font-size: 1.1rem;">${storeDetails.name}</p><p style="margin: 4px 0 0; font-size: 0.9rem; color: #555;">Proprietor: ${storeDetails.owner}</p></div></header><section style="margin-top: 2rem; display: flex; justify-content: space-between; font-size: 0.9rem; line-height: 1.5;"><div><p style="font-weight: bold; color: #555;">STORE DETAILS:</p><p style="margin: 4px 0 0;">${storeDetails.address}</p><p style="margin: 4px 0 0;">${storeDetails.phone}</p><p style="margin: 4px 0 0;">${storeDetails.email}</p></div><div style="text-align: right;"><p style="font-weight: bold; color: #555;">BILL TO:</p><p style="margin: 4px 0 0;">${orderData.customerDetails.name}</p><p style="margin: 4px 0 0; color: #666; max-width: 250px;">${orderData.customerDetails.address}</p>${mobileNumberHTML}</div></section><section style="margin-top: 2.5rem; flex-grow: 1;">${tableHTML}</section><section style="margin-top: 2rem; display: flex; justify-content: flex-end;"><div style="width: 300px; font-size: 0.9rem;"><div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Subtotal:</span><span>₹${summary.subtotal.toLocaleString('en-IN')}</span></div>${summary.coupon ? `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: #16a34a;"><span>Coupon (${summary.coupon.code}):</span><span>- ₹${summary.coupon.discount.toLocaleString('en-IN')}</span></div>` : ''}<div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Delivery Fee:</span><span>${summary.deliveryFee > 0 ? `₹${summary.deliveryFee.toLocaleString('en-IN')}` : 'Free'}</span></div><div style="display: flex; justify-content: space-between; padding: 0.75rem 0; margin-top: 0.5rem; border-top: 2px solid #333; font-weight: bold; font-size: 1.3rem;"><span>Grand Total:</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div></div></section><footer style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #eee; padding-top: 1rem;"><div style="font-size: 0.8rem; color: #888;"><p style="margin: 0;">Thank you for your order!</p><p style="margin: 4px 0 0; font-weight: bold;">${storeDetails.website}</p></div><div style="text-align: center;"><p style="font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif; margin: 0; color: #333;">Ramazone</p><p style="margin: 0; border-top: 1px solid #555; padding-top: 4px; font-size: 0.8rem; font-weight: bold;">Authorized Signatory</p></div></footer></div>`;
-    document.getElementById('invoice-modal').classList.add('active');
+        // --- Build Invoice HTML ---
+        const summary = orderData.priceSummary;
+        const storeDetails = { name: 'Ramazone Online Store', owner: 'Prince Rama', address: 'Lalunagar, Begusarai, Bihar - 851129', phone: 'WhatsApp: 7903698180', email: 'ramazone007@gmail.com', website: 'www.ramazon.in' };
+        const mobileNumberHTML = orderData.customerDetails.mobile ? `<p style="margin: 4px 0 0; color: #666;"><strong>Mobile:</strong> ${orderData.customerDetails.mobile}</p>` : '';
+        const tableHTML = `<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;"><thead><tr style="background-color: #DC2626; color: #FFFFFF;"><th style="padding: 0.8rem; text-align: left; white-space: nowrap;">SL.</th><th style="padding: 0.8rem; text-align: left; white-space: nowrap;">DESCRIPTION</th><th style="padding: 0.8rem; text-align: center; white-space: nowrap;">QTY</th><th style="padding: 0.8rem; text-align: right; white-space: nowrap;">RATE</th><th style="padding: 0.8rem; text-align: right; white-space: nowrap;">AMOUNT</th></tr></thead><tbody>${orderData.items.map((item, index) => `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 0.8rem;">${index + 1}</td><td style="padding: 0.8rem;"><div style="display: flex; align-items: center; min-width: 200px;"><img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 12px;" crossOrigin="anonymous"><span style="font-weight: 500;">${item.name}</span></div></td><td style="padding: 0.8rem; text-align: center;">${item.quantity}</td><td style="padding: 0.8rem; text-align: right;">₹${item.displayPrice.toLocaleString('en-IN')}</td><td style="padding: 0.8rem; text-align: right; font-weight: 500;">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</td></tr>`).join('')}</tbody></table></div>`;
+        const invoiceHTML = `<div style="width: 210mm; min-height: 297mm; padding: 15mm; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; color: #333; font-size: 11pt; display: flex; flex-direction: column; background: white;"><header style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 4px solid #DC2626;"><div><h1 style="font-size: 2.5rem; font-weight: bold; color: #DC2626; margin: 0;">INVOICE</h1><p style="margin: 8px 0 0; font-size: 1rem; color: #555;"><strong>Invoice No:</strong> ${orderData.orderId}</p><p style="margin: 4px 0 0; font-size: 1rem; color: #555;"><strong>Invoice Date:</strong> ${new Date(orderData.createdAt).toLocaleDateString()}</p></div><div style="text-align: right;"><img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" style="height: 65px; margin-bottom: 8px; margin-left: auto;" crossOrigin="anonymous"><p style="margin: 0; font-weight: bold; font-size: 1.1rem;">${storeDetails.name}</p><p style="margin: 4px 0 0; font-size: 0.9rem; color: #555;">Proprietor: ${storeDetails.owner}</p></div></header><section style="margin-top: 2rem; display: flex; justify-content: space-between; font-size: 0.9rem; line-height: 1.5;"><div><p style="font-weight: bold; color: #555;">STORE DETAILS:</p><p style="margin: 4px 0 0;">${storeDetails.address}</p><p style="margin: 4px 0 0;">${storeDetails.phone}</p><p style="margin: 4px 0 0;">${storeDetails.email}</p></div><div style="text-align: right;"><p style="font-weight: bold; color: #555;">BILL TO:</p><p style="margin: 4px 0 0;">${orderData.customerDetails.name}</p><p style="margin: 4px 0 0; color: #666; max-width: 250px;">${orderData.customerDetails.address}</p>${mobileNumberHTML}</div></section><section style="margin-top: 2.5rem; flex-grow: 1;">${tableHTML}</section><section style="margin-top: 2rem; display: flex; justify-content: flex-end;"><div style="width: 300px; font-size: 0.9rem;"><div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Subtotal:</span><span>₹${summary.subtotal.toLocaleString('en-IN')}</span></div>${summary.coupon ? `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: #16a34a;"><span>Coupon (${summary.coupon.code}):</span><span>- ₹${summary.coupon.discount.toLocaleString('en-IN')}</span></div>` : ''}<div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Delivery Fee:</span><span>${summary.deliveryFee > 0 ? `₹${summary.deliveryFee.toLocaleString('en-IN')}` : 'Free'}</span></div><div style="display: flex; justify-content: space-between; padding: 0.75rem 0; margin-top: 0.5rem; border-top: 2px solid #333; font-weight: bold; font-size: 1.3rem;"><span>Grand Total:</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div></div></section><footer style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #eee; padding-top: 1rem;"><div style="font-size: 0.8rem; color: #888;"><p style="margin: 0;">Thank you for your order!</p><p style="margin: 4px 0 0; font-weight: bold;">${storeDetails.website}</p></div><div style="text-align: center;"><p style="font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif; margin: 0; color: #333;">Ramazone</p><p style="margin: 0; border-top: 1px solid #555; padding-top: 4px; font-size: 0.8rem; font-weight: bold;">Authorized Signatory</p></div></footer></div>`;
+
+        // --- Render HTML off-screen to generate image ---
+        const renderContainer = document.createElement('div');
+        renderContainer.style.position = 'absolute';
+        renderContainer.style.left = '-9999px'; // Move it off-screen
+        document.body.appendChild(renderContainer);
+        renderContainer.innerHTML = invoiceHTML;
+
+        const invoiceElement = renderContainer.querySelector('div');
+
+        const canvas = await html2canvas(invoiceElement, { scale: 3, useCORS: true, allowTaint: true });
+        const link = document.createElement('a');
+        link.download = `Ramazone-Invoice-${orderId}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        // --- Clean up ---
+        document.body.removeChild(renderContainer);
+
+    } catch (error) {
+        console.error("Invoice download failed:", error);
+        showToast(error.message, 'error');
+    } finally {
+        // --- Restore button state ---
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`;
+    }
 }
 
-function downloadInvoice() { const invoiceElement = document.getElementById('invoice-slip-for-render').querySelector('div'); const orderId = document.getElementById('order-id-input').value.trim().toUpperCase(); if (!invoiceElement || !orderId) { showToast('Invoice content not found.', 'error'); return; } const btn = document.getElementById('download-invoice-btn'); btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Generating...`; html2canvas(invoiceElement, { scale: 3, useCORS: true, allowTaint: true, width: 794, height: invoiceElement.scrollHeight, windowWidth: 794, windowHeight: invoiceElement.scrollHeight }).then(canvas => { const link = document.createElement('a'); link.download = `Ramazone-Invoice-${orderId}.png`; link.href = canvas.toDataURL('image/png'); link.click(); btn.disabled = false; btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`; }).catch(err => { console.error("Download failed:", err); showToast('Failed to generate invoice.', 'error'); btn.disabled = false; btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`; }); }
+
 function showToast(message, type = "info") { const toast = document.getElementById("toast-notification"); if(!toast) return; toast.textContent = message; toast.className = 'toast show'; if(type === 'success') toast.classList.add('success'); if(type === 'error') toast.classList.add('error'); setTimeout(() => toast.classList.remove("show"), 3000); }
 async function checkAutoOrderStatus() { const todaysOrders = getTodaysOrders(); if (todaysOrders.length === 0) return; if (todaysOrders.length > 1) { const notification = document.getElementById('all-orders-notification'); document.getElementById('all-orders-summary').textContent = `You have ${todaysOrders.length} orders today:`; document.getElementById('all-orders-list').innerHTML = todaysOrders.map(o => `<div class="flex items-center gap-2"><span class="font-mono">${o.id}</span><button data-id="${o.id}" class="copy-id-btn text-indigo-500 hover:text-indigo-700"><i class="far fa-copy"></i></button></div>`).join(''); notification.classList.remove('hidden'); } const lastOrder = todaysOrders[todaysOrders.length - 1]; const orderId = lastOrder.id; let orderData = null; for (const status of ['pending', 'confirmed', 'rejected']) { const snapshot = await database.ref(`ramazone/orders/${status}/${orderId}`).get(); if (snapshot.exists()) { orderData = snapshot.val(); break; } } if (!orderData || !orderData.items || orderData.items.length === 0) return; const firstItem = orderData.items[0]; const productPreviewContainer = document.getElementById('auto-status-product-preview'); productPreviewContainer.innerHTML = `<img src="${firstItem.image || 'https://placehold.co/128x128'}" alt="${firstItem.name}"><div class="status-product-details"><h4>${firstItem.name}</h4><p>₹${Number(firstItem.displayPrice).toLocaleString('en-IN')} &times; ${firstItem.quantity}</p></div>`; const footerContainer = document.getElementById('auto-status-footer'); const orderDate = new Date(orderData.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); footerContainer.innerHTML = `<span class="order-date">Ordered on: ${orderDate}</span><button class="view-more-btn" data-order-id="${orderId}">View More &rarr;</button>`; renderDeliveryTracker(orderData.status, document.getElementById('auto-status-tracker')); document.getElementById('auto-status-container').classList.remove('hidden'); }
 
