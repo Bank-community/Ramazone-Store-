@@ -6,68 +6,46 @@ let database;
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
 function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
 
-/**
- * UPDATED addToCart Function
- * --------------------------
- * यह फंक्शन अब प्रोडक्ट्स के वेरिएंट्स को हैंडल करता है।
- * जब "Quick Add to Cart" पर क्लिक किया जाता है:
- * 1. यह जांचता है कि प्रोडक्ट में वेरिएंट्स (जैसे रंग, आकार) हैं या नहीं।
- * 2. यदि वेरिएंट्स हैं, तो यह प्रत्येक प्रकार के लिए पहला विकल्प डिफ़ॉल्ट के रूप में चुनता है।
- * 3. यह कार्ट में आइटम को वेरिएंट की जानकारी के साथ जोड़ता है।
- * 4. यह सुनिश्चित करता है कि एक ही प्रोडक्ट के अलग-अलग वेरिएंट कार्ट में अलग-अलग आइटम के रूप में रहें।
- * इस बदलाव से ऑर्डर पेज पर होने वाली समस्या ठीक हो जाएगी।
- */
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
     const product = allProductsCache.find(p => p && p.id === productId);
 
-    // यदि प्रोडक्ट नहीं मिलता है, तो कोई कार्रवाई न करें।
     if (!product) {
         console.error(`Product with ID ${productId} not found.`);
         showToast('Could not add item to cart.', 'error');
         return;
     }
 
-    // --- नया लॉजिक: वेरिएंट्स को हैंडल करना ---
-    let selectedVariants = null;
-    // जांचें कि क्या प्रोडक्ट में वेरिएंट्स परिभाषित हैं।
-    if (product.variants && typeof product.variants === 'object' && Object.keys(product.variants).length > 0) {
-        selectedVariants = {};
-        // प्रत्येक वेरिएंट प्रकार (जैसे, "Color", "Size") पर पुनरावृति करें
-        for (const variantType in product.variants) {
-            // जांचें कि वेरिएंट प्रकार में विकल्प हैं और डिफ़ॉल्ट के रूप में पहला चुनें।
-            if (Array.isArray(product.variants[variantType]) && product.variants[variantType].length > 0) {
-                selectedVariants[variantType] = product.variants[variantType][0];
+    let selectedVariants = {};
+    let hasVariants = false;
+
+    if (product.variants && Array.isArray(product.variants)) {
+        product.variants.forEach(variant => {
+            if (variant.type && Array.isArray(variant.options) && variant.options.length > 0) {
+                selectedVariants[variant.type] = variant.options[0].name;
+                hasVariants = true;
             }
-        }
+        });
     }
-    // --- नया लॉजिक समाप्त ---
 
-    // पता करें कि क्या कार्ट में पहले से ही एक समान आइटम (समान आईडी और समान वेरिएंट) मौजूद है।
+    if (!hasVariants) {
+        selectedVariants = {};
+    }
+
     const existingItemIndex = cart.findIndex(item => {
-        // मूल जांच: समान आईडी
         if (item.id !== productId) return false;
-
-        // उन्नत जांच: वेरिएंट की तुलना करें।
-        // `JSON.stringify` वेरिएंट ऑब्जेक्ट्स की गहराई से तुलना करने का एक सरल तरीका है।
-        const variantsMatch = JSON.stringify(item.variants || null) === JSON.stringify(selectedVariants || null);
-
+        const variantsMatch = JSON.stringify(item.variants || {}) === JSON.stringify(selectedVariants);
         return variantsMatch;
     });
 
     if (existingItemIndex > -1) {
-        // आइटम मौजूद है, बस मात्रा बढ़ाएँ।
         cart[existingItemIndex].quantity += quantityToAdd;
     } else {
-        // आइटम मौजूद नहीं है, एक नया कार्ट आइटम ऑब्जेक्ट बनाएँ।
         const newItem = {
             id: productId,
-            quantity: quantityToAdd
+            quantity: quantityToAdd,
+            variants: selectedVariants
         };
-        // नए आइटम में वेरिएंट तभी जोड़ें जब वे चुने गए हों।
-        if (selectedVariants) {
-            newItem.variants = selectedVariants;
-        }
         cart.push(newItem);
     }
 
@@ -75,6 +53,7 @@ function addToCart(productId, quantityToAdd = 1) {
     showToast(`${product.name} added to cart!`);
     updateCartIcon();
 }
+
 
 function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
 function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { if (totalQuantity > 0) { cartCountElement.textContent = totalQuantity; } else { cartCountElement.textContent = ''; } } }
@@ -84,9 +63,6 @@ function showToast(message, type = "info") { const toast=document.getElementById
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
 
-/**
- * Fetches Firebase config securely, initializes Firebase, and starts the application.
- */
 async function initializeApp() {
     try {
         const response = await fetch('/api/firebase-config');
@@ -108,9 +84,6 @@ async function initializeApp() {
     }
 }
 
-/**
- * Fetches all necessary data from Firebase.
- */
 function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
@@ -128,12 +101,9 @@ function loadAllData() {
     });
 }
 
-/**
- * Fetches HTML snippets for all sections and injects them into the main content area.
- */
 async function loadPageStructure() {
     const mainContentArea = document.getElementById('main-content-area');
-    if (mainContentArea.childElementCount > 0) return; // Avoid reloading
+    if (mainContentArea.childElementCount > 0) return;
 
     const sections = [
         'categories.html',
@@ -155,10 +125,6 @@ async function loadPageStructure() {
     }
 }
 
-/**
- * Calls all render functions to populate the page with data.
- * @param {object} data - The entire dataset from Firebase.
- */
 function renderAllSections(data) {
     const homepageData = data.homepage || {};
 
@@ -181,11 +147,6 @@ function renderAllSections(data) {
 
 
 // --- HELPER FUNCTIONS ---
-
-/**
- * FIXED: This function now creates a robust product card with a correctly placed Add to Cart button.
- * It's based on the working `createStandardCard` from product-details.html.
- */
 function createProductCardHTML(prod, cardClass = '') {
     if (!prod) return '';
 
@@ -281,7 +242,6 @@ function setupScrollAnimations() {
 
 
 // --- RENDER FUNCTIONS ---
-
 function renderSlider(sliderData) {
     const slider = document.getElementById('main-slider');
     const section = document.querySelector('.slider-wrapper');
@@ -334,9 +294,6 @@ function renderVideosSection(videoData) {
         </a>`).join('');
 }
 
-/**
- * FIXED: This function now uses the corrected product card for its slider.
- */
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
     if (!container || !collectionData || !Array.isArray(collectionData.productIds) || collectionData.productIds.length === 0) { if(container) container.style.display = 'none'; return; }
@@ -351,9 +308,6 @@ function renderFestiveCollection(collectionData) {
     slider.innerHTML = productsToRender.map(p => createProductCardHTML(p, 'carousel-item')).join('');
 }
 
-/**
- * FIXED: This function now uses the corrected card structure for JFY products.
- */
 function renderJustForYouSection(jfyData) {
     const section = document.getElementById('just-for-you-section');
     if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
@@ -421,9 +375,6 @@ function renderJustForYouSection(jfyData) {
     }
 }
 
-/**
- * FIXED: This function now uses the corrected product card for its grid.
- */
 function renderHighlightedProducts() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const section = document.getElementById('highlighted-products-section');
@@ -438,7 +389,135 @@ function renderInfoMarquee(text) { const section = document.getElementById('info
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data || !data.front || !data.back) { if(section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
 function renderFooter(data) { if (!data) return; document.getElementById('footer-shop-link').href = './order.html'; document.getElementById('footer-play-link').href = data.playLink || '#'; document.getElementById('footer-profile-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const mobileContainer = document.getElementById('social-links-container'); const desktopContainer = document.getElementById('desktop-social-links'); mobileContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', color: '#FF1111' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', color: '#E4405F' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', color: '#1877F2' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', color: '#25D366' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; mobileContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="social-link" style="background-color:${p.color};"><img src="${p.icon}" alt="${key}"></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
 
-// --- SLIDER LOGIC (UNCHANGED) ---
-let currentSlide=1,totalSlides=0,sliderInterval,isTransitioning=!1;function initializeSlider(count){const slider=document.getElementById("main-slider"),dots=document.getElementById("slider-dots-container");if((totalSlides=count)<=1)return void(dots&&(dots.style.display="none"));slider.appendChild(slider.children[0].cloneNode(!0)),slider.insertBefore(slider.children[totalSlides-1].cloneNode(!0),slider.children[0]),slider.style.transform=`translateX(-${100*currentSlide}%)`,dots.innerHTML="";for(let i=0;i<totalSlides;i++)dots.innerHTML+='<div class="dot" data-slide="'.concat(i+1,'"><div class="timer"></div></div>');dots.addEventListener("click",e=>{const dot=e.target.closest(".dot");dot&&goToSlide(parseInt(dot.dataset.slide))});let startPos=0;const swipeThreshold=50,getPositionX=event=>event.type.includes("mouse")?event.pageX:event.touches[0].clientX,swipeStart=e=>{startPos=getPositionX(e),clearInterval(sliderInterval)},swipeEnd=e=>{const endPos=getPositionX(e),deltaX=endPos-startPos;Math.abs(deltaX)>50&&(deltaX<0?moveSlide(1):moveSlide(-1)),resetSliderInterval()};slider.addEventListener("mousedown",swipeStart),slider.addEventListener("touchstart",swipeStart,{passive:!0}),slider.addEventListener("mouseup",swipeEnd),slider.addEventListener("touchend",swipeEnd),slider.addEventListener("transitionend",()=>{isTransitioning=!1,0===currentSlide&&(slider.classList.remove("transitioning"),currentSlide=totalSlides,slider.style.transform=`translateX(-${100*currentSlide}%)`),currentSlide===totalSlides+1&&(slider.classList.remove("transitioning"),currentSlide=1,slider.style.transform=`translateX(-${100*currentSlide}%)`)}),updateDots(),resetSliderInterval()}function moveSlide(dir){isTransitioning||(isTransitioning=!0,document.getElementById("main-slider").classList.add("transitioning"),currentSlide+=dir,document.getElementById("main-slider").style.transform=`translateX(-${100*currentSlide}%)`,updateDots())}function goToSlide(num){isTransitioning||currentSlide===num||(isTransitioning=!0,document.getElementById("main-slider").classList.add("transitioning"),currentSlide=num,document.getElementById("main-slider").style.transform=`translateX(-${100*currentSlide}%)`,updateDots(),resetSliderInterval())}function updateDots(){const dots=document.querySelectorAll(".slider-dots .dot");dots.forEach(d=>{d.classList.remove("active");const timer=d.querySelector(".timer");timer&&(timer.style.transition="none",timer.style.width="0%")});let activeDotIndex=currentSlide-1;0===currentSlide&&(activeDotIndex=totalSlides-1),currentSlide===totalSlides+1&&(activeDotIndex=0);const activeDot=dots[activeDotIndex];if(activeDot){activeDot.classList.add("active");const timer=activeDot.querySelector(".timer");timer&&(void timer.offsetWidth,timer.style.transition="width 5000ms linear",timer.style.width="100%")}}function resetSliderInterval(){clearInterval(sliderInterval),sliderInterval=setInterval(()=>moveSlide(1),5e3)}
+// --- SLIDER LOGIC (UPDATED WITH A SIMPLER, MORE RELIABLE SWIPE FEATURE) ---
+let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
+function initializeSlider(count) {
+    const slider = document.getElementById("main-slider");
+    const dots = document.getElementById("slider-dots-container");
+    totalSlides = count;
+
+    if (totalSlides <= 1) {
+        if (dots) dots.style.display = "none";
+        return;
+    }
+
+    slider.appendChild(slider.children[0].cloneNode(true));
+    slider.insertBefore(slider.children[totalSlides - 1].cloneNode(true), slider.children[0]);
+    slider.style.transform = `translateX(-${100 * currentSlide}%)`;
+
+    dots.innerHTML = "";
+    for (let i = 0; i < totalSlides; i++) {
+        dots.innerHTML += `<div class="dot" data-slide="${i + 1}"><div class="timer"></div></div>`;
+    }
+    dots.addEventListener("click", e => {
+        const dot = e.target.closest(".dot");
+        if (dot) goToSlide(parseInt(dot.dataset.slide));
+    });
+
+    // --- NEW, SIMPLIFIED SWIPE LOGIC ---
+    let startPos = 0;
+    const swipeThreshold = 50; // Min pixels to count as a swipe
+
+    const getPositionX = event => event.type.includes("mouse") ? event.pageX : event.touches[0].clientX;
+
+    const swipeStart = e => {
+        startPos = getPositionX(e);
+        clearInterval(sliderInterval); // Pause autoplay
+    };
+
+    const swipeEnd = e => {
+        // For touchend, we need to get the position from changedTouches
+        const endPos = e.type.includes("touch") ? e.changedTouches[0].clientX : e.pageX;
+        const deltaX = endPos - startPos;
+
+        if (Math.abs(deltaX) > swipeThreshold) {
+            if (deltaX < 0) {
+                moveSlide(1); // Swiped left
+            } else {
+                moveSlide(-1); // Swiped right
+            }
+        }
+        resetSliderInterval(); // Always resume autoplay
+    };
+
+    slider.addEventListener("mousedown", swipeStart);
+    slider.addEventListener("touchstart", swipeStart, { passive: true });
+    slider.addEventListener("mouseup", swipeEnd);
+    slider.addEventListener("touchend", swipeEnd);
+    // --- END OF NEW SWIPE LOGIC ---
+
+    slider.addEventListener("transitionend", () => {
+        isTransitioning = false;
+        if (currentSlide === 0) {
+            slider.classList.remove("transitioning");
+            currentSlide = totalSlides;
+            slider.style.transform = `translateX(-${100 * currentSlide}%)`;
+        }
+        if (currentSlide === totalSlides + 1) {
+            slider.classList.remove("transitioning");
+            currentSlide = 1;
+            slider.style.transform = `translateX(-${100 * currentSlide}%)`;
+        }
+    });
+
+    updateDots();
+    resetSliderInterval();
+}
+
+function moveSlide(dir) {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    const slider = document.getElementById("main-slider");
+    slider.classList.add("transitioning");
+    currentSlide += dir;
+    slider.style.transform = `translateX(-${100 * currentSlide}%)`;
+    updateDots();
+}
+
+function goToSlide(num) {
+    if (isTransitioning || currentSlide === num) return;
+    isTransitioning = true;
+    const slider = document.getElementById("main-slider");
+    slider.classList.add("transitioning");
+    currentSlide = num;
+    slider.style.transform = `translateX(-${100 * currentSlide}%)`;
+    updateDots();
+    resetSliderInterval();
+}
+
+function updateDots() {
+    const dots = document.querySelectorAll(".slider-dots .dot");
+    dots.forEach(d => {
+        d.classList.remove("active");
+        const timer = d.querySelector(".timer");
+        if (timer) {
+            timer.style.transition = "none";
+            timer.style.width = "0%";
+        }
+    });
+
+    let activeDotIndex = currentSlide - 1;
+    if (currentSlide === 0) activeDotIndex = totalSlides - 1;
+    if (currentSlide === totalSlides + 1) activeDotIndex = 0;
+
+    const activeDot = dots[activeDotIndex];
+    if (activeDot) {
+        activeDot.classList.add("active");
+        const timer = activeDot.querySelector(".timer");
+        if (timer) {
+            void timer.offsetWidth;
+            timer.style.transition = "width 5000ms linear";
+            timer.style.width = "100%";
+        }
+    }
+}
+
+function resetSliderInterval() {
+    clearInterval(sliderInterval);
+    sliderInterval = setInterval(() => moveSlide(1), 5000);
+}
+
+
+// --- JFY SLIDER LOGIC (UNCHANGED) ---
 let jfyCurrentSlide=1,jfyTotalSlides=0,jfySliderInterval,jfyIsTransitioning=!1;function initializeJfySlider(count){const slider=document.querySelector(".jfy-poster-slider"),dots=document.querySelector(".jfy-slider-dots");if(!slider)return;if((jfyTotalSlides=count)<=1)return void(dots&&(dots.style.display="none"));slider.appendChild(slider.children[0].cloneNode(!0)),slider.insertBefore(slider.children[jfyTotalSlides-1].cloneNode(!0),slider.children[0]),slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,slider.addEventListener("transitionend",()=>{jfyIsTransitioning=!1,0===jfyCurrentSlide&&(slider.classList.remove("transitioning"),jfyCurrentSlide=jfyTotalSlides,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`),jfyCurrentSlide===jfyTotalSlides+1&&(slider.classList.remove("transitioning"),jfyCurrentSlide=1,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`)}),dots.innerHTML="";for(let i=0;i<jfyTotalSlides;i++)dots.innerHTML+='<div class="dot" data-slide="'.concat(i+1,'"></div>');dots.addEventListener("click",e=>{e.target.closest(".dot")&&goToJfySlide(e.target.closest(".dot").dataset.slide)}),updateJfyDots(),resetJfySliderInterval()}function moveJfySlide(dir){if(jfyIsTransitioning)return;const slider=document.querySelector(".jfy-poster-slider");slider&&(jfyIsTransitioning=!0,slider.classList.add("transitioning"),jfyCurrentSlide+=dir,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,updateJfyDots(),resetJfySliderInterval())}function goToJfySlide(num){if(jfyIsTransitioning||jfyCurrentSlide==num)return;const slider=document.querySelector(".jfy-poster-slider");slider&&(jfyIsTransitioning=!0,slider.classList.add("transitioning"),jfyCurrentSlide=parseInt(num),slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,updateJfyDots(),resetJfySliderInterval())}function updateJfyDots(){const dots=document.querySelectorAll(".jfy-slider-dots .dot");dots.forEach(d=>d.classList.remove("active"));let activeDotIndex=jfyCurrentSlide-1;0===jfyCurrentSlide&&(activeDotIndex=jfyTotalSlides-1),jfyCurrentSlide===jfyTotalSlides+1&&(activeDotIndex=0);const activeDot=dots[activeDotIndex];activeDot&&activeDot.classList.add("active")}function resetJfySliderInterval(){clearInterval(jfySliderInterval),jfySliderInterval=setInterval(()=>moveJfySlide(1),4e3)}
 
