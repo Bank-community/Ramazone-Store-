@@ -1,6 +1,56 @@
 // --- GLOBAL STATE ---
 let allProductsCache = [];
 let database;
+let deferredInstallPrompt = null; // For PWA installation
+
+// --- PWA INSTALLATION LOGIC ---
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredInstallPrompt = e;
+    // Update UI to notify the user they can install the PWA
+    const installBtn = document.getElementById('install-app-btn');
+    if (installBtn) {
+        installBtn.classList.remove('hidden');
+    }
+    console.log(`'beforeinstallprompt' event was fired.`);
+});
+
+function setupInstallButton() {
+    const installBtn = document.getElementById('install-app-btn');
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            // Hide the app provided install promotion
+            installBtn.classList.add('hidden');
+            // Show the install prompt
+            if (!deferredInstallPrompt) {
+                showToast('Installation is not available right now.', 'error');
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            // We've used the prompt, and can't use it again, throw it away
+            deferredInstallPrompt = null;
+        });
+    }
+}
+
+window.addEventListener('appinstalled', () => {
+    // Hide the install button
+    const installBtn = document.getElementById('install-app-btn');
+    if (installBtn) {
+        installBtn.classList.add('hidden');
+    }
+    // Clear the deferredPrompt so it can be garbage collected
+    deferredInstallPrompt = null;
+    // Optionally, send analytics event to indicate successful install
+    console.log('PWA was installed');
+    showToast('Ramazone installed successfully!');
+});
+
 
 // --- CART FUNCTIONS ---
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
@@ -141,7 +191,8 @@ function renderAllSections(data) {
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
     setupGlobalEventListeners();
-    setupSideMenu(); // <<< NEW function call for menu logic
+    setupSideMenu();
+    setupInstallButton(); // <<< NEW function call for install button logic
     updateCartIcon();
     setupScrollAnimations();
 }
@@ -203,8 +254,6 @@ function getDealsOfTheDayProducts(maxCount) {
         return (b.rating || 0) - (b.rating || 0);
     }).slice(0, maxCount);
 }
-
-// --- REMOVED toggleSocialMedia function as it's replaced by menu logic ---
 
 function setupGlobalEventListeners() {
     document.body.addEventListener('click', function(event) {
@@ -387,7 +436,6 @@ function renderInfoMarquee(text) { const section = document.getElementById('info
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data || !data.front || !data.back) { if(section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
 function renderFooter(data) { 
     if (!data) return; 
-    // Update menu links instead of old footer links
     document.getElementById('menu-play-link').href = data.playLink || '#'; 
     document.getElementById('menu-cashback-link').href = data.profileLink || '#'; 
 
@@ -408,7 +456,6 @@ function renderFooter(data) {
     } 
 }
 
-// --- NEW: SIDE MENU LOGIC ---
 function setupSideMenu() {
     const menuToggleBtn = document.getElementById('menu-toggle-btn');
     const sideMenu = document.getElementById('side-menu');
@@ -436,7 +483,7 @@ function setupSideMenu() {
 }
 
 
-// --- SLIDER LOGIC (UNCHANGED) ---
+// --- SLIDER LOGIC ---
 let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
 function initializeSlider(count) {
     const slider = document.getElementById("main-slider");
@@ -562,6 +609,5 @@ function resetSliderInterval() {
 }
 
 
-// --- JFY SLIDER LOGIC (UNCHANGED) ---
+// --- JFY SLIDER LOGIC ---
 let jfyCurrentSlide=1,jfyTotalSlides=0,jfySliderInterval,jfyIsTransitioning=!1;function initializeJfySlider(count){const slider=document.querySelector(".jfy-poster-slider"),dots=document.querySelector(".jfy-slider-dots");if(!slider)return;if((jfyTotalSlides=count)<=1)return void(dots&&(dots.style.display="none"));slider.appendChild(slider.children[0].cloneNode(!0)),slider.insertBefore(slider.children[jfyTotalSlides-1].cloneNode(!0),slider.children[0]),slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,slider.addEventListener("transitionend",()=>{jfyIsTransitioning=!1,0===jfyCurrentSlide&&(slider.classList.remove("transitioning"),jfyCurrentSlide=jfyTotalSlides,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`),jfyCurrentSlide===jfyTotalSlides+1&&(slider.classList.remove("transitioning"),jfyCurrentSlide=1,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`)}),dots.innerHTML="";for(let i=0;i<jfyTotalSlides;i++)dots.innerHTML+='<div class="dot" data-slide="'.concat(i+1,'"></div>');dots.addEventListener("click",e=>{e.target.closest(".dot")&&goToJfySlide(e.target.closest(".dot").dataset.slide)}),updateJfyDots(),resetJfySliderInterval()}function moveJfySlide(dir){if(jfyIsTransitioning)return;const slider=document.querySelector(".jfy-poster-slider");slider&&(jfyIsTransitioning=!0,slider.classList.add("transitioning"),jfyCurrentSlide+=dir,slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,updateJfyDots(),resetJfySliderInterval())}function goToJfySlide(num){if(jfyIsTransitioning||jfyCurrentSlide==num)return;const slider=document.querySelector(".jfy-poster-slider");slider&&(jfyIsTransitioning=!0,slider.classList.add("transitioning"),jfyCurrentSlide=parseInt(num),slider.style.transform=`translateX(-${100*jfyCurrentSlide}%)`,updateJfyDots(),resetJfySliderInterval())}function updateJfyDots(){const dots=document.querySelectorAll(".jfy-slider-dots .dot");dots.forEach(d=>d.classList.remove("active"));let activeDotIndex=jfyCurrentSlide-1;0===jfyCurrentSlide&&(activeDotIndex=jfyTotalSlides-1),jfyCurrentSlide===jfyTotalSlides+1&&(activeDotIndex=0);const activeDot=dots[activeDotIndex];activeDot&&activeDot.classList.add("active")}function resetJfySliderInterval(){clearInterval(jfySliderInterval),jfySliderInterval=setInterval(()=>moveJfySlide(1),4e3)}
-
