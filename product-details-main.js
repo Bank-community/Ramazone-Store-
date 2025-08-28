@@ -2,7 +2,7 @@
 let mediaItems = [], currentMediaIndex = 0, currentProductData = null, currentProductId = null;
 let allProductsCache = [];
 let selectedVariants = {};
-let selectedPack = null;
+let selectedPack = null; // This will store the selected pack object { name, price }
 let appThemeColor = '#4F46E5';
 let database;
 
@@ -12,7 +12,7 @@ let slider, sliderWrapper;
 // --- SLIDER STATE ---
 let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, animationID;
 
-// --- CART FUNCTIONS ---
+// --- CART FUNCTIONS (AWARE OF VARIANTS AND PACKS) ---
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
 
@@ -47,6 +47,7 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
     if (existingItemIndex > -1) {
         cart[existingItemIndex].quantity += quantity;
     } else {
+        // Ensure variants is an object, and pack is either an object or null
         cart.push({ id: productId, quantity: quantity, variants: variants || {}, pack: pack || null });
     }
     saveCart(cart);
@@ -299,7 +300,7 @@ function createOptionSelector(type, options, optionType) {
     const cardsHTML = options.map((opt, index) => `
         <div class="option-card ${index === 0 ? 'selected' : ''}" data-value="${opt.name}" data-price="${opt.price || ''}">
             <div class="card-title">${opt.name}</div>
-            ${opt.price ? `<div class="card-price">₹${opt.price.toLocaleString('en-IN')}</div>` : ''}
+            ${opt.price ? `<div class="card-price">₹${Number(opt.price).toLocaleString('en-IN')}</div>` : ''}
         </div>
     `).join('');
 
@@ -562,35 +563,23 @@ function createHandpickedCard(product) {
             </div>`;
 }
 
-/**
- * UPDATED: createCarouselCard for "You Might Also Like"
- * -----------------------------------------------------
- * This function now ALWAYS shows the "Add to Cart" button, regardless of price.
- */
 function createCarouselCard(product) {
     const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
     const originalPriceNum = Number(product.originalPrice);
     const displayPriceNum = Number(product.displayPrice);
     const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
 
-    // ALWAYS show the button for this section
     const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`;
 
     return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`;
 }
 
-/**
- * UPDATED: createGridCard for "Other Products"
- * --------------------------------------------
- * This function now correctly uses the price/category condition for the button.
- */
 function createGridCard(product) {
     const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
     const originalPriceNum = Number(product.originalPrice);
     const displayPriceNum = Number(product.displayPrice);
     const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
 
-    // Restore the original price condition for this section
     const showAddButton = displayPriceNum < 500 || product.category === 'grocery';
     const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : "";
 
