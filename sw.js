@@ -3,7 +3,7 @@
 // --- STEP 1: UPDATE THE CACHE VERSION ---
 // Change this version number every time you deploy new updates.
 // For example, 'v2', 'v3', etc.
-const CACHE_NAME = 'ramazone-cache-v4'; 
+const CACHE_NAME = 'ramazone-cache-v5'; 
 
 // List of files to cache. Start with the essentials.
 const urlsToCache = [
