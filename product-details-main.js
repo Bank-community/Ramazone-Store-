@@ -47,7 +47,6 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
     if (existingItemIndex > -1) {
         cart[existingItemIndex].quantity += quantity;
     } else {
-        // Ensure variants is an object, and pack is either an object or null
         cart.push({ id: productId, quantity: quantity, variants: variants || {}, pack: pack || null });
     }
     saveCart(cart);
@@ -110,6 +109,42 @@ function updateStickyActionBar() {
         addToCartBtn.classList.remove('hidden');
         goToCartBtn.classList.add('hidden');
     }
+}
+
+// --- NEW: Header Scroll Effect ---
+function setupHeaderScrollEffect() {
+    const defaultHeader = document.getElementById('default-header-content');
+    const searchHeader = document.getElementById('search-header-content');
+
+    if (!defaultHeader || !searchHeader) {
+        console.warn("Header elements for scroll effect not found.");
+        return;
+    }
+
+    const SCROLL_THRESHOLD = 50;
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > SCROLL_THRESHOLD) {
+            // User neeche scroll kar chuka hai
+            if (!defaultHeader.classList.contains('header-hidden')) {
+                defaultHeader.classList.add('header-hidden');
+                searchHeader.classList.remove('hidden');
+                searchHeader.classList.remove('header-hidden');
+            }
+        } else {
+            // User page ke top par hai
+            if (defaultHeader.classList.contains('header-hidden')) {
+                defaultHeader.classList.remove('header-hidden');
+                searchHeader.classList.add('header-hidden');
+                setTimeout(() => {
+                    // Transition ke baad poori tarah hide karein
+                    if (window.scrollY <= SCROLL_THRESHOLD) {
+                       searchHeader.classList.add('hidden');
+                    }
+                }, 300); // CSS transition duration se match hona chahiye
+            }
+        }
+    }, { passive: true }); // Scroll performance behtar karne ke liye
 }
 
 
@@ -226,6 +261,9 @@ function populateDataAndAttachListeners(data) {
 
     document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
     document.getElementById('options-container').addEventListener('click', handleOptionsClick);
+
+    // Activate the new scroll behavior
+    setupHeaderScrollEffect();
 }
 
 function handleOptionsClick(event) {
@@ -453,7 +491,6 @@ function handleQuickAdd(event) {
         }
     }
 }
-
 
 function setupActionControls() {
     document.getElementById('add-to-cart-btn').addEventListener('click', () => {

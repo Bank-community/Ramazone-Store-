@@ -313,3 +313,27 @@
 }
 .card-rating-tag .fa-star { font-size: 10px; }
 
+/* === NEW: Header Scroll Effect Styles === */
+
+/* This will be the new search bar that appears on scroll */
+.header-search-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background-color: #f3f4f6; /* Tailwind gray-100 */
+    border: 1px solid #e5e7eb;  /* Tailwind gray-200 */
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* A class to smoothly hide elements */
+.header-hidden {
+    opacity: 0;
+    pointer-events: none;
+    max-height: 0px;
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    overflow: hidden;
+}
