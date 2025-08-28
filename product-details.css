@@ -175,65 +175,25 @@
     padding: 6px 12px; border-radius: 8px;
 }
 
-/* === NEW: "You Might Also Like" Carousel Style === */
-
+/* === "You Might Also Like" Carousel Style === */
 #handpicked-similar-container {
     display: flex;
-    gap: 12px; /* Cards ke beech mein thoda gap */
-    overflow-x: auto; /* Horizontal scrolling enable karega */
-    scroll-snap-type: x mandatory; /* Smooth scrolling ke liye */
-    padding-bottom: 1rem; /* Scrollbar ke liye neeche space */
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 1rem;
 }
-
-/* Scrollbar ko chhipane ke liye */
-#handpicked-similar-container::-webkit-scrollbar {
-    display: none;
-}
-#handpicked-similar-container {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-}
-
-/* Har ek card ka size set karega taki 3 card screen par fit ho */
+#handpicked-similar-container::-webkit-scrollbar { display: none; }
+#handpicked-similar-container { -ms-overflow-style: none; scrollbar-width: none; }
 #handpicked-similar-container > div {
-    flex: 0 0 31%; /* Isse ek time par lagbhag 3 card dikhenge */
+    flex: 0 0 31%;
     scroll-snap-align: start;
 }
-
-/* === "You Might Also Like" Card Customization (Corrected) === */
-
-/* Is naye selector se hum seedhe card ko target kar rahe hain */
-#handpicked-similar-container > div {
-    border-radius: 6px !important; /* IMPORTANT: Apni pasand ki value yahan daalein (jaise 4px, 8px) */
-}
-
-/* Card ke andar ke text section ki padding kam karke height adjust karne ke liye */
-#handpicked-similar-container .p-3 {
-    padding: 0.6rem; /* Padding ko thoda kam kiya gaya hai */
-}
-
-/* Product ka naam thoda chhota karne ke liye */
-#handpicked-similar-container h4 {
-    margin-bottom: 0.1rem; /* Naam aur price ke beech gap kam kiya gaya hai */
-}
-
-/* Price ka font size chhota karke height kam karne ke liye */
-#handpicked-similar-container .text-lg {
-    font-size: 1rem; /* Font size ko thoda chhota kiya gaya hai */
-    line-height: 1.4rem;
-}
-
-/* Discount text ka size adjust karne ke liye */
-#handpicked-similar-container .text-sm {
-    font-size: 0.8rem;
-}
-
-
-    
-
-
-
-
+#handpicked-similar-container > div { border-radius: 6px !important; }
+#handpicked-similar-container .p-3 { padding: 0.6rem; }
+#handpicked-similar-container h4 { margin-bottom: 0.1rem; }
+#handpicked-similar-container .text-lg { font-size: 1rem; line-height: 1.4rem; }
+#handpicked-similar-container .text-sm { font-size: 0.8rem; }
 
 .other-products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 @media (min-width: 640px) {
@@ -244,9 +204,54 @@
 #image-modal, #variant-modal-overlay, #bundle-modal-overlay {
     display: none; position: fixed; z-index: 1001; left: 0; top: 0;
     width: 100%; height: 100%; overflow: auto;
-    background-color: rgba(0,0,0,0.6);
+    background-color: rgba(0,0,0,0.8);
     align-items: center; justify-content: center;
 }
+
+/* === NEW/FIXED: Styles for Modal Close Button & Navigation === */
+.modal-nav {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 16px;
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+    transition: 0.3s ease;
+    user-select: none;
+    background-color: rgba(0,0,0,0.3);
+}
+.modal-nav.next {
+    right: 0;
+    border-radius: 3px 0 0 3px;
+}
+.modal-nav.prev {
+    left: 0;
+}
+.modal-nav:hover {
+    background-color: rgba(0,0,0,0.6);
+}
+
+/* This is the new style for the close button (×) */
+#image-modal .close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+    z-index: 1002; /* Ensure it's above other modal elements */
+}
+#image-modal .close:hover,
+#image-modal .close:focus {
+    color: #bbb;
+    text-decoration: none;
+}
+/* ============================================================= */
+
 #variant-modal-overlay.active, #bundle-modal-overlay.active { display: flex; }
 #variant-modal-content, #bundle-modal-content {
     transform: scale(0.95); opacity: 0; transition: all 0.3s;
@@ -313,22 +318,18 @@
 }
 .card-rating-tag .fa-star { font-size: 10px; }
 
-/* === NEW: Header Scroll Effect Styles === */
-
-/* This will be the new search bar that appears on scroll */
+/* === Header Scroll Effect Styles === */
 .header-search-bar {
     display: flex;
     align-items: center;
     width: 100%;
-    background-color: #f3f4f6; /* Tailwind gray-100 */
-    border: 1px solid #e5e7eb;  /* Tailwind gray-200 */
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 10px 14px;
     text-decoration: none;
     cursor: pointer;
 }
-
-/* A class to smoothly hide elements */
 .header-hidden {
     opacity: 0;
     pointer-events: none;
@@ -337,3 +338,4 @@
     padding-bottom: 0px !important;
     overflow: hidden;
 }
+
