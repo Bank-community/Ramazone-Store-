@@ -111,7 +111,6 @@ function updateStickyActionBar() {
     }
 }
 
-// --- NEW: Header Scroll Effect ---
 function setupHeaderScrollEffect() {
     const defaultHeader = document.getElementById('default-header-content');
     const searchHeader = document.getElementById('search-header-content');
@@ -125,26 +124,23 @@ function setupHeaderScrollEffect() {
 
     window.addEventListener('scroll', () => {
         if (window.scrollY > SCROLL_THRESHOLD) {
-            // User neeche scroll kar chuka hai
             if (!defaultHeader.classList.contains('header-hidden')) {
                 defaultHeader.classList.add('header-hidden');
                 searchHeader.classList.remove('hidden');
                 searchHeader.classList.remove('header-hidden');
             }
         } else {
-            // User page ke top par hai
             if (defaultHeader.classList.contains('header-hidden')) {
                 defaultHeader.classList.remove('header-hidden');
                 searchHeader.classList.add('header-hidden');
                 setTimeout(() => {
-                    // Transition ke baad poori tarah hide karein
                     if (window.scrollY <= SCROLL_THRESHOLD) {
                        searchHeader.classList.add('hidden');
                     }
-                }, 300); // CSS transition duration se match hona chahiye
+                }, 300);
             }
         }
-    }, { passive: true }); // Scroll performance behtar karne ke liye
+    }, { passive: true });
 }
 
 
@@ -262,7 +258,6 @@ function populateDataAndAttachListeners(data) {
     document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
     document.getElementById('options-container').addEventListener('click', handleOptionsClick);
 
-    // Activate the new scroll behavior
     setupHeaderScrollEffect();
 }
 
@@ -640,7 +635,19 @@ function setSliderPosition() { slider.style.transform=`translateX(${currentTrans
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
 function setupShareButton() { document.getElementById("share-button").addEventListener("click",async()=>{const e=currentProductData.name.replace(/\*/g,"").trim(),t=`*${e}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;navigator.share?await navigator.share({text:t}):navigator.clipboard.writeText(window.location.href).then(()=>showToast("Link Copied!"))})}
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
-function updateRecentlyViewed(newId) { let viewedIds=JSON.parse(sessionStorage.getItem("ramazoneRecentlyViewed"))||[];viewedIds=viewedIds.filter(e=>e!==newId),viewedIds.unshift(newId),viewedIds=viewedIds.slice(0,10),sessionStorage.setItem("ramazoneRecentlyViewed",JSON.stringify(viewedIds)),loadRecentlyViewed(viewedIds)}
+
+// --- UPDATED: Recently Viewed function now uses localStorage ---
+function updateRecentlyViewed(newId) {
+    // sessionStorage ko localStorage se badal diya gaya hai
+    let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
+    viewedIds = viewedIds.filter(e => e !== newId);
+    viewedIds.unshift(newId);
+    viewedIds = viewedIds.slice(0, 10); // Sirf 10 recent products rakhein
+    // sessionStorage ko localStorage se badal diya gaya hai
+    localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds));
+    loadRecentlyViewed(viewedIds);
+}
+
 function loadHandpickedSimilarProducts(similarIds) { const section = document.getElementById("handpicked-similar-section"), container = document.getElementById("handpicked-similar-container"); if (!similarIds || similarIds.length === 0) return void (section.style.display = "none"); container.innerHTML = ""; let hasContent = !1; similarIds.forEach(id => { const product = allProductsCache.find(p => p && p.id === id); product && (container.innerHTML += createHandpickedCard(product), hasContent = !0) }), hasContent && (section.style.display = "block")}
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e);n&&(container.innerHTML+=createCarouselCard(n),t++)}),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
