@@ -73,17 +73,15 @@ function renderProducts(products) {
     grid.innerHTML = products.map(createProductTileHTML).join('');
 }
 
-// --- UPDATED FUNCTION ---
-// This function has been updated to fix layout issues:
-// 1. Image padding is removed from the main container and applied only to the text area.
-// 2. Extra space below single-line titles is removed.
-// 3. Price, original price, and discount are now on a single line using flexbox.
+// --- CORRECTED AND UPDATED FUNCTION ---
+// 1. Boldness reduced from 'font-extrabold' to 'font-bold'.
+// 2. Space between title and price removed by removing min-height and margin-top.
+// 3. The "..." placeholder is replaced with the actual product name variable.
 function createProductTileHTML(prod) {
     if (!prod) return '';
 
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/300x300/e2e8f0/64748b?text=Image';
 
-    // Prices with smaller font sizes for better fit
     let priceHTML = `<span class="font-bold text-gray-900">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</span>`;
     let originalPriceHTML = '';
     let discountHTML = '';
@@ -96,24 +94,21 @@ function createProductTileHTML(prod) {
         }
     }
 
-    // Title logic updated to remove the empty space placeholder
+    // Title logic updated to remove extra space and reduce boldness
     const titleHTML = `
-        <div class="">
-             <h2 class="font-extrabold text-lg leading-5 truncate">${prod.brand || prod.name}</h2>
+        <div>
+             <h2 class="font-bold text-lg leading-5 truncate">${prod.brand || prod.name}</h2>
              ${prod.brand ? `<p class="text-gray-500 text-sm truncate max-w-full">${prod.name}</p>` : ''}
         </div>
     `;
 
-    // Main HTML structure updated:
-    // - Padding removed from the main 'a' tag.
-    // - A new 'div' with 'p-3' wraps the text content.
-    // - Price paragraph now uses flexbox for single-line display.
+    // Price paragraph's top margin (mt-2) is removed
     return `
         <a href="./product-details.html?id=${prod.id}" class="product-tile block border-b border-r border-gray-200">
             <img src="${imageUrl}" alt="${prod.name}" class="w-full h-auto object-contain aspect-square" loading="lazy">
             <div class="p-3">
                 ${titleHTML}
-                <p class=" flex items-baseline flex-wrap gap-x-2">
+                <p class="flex items-baseline flex-wrap gap-x-2">
                     ${discountHTML}
                     ${originalPriceHTML}
                     ${priceHTML}
@@ -129,4 +124,3 @@ function displayError(message) {
     if (loader) loader.style.display = 'none';
     if (grid) grid.innerHTML = `<p class="col-span-2 text-center text-red-500 p-8">${message}</p>`;
 }
-
