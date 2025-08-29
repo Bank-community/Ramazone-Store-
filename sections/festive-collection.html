@@ -1,4 +1,4 @@
-<!-- FINAL PERFECTED DESIGN: All visual tweaks and logic corrections are included. -->
+<!-- FINAL VERSION: The tag design is now perfected as per the last request. -->
 
 <style>
     /* Scoped styles for the Festive Collection section */
@@ -10,60 +10,39 @@
     #festive-collection-container .view-all-arrow:hover { background-color: rgba(0, 0, 0, 0.15); }
     #festive-collection-container .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
     
-    /* UPDATED: Professional Tag Styling */
     #festive-collection-container .offer-tag-top-left {
         position: absolute;
-        top: 0;
-        left: 0; /* UPDATED: Flush with the left edge */
-        background-color: var(--primary-color);
-        color: white;
-        padding: 3px 10px 5px 10px;
-        font-size: 0.75rem;
+        top: 0; /* UPDATED: Sticking to the top edge */
+        left: 0;
+        padding: 4px 10px 4px 8px;
+        font-size: 0.8rem;
         font-weight: 600;
-        border-radius: 0 0 8px 0px; /* UPDATED: Corner radius */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         z-index: 5;
     }
     #festive-collection-container .rating-tag-bottom-left {
         position: absolute;
         bottom: 8px;
         left: 8px;
-        background-color: #fff;
+        background-color: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(5px);
         font-size: 12px;
         font-weight: 600;
         padding: 3px 8px;
         z-index: 5;
-        color: #000;
-        border-radius: 5px;
-        border: 1px solid rgba(0, 0,0, 0.5);
+        color: #111827;
+        border-radius: 50px;
+        border: 1px solid rgba(0,0,0,0.05);
     }
     #festive-collection-container .rating-tag-bottom-left .fa-star {
         color: #16a34a; 
     }
 
-    /* UPDATED: Progress Bar Styling */
     #festive-collection-container .progress-bar-container { background-color: #e5e7eb; border-radius: 50px; height: 18px; width: 100%; position: relative; overflow: hidden; margin-top: 8px; }
-    #festive-collection-container .progress-bar-inner {
-        background-color: #ef4444; /* UPDATED: Pure Red progress bar */
-        height: 100%;
-        border-radius: 50px;
-        transition: width 0.5s ease-in-out;
-    }
+    #festive-collection-container .progress-bar-inner { background-color: #ef4444; height: 100%; border-radius: 50px; transition: width 0.5s ease-in-out; }
     #festive-collection-container .progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: 600; color: white; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25); }
-
-    /* NEW: Styles for price and discount alignment */
-    #festive-collection-container .price-discount-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 0.5rem;
-    }
-    #festive-collection-container .price-wrapper {
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
-    }
+    #festive-collection-container .price-discount-wrapper { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+    #festive-collection-container .price-wrapper { display: flex; align-items: baseline; gap: 0.5rem; }
 </style>
 
 <section class="festive-collection reveal" id="festive-collection-container" style="display: none;">
@@ -81,11 +60,8 @@
     document.addEventListener('ramazone:dataReady', (event) => {
         const { homepageData, allProducts } = event.detail;
         const collectionData = homepageData.festiveCollection;
-        
         const container = document.getElementById('festive-collection-container');
-        if (!container || !collectionData || !Array.isArray(collectionData.productIds) || collectionData.productIds.length === 0) {
-            return;
-        }
+        if (!container || !collectionData || !collectionData.productIds?.length) return;
         
         container.style.display = 'block';
         container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
@@ -98,8 +74,6 @@
             const headlineColor = collectionData.headlineColor || 'var(--text-dark)';
             headline.innerText = collectionData.title || 'Special Offers';
             headline.style.color = headlineColor;
-            
-            // UPDATED: Dynamically set timer and arrow color to match headline
             if(countdownTimer) countdownTimer.style.color = headlineColor;
             if(viewAllArrow) viewAllArrow.style.color = headlineColor;
         }
@@ -112,20 +86,12 @@
         const productMetadata = collectionData.productMetadata || {};
         const productsToShow = collectionData.productsToShow || collectionData.productIds.length;
 
-        const productsToRender = collectionData.productIds
-            .slice(0, productsToShow)
-            .map(id => {
-                const product = allProducts.find(p => p && p.id === id);
-                if (!product) return null;
-                const metadata = productMetadata[id] || {};
-                return createLocalProductCardHTML(product, 'carousel-item', {
-                    soldPercentage: metadata.soldPercentage
-                });
-            })
-            .filter(Boolean)
-            .join('');
-
-        slider.innerHTML = productsToRender;
+        slider.innerHTML = collectionData.productIds.slice(0, productsToShow).map(id => {
+            const product = allProducts.find(p => p && p.id === id);
+            if (!product) return null;
+            const metadata = productMetadata[id] || {};
+            return createLocalProductCardHTML(product, 'carousel-item', { soldPercentage: metadata.soldPercentage });
+        }).filter(Boolean).join('');
     });
 
     let localFestiveCountdownInterval = null;
@@ -138,15 +104,11 @@
         const updateTimer = () => {
             const now = new Date().getTime();
             const distance = endTime - now;
-            if (distance < 0) {
-                clearInterval(localFestiveCountdownInterval);
-                countdownElement.innerHTML = "Deal Ended";
-                return;
-            }
-            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((distance % (1000 * 60)) / 1000);
-            countdownElement.innerHTML = `<i class="far fa-clock"></i>&nbsp;<span>${String(h).padStart(2, '0')}</span>:<span>${String(m).padStart(2, '0')}</span>:<span>${String(s).padStart(2, '0')}</span>`;
+            if (distance < 0) { clearInterval(localFestiveCountdownInterval); countdownElement.innerHTML = "Deal Ended"; return; }
+            const h = String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+            const m = String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+            const s = String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0');
+            countdownElement.innerHTML = `<i class="far fa-clock"></i>&nbsp;<span>${h}</span>:<span>${m}</span>:<span>${s}</span>`;
         };
         updateTimer();
         localFestiveCountdownInterval = setInterval(updateTimer, 1000);
@@ -157,11 +119,19 @@
         const { soldPercentage } = options;
         const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
         const ratingTag = prod.rating ? `<div class="card-rating-tag rating-tag-bottom-left">${prod.rating} <i class="fas fa-star"></i></div>` : '';
-        const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
+        
+        // --- FINAL TAG STYLE FIX WITH COMMENTS ---
+        // This style string creates the specific rounded corners you wanted.
+        const offerTagStyle = `
+            color: ${prod.offerTextColor || 'white'}; 
+            background-color: ${prod.offerBackgroundColor || '#ef4444'};
+            /* border-radius format: top-left top-right bottom-right bottom-left */
+            border-radius: 8px 0 8px 0; 
+        `;
+        const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="${offerTagStyle}">${prod.offerText}</div>` : '';
         
         let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
         let originalPriceHTML = '', discountHTML = '';
-        
         if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
             const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
             originalPriceHTML = `<p class="text-xs text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
@@ -176,7 +146,6 @@
         const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
         const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
         
-        // UPDATED: HTML structure for price and discount
         return `
         <div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
             <div class="relative">
