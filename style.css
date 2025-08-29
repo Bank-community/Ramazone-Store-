@@ -191,10 +191,14 @@ body.menu-open #side-menu {
 .video-card-desc { color: #e5e7eb; font-size: 0.8rem; margin-top: 0.25rem; }
 .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: rgba(255,255,255,0.9); }
 
-/* FESTIVE COLLECTION */
-.festive-collection { padding: 1rem 0 0.5rem 0; margin-top: 0.5rem; overflow: hidden; }
-.festival-headline { font-size: 1.5rem; font-weight: 800; text-align: left; margin-bottom: 1rem; letter-spacing: -0.5px; padding: 0 1rem; }
-.product-slider .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
+/* --- UPDATED FESTIVE COLLECTION STYLES --- */
+
+
+
+
+
+/* --- END OF UPDATED STYLES --- */
+
 
 /* INFO MARQUEE */
 #info-marquee-section { margin: 1rem 0; padding: 0.75rem 0; } 
@@ -279,9 +283,31 @@ body.menu-open #side-menu {
 @media (min-width: 1024px) { .carousel-item { flex: 0 0 20%; } }
 
 /* --- General Card Styles (Used on multiple pages) --- */
-.card-rating-tag { position: absolute; top: 6px; right: 6px; background-color: #16a34a; color: white; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
+/* Original position for other sections */
+.card-rating-tag { position: absolute; top: 6px; right: 6px; background-color: #16a34a; color: white; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 6px; display: flex; align-items: center; gap: 4px; z-index: 5; }
 .card-rating-tag .fa-star { font-size: 10px; }
+
+/* Original position for other sections */
 .product-offer-tag { position: absolute; bottom: 0.6rem; left: 0.5rem; padding: 2px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; z-index: 5; }
+
+/* NEW: Repositioning classes for Festive Collection */
+.offer-tag-top-left {
+    top: 8px;
+    left: 8px;
+    bottom: auto; /* Override original style */
+    right: auto;
+}
+.rating-tag-bottom-left {
+    bottom: 8px;
+    left: 8px;
+    top: auto; /* Override original style */
+    right: auto;
+    background-color: rgba(0,0,0,0.4); /* Darker background for visibility */
+    backdrop-filter: blur(2px);
+    font-size: 11px;
+    padding: 2px 6px;
+}
+
 
 /* --- PRODUCTS PAGE SPECIFIC STYLES --- */
 .category-btn { transition: all 0.2s ease-in-out; border: 1px solid #D1D5DB; color: #374151; background-color: white; flex-shrink: 0; padding: 0.2rem 1rem; font-weight: 500; }
