@@ -2,10 +2,27 @@
 
 <style>
     /* Scoped styles for the Festive Collection section */
-    #festive-collection-container .section-header-flex { display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; margin-bottom: 1rem; gap: 1rem; }
+    #festive-collection-container .section-header-flex { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        padding: 0.5rem 1rem 0 1rem; /* UPDATED: Added top padding */
+        margin-bottom: 1rem; 
+        gap: 1rem; 
+    }
     #festive-collection-container .festival-headline { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0; flex-shrink: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #festive-collection-container .header-right-content { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-    #festive-collection-container .countdown-timer { background-color: rgba(0, 0, 0, 0.08); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+    #festive-collection-container .countdown-timer { 
+        background-color: rgba(0, 0, 0, 0.08); 
+        padding: 0.4rem 0.8rem; 
+        border-radius: 8px; 
+        font-size: 0.9rem; 
+        font-weight: 700; /* UPDATED: Bolder text */
+        display: flex; 
+        align-items: center; 
+        gap: 0.35rem; 
+        white-space: nowrap; 
+    }
     #festive-collection-container .view-all-arrow { background-color: rgba(0, 0, 0, 0.08); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: background-color 0.2s; }
     #festive-collection-container .view-all-arrow:hover { background-color: rgba(0, 0, 0, 0.15); }
     #festive-collection-container .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
@@ -50,17 +67,7 @@
     }
     #festive-collection-container .progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: 600; color: white; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25); }
 
-    #festive-collection-container .price-discount-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 0.5rem;
-    }
-    #festive-collection-container .price-wrapper {
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
-    }
+    /* REMOVED: .price-discount-wrapper is no longer needed */
 </style>
 
 <section class="festive-collection reveal" id="festive-collection-container">
