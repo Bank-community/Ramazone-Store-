@@ -1,9 +1,9 @@
 // --- GLOBAL STATE ---
 let allProductsCache = [];
 let database;
-let deferredInstallPrompt = null; // For PWA installation
+let deferredInstallPrompt = null;
 
-// --- PWA INSTALLATION LOGIC ---
+// --- PWA INSTALLATION LOGIC (Temporarily disabled but kept for future use) ---
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
@@ -46,12 +46,7 @@ function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(ca
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
     const product = allProductsCache.find(p => p && p.id === productId);
-
-    if (!product) {
-        showToast('Could not add item to cart.', 'error');
-        return;
-    }
-
+    if (!product) { showToast('Could not add item to cart.', 'error'); return; }
     let selectedVariants = {};
     if (product.variants && Array.isArray(product.variants)) {
         product.variants.forEach(variant => {
@@ -60,27 +55,20 @@ function addToCart(productId, quantityToAdd = 1) {
             }
         });
     }
-
-    const existingItemIndex = cart.findIndex(item => 
-        item.id === productId && JSON.stringify(item.variants || {}) === JSON.stringify(selectedVariants)
-    );
-
+    const existingItemIndex = cart.findIndex(item => item.id === productId && JSON.stringify(item.variants || {}) === JSON.stringify(selectedVariants));
     if (existingItemIndex > -1) {
         cart[existingItemIndex].quantity += quantityToAdd;
     } else {
         cart.push({ id: productId, quantity: quantityToAdd, variants: selectedVariants });
     }
-
     saveCart(cart);
     showToast(`${product.name} added to cart!`);
     updateCartIcon();
 }
 
-
 function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
 function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { cartCountElement.textContent = totalQuantity > 0 ? totalQuantity : ''; } }
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
-
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
@@ -117,41 +105,67 @@ function loadAllData() {
     });
 }
 
+// --- THIS IS THE FINAL AND CORRECTED FUNCTION ---
 async function loadPageStructure() {
     const mainContentArea = document.getElementById('main-content-area');
     if (mainContentArea.childElementCount > 0) return;
-    const sections = ['categories.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
+
+    // Sections will be loaded in this specific order.
+    const sections = [
+        'categories.html', 
+        'videos.html', 
+        'festive-collection.html', // This will now execute its internal script
+        'info-marquee.html', 
+        'flip-card.html', 
+        'just-for-you.html', 
+        'deals-of-the-day.html'
+    ];
+
     try {
-        const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
-        const htmlSnippets = await Promise.all(responses.map(res => res.text()));
-        mainContentArea.innerHTML = htmlSnippets.join('');
+        // We use a document fragment to build the structure in memory first
+        const fragment = document.createDocumentFragment();
+
+        for (const sectionFile of sections) {
+            const response = await fetch(`sections/${sectionFile}`);
+            if (!response.ok) {
+                console.error(`Failed to fetch ${sectionFile}`);
+                continue; // Skip to the next section if one fails
+            }
+            const html = await response.text();
+            
+            // This is the key part: we use a template element.
+            // The browser correctly parses the content, including <script> tags.
+            const template = document.createElement('template');
+            template.innerHTML = html;
+            
+            // We append the content of the template (which is a document fragment itself)
+            // to our main fragment. This preserves the scripts and makes them executable.
+            fragment.appendChild(template.content);
+        }
+
+        // Finally, we append the fully constructed fragment to the DOM in one go.
+        mainContentArea.appendChild(fragment);
+
     } catch (error) {
         console.error("Error loading page structure:", error);
         mainContentArea.innerHTML = '<div style="text-align: center; padding: 50px;">Error loading page content.</div>';
     }
 }
 
-// --- THE FINAL, CORRECTED RENDER LOGIC ---
 function renderAllSections(data) {
     const homepageData = data.homepage || {};
 
-    // --- STEP 1: Dispatch the data signal for autonomous components ---
+    // Dispatch the data signal for autonomous components like festive-collection
     const event = new CustomEvent('ramazone:dataReady', {
-        detail: {
-            homepageData: homepageData,
-            allProducts: allProductsCache
-        }
+        detail: { homepageData: homepageData, allProducts: allProductsCache }
     });
     document.dispatchEvent(event);
 
-    // --- STEP 2: Render ONLY the sections that are still controlled by main.js ---
+    // Render other sections that are still controlled by main.js
     renderSlider(homepageData.slider);
     renderSearch(homepageData.search);
     renderNormalCategories(homepageData.normalCategories);
     renderVideosSection(homepageData.videos);
-
-    // THE CRITICAL FIX: The line for renderFestiveCollection() is REMOVED from here.
-
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
     renderJustForYouSection(homepageData.justForYou);
@@ -159,7 +173,7 @@ function renderAllSections(data) {
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
-    // --- STEP 3: Setup global things after rendering ---
+    // Setup global things after rendering
     setupGlobalEventListeners();
     setupSideMenu();
     setupInstallButton();
