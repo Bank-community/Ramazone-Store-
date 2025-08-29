@@ -136,7 +136,7 @@ async function loadPageStructure() {
             // This is the key part: we use a template element.
             // The browser correctly parses the content, including <script> tags.
             const template = document.createElement('template');
-            template.innerHTML = html;
+            template.innerHTML = html.trim(); // .trim() removes any leading/trailing whitespace
             
             // We append the content of the template (which is a document fragment itself)
             // to our main fragment. This preserves the scripts and makes them executable.
