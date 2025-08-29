@@ -125,7 +125,7 @@ function renderAllSections(data) {
     renderSearch(homepageData.search);
     renderNormalCategories(homepageData.normalCategories);
     renderVideosSection(homepageData.videos);
-    renderFestiveCollection(homepageData.festiveCollection);
+    renderFestiveCollection(homepageData.festiveCollection); // Festive collection logic is now here
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
     renderJustForYouSection(homepageData.justForYou);
@@ -165,49 +165,20 @@ function createFestiveCardHTML(prod, options = {}) {
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
     const ratingTag = prod.rating ? `<div class="card-rating-tag rating-tag-bottom-left">${prod.rating} <i class="fas fa-star"></i></div>` : '';
     const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
-
     let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
     let originalPriceHTML = '', discountHTML = '';
-
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
         originalPriceHTML = `<p class="text-xs text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
         if (discount > 0) discountHTML = `<p class="text-xs font-semibold text-green-600">${discount}% OFF</p>`;
     }
-
     let progressBarHTML = '';
     if (typeof soldPercentage === 'number' && soldPercentage >= 0) {
         progressBarHTML = `<div class="progress-bar-container"><div class="progress-bar-inner" style="width: ${soldPercentage}%"></div><span class="progress-bar-text">${soldPercentage}% Sold</span></div>`;
     }
-
     const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
     const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
-
-    // FINAL UPDATE: HTML structure for price and discount
-    return `
-    <div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-        <div class="relative">
-            <a href="./product-details.html?id=${prod.id}" class="block relative">
-                <img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">
-                ${ratingTag}
-                ${offerTag}
-            </a>
-            ${addButtonHTML}
-        </div>
-        <div class="p-2">
-            <a href="./product-details.html?id=${prod.id}" class="block">
-                <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4>
-                <div class="price-discount-wrapper">
-                    <div class="price-wrapper">
-                        ${priceHTML}
-                        ${originalPriceHTML}
-                    </div>
-                    ${discountHTML}
-                </div>
-            </a>
-            ${progressBarHTML}
-        </div>
-    </div>`;
+    return `<div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}" class="block"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="price-discount-wrapper"><div class="price-wrapper">${priceHTML}${originalPriceHTML}</div>${discountHTML}</div></a>${progressBarHTML}</div></div>`;
 }
 
 function renderFestiveCollection(collectionData) {
@@ -335,7 +306,7 @@ function renderJustForYouSection(jfyData) {
     const subProduct2 = allProductsCache.find(p => p.id === topDeals?.subProductIds?.[1]);
     if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { section.style.display = 'none'; return; }
     const getDiscount = p => p && p.originalPrice > p.displayPrice ? `<p class="discount">${Math.round(((p.originalPrice - p.displayPrice) / p.originalPrice) * 100)}% OFF</p>` : '';
-    const getAddButton = p => p && (p.displayPrice < 500 || p.category === 'grocery') ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
+    const getAddButton = p => p && (p.displayPrice < 500 || p.category === 'grocery') ? `<button class="add-btn standard-card-add-btn" data-id="${p.id}">+</button>` : "";
     const jfyContent = document.getElementById('jfy-content');
     if (jfyContent) {
         jfyContent.innerHTML = `<div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};"><h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2><div class="jfy-grid"><a href="${poster.linkUrl || '#'}" class="jfy-poster-card"><div class="jfy-poster-slider-container"><div class="jfy-poster-slider">${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image"></div>`).join('')}</div><div class="jfy-slider-dots"></div></div></a><div class="jfy-deals-card"><div class="relative jfy-main-product"><a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProduct.images?.[0] || ''}" alt="${mainProduct.name}"></a>${getAddButton(mainProduct)}</div><div class="jfy-sub-products"><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct1.id}"><div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}"></div><div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div></a><div class="absolute bottom-2 right-2">${getAddButton(subProduct1)}</div></div><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct2.id}"><div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}"></div><div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div></a><div class="absolute bottom-2 right-2">${getAddButton(subProduct2)}</div></div></div></div></div></div>`;
