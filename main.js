@@ -178,10 +178,6 @@ function createFestiveCardHTML(prod, options = {}) {
     }
     const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
     const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
-
-    // === UPDATED PART ===
-    // The old 'price-discount-wrapper' div is replaced with a flexbox container
-    // to align the display price and original price on the same line.
     return `<div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}" class="block"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a>${progressBarHTML}</div></div>`;
 }
 
@@ -193,6 +189,13 @@ function renderFestiveCollection(collectionData) {
     const headline = document.getElementById('festive-headline');
     const timerEl = document.getElementById('festive-countdown-timer');
     const arrowEl = document.getElementById('festive-view-all-link');
+
+    // === UPDATED PART ===
+    // The link for the "View All" arrow button is now set here.
+    if (arrowEl) {
+        arrowEl.href = 'festive-products.html';
+    }
+
     if (headline) {
         const headlineColor = collectionData.headlineColor || 'var(--text-dark)';
         headline.innerText = collectionData.title || 'Special Offers';
