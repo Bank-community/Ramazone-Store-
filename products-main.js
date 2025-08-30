@@ -204,11 +204,13 @@ function createProductCardHTML(prod) {
 
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
 
+    // Naya Code
     const ratingTag = prod.rating 
         ? `<div class="card-rating-tag-new">
-             ${prod.rating} <i class="fas fa-star text-green-500"></i>
+             ${prod.rating} <i class="fas fa-star" style="color: #008E00;"></i>
            </div>` 
         : '';
+
 
     let priceLine = '';
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {

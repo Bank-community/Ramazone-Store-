@@ -107,7 +107,6 @@ function loadAllData() {
 async function loadPageStructure() {
     const mainArea = document.getElementById('main-content-area');
     if (mainArea.childElementCount > 0) return;
-    // UPDATED: 'recently-viewed.html' ko categories ke theek neeche add kiya gaya hai
     const sections = ['categories.html', 'recently-viewed.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
     try {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
@@ -125,7 +124,7 @@ function renderAllSections(data) {
     renderSlider(homepageData.slider);
     renderSearch(homepageData.search);
     renderNormalCategories(homepageData.normalCategories);
-    renderRecentlyViewed(); // NEW: Recently Viewed section ko render karne ke liye function call
+    renderRecentlyViewed();
     renderVideosSection(homepageData.videos);
     renderFestiveCollection(homepageData.festiveCollection); 
     renderInfoMarquee(homepageData.infoMarquee);
@@ -139,22 +138,39 @@ function renderAllSections(data) {
     setupInstallButton();
     updateCartIcon();
     setupScrollAnimations();
+    setupHeaderScrollEffect(); // NEW: Scroll effect ko activate karne ke liye function call
+}
+
+// --- NEW: HEADER SCROLL EFFECT LOGIC ---
+function setupHeaderScrollEffect() {
+    const header = document.getElementById('page-header');
+    if (!header) return;
+
+    const scrollThreshold = 50; // Kitna scroll karne par effect activate hoga
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > scrollThreshold) {
+            header.classList.add('header-scrolled');
+        } else {
+            header.classList.remove('header-scrolled');
+        }
+    }, { passive: true }); // Performance ke liye passive listener
 }
 
 
-// --- NEW: RECENTLY VIEWED SECTION LOGIC ---
+// --- RECENTLY VIEWED SECTION LOGIC ---
 function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed-section');
     const container = document.getElementById('recently-viewed-container');
     if (!section || !container) {
-        return; // Agar HTML load nahi hua to kuch na karein
+        return;
     }
 
     try {
         const viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
 
         if (viewedIds.length === 0) {
-            section.style.display = 'none'; // Agar koi product nahi dekha to section hide karein
+            section.style.display = 'none';
             return;
         }
 
@@ -177,7 +193,7 @@ function renderRecentlyViewed() {
 
         if (productsFound > 0) {
             container.innerHTML = cardsHTML;
-            section.style.display = 'block'; // Agar products mile to section dikhayein
+            section.style.display = 'block';
         } else {
             section.style.display = 'none';
         }
@@ -450,4 +466,5 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4e3) }
+
 

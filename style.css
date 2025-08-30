@@ -43,8 +43,55 @@ body.menu-open {
 
 /* --- HOMEPAGE SPECIFIC STYLES --- */
 
-/* HEADER & SEARCH */
+/* --- UPDATED HEADER & SEARCH STYLES FOR SCROLL EFFECT --- */
 header { position: sticky; top: 0; z-index: 50; transition: background-color 0.3s, box-shadow 0.3s; }
+
+#header-logo-container, #header-search-container {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    position: absolute;
+    width: 100%;
+}
+
+#header-search-container {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none; /* Jab hidden ho to click na ho */
+}
+
+/* Jab 'header-scrolled' class lagti hai */
+header.header-scrolled #header-logo-container {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+header.header-scrolled #header-search-container {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto; /* Jab visible ho to click ho sake */
+}
+
+/* Header ke andar ka search bar */
+#header-search-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 300px; /* Optional: max width set kar sakte hain */
+    margin: 0 auto;
+    height: 38px;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+#header-search-link:hover { border-color: var(--primary-color); }
+#header-search-link .search-icon { color: var(--text-dark); margin-right: 0.5rem; }
+
+
+/* Page ka main search bar */
 #search-container { background-color: var(--bg-white); padding: 0.5rem 1rem; }
 #search-link { display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
 #search-link:hover { border-color: var(--primary-color); }
