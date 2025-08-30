@@ -107,7 +107,8 @@ function loadAllData() {
 async function loadPageStructure() {
     const mainArea = document.getElementById('main-content-area');
     if (mainArea.childElementCount > 0) return;
-    const sections = ['categories.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
+    // UPDATED: 'recently-viewed.html' ko categories ke theek neeche add kiya gaya hai
+    const sections = ['categories.html', 'recently-viewed.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
     try {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
         const htmls = await Promise.all(responses.map(res => res.text()));
@@ -124,8 +125,9 @@ function renderAllSections(data) {
     renderSlider(homepageData.slider);
     renderSearch(homepageData.search);
     renderNormalCategories(homepageData.normalCategories);
+    renderRecentlyViewed(); // NEW: Recently Viewed section ko render karne ke liye function call
     renderVideosSection(homepageData.videos);
-    renderFestiveCollection(homepageData.festiveCollection); // Festive collection logic is now here
+    renderFestiveCollection(homepageData.festiveCollection); 
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
     renderJustForYouSection(homepageData.justForYou);
@@ -138,6 +140,54 @@ function renderAllSections(data) {
     updateCartIcon();
     setupScrollAnimations();
 }
+
+
+// --- NEW: RECENTLY VIEWED SECTION LOGIC ---
+function renderRecentlyViewed() {
+    const section = document.getElementById('recently-viewed-section');
+    const container = document.getElementById('recently-viewed-container');
+    if (!section || !container) {
+        return; // Agar HTML load nahi hua to kuch na karein
+    }
+
+    try {
+        const viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
+
+        if (viewedIds.length === 0) {
+            section.style.display = 'none'; // Agar koi product nahi dekha to section hide karein
+            return;
+        }
+
+        let cardsHTML = '';
+        let productsFound = 0;
+
+        viewedIds.forEach(id => {
+            const product = allProductsCache.find(p => p && p.id === id);
+            if (product) {
+                const imageUrl = (product.images && product.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
+                cardsHTML += `
+                    <a href="./product-details.html?id=${product.id}" class="rv-card">
+                        <img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy">
+                        <p>${product.name || 'Product Name'}</p>
+                    </a>
+                `;
+                productsFound++;
+            }
+        });
+
+        if (productsFound > 0) {
+            container.innerHTML = cardsHTML;
+            section.style.display = 'block'; // Agar products mile to section dikhayein
+        } else {
+            section.style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error("Error rendering recently viewed products:", error);
+        section.style.display = 'none';
+    }
+}
+
 
 // --- FESTIVE COLLECTION SPECIFIC LOGIC ---
 function startCountdownTimer(endTimeString, elementId) {
@@ -190,8 +240,6 @@ function renderFestiveCollection(collectionData) {
     const timerEl = document.getElementById('festive-countdown-timer');
     const arrowEl = document.getElementById('festive-view-all-link');
 
-    // === UPDATED PART ===
-    // The link for the "View All" arrow button is now set here.
     if (arrowEl) {
         arrowEl.href = 'festive-products.html';
     }
