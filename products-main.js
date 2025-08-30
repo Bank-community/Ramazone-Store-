@@ -9,18 +9,8 @@ let searchScrollingTexts = [];
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
 function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
 
-/**
- * FINAL FIXED addToCart Function
- * --------------------------------
- * यह फंक्शन अब main.js की तरह ही काम करता है।
- * 1. यह प्रोडक्ट की पूरी जानकारी `allProducts` से प्राप्त करता है।
- * 2. यह जांचता है कि प्रोडक्ट में `variants` हैं या नहीं।
- * 3. यदि वेरिएंट्स हैं, तो यह प्रत्येक प्रकार के लिए पहले विकल्प को डिफ़ॉल्ट के रूप में चुनता है।
- * 4. यह कार्ट में आइटम को पूरी जानकारी (id, quantity, variants) के साथ जोड़ता है।
- */
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
-    // Use the correct cache variable 'allProducts'
     const product = allProducts.find(p => p && p.id === productId);
 
     if (!product) {
@@ -29,7 +19,6 @@ function addToCart(productId, quantityToAdd = 1) {
         return;
     }
 
-    // --- New and correct variant handling logic ---
     let selectedVariants = {};
     let hasVariants = false;
 
@@ -69,8 +58,8 @@ function addToCart(productId, quantityToAdd = 1) {
 }
 
 function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
-function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { if (totalQuantity > 0) { cartCountElement.textContent = totalQuantity; } else { cartCountElement.textContent = ''; } } }
-function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
+function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { if (totalQuantity > 0) { cartCountElement.textContent = totalQuantity; cartCountElement.classList.remove('hidden'); } else { cartCountElement.textContent = ''; cartCountElement.classList.add('hidden'); } } }
+function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message;toast.style.backgroundColor="error"===type?"#ef4444":"#333";toast.style.opacity = 1; setTimeout(()=> { toast.style.opacity = 0; }, 2500)}
 
 
 // --- INITIALIZATION ---
@@ -80,9 +69,7 @@ async function initializeApp() {
     try {
         const response = await fetch('/api/firebase-config');
         if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
-
         const firebaseConfig = await response.json();
-
         if (firebaseConfig.apiKey) {
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
@@ -99,23 +86,18 @@ async function initializeApp() {
 async function loadPageData() {
     try {
         await fetchAllData(database);
-
         const urlParams = new URLSearchParams(window.location.search);
         currentCategory = urlParams.get('category') || 'All';
-
         displayCategories();
         filterAndDisplayProducts();
         setupSearch();
         setupGlobalEventListeners();
         updateCartIcon();
         setupDynamicPlaceholder();
-
         document.getElementById('loading-indicator').style.display = 'none';
-
         if (urlParams.get('focus') === 'true') {
             document.getElementById('search-input').focus();
         }
-
     } catch (error) {
         console.error("Initialization or data fetch failed:", error);
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Data load nahi ho saka.</p>';
@@ -128,30 +110,19 @@ async function fetchAllData(db) {
     if (snapshot.exists()) {
         const data = snapshot.val();
         const homepageData = data.homepage || {};
-
         if (homepageData.search && homepageData.search.scrollingTexts) {
             searchScrollingTexts = homepageData.search.scrollingTexts;
         }
-
         const mainProducts = data.products || [];
-
         const festiveProductIds = homepageData.festiveCollection?.productIds || [];
         const jfyMainProductId = homepageData.justForYou?.topDeals?.mainProductId;
         const jfySubProductIds = homepageData.justForYou?.topDeals?.subProductIds || [];
-
-        const allReferencedIds = new Set([
-            ...festiveProductIds,
-            jfyMainProductId,
-            ...jfySubProductIds
-        ].filter(Boolean));
-
+        const allReferencedIds = new Set([...festiveProductIds, jfyMainProductId, ...jfySubProductIds].filter(Boolean));
         const referencedProducts = mainProducts.filter(p => allReferencedIds.has(p.id));
         const combinedProducts = [...mainProducts, ...referencedProducts];
-
         allProducts = combinedProducts.filter((p, index, self) =>
             p && p.id && index === self.findIndex((t) => t.id === p.id)
         );
-
         allCategories = (homepageData.normalCategories || [])
             .filter(cat => cat && cat.name && cat.size !== 'double')
             .filter((cat, index, self) => 
@@ -162,47 +133,38 @@ async function fetchAllData(db) {
 
 function setupDynamicPlaceholder() {
     const searchInput = document.getElementById('search-input');
-    if (!searchInput || !searchScrollingTexts || searchScrollingTexts.length === 0) return;
-
+    if (!searchInput || !searchScrollingTexts || searchScrollingTexts.length === 0) {
+        searchInput.placeholder = "Search for products...";
+        return;
+    }
     let currentIndex = 0;
-    searchInput.placeholder = `Search for ${searchScrollingTexts[currentIndex]}...`;
-    currentIndex++;
-
-    setInterval(() => {
-        searchInput.style.transition = 'opacity 0.3s ease-out';
-        searchInput.style.opacity = 0;
-
-        setTimeout(() => {
-            searchInput.placeholder = `Search for ${searchScrollingTexts[currentIndex]}...`;
-            searchInput.style.opacity = 1;
-            currentIndex = (currentIndex + 1) % searchScrollingTexts.length;
-        }, 300);
-
-    }, 2500);
+    const updatePlaceholder = () => {
+        searchInput.placeholder = `Search for ${searchScrollingTexts[currentIndex]}...`;
+        currentIndex = (currentIndex + 1) % searchScrollingTexts.length;
+    };
+    updatePlaceholder();
+    setInterval(updatePlaceholder, 3000);
 }
-
 
 function displayCategories() {
     const categoryBar = document.getElementById('category-filter-bar');
     categoryBar.innerHTML = '';
     const allBtn = document.createElement('button');
-    allBtn.className = 'category-btn rounded-full px-3 py-1';
+    allBtn.className = 'category-btn rounded-full px-4 py-2 text-sm';
     allBtn.textContent = 'All';
     allBtn.dataset.category = 'All';
     if (currentCategory === 'All') allBtn.classList.add('active');
     categoryBar.appendChild(allBtn);
-
     allCategories.forEach(cat => {
         if (cat && cat.name) {
             const catBtn = document.createElement('button');
-            catBtn.className = 'category-btn rounded-full px-3 py-1';
+            catBtn.className = 'category-btn rounded-full px-4 py-2 text-sm';
             catBtn.textContent = cat.name;
             catBtn.dataset.category = cat.name;
             if (currentCategory === cat.name) catBtn.classList.add('active');
             categoryBar.appendChild(catBtn);
         }
     });
-
     categoryBar.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
             currentCategory = e.target.dataset.category;
@@ -220,15 +182,13 @@ function filterAndDisplayProducts() {
     const searchInput = document.getElementById('search-input').value.toLowerCase();
     grid.innerHTML = '';
     noProductsMsg.classList.add('hidden');
-
     let filteredProducts = allProducts;
     if (currentCategory !== 'All') {
         filteredProducts = filteredProducts.filter(prod => prod && prod.category === currentCategory);
     }
     if (searchInput) {
-        filteredProducts = filteredProducts.filter(prod => prod.name.toLowerCase().includes(searchInput));
+        filteredProducts = filteredProducts.filter(prod => prod && prod.name && prod.name.toLowerCase().includes(searchInput));
     }
-
     if (filteredProducts.length > 0) {
         filteredProducts.forEach(prod => {
             grid.insertAdjacentHTML('beforeend', createProductCardHTML(prod));
@@ -238,68 +198,55 @@ function filterAndDisplayProducts() {
     }
 }
 
+/**
+ * FINAL CORRECTED FUNCTION
+ * 1. Sabhi unwanted comments hata diye gaye hain.
+ * 2. Rating tag ki position theek kar di gayi hai.
+ * 3. Price, discount, aur original price ab aek hi line mein hain.
+ */
 function createProductCardHTML(prod) {
     if (!prod) return '';
 
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-    const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
-    const offerTag = prod.offerText ? `<div class="product-offer-tag" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
 
-    let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
-    let originalPriceHTML = '';
-    let discountHTML = '';
+    const ratingTag = prod.rating 
+        ? `<div class="card-rating-tag-new">
+             ${prod.rating} <i class="fas fa-star text-green-500"></i>
+           </div>` 
+        : '';
 
+    let priceLine = '';
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
-        originalPriceHTML = `<p class="text-xs text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
-        if(discount > 0) discountHTML = `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>`;
+        const discountHTML = discount > 0 ? `<span class="text-green-700 font-bold text-sm whitespace-nowrap">↓${discount}%</span>` : '';
+        const originalPriceHTML = `<span class="line-through text-gray-400 text-xs whitespace-nowrap">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</span>`;
+        const displayPriceHTML = `<span class="font-bold text-gray-900 text-base whitespace-nowrap">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</span>`;
+
+        priceLine = `<div class="flex items-baseline gap-x-2 mt-2">${discountHTML} ${originalPriceHTML} ${displayPriceHTML}</div>`;
+    } else {
+        priceLine = `<div class="flex items-baseline gap-x-2 mt-2"><span class="font-bold text-gray-900 text-base whitespace-nowrap">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</span></div>`;
     }
 
-    // This logic correctly shows the button based on your requirements
-    const displayPriceNum = Number(prod.displayPrice);
-    const showAddButton = displayPriceNum < 500 || prod.category === 'grocery';
-    const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
+    const titleHTML = `
+        <h2 class="text-base font-semibold text-gray-800 truncate">${prod.brand || prod.name}</h2>
+        ${prod.brand ? `<p class="text-gray-500 text-xs truncate -mt-1">${prod.name}</p>` : ''}
+    `;
 
     return `
-        <div class="product-card h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+        <a href="./product-details.html?id=${prod.id}" class="product-card-link">
             <div class="relative">
-                <a href="./product-details.html?id=${prod.id}">
-                    <img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">
-                </a>
+                <img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">
                 ${ratingTag}
-                ${offerTag}
-                ${addButtonHTML}
             </div>
-            <div class="p-2">
-                <a href="./product-details.html?id=${prod.id}">
-                    <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4>
-                    <div class="flex items-baseline gap-2">
-                        ${priceHTML}
-                        ${originalPriceHTML}
-                    </div>
-                    ${discountHTML}
-                </a>
+            <div class="p-3 pt-4">
+                ${titleHTML}
+                ${priceLine}
             </div>
-        </div>`;
+        </a>`;
 }
 
 function setupGlobalEventListeners() {
-    document.body.addEventListener('click', function(event) {
-        const addButton = event.target.closest('.add-btn');
-        if (addButton) {
-            event.preventDefault();
-            const productId = addButton.dataset.id;
-            if (productId) {
-                addToCart(productId);
-                addButton.classList.add('added');
-                addButton.innerHTML = '<i class="fas fa-check"></i>';
-                setTimeout(() => {
-                    addButton.classList.remove('added');
-                    addButton.innerHTML = '+';
-                }, 1500);
-            }
-        }
-    });
+    // Kept for any future global click handlers
 }
 
 function setupSearch() {
@@ -313,7 +260,8 @@ function setupSearch() {
     categorySuggestionsContainer.addEventListener('click', e => {
         if(e.target.classList.contains('suggestion-tag')) {
             const categoryName = e.target.dataset.category;
-            document.querySelector(`#category-filter-bar .category-btn[data-category="${categoryName}"]`).click();
+            const categoryButton = document.querySelector(`#category-filter-bar .category-btn[data-category="${categoryName}"]`);
+            if (categoryButton) categoryButton.click();
             searchInput.blur();
         }
     });
@@ -321,7 +269,7 @@ function setupSearch() {
     searchInput.addEventListener('input', () => {
         filterAndDisplayProducts();
         const query = searchInput.value.toLowerCase();
-        if (query.length < 2) {
+        if (query.length < 1) {
             suggestionsContainer.innerHTML = '';
             suggestionsContainer.classList.add('hidden');
             return;
@@ -330,8 +278,8 @@ function setupSearch() {
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `
                 <a href="./product-details.html?id=${prod.id}" class="suggestion-item">
-                    <img src="${(prod.images && prod.images[0]) || ''}" alt="${prod.name}">
-                    <span>${prod.name}</span>
+                    <img src="${(prod.images && prod.images[0]) || 'https://placehold.co/100x100/e2e8f0/64748b?text=?'}" alt="${prod.name}">
+                    <span class="text-sm text-gray-700">${prod.name}</span>
                 </a>`).join('');
             suggestionsContainer.classList.remove('hidden');
         } else {
@@ -346,4 +294,5 @@ function setupSearch() {
     searchOverlay.addEventListener('click', () => searchInput.blur());
     searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
 }
+
 
