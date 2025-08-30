@@ -85,29 +85,43 @@
             position: relative;
         }
 
-        /* --- NEW RATING STYLE --- */
         .card-rating-tag-new {
             position: absolute;
-            bottom: 8px; /* Position it halfway outside */
+            bottom: 8px;
             left: 8px;
             background-color: white;
             color: black;
             font-weight: 600;
-            font-size: 0.875rem; /* 14px */
-            padding: 2px 6px;
-            border-radius: 0.375rem; /* 6px */
-            border: 1px solid #d1d5db; /* gray-300 */
+            font-size: 0.875rem;
+            padding: 1.8px 6px;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
             display: inline-flex;
             align-items: center;
             gap: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* --- NEW STYLES FOR SCROLL BEHAVIOR --- */
+        #main-header {
+            transition: transform 0.3s ease-in-out;
+        }
+        #main-header.header-hidden {
+            transform: translateY(-100%);
+        }
+        .category-filter-container {
+            transition: top 0.3s ease-in-out;
+        }
+        body.header-is-hidden .category-filter-container {
+            top: 0;
         }
     </style>
 </head>
 <body>
     <div id="search-overlay"></div>
 
-    <header class="bg-white shadow-sm sticky top-0 z-50">
+    <!-- Added ID "main-header" for JS targeting -->
+    <header id="main-header" class="bg-white shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <a href="./index.html" class="text-gray-600 hover:text-gray-900 flex-shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

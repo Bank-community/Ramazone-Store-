@@ -94,6 +94,7 @@ async function loadPageData() {
         setupGlobalEventListeners();
         updateCartIcon();
         setupDynamicPlaceholder();
+        setupScrollBehavior(); // <-- Naya function yahan call kiya gaya hai
         document.getElementById('loading-indicator').style.display = 'none';
         if (urlParams.get('focus') === 'true') {
             document.getElementById('search-input').focus();
@@ -198,12 +199,6 @@ function filterAndDisplayProducts() {
     }
 }
 
-/**
- * FINAL CORRECTED FUNCTION
- * 1. Sabhi unwanted comments hata diye gaye hain.
- * 2. Rating tag ki position theek kar di gayi hai.
- * 3. Price, discount, aur original price ab aek hi line mein hain.
- */
 function createProductCardHTML(prod) {
     if (!prod) return '';
 
@@ -245,8 +240,34 @@ function createProductCardHTML(prod) {
         </a>`;
 }
 
+// --- NAYA FUNCTION: SCROLL BEHAVIOR KE LIYE ---
+function setupScrollBehavior() {
+    const header = document.getElementById('main-header');
+    if (!header) return;
+
+    let lastScrollY = window.scrollY;
+    const headerHeight = header.offsetHeight;
+
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+
+        // Scroll down hone par aur header se neeche jaane par
+        if (currentScrollY > lastScrollY && currentScrollY > headerHeight) {
+            header.classList.add('header-hidden');
+            document.body.classList.add('header-is-hidden');
+        } 
+        // Scroll up hone par
+        else if (currentScrollY < lastScrollY) {
+            header.classList.remove('header-hidden');
+            document.body.classList.remove('header-is-hidden');
+        }
+
+        lastScrollY = currentScrollY;
+    }, { passive: true }); // Performance ke liye passive listener
+}
+
 function setupGlobalEventListeners() {
-    // Kept for any future global click handlers
+    // Is function ko abhi khali rakha gaya hai
 }
 
 function setupSearch() {
