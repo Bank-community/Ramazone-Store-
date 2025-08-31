@@ -11,6 +11,73 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
+        /* --- YAHAN ZAROORI CSS ADD KIYA GAYA HAI --- */
+        
+        /* Form Inputs */
+        .form-input, input[type="text"]#customer-name, textarea#customer-address {
+            display: block; width: 100%; border-radius: 0.5rem;
+            border: 1px solid #D1D5DB; padding: 0.75rem 1rem;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none; appearance: none;
+        }
+        .form-input:focus, input[type="text"]#customer-name:focus, textarea#customer-address:focus {
+            outline: none; border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        /* Quantity Selector */
+        .quantity-selector-order {
+            display: inline-flex; align-items: center;
+            border: 1px solid #D1D5DB; border-radius: 9999px;
+        }
+        .quantity-selector-order button {
+            background-color: transparent; border: none; color: #4F46E5;
+            font-weight: bold; width: 36px; height: 36px;
+            font-size: 1.2rem; cursor: pointer;
+        }
+        .quantity-selector-order span {
+            font-size: 1rem; font-weight: 600;
+            min-width: 40px; text-align: center;
+        }
+
+        /* Coupon Button */
+        .coupon-apply-btn {
+            margin-left: 0.75rem; padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem; background-color: #4F46E5;
+            color: white; font-weight: 600; flex-shrink: 0;
+            transition: background-color 0.2s;
+        }
+        .coupon-apply-btn:hover { background-color: #4338ca; }
+        
+        /* Empty Cart Message */
+        #empty-cart-message { text-align: center; padding: 4rem 1rem; }
+        #empty-cart-message i { font-size: 4rem; color: #d1d5db; }
+        #empty-cart-message h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; color: #111827; }
+        #empty-cart-message p { color: #6B7280; margin-top: 0.5rem; margin-bottom: 1.5rem; }
+        #empty-cart-message .shop-now-btn {
+            display: inline-block; background-color: #4F46E5;
+            color: white; padding: 0.75rem 2rem; border-radius: 50px;
+            font-weight: 600; text-decoration: none; transition: transform 0.2s;
+        }
+        #empty-cart-message .shop-now-btn:hover { transform: scale(1.05); }
+
+        /* Place Order Button */
+        .whatsapp-btn { background-color: #128C7E; } /* Original color */
+
+        /* Toast Notification */
+        #toast-notification {
+            visibility: hidden; min-width: 250px; background-color: #333;
+            color: #fff; text-align: center; border-radius: 8px;
+            padding: 16px; position: fixed; z-index: 100;
+            left: 50%; bottom: 90px; font-size: 17px;
+            transform: translateX(-50%);
+            transition: visibility 0.5s, opacity 0.5s linear;
+            opacity: 0;
+        }
+        #toast-notification.show { visibility: visible; opacity: 1; }
+        
+        /* --- BAKI KA CSS PEHLE SE MAUJOOD HAI --- */
         .order-item-card { position: relative; }
         .delete-item-btn {
             position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
