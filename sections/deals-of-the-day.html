@@ -1,5 +1,40 @@
 <section class="section-container reveal" id="highlighted-products-section">
     <h2 class="section-title">Deals of the Day</h2>
+    <!-- 'Deals of the Day' products yahaan main.js se dynamically load honge -->
     <div id="highlighted-products-wrapper">
-        </div>
+    </div>
 </section>
+
+<!-- Sirf Deals of the Day Section ke liye CSS -->
+<style>
+    #highlighted-products-section { 
+        padding-top: 1rem; 
+    }
+
+    #highlighted-products-wrapper { 
+        display: grid; 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 1rem; 
+        padding: 0 1rem; 
+    }
+
+    /* Responsive adjustments for larger screens */
+    @media (min-width: 768px) { 
+        #highlighted-products-wrapper { 
+            grid-template-columns: repeat(3, 1fr); 
+        } 
+    }
+
+    @media (min-width: 1024px) { 
+        #highlighted-products-wrapper { 
+            grid-template-columns: repeat(4, 1fr); 
+        } 
+    }
+
+    @media (min-width: 1280px) { 
+        #highlighted-products-wrapper { 
+            grid-template-columns: repeat(5, 1fr); 
+        } 
+    }
+</style>
+

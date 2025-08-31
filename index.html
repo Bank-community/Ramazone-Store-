@@ -28,19 +28,19 @@
                     </button>
                 </div>
                 
-                <!-- Center Area: Logo and Search (Toggles on Scroll) -->
-                <div class="flex-grow text-center relative h-[40px] flex items-center justify-center">
-                     <!-- Logo Container -->
-                     <div id="header-logo-container">
-                        <a href="./index.html"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="inline-block" style="max-height: 40px;"></a>
-                     </div>
-                     <!-- Search Bar Container (Initially Hidden) -->
-                     <div id="header-search-container">
-                         <a id="header-search-link" href="./products.html?focus=true">
+                <!-- Center Area (Logo and Search) - YAHAN BADLAV KIYA GAYA HAI -->
+                <div id="header-center-area" class="flex-grow text-center relative">
+                    <!-- Logo Container -->
+                    <div id="header-logo-container">
+                         <a href="./index.html"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="inline-block" style="max-height: 40px;"></a>
+                    </div>
+                    <!-- Hidden Search Bar for Scroll -->
+                    <div id="header-search-container" class="absolute inset-0">
+                        <a href="./products.html?focus=true" class="search-link-header">
                             <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                             <span>Search...</span>
                         </a>
-                     </div>
+                    </div>
                 </div>
 
                 <!-- Right side Icons -->
@@ -78,7 +78,6 @@
         </div>
     </nav>
     
-    <!-- Yeh Page ka main search bar hai jo scroll karne par chhip jaata hai -->
     <div id="search-container">
          <a id="search-link" href="./products.html?focus=true">
             <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
@@ -121,4 +120,5 @@
     <script src="main.js"></script>
 </body>
 </html>
+
 

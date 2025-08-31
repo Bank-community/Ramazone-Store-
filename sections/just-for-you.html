@@ -1,4 +1,171 @@
 <section class="reveal" id="just-for-you-section">
+    <!-- Just For You content yahaan main.js se dynamically load hoga -->
     <div id="jfy-content">
-        </div>
+    </div>
 </section>
+
+<!-- Sirf Just For You Section ke liye CSS -->
+<style>
+    #just-for-you-section { 
+        padding: 1.5rem 1rem; 
+    } 
+
+    .jfy-main-container { 
+        border-radius: 1rem; 
+        padding: 1rem; 
+        background-color: var(--bg-light); 
+        display: flex; 
+        flex-direction: column; 
+        aspect-ratio: 1080 / 1002; 
+    } 
+
+    .jfy-main-title { 
+        font-size: 1.25rem; 
+        font-weight: 700; 
+        margin-bottom: 1rem; 
+        flex-shrink: 0; 
+    } 
+
+    .jfy-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 1rem; 
+        flex-grow: 1; 
+        min-height: 0; 
+    } 
+
+    .jfy-poster-card { 
+        border-radius: 1rem; 
+        overflow: hidden; 
+        position: relative; 
+    } 
+
+    .jfy-poster-slider-container { 
+        position: relative; 
+        width: 100%; 
+        height: 100%; 
+        overflow: hidden; 
+    } 
+
+    .jfy-poster-slider { 
+        display: flex; 
+        height: 100%; 
+    } 
+
+    .jfy-poster-slider.transitioning { 
+        transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); 
+    } 
+
+    .jfy-poster-slide { 
+        width: 100%; 
+        height: 100%; 
+        flex-shrink: 0; 
+    } 
+
+    .jfy-poster-slide img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+    } 
+
+    .jfy-slider-dots { 
+        position: absolute; 
+        bottom: 8px; 
+        left: 50%; 
+        transform: translateX(-50%); 
+        display: flex; 
+        gap: 6px; 
+        z-index: 10; 
+    } 
+
+    .jfy-slider-dots .dot { 
+        width: 6px; 
+        height: 6px; 
+        background: rgba(255, 255, 255, 0.5); 
+        border-radius: 50%; 
+        cursor: pointer; 
+        transition: all 0.3s ease; 
+    } 
+
+    .jfy-slider-dots .dot.active { 
+        background: white; 
+        transform: scale(1.2); 
+    } 
+
+    .jfy-deals-card { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 0.75rem; 
+    } 
+
+    .jfy-main-product { 
+        background-color: white; 
+        border-radius: 0.75rem; 
+        overflow: hidden; 
+        position: relative; 
+        padding-top: 100%; 
+    } 
+
+    .jfy-main-product img { 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+    } 
+
+    .jfy-sub-products { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 0.75rem; 
+        flex-grow: 1; 
+    } 
+
+    .jfy-sub-product-item { 
+        background-color: white; 
+        border-radius: 0.75rem; 
+        overflow: hidden; 
+        display: flex; 
+        flex-direction: column; 
+        text-decoration: none; 
+    } 
+
+    .jfy-sub-product-item .img-wrapper { 
+        width: 100%; 
+        aspect-ratio: 1 / 1; 
+        overflow: hidden; 
+    } 
+
+    .jfy-sub-product-item .img-wrapper img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+    } 
+
+    .jfy-sub-product-item .details { 
+        padding: 0.5rem; 
+        text-align: center; 
+        flex-grow: 1; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center; 
+    } 
+
+    .jfy-sub-product-item .name { 
+        font-size: 0.7rem; 
+        font-weight: 500; 
+        color: var(--text-dark); 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+    } 
+    
+    .jfy-sub-product-item .discount { 
+        font-size: 0.75rem; 
+        font-weight: 600; 
+        color: #16a34a; 
+        margin-top: 0.125rem; 
+    }
+</style>
+

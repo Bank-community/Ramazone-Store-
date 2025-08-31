@@ -1,2 +1,81 @@
 <section class="section-container reveal" id="normal-category-section">
-    </section>
+    <!-- Categories ka content yahaan main.js se dynamically load hoga -->
+</section>
+
+<!-- Sirf Category Section ke liye CSS -->
+<style>
+    #normal-category-section { 
+        padding: 0.5rem 0; 
+    }
+    
+    .category-master-scroller { 
+        overflow-x: auto; 
+        scroll-behavior: smooth; 
+        scrollbar-width: none; 
+        -ms-overflow-style: none; 
+        padding: 0 1rem; 
+    }
+
+    .category-master-scroller::-webkit-scrollbar { 
+        display: none; 
+    }
+
+    .category-rows-container { 
+        display: inline-flex; 
+        flex-direction: column; 
+        gap: 0.5rem; 
+        padding: 0.25rem 0; 
+    }
+
+    .category-row { 
+        display: flex; 
+        gap: 0.75rem; 
+    }
+
+    .category-card { 
+        flex-shrink: 0; 
+        width: 58px; 
+        text-align: center; 
+        text-decoration: none; 
+        color: var(--text-dark); 
+        display: flex; 
+        flex-direction: column; 
+    }
+
+    .category-card--double { 
+        width: 130px; 
+    }
+
+    .category-card .img-wrapper { 
+        background-color: var(--bg-light); 
+        border-radius: 12px; 
+        overflow: hidden; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+        width: 100%; 
+        height: 60px; 
+    }
+
+    .category-card .img-wrapper img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        transition: transform 0.3s ease; 
+    }
+
+    .category-card:hover .img-wrapper img { 
+        transform: scale(1.05); 
+    }
+    
+    .category-name { 
+        font-size: 0.62rem; 
+        font-weight: 600; 
+        color: var(--text-dark); 
+        line-height: 1.3; 
+        margin-top: 0.3rem; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        width: 100%; 
+    }
+</style>
+
