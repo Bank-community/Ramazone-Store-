@@ -163,7 +163,6 @@
         .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
 
-        /* REVERTED: 6th Card styles for consistent animation */
         #open-notification-center-btn { padding: 10px; }
         #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
         #open-notification-center-btn .notification-text-container { font-size: 12px; font-weight: 600; text-align: center; }
@@ -472,6 +471,7 @@
         let imgbbApiKey;
         let currentUser = null;
         let currentUserData = null;
+        let combinedHistory = []; // Global store for all history items
         let activeListeners = [];
         let scannerAnimation = null;
         let allTransactions = [];
@@ -480,9 +480,8 @@
         let activeFilter = 'all';
         let pendingAction = null;
         let isUplineLoaded = false;
-        let lastShownNotificationId = null;
         let popupTimeout = null;
-        let initialPopupShown = false; // NEW: Flag to show popup only once per session
+        let initialPopupShown = false;
         const commissionRates = [30, 25, 20, 15, 10];
         const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
         let historyStack = [];
@@ -516,7 +515,14 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
+        // FIXED: Network page viewport logic
         const toggleView = (viewId) => {
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (viewId === 'network-view') {
+                viewportMeta.setAttribute('content', 'width=1200');
+            } else {
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+            }
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             const viewElement = document.getElementById(viewId);
             if(viewElement) {
@@ -541,9 +547,8 @@
                     if (doc.exists()) {
                         currentUserData = { uid: doc.id, ...doc.data() };
                         updateDashboardUI(currentUserData, user);
-                        renderNotificationCenter(); // Update notification center which depends on currentUserData
+                        renderNotificationCenter();
                         
-                        // NEW: Trigger pop-up check only once after data is loaded
                         if (!initialPopupShown) {
                             handleDueNotificationPopup(currentUserData);
                             initialPopupShown = true;
@@ -562,14 +567,12 @@
                     creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
                     combineAndRenderHistory();
                 }),
-                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)), (snapshot) => {
-                     // The renderNotificationCenter is now called when user data updates
-                     // This listener just triggers the update of the 6th card
+                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
                      if (!snapshot.empty) {
                         const latestOffer = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
                         updateOfferNotificationCard(latestOffer);
                      } else {
-                        updateOfferNotificationCard(null); // Clear card if no offers
+                        updateOfferNotificationCard(null);
                      }
                 })
             ];
@@ -578,7 +581,7 @@
         function detachAllListeners() {
             activeListeners.forEach(unsub => unsub());
             activeListeners = [];
-            initialPopupShown = false; // Reset flag on logout
+            initialPopupShown = false;
         }
 
         // --- UI Update and Notification Logic ---
@@ -615,7 +618,6 @@
             return null;
         }
         
-        // NEW: Handles only the pop-up logic
         function handleDueNotificationPopup(dbData) {
             const dueNotification = getDueNotificationData(dbData);
             if (dueNotification) {
@@ -625,11 +627,10 @@
                     popupIcon: '⚠️',
                     popupTitle: dueNotification.popupTitle,
                     popupPercentage: dueNotification.popupPercentage
-                }, 4000); // Show for 4 seconds
+                }, 4000);
             }
         }
         
-        // REVERTED: This card now only shows offers
         function updateOfferNotificationCard(offerData) {
             const thumbNotifCard = document.getElementById('open-notification-center-btn');
             const wrapper = thumbNotifCard.querySelector('.notification-content-wrapper');
@@ -649,11 +650,11 @@
             wrapper.querySelector('.notification-percentage').textContent = `${offerData.thumbnailPercentage}%`;
             
             wrapper.classList.remove('animate');
-            void wrapper.offsetWidth; // Trigger reflow
+            void wrapper.offsetWidth;
             if (offerData.thumbnailAnimation !== false) {
                  wrapper.classList.add('animate');
             } else {
-                 wrapper.style.opacity = 1; // Make it visible if not animated
+                 wrapper.style.opacity = 1;
             }
         }
 
@@ -714,17 +715,43 @@
             const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
             const formattedCashbackRequests = cashbackRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
             const formattedCreditRequests = creditRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
-            const combined = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
-            renderUnifiedHistory(combined);
+            combinedHistory = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
+            renderUnifiedHistory();
         }
-        function renderUnifiedHistory(items) {
+        // FIXED: Transaction filter logic
+        function renderUnifiedHistory() {
             const listEl = document.getElementById('unified-history-list');
+            const summaryEl = document.getElementById('transaction-summary');
+            const summaryAmountEl = summaryEl.querySelector('.summary-amount');
+            const summaryLabelEl = summaryEl.querySelector('.summary-label');
             listEl.innerHTML = '';
-            if (items.length === 0) {
-                listEl.innerHTML = `<div class="empty-state" style="padding: 20px 0; text-align:center; color: var(--text-secondary);">No Transactions Found</div>`;
+
+            const itemsToRender = combinedHistory.filter(item => {
+                if (activeFilter === 'all') return true;
+                if (activeFilter === 'cashback') return item.type === 'cashback';
+                if (activeFilter === 'commission') return item.type === 'commission';
+                if (activeFilter === 'payment') return item.type === 'payment';
+                if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'credit_request';
+                if (activeFilter === 'due_payment') return item.type === 'due_payment';
+                return false;
+            });
+
+            if (itemsToRender.length > 0 && activeFilter !== 'all') {
+                const total = itemsToRender.reduce((sum, item) => sum + Math.abs(item.amount || item.cashbackAmount || 0), 0);
+                const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
+                summaryLabelEl.textContent = `Total ${filterText}`;
+                summaryAmountEl.textContent = `₹ ${total.toFixed(2)}`;
+                summaryEl.style.display = 'flex';
+            } else {
+                summaryEl.style.display = 'none';
+            }
+
+            if (itemsToRender.length === 0) {
+                listEl.innerHTML = `<div class="empty-state" style="padding: 20px 0; text-align:center; color: var(--text-secondary);">No Transactions Found for this filter.</div>`;
                 return;
             }
-            items.forEach(item => {
+
+            itemsToRender.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'history-item';
                 itemDiv.addEventListener('click', () => showTransactionDetails(item));
@@ -1314,7 +1341,7 @@
                 document.querySelector('#filter-bar .active')?.classList.remove('active');
                 target.classList.add('active');
                 activeFilter = target.dataset.filter;
-                combineAndRenderHistory();
+                renderUnifiedHistory();
             });
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
             document.getElementById('open-network-view').addEventListener('click', () => {
