@@ -9,10 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-page: #f4f7f9; --bg-card: #ffffff; --text-primary: #1c2028;
-            --text-secondary: #5a647e; --border-color: #e8eef3; --brand-red: #e50914;
-            --accent-green: #27ae60; --accent-yellow: #f1c40f; --due-red: #ff6b6b;
-            --accent-red-light: #c0392b; --brand-blue: #0052D4; --link-blue: #0056b3;
+            --bg-page: #f0f2f5; /* Slightly updated background for professional look */
+            --bg-card: #ffffff; 
+            --text-primary: #1c2028;
+            --text-secondary: #5a647e; 
+            --border-color: #e8eef3; 
+            --brand-red: #e50914;
+            --accent-green: #27ae60; 
+            --due-red: #ff6b6b;
+            --brand-blue: #0052D4; 
+            --link-blue: #0056b3;
             --line-color: #ced4da;
             --shadow-light: rgba(0, 0, 0, 0.05);
             --shadow-medium: rgba(0, 0, 0, 0.1);
@@ -20,11 +26,11 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { height: 100%; }
         body {
-            font-family: 'Poppins', sans-serif; background-color: var(--bg-page);
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--bg-page);
             color: var(--text-primary);
             min-height: 100%;
         }
-        /* UPDATED: Container is now full-width */
         .container { 
             width: 100%; 
             max-width: 100%; 
@@ -32,16 +38,14 @@
         }
         .view { display: none; background-color: var(--bg-page); min-height: 100vh; }
         #login-view, #registration-view { padding: 20px; background-color: var(--bg-card); }
-        /* UPDATED: Dashboard no longer has global padding */
-        #dashboard-view { padding: 0; }
+        
+        /* UPDATED: Dashboard now has global padding for a professional container effect */
+        #dashboard-view { padding: 16px; }
         .view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         
         #network-view.active, #notification-view.active {
-            display: flex;
-            width: 100%;
-            max-width: 100%;
+            display: flex; width: 100%; max-width: 100%;
         }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         /* --- Login/Register --- */
@@ -61,48 +65,53 @@
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
         
         /* --- NEW: Dashboard UI --- */
+        .header-wrapper {
+             background-color: var(--bg-page);
+             padding: 0 16px; /* Match dashboard padding */
+             position: sticky;
+             top: 0;
+             z-index: 100;
+        }
         .header {
             background-color: var(--bg-card);
-            padding: 16px 20px;
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px var(--shadow-light);
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
-        .header-logo { height: 32px; }
+        .header-left, .header-right { flex: 1; }
+        .header-center { flex: 2; text-align: center; }
+        .header-logo { height: 30px; }
+        .header-right { text-align: right; }
         .header-profile-avatar {
             width: 40px; height: 40px; border-radius: 50%;
             object-fit: cover; border: 2px solid var(--brand-red);
             cursor: pointer;
         }
-        
-        .greeting-section {
-            padding: 24px 20px 16px 20px;
-        }
-        .greeting-title {
-            font-size: 26px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .greeting-subtitle {
-            font-size: 16px;
+        #header-notification-btn {
+            cursor: pointer;
             color: var(--text-secondary);
         }
 
+        /* REMOVED: Greeting Section */
+
         .wallet-card-wrapper {
-            padding: 0 20px 20px 20px;
+            margin-bottom: 20px; /* Space between wallet and actions */
         }
         .wallet-card {
             background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
-            color: white; padding: 24px; border-radius: 20px;
+            color: white; padding: 24px;
             box-shadow: 0 10px 30px rgba(67, 100, 247, 0.3);
             text-align: center;
+            border-radius: 0; /* UPDATED */
         }
         
-        #wallet-user-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; display: none; /* Hide old name, using greeting now */ }
+        #wallet-user-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block; /* Make it visible again */
+        }
         .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); }
         #wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; margin-bottom: 20px; }
         .wallet-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 20px; }
@@ -118,26 +127,24 @@
         .wallet-sub-items { grid-column: 1 / -1; display: flex; justify-content: space-around; margin-top: 15px; }
 
         .actions-section {
-            padding: 0 20px 20px 20px;
+            margin-bottom: 20px;
         }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
         .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .action-card { 
-            background-color: var(--bg-card); padding: 15px 10px; border-radius: 16px; text-align: center; cursor: pointer; 
+            background-color: var(--bg-card); padding: 15px 10px; text-align: center; cursor: pointer; 
             transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 12px var(--shadow-light);
             display: flex; flex-direction: column; justify-content: center; align-items: center; aspect-ratio: 1/1;
             position: relative; overflow: hidden;
+            border-radius: 0; /* UPDATED */
         }
         .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px var(--shadow-medium); }
         .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
         
-        /* OLD NOTIFICATION CARD IN HEADER IS REMOVED. NEW ONE IS IN ACTION GRID. */
-        #static-notification-card { display: none; }
         #open-notification-center-btn { 
             padding: 10px;
-            border: var(--thumbnail-border-width, 1px) solid var(--thumbnail-border-color, var(--border-color));
         }
         #open-notification-center-btn .notification-content-wrapper {
              flex-direction: column; justify-content: center; align-items: center; gap: 4px;
@@ -161,12 +168,10 @@
         .animate .notification-percentage { animation: simple-fade-in-hold 4.2s infinite; }
         @keyframes simple-fade-in-hold { 0%, 33% { opacity: 0; } 38%, 100% { opacity: 1; } }
 
-        /* Transactions Section with Top Rounded Corners */
         .section { 
             background: var(--bg-card); 
             padding: 24px 20px; 
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
+            border-radius: 0; /* UPDATED */
         }
         
         #transaction-summary {
@@ -196,7 +201,7 @@
         .history-amount .amount.rejected { color: var(--due-red); }
         .history-amount .status { font-size: 12px; text-transform: capitalize; }
         
-        /* --- Modals --- */
+        /* --- Modals (Radius Unchanged) --- */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: rgba(0,0,0,0.6); display: none; 
@@ -396,19 +401,23 @@
 
         <!-- Dashboard View -->
         <div id="dashboard-view" class="view active">
-            <header class="header">
-                <a href="https://ramazone.in" target="_blank">
-                    <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone" class="header-logo">
-                </a>
-                <img id="header-profile-avatar" src="https://placehold.co/40x40/e50914/FFFFFF?text=R" alt="Profile" class="header-profile-avatar">
-            </header>
+            <div class="header-wrapper">
+                 <header class="header">
+                    <div class="header-left">
+                        <svg id="header-notification-btn" xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 0 24 24" width="28px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+                    </div>
+                    <div class="header-center">
+                        <a href="https://ramazone.in" target="_blank">
+                            <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone" class="header-logo">
+                        </a>
+                    </div>
+                    <div class="header-right">
+                        <img id="header-profile-avatar" src="https://placehold.co/40x40/e50914/FFFFFF?text=R" alt="Profile" class="header-profile-avatar">
+                    </div>
+                </header>
+            </div>
             
             <main>
-                <section class="greeting-section">
-                    <h1 class="greeting-title">Welcome Back,</h1>
-                    <p id="greeting-subtitle" class="greeting-subtitle">User</p>
-                </section>
-
                 <section class="wallet-card-wrapper">
                     <div class="wallet-card">
                         <h3 id="wallet-user-name">User Name</h3>
@@ -744,11 +753,8 @@
         }
         function updateDashboardUI(dbData, authUser) {
             const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/80x80/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
-            // New UI elements
-            document.getElementById('greeting-subtitle').textContent = authUser.displayName;
-            document.getElementById('header-profile-avatar').src = profilePicUrl;
             
-            // Old UI elements
+            document.getElementById('header-profile-avatar').src = profilePicUrl;
             document.getElementById('wallet-user-name').textContent = authUser.displayName;
             document.getElementById('modal-profile-img').src = profilePicUrl;
             document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
@@ -1365,8 +1371,9 @@
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
-            // UPDATED: Profile modal now opens from header icon
             document.getElementById('header-profile-avatar').addEventListener('click', () => openModal('profile-modal'));
+            // NEW: Event listener for header notification icon
+            document.getElementById('header-notification-btn').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('modal-profile-img').addEventListener('click', () => {
                 document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src;
                 openModal('profile-picture-modal');
