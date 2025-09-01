@@ -163,12 +163,16 @@
         .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
 
+        /* REVERTED: 6th Card styles for consistent animation */
         #open-notification-center-btn { padding: 10px; }
-        #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; opacity: 1; }
+        #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
         #open-notification-center-btn .notification-text-container { font-size: 12px; font-weight: 600; text-align: center; }
         #open-notification-center-btn .notification-percentage { font-size: 22px; font-weight: 800; margin-top: 4px; }
-        .notification-content-wrapper.animate .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
-        .notification-content-wrapper.animate .notification-percentage { transform: scale(1); opacity: 0; }
+        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
+        .notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
+        .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
+        .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
+        .notification-percentage { transform: scale(1); opacity: 0; }
         @keyframes fade-in-out { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
         .animate .notification-text-line1 { animation: typing-hold 4.2s steps(30, end) infinite; }
         .animate .notification-text-line2 { animation: typing-hold 4.2s steps(30, end) 0.2s infinite; }
@@ -478,7 +482,7 @@
         let isUplineLoaded = false;
         let lastShownNotificationId = null;
         let popupTimeout = null;
-        let isDueNotificationActive = false; // Flag to track due notification priority
+        let initialPopupShown = false; // NEW: Flag to show popup only once per session
         const commissionRates = [30, 25, 20, 15, 10];
         const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
         let historyStack = [];
@@ -537,7 +541,13 @@
                     if (doc.exists()) {
                         currentUserData = { uid: doc.id, ...doc.data() };
                         updateDashboardUI(currentUserData, user);
-                        handlePriorityNotifications(currentUserData); // Central notification handler
+                        renderNotificationCenter(); // Update notification center which depends on currentUserData
+                        
+                        // NEW: Trigger pop-up check only once after data is loaded
+                        if (!initialPopupShown) {
+                            handleDueNotificationPopup(currentUserData);
+                            initialPopupShown = true;
+                        }
                     }
                 }),
                 onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
@@ -553,11 +563,14 @@
                     combineAndRenderHistory();
                 }),
                 onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)), (snapshot) => {
-                    renderNotificationCenter(snapshot); // Render main list
-                    if (!isDueNotificationActive && !snapshot.empty) {
+                     // The renderNotificationCenter is now called when user data updates
+                     // This listener just triggers the update of the 6th card
+                     if (!snapshot.empty) {
                         const latestOffer = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-                        updateOfferNotificationUI(latestOffer); // Update header with offer if no due amount
-                    }
+                        updateOfferNotificationCard(latestOffer);
+                     } else {
+                        updateOfferNotificationCard(null); // Clear card if no offers
+                     }
                 })
             ];
             activeListeners.push(...listeners);
@@ -565,6 +578,7 @@
         function detachAllListeners() {
             activeListeners.forEach(unsub => unsub());
             activeListeners = [];
+            initialPopupShown = false; // Reset flag on logout
         }
 
         // --- UI Update and Notification Logic ---
@@ -591,7 +605,7 @@
             const dayOfMonth = today.getDate();
             if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
                 return {
-                    id: 'due_notification',
+                    id: 'due_notification_priority',
                     title: `Payment Due: ₹${dbData.dueAmount.toFixed(2)}`,
                     popupTitle: `Namaste ${dbData.name}, aapka bhugtan baki hai.`,
                     popupPercentage: `Amount: ₹${dbData.dueAmount.toFixed(2)}`,
@@ -601,58 +615,49 @@
             return null;
         }
         
-        function handlePriorityNotifications(dbData) {
+        // NEW: Handles only the pop-up logic
+        function handleDueNotificationPopup(dbData) {
             const dueNotification = getDueNotificationData(dbData);
             if (dueNotification) {
-                isDueNotificationActive = true;
                 showPopupNotification({
                     popupBgColor: 'var(--due-red)',
                     popupTextColor: 'white',
                     popupIcon: '⚠️',
                     popupTitle: dueNotification.popupTitle,
                     popupPercentage: dueNotification.popupPercentage
-                }, 8000);
-                updateHeaderWithDueNotification(dueNotification);
-            } else {
-                isDueNotificationActive = false;
+                }, 4000); // Show for 4 seconds
             }
         }
         
-        function updateHeaderWithDueNotification(dueData) {
+        // REVERTED: This card now only shows offers
+        function updateOfferNotificationCard(offerData) {
             const thumbNotifCard = document.getElementById('open-notification-center-btn');
-            thumbNotifCard.style.backgroundColor = '#fff5f5';
-            thumbNotifCard.style.color = 'var(--due-red)';
             const wrapper = thumbNotifCard.querySelector('.notification-content-wrapper');
-            wrapper.classList.remove('animate');
-            wrapper.querySelector('.notification-text-line1').textContent = 'Payment Due!';
-            wrapper.querySelector('.notification-text-line2').textContent = '';
-            wrapper.querySelector('.notification-percentage').textContent = `₹${currentUserData.dueAmount.toFixed(2)}`;
-        }
 
-        function updateOfferNotificationUI(offerData) {
-            if (isDueNotificationActive || !offerData) return; // Priority check
-            const thumbNotifCard = document.getElementById('open-notification-center-btn');
+            if (!offerData) {
+                wrapper.style.opacity = 0;
+                wrapper.classList.remove('animate');
+                return;
+            }
+
             thumbNotifCard.style.backgroundColor = offerData.thumbnailBgColor || 'var(--bg-card)';
             thumbNotifCard.style.color = offerData.thumbnailTextColor || 'var(--text-primary)';
-            const wrapper = thumbNotifCard.querySelector('.notification-content-wrapper');
+            
             const [text1, text2 = ''] = (offerData.thumbnailTitle || '').split('|').map(t => t.trim());
             wrapper.querySelector('.notification-text-line1').textContent = text1;
             wrapper.querySelector('.notification-text-line2').textContent = text2;
             wrapper.querySelector('.notification-percentage').textContent = `${offerData.thumbnailPercentage}%`;
             
+            wrapper.classList.remove('animate');
+            void wrapper.offsetWidth; // Trigger reflow
             if (offerData.thumbnailAnimation !== false) {
                  wrapper.classList.add('animate');
             } else {
-                 wrapper.classList.remove('animate');
-            }
-            
-            if (offerData.id !== lastShownNotificationId) {
-                lastShownNotificationId = offerData.id;
-                showPopupNotification(offerData);
+                 wrapper.style.opacity = 1; // Make it visible if not animated
             }
         }
 
-        function showPopupNotification(notifData, duration = 6000) {
+        function showPopupNotification(notifData, duration = 4000) {
              if (popupTimeout) clearTimeout(popupTimeout);
              const popup = document.getElementById('popup-notification');
              popup.style.backgroundColor = notifData.popupBgColor || '#333';
@@ -665,7 +670,7 @@
              popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
         }
 
-        function renderNotificationCenter(snapshot) {
+        async function renderNotificationCenter() {
             const listEl = document.getElementById('notification-center-list');
             listEl.innerHTML = '';
             
@@ -676,26 +681,34 @@
                 item.innerHTML = `<div class="title" style="color: var(--due-red);">${dueNotification.title}</div><p class="paragraph">${dueNotification.paragraph}</p>`;
                 listEl.appendChild(item);
             }
-
-            if (snapshot.empty && !dueNotification) {
-                listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
-                return;
+            
+            try {
+                const snapshot = await getDocs(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)));
+                if (snapshot.empty && !dueNotification) {
+                    listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const notif = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'notification-center-item';
+                    item.style.backgroundColor = notif.mainBgColor;
+                    item.style.color = notif.mainTextColor;
+                    const linkify = (text) => {
+                        if (!text) return '';
+                        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+                        return text.replace(urlRegex, (url) => `<a href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`);
+                    };
+                    const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
+                    item.innerHTML = `<div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div><div class="percentage">${notif.mainPercentage}%</div>${paragraphHTML}`;
+                    listEl.appendChild(item);
+                });
+            } catch (error) {
+                console.error("Error fetching notifications for center:", error);
+                if (!dueNotification) {
+                    listEl.innerHTML = '<p class="empty-state">Could not load notifications.</p>';
+                }
             }
-            snapshot.forEach(doc => {
-                const notif = doc.data();
-                const item = document.createElement('div');
-                item.className = 'notification-center-item';
-                item.style.backgroundColor = notif.mainBgColor;
-                item.style.color = notif.mainTextColor;
-                const linkify = (text) => {
-                    if (!text) return '';
-                    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-                    return text.replace(urlRegex, (url) => `<a href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`);
-                };
-                const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
-                item.innerHTML = `<div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div><div class="percentage">${notif.mainPercentage}%</div>${paragraphHTML}`;
-                listEl.appendChild(item);
-            });
         }
         function combineAndRenderHistory() {
             const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
@@ -832,7 +845,6 @@
                 pendingAction = null;
             }
         }
-        // Other functions (handlePayment, handleCashbackRequest etc.) remain the same...
         function handlePayment() {
             const amount = parseFloat(document.getElementById('payment-amount').value);
             const errorMsg = document.getElementById('payment-error-msg');
