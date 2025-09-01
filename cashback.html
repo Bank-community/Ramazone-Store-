@@ -60,13 +60,17 @@
         
         /* --- Dashboard UI --- */
         .header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 12px;
-            background-color: var(--bg-card); 
-            border-radius: 8px;
-            margin-bottom: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            gap: 10px;
-        }
+    display: flex; 
+    justify-content: space-between; /* यह सुनिश्चित करता है कि आइटम दोनों सिरों पर रहें */
+    align-items: center;
+    /* padding: 8px 12px; <-- इस लाइन को नीचे वाली लाइन से बदलें */
+    padding: 8px 4px; /* हॉरिजॉन्टल पैडिंग को एडजस्ट किया गया है */
+    background-color: var(--bg-card); 
+    border-radius: 8px;
+    margin-bottom: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    gap: 10px;
+}
+
         .header-logo { height: 35px; flex-shrink: 0; }
         #static-notification-card { flex-grow: 1; margin-right: 2px; cursor: pointer; }
 
