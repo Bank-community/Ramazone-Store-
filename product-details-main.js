@@ -166,13 +166,18 @@ async function initializeApp() {
     }
 }
 
+// --- UPDATED FUNCTION ---
 async function fetchAllData() {
     const snapshot = await database.ref('ramazone').get();
     if (snapshot.exists()) {
         const data = snapshot.val();
         appThemeColor = data.config?.themeColor || '#4F46E5';
         document.documentElement.style.setProperty('--primary-color', appThemeColor);
-        allProductsCache = Object.values(data.products || {});
+
+        // ** YAHAN BADLAV KIYA GAYA HAI **
+        // Sirf unhi products ko cache mein daalo jo hidden nahi hain.
+        const allProds = Object.values(data.products || {});
+        allProductsCache = allProds.filter(p => p && p.isVisible !== false);
     }
 }
 
@@ -182,12 +187,16 @@ function fetchProductData() {
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product ID not found.</p>';
         return;
     }
+
+    // allProductsCache ab pehle se hi filtered hai.
     const product = allProductsCache.find(p => p && p.id == currentProductId);
+
+    // Agar product nahi milta (kyunki woh hidden hai), toh error dikhao.
     if (product) {
         currentProductData = product;
         loadPageSectionsAndData(product);
     } else {
-        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product not found.</p>';
+        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product not found or is currently unavailable.</p>';
     }
 }
 
@@ -310,7 +319,7 @@ function renderProductOptions(data) {
 
     if (data.combos && data.combos.productBundle) {
         const bundle = data.combos.productBundle;
-        const linkedProduct = allProductsCache.find(p => p.id === bundle.linkedProductId);
+        const linkedProduct = allProductsCache.find(p => p.id === bundle.linkedProductId); // Cache is filtered
         if (linkedProduct) {
             const bundleHTML = createProductBundle(data, linkedProduct, bundle.bundlePrice);
             container.insertAdjacentHTML('beforeend', bundleHTML);
@@ -635,19 +644,7 @@ function setSliderPosition() { slider.style.transform=`translateX(${currentTrans
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
 function setupShareButton() { document.getElementById("share-button").addEventListener("click",async()=>{const e=currentProductData.name.replace(/\*/g,"").trim(),t=`*${e}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;navigator.share?await navigator.share({text:t}):navigator.clipboard.writeText(window.location.href).then(()=>showToast("Link Copied!"))})}
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
-
-// --- UPDATED: Recently Viewed function now uses localStorage ---
-function updateRecentlyViewed(newId) {
-    // sessionStorage ko localStorage se badal diya gaya hai
-    let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
-    viewedIds = viewedIds.filter(e => e !== newId);
-    viewedIds.unshift(newId);
-    viewedIds = viewedIds.slice(0, 10); // Sirf 10 recent products rakhein
-    // sessionStorage ko localStorage se badal diya gaya hai
-    localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds));
-    loadRecentlyViewed(viewedIds);
-}
-
+function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; viewedIds = viewedIds.filter(e => e !== newId); viewedIds.unshift(newId); viewedIds = viewedIds.slice(0, 10); localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds)); loadRecentlyViewed(viewedIds); }
 function loadHandpickedSimilarProducts(similarIds) { const section = document.getElementById("handpicked-similar-section"), container = document.getElementById("handpicked-similar-container"); if (!similarIds || similarIds.length === 0) return void (section.style.display = "none"); container.innerHTML = ""; let hasContent = !1; similarIds.forEach(id => { const product = allProductsCache.find(p => p && p.id === id); product && (container.innerHTML += createHandpickedCard(product), hasContent = !0) }), hasContent && (section.style.display = "block")}
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e);n&&(container.innerHTML+=createCarouselCard(n),t++)}),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}

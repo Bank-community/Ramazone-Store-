@@ -94,7 +94,7 @@ async function loadPageData() {
         setupGlobalEventListeners();
         updateCartIcon();
         setupDynamicPlaceholder();
-        setupScrollBehavior(); // <-- Naya function yahan call kiya gaya hai
+        setupScrollBehavior();
         document.getElementById('loading-indicator').style.display = 'none';
         if (urlParams.get('focus') === 'true') {
             document.getElementById('search-input').focus();
@@ -105,6 +105,7 @@ async function loadPageData() {
     }
 }
 
+// --- UPDATED FUNCTION ---
 async function fetchAllData(db) {
     const dbRef = db.ref('ramazone');
     const snapshot = await dbRef.get();
@@ -114,16 +115,27 @@ async function fetchAllData(db) {
         if (homepageData.search && homepageData.search.scrollingTexts) {
             searchScrollingTexts = homepageData.search.scrollingTexts;
         }
-        const mainProducts = data.products || [];
+
+        // ** YAHAN BADLAV KIYA GAYA HAI **
+        // Pehle sabhi products ko filter karo jo visible hain
+        const visibleProducts = (data.products || []).filter(p => p && p.isVisible !== false);
+
         const festiveProductIds = homepageData.festiveCollection?.productIds || [];
         const jfyMainProductId = homepageData.justForYou?.topDeals?.mainProductId;
         const jfySubProductIds = homepageData.justForYou?.topDeals?.subProductIds || [];
+
         const allReferencedIds = new Set([...festiveProductIds, jfyMainProductId, ...jfySubProductIds].filter(Boolean));
-        const referencedProducts = mainProducts.filter(p => allReferencedIds.has(p.id));
-        const combinedProducts = [...mainProducts, ...referencedProducts];
+
+        // Referenced products bhi visible products me se hi lo
+        const referencedProducts = visibleProducts.filter(p => allReferencedIds.has(p.id));
+
+        const combinedProducts = [...visibleProducts, ...referencedProducts];
+
+        // Final list se duplicate hata do
         allProducts = combinedProducts.filter((p, index, self) =>
             p && p.id && index === self.findIndex((t) => t.id === p.id)
         );
+
         allCategories = (homepageData.normalCategories || [])
             .filter(cat => cat && cat.name && cat.size !== 'double')
             .filter((cat, index, self) => 
@@ -183,7 +195,7 @@ function filterAndDisplayProducts() {
     const searchInput = document.getElementById('search-input').value.toLowerCase();
     grid.innerHTML = '';
     noProductsMsg.classList.add('hidden');
-    let filteredProducts = allProducts;
+    let filteredProducts = allProducts; // allProducts ab pehle se hi filtered hai
     if (currentCategory !== 'All') {
         filteredProducts = filteredProducts.filter(prod => prod && prod.category === currentCategory);
     }
@@ -204,7 +216,6 @@ function createProductCardHTML(prod) {
 
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
 
-    // Naya Code
     const ratingTag = prod.rating 
         ? `<div class="card-rating-tag-new">
              ${prod.rating} <i class="fas fa-star" style="color: #008E00;"></i>
@@ -242,7 +253,6 @@ function createProductCardHTML(prod) {
         </a>`;
 }
 
-// --- NAYA FUNCTION: SCROLL BEHAVIOR KE LIYE ---
 function setupScrollBehavior() {
     const header = document.getElementById('main-header');
     if (!header) return;
@@ -253,19 +263,17 @@ function setupScrollBehavior() {
     window.addEventListener('scroll', () => {
         const currentScrollY = window.scrollY;
 
-        // Scroll down hone par aur header se neeche jaane par
         if (currentScrollY > lastScrollY && currentScrollY > headerHeight) {
             header.classList.add('header-hidden');
             document.body.classList.add('header-is-hidden');
         } 
-        // Scroll up hone par
         else if (currentScrollY < lastScrollY) {
             header.classList.remove('header-hidden');
             document.body.classList.remove('header-is-hidden');
         }
 
         lastScrollY = currentScrollY;
-    }, { passive: true }); // Performance ke liye passive listener
+    }, { passive: true });
 }
 
 function setupGlobalEventListeners() {
@@ -297,7 +305,7 @@ function setupSearch() {
             suggestionsContainer.classList.add('hidden');
             return;
         }
-        const suggestions = allProducts.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+        const suggestions = allProducts.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5); // allProducts ab filtered hai
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `
                 <a href="./product-details.html?id=${prod.id}" class="suggestion-item">
@@ -317,5 +325,4 @@ function setupSearch() {
     searchOverlay.addEventListener('click', () => searchInput.blur());
     searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
 }
-
 

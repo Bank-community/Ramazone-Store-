@@ -91,11 +91,17 @@ async function initializeApp() {
     }
 }
 
+// --- UPDATED FUNCTION ---
 function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
         const data = snapshot.val() || {};
-        allProductsCache = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
+        let products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
+
+        // ** YAHAN BADLAV KIYA GAYA HAI **
+        // Sirf unhi products ko cache mein daalo jo hidden nahi hain.
+        allProductsCache = products.filter(p => p && p.isVisible !== false);
+
         await loadPageStructure();
         renderAllSections(data);
     }, (error) => {
@@ -138,23 +144,21 @@ function renderAllSections(data) {
     setupInstallButton();
     updateCartIcon();
     setupScrollAnimations();
-    setupHeaderScrollEffect(); // NEW: Scroll effect ko activate karne ke liye function call
+    setupHeaderScrollEffect();
 }
 
-// --- NEW: HEADER SCROLL EFFECT LOGIC ---
+// --- HEADER SCROLL EFFECT LOGIC ---
 function setupHeaderScrollEffect() {
     const header = document.getElementById('page-header');
     if (!header) return;
-
-    const scrollThreshold = 50; // Kitna scroll karne par effect activate hoga
-
+    const scrollThreshold = 50;
     window.addEventListener('scroll', () => {
         if (window.scrollY > scrollThreshold) {
             header.classList.add('header-scrolled');
         } else {
             header.classList.remove('header-scrolled');
         }
-    }, { passive: true }); // Performance ke liye passive listener
+    }, { passive: true });
 }
 
 
@@ -165,21 +169,17 @@ function renderRecentlyViewed() {
     if (!section || !container) {
         return;
     }
-
     try {
         const viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
-
         if (viewedIds.length === 0) {
             section.style.display = 'none';
             return;
         }
-
         let cardsHTML = '';
         let productsFound = 0;
-
         viewedIds.forEach(id => {
             const product = allProductsCache.find(p => p && p.id === id);
-            if (product) {
+            if (product) { // Ab yahan hidden product nahi milega
                 const imageUrl = (product.images && product.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
                 cardsHTML += `
                     <a href="./product-details.html?id=${product.id}" class="rv-card">
@@ -190,14 +190,12 @@ function renderRecentlyViewed() {
                 productsFound++;
             }
         });
-
         if (productsFound > 0) {
             container.innerHTML = cardsHTML;
             section.style.display = 'block';
         } else {
             section.style.display = 'none';
         }
-
     } catch (error) {
         console.error("Error rendering recently viewed products:", error);
         section.style.display = 'none';
@@ -274,7 +272,7 @@ function renderFestiveCollection(collectionData) {
     const metadata = collectionData.productMetadata || {};
     const limit = collectionData.productsToShow || collectionData.productIds.length;
     slider.innerHTML = collectionData.productIds.slice(0, limit).map(id => {
-        const product = allProductsCache.find(p => p && p.id === id);
+        const product = allProductsCache.find(p => p && p.id === id); // Ab yahan hidden product nahi milega
         if (!product) return '';
         return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
     }).join('');
@@ -466,5 +464,4 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4e3) }
-
 
