@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Reverted to the original viewport for mobile-first experience -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ramazone Cashback</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -302,12 +303,13 @@
 
         #downline-content {
             width: 100%; height: 100%;
-            overflow: auto; text-align: center;
+            overflow: auto; 
+            text-align: center;
             background-color: #ffffff;
         }
         .tree-container {
             position: relative; display: inline-block;
-            padding: 40px; white-space: nowrap;
+            padding: 40px; white-space: nowrap; 
         }
         #connector-svg {
             position: absolute; top: 0; left: 0;
@@ -316,12 +318,13 @@
         }
         .tree { display: inline-flex; flex-direction: column; align-items: center; }
         .node-children { display: flex; justify-content: center; padding-top: 80px; position: relative; }
-        .node-wrapper { display: flex; flex-direction: column; align-items: center; padding: 0 20px; position: relative; }
+        .node-wrapper { display: flex; flex-direction: column; align-items: center; padding: 0 35px; position: relative; }
         .node {
             display: flex; flex-direction: column; align-items: center;
             background-color: white; padding: 15px; border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            width: 140px; position: relative; z-index: 2;
+            width: 150px; 
+            position: relative; z-index: 2;
             cursor: pointer; border: 1px solid #e9ecef;
             transition: transform 0.2s, box-shadow 0.2s;
         }
@@ -345,8 +348,10 @@
 
         #upline-list { display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 25px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .upline-member .node { width: 160px; } /* Slightly wider for better look */
-        .upline-member.current-user .node-avatar { background-color: var(--brand-blue); }
+        .upline-member .node { width: 160px; }
+        .upline-member.current-user .node {
+            border: 2px solid var(--brand-blue);
+        }
         .upline-member:not(:last-child)::after { 
             content: ''; 
             width: 2px; 
@@ -594,7 +599,7 @@
                 </div>
                 
                 <div style="background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px; font-size: 13px; color: #8a6d3b; margin-bottom: 15px;">
-                    <b>Attention:</b> Every month, you must clear your due amount between the 1st and 7th. Failure to do so will result in a 10% penalty on the outstanding credit amount.
+                    <b>Attention:</b> हर महीने आपको अपनी due amount 1 से 7 तारीख के बीच चुकानी होगी। ऐसा न करने पर बकाया क्रेडिट amount पर 10% का जुर्माना लगाया जाएगा।"
                 </div>
 
                 <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
@@ -746,7 +751,6 @@
         let popupTimeout = null;
         const commissionRates = [30, 25, 20, 15, 10];
         
-        // UPDATE: Credit level definitions
         const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
 
         let historyStack = [];
@@ -760,10 +764,25 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
+
+        // UPDATED: Central function to manage views and viewport meta tag
         const toggleView = (viewId) => {
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            // Set viewport for desktop-like experience ONLY for network view
+            if (viewId === 'network-view') {
+                viewportMeta.setAttribute('content', 'width=1200');
+            } else {
+                // Revert to mobile-friendly viewport for all other views
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+            }
+
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId)?.classList.add('active');
+            const viewElement = document.getElementById(viewId);
+            if(viewElement) {
+                viewElement.classList.add('active');
+            }
         };
+
         const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
         const closeModal = (modalId) => {
             const modal = document.getElementById(modalId);
@@ -817,7 +836,6 @@
                 toggleView('dashboard-view');
             } else {
                 detachAllListeners();
-                // UPDATE: Check for referral link on logout/initial load
                 handleReferralLink();
             }
         });
@@ -1344,7 +1362,6 @@
             window.open(whatsappUrl, '_blank');
         }
         
-        // UPDATE: Function to handle referral link on page load
         function handleReferralLink() {
             const params = new URLSearchParams(window.location.search);
             const refCode = params.get('ref');
@@ -1546,13 +1563,13 @@
                 const uplinePromises = uplineUIDs.map(uid => getDoc(doc(db, 'users', uid)));
                 const uplineDocs = await Promise.all(uplinePromises);
 
-                const uplineData = uplineDocs.map(doc => doc.exists() ? doc.data() : null).filter(Boolean);
+                const uplineData = uplineDocs.map(doc => doc.exists() ? {uid: doc.id, ...doc.data()} : null).filter(Boolean);
                 
                 uplineData.push(currentUserData);
 
-                uplineContainer.innerHTML = uplineData.reverse().map((member, index) => {
+                uplineContainer.innerHTML = uplineData.reverse().map((member, index, arr) => {
                     const isCurrentUser = member.uid === currentUserData.uid;
-                    const level = uplineData.length - 1 - index;
+                    const level = arr.length - 1 - index;
                     const avatarHTML = member.profilePictureUrl ? `<img src="${member.profilePictureUrl}" alt="${member.name}">` : member.name.charAt(0).toUpperCase();
 
                     return `
@@ -1560,8 +1577,8 @@
                             ${!isCurrentUser && level < commissionRates.length ? `<div class="upline-commission">${commissionRates[level]}%</div>` : ''}
                             <div class="node">
                                 <div class="node-avatar">${avatarHTML}</div>
-                                <div class="node-name">${member.name}</div>
-                                <div class="node-earning">${isCurrentUser ? `(Aap)` : ''}</div>
+                                <div class="node-name">${member.name} ${isCurrentUser ? '(Aap)' : ''}</div>
+                                ${!isCurrentUser ? `<div class="node-earning">Sponsor</div>` : ''}
                             </div>
                         </div>
                     `;
@@ -1634,7 +1651,7 @@
                     const newUserDoc = {
                         uid: tempUser.uid, name, mobile, password, wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0,
                         referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`,
-                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 // UPDATE: Initialize creditLevel
+                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 
                     };
                     await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
                     await signOut(auth);
@@ -1665,7 +1682,6 @@
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
             
-            // UPDATE: Credit Request Modal Logic
             document.getElementById('open-credit-request-modal').addEventListener('click', () => {
                 if (!currentUserData) return showToast("Please wait for data to load.");
                 if (currentUserData.dueAmount > 0) {
@@ -1683,7 +1699,6 @@
                 document.getElementById('credit-submit-btn').disabled = !e.target.checked;
             });
 
-            // UPDATE: Notification View Logic
             document.getElementById('static-notification-card').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('open-notification-center-btn').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
