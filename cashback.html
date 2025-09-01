@@ -7,6 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --bg-page: #f0f2f5; 
@@ -119,24 +122,27 @@
         #wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
         #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
         #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
-        .wallet-sub-items { 
-            grid-column: 1 / -1; 
-            display: flex; 
-            justify-content: center;
-            align-items: center;
+        
+        /* NEW: Due Payment Section Styles */
+        .due-payment-section {
+            grid-column: 1 / -1;
             margin-top: 15px;
-            gap: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
         }
         #pay-due-amount-btn {
             background-color: var(--brand-red);
             color: white;
             border: none;
-            padding: 6px 14px;
-            font-size: 12px;
+            padding: 6px 24px;
+            font-size: 13px;
             font-weight: 600;
             border-radius: 20px;
             cursor: pointer;
-            display: none;
+            display: none; /* JS toggles this */
+            width: auto;
         }
 
 
@@ -295,13 +301,12 @@
         #popup-notification.show { top: 20px; }
         .popup-notification-content { display: flex; align-items: center; gap: 15px; }
         .popup-notification-icon { font-size: 28px; font-weight: 800; }
-        .popup-notification-text .title { font-size: 14px; font-weight: 600; }
-        .popup-notification-text .percentage { font-size: 24px; font-weight: 800; }
+        .popup-notification-text .title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+        .popup-notification-text .percentage { font-size: 16px; font-weight: 600; margin-top: 2px; }
         #popup-notification-close { background: none; border: none; font-size: 24px; cursor: pointer; opacity: 0.7; padding: 0; line-height: 1; }
         /* NEW: Due Payment QR Modal styles */
-        #due-qr-code { width: 200px; height: 200px; margin: 20px auto; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; }
-        #due-qr-code canvas { max-width: 100%; max-height: 100%; }
-        #due-qr-amount { font-size: 24px; font-weight: 700; color: var(--brand-red); }
+        #due-qr-code { margin: 15px auto; display: flex; justify-content: center; align-items: center; }
+        #due-qr-code canvas, #due-qr-code img { border-radius: 8px; }
         .qr-instructions { font-size: 13px; color: var(--text-secondary); margin-top: 15px; line-height: 1.5; }
     </style>
 </head>
@@ -365,8 +370,12 @@
                             <div class="wallet-footer-item"><p>Lifetime Earning</p><span id="lifetime-earning" class="amount">₹0.00</span></div>
                             <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
                             <div class="wallet-footer-item"><p>Total Credit</p><span id="credit-limit" class="amount">₹0.00</span></div>
-                            <div class="wallet-sub-items">
-                                <div class="wallet-footer-item"><p>Due Amount</p><span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span></div>
+                            <!-- MODIFIED: Due Payment Section -->
+                            <div class="due-payment-section">
+                                <div class="wallet-footer-item">
+                                    <p>Due Amount</p>
+                                    <span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span>
+                                </div>
                                 <button id="pay-due-amount-btn">Pay Now</button>
                             </div>
                         </div>
@@ -427,18 +436,25 @@
     <!-- NEW: Due Payment QR Modal -->
     <div id="due-payment-modal" class="modal-overlay">
         <div class="modal-content" style="text-align: center;">
-             <button class="modal-close-btn" data-close-modal>&times;</button>
-            <h3>Pay Due Amount</h3>
-            <p>Scan the QR code below to pay</p>
-            <p id="due-qr-amount" class="amount"></p>
-            <div id="due-qr-code"></div>
+            <button class="modal-close-btn" data-close-modal>&times;</button>
+            <h3>Pay Your Due Amount</h3>
+            
+            <!-- This is the card that will be downloaded -->
+            <div id="due-qr-card" style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; display: inline-block; margin: 20px 0;">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" style="width: 150px; margin: 0 auto 15px auto; display: block;">
+                <div id="due-qr-code"></div> <!-- QR will be generated here -->
+                <p id="due-qr-amount" style="font-size: 24px; font-weight: 700; color: var(--brand-red); margin-top: 10px;"></p>
+                <p id="due-qr-upi-id" style="font-weight: 600; margin-top: 5px; color: var(--text-primary);"></p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Scan using any UPI app</p>
+            </div>
+    
             <p class="qr-instructions">
-                Payment karne ke baad, कृपया transaction ka screenshot
+                Payment karne ke baad, kripya transaction ka screenshot
                 <br>
                 hamare WhatsApp number par bhejkar confirm karein.
             </p>
             <div class="modal-actions">
-                <button id="download-qr-btn" class="btn-secondary">Download QR</button>
+                <button id="download-qr-btn" class="btn-secondary">Download QR Card</button>
             </div>
         </div>
     </div>
@@ -446,9 +462,6 @@
     <div id="toast-notification" class="toast-notification"></div>
     <div id="popup-notification"><div class="popup-notification-content"><div class="popup-notification-icon">🔥</div><div class="popup-notification-text"><div class="title" id="popup-notification-title"></div><div class="percentage" id="popup-notification-percentage"></div></div></div><button id="popup-notification-close">&times;</button></div>
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
-    
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -475,7 +488,7 @@
         let historyStack = [];
         const networkLoader = document.getElementById('network-loader');
         const networkTitleEl = document.getElementById('network-title');
-        const UPI_ID = "princekumar954684-3@okhdfcbank"; // Your UPI ID
+        const UPI_ID = "princekumar954684-1@okicici"; // UPDATED: Correct UPI ID
 
         // --- Core Functions (Config, UI Toggles) ---
         async function fetchConfigsAndInit() {
@@ -575,31 +588,35 @@
             document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
             
-            // NEW: Due amount button and notification logic
+            // UPDATED: Due amount button and notification logic
             const payDueBtn = document.getElementById('pay-due-amount-btn');
-            const today = new Date();
-            const dayOfMonth = today.getDate();
-
             if (dbData.dueAmount > 0) {
                 payDueBtn.style.display = 'block';
-                if (dayOfMonth >= 1 && dayOfMonth <= 7) {
-                    showDueNotification(dbData.dueAmount);
-                }
+                showDueNotification(dbData); // Show popup notification if conditions are met
             } else {
                 payDueBtn.style.display = 'none';
             }
         }
-        function showDueNotification(amount) {
+        // NEW: Function to show a prominent popup for due amount
+        function showDueNotification(dbData) {
             const popup = document.getElementById('popup-notification');
-            popup.style.backgroundColor = 'var(--due-red)';
-            popup.style.color = 'white';
-            document.getElementById('popup-notification-icon').textContent = '⚠️';
-            document.getElementById('popup-notification-title').textContent = `Your due amount of ₹${amount.toFixed(2)} is pending.`;
-            document.getElementById('popup-notification-percentage').textContent = `Pay before 7th`;
-            document.getElementById('popup-notification-close').style.color = 'white';
-            popup.classList.add('show');
-            if (popupTimeout) clearTimeout(popupTimeout);
-            popupTimeout = setTimeout(() => popup.classList.remove('show'), 6000);
+            const today = new Date();
+            const dayOfMonth = today.getDate();
+
+            // Only show between 1st and 7th of the month
+            if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
+                if (popupTimeout) clearTimeout(popupTimeout); // Clear any existing offer notification timeout
+                
+                popup.style.backgroundColor = 'var(--due-red)';
+                popup.style.color = 'white';
+                document.getElementById('popup-notification-icon').textContent = '⚠️';
+                document.getElementById('popup-notification-title').textContent = `Namaste ${dbData.name}, aapka ₹${dbData.dueAmount.toFixed(2)} ka bhugtan baki hai.`;
+                document.getElementById('popup-notification-percentage').textContent = `Kripya 7 tarikh se pehle pay karein.`;
+                document.getElementById('popup-notification-close').style.color = 'white';
+                popup.classList.add('show');
+                
+                popupTimeout = setTimeout(() => popup.classList.remove('show'), 8000); // Show for 8 seconds
+            }
         }
         function updateNotificationUI(notifData) {
             const thumbNotifCard = document.getElementById('open-notification-center-btn');
@@ -632,10 +649,27 @@
             thumbNotifCard.style.setProperty('--thumbnail-border-color', notifData.thumbnailBorderColor || 'var(--border-color)');
             thumbNotifCard.style.setProperty('--thumbnail-border-width', notifData.thumbnailBorderWidth ? `${notifData.thumbnailBorderWidth}px` : '1px');
             updateElement(thumbNotifCard, notifData.thumbnailTitle, notifData.thumbnailPercentage, notifData.thumbnailAnimation !== false);
-            if (notifData.id !== lastShownNotificationId && !(new Date().getDate() >= 1 && new Date().getDate() <= 7 && currentUserData?.dueAmount > 0)) {
+
+            // UPDATED: Prevent offer popup if it's due payment period for a user with due amount
+            const isDuePeriod = new Date().getDate() >= 1 && new Date().getDate() <= 7;
+            const hasDueAmount = currentUserData && currentUserData.dueAmount > 0;
+
+            if (notifData.id !== lastShownNotificationId && !(isDuePeriod && hasDueAmount)) {
                 lastShownNotificationId = notifData.id;
                 showPopupNotification(notifData);
             }
+        }
+        function showPopupNotification(notifData) {
+             if (popupTimeout) clearTimeout(popupTimeout);
+             const popup = document.getElementById('popup-notification');
+             popup.style.backgroundColor = notifData.popupBgColor || '#333';
+             popup.style.color = notifData.popupTextColor || 'white';
+             document.getElementById('popup-notification-icon').textContent = notifData.popupIcon || '🔥';
+             document.getElementById('popup-notification-title').innerHTML = (notifData.popupTitle || '').replace('|', '<br>');
+             document.getElementById('popup-notification-percentage').textContent = `${notifData.popupPercentage || ''}%`;
+             document.getElementById('popup-notification-close').style.color = notifData.popupTextColor || 'white';
+             popup.classList.add('show');
+             popupTimeout = setTimeout(() => popup.classList.remove('show'), 6000);
         }
         function renderNotificationCenter(snapshot) {
             const listEl = document.getElementById('notification-center-list');
@@ -726,15 +760,17 @@
         }
         
         // --- Feature Logic (Payment, Cashback, etc.) ---
+        // UPDATED: Function to generate and display the branded QR card
         function generateDueQR() {
-            const amount = currentUserData.dueAmount;
-            if (!amount || amount <= 0) {
+            if (!currentUserData || currentUserData.dueAmount <= 0) {
                 showToast("No due amount to pay.");
                 return;
             }
-            const upiLink = `upi://pay?pa=${UPI_ID}&pn=RamazoneCashback&am=${amount.toFixed(2)}&cu=INR&tn=DuePayment`;
+            const amount = currentUserData.dueAmount;
+            const upiLink = `upi://pay?pa=${UPI_ID}&pn=Ramazone%20Cashback&am=${amount.toFixed(2)}&cu=INR&tn=DuePaymentFor-${currentUserData.mobile}`;
             const qrContainer = document.getElementById('due-qr-code');
             qrContainer.innerHTML = ''; // Clear previous QR
+            
             new QRCode(qrContainer, {
                 text: upiLink,
                 width: 200,
@@ -743,19 +779,30 @@
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
-            document.getElementById('due-qr-amount').textContent = `₹ ${amount.toFixed(2)}`;
+            document.getElementById('due-qr-amount').textContent = `Pay: ₹ ${amount.toFixed(2)}`;
+            document.getElementById('due-qr-upi-id').textContent = UPI_ID;
             openModal('due-payment-modal');
         }
-        function downloadQR() {
-            const qrCanvas = document.querySelector('#due-qr-code canvas');
-            if (!qrCanvas) {
-                showToast("QR Code not found.");
+
+        // UPDATED: Function to download the entire QR card as a high-quality image
+        function downloadQRCard() {
+            const cardElement = document.getElementById('due-qr-card');
+            if (!cardElement) {
+                showToast("QR Card element not found.");
                 return;
             }
-            const link = document.createElement('a');
-            link.download = `Ramazone-Due-Payment-QR-${currentUserData.dueAmount}.png`;
-            link.href = qrCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-            link.click();
+            showToast("Preparing download...");
+            html2canvas(cardElement, { scale: 3, useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = `Ramazone-Due-Payment-${currentUserData.dueAmount.toFixed(2)}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error("Error downloading QR card:", err);
+                showToast("Download failed. Please try again.");
+            });
         }
         async function handleProfilePictureUpload(event) {
             const file = event.target.files[0];
@@ -1307,12 +1354,12 @@
                     updateNetworkTreeView(currentUserData.uid, 0);
                 }
             });
+            // NEW Event Listeners
             document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
-            document.getElementById('download-qr-btn').addEventListener('click', downloadQR);
+            document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
         }
         document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
     </script>
 </body>
 </html>
-
 
