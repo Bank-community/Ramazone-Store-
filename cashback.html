@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Reverted to the original viewport for mobile-first experience -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ramazone Cashback</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,23 +14,26 @@
             --accent-green: #27ae60; --accent-yellow: #f1c40f; --due-red: #ff6b6b;
             --accent-red-light: #c0392b; --brand-blue: #0052D4; --link-blue: #0056b3;
             --line-color: #ced4da;
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { height: 100%; }
         body {
             font-family: 'Poppins', sans-serif; background-color: var(--bg-page);
             color: var(--text-primary);
-            min-height: 100%; 
-            overflow-x: hidden;
+            min-height: 100%;
         }
+        /* UPDATED: Container is now full-width */
         .container { 
             width: 100%; 
-            max-width: 500px; 
-            margin: 0 auto;
+            max-width: 100%; 
+            margin: 0;
         }
-        .view { display: none; background-color: var(--bg-card); min-height: 100vh; }
-        #login-view, #registration-view { padding: 20px; }
-        #dashboard-view { padding: 15px; background-color: var(--bg-page); }
+        .view { display: none; background-color: var(--bg-page); min-height: 100vh; }
+        #login-view, #registration-view { padding: 20px; background-color: var(--bg-card); }
+        /* UPDATED: Dashboard no longer has global padding */
+        #dashboard-view { padding: 0; }
         .view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         
         #network-view.active, #notification-view.active {
@@ -58,105 +60,81 @@
         .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
         
-        /* --- Dashboard UI --- */
+        /* --- NEW: Dashboard UI --- */
         .header {
-    display: flex; 
-    justify-content: space-between; /* यह सुनिश्चित करता है कि आइटम दोनों सिरों पर रहें */
-    align-items: center;
-    /* padding: 8px 12px; <-- इस लाइन को नीचे वाली लाइन से बदलें */
-    padding: 8px 4px; /* हॉरिजॉन्टल पैडिंग को एडजस्ट किया गया है */
-    background-color: var(--bg-card); 
-    border-radius: 8px;
-    margin-bottom: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    gap: 10px;
-}
-
-        .header-logo { height: 35px; flex-shrink: 0; }
-        #static-notification-card { flex-grow: 1; margin-right: 2px; cursor: pointer; }
-
-        #static-notification-card {
-            display: flex; align-items: center; gap: 1px;
-            padding: 5px 10px; 
-            border-radius: 8px;
-            background-color: var(--brand-red); color: white;
-            transition: all 0.3s ease; display: none;
-            border: var(--notification-border-width, 0px) solid var(--notification-border-color, transparent);
+            background-color: var(--bg-card);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px var(--shadow-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        #static-notification-card.visible { display: flex; }
-        
-        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
-        
-        .notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
-        .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
-        .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
-        .notification-percentage { transform: scale(1); opacity: 0; }
-
-        @keyframes fade-in-out {
-            0%, 100% { opacity: 0; }
-            5%, 95% { opacity: 1; }
+        .header-logo { height: 32px; }
+        .header-profile-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            object-fit: cover; border: 2px solid var(--brand-red);
+            cursor: pointer;
         }
         
-        .animate .notification-text-line1 { animation: typing-hold 4.2s steps(30, end) infinite; }
-        .animate .notification-text-line2 { animation: typing-hold 4.2s steps(30, end) 0.2s infinite; }
-        
-        @keyframes typing-hold {
-            0% { width: 0; }
-            28.5% { width: 100%; }
-            100% { width: 100%; }
+        .greeting-section {
+            padding: 24px 20px 16px 20px;
         }
-        
-        .animate .notification-percentage { animation: simple-fade-in-hold 4.2s infinite; }
-        
-        @keyframes simple-fade-in-hold {
-            0%, 33% { opacity: 0; }
-            38%, 100% { opacity: 1; }
+        .greeting-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .greeting-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
         }
 
-        #static-notification-card .notification-text-container { font-size: 10px; font-weight: 500; }
-        #static-notification-card .notification-percentage { font-size: 20px; font-weight: 800; }
-
+        .wallet-card-wrapper {
+            padding: 0 20px 20px 20px;
+        }
         .wallet-card {
             background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
-            color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;
+            color: white; padding: 24px; border-radius: 20px;
             box-shadow: 0 10px 30px rgba(67, 100, 247, 0.3);
-            text-align: center; position: relative;
+            text-align: center;
         }
-        #wallet-user-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; }
         
-        #wallet-profile-icon-container {
-            position: absolute; top: 15px; right: 15px; cursor: pointer;
-        }
-        #wallet-profile-img {
-            width: 45px; height: 45px; border-radius: 50%;
-            object-fit: cover; border: 2px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
+        #wallet-user-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; display: none; /* Hide old name, using greeting now */ }
         .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); }
-        #wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; margin-bottom: 15px; }
-        .wallet-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 15px; }
+        #wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; margin-bottom: 20px; }
+        .wallet-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 20px; }
         .wallet-footer-item { text-align: center; }
         .wallet-footer-item p { font-size: 12px; color: rgba(255,255,255,0.8); margin: 0; }
         .wallet-footer-item .amount { font-size: 16px; font-weight: 600; }
         #wallet-share-btn { cursor: pointer; }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
-        #wallet-referral-container { margin-top: 15px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; background-color: rgba(0,0,0,0.15); padding: 5px 12px; border-radius: 20px; }
+        #wallet-referral-container { margin-top: 20px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; background-color: rgba(0,0,0,0.15); padding: 5px 12px; border-radius: 20px; }
         #wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
         #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
         #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
         .wallet-sub-items { grid-column: 1 / -1; display: flex; justify-content: space-around; margin-top: 15px; }
 
-        .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .actions-section {
+            padding: 0 20px 20px 20px;
+        }
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .action-card { 
-            background-color: var(--bg-card); padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; 
-            transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border-color);
+            background-color: var(--bg-card); padding: 15px 10px; border-radius: 16px; text-align: center; cursor: pointer; 
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px var(--shadow-light);
             display: flex; flex-direction: column; justify-content: center; align-items: center; aspect-ratio: 1/1;
             position: relative; overflow: hidden;
         }
-        .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.07); }
-        .action-card .icon { margin-bottom: 8px; width: 30px; height: 30px; }
-        .action-card .card-text { font-size: 12px; font-weight: 500; color: var(--text-primary); }
-
+        .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px var(--shadow-medium); }
+        .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
+        .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+        
+        /* OLD NOTIFICATION CARD IN HEADER IS REMOVED. NEW ONE IS IN ACTION GRID. */
+        #static-notification-card { display: none; }
         #open-notification-center-btn { 
             padding: 10px;
             border: var(--thumbnail-border-width, 1px) solid var(--thumbnail-border-color, var(--border-color));
@@ -170,9 +148,26 @@
         #open-notification-center-btn .notification-percentage { 
             font-size: 22px; font-weight: 800; margin-top: 4px;
         }
+        
+        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
+        .notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
+        .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
+        .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
+        .notification-percentage { transform: scale(1); opacity: 0; }
+        @keyframes fade-in-out { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
+        .animate .notification-text-line1 { animation: typing-hold 4.2s steps(30, end) infinite; }
+        .animate .notification-text-line2 { animation: typing-hold 4.2s steps(30, end) 0.2s infinite; }
+        @keyframes typing-hold { 0% { width: 0; } 28.5% { width: 100%; } 100% { width: 100%; } }
+        .animate .notification-percentage { animation: simple-fade-in-hold 4.2s infinite; }
+        @keyframes simple-fade-in-hold { 0%, 33% { opacity: 0; } 38%, 100% { opacity: 1; } }
 
-        .section { background: var(--bg-card); padding: 20px; border-radius: 16px; }
-        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
+        /* Transactions Section with Top Rounded Corners */
+        .section { 
+            background: var(--bg-card); 
+            padding: 24px 20px; 
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+        }
         
         #transaction-summary {
             background-color: var(--bg-page); border-radius: 10px; padding: 12px 15px;
@@ -214,12 +209,10 @@
             animation: fadeInScale 0.3s ease-out;
         }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-
         .modal-content h3 { text-align: center; font-size: 20px; margin-bottom: 20px; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .btn-secondary { background: #e8eef3; color: var(--text-primary); }
         #password-verification-modal { z-index: 1001; }
-        
         #profile-modal .modal-content { padding-top: 15px; }
         #modal-profile-img-container { text-align: center; margin-bottom: 15px; position: relative; }
         #modal-profile-img {
@@ -239,8 +232,6 @@
         #profile-modal #logout-btn { background-color: var(--text-secondary); margin-top: 20px; }
         #scanner-container { width: 100%; max-width: 250px; aspect-ratio: 1/1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background: #000; }
         #scanner-video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* --- Professional Success & Details Modals --- */
         .professional-modal .modal-content { padding: 30px; max-width: 380px; text-align: center; }
         .professional-modal .success-icon {
             width: 80px; height: 80px; background-color: var(--accent-green);
@@ -259,7 +250,6 @@
         .professional-modal .detail-item .label { color: var(--text-secondary); }
         .professional-modal .detail-item .value { font-weight: 600; }
         .professional-modal .action-btn { width: 100%; }
-        
         #transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
         #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 30px; }
         #transaction-details-modal .status-badge {
@@ -269,7 +259,6 @@
         #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
         #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
         #transaction-details-modal .action-btn { background-color: var(--text-secondary); }
-
         .modal-close-btn { 
             position: absolute; top: 10px; right: 15px; 
             background: transparent; border: none; 
@@ -277,17 +266,9 @@
             cursor: pointer; color: #aaa; line-height: 1; padding: 0;
         }
         .modal-close-btn:hover { color: #000; }
-        
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
         .toast-notification.show { bottom: 30px; }
-
-        /* --- Network & Notification View Styles --- */
-        .fullscreen-view { 
-            flex-direction: column; 
-            height: 100vh; 
-            padding: 0; 
-            background-color: var(--bg-page);
-        }
+        .fullscreen-view { flex-direction: column; height: 100vh; padding: 0; background-color: var(--bg-page); }
         .fullscreen-header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px 15px; border-bottom: 1px solid var(--border-color); 
@@ -296,30 +277,15 @@
         .fullscreen-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; flex-grow: 1; }
         .fullscreen-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
         .fullscreen-header .header-action svg { width: 24px; height: 24px; stroke: var(--text-secondary); }
-        
         .network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
         .network-tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
         .network-tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
-        
         .network-content-container { flex-grow: 1; overflow: hidden; position: relative; }
         .network-tab-content { display: none; width: 100%; height: 100%; }
         .network-tab-content.active { display: block; }
-
-        #downline-content {
-            width: 100%; height: 100%;
-            overflow: auto; 
-            text-align: center;
-            background-color: #ffffff;
-        }
-        .tree-container {
-            position: relative; display: inline-block;
-            padding: 40px; white-space: nowrap; 
-        }
-        #connector-svg {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1; overflow: visible;
-        }
+        #downline-content { width: 100%; height: 100%; overflow: auto; text-align: center; background-color: #ffffff; }
+        .tree-container { position: relative; display: inline-block; padding: 40px; white-space: nowrap; }
+        #connector-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; }
         .tree { display: inline-flex; flex-direction: column; align-items: center; }
         .node-children { display: flex; justify-content: center; padding-top: 80px; position: relative; }
         .node-wrapper { display: flex; flex-direction: column; align-items: center; padding: 0 35px; position: relative; }
@@ -349,37 +315,20 @@
             border-radius: 5px; font-weight: 600; z-index: 3;
             transform: translate(-50%, -50%);
         }
-
         #upline-list { display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 25px; }
         .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
         .upline-member .node { width: 160px; }
-        .upline-member.current-user .node {
-            border: 2px solid var(--brand-blue);
-        }
+        .upline-member.current-user .node { border: 2px solid var(--brand-blue); }
         .upline-member:not(:last-child)::after { 
-            content: ''; 
-            width: 2px; 
-            height: 25px; 
-            background-color: var(--line-color); 
-            position: absolute; 
-            top: -25px; 
-            left: 50%;
-            transform: translateX(-50%);
+            content: ''; width: 2px; height: 25px; background-color: var(--line-color); 
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
         }
         .upline-commission {
-            position: absolute;
-            top: -12px;
-            left: calc(50% + 20px);
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 600;
-            background-color: var(--bg-page);
+            position: absolute; top: -12px; left: calc(50% + 20px); font-size: 13px;
+            color: var(--text-secondary); font-weight: 600; background-color: var(--bg-page);
             padding: 0 5px;
         }
-
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
-
-        /* --- Notification Center (Page) Styles --- */
         #notification-center-list {
             flex-grow: 1; overflow-y: auto; padding: 15px;
             display: flex; flex-direction: column; gap: 15px;
@@ -391,33 +340,17 @@
             justify-content: center; align-items: center;
             text-align: center;
         }
-        .notification-center-item .title {
-            font-size: 16px;
-            font-weight: 600;
-            line-height: 1.4;
-            word-break: break-all;
-        }
-        .notification-center-item .title a {
-            color: var(--link-blue) !important;
-            text-decoration: underline;
-        }
+        .notification-center-item .title { font-size: 16px; font-weight: 600; line-height: 1.4; word-break: break-all; }
+        .notification-center-item .title a { color: var(--link-blue) !important; text-decoration: underline; }
         .notification-center-item .percentage { font-size: 40px; font-weight: 800; margin-top: 10px; }
         .notification-center-item .paragraph {
-            font-size: 14px;
-            color: inherit; /* Inherits color from parent */
-            opacity: 0.9;
-            margin-top: 15px;
-            line-height: 1.6;
-            white-space: pre-wrap; /* Respects new lines */
+            font-size: 14px; color: inherit; opacity: 0.9;
+            margin-top: 15px; line-height: 1.6; white-space: pre-wrap;
         }
-
         #popup-notification {
-            position: fixed; top: -200px; left: 50%;
-            transform: translateX(-50%);
-            width: 90%; max-width: 450px;
-            padding: 15px; border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 9999;
+            position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 450px; padding: 15px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999;
             display: flex; align-items: center; justify-content: space-between;
             transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -433,7 +366,7 @@
 
     <div class="container">
         <!-- Login and Registration Views -->
-        <div id="login-view" class="view active">
+        <div id="login-view" class="view">
             <div class="auth-container">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
                 <h1>Customer Login</h1>
@@ -462,82 +395,83 @@
         </div>
 
         <!-- Dashboard View -->
-        <div id="dashboard-view" class="view">
-            <div class="header">
-                <div id="static-notification-card">
-                    <div class="notification-content-wrapper">
-                        <div class="notification-text-container">
-                            <span class="notification-text-line notification-text-line1"></span>
-                            <span class="notification-text-line notification-text-line2"></span>
-                        </div>
-                        <div class="notification-percentage"></div>
-                    </div>
-                </div>
+        <div id="dashboard-view" class="view active">
+            <header class="header">
                 <a href="https://ramazone.in" target="_blank">
                     <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone" class="header-logo">
                 </a>
-            </div>
+                <img id="header-profile-avatar" src="https://placehold.co/40x40/e50914/FFFFFF?text=R" alt="Profile" class="header-profile-avatar">
+            </header>
             
-            <div class="wallet-card">
-                <div id="wallet-profile-icon-container">
-                    <img id="wallet-profile-img" src="https://placehold.co/45x45/ffffff/e50914?text=R" alt="Profile">
-                </div>
-                <h3 id="wallet-user-name">User Name</h3>
-                <p class="wallet-balance-label">Available Balance</p>
-                <p id="wallet-balance">₹ 0.00</p>
-                <div class="wallet-footer">
-                    <div class="wallet-footer-item"><p>Lifetime Earning</p><span id="lifetime-earning" class="amount">₹0.00</span></div>
-                    <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
-                    <div class="wallet-footer-item"><p>Total Credit</p><span id="credit-limit" class="amount">₹0.00</span></div>
-                    <div class="wallet-sub-items">
-                        <div class="wallet-footer-item"><p>Due Amount</p><span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span></div>
-                    </div>
-                </div>
-                <div id="wallet-referral-container">
-                    <span id="wallet-referral-id">REF-CODE</span>
-                    <button id="copy-referral-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                </div>
-            </div>
+            <main>
+                <section class="greeting-section">
+                    <h1 class="greeting-title">Welcome Back,</h1>
+                    <p id="greeting-subtitle" class="greeting-subtitle">User</p>
+                </section>
 
-            <div class="dashboard-actions">
-                <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
-                <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                <div id="open-network-view" class="action-card">
-                    <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
-                    <span class="card-text">Network</span>
-                </div>
-                <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
-                <div id="open-credit-request-modal" class="action-card">
-                    <img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg">
-                    <span class="card-text">Credit Request</span>
-                </div>
-                <div id="open-notification-center-btn" class="action-card">
-                    <div class="notification-content-wrapper">
-                        <div class="notification-text-container">
-                            <span class="notification-text-line notification-text-line1"></span>
-                            <span class="notification-text-line notification-text-line2"></span>
+                <section class="wallet-card-wrapper">
+                    <div class="wallet-card">
+                        <h3 id="wallet-user-name">User Name</h3>
+                        <p class="wallet-balance-label">Available Balance</p>
+                        <p id="wallet-balance">₹ 0.00</p>
+                        <div class="wallet-footer">
+                            <div class="wallet-footer-item"><p>Lifetime Earning</p><span id="lifetime-earning" class="amount">₹0.00</span></div>
+                            <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
+                            <div class="wallet-footer-item"><p>Total Credit</p><span id="credit-limit" class="amount">₹0.00</span></div>
+                            <div class="wallet-sub-items">
+                                <div class="wallet-footer-item"><p>Due Amount</p><span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span></div>
+                            </div>
                         </div>
-                        <div class="notification-percentage"></div>
+                        <div id="wallet-referral-container">
+                            <span id="wallet-referral-id">REF-CODE</span>
+                            <button id="copy-referral-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </section>
+                
+                <section class="actions-section">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="dashboard-actions">
+                        <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
+                        <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
+                        <div id="open-network-view" class="action-card">
+                            <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
+                            <span class="card-text">Network</span>
+                        </div>
+                        <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
+                        <div id="open-credit-request-modal" class="action-card">
+                            <img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg">
+                            <span class="card-text">Credit Request</span>
+                        </div>
+                        <div id="open-notification-center-btn" class="action-card">
+                            <div class="notification-content-wrapper">
+                                <div class="notification-text-container">
+                                    <span class="notification-text-line notification-text-line1"></span>
+                                    <span class="notification-text-line notification-text-line2"></span>
+                                </div>
+                                <div class="notification-percentage"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-            <div class="section">
-                <h2 class="section-title">All Transactions</h2>
-                <div id="transaction-summary">
-                    <span class="summary-label">Total Amount</span>
-                    <span class="summary-amount">₹0.00</span>
+                <div class="section">
+                    <h2 class="section-title">All Transactions</h2>
+                    <div id="transaction-summary">
+                        <span class="summary-label">Total Amount</span>
+                        <span class="summary-amount">₹0.00</span>
+                    </div>
+                    <div class="filter-bar" id="filter-bar">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="cashback">Cashback</button>
+                        <button class="filter-btn" data-filter="commission">Commission</button>
+                        <button class="filter-btn" data-filter="payment">Payments</button>
+                        <button class="filter-btn" data-filter="credit">Credit</button>
+                        <button class="filter-btn" data-filter="due_payment">Due Paid</button>
+                    </div>
+                    <div id="unified-history-list" class="history-list"></div>
                 </div>
-                <div class="filter-bar" id="filter-bar">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="cashback">Cashback</button>
-                    <button class="filter-btn" data-filter="commission">Commission</button>
-                    <button class="filter-btn" data-filter="payment">Payments</button>
-                    <button class="filter-btn" data-filter="credit">Credit</button>
-                    <button class="filter-btn" data-filter="due_payment">Due Paid</button>
-                </div>
-                <div id="unified-history-list" class="history-list"></div>
-            </div>
+            </main>
         </div>
         
     </div>
@@ -572,63 +506,44 @@
         <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
     </div>
 
-    <!-- Notification View (NEW) -->
+    <!-- Notification View -->
     <div id="notification-view" class="view fullscreen-view">
         <div class="fullscreen-header">
             <div id="notification-back-btn" class="header-action" title="Back to Dashboard">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </div>
             <h1>Latest Offers</h1>
-            <!-- Empty div for spacing to center the title -->
             <div class="header-action" style="width: 24px;"></div>
         </div>
-        <div id="notification-center-list">
-            <!-- Notifications will be dynamically inserted here -->
-        </div>
+        <div id="notification-center-list"></div>
     </div>
 
-
-    <!-- All Modals -->
+    <!-- All Modals are unchanged -->
     <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
     <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
-    
-    <!-- UPDATED: Credit Request Modal -->
     <div id="credit-request-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Credit Request</h3>
             <form id="credit-request-form">
-                <div class="form-group">
-                    <label for="credit-amount">Amount (₹)</label>
-                    <input type="number" id="credit-amount" min="1" required>
-                </div>
-                
+                <div class="form-group"><label for="credit-amount">Amount (₹)</label><input type="number" id="credit-amount" min="1" required></div>
                 <div style="background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px; font-size: 13px; color: #8a6d3b; margin-bottom: 15px;">
                     <b>Attention:</b> हर महीने आपको अपनी due amount 1 से 7 तारीख के बीच चुकानी होगी। ऐसा न करने पर बकाया क्रेडिट amount पर 10% का जुर्माना लगाया जाएगा।"
                 </div>
-
                 <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
                     <input type="checkbox" id="credit-tnc-checkbox" style="width: auto; height: 18px;">
                     <label for="credit-tnc-checkbox" style="margin-bottom: 0;">I agree to the Terms & Conditions.</label>
                 </div>
-
                 <p id="credit-error-msg" class="error-message"></p>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
-                    <button type="submit" id="credit-submit-btn" disabled>Request Credit</button>
-                </div>
+                <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="credit-submit-btn" disabled>Request Credit</button></div>
             </form>
         </div>
     </div>
-
     <div id="scan-pay-modal" class="modal-overlay"> <div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div> </div>
-    
     <div id="profile-modal" class="modal-overlay"> 
         <div class="modal-content"> 
             <div id="modal-profile-img-container">
                 <img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture">
-                <div id="edit-profile-pic-icon" title="Change Profile Picture">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </div>
+                <div id="edit-profile-pic-icon" title="Change Profile Picture"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div>
             </div>
             <h3>My Profile</h3> 
             <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div> 
@@ -642,73 +557,39 @@
             <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> 
         </div> 
     </div>
-
     <div id="profile-picture-modal" class="modal-overlay">
         <div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;">
             <button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button>
             <img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;">
         </div>
     </div>
-
-    <!-- Professional Success Modal -->
     <div id="payment-success-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
-            <div class="success-icon">
-                <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
+            <div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
             <h2>Payment Successful!</h2>
             <p class="amount" id="success-modal-amount"></p>
             <div class="details-box">
-                <div class="detail-item">
-                    <span class="label">Paid to</span>
-                    <span class="value" id="success-modal-receiver"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Transaction ID</span>
-                    <span class="value" id="success-modal-txn-id"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Date & Time</span>
-                    <span class="value" id="success-modal-datetime"></span>
-                </div>
+                <div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div>
+                <div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div>
+                <div class="detail-item"><span class="label">Date & Time</span><span class="value" id="success-modal-datetime"></span></div>
             </div>
             <button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button>
         </div>
     </div>
-
-    <!-- Professional Transaction Details Modal -->
     <div id="transaction-details-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
-            <p class="amount" id="details-modal-amount"></p>
-            <hr>
+            <p class="amount" id="details-modal-amount"></p><hr>
             <div class="details-list">
-                <div class="detail-item">
-                    <span class="label">Status</span>
-                    <span class="value status-badge" id="details-modal-status"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Description</span>
-                    <span class="value" id="details-modal-desc"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Date</span>
-                    <span class="value" id="details-modal-date"></span>
-                </div>
-                 <div class="detail-item">
-                    <span class="label">Time</span>
-                    <span class="value" id="details-modal-time"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Transaction ID</span>
-                    <span class="value" id="details-modal-txn-id"></span>
-                </div>
+                <div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div>
+                <div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div>
+                <div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div>
+                 <div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div>
+                <div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="details-modal-txn-id"></span></div>
             </div>
             <button class="action-btn" data-close-modal>Close</button>
         </div>
     </div>
-
     <div id="toast-notification" class="toast-notification"></div>
-
     <div id="popup-notification">
         <div class="popup-notification-content">
             <div class="popup-notification-icon">🔥</div>
@@ -719,24 +600,14 @@
         </div>
         <button id="popup-notification-close">&times;</button>
     </div>
-
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
-
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    
     <script type="module">
-        // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- Global Variables ---
-        // Firebase services will be initialized after fetching config
         let app, auth, db;
-        // API key for image hosting will be fetched from serverless function
         let imgbbApiKey;
-
-        // App state variables
         let currentUser = null;
         let currentUserData = null;
         let activeListeners = [];
@@ -752,63 +623,36 @@
         const commissionRates = [30, 25, 20, 15, 10];
         const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
         let historyStack = [];
-        
-        // DOM Elements
         const networkLoader = document.getElementById('network-loader');
         const networkTitleEl = document.getElementById('network-title');
 
-        // --- Core App Initialization ---
-
-        /**
-         * Fetches configurations from serverless functions, then initializes Firebase and the app logic.
-         * This is the main entry point of the application.
-         */
         async function fetchConfigsAndInit() {
             try {
-                // Fetch Firebase config and Image hosting API key in parallel
                 const [firebaseConfigRes, imageConfigRes] = await Promise.all([
                     fetch('/api/cashback-config'),
                     fetch('/api/image-config')
                 ]);
-
-                // Check if both requests were successful
                 if (!firebaseConfigRes.ok || !imageConfigRes.ok) {
                     throw new Error('Failed to load app configuration from server.');
                 }
-
                 const firebaseConfig = await firebaseConfigRes.json();
                 const imageConfig = await imageConfigRes.json();
-                
-                // Store the fetched Imgbb API key globally
                 imgbbApiKey = imageConfig.apiKey;
-
-                // Initialize Firebase with the fetched config
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                
-                // Now that Firebase is initialized, set up the rest of the app logic and event listeners
                 initializeAppLogic();
-
             } catch (error) {
                 console.error("Critical Initialization Error:", error);
-                // Display a user-friendly error message if configs can't be loaded
-                document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;">
-                    <h2>Application Error</h2>
-                    <p>Could not load application settings. Please check your connection and try again later.</p>
-                </div>`;
+                document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load application settings. Please check your connection and try again later.</p></div>`;
             }
         }
-
-        // --- Helper Functions ---
-
         const showToast = (message) => {
             const toast = document.getElementById('toast-notification');
             toast.textContent = message;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
-
         const toggleView = (viewId) => {
             const viewportMeta = document.querySelector('meta[name="viewport"]');
             if (viewId === 'network-view') {
@@ -822,7 +666,6 @@
                 viewElement.classList.add('active');
             }
         };
-
         const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
         const closeModal = (modalId) => {
             const modal = document.getElementById(modalId);
@@ -831,7 +674,6 @@
         };
         const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
         const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
-        
         const showSuccessPopup = (details) => {
             document.getElementById('success-modal-amount').textContent = `- ₹${details.amount.toFixed(2)}`;
             document.getElementById('success-modal-receiver').textContent = details.receiver;
@@ -839,7 +681,6 @@
             document.getElementById('success-modal-datetime').textContent = details.datetime;
             openModal('payment-success-modal');
         };
-
         const showTransactionDetails = (item) => {
             const amount = item.amount || item.cashbackAmount || 0;
             let sign = '+';
@@ -863,9 +704,6 @@
             document.getElementById('details-modal-txn-id').textContent = item.id;
             openModal('transaction-details-modal');
         };
-        
-        // --- Firebase & Data Logic ---
-
         function attachRealtimeListeners(user) {
             detachAllListeners();
             const uid = user.uid;
@@ -900,18 +738,18 @@
             });
             activeListeners.push(userUnsubscribe, transUnsubscribe, cashbackRequestsUnsubscribe, creditRequestsUnsubscribe, latestNotificationUnsubscribe, allNotificationsUnsubscribe);
         }
-
         function detachAllListeners() {
             activeListeners.forEach(unsub => unsub());
             activeListeners = [];
         }
-        
-        // --- UI Update Functions ---
-
         function updateDashboardUI(dbData, authUser) {
             const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/80x80/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
+            // New UI elements
+            document.getElementById('greeting-subtitle').textContent = authUser.displayName;
+            document.getElementById('header-profile-avatar').src = profilePicUrl;
+            
+            // Old UI elements
             document.getElementById('wallet-user-name').textContent = authUser.displayName;
-            document.getElementById('wallet-profile-img').src = profilePicUrl;
             document.getElementById('modal-profile-img').src = profilePicUrl;
             document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
             document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
@@ -921,31 +759,23 @@
             document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
         }
-
         function updateNotificationUI(notifData) {
-            const topNotifCard = document.getElementById('static-notification-card');
             const thumbNotifCard = document.getElementById('open-notification-center-btn');
-
             if (!notifData) {
-                topNotifCard.classList.remove('visible');
                 thumbNotifCard.querySelector('.notification-content-wrapper').style.opacity = 0;
                 return;
             }
-
             const updateElement = (card, title, percentage, animate) => {
                 const [text1, text2 = ''] = (title || '').split('|').map(t => t.trim());
                 const wrapper = card.querySelector('.notification-content-wrapper');
                 const line1 = wrapper.querySelector('.notification-text-line1');
                 const line2 = wrapper.querySelector('.notification-text-line2');
                 const percentEl = wrapper.querySelector('.notification-percentage');
-
                 line1.textContent = text1;
                 line2.textContent = text2;
                 percentEl.textContent = `${percentage}%`;
-                
                 wrapper.classList.remove('animate');
-                void wrapper.offsetWidth; // Trigger reflow
-
+                void wrapper.offsetWidth;
                 if (animate) {
                     wrapper.classList.add('animate');
                 } else {
@@ -955,26 +785,16 @@
                     percentEl.style.transform = 'scale(1)';
                 }
             };
-            
-            topNotifCard.style.backgroundColor = notifData.mainBgColor || 'var(--brand-red)';
-            topNotifCard.style.color = notifData.mainTextColor || 'white';
-            topNotifCard.style.setProperty('--notification-border-color', notifData.mainBorderColor || 'transparent');
-            topNotifCard.style.setProperty('--notification-border-width', notifData.mainBorderWidth ? `${notifData.mainBorderWidth}px` : '0px');
-            updateElement(topNotifCard, notifData.mainTitle, notifData.mainPercentage, notifData.mainAnimation !== false);
-            topNotifCard.classList.add('visible');
-
             thumbNotifCard.style.backgroundColor = notifData.thumbnailBgColor || 'var(--bg-card)';
             thumbNotifCard.style.color = notifData.thumbnailTextColor || 'var(--text-primary)';
             thumbNotifCard.style.setProperty('--thumbnail-border-color', notifData.thumbnailBorderColor || 'var(--border-color)');
             thumbNotifCard.style.setProperty('--thumbnail-border-width', notifData.thumbnailBorderWidth ? `${notifData.thumbnailBorderWidth}px` : '1px');
             updateElement(thumbNotifCard, notifData.thumbnailTitle, notifData.thumbnailPercentage, notifData.thumbnailAnimation !== false);
-
             if (notifData.id !== lastShownNotificationId) {
                 lastShownNotificationId = notifData.id;
                 showPopupNotification(notifData);
             }
         }
-
         function renderNotificationCenter(snapshot) {
             const listEl = document.getElementById('notification-center-list');
             listEl.innerHTML = ''; 
@@ -988,7 +808,6 @@
                 item.className = 'notification-center-item';
                 item.style.backgroundColor = notif.mainBgColor;
                 item.style.color = notif.mainTextColor;
-
                 const linkify = (text) => {
                     if (!text) return '';
                     const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
@@ -1000,9 +819,7 @@
                         return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`;
                     });
                 };
-
                 const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
-
                 item.innerHTML = `
                     <div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div>
                     <div class="percentage">${notif.mainPercentage}%</div>
@@ -1011,7 +828,6 @@
                 listEl.appendChild(item);
             });
         }
-        
         function showPopupNotification(notifData) {
             if (popupTimeout) clearTimeout(popupTimeout);
             const popup = document.getElementById('popup-notification');
@@ -1023,19 +839,13 @@
             popup.classList.add('show');
             popupTimeout = setTimeout(() => popup.classList.remove('show'), 5000);
         }
-        
         function combineAndRenderHistory() {
             const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
-            const formattedCashbackRequests = cashbackRequests
-                .filter(r => r.status === 'pending' || r.status === 'rejected')
-                .map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
-            const formattedCreditRequests = creditRequests
-                .filter(r => r.status === 'pending' || r.status === 'rejected')
-                .map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
+            const formattedCashbackRequests = cashbackRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
+            const formattedCreditRequests = creditRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
             const combined = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
             renderUnifiedHistory(combined);
         }
-
         function renderUnifiedHistory(items) {
             const listEl = document.getElementById('unified-history-list');
             const summaryEl = document.getElementById('transaction-summary');
@@ -1044,19 +854,12 @@
             listEl.innerHTML = '';
             const itemsToRender = items.filter(item => {
                 if (activeFilter === 'all') return true;
-                if (activeFilter === 'cashback') {
-                    return item.type === 'cashback';
-                }
-                if (activeFilter === 'credit') {
-                    return item.type === 'credit' || item.type === 'due_payment' || item.type === 'credit_request';
-                }
+                if (activeFilter === 'cashback') return item.type === 'cashback';
+                if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'due_payment' || item.type === 'credit_request';
                 return item.type === activeFilter;
             });
             if (itemsToRender.length > 0 && activeFilter !== 'all') {
-                const total = itemsToRender.reduce((sum, item) => {
-                    const amount = item.amount || item.cashbackAmount || 0;
-                    return sum + Math.abs(amount);
-                }, 0);
+                const total = itemsToRender.reduce((sum, item) => sum + Math.abs(item.amount || item.cashbackAmount || 0), 0);
                 const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
                 summaryLabelEl.textContent = `Total ${filterText}`;
                 summaryAmountEl.textContent = `₹ ${total.toFixed(2)}`;
@@ -1075,43 +878,20 @@
                 const amount = item.amount || item.cashbackAmount || 0;
                 let sign = '+';
                 let typeClass = 'credit';
-                if(item.type === 'due_payment' || item.type === 'payment' || item.amount < 0) { 
-                    typeClass = 'debit'; 
-                    sign = '-'; 
-                }
-                if (item.status === 'rejected' || item.status === 'refunded') { 
-                    typeClass = 'rejected'; 
-                }
-                itemDiv.innerHTML = `
-                    <div class="history-details">
-                        <div class="history-info">
-                            <div class="title">${item.description}</div>
-                            <div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div>
-                        </div>
-                    </div>
-                    <div class="history-amount">
-                        <div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div>
-                        <span class="status">${item.status || ''}</span>
-                    </div>`;
+                if(item.type === 'due_payment' || item.type === 'payment' || item.amount < 0) { typeClass = 'debit'; sign = '-'; }
+                if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
+                itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || ''}</span></div>`;
                 listEl.appendChild(itemDiv);
             });
         }
-        
-        // --- Feature Handlers ---
-
         async function handleProfilePictureUpload(event) {
             const file = event.target.files[0];
             if (!file || !currentUser) return;
-            // The API key is now fetched and stored in the global imgbbApiKey variable
-            if (!imgbbApiKey) {
-                showToast("Image hosting service is not available.");
-                return;
-            }
+            if (!imgbbApiKey) { showToast("Image hosting service is not available."); return; }
             showToast("Uploading picture...");
             const formData = new FormData();
             formData.append("image", file);
             try {
-                // Use the fetched API key in the request
                 const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, { method: "POST", body: formData });
                 const result = await response.json();
                 if (result.success) {
@@ -1124,13 +904,11 @@
                 showToast("Upload failed. Please try again.");
             } finally { event.target.value = ''; }
         }
-
         function verifyPasswordAndExecute(action, sourceModalId) {
             if (sourceModalId) closeModal(sourceModalId);
             pendingAction = action;
             openModal('password-verification-modal');
         }
-
         async function handleVerificationConfirm() {
             const password = document.getElementById('verification-password').value;
             const errorMsg = document.getElementById('verification-error-msg');
@@ -1152,14 +930,12 @@
                 pendingAction = null;
             }
         }
-
         function handlePayment() {
             const amount = parseFloat(document.getElementById('payment-amount').value);
             const errorMsg = document.getElementById('payment-error-msg');
             hideErrorMessage(errorMsg);
             if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
             if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
-            
             verifyPasswordAndExecute(async () => {
                 try {
                     const newTxnRef = doc(collection(db, "transactions"));
@@ -1172,16 +948,10 @@
                         t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
                     });
                     const now = new Date();
-                    showSuccessPopup({
-                        amount: amount,
-                        receiver: 'Ramazone Store',
-                        txnId: newTxnRef.id,
-                        datetime: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
-                    });
+                    showSuccessPopup({ amount: amount, receiver: 'Ramazone Store', txnId: newTxnRef.id, datetime: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}` });
                 } catch (error) { showToast("Payment failed. Please try again."); }
             }, 'scan-pay-modal');
         }
-
         async function handleCashbackRequest(e) {
             e.preventDefault();
             const btn = document.getElementById('cashback-submit-btn');
@@ -1211,34 +981,24 @@
                 btn.disabled = false; btn.textContent = "Request";
             }
         }
-
         async function handleCreditRequest(e) {
             e.preventDefault();
             const btn = document.getElementById('credit-submit-btn');
             const errorMsg = document.getElementById('credit-error-msg');
             const amountInput = document.getElementById('credit-amount');
             hideErrorMessage(errorMsg);
-            
             const amount = parseFloat(amountInput.value);
             const maxAmount = parseFloat(amountInput.max);
-
             if (isNaN(amount) || amount <= 0 || amount > maxAmount) {
                 showErrorMessage(errorMsg, `Amount 1 se ${maxAmount} ke beech hona chahiye.`);
                 return;
             }
-
-            btn.disabled = true;
-            btn.textContent = "Submitting...";
-
+            btn.disabled = true; btn.textContent = "Submitting...";
             verifyPasswordAndExecute(async () => {
                 try {
                     await addDoc(collection(db, "credit_requests"), {
-                        userId: currentUserData.uid,
-                        userName: currentUserData.name,
-                        userMobile: currentUserData.mobile,
-                        amount: amount,
-                        status: "pending",
-                        requestDate: serverTimestamp()
+                        userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
+                        amount: amount, status: "pending", requestDate: serverTimestamp()
                     });
                     showToast(`₹${amount.toFixed(2)} ka credit request bhej diya gaya hai.`);
                     document.getElementById('credit-request-form').reset();
@@ -1246,60 +1006,44 @@
                     btn.disabled = true;
                 } catch (error) {
                     showToast("Request fail ho gaya. Dobara try karein.");
-                    console.error("Credit request error:", error);
                 } finally {
                     closeModal('credit-request-modal');
                 }
             }, 'credit-request-modal');
-            
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.textContent = "Request Credit";
-            }, 500);
+            setTimeout(() => { btn.disabled = false; btn.textContent = "Request Credit"; }, 500);
         }
-
         async function handlePasswordChange(e) {
             e.preventDefault();
             const form = document.getElementById('password-change-form');
             const btn = document.getElementById('password-change-btn');
             const errorMsgEl = document.getElementById('password-change-error-msg');
             hideErrorMessage(errorMsgEl);
-
             const currentPassword = document.getElementById('current-password').value;
             const newPassword = document.getElementById('new-password').value;
-
             if (newPassword.length < 6) {
                 showErrorMessage(errorMsgEl, "Naya password kam se kam 6 character ka hona chahiye.");
                 return;
             }
-
-            btn.disabled = true;
-            btn.textContent = "Updating...";
-
+            btn.disabled = true; btn.textContent = "Updating...";
             const user = auth.currentUser;
             const credential = EmailAuthProvider.credential(user.email, currentPassword);
-
             try {
                 await reauthenticateWithCredential(user, credential);
                 await updatePassword(user, newPassword);
-                const userRef = doc(db, "users", user.uid);
-                await updateDoc(userRef, { password: newPassword });
+                await updateDoc(doc(db, "users", user.uid), { password: newPassword });
                 showToast("Password safaltapoorvak badal gaya!");
                 form.reset();
                 closeModal('profile-modal');
             } catch (error) {
-                console.error("Password change failed:", error);
                 if (error.code === 'auth/wrong-password') {
                     showErrorMessage(errorMsgEl, "Aapka purana password galat hai.");
                 } else {
                     showErrorMessage(errorMsgEl, "Ek error aayi. Dobara try karein.");
                 }
             } finally {
-                btn.disabled = false;
-                btn.textContent = "Password Badlein";
+                btn.disabled = false; btn.textContent = "Password Badlein";
             }
         }
-
         function startScanner() {
             stopScanner();
             const video = document.getElementById('scanner-video');
@@ -1375,7 +1119,6 @@
             const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
-        
         function handleReferralLink() {
             const params = new URLSearchParams(window.location.search);
             const refCode = params.get('ref');
@@ -1386,25 +1129,18 @@
                 toggleView('login-view');
             }
         }
-
-        // --- Network View Logic ---
         async function updateNetworkTreeView(userId, level = 0) {
             networkLoader.style.display = 'block';
             const treeRoot = document.getElementById('tree-root');
             treeRoot.innerHTML = '';
-            
             try {
                 const rootUserDoc = await getDoc(doc(db, 'users', userId));
                 if (!rootUserDoc.exists()) throw new Error("User not found");
                 const rootUserData = { uid: rootUserDoc.id, ...rootUserDoc.data() };
-                
                 networkTitleEl.textContent = `${rootUserData.name}'s Network`;
-                
                 const treeData = await buildTreeData(rootUserData, level, 4);
                 treeRoot.innerHTML = createTreeHTML(treeData);
-
                 attachNodeClickListeners();
-
                 setTimeout(() => {
                     drawConnectors();
                     if (!treeData.children || treeData.children.length === 0) {
@@ -1415,41 +1151,25 @@
                         treeRoot.querySelector('.tree').appendChild(emptyMessage);
                     }
                 }, 100);
-
                 updateNetworkNavButton();
             } catch (error) {
-                console.error("Error loading downline:", error);
                 treeRoot.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
             } finally {
                 networkLoader.style.display = 'none';
             }
         }
-        
         async function buildTreeData(userData, currentLevel, maxLevel) {
             if (currentLevel >= maxLevel) {
                 return { ...userData, children: [], level: currentLevel };
             }
             const referrals = await getDirectReferrals(userData.uid);
-            const children = await Promise.all(
-                referrals.map(ref => buildTreeData(ref, currentLevel + 1, maxLevel))
-            );
+            const children = await Promise.all(referrals.map(ref => buildTreeData(ref, currentLevel + 1, maxLevel)));
             return { ...userData, children, level: currentLevel };
         }
-
         function createTreeHTML(nodeData) {
             let html = `<div class="tree">`;
             const avatarHTML = nodeData.profilePictureUrl ? `<img src="${nodeData.profilePictureUrl}" alt="${nodeData.name}">` : nodeData.name.charAt(0).toUpperCase();
-            
-            html += `
-                <div class="node-wrapper">
-                    <div class="node" data-uid="${nodeData.uid}">
-                        <div class="node-avatar">${avatarHTML}</div>
-                        <div class="node-name">${nodeData.name}</div>
-                        <div class="node-earning">₹${(nodeData.lifetimeEarning || 0).toLocaleString()}</div>
-                    </div>
-                </div>
-            `;
-
+            html += `<div class="node-wrapper"><div class="node" data-uid="${nodeData.uid}"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${nodeData.name}</div><div class="node-earning">₹${(nodeData.lifetimeEarning || 0).toLocaleString()}</div></div></div>`;
             if (nodeData.children && nodeData.children.length > 0) {
                 html += '<div class="node-children">';
                 nodeData.children.forEach(child => {
@@ -1460,13 +1180,11 @@
             html += `</div>`;
             return html;
         }
-        
         function attachNodeClickListeners() {
             document.querySelectorAll('.node').forEach(nodeEl => {
                 nodeEl.addEventListener('click', () => {
                     const clickedUid = nodeEl.dataset.uid;
                     const currentRootUid = historyStack[historyStack.length - 1].uid;
-
                     if (clickedUid !== currentRootUid) {
                         networkLoader.style.display = 'block';
                         getDoc(doc(db, 'users', clickedUid)).then(userDoc => {
@@ -1480,52 +1198,38 @@
                 });
             });
         }
-
         function drawConnectors() {
             const svg = document.getElementById('connector-svg');
             const treeContainer = document.querySelector('.tree-container');
             const tagsContainer = document.getElementById('commission-tags-container');
             svg.innerHTML = '';
             tagsContainer.innerHTML = '';
-
             const allParentWrappers = document.querySelectorAll('.tree');
-
             allParentWrappers.forEach(parentTree => {
                 const parentNode = parentTree.querySelector(':scope > .node-wrapper > .node');
                 const childrenContainer = parentTree.querySelector(':scope > .node-children');
                 if (!childrenContainer) return;
-
                 const parentRect = parentNode.getBoundingClientRect();
                 const containerRect = treeContainer.getBoundingClientRect();
-
                 const startX = parentRect.left + parentRect.width / 2 - containerRect.left;
                 const startY = parentRect.top + parentRect.height - containerRect.top;
-                
                 const horizontalLineY = startY + 40;
-
                 svg.appendChild(createPath(`M ${startX} ${startY} V ${horizontalLineY}`));
-
                 const childrenWrappers = Array.from(childrenContainer.children);
                 if (childrenWrappers.length === 0) return;
-
                 const firstChildNode = childrenWrappers[0].querySelector('.node');
                 const lastChildNode = childrenWrappers[childrenWrappers.length - 1].querySelector('.node');
-                
                 const hLineStartX = firstChildNode.getBoundingClientRect().left + firstChildNode.offsetWidth / 2 - containerRect.left;
                 const hLineEndX = lastChildNode.getBoundingClientRect().left + lastChildNode.offsetWidth / 2 - containerRect.left;
-
                 if (childrenWrappers.length > 1) {
                     svg.appendChild(createPath(`M ${hLineStartX} ${horizontalLineY} H ${hLineEndX}`));
                 }
-
                 childrenWrappers.forEach(childWrapper => {
                     const childNode = childWrapper.querySelector('.node');
                     const childRect = childNode.getBoundingClientRect();
                     const childX = childRect.left + childRect.width / 2 - containerRect.left;
                     const childY = childRect.top - containerRect.top;
-                    
                     svg.appendChild(createPath(`M ${childX} ${horizontalLineY} V ${childY}`));
-                    
                     const level = parseInt(childWrapper.dataset.level);
                     if (!isNaN(level) && level > 0 && level <= commissionRates.length) {
                         const tag = document.createElement('div');
@@ -1538,25 +1242,16 @@
                 });
             });
         }
-        
         function createPath(d) {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', d);
-            path.setAttribute('stroke', 'var(--line-color)');
-            path.setAttribute('stroke-width', '2');
-            path.setAttribute('fill', 'none');
+            path.setAttribute('d', d); path.setAttribute('stroke', 'var(--line-color)');
+            path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
             return path;
         }
-        
         function updateNetworkNavButton() {
             const navBtn = document.getElementById('network-nav-btn');
-            if (historyStack.length > 1) {
-                navBtn.title = "Go Back";
-            } else {
-                navBtn.title = "Back to Dashboard";
-            }
+            navBtn.title = historyStack.length > 1 ? "Go Back" : "Back to Dashboard";
         }
-
         async function getDirectReferrals(userId) {
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (!userDoc.exists()) return [];
@@ -1566,50 +1261,29 @@
             const snapshot = await getDocs(q);
             return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
         }
-
         async function loadUpline() {
             const uplineContainer = document.getElementById('upline-list');
             uplineContainer.innerHTML = '';
             networkLoader.style.display = 'block';
-
             try {
                 const uplineUIDs = currentUserData.upline || [];
-                const uplinePromises = uplineUIDs.map(uid => getDoc(doc(db, 'users', uid)));
-                const uplineDocs = await Promise.all(uplinePromises);
+                const uplineDocs = await Promise.all(uplineUIDs.map(uid => getDoc(doc(db, 'users', uid))));
                 const uplineData = uplineDocs.map(doc => doc.exists() ? {uid: doc.id, ...doc.data()} : null).filter(Boolean);
                 uplineData.push(currentUserData);
                 uplineContainer.innerHTML = uplineData.reverse().map((member, index, arr) => {
                     const isCurrentUser = member.uid === currentUserData.uid;
                     const level = arr.length - 1 - index;
                     const avatarHTML = member.profilePictureUrl ? `<img src="${member.profilePictureUrl}" alt="${member.name}">` : member.name.charAt(0).toUpperCase();
-                    return `
-                        <div class="upline-member ${isCurrentUser ? 'current-user' : ''}">
-                            ${!isCurrentUser && level < commissionRates.length ? `<div class="upline-commission">${commissionRates[level]}%</div>` : ''}
-                            <div class="node">
-                                <div class="node-avatar">${avatarHTML}</div>
-                                <div class="node-name">${member.name} ${isCurrentUser ? '(Aap)' : ''}</div>
-                                ${!isCurrentUser ? `<div class="node-earning">Sponsor</div>` : ''}
-                            </div>
-                        </div>
-                    `;
+                    return `<div class="upline-member ${isCurrentUser ? 'current-user' : ''}">${!isCurrentUser && level < commissionRates.length ? `<div class="upline-commission">${commissionRates[level]}%</div>` : ''}<div class="node"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${member.name} ${isCurrentUser ? '(Aap)' : ''}</div>${!isCurrentUser ? `<div class="node-earning">Sponsor</div>` : ''}</div></div>`;
                 }).join('');
-                if (uplineData.length <= 1) {
-                     uplineContainer.innerHTML += '<div class="empty-state">Aapke paas koi sponsor nahi hai.</div>';
-                }
+                if (uplineData.length <= 1) { uplineContainer.innerHTML += '<div class="empty-state">Aapke paas koi sponsor nahi hai.</div>'; }
                 isUplineLoaded = true;
             } catch (error) {
-                console.error("Error loading upline:", error);
                 uplineContainer.innerHTML = '<div class="empty-state">Sponsor load karne mein error hua.</div>';
             } finally {
                 networkLoader.style.display = 'none';
             }
         }
-        
-        // --- App Logic & Event Listeners Setup ---
-        /**
-         * This function sets up all the event listeners and the auth state change listener.
-         * It's called only after Firebase has been successfully initialized.
-         */
         function initializeAppLogic() {
             onAuthStateChanged(auth, user => {
                 if (user && user.displayName) {
@@ -1621,8 +1295,6 @@
                     handleReferralLink();
                 }
             });
-            
-            // All event listeners are placed here to ensure they are set up after initialization
             document.getElementById('login-form').addEventListener('submit', e => {
                 e.preventDefault();
                 const mobile = document.getElementById('login-mobile').value;
@@ -1635,7 +1307,6 @@
                         errorMsgEl.style.display = 'block';
                     });
             });
-            
             document.getElementById('register-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const registerButton = e.target.querySelector('button');
@@ -1683,7 +1354,6 @@
                     document.getElementById('register-form').reset();
                     alert("Registration safal hua! Ab login karein.");
                 } catch (error) {
-                    console.error("Registration failed:", error);
                     if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
                     let message = "Registration fail ho gaya. Dobara try karein.";
                     if (error.code === 'auth/email-already-in-use') message = "Yah mobile number pehle se register hai.";
@@ -1692,11 +1362,11 @@
                     registerButton.disabled = false; registerButton.textContent = 'Register Karein';
                 }
             });
-
             document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
-            document.getElementById('wallet-profile-icon-container').addEventListener('click', () => openModal('profile-modal'));
+            // UPDATED: Profile modal now opens from header icon
+            document.getElementById('header-profile-avatar').addEventListener('click', () => openModal('profile-modal'));
             document.getElementById('modal-profile-img').addEventListener('click', () => {
                 document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src;
                 openModal('profile-picture-modal');
@@ -1704,7 +1374,6 @@
             document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
-            
             document.getElementById('open-credit-request-modal').addEventListener('click', () => {
                 if (!currentUserData) return showToast("Please wait for data to load.");
                 if (currentUserData.dueAmount > 0) {
@@ -1721,12 +1390,10 @@
             document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => {
                 document.getElementById('credit-submit-btn').disabled = !e.target.checked;
             });
-
             document.getElementById('popup-notification-close').addEventListener('click', () => {
                 if (popupTimeout) clearTimeout(popupTimeout);
                 document.getElementById('popup-notification').classList.remove('show');
             });
-            document.getElementById('static-notification-card').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('open-notification-center-btn').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
@@ -1739,9 +1406,7 @@
             document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
             document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
             document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
-            
             document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
-
             document.getElementById('filter-bar').addEventListener('click', e => {
                 const target = e.target.closest('.filter-btn');
                 if (!target) return;
@@ -1751,14 +1416,12 @@
                 combineAndRenderHistory();
             });
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
-
             document.getElementById('open-network-view').addEventListener('click', () => {
                 if (!currentUserData) return;
                 toggleView('network-view');
                 historyStack = [currentUserData];
                 updateNetworkTreeView(currentUserData.uid, 0);
             });
-            
             document.getElementById('network-nav-btn').addEventListener('click', () => {
                 if (historyStack.length > 1) {
                     historyStack.pop();
@@ -1768,24 +1431,19 @@
                     toggleView('dashboard-view');
                 }
             });
-
             document.getElementById('network-refresh-btn').addEventListener('click', () => {
                 const currentRoot = historyStack[historyStack.length - 1];
                 if (currentRoot) {
                     updateNetworkTreeView(currentRoot.uid, 0);
                 }
             });
-
             document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
                 const target = e.target.closest('.network-tab-btn');
                 if (!target || target.classList.contains('active')) return;
-                
                 document.querySelector('#network-view .network-tab-btn.active').classList.remove('active');
                 target.classList.add('active');
-                
                 document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
                 document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
-                
                 if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
                 if (target.dataset.tab === 'downline') { 
                     historyStack = [currentUserData];
@@ -1793,10 +1451,9 @@
                 }
             });
         }
-
-        // Start the application by fetching configs when the DOM is ready.
         document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
     </script>
 </body>
 </html>
+
 
