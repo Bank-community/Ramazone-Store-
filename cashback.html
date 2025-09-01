@@ -65,7 +65,7 @@
         .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
         .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
         
-        /* --- UPDATED: Dashboard UI --- */
+        /* --- Dashboard UI --- */
         .header-wrapper {
              background-color: var(--bg-card);
              padding: 0;
@@ -123,7 +123,6 @@
         #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
         #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
         
-        /* NEW: Due Payment Section Styles */
         .due-payment-section {
             grid-column: 1 / -1;
             margin-top: 15px;
@@ -165,14 +164,11 @@
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
 
         #open-notification-center-btn { padding: 10px; }
-        #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
+        #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; opacity: 1; }
         #open-notification-center-btn .notification-text-container { font-size: 12px; font-weight: 600; text-align: center; }
         #open-notification-center-btn .notification-percentage { font-size: 22px; font-weight: 800; margin-top: 4px; }
-        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
-        .notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
-        .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
-        .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
-        .notification-percentage { transform: scale(1); opacity: 0; }
+        .notification-content-wrapper.animate .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
+        .notification-content-wrapper.animate .notification-percentage { transform: scale(1); opacity: 0; }
         @keyframes fade-in-out { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
         .animate .notification-text-line1 { animation: typing-hold 4.2s steps(30, end) infinite; }
         .animate .notification-text-line2 { animation: typing-hold 4.2s steps(30, end) 0.2s infinite; }
@@ -213,7 +209,7 @@
         .history-amount .amount.rejected { color: var(--due-red); }
         .history-amount .status { font-size: 12px; text-transform: capitalize; }
 
-        /* --- Modals (Radius Unchanged) --- */
+        /* --- Modals --- */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: rgba(0,0,0,0.6); display: none; 
@@ -293,6 +289,7 @@
         #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
         #notification-center-list { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
         .notification-center-item { padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .notification-center-item.due-notification-item { background-color: #fff5f5; border: 1px solid var(--due-red); }
         .notification-center-item .title { font-size: 16px; font-weight: 600; line-height: 1.4; word-break: break-all; }
         .notification-center-item .title a { color: var(--link-blue) !important; text-decoration: underline; }
         .notification-center-item .percentage { font-size: 40px; font-weight: 800; margin-top: 10px; }
@@ -304,7 +301,7 @@
         .popup-notification-text .title { font-size: 14px; font-weight: 600; line-height: 1.3; }
         .popup-notification-text .percentage { font-size: 16px; font-weight: 600; margin-top: 2px; }
         #popup-notification-close { background: none; border: none; font-size: 24px; cursor: pointer; opacity: 0.7; padding: 0; line-height: 1; }
-        /* NEW: Due Payment QR Modal styles */
+        /* Due Payment QR Modal styles */
         #due-qr-code { margin: 15px auto; display: flex; justify-content: center; align-items: center; }
         #due-qr-code canvas, #due-qr-code img { border-radius: 8px; }
         .qr-instructions { font-size: 13px; color: var(--text-secondary); margin-top: 15px; line-height: 1.5; }
@@ -370,7 +367,6 @@
                             <div class="wallet-footer-item"><p>Lifetime Earning</p><span id="lifetime-earning" class="amount">₹0.00</span></div>
                             <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
                             <div class="wallet-footer-item"><p>Total Credit</p><span id="credit-limit" class="amount">₹0.00</span></div>
-                            <!-- MODIFIED: Due Payment Section -->
                             <div class="due-payment-section">
                                 <div class="wallet-footer-item">
                                     <p>Due Amount</p>
@@ -419,7 +415,7 @@
 
     <!-- Notification View -->
     <div id="notification-view" class="view fullscreen-view">
-       <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Latest Offers</h1><div class="header-action" style="width: 24px;"></div></div>
+       <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
        <div id="notification-center-list"></div>
     </div>
 
@@ -433,16 +429,15 @@
     <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span><span class="value" id="success-modal-datetime"></span></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
     <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="details-modal-txn-id"></span></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
 
-    <!-- NEW: Due Payment QR Modal -->
+    <!-- Due Payment QR Modal -->
     <div id="due-payment-modal" class="modal-overlay">
         <div class="modal-content" style="text-align: center;">
             <button class="modal-close-btn" data-close-modal>&times;</button>
             <h3>Pay Your Due Amount</h3>
             
-            <!-- This is the card that will be downloaded -->
             <div id="due-qr-card" style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; display: inline-block; margin: 20px 0;">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" style="width: 150px; margin: 0 auto 15px auto; display: block;">
-                <div id="due-qr-code"></div> <!-- QR will be generated here -->
+                <div id="due-qr-code"></div>
                 <p id="due-qr-amount" style="font-size: 24px; font-weight: 700; color: var(--brand-red); margin-top: 10px;"></p>
                 <p id="due-qr-upi-id" style="font-weight: 600; margin-top: 5px; color: var(--text-primary);"></p>
                 <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Scan using any UPI app</p>
@@ -483,12 +478,13 @@
         let isUplineLoaded = false;
         let lastShownNotificationId = null;
         let popupTimeout = null;
+        let isDueNotificationActive = false; // Flag to track due notification priority
         const commissionRates = [30, 25, 20, 15, 10];
         const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
         let historyStack = [];
         const networkLoader = document.getElementById('network-loader');
         const networkTitleEl = document.getElementById('network-title');
-        const UPI_ID = "princekumar954684-1@okicici"; // UPDATED: Correct UPI ID
+        const UPI_ID = "princekumar954684-1@okicici";
 
         // --- Core Functions (Config, UI Toggles) ---
         async function fetchConfigsAndInit() {
@@ -517,12 +513,6 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
         const toggleView = (viewId) => {
-            const viewportMeta = document.querySelector('meta[name="viewport"]');
-            if (viewId === 'network-view') {
-                viewportMeta.setAttribute('content', 'width=1200');
-            } else {
-                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-            }
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             const viewElement = document.getElementById(viewId);
             if(viewElement) {
@@ -547,6 +537,7 @@
                     if (doc.exists()) {
                         currentUserData = { uid: doc.id, ...doc.data() };
                         updateDashboardUI(currentUserData, user);
+                        handlePriorityNotifications(currentUserData); // Central notification handler
                     }
                 }),
                 onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
@@ -561,11 +552,13 @@
                     creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
                     combineAndRenderHistory();
                 }),
-                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
-                    if (!snapshot.empty) updateNotificationUI({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
-                    else updateNotificationUI(null);
-                }),
-                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)), renderNotificationCenter)
+                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)), (snapshot) => {
+                    renderNotificationCenter(snapshot); // Render main list
+                    if (!isDueNotificationActive && !snapshot.empty) {
+                        const latestOffer = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+                        updateOfferNotificationUI(latestOffer); // Update header with offer if no due amount
+                    }
+                })
             ];
             activeListeners.push(...listeners);
         }
@@ -574,7 +567,7 @@
             activeListeners = [];
         }
 
-        // --- UI Update Functions ---
+        // --- UI Update and Notification Logic ---
         function updateDashboardUI(dbData, authUser) {
             const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
             document.getElementById('header-profile-avatar').src = profilePicUrl;
@@ -588,93 +581,103 @@
             document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
             
-            // UPDATED: Due amount button and notification logic
             const payDueBtn = document.getElementById('pay-due-amount-btn');
-            if (dbData.dueAmount > 0) {
-                payDueBtn.style.display = 'block';
-                showDueNotification(dbData); // Show popup notification if conditions are met
-            } else {
-                payDueBtn.style.display = 'none';
-            }
+            payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
         }
-        // NEW: Function to show a prominent popup for due amount
-        function showDueNotification(dbData) {
-            const popup = document.getElementById('popup-notification');
+
+        function getDueNotificationData(dbData) {
+            if (!dbData) return null;
             const today = new Date();
             const dayOfMonth = today.getDate();
-
-            // Only show between 1st and 7th of the month
             if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
-                if (popupTimeout) clearTimeout(popupTimeout); // Clear any existing offer notification timeout
-                
-                popup.style.backgroundColor = 'var(--due-red)';
-                popup.style.color = 'white';
-                document.getElementById('popup-notification-icon').textContent = '⚠️';
-                document.getElementById('popup-notification-title').textContent = `Namaste ${dbData.name}, aapka ₹${dbData.dueAmount.toFixed(2)} ka bhugtan baki hai.`;
-                document.getElementById('popup-notification-percentage').textContent = `Kripya 7 tarikh se pehle pay karein.`;
-                document.getElementById('popup-notification-close').style.color = 'white';
-                popup.classList.add('show');
-                
-                popupTimeout = setTimeout(() => popup.classList.remove('show'), 8000); // Show for 8 seconds
+                return {
+                    id: 'due_notification',
+                    title: `Payment Due: ₹${dbData.dueAmount.toFixed(2)}`,
+                    popupTitle: `Namaste ${dbData.name}, aapka bhugtan baki hai.`,
+                    popupPercentage: `Amount: ₹${dbData.dueAmount.toFixed(2)}`,
+                    paragraph: `Kripya apna ₹${dbData.dueAmount.toFixed(2)} ka due amount 7 tarikh se pehle pay karein. Dhanyavad!`,
+                };
+            }
+            return null;
+        }
+        
+        function handlePriorityNotifications(dbData) {
+            const dueNotification = getDueNotificationData(dbData);
+            if (dueNotification) {
+                isDueNotificationActive = true;
+                showPopupNotification({
+                    popupBgColor: 'var(--due-red)',
+                    popupTextColor: 'white',
+                    popupIcon: '⚠️',
+                    popupTitle: dueNotification.popupTitle,
+                    popupPercentage: dueNotification.popupPercentage
+                }, 8000);
+                updateHeaderWithDueNotification(dueNotification);
+            } else {
+                isDueNotificationActive = false;
             }
         }
-        function updateNotificationUI(notifData) {
+        
+        function updateHeaderWithDueNotification(dueData) {
             const thumbNotifCard = document.getElementById('open-notification-center-btn');
-            if (!notifData) {
-                thumbNotifCard.querySelector('.notification-content-wrapper').style.opacity = 0;
-                return;
+            thumbNotifCard.style.backgroundColor = '#fff5f5';
+            thumbNotifCard.style.color = 'var(--due-red)';
+            const wrapper = thumbNotifCard.querySelector('.notification-content-wrapper');
+            wrapper.classList.remove('animate');
+            wrapper.querySelector('.notification-text-line1').textContent = 'Payment Due!';
+            wrapper.querySelector('.notification-text-line2').textContent = '';
+            wrapper.querySelector('.notification-percentage').textContent = `₹${currentUserData.dueAmount.toFixed(2)}`;
+        }
+
+        function updateOfferNotificationUI(offerData) {
+            if (isDueNotificationActive || !offerData) return; // Priority check
+            const thumbNotifCard = document.getElementById('open-notification-center-btn');
+            thumbNotifCard.style.backgroundColor = offerData.thumbnailBgColor || 'var(--bg-card)';
+            thumbNotifCard.style.color = offerData.thumbnailTextColor || 'var(--text-primary)';
+            const wrapper = thumbNotifCard.querySelector('.notification-content-wrapper');
+            const [text1, text2 = ''] = (offerData.thumbnailTitle || '').split('|').map(t => t.trim());
+            wrapper.querySelector('.notification-text-line1').textContent = text1;
+            wrapper.querySelector('.notification-text-line2').textContent = text2;
+            wrapper.querySelector('.notification-percentage').textContent = `${offerData.thumbnailPercentage}%`;
+            
+            if (offerData.thumbnailAnimation !== false) {
+                 wrapper.classList.add('animate');
+            } else {
+                 wrapper.classList.remove('animate');
             }
-            const updateElement = (card, title, percentage, animate) => {
-                const [text1, text2 = ''] = (title || '').split('|').map(t => t.trim());
-                const wrapper = card.querySelector('.notification-content-wrapper');
-                const line1 = wrapper.querySelector('.notification-text-line1');
-                const line2 = wrapper.querySelector('.notification-text-line2');
-                const percentEl = wrapper.querySelector('.notification-percentage');
-                line1.textContent = text1;
-                line2.textContent = text2;
-                percentEl.textContent = `${percentage}%`;
-                wrapper.classList.remove('animate');
-                void wrapper.offsetWidth;
-                if (animate) {
-                    wrapper.classList.add('animate');
-                } else {
-                    wrapper.style.opacity = 1;
-                    line1.style.width = 'auto';
-                    line2.style.width = 'auto';
-                    percentEl.style.transform = 'scale(1)';
-                }
-            };
-            thumbNotifCard.style.backgroundColor = notifData.thumbnailBgColor || 'var(--bg-card)';
-            thumbNotifCard.style.color = notifData.thumbnailTextColor || 'var(--text-primary)';
-            thumbNotifCard.style.setProperty('--thumbnail-border-color', notifData.thumbnailBorderColor || 'var(--border-color)');
-            thumbNotifCard.style.setProperty('--thumbnail-border-width', notifData.thumbnailBorderWidth ? `${notifData.thumbnailBorderWidth}px` : '1px');
-            updateElement(thumbNotifCard, notifData.thumbnailTitle, notifData.thumbnailPercentage, notifData.thumbnailAnimation !== false);
-
-            // UPDATED: Prevent offer popup if it's due payment period for a user with due amount
-            const isDuePeriod = new Date().getDate() >= 1 && new Date().getDate() <= 7;
-            const hasDueAmount = currentUserData && currentUserData.dueAmount > 0;
-
-            if (notifData.id !== lastShownNotificationId && !(isDuePeriod && hasDueAmount)) {
-                lastShownNotificationId = notifData.id;
-                showPopupNotification(notifData);
+            
+            if (offerData.id !== lastShownNotificationId) {
+                lastShownNotificationId = offerData.id;
+                showPopupNotification(offerData);
             }
         }
-        function showPopupNotification(notifData) {
+
+        function showPopupNotification(notifData, duration = 6000) {
              if (popupTimeout) clearTimeout(popupTimeout);
              const popup = document.getElementById('popup-notification');
              popup.style.backgroundColor = notifData.popupBgColor || '#333';
              popup.style.color = notifData.popupTextColor || 'white';
              document.getElementById('popup-notification-icon').textContent = notifData.popupIcon || '🔥';
              document.getElementById('popup-notification-title').innerHTML = (notifData.popupTitle || '').replace('|', '<br>');
-             document.getElementById('popup-notification-percentage').textContent = `${notifData.popupPercentage || ''}%`;
+             document.getElementById('popup-notification-percentage').textContent = notifData.popupPercentage || '';
              document.getElementById('popup-notification-close').style.color = notifData.popupTextColor || 'white';
              popup.classList.add('show');
-             popupTimeout = setTimeout(() => popup.classList.remove('show'), 6000);
+             popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
         }
+
         function renderNotificationCenter(snapshot) {
             const listEl = document.getElementById('notification-center-list');
-            listEl.innerHTML = ''; 
-            if (snapshot.empty) {
+            listEl.innerHTML = '';
+            
+            const dueNotification = getDueNotificationData(currentUserData);
+            if (dueNotification) {
+                const item = document.createElement('div');
+                item.className = 'notification-center-item due-notification-item';
+                item.innerHTML = `<div class="title" style="color: var(--due-red);">${dueNotification.title}</div><p class="paragraph">${dueNotification.paragraph}</p>`;
+                listEl.appendChild(item);
+            }
+
+            if (snapshot.empty && !dueNotification) {
                 listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
                 return;
             }
@@ -703,37 +706,19 @@
         }
         function renderUnifiedHistory(items) {
             const listEl = document.getElementById('unified-history-list');
-            const summaryEl = document.getElementById('transaction-summary');
-            const summaryAmountEl = summaryEl.querySelector('.summary-amount');
-            const summaryLabelEl = summaryEl.querySelector('.summary-label');
             listEl.innerHTML = '';
-            const itemsToRender = items.filter(item => {
-                if (activeFilter === 'all') return true;
-                if (activeFilter === 'cashback') return item.type === 'cashback';
-                if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'due_payment' || item.type === 'credit_request';
-                return item.type === activeFilter;
-            });
-            if (itemsToRender.length > 0 && activeFilter !== 'all') {
-                const total = itemsToRender.reduce((sum, item) => sum + Math.abs(item.amount || item.cashbackAmount || 0), 0);
-                const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
-                summaryLabelEl.textContent = `Total ${filterText}`;
-                summaryAmountEl.textContent = `₹ ${total.toFixed(2)}`;
-                summaryEl.style.display = 'flex';
-            } else {
-                summaryEl.style.display = 'none';
-            }
-            if (itemsToRender.length === 0) {
-                listEl.innerHTML = `<div class="empty-state" style="border:none; padding: 20px 0; text-align:center; color: var(--text-secondary);"><h4>No Transactions</h4></div>`;
+            if (items.length === 0) {
+                listEl.innerHTML = `<div class="empty-state" style="padding: 20px 0; text-align:center; color: var(--text-secondary);">No Transactions Found</div>`;
                 return;
             }
-            itemsToRender.forEach(item => {
+            items.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'history-item';
                 itemDiv.addEventListener('click', () => showTransactionDetails(item));
                 const amount = item.amount || item.cashbackAmount || 0;
                 let sign = '+';
                 let typeClass = 'credit';
-                if(item.type === 'due_payment' || item.type === 'payment' || item.amount < 0) { typeClass = 'debit'; sign = '-'; }
+                if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { typeClass = 'debit'; sign = '-'; }
                 if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
                 itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || ''}</span></div>`;
                 listEl.appendChild(itemDiv);
@@ -742,7 +727,7 @@
         function showTransactionDetails(item) {
             const amount = item.amount || item.cashbackAmount || 0;
             let sign = '+', typeClass = 'credit';
-            if (item.type === 'payment' || item.amount < 0) { sign = '-'; typeClass = 'debit'; }
+            if (item.type === 'payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
             if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
             
             document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
@@ -759,8 +744,7 @@
             openModal('transaction-details-modal');
         }
         
-        // --- Feature Logic (Payment, Cashback, etc.) ---
-        // UPDATED: Function to generate and display the branded QR card
+        // --- Feature Logic (Payment, QR, etc.) ---
         function generateDueQR() {
             if (!currentUserData || currentUserData.dueAmount <= 0) {
                 showToast("No due amount to pay.");
@@ -769,7 +753,7 @@
             const amount = currentUserData.dueAmount;
             const upiLink = `upi://pay?pa=${UPI_ID}&pn=Ramazone%20Cashback&am=${amount.toFixed(2)}&cu=INR&tn=DuePaymentFor-${currentUserData.mobile}`;
             const qrContainer = document.getElementById('due-qr-code');
-            qrContainer.innerHTML = ''; // Clear previous QR
+            qrContainer.innerHTML = ''; 
             
             new QRCode(qrContainer, {
                 text: upiLink,
@@ -783,8 +767,6 @@
             document.getElementById('due-qr-upi-id').textContent = UPI_ID;
             openModal('due-payment-modal');
         }
-
-        // UPDATED: Function to download the entire QR card as a high-quality image
         function downloadQRCard() {
             const cardElement = document.getElementById('due-qr-card');
             if (!cardElement) {
@@ -850,6 +832,7 @@
                 pendingAction = null;
             }
         }
+        // Other functions (handlePayment, handleCashbackRequest etc.) remain the same...
         function handlePayment() {
             const amount = parseFloat(document.getElementById('payment-amount').value);
             const errorMsg = document.getElementById('payment-error-msg');
@@ -1354,7 +1337,6 @@
                     updateNetworkTreeView(currentUserData.uid, 0);
                 }
             });
-            // NEW Event Listeners
             document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
             document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
         }
@@ -1362,4 +1344,5 @@
     </script>
 </body>
 </html>
+
 
