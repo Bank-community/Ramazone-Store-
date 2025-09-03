@@ -1,4 +1,4 @@
-// --- GLOBAL VARIABLES & CONFIG (Ab Server se dynamically load honge) ---
+// --- GLOBAL VARIABLES & CONFIG ---
 let FIREBASE_CONFIG = null;
 let IMGBB_API_KEY = null;
 const DB_BASE_PATH = 'ramazone';
@@ -11,16 +11,16 @@ window.currentVendorProductsCache = [];
 window.allCategoriesCache = [];
 
 
-// --- NEW: SERVER SE CONFIGURATION FETCH KARNE KA FUNCTION ---
+// --- SERVER SE CONFIGURATION FETCH KARNE KA FUNCTION ---
 async function fetchConfigurations() {
     try {
+        // === YAHAN NAAM BADLA GAYA HAI ===
         const [firebaseResponse, imgbbResponse] = await Promise.all([
-            fetch('/api/vendor-firebase-config'),
+            fetch('/api/get-vendor-firebase'), // Purana naam: /api/vendor-firebase-config
             fetch('/api/vendor-image-config')
         ]);
 
         if (!firebaseResponse.ok || !imgbbResponse.ok) {
-            // Server se error aane par aasan bhasha mein error dikhayein
             const firebaseError = firebaseResponse.ok ? '' : `Firebase Config (Error ${firebaseResponse.status})`;
             const imgbbError = imgbbResponse.ok ? '' : `Image Config (Error ${imgbbResponse.status})`;
             throw new Error(`Connection failed. Check: ${firebaseError} ${imgbbError}`);
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const loginForm = document.getElementById('loginForm'); const logoutBtn = document.getElementById('logout-btn'); const forgotPasswordLink = document.getElementById('forgot-password-link');
             loginForm.addEventListener('submit', (e) => { e.preventDefault(); const email = document.getElementById('vendor-email').value; const password = document.getElementById('vendor-password').value; const submitButton = loginForm.querySelector('button[type="submit"]'); submitButton.disabled = true; submitButton.textContent = 'Logging in...'; auth.signInWithEmailAndPassword(email, password) .catch((error) => { let msg = error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' ? 'Galat email ya password.' : 'Login fail ho gaya. Dobara try karein.'; showToast('Login Failed', msg, 'error'); }) .finally(() => { submitButton.disabled = false; submitButton.textContent = 'Login'; }); });
             logoutBtn.addEventListener('click', () => { auth.signOut(); });
-            forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); const email = document.getElementById('vendor-email').value; if (!email) { return showToast('Error', 'Please enter your email address first.', 'error'); } auth.sendPasswordResetEmail(email) .then(() => { showToast('Check Your Email', `Password reset link sent to ${email}.`, 'success'); }) .catch((error) => { showToast('Error', error.message, 'error'); }); });
+            forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); const email = document.getElementById('vendor-email').value; if (!email) { return window.showToast('Error', 'Please enter your email address first.', 'error'); } auth.sendPasswordResetEmail(email) .then(() => { showToast('Check Your Email', `Password reset link sent to ${email}.`, 'success'); }) .catch((error) => { showToast('Error', error.message, 'error'); }); });
             const sidebar = document.getElementById('sidebar'); const sidebarOverlay = document.getElementById('sidebarOverlay');
             document.getElementById('sidebarToggle').addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); sidebarOverlay.classList.toggle('hidden'); });
             sidebarOverlay.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); });
