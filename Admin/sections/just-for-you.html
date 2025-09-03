@@ -1,0 +1,223 @@
+<!-- sections/just-for-you.html -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Just for You Section</h2>
+</div>
+<form id="jfy-form" class="space-y-6">
+    <!-- General Settings Card -->
+    <div class="admin-card">
+        <div class="card-header"><h3>General Settings</h3></div>
+        <div class="card-body grid md:grid-cols-3 gap-6">
+            <div>
+                <label class="form-label" for="jfy-title">Section Title</label>
+                <input type="text" id="jfy-title" class="form-control" data-key="title" placeholder="e.g., Just for you">
+            </div>
+            <div>
+                <label class="form-label">Title Color</label>
+                <div class="flex items-center gap-2">
+                    <input type="color" data-key="titleColor_picker" class="p-1 h-10 w-10 block bg-white border border-gray-200 cursor-pointer rounded-lg">
+                    <input type="text" class="form-control" data-key="titleColor" placeholder="#212529">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Background Color</label>
+                <div class="flex items-center gap-2">
+                    <input type="color" data-key="backgroundColor_picker" class="p-1 h-10 w-10 block bg-white border border-gray-200 cursor-pointer rounded-lg">
+                    <input type="text" class="form-control" data-key="backgroundColor" placeholder="#F3F4F6">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid lg:grid-cols-2 gap-6">
+        <!-- Poster Card (Left) -->
+        <div class="admin-card">
+            <div class="card-header"><h3>Poster (Left Side)</h3></div>
+            <div class="card-body space-y-4">
+                <div>
+                    <label class="form-label" for="poster-link">Link URL</label>
+                    <input type="url" id="poster-link" class="form-control" data-key="poster_linkUrl" placeholder="https://example.com/...">
+                </div>
+                <div>
+                    <label class="form-label">Poster Image 1</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="poster_image1"><div class="placeholder"><i class="fas fa-image text-2xl"></i><p>Image 1</p></div></div><button type="button" class="remove-media-btn hidden">&times;</button><input type="file" class="form-file-upload" data-key="poster_image1" accept="image/*"></div>
+                </div>
+                <div>
+                    <label class="form-label">Poster Image 2</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="poster_image2"><div class="placeholder"><i class="fas fa-image text-2xl"></i><p>Image 2</p></div></div><button type="button" class="remove-media-btn hidden">&times;</button><input type="file" class="form-file-upload" data-key="poster_image2" accept="image/*"></div>
+                </div>
+                <div>
+                    <label class="form-label">Poster Image 3</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="poster_image3"><div class="placeholder"><i class="fas fa-image text-2xl"></i><p>Image 3</p></div></div><button type="button" class="remove-media-btn hidden">&times;</button><input type="file" class="form-file-upload" data-key="poster_image3" accept="image/*"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Deals Card (Right) -->
+        <div class="admin-card">
+            <div class="card-header"><h3>Top Deals (Right Side)</h3></div>
+            <div class="card-body space-y-4" id="jfy-deals-body">
+                <!-- Dynamic content is injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="flex justify-end mt-2">
+        <button type="submit" id="jfy-save-btn" class="btn btn-primary btn-lg py-3 px-6"><i class="fas fa-save mr-2"></i> Save Changes</button>
+    </div>
+</form>
+
+<script>
+(function() {
+    if (document.getElementById('jfy-script-loaded')) return;
+
+    const form = document.getElementById('jfy-form');
+    const jfyData = window.ramazoneData.homepage?.justForYou || {};
+    const productOptions = window.allProductsCache.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+    // --- RENDER DEALS SECTION ---
+    document.getElementById('jfy-deals-body').innerHTML = `
+        <div class="space-y-2">
+            <label class="form-label">Main Product (Big)</label>
+            <select class="form-control" data-key="deals_mainProduct"><option value="">-- Select a Product --</option>${productOptions}</select>
+        </div>
+        
+        <div>
+            <label class="form-label">Main Product Custom Image (Optional)</label>
+            <p class="text-xs text-gray-500 mb-2">Desktop पर बेहतर दिखने के लिए एक चौड़ी (horizontal) इमेज अपलोड करें।</p>
+            <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="deals_mainProductImage"><div class="placeholder"><i class="fas fa-image text-2xl"></i><p>Custom Image</p></div></div><button type="button" class="remove-media-btn hidden">&times;</button><input type="file" class="form-file-upload" data-key="deals_mainProductImage" accept="image/*"></div>
+        </div>
+        <hr class="my-4">
+        <div><label class="form-label">Sub Product 1 (Small)</label><select class="form-control" data-key="deals_subProduct1"><option value="">-- Select a Product --</option>${productOptions}</select></div>
+        <div><label class="form-label">Sub Product 2 (Small)</label><select class="form-control" data-key="deals_subProduct2"><option value="">-- Select a Product --</option>${productOptions}</select></div>
+    `;
+
+    // --- HELPER TO POPULATE PREVIEWS ---
+    const setupImagePreview = (key, url) => {
+        const wrapper = form.querySelector(`[data-key="${key}"]`).closest('.file-preview-wrapper');
+        if (url && wrapper) {
+            const img = wrapper.querySelector(`img[data-preview-for]`);
+            const placeholder = wrapper.querySelector('.placeholder');
+            const removeBtn = wrapper.querySelector('.remove-media-btn');
+            img.src = url;
+            placeholder.classList.add('hidden');
+            removeBtn.classList.remove('hidden');
+        }
+    };
+
+    // --- POPULATE FORM WITH EXISTING DATA ---
+    form.querySelector('[data-key="title"]').value = jfyData.title || '';
+    form.querySelector('[data-key="titleColor"]').value = jfyData.titleColor || '#212529';
+    form.querySelector('[data-key="titleColor_picker"]').value = jfyData.titleColor || '#212529';
+    form.querySelector('[data-key="backgroundColor"]').value = jfyData.backgroundColor || '#F3F4F6';
+    form.querySelector('[data-key="backgroundColor_picker"]').value = jfyData.backgroundColor || '#F3F4F6';
+    form.querySelector('[data-key="poster_linkUrl"]').value = jfyData.poster?.linkUrl || '';
+    form.querySelector('[data-key="deals_mainProduct"]').value = jfyData.topDeals?.mainProductId || '';
+    form.querySelector('[data-key="deals_subProduct1"]').value = jfyData.topDeals?.subProductIds?.[0] || '';
+    form.querySelector('[data-key="deals_subProduct2"]').value = jfyData.topDeals?.subProductIds?.[1] || '';
+    
+    // Populate poster images
+    jfyData.poster?.images?.forEach((imgUrl, i) => {
+        setupImagePreview(`poster_image${i + 1}`, imgUrl);
+    });
+    // Populate main product custom image
+    if (jfyData.topDeals?.mainProductImageUrl) {
+        setupImagePreview('deals_mainProductImage', jfyData.topDeals.mainProductImageUrl);
+    }
+
+    // --- EVENT LISTENERS ---
+    const syncColorInputs = (pickerKey, textKey) => {
+        const picker = form.querySelector(`[data-key="${pickerKey}"]`);
+        const text = form.querySelector(`[data-key="${textKey}"]`);
+        picker.addEventListener('input', (e) => text.value = e.target.value.toUpperCase());
+        text.addEventListener('input', (e) => picker.value = e.target.value);
+    };
+    syncColorInputs('titleColor_picker', 'titleColor');
+    syncColorInputs('backgroundColor_picker', 'backgroundColor');
+
+    form.addEventListener('change', (e) => {
+        if (e.target.classList.contains('form-file-upload')) {
+            const file = e.target.files[0];
+            const wrapper = e.target.closest('.file-preview-wrapper');
+            if (file && wrapper) {
+                const reader = new FileReader();
+                reader.onload = (event) => setupImagePreview(e.target.dataset.key, event.target.result);
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
+    form.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-media-btn')) {
+            const wrapper = e.target.closest('.file-preview-wrapper');
+            if (wrapper) {
+                wrapper.querySelector('img[data-preview-for]').removeAttribute('src');
+                wrapper.querySelector('.form-file-upload').value = '';
+                wrapper.querySelector('.placeholder').classList.remove('hidden');
+                e.target.classList.add('hidden');
+            }
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveBtn = document.getElementById('jfy-save-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
+        const getImageUrl = async (key) => {
+            const fileInput = form.querySelector(`[data-key="${key}"]`);
+            const previewImg = form.querySelector(`[data-preview-for="${key}"]`);
+            if (fileInput.files[0]) {
+                return await window.uploadToImgBB(fileInput.files[0]);
+            }
+            if (previewImg.src && !previewImg.src.startsWith('blob:')) {
+                return previewImg.src;
+            }
+            return '';
+        };
+
+        try {
+            const posterImages = await Promise.all([
+                getImageUrl('poster_image1'),
+                getImageUrl('poster_image2'),
+                getImageUrl('poster_image3')
+            ]);
+
+            const mainProductImageUrl = await getImageUrl('deals_mainProductImage');
+
+            const saveData = {
+                title: form.querySelector('[data-key="title"]').value.trim(),
+                titleColor: form.querySelector('[data-key="titleColor"]').value.trim(),
+                backgroundColor: form.querySelector('[data-key="backgroundColor"]').value.trim(),
+                poster: {
+                    linkUrl: form.querySelector('[data-key="poster_linkUrl"]').value.trim(),
+                    images: posterImages.filter(Boolean)
+                },
+                topDeals: {
+                    mainProductId: form.querySelector('[data-key="deals_mainProduct"]').value,
+                    mainProductImageUrl: mainProductImageUrl, // New field
+                    subProductIds: [
+                        form.querySelector('[data-key="deals_subProduct1"]').value,
+                        form.querySelector('[data-key="deals_subProduct2"]').value
+                    ].filter(Boolean)
+                }
+            };
+            await db.ref(`${DB_BASE_PATH}/homepage/justForYou`).set(saveData);
+            window.showToast('Success!', 'Just for You section has been saved.', 'success');
+        } catch (error) {
+            window.showToast('Error!', `Could not save: ${error.message}`, 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Save Changes';
+        }
+    });
+    
+    const scriptMarker = document.createElement('div');
+    scriptMarker.id = 'jfy-script-loaded';
+    scriptMarker.style.display = 'none';
+    document.body.appendChild(scriptMarker);
+
+})();
+</script>
