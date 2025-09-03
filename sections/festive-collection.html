@@ -25,7 +25,7 @@
     }
     #festive-collection-container .view-all-arrow { background-color: rgba(0, 0, 0, 0.08); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: background-color 0.2s; }
     #festive-collection-container .view-all-arrow:hover { background-color: rgba(0, 0, 0, 0.15); }
-    #festive-collection-container .product-card { flex: 0 0 calc(50% 10px); max-width: 200px; }
+    #festive-collection-container .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
     
     #festive-collection-container .offer-tag-top-left {
         position: absolute;
@@ -68,9 +68,52 @@
     #festive-collection-container .progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: 600; color: white; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25); }
 
     /* Product cards ke beech mein space add karne ke liye */
-#festive-collection-container .horizontal-scroller {
-    gap: 12px;
-}
+    #festive-collection-container .horizontal-scroller {
+        gap: 12px;
+    }
+
+    /* === YAHAN BADLAV KIYA GAYA HAI: Naye 'View All' Card ke liye Styles === */
+    #festive-collection-container .view-all-card {
+        flex: 0 0 calc(50% - 10px); /* Same width as product cards */
+        max-width: 200px;           /* Same max-width */
+        height: auto;               /* Allow height to adjust */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background-color: #f3f4f6; /* Light grey background */
+        border: 1px dashed #d1d5db; /* Dashed border */
+        border-radius: 8px;         /* Same border-radius */
+        text-decoration: none;
+        color: #1f2937;             /* Dark text color */
+        transition: background-color 0.2s, transform 0.2s;
+        padding: 1rem;
+    }
+
+    #festive-collection-container .view-all-card:hover {
+        background-color: #e5e7eb;
+        transform: translateY(-2px);
+    }
+
+    #festive-collection-container .view-all-card .arrow-circle {
+        width: 50px;
+        height: 50px;
+        background-color: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    #festive-collection-container .view-all-card .view-all-text {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
     
 </style>
 

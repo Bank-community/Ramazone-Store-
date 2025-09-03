@@ -245,17 +245,24 @@ function createFestiveCardHTML(prod, options = {}) {
     return `<div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}" class="block"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a>${progressBarHTML}</div></div>`;
 }
 
+// === YAHAN BADLAV KIYA GAYA HAI: 'View All' Button ka logic add kiya gaya hai ===
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
-    if (!container || !collectionData || !collectionData.productIds?.length) { if (container) container.style.display = 'none'; return; }
+    if (!container || !collectionData || !collectionData.productIds?.length) { 
+        if (container) container.style.display = 'none'; 
+        return; 
+    }
     container.style.display = 'block';
     container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
+
     const headline = document.getElementById('festive-headline');
     const timerEl = document.getElementById('festive-countdown-timer');
     const arrowEl = document.getElementById('festive-view-all-link');
 
+    const viewAllUrl = 'festive-products.html'; // URL ko ek jagah define kiya gaya hai
+
     if (arrowEl) {
-        arrowEl.href = 'festive-products.html';
+        arrowEl.href = viewAllUrl; // Upar wale arrow ke liye bhi same URL
     }
 
     if (headline) {
@@ -265,18 +272,36 @@ function renderFestiveCollection(collectionData) {
         if (timerEl) timerEl.style.color = headlineColor;
         if (arrowEl) arrowEl.style.color = headlineColor;
     }
+
     if (collectionData.endTime) {
         startCountdownTimer(collectionData.endTime, 'festive-countdown-timer');
     }
+
     const slider = document.getElementById('festive-product-slider');
     const metadata = collectionData.productMetadata || {};
     const limit = collectionData.productsToShow || collectionData.productIds.length;
-    slider.innerHTML = collectionData.productIds.slice(0, limit).map(id => {
-        const product = allProductsCache.find(p => p && p.id === id); // Ab yahan hidden product nahi milega
+
+    // Step 1: Product cards ka HTML banayein
+    let productsHTML = collectionData.productIds.slice(0, limit).map(id => {
+        const product = allProductsCache.find(p => p && p.id === id);
         if (!product) return '';
         return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
     }).join('');
+
+    // Step 2: 'View All' card ka HTML banayein
+    const viewAllCardHTML = `
+        <a href="${viewAllUrl}" class="view-all-card">
+            <div class="arrow-circle">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            <span class="view-all-text">View All</span>
+        </a>
+    `;
+
+    // Step 3: Dono ko jod kar slider mein daalein
+    slider.innerHTML = productsHTML + viewAllCardHTML;
 }
+
 
 // --- UNIVERSAL HELPER FUNCTIONS ---
 function createProductCardHTML(prod, cardClass = '') {
