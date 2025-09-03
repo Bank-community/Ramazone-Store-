@@ -1,0 +1,184 @@
+<!-- Inline styles for this specific page -->
+<style>
+    .vendor-card {
+        background-color: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .vendor-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.05);
+        border-color: var(--primary);
+    }
+    .vendor-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #e0e7ff;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    .vendor-info h4 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    .vendor-info p {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    #add-vendor-fab {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 56px;
+        height: 56px;
+        background-color: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.2s ease;
+        z-index: 50;
+    }
+    #add-vendor-fab:hover {
+        background-color: var(--primary-dark);
+        transform: scale(1.05);
+    }
+</style>
+
+<!-- Page Header and Search Bar -->
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">Vendor Management</h2>
+        <p class="text-sm text-gray-500">Search for vendors or add a new one.</p>
+    </div>
+    <div class="relative flex-grow w-full sm:w-auto sm:max-w-xs">
+        <input type="text" id="vendor-search-input" class="form-control w-full pr-10" placeholder="Search by name or number...">
+        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+    </div>
+</div>
+
+<!-- Container for Vendor Cards -->
+<div id="vendor-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- Vendor cards will be loaded here by the script -->
+</div>
+
+<!-- Floating Action Button to Add Vendor -->
+<button id="add-vendor-fab" title="Add New Vendor">
+    <i class="fas fa-plus"></i>
+</button>
+
+<script>
+(async function() {
+    // --- ELEMENTS ---
+    const listContainer = document.getElementById('vendor-list-container');
+    const searchInput = document.getElementById('vendor-search-input');
+    const addVendorBtn = document.getElementById('add-vendor-fab');
+    
+    let allVendors = {}; // Cache to hold all vendor data
+
+    // --- RENDER FUNCTION ---
+    function renderVendors(filter = '') {
+        const lowercasedFilter = filter.toLowerCase();
+        
+        // Filter the vendors from the cached data
+        const filteredVendorIds = Object.keys(allVendors).filter(vendorId => {
+            const vendor = allVendors[vendorId];
+            if (!vendor) return false;
+            const nameMatch = vendor.name && vendor.name.toLowerCase().includes(lowercasedFilter);
+            const shopMatch = vendor.shopName && vendor.shopName.toLowerCase().includes(lowercasedFilter);
+            const phoneMatch = vendor.whatsappNumber && vendor.whatsappNumber.includes(lowercasedFilter);
+            return nameMatch || shopMatch || phoneMatch;
+        });
+
+        // Clear previous list
+        listContainer.innerHTML = '';
+
+        if (filteredVendorIds.length === 0) {
+            listContainer.className = 'text-center py-10'; // Reset grid class
+            listContainer.innerHTML = `<div class="text-center py-10"><i class="fas fa-store-slash text-4xl text-gray-300"></i><p class="mt-4 text-gray-500">No vendors found.</p></div>`;
+            return;
+        }
+
+        listContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'; // Restore grid class
+        filteredVendorIds.forEach(vendorId => {
+            const vendor = allVendors[vendorId];
+            const firstLetter = vendor.shopName ? vendor.shopName.charAt(0).toUpperCase() : '?';
+
+            const card = document.createElement('div');
+            card.className = 'vendor-card';
+            card.dataset.vendorId = vendorId; // Store vendor ID for click event
+            card.innerHTML = `
+                <div class="vendor-avatar">${firstLetter}</div>
+                <div class="vendor-info">
+                    <h4>${vendor.shopName}</h4>
+                    <p>${vendor.name}</p>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+
+    // --- FETCH DATA ---
+    async function fetchAndDisplayVendors() {
+        listContainer.innerHTML = `<div class="text-center py-20 col-span-full"><div class="loader"></div><p class="text-primary font-medium mt-6">Loading Vendors...</p></div>`;
+        try {
+            const vendorsRef = db.ref(`${DB_BASE_PATH}/vendors`);
+            const snapshot = await vendorsRef.once('value');
+            allVendors = snapshot.val() || {}; // Store in cache
+            renderVendors(); // Initial render with all vendors
+        } catch (error) {
+            console.error("Error fetching vendors:", error);
+            listContainer.innerHTML = `<div class="text-center py-10 col-span-full text-red-500">Could not load vendors. Please check console.</div>`;
+            window.showToast('Error', 'Failed to fetch vendor data.', 'error');
+        }
+    }
+
+    // --- EVENT LISTENERS ---
+    searchInput.addEventListener('input', () => {
+        renderVendors(searchInput.value.trim());
+    });
+    
+    // NOTE: ADD VENDOR MODAL LOGIC WILL BE HANDLED IN admin-main.js
+    // This is just the UI trigger.
+    addVendorBtn.addEventListener('click', () => {
+        // We will create a global function in admin-main.js to open the modal
+        if (window.openVendorRegistrationModal) {
+            window.openVendorRegistrationModal();
+        } else {
+            window.showToast('Error', 'Modal function not found.', 'error');
+        }
+    });
+
+    listContainer.addEventListener('click', (e) => {
+        const card = e.target.closest('.vendor-card');
+        if (card) {
+            const vendorId = card.dataset.vendorId;
+            // Store the ID globally so the next page can access it
+            window.currentVendorIdForDetails = vendorId;
+            // Load the details page
+            loadPage('sections/vendor-details.html');
+        }
+    });
+
+    // --- INITIAL CALL ---
+    await fetchAndDisplayVendors();
+
+})();
+</script>
+
