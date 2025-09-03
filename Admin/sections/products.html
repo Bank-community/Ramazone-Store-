@@ -1,0 +1,389 @@
+<!-- sections/products.html -->
+
+<!-- Naye Toggle Switch aur UI Adjustments ke liye Inline CSS -->
+<style>
+    /* Product Card ko dhundhla karne ke liye jab woh hidden ho */
+    .product-hidden {
+        opacity: 0.6;
+        background-color: #f8f9fa;
+    }
+    .product-hidden .name {
+        text-decoration: line-through;
+    }
+
+    /* --- 2x2 GRID LAYOUT --- */
+    .product-actions {
+        margin-left: auto;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 8px;
+        align-items: center;
+        justify-items: center;
+        width: 100px;
+    }
+
+    .product-actions .btn {
+        width: 40px;
+        height: 32px;
+        padding: 0;
+        font-size: 1rem;
+    }
+
+    /* Sundar Toggle Switch ka CSS */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 26px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: var(--primary);
+    }
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+
+    /* Drag-and-drop ke liye style */
+    .sortable-ghost {
+        opacity: 0.4;
+        background: #c7d2fe;
+    }
+    .handle {
+        cursor: grab !important;
+    }
+</style>
+
+<!-- Filter indicator message ke liye Placeholder -->
+<div id="filter-indicator" class="mb-4"></div>
+
+<!-- Search, Filter, aur Add Button ka UI -->
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+    <div class="relative flex-grow w-full sm:w-auto">
+        <input type="text" id="sku-search-input" class="form-control w-full pr-10" placeholder="Search by Product Name or SKU...">
+        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+    </div>
+    <div class="flex items-center gap-4 shrink-0">
+        <select id="category-filter-dropdown" class="form-control max-w-xs"></select>
+        <button id="add-product-btn" class="btn btn-primary shrink-0"><i class="fas fa-plus mr-2"></i> Add Product</button>
+    </div>
+</div>
+
+<!-- Container jahan product list dikhegi -->
+<div id="all-products-list"></div>
+
+<script>
+(function() {
+    // --- ELEMENTS ---
+    const productsContainer = document.getElementById('all-products-list');
+    const addProductBtn = document.getElementById('add-product-btn');
+    const categoryFilterDropdown = document.getElementById('category-filter-dropdown');
+    const searchInput = document.getElementById('sku-search-input');
+    const filterIndicator = document.getElementById('filter-indicator');
+
+    const applyLowStockFilter = window.showLowStockOnly;
+    window.showLowStockOnly = false;
+
+    // SortableJS instance ke liye global variable
+    let sortableInstance = null;
+
+    // --- DRAG-AND-DROP FUNCTION ---
+    function initializeSortable() {
+        const isFiltered = categoryFilterDropdown.value !== 'all' || searchInput.value.trim() !== '' || applyLowStockFilter;
+
+        if (sortableInstance) {
+            sortableInstance.destroy();
+            sortableInstance = null;
+        }
+
+        if (!isFiltered) {
+            sortableInstance = new Sortable(productsContainer, {
+                animation: 150,
+                handle: '.handle', // Drag handle ka class
+                ghostClass: 'sortable-ghost',
+                onEnd: async function(evt) {
+                    const newOrderedArray = Array.from(productsContainer.children).map(item => {
+                        const originalIndex = parseInt(item.dataset.index, 10);
+                        return window.allProductsCache[originalIndex];
+                    });
+
+                    productsContainer.style.pointerEvents = 'none'; // UI ko disable karein
+
+                    try {
+                        await db.ref(`${DB_BASE_PATH}/products`).set(newOrderedArray);
+                        window.allProductsCache = newOrderedArray; // Cache ko update karein
+                        window.showToast('Success', 'Product order has been saved.', 'success');
+                        renderProducts(); // List ko re-render karein
+                    } catch (error) {
+                        window.showToast('Error', 'Could not save order. Reverting.', 'error');
+                        console.error("Firebase reorder error:", error);
+                        renderProducts(); // Error par purani list wapas dikhayein
+                    } finally {
+                        productsContainer.style.pointerEvents = 'auto'; // UI ko enable karein
+                    }
+                }
+            });
+        }
+    }
+
+    // --- RENDER FUNCTION ---
+    function renderProducts() {
+        let productSource = window.allProductsCache || [];
+        
+        if (applyLowStockFilter) {
+            productSource = productSource.filter(p => p && p.quantity !== undefined && parseInt(p.quantity, 10) < 5);
+        }
+
+        const categoryFilter = categoryFilterDropdown.value;
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        let filteredProducts = productSource;
+
+        if (categoryFilter !== 'all') {
+            filteredProducts = filteredProducts.filter(p => p && p.category === categoryFilter);
+        }
+        if (searchTerm) {
+            filteredProducts = filteredProducts.filter(p => p && 
+                ((p.sku && p.sku.toLowerCase().includes(searchTerm)) || 
+                 (p.name && p.name.toLowerCase().includes(searchTerm)))
+            );
+        }
+
+        productsContainer.innerHTML = '';
+        if (filteredProducts.length > 0) {
+            filteredProducts.forEach(product => {
+                const originalIndex = window.allProductsCache.findIndex(p => p && p.id === product.id);
+                if (originalIndex === -1) return;
+                
+                const itemEl = document.createElement('div');
+                itemEl.className = 'draggable-item';
+                itemEl.dataset.index = originalIndex;
+
+                const isVisible = product.isVisible !== false;
+                if (!isVisible) {
+                    itemEl.classList.add('product-hidden');
+                }
+
+                const imageUrl = product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/100x100/e2e8f0/e2e8f0?text=img';
+                const stockInfo = product.quantity < 5 ? `<span class="text-xs font-bold text-red-500 ml-2">(Low Stock: ${product.quantity})</span>` : '';
+                
+                itemEl.innerHTML = `
+                    <i class="fas fa-grip-vertical handle text-gray-400"></i>
+                    <img src="${imageUrl}" alt="${product.name}" class="w-16 h-16 object-cover rounded-md">
+                    <div class="flex-grow">
+                        <span class="name font-semibold text-gray-800">${product.name}${stockInfo}</span>
+                        <p class="text-xs text-gray-500 mt-1">SKU: ${product.sku || 'N/A'}</p>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn btn-sm edit-product-btn" title="Edit"><i class="fas fa-edit"></i></button>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="visibility-toggle" ${isVisible ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary copy-product-btn" title="Duplicate"><i class="fas fa-copy"></i></button>
+                        <button class="btn btn-danger btn-sm delete-product-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+                productsContainer.appendChild(itemEl);
+            });
+        } else {
+            productsContainer.innerHTML = `<div class="text-center py-10"><i class="fas fa-box-open text-4xl text-gray-300"></i><p class="mt-4 text-gray-500">No products found matching your criteria.</p></div>`;
+        }
+        
+        // Render hone ke baad SortableJS ko initialize karein
+        initializeSortable();
+    }
+
+    // --- INITIAL SETUP ---
+    const categories = window.allCategoriesCache || [];
+    categoryFilterDropdown.innerHTML = `<option value="all">All Categories</option>`;
+    categories.forEach(cat => { if (cat) categoryFilterDropdown.innerHTML += `<option value="${cat}">${cat}</option>`; });
+
+    if (applyLowStockFilter) {
+        filterIndicator.innerHTML = `
+            <div class="bg-red-100 border border-red-200 text-red-700 px-4 py-2 rounded-md flex justify-between items-center text-sm">
+                <span>Showing only <strong>low stock</strong> products (Quantity < 5).</span>
+                <button id="clear-low-stock-filter" class="font-bold hover:underline">Clear Filter</button>
+            </div>
+        `;
+        document.getElementById('clear-low-stock-filter').addEventListener('click', () => {
+            document.querySelector('.sidebar-link[data-page="sections/products.html"]').click();
+        });
+    }
+
+    // --- EVENT LISTENERS ---
+    addProductBtn.addEventListener('click', () => {
+        window.editingProductData = null; // Purane data ko saaf karein
+        loadPage('sections/product-form.html');
+    });
+
+    productsContainer.addEventListener('click', async (e) => {
+        const itemEl = e.target.closest('.draggable-item');
+        if (!itemEl) return;
+        const index = parseInt(itemEl.dataset.index, 10);
+        const productData = window.allProductsCache[index];
+        if (!productData) return; // Agar product na mile toh ruk jayein
+
+        // --- Visibility Toggle ka Logic ---
+        if (e.target.classList.contains('visibility-toggle')) {
+            const toggle = e.target;
+            const newVisibility = toggle.checked;
+            itemEl.classList.toggle('product-hidden', !newVisibility);
+            try {
+                // Database se realtime data fetch karein
+                const snapshot = await db.ref(`${DB_BASE_PATH}/products`).get();
+                let productsArray = snapshot.val() || [];
+                // Sahi product ka index database array mein dhundein
+                const dbIndex = productsArray.findIndex(p => p && p.id === productData.id);
+                if (dbIndex > -1) {
+                    await db.ref(`${DB_BASE_PATH}/products/${dbIndex}/isVisible`).set(newVisibility);
+                    window.allProductsCache[index].isVisible = newVisibility; // Local cache update karein
+                    window.showToast('Status Updated', `${productData.name} is now ${newVisibility ? 'visible' : 'hidden'}.`, 'success');
+                } else {
+                     throw new Error("Product not found in Database. Please refresh.");
+                }
+            } catch (error) {
+                console.error("Visibility Error:", error);
+                toggle.checked = !newVisibility; // UI ko wapas purani state mein layein
+                itemEl.classList.toggle('product-hidden', newVisibility);
+                window.showToast('Error', 'Could not update visibility. ' + error.message, 'error');
+            }
+            return; // Baaki code execute na ho
+        }
+        
+        // --- EDIT BUTTON KA LOGIC ---
+        if (e.target.closest('.edit-product-btn')) {
+            // Product data ko global variable mein set karein taaki form use kar sake
+            window.editingProductData = { ...productData, originalIndex: index };
+            window.showToast('Loading Editor', `Editing "${productData.name}"...`, 'info');
+            loadPage('sections/product-form.html');
+        }
+        
+        // --- DELETE BUTTON KA LOGIC ---
+        if (e.target.closest('.delete-product-btn')) {
+            // Universal Modal ka istemal confirmation ke liye
+            const modal = document.getElementById('universalModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const modalSaveBtn = document.getElementById('modalSaveBtn');
+            const modalCancelBtn = document.getElementById('modalCancelBtn');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+            modalTitle.textContent = 'Confirm Deletion';
+            modalBody.innerHTML = `<p>Are you sure you want to permanently delete: <strong class="text-gray-800">${productData.name}</strong>?</p><p class="text-sm text-red-600 mt-2">This action cannot be undone.</p>`;
+            modalSaveBtn.textContent = 'Yes, Delete';
+            modalSaveBtn.className = 'btn btn-danger';
+            
+            const closeModal = () => {
+                modal.classList.remove('active');
+                // Purane event listener ko hatana zaroori hai
+                const newSaveBtn = modalSaveBtn.cloneNode(true);
+                modalSaveBtn.parentNode.replaceChild(newSaveBtn, modalSaveBtn);
+                newSaveBtn.textContent = 'Save Changes';
+                newSaveBtn.className = 'btn btn-primary';
+            };
+
+            const deleteHandler = async () => {
+                try {
+                    // Cache se product ko filter karke naya array banayein
+                    const updatedProducts = window.allProductsCache.filter(p => p && p.id !== productData.id);
+                    // Database mein naya array save karein
+                    await db.ref(`${DB_BASE_PATH}/products`).set(updatedProducts);
+                    window.showToast('Success', `"${productData.name}" has been deleted.`, 'success');
+                    // Cache aur UI ko turant update karein
+                    window.allProductsCache = updatedProducts;
+                    renderProducts();
+                } catch (error) {
+                    console.error("Delete Error:", error);
+                    window.showToast('Error', `Could not delete product. ${error.message}`, 'error');
+                } finally {
+                    closeModal();
+                }
+            };
+            
+            // Event listeners ko manage karna (cloneNode sabse aasan tarika)
+            const newSaveBtn = modalSaveBtn.cloneNode(true);
+            modalSaveBtn.parentNode.replaceChild(newSaveBtn, modalSaveBtn);
+            newSaveBtn.addEventListener('click', deleteHandler, { once: true });
+
+            modalCancelBtn.addEventListener('click', closeModal, { once: true });
+            modalCloseBtn.addEventListener('click', closeModal, { once: true });
+            modal.addEventListener('click', e => { if (e.target === modal) closeModal(); }, { once: true });
+
+            modal.classList.add('active'); // Modal dikhayein
+        }
+        
+        // --- COPY/DUPLICATE BUTTON KA LOGIC ---
+        if (e.target.closest('.copy-product-btn')) {
+            // Naye product ke liye unique ID aur SKU banayein
+            const newId = `prod-${Date.now()}`;
+            const newSku = `RAMA-${Date.now().toString().slice(-6)}`;
+            
+            // Product ka deep copy banayein
+            const newProduct = JSON.parse(JSON.stringify(productData)); 
+            
+            // Naye product ki properties set karein
+            newProduct.id = newId;
+            newProduct.sku = newSku;
+            newProduct.name = `${productData.name} - Copy`;
+            newProduct.isVisible = false; // Copy ko by default hidden rakhein
+            
+            // Copy ko original product ke theek neeche daalein
+            const originalPosition = window.allProductsCache.findIndex(p => p && p.id === productData.id);
+            const updatedProducts = [...window.allProductsCache];
+            
+            if (originalPosition > -1) {
+                updatedProducts.splice(originalPosition + 1, 0, newProduct);
+            } else {
+                updatedProducts.push(newProduct); // Agar original na mile
+            }
+
+            try {
+                // Nayi list ko database mein save karein
+                await db.ref(`${DB_BASE_PATH}/products`).set(updatedProducts);
+                window.showToast('Success', `"${productData.name}" has been duplicated.`, 'success');
+                // Cache aur UI ko turant update karein
+                window.allProductsCache = updatedProducts;
+                renderProducts();
+            } catch (error) {
+                console.error("Copy Error:", error);
+                window.showToast('Error', `Could not duplicate product. ${error.message}`, 'error');
+            }
+        }
+    });
+
+    categoryFilterDropdown.addEventListener('change', renderProducts);
+    searchInput.addEventListener('input', renderProducts);
+    
+    // --- INITIAL RENDER ---
+    renderProducts();
+})();
+</script>
