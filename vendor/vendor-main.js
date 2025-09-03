@@ -12,8 +12,6 @@ window.allCategoriesCache = [];
 
 
 // --- NAYA SEQUENTIAL CONFIGURATION FETCH FUNCTION ---
-// Pehle hum Promise.all se dono file ek saath mang rahe the.
-// Ab hum Firebase config PEHLE mangenge.
 async function fetchFirebaseConfig() {
     try {
         const response = await fetch('/api/get-vendor-firebase');
@@ -21,11 +19,15 @@ async function fetchFirebaseConfig() {
             throw new Error(`Firebase Config (Error ${response.status})`);
         }
         const config = await response.json();
+
+        // === YEH NAYI LINE JODI GAYI HAI ===
+        console.log("Vercel se yeh Firebase Config mili hai:", config);
+        // ===================================
+
         if (!config.apiKey) {
             throw new Error('Firebase API key server response mein nahi hai.');
         }
         FIREBASE_CONFIG = config;
-        console.log("Firebase configuration loaded successfully.");
         return true;
     } catch (error) {
         console.error("Firebase config load karne mein fail:", error);
@@ -34,7 +36,6 @@ async function fetchFirebaseConfig() {
     }
 }
 
-// Firebase config milne ke BAAD hum Image config mangenge.
 async function fetchImageConfig() {
     try {
         const response = await fetch('/api/vendor-image-config');
@@ -46,10 +47,8 @@ async function fetchImageConfig() {
             throw new Error('Image API key server response mein nahi hai.');
         }
         IMGBB_API_KEY = config.apiKey;
-        console.log("Image configuration loaded successfully.");
         return true;
     } catch (error) {
-        // Agar image config fail hoti hai, to hum sirf ek warning dikhayenge, app ko rokेंगे nahi.
         console.error("Image config load karne mein fail:", error);
         showToast('Warning', 'Image upload service shuru nahi ho saki. Aap kaam kar sakte hain, lekin image upload shayad na ho.', 'error', 8000);
         return false;
@@ -127,7 +126,6 @@ async function initializeVendorPanel(user) {
 
         setupEventListeners();
         
-        // Image config ko background mein load karein
         fetchImageConfig();
 
         document.querySelector('.sidebar-link[data-page="sections/dashboard.html"]').click();
@@ -149,7 +147,7 @@ function setupEventListeners() {
             document.getElementById('contentTitle').textContent = link.querySelector('span').textContent;
             loadPage(link.dataset.page);
             if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar').classList.add('-translatex-full');
                 document.getElementById('sidebarOverlay').classList.add('hidden');
             }
         });
@@ -216,10 +214,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadingOverlay.innerHTML = `<div style="position:fixed; inset:0; background: #f9fafb; z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1rem; font-family: Inter, sans-serif;"><div class="loader"></div><p>Panel ko surakshit roop se shuru kiya ja raha hai...</p></div>`;
     document.body.prepend(loadingOverlay);
 
-    // Step 1: Pehle sirf Firebase config fetch karein
     const firebaseLoaded = await fetchFirebaseConfig();
     
-    // Step 2: Agar Firebase load ho gaya, tabhi aage badhein
     if (firebaseLoaded) {
         loadingOverlay.remove();
         try {
