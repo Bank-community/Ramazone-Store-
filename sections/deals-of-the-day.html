@@ -3,6 +3,11 @@
     <!-- 'Deals of the Day' products yahaan main.js se dynamically load honge -->
     <div id="highlighted-products-wrapper">
     </div>
+
+    <!-- === YAHAN BADLAV KIYA GAYA HAI: Loading spinner joda gaya === -->
+    <div id="deals-loader" class="deals-loader">
+        <div class="spinner"></div>
+    </div>
 </section>
 
 <!-- Sirf Deals of the Day Section ke liye CSS -->
@@ -18,7 +23,7 @@
         padding: 0 1rem; 
     }
 
-    /* Offer tag ka style (Ye waisa hi rahega) */
+    /* Offer tag ka style */
     .offer-tag-top-left {
         position: absolute;
         top: 0;
@@ -33,7 +38,7 @@
         z-index: 5;
     }
     
-    /* === YAHAN BADLAV KIYA GAYA HAI: Rating card ka style purana wala set kiya gaya === */
+    /* Rating card ka style */
     .rating-tag-bottom-left {
         position: absolute;
         bottom: 8px;
@@ -41,7 +46,7 @@
         background-color: #16a34a; /* Green background */
         font-size: 12px;
         font-weight: 600;
-        padding: 4px 8px; /* Thoda sa padding adjust kiya */
+        padding: 4px 8px;
         z-index: 5;
         color: #fff; /* White text */
         border-radius: 5px;
@@ -50,6 +55,29 @@
     .rating-tag-bottom-left .fa-star {
         color: #fff; /* White star */
     }
+
+    /* === YAHAN BADLAV KIYA GAYA HAI: Loader ka CSS joda gaya === */
+    .deals-loader {
+        display: none; /* By default chhipa rahega */
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+
+    .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: var(--primary-color);
+        animation: spin 1s ease infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
 
     /* Responsive adjustments for larger screens */
     @media (min-width: 768px) { 
@@ -70,4 +98,5 @@
         } 
     }
 </style>
+
 

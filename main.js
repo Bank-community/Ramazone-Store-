@@ -99,7 +99,7 @@ async function initializeApp() {
     }
 }
 
-// --- UPDATED FUNCTION ---
+// --- DATA LOADING ---
 function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
@@ -117,7 +117,6 @@ function loadAllData() {
 async function loadPageStructure() {
     const mainArea = document.getElementById('main-content-area');
     if (mainArea.childElementCount > 0) return;
-    // Naya code (सही)
     const sections = ['categories.html', 'recently-viewed.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
     try {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
@@ -282,7 +281,6 @@ function renderFestiveCollection(collectionData) {
         return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
     }).join('');
 
-    // "View All" button ko yahaan add karo
     productsHTML += `
         <a href="festive-products.html" class="view-all-card">
             <div class="view-all-circle">
@@ -295,11 +293,9 @@ function renderFestiveCollection(collectionData) {
 }
 
 // --- UNIVERSAL HELPER FUNCTIONS ---
-// ** YAHAN BADLAV KIYA GAYA HAI **
 function createProductCardHTML(prod, cardClass = '') {
     if (!prod) return '';
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-    // Ab ye naye CSS classes ka istemaal karega
     const ratingTag = prod.rating ? `<div class="card-rating-tag rating-tag-bottom-left">${prod.rating} <i class="fas fa-star"></i></div>` : '';
     const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
 
@@ -313,13 +309,11 @@ function createProductCardHTML(prod, cardClass = '') {
     const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
     const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
 
-    // Yahan <a> tag ke andar relative class add ki gayi hai
     return `<div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a></div></div>`;
 }
 
 function getDealsOfTheDayProducts() {
     if (!allProductsCache || allProductsCache.length === 0) return [];
-    // Just sort and return all of them. The infinite scroll will handle loading.
     return [...allProductsCache].sort((a, b) => {
         const discountA = (a.originalPrice || 0) - (a.displayPrice || 0);
         const discountB = (b.originalPrice || 0) - (b.displayPrice || 0);
@@ -372,12 +366,12 @@ function renderHighlightedProducts() {
     }
 
     section.style.display = 'block';
-    wrapper.innerHTML = ''; // Clear previous content
+    wrapper.innerHTML = ''; 
     currentlyDisplayedDeals = 0;
+    if (dealsObserver) dealsObserver.disconnect(); // Purana observer reset karo
 
-    loadMoreDeals(); // Load initial batch (20 products)
+    loadMoreDeals(); 
 
-    // Setup Intersection Observer
     const loader = document.getElementById('deals-loader');
     if (loader) {
         dealsObserver = new IntersectionObserver((entries) => {
@@ -389,34 +383,50 @@ function renderHighlightedProducts() {
     }
 }
 
+// === YAHAN BADLAV KIYA GAYA HAI: Pura function theek kiya gaya ===
 function loadMoreDeals() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const loader = document.getElementById('deals-loader');
     if (isLoadingDeals || !wrapper || !loader) return;
 
-    const productsToLoad = dealsOfTheDayProducts.slice(currentlyDisplayedDeals, currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage));
+    // Check karo ki aur products bache hain ya nahi
+    if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length && currentlyDisplayedDeals > 0) {
+        loader.style.display = 'none'; // Sab load ho gaya, ab loader ko hamesha ke liye chhupa do
+        if (dealsObserver) dealsObserver.disconnect(); // Observer ka kaam khatam
+        return;
+    }
+
+    const productsToLoad = dealsOfTheDayProducts.slice(
+        currentlyDisplayedDeals, 
+        currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage)
+    );
 
     if (productsToLoad.length === 0) {
-        loader.style.display = 'none'; // No more products, hide loader
-        if (dealsObserver) dealsObserver.disconnect(); // Stop observing
+        loader.style.display = 'none';
+        if (dealsObserver) dealsObserver.disconnect();
         return;
     }
 
     isLoadingDeals = true;
-    loader.style.display = 'flex';
+    loader.style.display = 'flex'; // Loading shuru, loader dikhao
 
-    // Simulate network delay for better UX
+    // Network delay ka anubhav dene ke liye setTimeout
     setTimeout(() => {
         const productsHTML = productsToLoad.map(p => createProductCardHTML(p, 'grid-item')).join('');
         wrapper.insertAdjacentHTML('beforeend', productsHTML);
         currentlyDisplayedDeals += productsToLoad.length;
         isLoadingDeals = false;
-        loader.style.display = 'none';
 
-        // If we've loaded all products, hide loader and stop observing
+        // **SABSE ZAROORI BADLAV:** Loader ko yahaan mat chhupao.
+        // Usko bas tabhi chhupana hai jab saare products load ho jaayein.
+        // Isliye loader ko dikhte rehne do taaki agla scroll detect ho sake.
+
+        // Agar saare products load ho gaye hain, to ab loader ko chhupa do.
         if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) {
+            loader.style.display = 'none';
             if (dealsObserver) dealsObserver.disconnect();
         }
+
     }, 500);
 }
 
