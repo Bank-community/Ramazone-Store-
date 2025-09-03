@@ -1,0 +1,206 @@
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Manage Coupons</h2>
+    <button id="add-coupon-btn" class="btn btn-primary"><i class="fas fa-plus mr-2"></i> Add Coupon</button>
+</div>
+<div id="coupon-list-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    </div>
+
+<script>
+    (function() {
+        const container = document.getElementById('coupon-list-container');
+        const addBtn = document.getElementById('add-coupon-btn');
+
+        function renderCoupons() {
+            container.innerHTML = '';
+            const coupons = window.ramazoneData.homepage?.coupons || [];
+
+            if (coupons.length > 0) {
+                coupons.forEach((coupon, index) => {
+                    if (!coupon) return;
+                    
+                    // --- Updated: Status and Expiry Logic ---
+                    let effectiveStatus = coupon.status;
+                    let statusClass = '';
+                    let isExpired = false;
+                    
+                    if (coupon.expiryDate) {
+                        const expiry = new Date(coupon.expiryDate);
+                        expiry.setHours(23, 59, 59, 999); // Coupon is valid for the whole day
+                        if (coupon.status === 'active' && expiry < new Date()) {
+                            effectiveStatus = 'expired';
+                            isExpired = true;
+                        }
+                    }
+
+                    switch(effectiveStatus) {
+                        case 'active':
+                            statusClass = 'bg-green-100 text-green-800';
+                            break;
+                        case 'inactive':
+                            statusClass = 'bg-gray-200 text-gray-800';
+                            break;
+                        case 'expired':
+                            statusClass = 'bg-red-100 text-red-800';
+                            break;
+                    }
+                    // --- End of Update ---
+
+                    const card = document.createElement('div');
+                    card.className = 'admin-card';
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Coupon Code</p>
+                                    <p class="text-2xl font-bold font-mono tracking-widest">${coupon.code}</p>
+                                </div>
+                                <span class="text-xs font-bold px-2 py-1 rounded-full ${statusClass} capitalize">${effectiveStatus}</span>
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Discount</p>
+                                    <p class="text-xl font-semibold">₹${coupon.discount}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Expiry Date</p>
+                                    <p class="text-base font-semibold">${coupon.expiryDate || 'No expiry'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer flex justify-between items-center">
+                             <label class="toggle-switch" title="Toggle Status (Active/Inactive)">
+                                <input type="checkbox" class="status-toggle" data-index="${index}" ${coupon.status === 'active' ? 'checked' : ''} ${isExpired ? 'disabled' : ''}>
+                                <span class="slider"></span>
+                             </label>
+                             <div class="flex gap-2">
+                                <button type="button" data-index="${index}" class="btn btn-sm edit-coupon-btn"><i class="fas fa-edit mr-1"></i> Edit</button>
+                                <button type="button" data-index="${index}" class="btn btn-danger btn-sm delete-coupon-btn"><i class="fas fa-trash-alt"></i></button>
+                             </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                container.innerHTML = `<p class="text-center text-gray-500 py-4 md:col-span-3">No coupons added yet.</p>`;
+            }
+        }
+
+        function openCouponModal(data = null, index = null) {
+            const modal = document.getElementById('universalModal');
+            document.getElementById('modalTitle').textContent = index !== null ? 'Edit Coupon' : 'Add New Coupon';
+            
+            // --- Updated: Added Expiry Date to modal form ---
+            document.getElementById('modalBody').innerHTML = `
+                <form id="coupon-form" class="space-y-4">
+                    <input type="hidden" id="coupon-index" value="${index !== null ? index : ''}">
+                    <div><label class="form-label">Coupon Code</label><input type="text" class="form-control" id="coupon-code" required></div>
+                    <div><label class="form-label">Discount Amount (₹)</label><input type="number" class="form-control" id="coupon-discount" required></div>
+                    <div><label class="form-label">Expiry Date</label><input type="date" class="form-control" id="coupon-expiry"></div>
+                    <div><label class="form-label">Status</label><select class="form-control" id="coupon-status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+                </form>
+            `;
+
+            if (data) {
+                document.getElementById('coupon-code').value = data.code || '';
+                document.getElementById('coupon-discount').value = data.discount || '';
+                document.getElementById('coupon-status').value = data.status || 'active';
+                document.getElementById('coupon-expiry').value = data.expiryDate || '';
+            }
+
+            document.getElementById('modalSaveBtn').onclick = saveCouponFromModal;
+            modal.classList.add('active');
+        };
+
+        async function saveCouponFromModal() {
+            const modalSaveBtn = document.getElementById('modalSaveBtn');
+            const form = document.getElementById('coupon-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            modalSaveBtn.disabled = true;
+            window.showToast('Saving...', 'Coupon data save ho raha hai...', 'info');
+
+            try {
+                const index = form.querySelector('#coupon-index').value;
+                const itemData = {
+                    code: form.querySelector('#coupon-code').value.toUpperCase(),
+                    discount: form.querySelector('#coupon-discount').value,
+                    status: form.querySelector('#coupon-status').value,
+                    expiryDate: form.querySelector('#coupon-expiry').value, // Save expiry date
+                };
+                
+                const listRef = db.ref(`${DB_BASE_PATH}/homepage/coupons`);
+                const snapshot = await listRef.get();
+                let currentList = snapshot.val() || [];
+                
+                if (index !== '') {
+                    currentList[index] = itemData;
+                } else {
+                    currentList.push(itemData);
+                }
+                await listRef.set(currentList);
+                window.showToast('Success', 'Coupon save ho gaya!', 'success');
+                document.getElementById('universalModal').classList.remove('active');
+            } catch (err) {
+                window.showToast('Error', `Save nahi ho paya: ${err.message}`, 'error');
+            } finally {
+                modalSaveBtn.disabled = false;
+            }
+        };
+
+        addBtn.addEventListener('click', () => openCouponModal());
+
+        // Using one listener for both click and change events
+        container.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return; // Not a button, do nothing
+
+            if (btn.classList.contains('edit-coupon-btn')) {
+                const index = btn.dataset.index;
+                openCouponModal(window.ramazoneData.homepage?.coupons[index], index);
+            }
+
+            if (btn.classList.contains('delete-coupon-btn')) {
+                const index = btn.dataset.index;
+                if (confirm(`Kya aap is coupon ko sach mein delete karna chahte hain?`)) {
+                   const listRef = db.ref(`${DB_BASE_PATH}/homepage/coupons`);
+                   const snapshot = await listRef.get();
+                   let currentList = snapshot.val() || [];
+                   currentList.splice(index, 1);
+                   await listRef.set(currentList);
+                   window.showToast('Success', `Coupon delete ho gaya.`, 'success');
+                }
+            }
+        });
+
+        // --- Added: Event listener for toggle switch ---
+        container.addEventListener('change', async (e) => {
+            if (e.target.classList.contains('status-toggle')) {
+                const index = e.target.dataset.index;
+                const newStatus = e.target.checked ? 'active' : 'inactive';
+                
+                e.target.disabled = true; // Prevent rapid clicking
+
+                try {
+                    const listRef = db.ref(`${DB_BASE_PATH}/homepage/coupons`);
+                    const snapshot = await listRef.get();
+                    let currentList = snapshot.val() || [];
+                    
+                    if (currentList[index]) {
+                        currentList[index].status = newStatus;
+                        await listRef.set(currentList);
+                        window.showToast('Success', `Coupon status updated to ${newStatus}.`, 'success');
+                    }
+                } catch(err) {
+                    window.showToast('Error', `Status update failed: ${err.message}`, 'error');
+                    e.target.checked = !e.target.checked; // Revert toggle on error
+                } finally {
+                    e.target.disabled = false;
+                }
+            }
+        });
+
+        renderCoupons();
+    })();
+</script>
