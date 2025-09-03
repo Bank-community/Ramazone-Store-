@@ -1,0 +1,313 @@
+<!-- sections/orders.html -->
+<style>
+    /* Tabs ka style same rahega */
+    .tab-button { padding: .75rem 1.5rem; font-weight: 600; color: #4b5563; border-bottom: 3px solid transparent; transition: all .2s ease; cursor: pointer; }
+    .tab-button.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* === NEW TOP-NOTCH LIST DESIGN === */
+    .order-list-container {
+        background-color: #fff;
+        border-radius: 0.75rem;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .order-item {
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .order-item:last-child {
+        border-bottom: none;
+    }
+    .order-summary {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .order-summary:hover {
+        background-color: #f9fafb;
+    }
+    .order-summary .customer-info { flex-grow: 1; }
+    .order-summary .customer-name { font-size: 1.125rem; font-weight: 600; color: #1f2937; }
+    .order-summary .order-id-wrapper { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.125rem; }
+    .order-summary .order-id { font-family: monospace; font-size: 0.8rem; color: #6b7280; }
+    .order-summary .copy-btn { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.9rem; padding: 0.25rem; }
+    .order-summary .copy-btn:hover { color: var(--primary); }
+
+    .order-summary .order-meta { text-align: right; }
+    .order-summary .vendor-total { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+    .order-summary .order-date { font-size: 0.75rem; color: #6b7280; }
+
+    .order-summary .expand-icon {
+        margin-left: 1rem;
+        color: #9ca3af;
+        transition: transform 0.3s ease;
+    }
+    .order-item.expanded .expand-icon {
+        transform: rotate(180deg);
+    }
+
+    /* Expandable Details Section */
+    .order-details {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+        padding: 0 1.25rem;
+        background-color: #f8fafc;
+    }
+    .order-item.expanded .order-details {
+        max-height: 1000px; /* Badi value taaki content fit ho jaye */
+        padding: 1rem 1.25rem;
+        border-top: 1px solid #f3f4f6;
+    }
+    .order-details .detail-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed #e5e7eb;
+    }
+    .order-details .detail-item:last-child { border-bottom: none; }
+    .order-details .item-image { width: 48px; height: 48px; object-fit: cover; border-radius: 0.5rem; margin-right: 1rem; }
+    .order-details .item-name { flex-grow: 1; font-weight: 500; }
+    .order-details .item-price { font-weight: 600; }
+
+    .order-details .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    /* Status Badge ka style same rahega */
+    .status-badge{padding:.25rem .75rem;border-radius:9999px;font-size:.75rem;font-weight:600;text-transform:capitalize}.status-Confirmed{background-color:#e0f2fe;color:#0ea5e9}.status-Shipped{background-color:#dbeafe;color:#3b82f6}.status-Out-for-Delivery{background-color:#fef3c7;color:#f59e0b}.status-Delivered{background-color:#dcfce7;color:#22c55e}.status-Pending{background-color:#fee2e2;color:#ef4444}.status-Rejected{background-color:#e5e7eb;color:#4b5563}
+</style>
+
+<!-- Page Header (No Change) -->
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">My Orders</h2>
+    <p class="text-sm text-gray-500">Aapke products ke saare orders yahan dikhenge.</p>
+</div>
+
+<!-- Tabs (No Change) -->
+<div class="mb-6">
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+            <button class="tab-button active" data-tab="pending">Pending</button>
+            <button class="tab-button" data-tab="confirmed">Confirmed & Shipped</button>
+            <button class="tab-button" data-tab="rejected">Rejected</button>
+        </nav>
+    </div>
+</div>
+
+<!-- Container for Orders List (NEW Structure) -->
+<div id="vendor-orders-content" class="space-y-4">
+    <div id="pending-orders-container" class="tab-content order-list-container"></div>
+    <div id="confirmed-orders-container" class="tab-content order-list-container hidden"></div>
+    <div id="rejected-orders-container" class="tab-content order-list-container hidden"></div>
+</div>
+
+<div id="orders-loading-indicator" class="text-center py-16"><div class="loader"></div><p class="text-primary font-medium mt-6">Loading Your Orders...</p></div>
+<div id="no-orders-message" class="text-center py-16 hidden"><i class="fas fa-inbox text-5xl text-gray-300"></i><h3 class="mt-4 text-xl font-semibold text-gray-700">No Orders Found</h3><p class="text-gray-500 mt-1">Is section mein abhi koi order nahi hai.</p></div>
+
+<script>
+(async function() {
+    // --- ELEMENTS ---
+    const loadingIndicator = document.getElementById('orders-loading-indicator');
+    const noOrdersMessage = document.getElementById('no-orders-message');
+    const tabs = document.querySelectorAll('.tab-button');
+    const contents = { pending: document.getElementById('pending-orders-container'), confirmed: document.getElementById('confirmed-orders-container'), rejected: document.getElementById('rejected-orders-container') };
+    const mainContainer = document.getElementById('vendor-orders-content');
+    let currentTab = 'pending';
+    let allVendorOrders = [];
+
+    // --- RENDER FUNCTIONS ---
+    function renderOrdersForCurrentTab() {
+        Object.values(contents).forEach(c => c.innerHTML = '');
+        let ordersToRender = [];
+        if (currentTab === 'pending') {
+            ordersToRender = allVendorOrders.filter(o => o.status === 'Pending');
+        } else if (currentTab === 'confirmed') {
+            ordersToRender = allVendorOrders.filter(o => o.status !== 'Pending' && o.status !== 'Rejected');
+        } else {
+            ordersToRender = allVendorOrders.filter(o => o.status === 'Rejected');
+        }
+        
+        const container = contents[currentTab];
+        if (ordersToRender.length === 0) {
+            noOrdersMessage.classList.remove('hidden');
+            Object.values(contents).forEach(c => c.classList.add('hidden'));
+        } else {
+            noOrdersMessage.classList.add('hidden');
+            Object.values(contents).forEach(c => c.classList.add('hidden'));
+            container.classList.remove('hidden');
+            ordersToRender.forEach(order => container.appendChild(createOrderRow(order)));
+        }
+    }
+
+    // --- createOrderRow function (NEW UI) ---
+    function createOrderRow(order) {
+        const itemWrapper = document.createElement('div');
+        itemWrapper.className = 'order-item';
+        itemWrapper.dataset.orderId = order.orderId;
+
+        const vendorProductIds = (window.currentVendorProductsCache || []).map(p => p.data.id);
+        const vendorItemsInOrder = order.items.filter(item => vendorProductIds.includes(item.id));
+        if (vendorItemsInOrder.length === 0) return document.createDocumentFragment();
+
+        const vendorTotal = vendorItemsInOrder.reduce((sum, item) => sum + ((item.displayPrice || 0) * (item.quantity || 1)), 0);
+        const orderTimestamp = order.createdAt || order.timestamp || Date.now();
+        
+        const itemsHtml = vendorItemsInOrder.map(item => `
+            <div class="detail-item">
+                <img src="${item.image || 'https://placehold.co/48x48'}" alt="${item.name}" class="item-image">
+                <div class="item-name">${item.name} <span class="text-gray-500 text-sm">(x${item.quantity})</span></div>
+                <div class="item-price">₹${((item.displayPrice || 0) * item.quantity).toLocaleString('en-IN')}</div>
+            </div>
+        `).join('');
+
+        let actionButtonsHtml = '';
+        if (order.status === 'Pending') {
+            actionButtonsHtml = `
+                <div class="action-buttons">
+                    <button class="btn btn-danger reject-btn"><i class="fas fa-times mr-2"></i>Reject</button>
+                    <button class="btn btn-primary accept-btn"><i class="fas fa-check mr-2"></i>Accept Order</button>
+                </div>
+            `;
+        }
+
+        itemWrapper.innerHTML = `
+            <div class="order-summary">
+                <div class="customer-info">
+                    <h4 class="customer-name">${order.customerDetails.name}</h4>
+                    <div class="order-id-wrapper">
+                        <span class="order-id">${order.orderId}</span>
+                        <button class="copy-btn" title="Copy Order ID"><i class="far fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="order-meta">
+                    <p class="vendor-total">₹${vendorTotal.toLocaleString('en-IN')}</p>
+                    <p class="order-date">${new Date(orderTimestamp).toLocaleDateString()}</p>
+                </div>
+                <i class="fas fa-chevron-down expand-icon"></i>
+            </div>
+            <div class="order-details">
+                <h5 class="font-semibold text-gray-700 mb-2">Your Items in this Order:</h5>
+                <div class="items-list">${itemsHtml}</div>
+                ${actionButtonsHtml}
+            </div>
+        `;
+        return itemWrapper;
+    }
+
+    // --- DATA FETCHING (Real-time) - No Change ---
+    async function setupOrderListener() {
+        try {
+            const vendorProductIds = (window.currentVendorProductsCache || []).map(p => p.data.id);
+            if (vendorProductIds.length === 0) {
+                loadingIndicator.classList.add('hidden');
+                noOrdersMessage.classList.remove('hidden');
+                return;
+            }
+            const ordersRef = db.ref(`${DB_BASE_PATH}/orders`);
+            ordersRef.on('value', (snapshot) => {
+                const ordersData = snapshot.val() || {};
+                const combinedOrders = [
+                    ...Object.values(ordersData.pending || {}),
+                    ...Object.values(ordersData.confirmed || {}),
+                    ...Object.values(ordersData.rejected || {})
+                ];
+                allVendorOrders = combinedOrders.filter(order => 
+                    order.items && order.items.some(item => vendorProductIds.includes(item.id))
+                ).sort((a, b) => (b.createdAt || b.timestamp) - (a.createdAt || a.timestamp));
+                loadingIndicator.classList.add('hidden');
+                renderOrdersForCurrentTab();
+            });
+        } catch (error) {
+            console.error("Error fetching vendor orders:", error);
+            window.showToast('Error', 'Could not load your orders.', 'error');
+            loadingIndicator.classList.add('hidden');
+        }
+    }
+
+    // --- FIREBASE ACTIONS - No Change ---
+    async function moveOrder(orderId, from, to, newStatus, button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        const orderRef = db.ref(`${DB_BASE_PATH}/orders/${from}/${orderId}`);
+        const snapshot = await orderRef.get();
+        if (!snapshot.exists()) { window.showToast('Error', 'Order not found.', 'error'); return; }
+        const orderData = snapshot.val();
+        orderData.status = newStatus;
+        orderData.statusHistory = orderData.statusHistory || {};
+        orderData.statusHistory[Date.now()] = { status: newStatus, timestamp: firebase.database.ServerValue.TIMESTAMP, actionBy: 'vendor' };
+        const updates = {};
+        updates[`orders/${from}/${orderId}`] = null;
+        updates[`orders/${to}/${orderId}`] = orderData;
+        try {
+            await db.ref(DB_BASE_PATH).update(updates);
+            window.showToast('Success!', `Order has been ${newStatus.toLowerCase()}.`, 'success');
+        } catch (error) {
+            window.showToast('Error', 'Failed to update order.', 'error');
+            button.disabled = false;
+        }
+    }
+
+    // --- EVENT LISTENERS (UPDATED for new UI) ---
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentTab = tab.dataset.tab;
+            renderOrdersForCurrentTab();
+        });
+    });
+
+    // --- === LOGIC FIX STARTS HERE === ---
+    mainContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+
+        // 1. Sabse pehle Copy Button ko handle karein
+        if (button && button.classList.contains('copy-btn')) {
+            const itemWrapper = button.closest('.order-item');
+            const orderIdText = itemWrapper.querySelector('.order-id').textContent;
+            
+            // Clipboard API ka istemal
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = orderIdText;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            window.showToast('Copied!', 'Order ID copied to clipboard.', 'success');
+            return; // Yahan par function rok dein
+        }
+
+        // 2. Uske baad expand/collapse ko handle karein
+        const summary = e.target.closest('.order-summary');
+        if (summary) {
+            summary.parentElement.classList.toggle('expanded');
+            return; // Yahan par function rok dein
+        }
+        
+        // 3. Aakhir mein expanded view ke buttons (Accept/Reject) ko handle karein
+        if (button) {
+            const itemWrapper = button.closest('.order-item');
+            const orderId = itemWrapper.dataset.orderId;
+
+            if (button.classList.contains('accept-btn')) {
+                moveOrder(orderId, 'pending', 'confirmed', 'Confirmed', button);
+            } else if (button.classList.contains('reject-btn')) {
+                moveOrder(orderId, 'pending', 'rejected', 'Rejected', button);
+            }
+        }
+    });
+    // --- === LOGIC FIX ENDS HERE === ---
+
+    // --- INITIAL CALL ---
+    await setupOrderListener();
+})();
+</script>
+
