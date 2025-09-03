@@ -1,0 +1,206 @@
+<!-- sections/orders.html -->
+<style>
+    .tab-button{padding:.75rem 1.5rem;font-weight:600;color:#4b5563;border-bottom:3px solid transparent;transition:all .2s ease;cursor:pointer}.tab-button.active{color:var(--primary);border-bottom-color:var(--primary)}
+    .order-card-new { background-color: #fff; border-radius: 0.75rem; border: 1px solid #e5e7eb; margin-bottom: 1.5rem; overflow: hidden; transition: all 0.2s ease-in-out; }
+    .order-card-new:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .order-card-header-new { padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+    .order-card-body-new { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out; padding: 0 1.25rem; }
+    .order-card-body-new.expanded { max-height: 500px; padding: 1rem 1.25rem; border-top: 1px solid #f3f4f6; }
+    .order-card-footer-new { padding: 0.75rem 1.25rem; background-color: #f9fafb; display: flex; justify-content: space-between; align-items: center; }
+    .status-badge{padding:.25rem .75rem;border-radius:9999px;font-size:.8rem;font-weight:600;text-transform:capitalize}.status-Confirmed{background-color:#e0f2fe;color:#0ea5e9}.status-Shipped{background-color:#dbeafe;color:#3b82f6}.status-Out-for-Delivery{background-color:#fef3c7;color:#f59e0b}.status-Delivered{background-color:#dcfce7;color:#22c55e}.status-Pending{background-color:#fee2e2;color:#ef4444}.status-Rejected{background-color:#e5e7eb;color:#4b5563}
+</style>
+
+<div class="mb-6">
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+            <button id="pending-tab-btn" class="tab-button active" data-tab="pending">Pending</button>
+            <button id="confirmed-tab-btn" class="tab-button" data-tab="confirmed">Confirmed</button>
+            <button id="rejected-tab-btn" class="tab-button" data-tab="rejected">Rejected</button>
+        </nav>
+    </div>
+</div>
+
+<div id="orders-content">
+    <div id="pending-orders-content" class="tab-content"></div>
+    <div id="confirmed-orders-content" class="tab-content hidden"></div>
+    <div id="rejected-orders-content" class="tab-content hidden"></div>
+</div>
+
+<div id="orders-loading-indicator" class="text-center py-16"><div class="loader"></div><p class="text-primary font-medium mt-6">Loading Orders...</p></div>
+<div id="no-orders-message" class="text-center py-16 hidden"><i class="fas fa-inbox text-5xl text-gray-300"></i><h3 class="mt-4 text-xl font-semibold text-gray-700">No Orders Found</h3><p class="text-gray-500 mt-1">Is section mein abhi koi order nahi hai.</p></div>
+
+<script>
+(function() {
+    // --- ELEMENTS ---
+    const contentArea = document.getElementById('orders-content');
+    const loadingIndicator = document.getElementById('orders-loading-indicator');
+    const noOrdersMessage = document.getElementById('no-orders-message');
+    const tabs = { pending: document.getElementById('pending-tab-btn'), confirmed: document.getElementById('confirmed-tab-btn'), rejected: document.getElementById('rejected-tab-btn') };
+    const contents = { pending: document.getElementById('pending-orders-content'), confirmed: document.getElementById('confirmed-orders-content'), rejected: document.getElementById('rejected-orders-content') };
+
+    let currentTab = 'pending';
+    let ordersRef = null; // To store the Firebase reference
+
+    // --- REAL-TIME LISTENER ---
+    function initializeOrdersSection() {
+        loadingIndicator.classList.remove('hidden');
+        contentArea.classList.add('hidden');
+        
+        // Detach any old listener before attaching a new one
+        if (ordersRef) ordersRef.off(); 
+
+        ordersRef = db.ref(`${DB_BASE_PATH}/orders`);
+        ordersRef.on('value', (snapshot) => {
+            const ordersData = snapshot.val() || {};
+            const allOrders = {
+                pending: ordersData.pending || {},
+                confirmed: ordersData.confirmed || {},
+                rejected: ordersData.rejected || {}
+            };
+            renderAllOrders(allOrders);
+            updateNoOrdersMessage(allOrders);
+            loadingIndicator.classList.add('hidden');
+            contentArea.classList.remove('hidden');
+        }, (error) => {
+            console.error("Firebase read failed:", error);
+            window.showToast('Error', 'Could not fetch orders.', 'error');
+            loadingIndicator.classList.add('hidden');
+        });
+
+        setupEventListeners();
+        switchTab('pending');
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderAllOrders(allOrders) {
+        renderOrderList(allOrders.pending, contents.pending, 'pending');
+        renderOrderList(allOrders.confirmed, contents.confirmed, 'confirmed');
+        renderOrderList(allOrders.rejected, contents.rejected, 'rejected');
+    }
+
+    function renderOrderList(orderObject, container, type) {
+        container.innerHTML = '';
+        const orderIds = Object.keys(orderObject);
+        if (orderIds.length === 0) return;
+        orderIds.sort((a, b) => orderObject[b].createdAt - orderObject[a].createdAt);
+        orderIds.forEach(orderId => container.appendChild(createOrderCard(orderObject[orderId], type)));
+    }
+
+    function createOrderCard(order, type) {
+        const card = document.createElement('div');
+        card.className = 'order-card-new';
+        card.dataset.orderId = order.orderId;
+        card.dataset.orderType = type; // Store the current type (pending, confirmed, etc.)
+        const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+        let actionButtons = '';
+
+        if (type === 'pending') {
+            actionButtons = `<button class="btn btn-sm btn-danger reject-btn"><i class="fas fa-times mr-1"></i>Reject</button><button class="btn btn-sm btn-primary approve-btn"><i class="fas fa-check mr-1"></i>Approve</button>`;
+        } else if (type === 'confirmed') {
+            switch(order.status) {
+                case 'Confirmed': actionButtons = `<button class="btn btn-sm btn-primary status-update-btn" data-status="Shipped"><i class="fas fa-truck mr-1"></i>Mark Shipped</button>`; break;
+                case 'Shipped': actionButtons = `<button class="btn btn-sm btn-primary status-update-btn" data-status="Out for Delivery"><i class="fas fa-box-taped mr-1"></i>Mark OFD</button>`; break;
+                case 'Out for Delivery': actionButtons = `<button class="btn btn-sm btn-primary status-update-btn" data-status="Delivered"><i class="fas fa-star mr-1"></i>Mark Delivered</button>`; break;
+                case 'Delivered': actionButtons = `<span class="font-semibold text-green-600 flex items-center gap-2"><i class="fas fa-check-circle"></i>Completed</span>`; break;
+            }
+        } else if (type === 'rejected') {
+            actionButtons = `<button class="btn btn-sm btn-danger delete-btn"><i class="fas fa-trash-alt mr-1"></i>Delete</button>`;
+        }
+
+        card.innerHTML = `
+            <div class="order-card-header-new">
+                <div><h3 class="font-bold text-lg">${order.customerDetails.name}</h3><p class="text-xs text-gray-500 font-mono">${order.orderId}</p></div>
+                <div class="text-right"><p class="font-bold text-xl text-primary">₹${order.priceSummary.grandTotal.toLocaleString('en-IN')}</p><p class="text-xs text-gray-500">${new Date(order.createdAt).toLocaleString()}</p></div>
+            </div>
+            <div class="order-card-body-new">
+                <p class="font-semibold mb-2">Items:</p>
+                <div class="space-y-2">${order.items.map(item => `<div class="flex items-center text-sm"><img src="${item.image}" class="w-10 h-10 rounded-md mr-3 object-cover"><span class="flex-grow">${item.name} (x${item.quantity})</span><span class="font-medium">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</span></div>`).join('')}</div>
+            </div>
+            <div class="order-card-footer-new">
+                <div class="flex items-center gap-3"><span class="status-badge ${statusClass}">${order.status}</span><button class="btn btn-sm view-items-btn"><i class="fas fa-list mr-1"></i>View Items</button></div>
+                <div class="flex items-center gap-2">${actionButtons}</div>
+            </div>
+        `;
+        return card;
+    }
+
+    // --- UI & EVENT FUNCTIONS ---
+    function switchTab(tabName) {
+        currentTab = tabName;
+        Object.values(tabs).forEach(t => t.classList.remove('active'));
+        Object.values(contents).forEach(c => c.classList.add('hidden'));
+        tabs[tabName].classList.add('active');
+        contents[tabName].classList.remove('hidden');
+        updateNoOrdersMessage();
+    }
+    
+    function updateNoOrdersMessage(allOrdersData) {
+        const ordersToShow = allOrdersData || { pending: contents.pending.children.length, confirmed: contents.confirmed.children.length, rejected: contents.rejected.children.length };
+        const count = (typeof ordersToShow[currentTab] === 'number') ? ordersToShow[currentTab] : Object.keys(ordersToShow[currentTab]).length;
+        noOrdersMessage.classList.toggle('hidden', count > 0);
+    }
+
+    function setupEventListeners() {
+        Object.keys(tabs).forEach(tabName => tabs[tabName].addEventListener('click', () => switchTab(tabName)));
+        contentArea.addEventListener('click', handleCardButtonClick);
+    }
+
+    async function handleCardButtonClick(e) {
+        const button = e.target.closest('button');
+        if (!button) return;
+        const card = e.target.closest('.order-card-new');
+        const orderId = card.dataset.orderId;
+        const orderType = card.dataset.orderType;
+
+        if (button.classList.contains('view-items-btn')) card.querySelector('.order-card-body-new').classList.toggle('expanded');
+        else if (button.classList.contains('approve-btn')) await moveOrder(orderId, 'pending', 'confirmed', 'Confirmed');
+        else if (button.classList.contains('reject-btn')) await moveOrder(orderId, 'pending', 'rejected', 'Rejected');
+        else if (button.classList.contains('delete-btn')) await deleteOrder(orderId);
+        else if (button.classList.contains('status-update-btn')) await updateOrderStatus(orderId, button.dataset.status);
+    }
+
+    // --- FIREBASE ACTIONS ---
+    async function moveOrder(orderId, from, to, newStatus) {
+        const orderRef = db.ref(`${DB_BASE_PATH}/orders/${from}/${orderId}`);
+        const snapshot = await orderRef.get();
+        if (!snapshot.exists()) return window.showToast('Error', 'Order not found.', 'error');
+        
+        const orderData = snapshot.val();
+        orderData.status = newStatus;
+        orderData.statusHistory = orderData.statusHistory || {};
+        orderData.statusHistory[Date.now()] = { status: newStatus, timestamp: firebase.database.ServerValue.TIMESTAMP };
+        
+        const updates = {};
+        updates[`orders/${from}/${orderId}`] = null;
+        updates[`orders/${to}/${orderId}`] = orderData;
+        
+        try {
+            await db.ref(DB_BASE_PATH).update(updates);
+            window.showToast('Success', `Order has been ${newStatus.toLowerCase()}.`, 'success');
+        } catch (error) {
+            window.showToast('Error', 'Failed to update order.', 'error');
+        }
+    }
+
+    async function deleteOrder(orderId) {
+        if (confirm(`DELETE order ID: ${orderId} permanently?`)) {
+            await db.ref(`${DB_BASE_PATH}/orders/rejected/${orderId}`).remove();
+            window.showToast('Success', `Order ${orderId} has been deleted.`, 'success');
+        }
+    }
+    
+    async function updateOrderStatus(orderId, newStatus) {
+        const button = event.target.closest('button');
+        button.disabled = true;
+        button.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+        const updates = {
+            status: newStatus,
+            [`statusHistory/${Date.now()}`]: { status: newStatus, timestamp: firebase.database.ServerValue.TIMESTAMP }
+        };
+        await db.ref(`${DB_BASE_PATH}/orders/confirmed/${orderId}`).update(updates);
+        window.showToast('Success', `Status updated to ${newStatus}.`, 'success');
+    }
+
+    initializeOrdersSection();
+})();
+</script>
