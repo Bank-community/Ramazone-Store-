@@ -287,4 +287,3 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Firebase Init Error:", error);
     }
 });
-
