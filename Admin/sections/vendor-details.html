@@ -1,0 +1,252 @@
+<!-- Inline styles for this specific page -->
+<style>
+    /* Same product-hidden style from products.html for consistency */
+    .product-hidden {
+        opacity: 0.6;
+        background-color: #f8f9fa;
+    }
+    .product-hidden .name {
+        text-decoration: line-through;
+    }
+    .product-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    /* Sundar Toggle Switch ka CSS */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 26px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px; width: 20px;
+        left: 3px; bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(24px); }
+</style>
+
+<!-- Page Header -->
+<div class="flex justify-between items-center gap-4 mb-6">
+    <div>
+        <h2 id="vendor-details-title" class="text-2xl font-bold text-gray-800">Vendor Details</h2>
+        <p class="text-sm text-gray-500">Manage this vendor's details, products, and account status.</p>
+    </div>
+    <button id="back-to-vendors-btn" class="btn btn-secondary"><i class="fas fa-arrow-left mr-2"></i> Back to Vendor List</button>
+</div>
+
+<!-- Main content area for vendor details -->
+<div id="vendor-details-content" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Vendor Info and Danger Zone -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Vendor Information Card -->
+        <div class="admin-card">
+            <div class="card-header">
+                <h3 class="card-title">Vendor Information</h3>
+            </div>
+            <div id="vendor-info-body" class="card-body space-y-3">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+        <!-- Danger Zone Card -->
+        <div class="admin-card border-red-500">
+            <div class="card-header bg-red-50 text-red-800">
+                <h3 class="card-title"><i class="fas fa-exclamation-triangle mr-2"></i> Danger Zone</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-sm text-gray-600 mb-4">Be careful with these actions. Disabling a vendor will prevent them from logging in.</p>
+                <button id="toggle-vendor-status-btn" class="btn w-full">
+                    <!-- Button text and color will be set by script -->
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Products by this Vendor -->
+    <div class="lg:col-span-2 admin-card">
+        <div class="card-header">
+            <h3 class="card-title">Products by this Vendor</h3>
+        </div>
+        <div id="vendor-products-list" class="card-body divide-y divide-gray-200">
+            <!-- Product list will be loaded here -->
+        </div>
+    </div>
+</div>
+
+
+<script>
+(async function() {
+    // --- ELEMENTS ---
+    const contentArea = document.getElementById('vendor-details-content');
+    const title = document.getElementById('vendor-details-title');
+    const infoBody = document.getElementById('vendor-info-body');
+    const toggleStatusBtn = document.getElementById('toggle-vendor-status-btn');
+    const productsListContainer = document.getElementById('vendor-products-list');
+    const backBtn = document.getElementById('back-to-vendors-btn');
+
+    // --- DATA ---
+    const vendorId = window.currentVendorIdForDetails;
+    let vendorData = null;
+
+    // --- INITIALIZATION ---
+    if (!vendorId) {
+        contentArea.innerHTML = `<div class="text-center py-10 col-span-full"><p class="text-red-500">No vendor selected. Please go back.</p></div>`;
+        return;
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderVendorDetails() {
+        vendorData = window.allVendorsCache[vendorId];
+        if (!vendorData) {
+            contentArea.innerHTML = `<div class="text-center py-10 col-span-full"><p class="text-red-500">Vendor data not found.</p></div>`;
+            return;
+        }
+
+        title.textContent = vendorData.shopName || 'Vendor Details';
+        infoBody.innerHTML = `
+            <div class="flex justify-between text-sm"><span class="font-medium text-gray-500">Full Name</span><span class="text-gray-800 font-semibold">${vendorData.name}</span></div>
+            <div class="flex justify-between text-sm"><span class="font-medium text-gray-500">Shop Name</span><span class="text-gray-800 font-semibold">${vendorData.shopName}</span></div>
+            <div class="flex justify-between text-sm"><span class="font-medium text-gray-500">Login Email</span><span class="text-gray-800 font-semibold">${vendorData.email}</span></div>
+            <div class="flex justify-between text-sm"><span class="font-medium text-gray-500">WhatsApp</span><span class="text-gray-800 font-semibold">${vendorData.whatsappNumber}</span></div>
+            <div class="flex justify-between text-sm"><span class="font-medium text-gray-500">Status</span><span id="vendor-status-badge" class="font-bold"></span></div>
+        `;
+        updateStatusUI();
+    }
+
+    function renderVendorProducts() {
+        const vendorProducts = window.allProductsCache.filter(p => p && p.vendorId === vendorId);
+        productsListContainer.innerHTML = '';
+
+        if (vendorProducts.length === 0) {
+            productsListContainer.innerHTML = `<div class="text-center py-10"><p class="text-gray-500">This vendor has not added any products yet.</p></div>`;
+            return;
+        }
+
+        vendorProducts.forEach(product => {
+            const originalIndex = window.allProductsCache.findIndex(p => p && p.id === product.id);
+            if (originalIndex === -1) return;
+
+            const isVisible = product.isVisible !== false;
+            const itemEl = document.createElement('div');
+            itemEl.className = 'py-3 flex items-center gap-4';
+            if (!isVisible) itemEl.classList.add('product-hidden');
+            itemEl.dataset.productId = product.id; // Store product ID for easier access
+
+            const imageUrl = product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/100x100/e2e8f0/e2e8f0?text=img';
+            
+            itemEl.innerHTML = `
+                <img src="${imageUrl}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md">
+                <div class="flex-grow">
+                    <span class="name font-semibold text-gray-800">${product.name}</span>
+                    <p class="text-xs text-gray-500 mt-1">SKU: ${product.sku || 'N/A'}</p>
+                </div>
+                <div class="product-actions">
+                    <button class="btn btn-sm edit-product-btn" title="Edit"><i class="fas fa-edit"></i></button>
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="visibility-toggle" ${isVisible ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `;
+            productsListContainer.appendChild(itemEl);
+        });
+    }
+
+    // --- UI UPDATE FUNCTIONS ---
+    function updateStatusUI() {
+        const statusBadge = document.getElementById('vendor-status-badge');
+        const isActive = vendorData.status === 'active';
+        
+        statusBadge.textContent = isActive ? 'Active' : 'Disabled';
+        statusBadge.className = `font-bold ${isActive ? 'text-green-600' : 'text-red-600'}`;
+
+        toggleStatusBtn.textContent = isActive ? 'Disable Vendor Account' : 'Enable Vendor Account';
+        toggleStatusBtn.className = `btn w-full ${isActive ? 'btn-danger' : 'btn-success'}`;
+    }
+
+    // --- EVENT HANDLERS ---
+    async function handleToggleVendorStatus() {
+        const newStatus = vendorData.status === 'active' ? 'disabled' : 'active';
+        toggleStatusBtn.disabled = true;
+        toggleStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+        try {
+            // Update status in Firebase Realtime Database
+            await db.ref(`${DB_BASE_PATH}/vendors/${vendorId}/status`).set(newStatus);
+            
+            // NOTE: Disabling the user in Firebase AUTH requires Admin SDK on a server (e.g., Cloud Function).
+            // Changing the status in DB is the secure client-side action to prevent login in the Vendor App.
+            
+            vendorData.status = newStatus; // Update local cache
+            window.allVendorsCache[vendorId].status = newStatus; // Update global cache
+            updateStatusUI();
+            window.showToast('Success', `Vendor has been ${newStatus}.`, 'success');
+        } catch (error) {
+            console.error("Failed to update vendor status:", error);
+            window.showToast('Error', `Could not update status: ${error.message}`, 'error');
+        } finally {
+            toggleStatusBtn.disabled = false;
+        }
+    }
+
+    async function handleProductActions(e) {
+        const productEl = e.target.closest('[data-product-id]');
+        if (!productEl) return;
+        const productId = productEl.dataset.productId;
+        const productIndex = window.allProductsCache.findIndex(p => p && p.id === productId);
+        if (productIndex === -1) return;
+        const productData = window.allProductsCache[productIndex];
+
+        // Handle Edit Button
+        if (e.target.closest('.edit-product-btn')) {
+            window.editingProductData = { ...productData, originalIndex: productIndex };
+            loadPage('sections/product-form.html');
+        }
+
+        // Handle Visibility Toggle
+        if (e.target.classList.contains('visibility-toggle')) {
+            const toggle = e.target;
+            const newVisibility = toggle.checked;
+            productEl.classList.toggle('product-hidden', !newVisibility);
+            try {
+                // We have the correct index, so we can update directly
+                await db.ref(`${DB_BASE_PATH}/products/${productIndex}/isVisible`).set(newVisibility);
+                window.allProductsCache[productIndex].isVisible = newVisibility; // Update global cache
+                window.showToast('Status Updated', `${productData.name} is now ${newVisibility ? 'visible' : 'hidden'}.`, 'success');
+            } catch (error) {
+                console.error("Visibility update error:", error);
+                toggle.checked = !newVisibility; // Revert UI on error
+                productEl.classList.toggle('product-hidden', newVisibility);
+                window.showToast('Error', 'Could not update visibility.', 'error');
+            }
+        }
+    }
+
+    // --- ATTACH LISTENERS ---
+    backBtn.addEventListener('click', () => loadPage('sections/vendor-dashboard.html'));
+    toggleStatusBtn.addEventListener('click', handleToggleVendorStatus);
+    productsListContainer.addEventListener('click', handleProductActions);
+
+    // --- INITIAL RENDER ---
+    renderVendorDetails();
+    renderVendorProducts();
+
+})();
+</script>
