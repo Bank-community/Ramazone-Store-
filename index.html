@@ -80,7 +80,7 @@
     
     <div id="search-container">
          <a id="search-link" href="./products.html?focus=true">
-            <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+            <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 S0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
             <span class="text-gray-500">Search for&nbsp;&nbsp;<span id="categoryText" class="text-gray-800 font-medium">Products...</span></span>
         </a>
     </div>
@@ -95,6 +95,11 @@
     <main id="main-content-area" class="mb-16 md:mb-0">
         <!-- Dynamic content will be loaded here by main.js -->
     </main>
+
+    <!-- === YAHAN BADLAV KIYA GAYA HAI: Infinite Scroll Loader === -->
+    <div id="deals-loader" class="deals-loader-container hidden">
+        <div class="spinner"></div>
+    </div>
 
     <div class="social-media-links" id="social-links-container" style="display: none;"></div>
     
@@ -120,5 +125,4 @@
     <script src="main.js"></script>
 </body>
 </html>
-
 

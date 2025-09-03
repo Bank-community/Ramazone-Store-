@@ -4,6 +4,13 @@ let database;
 let deferredInstallPrompt = null;
 let festiveCountdownInterval = null; // Timer interval for festive collection
 
+// === YAHAN BADLAV KIYA GAYA HAI: Infinite Scroll State Variables ===
+let allDealsProducts = []; // To store all sorted deal products
+let loadedDealsCount = 0; // To track how many products are currently shown
+let dealsObserver = null; // The IntersectionObserver for lazy loading
+const INITIAL_DEALS_COUNT = 20; // Initial products to show
+const DEALS_PER_LOAD = 10; // Number of products to load on each scroll
+
 // --- PWA LOGIC (Kept for future) ---
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -91,15 +98,12 @@ async function initializeApp() {
     }
 }
 
-// --- UPDATED FUNCTION ---
+// --- DATA LOADING ---
 function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
         const data = snapshot.val() || {};
         let products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
-
-        // ** YAHAN BADLAV KIYA GAYA HAI **
-        // Sirf unhi products ko cache mein daalo jo hidden nahi hain.
         allProductsCache = products.filter(p => p && p.isVisible !== false);
 
         await loadPageStructure();
@@ -136,7 +140,7 @@ function renderAllSections(data) {
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
     renderJustForYouSection(homepageData.justForYou);
-    renderHighlightedProducts();
+    renderHighlightedProducts(); // This will now set up the infinite scroll
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
     setupGlobalEventListeners();
@@ -161,47 +165,28 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
-
 // --- RECENTLY VIEWED SECTION LOGIC ---
 function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed-section');
     const container = document.getElementById('recently-viewed-container');
-    if (!section || !container) {
-        return;
-    }
+    if (!section || !container) { return; }
     try {
         const viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
-        if (viewedIds.length === 0) {
-            section.style.display = 'none';
-            return;
-        }
+        if (viewedIds.length === 0) { section.style.display = 'none'; return; }
         let cardsHTML = '';
         let productsFound = 0;
         viewedIds.forEach(id => {
             const product = allProductsCache.find(p => p && p.id === id);
-            if (product) { // Ab yahan hidden product nahi milega
+            if (product) {
                 const imageUrl = (product.images && product.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-                cardsHTML += `
-                    <a href="./product-details.html?id=${product.id}" class="rv-card">
-                        <img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy">
-                        <p>${product.name || 'Product Name'}</p>
-                    </a>
-                `;
+                cardsHTML += `<a href="./product-details.html?id=${product.id}" class="rv-card"><img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy"><p>${product.name || 'Product Name'}</p></a>`;
                 productsFound++;
             }
         });
-        if (productsFound > 0) {
-            container.innerHTML = cardsHTML;
-            section.style.display = 'block';
-        } else {
-            section.style.display = 'none';
-        }
-    } catch (error) {
-        console.error("Error rendering recently viewed products:", error);
-        section.style.display = 'none';
-    }
+        if (productsFound > 0) { container.innerHTML = cardsHTML; section.style.display = 'block'; } 
+        else { section.style.display = 'none'; }
+    } catch (error) { console.error("Error rendering recently viewed products:", error); section.style.display = 'none'; }
 }
-
 
 // --- FESTIVE COLLECTION SPECIFIC LOGIC ---
 function startCountdownTimer(endTimeString, elementId) {
@@ -245,26 +230,16 @@ function createFestiveCardHTML(prod, options = {}) {
     return `<div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}" class="block"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a>${progressBarHTML}</div></div>`;
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: 'View All' Button ka logic add kiya gaya hai ===
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
-    if (!container || !collectionData || !collectionData.productIds?.length) { 
-        if (container) container.style.display = 'none'; 
-        return; 
-    }
+    if (!container || !collectionData || !collectionData.productIds?.length) { if (container) container.style.display = 'none'; return; }
     container.style.display = 'block';
     container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
-
     const headline = document.getElementById('festive-headline');
     const timerEl = document.getElementById('festive-countdown-timer');
     const arrowEl = document.getElementById('festive-view-all-link');
-
-    const viewAllUrl = 'festive-products.html'; // URL ko ek jagah define kiya gaya hai
-
-    if (arrowEl) {
-        arrowEl.href = viewAllUrl; // Upar wale arrow ke liye bhi same URL
-    }
-
+    const viewAllUrl = 'festive-products.html';
+    if (arrowEl) { arrowEl.href = viewAllUrl; }
     if (headline) {
         const headlineColor = collectionData.headlineColor || 'var(--text-dark)';
         headline.innerText = collectionData.title || 'Special Offers';
@@ -272,36 +247,18 @@ function renderFestiveCollection(collectionData) {
         if (timerEl) timerEl.style.color = headlineColor;
         if (arrowEl) arrowEl.style.color = headlineColor;
     }
-
-    if (collectionData.endTime) {
-        startCountdownTimer(collectionData.endTime, 'festive-countdown-timer');
-    }
-
+    if (collectionData.endTime) { startCountdownTimer(collectionData.endTime, 'festive-countdown-timer'); }
     const slider = document.getElementById('festive-product-slider');
     const metadata = collectionData.productMetadata || {};
     const limit = collectionData.productsToShow || collectionData.productIds.length;
-
-    // Step 1: Product cards ka HTML banayein
     let productsHTML = collectionData.productIds.slice(0, limit).map(id => {
         const product = allProductsCache.find(p => p && p.id === id);
         if (!product) return '';
         return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
     }).join('');
-
-    // Step 2: 'View All' card ka HTML banayein
-    const viewAllCardHTML = `
-        <a href="${viewAllUrl}" class="view-all-card">
-            <div class="arrow-circle">
-                <i class="fas fa-arrow-right"></i>
-            </div>
-            <span class="view-all-text">View All</span>
-        </a>
-    `;
-
-    // Step 3: Dono ko jod kar slider mein daalein
+    const viewAllCardHTML = `<a href="${viewAllUrl}" class="view-all-card"><div class="arrow-circle"><i class="fas fa-arrow-right"></i></div><span class="view-all-text">View All</span></a>`;
     slider.innerHTML = productsHTML + viewAllCardHTML;
 }
-
 
 // --- UNIVERSAL HELPER FUNCTIONS ---
 function createProductCardHTML(prod, cardClass = '') {
@@ -321,14 +278,81 @@ function createProductCardHTML(prod, cardClass = '') {
     return `<div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy"></a>${ratingTag}${offerTag}${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a></div></div>`;
 }
 
+// === YAHAN BADLAV KIYA GAYA HAI: 'getDealsOfTheDayProducts' ab bina limit ke bhi kaam karega ===
 function getDealsOfTheDayProducts(maxCount) {
     if (!allProductsCache || allProductsCache.length === 0) return [];
-    return [...allProductsCache].sort((a, b) => {
+    const sortedProducts = [...allProductsCache].sort((a, b) => {
         const discountA = (a.originalPrice || 0) - (a.displayPrice || 0);
         const discountB = (b.originalPrice || 0) - (b.displayPrice || 0);
         return (discountB - discountA) || ((b.rating || 0) - (a.rating || 0));
-    }).slice(0, maxCount);
+    });
+    // Agar maxCount diya hai to slice karo, warna sabhi products return karo
+    return maxCount ? sortedProducts.slice(0, maxCount) : sortedProducts;
 }
+
+// === YAHAN BADLAV KIYA GAYA HAI: Naya Infinite Scroll Logic ===
+function renderHighlightedProducts() {
+    const wrapper = document.getElementById('highlighted-products-wrapper');
+    const section = document.getElementById('highlighted-products-section');
+    const loader = document.getElementById('deals-loader');
+
+    if (dealsObserver) dealsObserver.disconnect(); // Purane observer ko disconnect karo
+
+    allDealsProducts = getDealsOfTheDayProducts(); // Sabhi sorted deals products le lo
+
+    if (!wrapper || !section || !loader || allDealsProducts.length === 0) {
+        if (section) section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+
+    // Shuruaati 20 products dikhao
+    const initialProducts = allDealsProducts.slice(0, INITIAL_DEALS_COUNT);
+    wrapper.innerHTML = initialProducts.map(p => createProductCardHTML(p, 'grid-item')).join('');
+    loadedDealsCount = initialProducts.length;
+
+    // Agar aur products hain to observer set karo
+    if (loadedDealsCount < allDealsProducts.length) {
+        loader.classList.remove('hidden');
+        dealsObserver = new IntersectionObserver((entries) => {
+            // Jab loader screen par dikhe
+            if (entries[0].isIntersecting) {
+                loadMoreDealsProducts();
+            }
+        }, { rootMargin: '0px 0px 200px 0px' }); // Page end se 200px pehle hi load karna shuru kar do
+        dealsObserver.observe(loader);
+    } else {
+        loader.classList.add('hidden');
+    }
+}
+
+function loadMoreDealsProducts() {
+    const wrapper = document.getElementById('highlighted-products-wrapper');
+    const loader = document.getElementById('deals-loader');
+
+    // Agle 10 products nikalo
+    const nextProducts = allDealsProducts.slice(loadedDealsCount, loadedDealsCount + DEALS_PER_LOAD);
+
+    if (nextProducts.length > 0) {
+        // Ek chhota sa delay daalo taaki loading smooth lage
+        setTimeout(() => {
+            const newProductsHTML = nextProducts.map(p => createProductCardHTML(p, 'grid-item')).join('');
+            wrapper.insertAdjacentHTML('beforeend', newProductsHTML);
+            loadedDealsCount += nextProducts.length;
+
+            // Agar saare products load ho gaye hain to loader ko hata do
+            if (loadedDealsCount >= allDealsProducts.length) {
+                loader.classList.add('hidden');
+                if (dealsObserver) dealsObserver.disconnect();
+            }
+        }, 500); // 0.5 second ka delay
+    } else {
+        // Agar koi product nahi bacha hai
+        loader.classList.add('hidden');
+        if (dealsObserver) dealsObserver.disconnect();
+    }
+}
+
 
 function setupGlobalEventListeners() {
     document.body.addEventListener('click', function (event) {
@@ -409,15 +433,6 @@ function renderJustForYouSection(jfyData) {
     if (poster.images && poster.images.length > 0) initializeJfySlider(poster.images.length);
 }
 
-function renderHighlightedProducts() {
-    const wrapper = document.getElementById('highlighted-products-wrapper');
-    const section = document.getElementById('highlighted-products-section');
-    const deals = getDealsOfTheDayProducts(18);
-    if (!wrapper || deals.length === 0) { if (section) section.style.display = 'none'; return; }
-    section.style.display = 'block';
-    wrapper.innerHTML = deals.map(p => createProductCardHTML(p, 'grid-item')).join('');
-}
-
 function renderSearch(searchData) { if (!searchData?.scrollingTexts?.length) return; const texts = searchData.scrollingTexts; let i = 0; const el = document.getElementById("categoryText"); if (window.searchInterval) clearInterval(window.searchInterval); window.searchInterval = setInterval(() => { if (el) { el.style.opacity = 0; setTimeout(() => { el.innerText = texts[i]; el.style.opacity = 1; i = (i + 1) % texts.length; }, 300); } }, 2500); }
 function renderInfoMarquee(text) { const section = document.getElementById('info-marquee-section'); if (!text) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; section.querySelector('#info-marquee-text').innerHTML = text; }
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data?.front || !data.back) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
@@ -489,4 +504,5 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4e3) }
+
 
