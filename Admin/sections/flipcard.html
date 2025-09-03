@@ -1,0 +1,62 @@
+<!-- sections/flipcard.html -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Flip Card</h2>
+</div>
+<form id="flipcard-form" class="admin-card">
+    <div class="card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="admin-card"><div class="card-header"><h3>Front Side</h3></div><div class="card-body space-y-4">
+                <div><label class="form-label">Link URL</label><input type="url" class="form-control" data-key="front_linkUrl"></div>
+                <div><label class="form-label">Image</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="front_imageUrl"><div class="placeholder"><i class="fas fa-image text-2xl"></i><p>Front Image</p></div><input type="file" class="form-file-upload" data-key="front_imageUrl" accept="image/*"></div><button type="button" class="remove-media-btn hidden">&times;</button></div>
+                </div>
+            </div></div>
+            <div class="admin-card"><div class="card-header"><h3>Back Side</h3></div><div class="card-body space-y-4">
+                <div><label class="form-label">Link URL</label><input type="url" class="form-control" data-key="back_linkUrl"></div>
+                <div><label class="form-label">Image</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="back_imageUrl"><div class="placeholder"><i class="fas fa-image text-2xl"></i><p>Back Image</p></div><input type="file" class="form-file-upload" data-key="back_imageUrl" accept="image/*"></div><button type="button" class="remove-media-btn hidden">&times;</button></div>
+                </div>
+            </div></div>
+        </div>
+    </div>
+    <div class="card-footer flex justify-end">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-2"></i> Save Flip Card</button>
+    </div>
+</form>
+
+<script>
+(function() {
+    const form = document.getElementById('flipcard-form');
+    const flipcardData = window.ramazoneData.homepage?.flipCard || {};
+
+    // Populate form
+    const populateSide = (side) => {
+        form.querySelector(`[data-key="${side}_linkUrl"]`).value = flipcardData[side]?.linkUrl || '';
+        const imgUrl = flipcardData[side]?.imageUrl;
+        if (imgUrl) {
+            const wrapper = form.querySelector(`[data-key="${side}_imageUrl"]`).closest('.file-preview-wrapper');
+            wrapper.querySelector(`[data-preview-for="${side}_imageUrl"]`).src = imgUrl;
+            wrapper.querySelector('.remove-media-btn').classList.remove('hidden');
+            wrapper.querySelector('.placeholder').classList.add('hidden');
+        }
+    };
+    populateSide('front');
+    populateSide('back');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const frontImgFile = form.querySelector('[data-key="front_imageUrl"]').files[0];
+        const backImgFile = form.querySelector('[data-key="back_imageUrl"]').files[0];
+
+        const frontImgUrl = frontImgFile ? await window.uploadToImgBB(frontImgFile) : form.querySelector('[data-preview-for="front_imageUrl"]').src || '';
+        const backImgUrl = backImgFile ? await window.uploadToImgBB(backImgFile) : form.querySelector('[data-preview-for="back_imageUrl"]').src || '';
+
+        const saveData = {
+            front: { linkUrl: form.querySelector('[data-key="front_linkUrl"]').value, imageUrl: frontImgUrl },
+            back: { linkUrl: form.querySelector('[data-key="back_linkUrl"]').value, imageUrl: backImgUrl }
+        };
+        await db.ref(`${DB_BASE_PATH}/homepage/flipCard`).set(saveData);
+        window.showToast('Success', 'Flip Card saved!', 'success');
+    });
+})();
+</script>
