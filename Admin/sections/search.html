@@ -1,0 +1,33 @@
+<!-- sections/search.html -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Search Section</h2>
+</div>
+<form id="search-form" class="admin-card">
+    <div class="card-body">
+        <label class="form-label">Scrolling Texts (comma-separated)</label>
+        <input type="text" class="form-control" data-key="scrollingTexts" placeholder="Mobile, Laptop, Charger...">
+    </div>
+    <div class="card-footer flex justify-end">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-2"></i> Save Section</button>
+    </div>
+</form>
+
+<script>
+    (function() {
+        const form = document.getElementById('search-form');
+        const searchData = window.ramazoneData.homepage?.search || {};
+        const input = form.querySelector('[data-key="scrollingTexts"]');
+
+        // Populate form
+        input.value = (searchData.scrollingTexts || []).join(', ');
+
+        // Save logic
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const scrollingTexts = input.value.split(',').map(s => s.trim()).filter(Boolean);
+            await db.ref(`${DB_BASE_PATH}/homepage/search`).set({ scrollingTexts });
+            window.showToast('Success', 'Search Section save ho gaya!', 'success');
+        });
+    })();
+</script>
+

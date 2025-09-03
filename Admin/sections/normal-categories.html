@@ -1,0 +1,263 @@
+<!-- sections/normal-categories.html -->
+<div class="flex flex-wrap gap-4 justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Categories</h2>
+    <button id="add-category-btn" class="btn btn-primary"><i class="fas fa-plus mr-2"></i> Add Category</button>
+</div>
+
+<div class="admin-card">
+    <div class="card-body">
+        <p class="text-sm text-gray-600 mb-4">
+            यहाँ आप अपनी दुकान की श्रेणियां (categories) मैनेज कर सकते हैं। आइटम को खींचकर (drag करके) उनका क्रम बदलें।
+        </p>
+        <div id="category-list-container">
+            <!-- Categories will be rendered here -->
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function() {
+    if (document.getElementById('category-script-loaded')) {
+        return;
+    }
+
+    const container = document.getElementById('category-list-container');
+    const addBtn = document.getElementById('add-category-btn');
+    const dbKey = 'homepage/normalCategories';
+
+    function renderCategories() {
+        container.innerHTML = '<div class="loader-container text-center py-5"><div class="loader"></div></div>'; // Loading indicator
+        const categories = window.ramazoneData.homepage?.normalCategories || [];
+        
+        // Timeout to ensure data is available, then render
+        setTimeout(() => {
+            container.innerHTML = ''; // Clear loader
+            if (categories.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 px-4 border-2 border-dashed rounded-lg">
+                    <i class="fas fa-folder-open text-4xl text-gray-300"></i>
+                    <p class="mt-4 font-semibold text-gray-700">No Categories Found</p>
+                    <p class="text-sm text-gray-500">Click 'Add Category' to get started.</p>
+                </div>`;
+                return;
+            }
+
+            categories.forEach((cat, index) => {
+                if (!cat) return;
+                const itemEl = document.createElement('div');
+                itemEl.className = 'draggable-item';
+                itemEl.dataset.index = index;
+                itemEl.dataset.fullData = JSON.stringify(cat);
+                
+                itemEl.innerHTML = `
+                    <i class="fas fa-grip-vertical handle text-gray-400 cursor-grab"></i>
+                    <img src="${cat.imageUrl || 'https://placehold.co/100x100/e2e8f0/e2e8f0?text=img'}" alt="${cat.name}" class="flex-shrink-0 w-12 h-12 object-cover rounded-md bg-gray-100">
+                    <div class="flex-grow">
+                        <span class="name text-gray-800 font-semibold">${cat.name}</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="badge badge-blue"><i class="fas fa-layer-group mr-1"></i>${cat.row || 'top'}</span>
+                            <span class="badge badge-purple"><i class="fas fa-expand-arrows-alt mr-1"></i>${cat.size || 'normal'}</span>
+                        </div>
+                    </div>
+                    <div class="ml-auto flex items-center gap-2 flex-shrink-0">
+                        <button type="button" class="btn btn-sm edit-category-btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"><i class="fas fa-edit"></i></button>
+                        <button type="button" class="btn btn-sm delete-category-btn bg-red-50 text-red-600 hover:bg-red-100"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+                container.appendChild(itemEl);
+            });
+
+            new Sortable(container, {
+                handle: '.handle',
+                animation: 150,
+                onEnd: async (evt) => {
+                    const reorderedCategories = Array.from(evt.target.children).map(el => JSON.parse(el.dataset.fullData));
+                    try {
+                        await db.ref(`${DB_BASE_PATH}/${dbKey}`).set(reorderedCategories);
+                        window.showToast('Success', 'Category order updated!', 'success');
+                    } catch (err) {
+                        window.showToast('Error', `Could not save order: ${err.message}`, 'error');
+                    }
+                }
+            });
+        }, 200);
+    }
+
+    function openCategoryModal(data = null, index = null) {
+        const modal = document.getElementById('universalModal');
+        document.getElementById('modalTitle').textContent = index !== null ? 'Edit Category' : 'Add New Category';
+        
+        document.getElementById('modalBody').innerHTML = `
+            <form id="category-form" class="space-y-5">
+                <input type="hidden" id="category-index" value="${index !== null ? index : ''}">
+                <div>
+                    <label class="form-label" for="category-name">Category Name</label>
+                    <input type="text" class="form-control" id="category-name" required placeholder="e.g. Electronics">
+                </div>
+                <div>
+                    <label class="form-label">Category Image</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="imageUrl"><div class="placeholder"><i class="fas fa-image text-3xl"></i><p class="mt-1 text-sm">Click to upload</p></div></div><button type="button" class="remove-media-btn hidden">&times;</button><input type="file" class="form-file-upload" data-key="imageUrl" accept="image/*"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <label class="form-label">Category Size</label>
+                        <div class="radio-group-wrapper">
+                            <label class="radio-label"><input type="radio" name="category-size" value="normal"><span>Normal</span></label>
+                            <label class="radio-label"><input type="radio" name="category-size" value="double"><span>Double</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Category Row</label>
+                        <div class="radio-group-wrapper">
+                            <label class="radio-label"><input type="radio" name="category-row" value="top"><span>Top</span></label>
+                            <label class="radio-label"><input type="radio" name="category-row" value="bottom"><span>Bottom</span></label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        `;
+
+        const form = document.getElementById('category-form');
+        const previewWrapper = form.querySelector('.file-preview-wrapper');
+        const imgPreview = previewWrapper.querySelector('[data-preview-for="imageUrl"]');
+        const placeholder = previewWrapper.querySelector('.placeholder');
+        const removeBtn = previewWrapper.querySelector('.remove-media-btn');
+        const fileInput = form.querySelector('[data-key="imageUrl"]');
+
+        const updatePreview = (src) => {
+            if (src) {
+                imgPreview.src = src;
+                placeholder.classList.add('hidden');
+                removeBtn.classList.remove('hidden');
+            } else {
+                imgPreview.src = '';
+                placeholder.classList.remove('hidden');
+                removeBtn.classList.add('hidden');
+            }
+        };
+
+        if (data) {
+            document.getElementById('category-name').value = data.name || '';
+            updatePreview(data.imageUrl);
+            document.querySelector(`input[name="category-size"][value="${data.size || 'normal'}"]`).checked = true;
+            document.querySelector(`input[name="category-row"][value="${data.row || 'top'}"]`).checked = true;
+        } else {
+            updatePreview(null);
+            document.querySelector('input[name="category-size"][value="normal"]').checked = true;
+            document.querySelector('input[name="category-row"][value="top"]').checked = true;
+        }
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => updatePreview(e.target.result);
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removeBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            updatePreview(null);
+        });
+
+        document.getElementById('modalSaveBtn').onclick = saveCategoryFromModal;
+        modal.classList.add('active');
+    };
+
+    async function saveCategoryFromModal() {
+        const modalSaveBtn = document.getElementById('modalSaveBtn');
+        modalSaveBtn.disabled = true;
+        modalSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+        
+        try {
+            const form = document.getElementById('category-form');
+            const index = form.querySelector('#category-index').value;
+            const categoryName = form.querySelector('#category-name').value;
+
+            if (!categoryName.trim()) {
+                window.showToast('Validation Error', 'Category name is required.', 'error');
+                return;
+            }
+            
+            const fileInput = form.querySelector('[data-key="imageUrl"]');
+            const previewImg = form.querySelector('[data-preview-for="imageUrl"]');
+            const existingImage = (previewImg && previewImg.src.startsWith('http')) ? previewImg.src : '';
+            const newImageFile = fileInput.files[0];
+            
+            let imageUrl = existingImage;
+            if (newImageFile) {
+                imageUrl = await window.uploadToImgBB(newImageFile);
+                if (!imageUrl) throw new Error("Image upload failed.");
+            } else if (!existingImage) {
+                 imageUrl = ''; // Handle case where image was removed
+            }
+
+            const size = form.querySelector('input[name="category-size"]:checked').value;
+            const row = form.querySelector('input[name="category-row"]:checked').value;
+
+            const itemData = { name: categoryName, imageUrl, size, row };
+            
+            const listRef = db.ref(`${DB_BASE_PATH}/${dbKey}`);
+            const snapshot = await listRef.get();
+            let currentList = snapshot.val() || [];
+            
+            if (index !== '') {
+                currentList[index] = itemData;
+            } else {
+                currentList.push(itemData);
+            }
+            await listRef.set(currentList);
+            window.showToast('Success', 'Category saved successfully!', 'success');
+            document.getElementById('universalModal').classList.remove('active');
+        } catch (err) {
+            window.showToast('Error', `Could not save: ${err.message}`, 'error');
+        } finally {
+            modalSaveBtn.disabled = false;
+            modalSaveBtn.innerHTML = 'Save Changes';
+        }
+    };
+
+    async function deleteCategory(index, name) {
+        if (confirm(`Are you sure you want to delete the category "${name}"? This cannot be undone.`)) {
+            try {
+                const listRef = db.ref(`${DB_BASE_PATH}/${dbKey}`);
+                const snapshot = await listRef.get();
+                let currentList = snapshot.val() || [];
+                currentList.splice(index, 1);
+                await listRef.set(currentList.filter(Boolean));
+                window.showToast('Success', `"${name}" was deleted.`, 'success');
+            } catch (err) {
+                window.showToast('Error', `Could not delete: ${err.message}`, 'error');
+            }
+        }
+    }
+
+    addBtn.addEventListener('click', () => openCategoryModal());
+
+    container.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-category-btn');
+        if (editBtn) {
+            const itemEl = editBtn.closest('.draggable-item');
+            openCategoryModal(JSON.parse(itemEl.dataset.fullData), itemEl.dataset.index);
+        }
+        
+        const deleteBtn = e.target.closest('.delete-category-btn');
+        if (deleteBtn) {
+            const itemEl = deleteBtn.closest('.draggable-item');
+            const index = parseInt(itemEl.dataset.index, 10);
+            const name = JSON.parse(itemEl.dataset.fullData).name;
+            deleteCategory(index, name);
+        }
+    });
+    
+    // Mark script as loaded to prevent re-execution
+    const scriptMarker = document.createElement('div');
+    scriptMarker.id = 'category-script-loaded';
+    scriptMarker.style.display = 'none';
+    document.body.appendChild(scriptMarker);
+
+    renderCategories();
+})();
+</script>
+

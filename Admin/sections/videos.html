@@ -1,0 +1,148 @@
+<!-- sections/videos.html -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Video Section</h2>
+    <button id="add-video-btn" class="btn btn-primary"><i class="fas fa-plus mr-2"></i> Add Video Card</button>
+</div>
+<div id="video-list-container">
+    <!-- Video cards will be rendered here -->
+</div>
+
+<script>
+(function() {
+    // This script is self-contained for the videos section.
+    const container = document.getElementById('video-list-container');
+    const addBtn = document.getElementById('add-video-btn');
+    const dbKey = 'homepage/videos';
+
+    const getVideoCardHtml = () => `
+        <div class="space-y-4">
+            <div><label class="form-label">Title</label><input type="text" class="form-control" data-key="title" placeholder="Video ka title"></div>
+            <div><label class="form-label">Description</label><textarea class="form-control" data-key="description" rows="3" placeholder="Video ke baare mein likhein"></textarea></div>
+            <div><label class="form-label">Redirect URL (e.g., "Shop Now" link)</label><input type="url" class="form-control" data-key="redirectUrl" placeholder="https://example.com/product"></div>
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <label class="form-label font-semibold text-red-800">YouTube Video Link</label>
+                <input type="url" class="form-control" data-key="youtubeUrl" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <label class="form-label font-semibold text-green-800">OR Upload Image</label>
+                <div class="file-preview-wrapper">
+                    <div class="form-file-preview"><img data-preview-for="imageUrl"><div class="placeholder"><i class="fas fa-image text-2xl"></i><p>Image Upload</p></div><input type="file" class="form-file-upload" data-key="imageUrl" accept="image/*"></div>
+                    <button type="button" class="remove-media-btn hidden">&times;</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Similar create card, render, save, and delete logic as the slider section
+    const createVideoCard = (data, index) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.dataset.index = index;
+        card.innerHTML = `
+            <div class="item-card-header">
+                <h4 class="item-card-title">Video Card #${index + 1}</h4>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn btn-primary btn-sm save-video-btn"><i class="fas fa-save mr-1"></i> Save</button>
+                    <button type="button" class="btn btn-danger btn-sm delete-video-btn"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+            <div class="card-body">${getVideoCardHtml()}</div>
+        `;
+        // Populate data
+        if (data) {
+            ['title', 'description', 'redirectUrl', 'youtubeUrl', 'imageUrl'].forEach(key => {
+                const input = card.querySelector(`[data-key="${key}"]`);
+                if (input.type === 'file') {
+                    const previewWrapper = input.closest('.file-preview-wrapper');
+                    const previewEl = previewWrapper.querySelector(`[data-preview-for="${key}"]`);
+                    if (data[key]) {
+                       previewEl.src = data[key];
+                       previewWrapper.querySelector('.remove-media-btn').classList.remove('hidden');
+                       previewWrapper.querySelector('.placeholder').classList.add('hidden');
+                    }
+                } else {
+                    input.value = data[key] || '';
+                }
+            });
+        }
+        return card;
+    };
+
+    function renderVideos() {
+        container.innerHTML = '';
+        const videoData = window.ramazoneData.homepage?.videos || [];
+        videoData.forEach((video, index) => {
+            container.appendChild(createVideoCard(video, index));
+        });
+    }
+
+    addBtn.addEventListener('click', () => {
+        const newIndex = container.children.length;
+        container.appendChild(createVideoCard(null, newIndex));
+    });
+
+    container.addEventListener('click', async (e) => {
+        const card = e.target.closest('.item-card');
+        if (!card) return;
+        const index = card.dataset.index;
+
+        if (e.target.closest('.save-video-btn')) {
+            e.target.closest('.save-video-btn').disabled = true;
+            window.showToast('Saving...', `Video Card #${parseInt(index, 10) + 1} save ho raha hai...`, 'info');
+            try {
+                const itemData = {};
+                const imageFile = card.querySelector('[data-key="imageUrl"]').files[0];
+                
+                itemData.title = card.querySelector('[data-key="title"]').value;
+                itemData.description = card.querySelector('[data-key="description"]').value;
+                itemData.redirectUrl = card.querySelector('[data-key="redirectUrl"]').value;
+                itemData.youtubeUrl = card.querySelector('[data-key="youtubeUrl"]').value;
+                itemData.imageUrl = imageFile ? await window.uploadToImgBB(imageFile) : card.querySelector('[data-preview-for="imageUrl"]').src || '';
+
+                await db.ref(`${DB_BASE_PATH}/${dbKey}/${index}`).set(itemData);
+                window.showToast('Success', 'Video card save ho gaya!', 'success');
+            } catch(err) {
+                window.showToast('Error', `Save nahi ho paya: ${err.message}`, 'error');
+            } finally {
+                e.target.closest('.save-video-btn').disabled = false;
+            }
+        }
+
+        if (e.target.closest('.delete-video-btn')) {
+            if (confirm('Kya aap is video card ko sach mein delete karna chahte hain?')) {
+                const listRef = db.ref(`${DB_BASE_PATH}/${dbKey}`);
+                const snapshot = await listRef.get();
+                let currentList = snapshot.val() || [];
+                currentList.splice(index, 1);
+                await listRef.set(currentList);
+                window.showToast('Success', 'Video card delete ho gaya.', 'success');
+            }
+        }
+    });
+
+    // File preview logic
+    container.addEventListener('change', e => {
+        if (e.target.classList.contains('form-file-upload')) {
+            const wrapper = e.target.closest('.file-preview-wrapper');
+            const previewEl = wrapper.querySelector('[data-preview-for]');
+            if (e.target.files && e.target.files[0]) {
+                previewEl.src = URL.createObjectURL(e.target.files[0]);
+                wrapper.querySelector('.remove-media-btn').classList.remove('hidden');
+                wrapper.querySelector('.placeholder').classList.add('hidden');
+            }
+        }
+    });
+    container.addEventListener('click', e => {
+        if (e.target.classList.contains('remove-media-btn')) {
+            const wrapper = e.target.closest('.file-preview-wrapper');
+            wrapper.querySelector('[data-preview-for]').src = '';
+            wrapper.querySelector('.form-file-upload').value = '';
+            wrapper.querySelector('.remove-media-btn').classList.add('hidden');
+            wrapper.querySelector('.placeholder').classList.remove('hidden');
+        }
+    });
+
+    renderVideos();
+})();
+</script>
+

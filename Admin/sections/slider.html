@@ -1,0 +1,149 @@
+<!-- sections/slider.html -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Homepage Slider</h2>
+    <button id="add-slide-btn" class="btn btn-primary"><i class="fas fa-plus mr-2"></i> Add Slide</button>
+</div>
+<div id="slider-list-container">
+    <!-- Slides will be rendered here -->
+</div>
+
+<script>
+(function() {
+    const container = document.getElementById('slider-list-container');
+    const addBtn = document.getElementById('add-slide-btn');
+    const dbKey = 'homepage/slider';
+
+    const getSlideHtml = () => `
+        <div class="space-y-4">
+            <div><label class="form-label">Link URL</label><input type="url" class="form-control" data-key="linkUrl" placeholder="https://example.com"></div>
+            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <label class="form-label font-semibold text-blue-800">Cinematic Video (Cloudinary Upload)</label>
+                <div class="file-preview-wrapper">
+                    <div class="form-file-preview"><video data-preview-for="videoUrl" controls></video><div class="placeholder"><i class="fas fa-video text-2xl"></i><p>Video Upload (MP4)</p></div><input type="file" class="form-file-upload" data-key="videoUrl" accept="video/*"></div>
+                    <button type="button" class="remove-media-btn hidden">&times;</button>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div><label class="form-label font-semibold">Desktop Image</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="imageUrlDesktop"><div class="placeholder"><i class="fas fa-desktop text-2xl"></i><p>Desktop Image</p></div><input type="file" class="form-file-upload" data-key="imageUrlDesktop" accept="image/*"></div><button type="button" class="remove-media-btn hidden">&times;</button></div>
+                </div>
+                <div><label class="form-label font-semibold">Mobile Image</label>
+                    <div class="file-preview-wrapper"><div class="form-file-preview"><img data-preview-for="imageUrlMobile"><div class="placeholder"><i class="fas fa-mobile-alt text-2xl"></i><p>Mobile Image</p></div><input type="file" class="form-file-upload" data-key="imageUrlMobile" accept="image/*"></div><button type="button" class="remove-media-btn hidden">&times;</button></div>
+                </div>
+            </div>
+        </div>`;
+
+    const createSlideCard = (data, index) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.dataset.index = index;
+        card.innerHTML = `
+            <div class="item-card-header">
+                <h4 class="item-card-title">Slide #${index + 1}</h4>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn btn-primary btn-sm save-slide-btn"><i class="fas fa-save mr-1"></i> Save</button>
+                    <button type="button" class="btn btn-danger btn-sm delete-slide-btn"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+            <div class="card-body">${getSlideHtml()}</div>
+        `;
+        // Populate data
+        if (data) {
+            ['linkUrl', 'videoUrl', 'imageUrlDesktop', 'imageUrlMobile'].forEach(key => {
+                const input = card.querySelector(`[data-key="${key}"]`);
+                if (input.type === 'file') {
+                    const previewWrapper = input.closest('.file-preview-wrapper');
+                    const previewEl = previewWrapper.querySelector(`[data-preview-for="${key}"]`);
+                    if (data[key]) {
+                       previewEl.src = data[key];
+                       previewWrapper.querySelector('.remove-media-btn').classList.remove('hidden');
+                       previewWrapper.querySelector('.placeholder').classList.add('hidden');
+                    }
+                } else {
+                    input.value = data[key] || '';
+                }
+            });
+        }
+        return card;
+    };
+
+    function renderSlider() {
+        container.innerHTML = '';
+        const sliderData = window.ramazoneData.homepage?.slider || [];
+        sliderData.forEach((slide, index) => {
+            container.appendChild(createSlideCard(slide, index));
+        });
+    }
+
+    addBtn.addEventListener('click', () => {
+        const newIndex = container.children.length;
+        container.appendChild(createSlideCard(null, newIndex));
+    });
+
+    container.addEventListener('click', async (e) => {
+        const card = e.target.closest('.item-card');
+        if (!card) return;
+        const index = card.dataset.index;
+
+        if (e.target.closest('.save-slide-btn')) {
+            e.target.closest('.save-slide-btn').disabled = true;
+            window.showToast('Saving...', `Slide #${parseInt(index, 10) + 1} save ho raha hai...`, 'info');
+            try {
+                const itemData = {};
+                const videoFile = card.querySelector('[data-key="videoUrl"]').files[0];
+                const desktopFile = card.querySelector('[data-key="imageUrlDesktop"]').files[0];
+                const mobileFile = card.querySelector('[data-key="imageUrlMobile"]').files[0];
+
+                itemData.linkUrl = card.querySelector('[data-key="linkUrl"]').value;
+                itemData.videoUrl = videoFile ? await window.uploadToCloudinary(videoFile) : card.querySelector('[data-preview-for="videoUrl"]').src || '';
+                itemData.imageUrlDesktop = desktopFile ? await window.uploadToImgBB(desktopFile) : card.querySelector('[data-preview-for="imageUrlDesktop"]').src || '';
+                itemData.imageUrlMobile = mobileFile ? await window.uploadToImgBB(mobileFile) : card.querySelector('[data-preview-for="imageUrlMobile"]').src || '';
+
+                await db.ref(`${DB_BASE_PATH}/${dbKey}/${index}`).set(itemData);
+                window.showToast('Success', 'Slide save ho gaya!', 'success');
+            } catch(err) {
+                window.showToast('Error', `Save nahi ho paya: ${err.message}`, 'error');
+            } finally {
+                e.target.closest('.save-slide-btn').disabled = false;
+            }
+        }
+
+        if (e.target.closest('.delete-slide-btn')) {
+            if (confirm('Kya aap is slide ko sach mein delete karna chahte hain?')) {
+                const listRef = db.ref(`${DB_BASE_PATH}/${dbKey}`);
+                const snapshot = await listRef.get();
+                let currentList = snapshot.val() || [];
+                currentList.splice(index, 1);
+                await listRef.set(currentList);
+                window.showToast('Success', 'Slide delete ho gayi.', 'success');
+            }
+        }
+    });
+    
+    // Handle file preview and remove
+    container.addEventListener('change', e => {
+        if (e.target.classList.contains('form-file-upload')) {
+            const wrapper = e.target.closest('.file-preview-wrapper');
+            const previewEl = wrapper.querySelector('[data-preview-for]');
+            if (e.target.files && e.target.files[0]) {
+                previewEl.src = URL.createObjectURL(e.target.files[0]);
+                wrapper.querySelector('.remove-media-btn').classList.remove('hidden');
+                wrapper.querySelector('.placeholder').classList.add('hidden');
+            }
+        }
+    });
+    container.addEventListener('click', e => {
+        if (e.target.classList.contains('remove-media-btn')) {
+            const wrapper = e.target.closest('.file-preview-wrapper');
+            wrapper.querySelector('[data-preview-for]').src = '';
+            wrapper.querySelector('.form-file-upload').value = '';
+            wrapper.querySelector('.remove-media-btn').classList.add('hidden');
+            wrapper.querySelector('.placeholder').classList.remove('hidden');
+        }
+    });
+
+
+    renderSlider();
+})();
+</script>
+
