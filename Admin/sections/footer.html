@@ -1,0 +1,53 @@
+<!-- sections/footer.html -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Footer & Social Links</h2>
+</div>
+<form id="footer-form" class="admin-card">
+    <div class="card-body">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="form-group"><label class="form-label">Shop Link</label><input type="url" class="form-control" data-key="shopLink"></div>
+            <div class="form-group"><label class="form-label">Play Link</label><input type="url" class="form-control" data-key="playLink"></div>
+            <div class="form-group"><label class="form-label">2% Cashback Link</label><input type="url" class="form-control" data-key="profileLink"></div>
+            <div class="form-group"><label class="form-label">YouTube Link</label><input type="url" class="form-control" data-key="youtube"></div>
+            <div class="form-group"><label class="form-label">Facebook Link</label><input type="url" class="form-control" data-key="facebook"></div>
+            <div class="form-group"><label class="form-label">Instagram Link</label><input type="url" class="form-control" data-key="instagram"></div>
+            <div class="form-group"><label class="form-label">WhatsApp Link</label><input type="url" class="form-control" data-key="whatsapp"></div>
+        </div>
+    </div>
+    <div class="card-footer flex justify-end">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-2"></i> Save Links</button>
+    </div>
+</form>
+
+<script>
+(function() {
+    const form = document.getElementById('footer-form');
+    const footerData = window.ramazoneData.homepage?.footer || {};
+
+    // Populate form
+    form.querySelector('[data-key="shopLink"]').value = footerData.shopLink || '';
+    form.querySelector('[data-key="playLink"]').value = footerData.playLink || '';
+    form.querySelector('[data-key="profileLink"]').value = footerData.profileLink || '';
+    form.querySelector('[data-key="youtube"]').value = footerData.followLinks?.youtube || '';
+    form.querySelector('[data-key="facebook"]').value = footerData.followLinks?.facebook || '';
+    form.querySelector('[data-key="instagram"]').value = footerData.followLinks?.instagram || '';
+    form.querySelector('[data-key="whatsapp"]').value = footerData.followLinks?.whatsapp || '';
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveData = {
+            shopLink: form.querySelector('[data-key="shopLink"]').value,
+            playLink: form.querySelector('[data-key="playLink"]').value,
+            profileLink: form.querySelector('[data-key="profileLink"]').value,
+            followLinks: {
+                youtube: form.querySelector('[data-key="youtube"]').value,
+                facebook: form.querySelector('[data-key="facebook"]').value,
+                instagram: form.querySelector('[data-key="instagram"]').value,
+                whatsapp: form.querySelector('[data-key="whatsapp"]').value,
+            }
+        };
+        await db.ref(`${DB_BASE_PATH}/homepage/footer`).set(saveData);
+        window.showToast('Success', 'Footer Links saved!', 'success');
+    });
+})();
+</script>
