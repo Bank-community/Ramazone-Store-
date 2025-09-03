@@ -1,0 +1,204 @@
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Festive Collection</h2>
+    <p class="text-gray-500">Yahan se aap festive deals section ko control kar sakte hain.</p>
+</div>
+
+<!-- Section Info Form -->
+<form id="festive-form" class="admin-card mb-6">
+    <div class="card-body grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Section Title -->
+        <div>
+            <label class="form-label" for="festive-title">Section Title</label>
+            <input type="text" class="form-control" id="festive-title" placeholder="e.g., Happy Ganesh Chaturthi">
+        </div>
+
+        <!-- Headline Color -->
+        <div>
+            <label class="form-label">Headline Color</label>
+            <div class="flex items-center gap-2">
+                <input type="color" id="festive-headline-color-picker" class="p-1 h-10 w-10 block bg-white border border-gray-200 cursor-pointer rounded-lg">
+                <input type="text" class="form-control" id="festive-headline-color-hex">
+            </div>
+        </div>
+
+        <!-- Background Style -->
+        <div>
+            <label class="form-label">Background (Gradient/Color)</label>
+            <input type="text" class="form-control" id="festive-bg-color-hex" placeholder="e.g., #ff7700 or linear-gradient(...)">
+        </div>
+
+        <!-- NEW: End Time -->
+        <div class="md:col-span-2 lg:col-span-1">
+            <label class="form-label" for="festive-end-time">Offer End Time (for Countdown)</label>
+            <input type="datetime-local" class="form-control" id="festive-end-time">
+        </div>
+
+        <!-- NEW: Products to Show -->
+        <div>
+            <label class="form-label" for="festive-products-to-show">Products on Homepage</label>
+            <input type="number" class="form-control" id="festive-products-to-show" placeholder="e.g., 5">
+        </div>
+    </div>
+    <div class="card-footer flex justify-end">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-2"></i>Save Section Info</button>
+    </div>
+</form>
+
+<!-- Selected Products Section -->
+<div class="admin-card">
+    <div class="card-header flex justify-between items-center">
+        <h3 class="text-xl font-bold text-gray-800">Selected Products</h3>
+        <button type="button" id="select-festive-products-btn" class="btn btn-primary"><i class="fas fa-check-circle mr-2"></i>Select Products</button>
+    </div>
+    <div class="card-body">
+        <div id="festive-products-list">
+            <!-- Products will be rendered here by JS -->
+        </div>
+    </div>
+    <div id="festive-products-footer" class="card-footer flex justify-end" style="display: none;">
+         <button type="button" id="save-percentages-btn" class="btn btn-success bg-green-600 hover:bg-green-700"><i class="fas fa-percent mr-2"></i>Save All Percentages</button>
+    </div>
+</div>
+
+
+<script>
+(function() {
+    // --- ELEMENTS ---
+    const form = document.getElementById('festive-form');
+    const productsContainer = document.getElementById('festive-products-list');
+    const selectBtn = document.getElementById('select-festive-products-btn');
+    const savePercentagesBtn = document.getElementById('save-percentages-btn');
+    const productsFooter = document.getElementById('festive-products-footer');
+
+    // --- FIREBASE PATH ---
+    const dbKey = 'ramazone/homepage/festiveCollection';
+    
+    // --- INITIAL DATA ---
+    const festiveData = window.ramazoneData.homepage?.festiveCollection || {};
+
+    // --- FORM POPULATION ---
+    function populateForm() {
+        form.querySelector('#festive-title').value = festiveData.title || '';
+        form.querySelector('#festive-headline-color-hex').value = festiveData.headlineColor || '#ffffff';
+        form.querySelector('#festive-headline-color-picker').value = festiveData.headlineColor || '#ffffff';
+        form.querySelector('#festive-bg-color-hex').value = festiveData.backgroundColor || 'linear-gradient(135deg, #ff7e5f, #feb47b)';
+        form.querySelector('#festive-end-time').value = festiveData.endTime || '';
+        form.querySelector('#festive-products-to-show').value = festiveData.productsToShow || '';
+    }
+
+    // --- COLOR PICKER LOGIC ---
+    const setupColorPicker = (pickerId, hexId) => {
+        const picker = form.querySelector(`#${pickerId}`);
+        const hex = form.querySelector(`#${hexId}`);
+        picker.addEventListener('input', (e) => hex.value = e.target.value);
+        hex.addEventListener('input', (e) => picker.value = e.target.value);
+    };
+    setupColorPicker('festive-headline-color-picker', 'festive-headline-color-hex');
+
+    // --- RENDER SELECTED PRODUCTS ---
+    function renderSelectedProducts() {
+        productsContainer.innerHTML = '';
+        const productIds = festiveData.productIds || [];
+        const productMetadata = festiveData.productMetadata || {};
+
+        if (productIds.length > 0) {
+            productsFooter.style.display = 'flex'; // Show footer with save button
+            productIds.forEach(productId => {
+                const product = window.allProductsCache.find(p => p.id === productId);
+                if (!product) return;
+
+                const percentage = productMetadata[productId]?.soldPercentage || 0;
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'draggable-item items-center';
+                itemEl.dataset.id = productId;
+                itemEl.innerHTML = `
+                    <i class="fas fa-grip-vertical handle cursor-grab"></i>
+                    <img src="${product.images?.[0] || 'https://placehold.co/100x100/e2e8f0/e2e8f0?text=img'}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md">
+                    <span class="name flex-grow font-semibold">${product.name}</span>
+                    <div class="flex items-center gap-2">
+                        <label for="percentage-${productId}" class="text-sm font-medium text-gray-600">Sold:</label>
+                        <input type="number" id="percentage-${productId}" value="${percentage}" min="0" max="100" class="form-control w-24 text-center sold-percentage-input" placeholder="%">
+                    </div>
+                `;
+                productsContainer.appendChild(itemEl);
+            });
+
+            new Sortable(productsContainer, {
+                handle: '.handle',
+                animation: 150,
+                onEnd: async (evt) => {
+                    const reorderedIds = Array.from(evt.target.children).map(el => el.dataset.id);
+                    await db.ref(`${dbKey}/productIds`).set(reorderedIds);
+                    window.showToast('Success', 'Product order updated!', 'success');
+                }
+            });
+        } else {
+            productsContainer.innerHTML = `<p class="text-center text-gray-500 py-4">No products selected yet.</p>`;
+            productsFooter.style.display = 'none'; // Hide footer if no products
+        }
+    }
+
+    // --- EVENT LISTENERS ---
+
+    // Save Section Info (Title, Colors, End Time, etc.)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const updates = {
+            title: form.querySelector('#festive-title').value.trim(),
+            headlineColor: form.querySelector('#festive-headline-color-hex').value.trim(),
+            backgroundColor: form.querySelector('#festive-bg-color-hex').value.trim(),
+            endTime: form.querySelector('#festive-end-time').value,
+            productsToShow: parseInt(form.querySelector('#festive-products-to-show').value, 10) || 0
+        };
+        await db.ref(dbKey).update(updates);
+        window.showToast('Success', 'Festive Section info save ho gayi!', 'success');
+    });
+
+    // Open Product Selection Modal
+    selectBtn.addEventListener('click', () => {
+        const modal = document.getElementById('universalModal');
+        document.getElementById('modalTitle').textContent = 'Select Products for Festive Collection';
+        
+        const selectedIds = festiveData.productIds || [];
+        const productListHtml = window.allProductsCache.map(p => `
+            <div class="flex items-center p-2 border-b hover:bg-gray-50">
+                <input type="checkbox" id="prod-select-${p.id}" data-id="${p.id}" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" ${selectedIds.includes(p.id) ? 'checked' : ''}>
+                <img src="${p.images?.[0] || ''}" class="w-10 h-10 object-cover rounded mx-3">
+                <label for="prod-select-${p.id}" class="flex-grow cursor-pointer">${p.name}</label>
+            </div>
+        `).join('');
+
+        document.getElementById('modalBody').innerHTML = `<div id="product-selection-list" class="max-h-96 overflow-y-auto">${productListHtml}</div>`;
+        
+        document.getElementById('modalSaveBtn').onclick = async () => {
+            const newSelectedIds = Array.from(document.querySelectorAll('#product-selection-list input:checked')).map(input => input.dataset.id);
+            await db.ref(`${dbKey}/productIds`).set(newSelectedIds);
+            window.showToast('Success', 'Product selection saved!', 'success');
+            modal.classList.remove('active');
+            // Note: The page will auto-refresh data due to the 'on' listener in admin-main.js
+        };
+        modal.classList.add('active');
+    });
+    
+    // Save All Percentages
+    savePercentagesBtn.addEventListener('click', async () => {
+        const metadataUpdates = {};
+        const productItems = productsContainer.querySelectorAll('.draggable-item');
+        
+        productItems.forEach(item => {
+            const productId = item.dataset.id;
+            const percentageInput = item.querySelector('.sold-percentage-input');
+            const percentage = parseInt(percentageInput.value, 10) || 0;
+            metadataUpdates[productId] = { soldPercentage: percentage };
+        });
+
+        await db.ref(`${dbKey}/productMetadata`).set(metadataUpdates);
+        window.showToast('Success', 'All sold percentages have been saved!', 'success');
+    });
+
+    // --- INITIAL RENDER ---
+    populateForm();
+    renderSelectedProducts();
+})();
+</script>
