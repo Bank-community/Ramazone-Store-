@@ -4,12 +4,13 @@ let database;
 let deferredInstallPrompt = null;
 let festiveCountdownInterval = null; // Timer interval for festive collection
 
-// === YAHAN BADLAV KIYA GAYA HAI: Infinite Scroll State Variables ===
-let allDealsProducts = []; // To store all sorted deal products
-let loadedDealsCount = 0; // To track how many products are currently shown
-let dealsObserver = null; // The IntersectionObserver for lazy loading
-const INITIAL_DEALS_COUNT = 20; // Initial products to show
-const DEALS_PER_LOAD = 10; // Number of products to load on each scroll
+// **INFINITE SCROLL STATE FOR DEALS**
+let dealsOfTheDayProducts = []; // Saare deals products yahaan store honge
+let currentlyDisplayedDeals = 0; // Kitne products abhi dikh rahe hain
+const dealsPerPage = 10; // Ek baar mein kitne load karne hain
+let isLoadingDeals = false; // Kya abhi loading chal rahi hai?
+let dealsObserver = null; // Intersection Observer ka instance
+
 
 // --- PWA LOGIC (Kept for future) ---
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -98,14 +99,13 @@ async function initializeApp() {
     }
 }
 
-// --- DATA LOADING ---
+// --- UPDATED FUNCTION ---
 function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
         const data = snapshot.val() || {};
         let products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
         allProductsCache = products.filter(p => p && p.isVisible !== false);
-
         await loadPageStructure();
         renderAllSections(data);
     }, (error) => {
@@ -117,6 +117,7 @@ function loadAllData() {
 async function loadPageStructure() {
     const mainArea = document.getElementById('main-content-area');
     if (mainArea.childElementCount > 0) return;
+    // Naya code (सही)
     const sections = ['categories.html', 'recently-viewed.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
     try {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
@@ -140,7 +141,7 @@ function renderAllSections(data) {
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
     renderJustForYouSection(homepageData.justForYou);
-    renderHighlightedProducts(); // This will now set up the infinite scroll
+    renderHighlightedProducts();
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
     setupGlobalEventListeners();
@@ -165,28 +166,47 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
+
 // --- RECENTLY VIEWED SECTION LOGIC ---
 function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed-section');
     const container = document.getElementById('recently-viewed-container');
-    if (!section || !container) { return; }
+    if (!section || !container) {
+        return;
+    }
     try {
         const viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
-        if (viewedIds.length === 0) { section.style.display = 'none'; return; }
+        if (viewedIds.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
         let cardsHTML = '';
         let productsFound = 0;
         viewedIds.forEach(id => {
             const product = allProductsCache.find(p => p && p.id === id);
             if (product) {
                 const imageUrl = (product.images && product.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-                cardsHTML += `<a href="./product-details.html?id=${product.id}" class="rv-card"><img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy"><p>${product.name || 'Product Name'}</p></a>`;
+                cardsHTML += `
+                    <a href="./product-details.html?id=${product.id}" class="rv-card">
+                        <img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy">
+                        <p>${product.name || 'Product Name'}</p>
+                    </a>
+                `;
                 productsFound++;
             }
         });
-        if (productsFound > 0) { container.innerHTML = cardsHTML; section.style.display = 'block'; } 
-        else { section.style.display = 'none'; }
-    } catch (error) { console.error("Error rendering recently viewed products:", error); section.style.display = 'none'; }
+        if (productsFound > 0) {
+            container.innerHTML = cardsHTML;
+            section.style.display = 'block';
+        } else {
+            section.style.display = 'none';
+        }
+    } catch (error) {
+        console.error("Error rendering recently viewed products:", error);
+        section.style.display = 'none';
+    }
 }
+
 
 // --- FESTIVE COLLECTION SPECIFIC LOGIC ---
 function startCountdownTimer(endTimeString, elementId) {
@@ -238,8 +258,11 @@ function renderFestiveCollection(collectionData) {
     const headline = document.getElementById('festive-headline');
     const timerEl = document.getElementById('festive-countdown-timer');
     const arrowEl = document.getElementById('festive-view-all-link');
-    const viewAllUrl = 'festive-products.html';
-    if (arrowEl) { arrowEl.href = viewAllUrl; }
+
+    if (arrowEl) {
+        arrowEl.href = 'festive-products.html';
+    }
+
     if (headline) {
         const headlineColor = collectionData.headlineColor || 'var(--text-dark)';
         headline.innerText = collectionData.title || 'Special Offers';
@@ -247,7 +270,9 @@ function renderFestiveCollection(collectionData) {
         if (timerEl) timerEl.style.color = headlineColor;
         if (arrowEl) arrowEl.style.color = headlineColor;
     }
-    if (collectionData.endTime) { startCountdownTimer(collectionData.endTime, 'festive-countdown-timer'); }
+    if (collectionData.endTime) {
+        startCountdownTimer(collectionData.endTime, 'festive-countdown-timer');
+    }
     const slider = document.getElementById('festive-product-slider');
     const metadata = collectionData.productMetadata || {};
     const limit = collectionData.productsToShow || collectionData.productIds.length;
@@ -256,16 +281,28 @@ function renderFestiveCollection(collectionData) {
         if (!product) return '';
         return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
     }).join('');
-    const viewAllCardHTML = `<a href="${viewAllUrl}" class="view-all-card"><div class="arrow-circle"><i class="fas fa-arrow-right"></i></div><span class="view-all-text">View All</span></a>`;
-    slider.innerHTML = productsHTML + viewAllCardHTML;
+
+    // "View All" button ko yahaan add karo
+    productsHTML += `
+        <a href="festive-products.html" class="view-all-card">
+            <div class="view-all-circle">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            <span>View All</span>
+        </a>
+    `;
+    slider.innerHTML = productsHTML;
 }
 
 // --- UNIVERSAL HELPER FUNCTIONS ---
+// ** YAHAN BADLAV KIYA GAYA HAI **
 function createProductCardHTML(prod, cardClass = '') {
     if (!prod) return '';
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-    const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
-    const offerTag = prod.offerText ? `<div class="product-offer-tag" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
+    // Ab ye naye CSS classes ka istemaal karega
+    const ratingTag = prod.rating ? `<div class="card-rating-tag rating-tag-bottom-left">${prod.rating} <i class="fas fa-star"></i></div>` : '';
+    const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
+
     let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
     let originalPriceHTML = '', discountHTML = '';
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
@@ -275,84 +312,20 @@ function createProductCardHTML(prod, cardClass = '') {
     }
     const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
     const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
-    return `<div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy"></a>${ratingTag}${offerTag}${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a></div></div>`;
+
+    // Yahan <a> tag ke andar relative class add ki gayi hai
+    return `<div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a></div></div>`;
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: 'getDealsOfTheDayProducts' ab bina limit ke bhi kaam karega ===
-function getDealsOfTheDayProducts(maxCount) {
+function getDealsOfTheDayProducts() {
     if (!allProductsCache || allProductsCache.length === 0) return [];
-    const sortedProducts = [...allProductsCache].sort((a, b) => {
+    // Just sort and return all of them. The infinite scroll will handle loading.
+    return [...allProductsCache].sort((a, b) => {
         const discountA = (a.originalPrice || 0) - (a.displayPrice || 0);
         const discountB = (b.originalPrice || 0) - (b.displayPrice || 0);
         return (discountB - discountA) || ((b.rating || 0) - (a.rating || 0));
     });
-    // Agar maxCount diya hai to slice karo, warna sabhi products return karo
-    return maxCount ? sortedProducts.slice(0, maxCount) : sortedProducts;
 }
-
-// === YAHAN BADLAV KIYA GAYA HAI: Naya Infinite Scroll Logic ===
-function renderHighlightedProducts() {
-    const wrapper = document.getElementById('highlighted-products-wrapper');
-    const section = document.getElementById('highlighted-products-section');
-    const loader = document.getElementById('deals-loader');
-
-    if (dealsObserver) dealsObserver.disconnect(); // Purane observer ko disconnect karo
-
-    allDealsProducts = getDealsOfTheDayProducts(); // Sabhi sorted deals products le lo
-
-    if (!wrapper || !section || !loader || allDealsProducts.length === 0) {
-        if (section) section.style.display = 'none';
-        return;
-    }
-    section.style.display = 'block';
-
-    // Shuruaati 20 products dikhao
-    const initialProducts = allDealsProducts.slice(0, INITIAL_DEALS_COUNT);
-    wrapper.innerHTML = initialProducts.map(p => createProductCardHTML(p, 'grid-item')).join('');
-    loadedDealsCount = initialProducts.length;
-
-    // Agar aur products hain to observer set karo
-    if (loadedDealsCount < allDealsProducts.length) {
-        loader.classList.remove('hidden');
-        dealsObserver = new IntersectionObserver((entries) => {
-            // Jab loader screen par dikhe
-            if (entries[0].isIntersecting) {
-                loadMoreDealsProducts();
-            }
-        }, { rootMargin: '0px 0px 200px 0px' }); // Page end se 200px pehle hi load karna shuru kar do
-        dealsObserver.observe(loader);
-    } else {
-        loader.classList.add('hidden');
-    }
-}
-
-function loadMoreDealsProducts() {
-    const wrapper = document.getElementById('highlighted-products-wrapper');
-    const loader = document.getElementById('deals-loader');
-
-    // Agle 10 products nikalo
-    const nextProducts = allDealsProducts.slice(loadedDealsCount, loadedDealsCount + DEALS_PER_LOAD);
-
-    if (nextProducts.length > 0) {
-        // Ek chhota sa delay daalo taaki loading smooth lage
-        setTimeout(() => {
-            const newProductsHTML = nextProducts.map(p => createProductCardHTML(p, 'grid-item')).join('');
-            wrapper.insertAdjacentHTML('beforeend', newProductsHTML);
-            loadedDealsCount += nextProducts.length;
-
-            // Agar saare products load ho gaye hain to loader ko hata do
-            if (loadedDealsCount >= allDealsProducts.length) {
-                loader.classList.add('hidden');
-                if (dealsObserver) dealsObserver.disconnect();
-            }
-        }, 500); // 0.5 second ka delay
-    } else {
-        // Agar koi product nahi bacha hai
-        loader.classList.add('hidden');
-        if (dealsObserver) dealsObserver.disconnect();
-    }
-}
-
 
 function setupGlobalEventListeners() {
     document.body.addEventListener('click', function (event) {
@@ -384,6 +357,69 @@ function setupScrollAnimations() {
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 }
+
+// --- DEALS OF THE DAY - INFINITE SCROLL LOGIC ---
+function renderHighlightedProducts() {
+    const wrapper = document.getElementById('highlighted-products-wrapper');
+    const section = document.getElementById('highlighted-products-section');
+    if (!wrapper || !section) { if (section) section.style.display = 'none'; return; }
+
+    dealsOfTheDayProducts = getDealsOfTheDayProducts();
+
+    if (dealsOfTheDayProducts.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    wrapper.innerHTML = ''; // Clear previous content
+    currentlyDisplayedDeals = 0;
+
+    loadMoreDeals(); // Load initial batch (20 products)
+
+    // Setup Intersection Observer
+    const loader = document.getElementById('deals-loader');
+    if (loader) {
+        dealsObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !isLoadingDeals) {
+                loadMoreDeals();
+            }
+        }, { threshold: 1.0 });
+        dealsObserver.observe(loader);
+    }
+}
+
+function loadMoreDeals() {
+    const wrapper = document.getElementById('highlighted-products-wrapper');
+    const loader = document.getElementById('deals-loader');
+    if (isLoadingDeals || !wrapper || !loader) return;
+
+    const productsToLoad = dealsOfTheDayProducts.slice(currentlyDisplayedDeals, currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage));
+
+    if (productsToLoad.length === 0) {
+        loader.style.display = 'none'; // No more products, hide loader
+        if (dealsObserver) dealsObserver.disconnect(); // Stop observing
+        return;
+    }
+
+    isLoadingDeals = true;
+    loader.style.display = 'flex';
+
+    // Simulate network delay for better UX
+    setTimeout(() => {
+        const productsHTML = productsToLoad.map(p => createProductCardHTML(p, 'grid-item')).join('');
+        wrapper.insertAdjacentHTML('beforeend', productsHTML);
+        currentlyDisplayedDeals += productsToLoad.length;
+        isLoadingDeals = false;
+        loader.style.display = 'none';
+
+        // If we've loaded all products, hide loader and stop observing
+        if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) {
+            if (dealsObserver) dealsObserver.disconnect();
+        }
+    }, 500);
+}
+
 
 // --- OTHER RENDER FUNCTIONS ---
 function renderSlider(sliderData) {
