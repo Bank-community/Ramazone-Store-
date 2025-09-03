@@ -6,16 +6,71 @@
     <title>Ramazone - Vendor Panel</title>
     <link rel="icon" type="image/png" href="https://i.ibb.co/VYkVCfhD/20250902-230504.png">
     
-    <!-- CSS Files -->
+    <!-- External CSS (Tailwind and Font Awesome) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Vendor Panel ki Apni CSS File -->
-    <link rel="stylesheet" href="vendor-style.css">
+    
+    <!-- Internal CSS (vendor-style.css ka code yahaan daal diya gaya hai) -->
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --secondary-bg: #f3f4f6;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .passcode-container { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background-color: var(--secondary-bg); z-index: 100; }
+        .passcode-card { background: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1); text-align: center; width: 90%; max-width: 380px; }
+        .passcode-logo { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 1rem; }
+        .form-label { display: block; text-align: left; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem; }
+        .form-control { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.75rem; font-size: 1rem; transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
+        .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); outline: none; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.375rem; font-weight: 600; text-align: center; transition: background-color .2s; cursor: pointer; border: 1px solid transparent; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .sidebar { background-color: #111827; color: #d1d5db; transition: transform 0.3s ease-in-out; }
+        .sidebar-brand { background-color: #1f2937; }
+        .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.5rem; border-radius: 0.375rem; margin: 0 0.5rem; transition: background-color .2s, color .2s; }
+        .sidebar-link:hover { background-color: #374151; color: white; }
+        .sidebar-link.active { background-color: var(--primary-color); color: white; }
+        .vendor-avatar-sm { width: 40px; height: 40px; background-color: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem; }
+        .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center; z-index: 50; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background-color: white; border-radius: 0.5rem; width: 90%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; }
+        .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-close-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
+        .modal-body { padding: 1.5rem; overflow-y: auto; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; text-align: right; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 100; }
+        .toast { background: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1); display: flex; overflow: hidden; transform: translateX(120%); transition: transform 0.5s ease; margin-bottom: 0.5rem; }
+        .toast.show { transform: translateX(0); }
+        .profile-card { background-color: #fff; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px -1px rgba(0,0,0,.1); }
+        .profile-card-header { padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+        .profile-card-title { font-size: 1.125rem; font-weight: 600; }
+        .profile-card-body { padding: 1.5rem; }
+        .detail-item { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6; }
+    </style>
 </head>
 <body class="bg-gray-100">
 
-    <!-- Login Screen -->
+    <!-- VERCEL BUILD-TIME CONFIGURATION -->
+    <script>
+      window.CLIENT_CONFIG = {
+        FIREBASE_API_KEY: "%NEXT_PUBLIC_VENDOR_FIREBASE_API_KEY%",
+        FIREBASE_AUTH_DOMAIN: "%NEXT_PUBLIC_VENDOR_FIREBASE_AUTH_DOMAIN%",
+        FIREBASE_DATABASE_URL: "%NEXT_PUBLIC_VENDOR_FIREBASE_DATABASE_URL%",
+        IMGBB_API_KEY: "%NEXT_PUBLIC_VENDOR_IMGBB_API_KEY%"
+      };
+    </script>
+
+    <!-- HTML Content -->
     <div id="loginOverlay" class="passcode-container">
         <div class="passcode-card" id="loginCard">
             <div class="passcode-logo"><i class="fas fa-store"></i></div>
@@ -23,11 +78,11 @@
             <p class="text-gray-500 mb-6">Apne account mein login karein.</p>
             <form id="loginForm" class="space-y-4">
                 <div>
-                    <label for="vendor-email" class="form-label text-left">Email</label>
+                    <label for="vendor-email" class="form-label">Email</label>
                     <input type="email" id="vendor-email" class="form-control" required>
                 </div>
                 <div>
-                    <label for="vendor-password" class="form-label text-left">Password</label>
+                    <label for="vendor-password" class="form-label">Password</label>
                     <input type="password" id="vendor-password" class="form-control" required>
                 </div>
                  <div class="text-right text-sm">
@@ -38,9 +93,7 @@
         </div>
     </div>
 
-    <!-- Main Vendor Layout -->
     <div id="vendorLayout" class="hidden">
-        <!-- Sidebar -->
         <aside id="sidebar" class="sidebar w-64 fixed inset-y-0 left-0 z-20 transform -translate-x-full md:translate-x-0">
              <div class="flex flex-col h-full">
                 <div class="sidebar-brand h-16 flex items-center justify-center px-4 shadow-md flex-shrink-0">
@@ -62,35 +115,25 @@
             </div>
         </aside>
 
-        <!-- Main Content Area -->
         <div class="md:ml-64 flex-1 flex flex-col">
-            <!-- Header -->
             <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-10">
                 <div class="flex items-center">
                     <button id="sidebarToggle" class="text-gray-500 focus:outline-none md:hidden mr-4"><i class="fas fa-bars text-lg"></i></button>
                     <h2 id="contentTitle" class="text-xl font-semibold text-gray-800">Dashboard</h2>
                 </div>
-                 <!-- === UPDATED: Naya Home Button Yahan Joda Gaya Hai === -->
                  <div class="flex items-center gap-4">
-                    <!-- NEW HOME BUTTON -->
                     <button id="home-button" title="Go to Dashboard" class="text-gray-600 hover:text-primary focus:outline-none text-xl transition-colors duration-200">
                         <i class="fas fa-home"></i>
                     </button>
-                    
                     <span class="text-sm font-medium text-gray-700 hidden sm:block" id="vendor-name-header"></span>
                     <button id="vendor-avatar-header" class="vendor-avatar-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"></button>
                 </div>
             </header>
-
-            <!-- Yahan par sections dynamically load honge -->
-            <main id="main-content-area" class="flex-1 overflow-y-auto p-6">
-                <!-- Loading indicator -->
-            </main>
+            <main id="main-content-area" class="flex-1 overflow-y-auto p-6"></main>
         </div>
         <div id="sidebarOverlay" class="fixed inset-0 bg-black opacity-50 z-10 hidden md:hidden"></div>
     </div>
 
-    <!-- Universal Modal -->
     <div id="universalModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -105,16 +148,244 @@
         </div>
     </div>
 
-
-    <!-- Toast Notifications -->
     <div id="toast-container"></div>
 
-    <!-- JavaScript Files -->
+    <!-- External JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <!-- Vendor Panel ki Apni JS File -->
-    <script src="vendor-main.js"></script>
+    
+    <!-- Internal JavaScript (vendor-main.js ka code yahaan daal diya gaya hai) -->
+    <script>
+        // --- GLOBAL VARIABLES & CONFIG ---
+        const FIREBASE_CONFIG = {
+            apiKey: window.CLIENT_CONFIG.FIREBASE_API_KEY,
+            authDomain: window.CLIENT_CONFIG.FIREBASE_AUTH_DOMAIN,
+            databaseURL: window.CLIENT_CONFIG.FIREBASE_DATABASE_URL,
+        };
+        const IMGBB_API_KEY = window.CLIENT_CONFIG.IMGBB_API_KEY;
+        const DB_BASE_PATH = 'ramazone';
+
+        // Global state
+        let app, db, auth;
+        window.currentVendorData = {};
+        window.allProductsCache = [];
+        window.currentVendorProductsCache = [];
+        window.allCategoriesCache = [];
+
+        // --- CORE FUNCTIONS ---
+        async function loadPage(pageUrl) {
+            const mainContentArea = document.getElementById('main-content-area');
+            mainContentArea.innerHTML = `<div class="w-full flex justify-center items-center p-10"><div class="loader"></div></div>`;
+            try {
+                const response = await fetch(pageUrl);
+                if (!response.ok) throw new Error(`Page not found: ${pageUrl}`);
+                mainContentArea.innerHTML = await response.text();
+                // We don't need to handle scripts inside loaded HTML anymore
+            } catch (error) {
+                console.error("Page Load Error:", error);
+                mainContentArea.innerHTML = `<p class="text-center p-10 text-red-500">Error loading page. Please try again.</p>`;
+            }
+        }
+
+        async function initializeVendorPanel(user) {
+            try {
+                const vendorSnapshot = await db.ref(`${DB_BASE_PATH}/vendors/${user.uid}`).once('value');
+                window.currentVendorData = vendorSnapshot.val();
+
+                if (!window.currentVendorData) {
+                    showToast('Error', 'Aapka vendor data nahin mila. Admin se sampark karein.', 'error');
+                    return auth.signOut();
+                }
+
+                if (window.currentVendorData.status === 'disabled') {
+                    showToast('Account Disabled', 'Aapka account admin dwara disable kar diya gaya hai.', 'error', 8000);
+                    return auth.signOut();
+                }
+
+                const allProductsSnapshot = await db.ref(`${DB_BASE_PATH}/products`).once('value');
+                const productsData = allProductsSnapshot.val() || [];
+                window.allProductsCache = Array.isArray(productsData) ? productsData.filter(p => p) : Object.values(productsData).filter(p => p);
+
+                const categoriesSnapshot = await db.ref(`${DB_BASE_PATH}/homepage/normalCategories`).once('value');
+                const categoriesData = categoriesSnapshot.val() || [];
+                window.allCategoriesCache = Array.isArray(categoriesData) ? categoriesData.map(c => c.name) : [];
+
+                window.currentVendorProductsCache = window.allProductsCache
+                    .map((p, index) => ({ data: p, originalIndex: index }))
+                    .filter(item => item.data && item.data.vendorId === user.uid);
+
+                document.getElementById('vendor-shop-name-sidebar').textContent = window.currentVendorData.shopName;
+                document.getElementById('vendor-name-header').textContent = `Hello, ${window.currentVendorData.name.split(' ')[0]}`;
+                document.getElementById('vendor-avatar-header').textContent = window.currentVendorData.name.charAt(0).toUpperCase();
+
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('vendorLayout').classList.remove('hidden');
+
+                setupEventListeners();
+                document.querySelector('.sidebar-link[data-page="sections/dashboard.html"]').click();
+            } catch (error) {
+                console.error("Initialization Error:", error);
+                showToast('Error', 'Panel initialize karne mein error aaya.', 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                if (link.eventAttached) return;
+                link.eventAttached = true;
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    document.getElementById('contentTitle').textContent = link.querySelector('span').textContent;
+                    loadPage(link.dataset.page);
+                    if (window.innerWidth < 768) {
+                        document.getElementById('sidebar').classList.add('-translate-x-full');
+                        document.getElementById('sidebarOverlay').classList.add('hidden');
+                    }
+                });
+            });
+            document.getElementById('vendor-avatar-header').addEventListener('click', renderProfilePage);
+            const homeButton = document.getElementById('home-button');
+            if (homeButton && !homeButton.eventAttached) {
+                homeButton.eventAttached = true;
+                homeButton.addEventListener('click', () => {
+                    const dashboardLink = document.querySelector('.sidebar-link[data-page="sections/dashboard.html"]');
+                    if (dashboardLink) dashboardLink.click();
+                });
+            }
+        }
+
+        function renderProfilePage() {
+             const mainContentArea = document.getElementById('main-content-area');
+            const contentTitle = document.getElementById('contentTitle');
+            contentTitle.textContent = 'My Profile';
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            const profilePageHtml = `
+                <div class="space-y-6">
+                    <div class="profile-card">
+                        <div class="profile-card-header"><h3 class="profile-card-title">Vendor Details</h3></div>
+                        <div class="profile-card-body">
+                            <div class="space-y-4">
+                                <div class="detail-item"><i class="fas fa-user-circle w-6 text-center"></i> <strong>Full Name:</strong> <span class="ml-auto text-gray-700">${window.currentVendorData.name}</span></div>
+                                <div class="detail-item"><i class="fas fa-store w-6 text-center"></i> <strong>Shop Name:</strong> <span class="ml-auto text-gray-700">${window.currentVendorData.shopName}</span></div>
+                                <div class="detail-item"><i class="fas fa-envelope w-6 text-center"></i> <strong>Login Email:</strong> <span class="ml-auto text-gray-700">${window.currentVendorData.email}</span></div>
+                                <div class="detail-item"><i class="fab fa-whatsapp w-6 text-center"></i> <strong>WhatsApp:</strong> <span class="ml-auto text-gray-700">${window.currentVendorData.whatsappNumber}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-card">
+                        <div class="profile-card-header"><h3 class="profile-card-title">Change Password</h3></div>
+                        <div class="profile-card-body">
+                            <form id="profile-change-password-form" class="space-y-4">
+                                <div><label class="form-label">Old Password</label><input type="password" id="profile-old-password" class="form-control" required></div>
+                                <div><label class="form-label">New Password</label><input type="password" id="profile-new-password" class="form-control" required></div>
+                                <div><label class="form-label">Confirm New Password</label><input type="password" id="profile-confirm-password" class="form-control" required></div>
+                                <div class="text-right pt-2"><button type="submit" id="update-password-btn" class="btn btn-primary">Update Password</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>`;
+            mainContentArea.innerHTML = profilePageHtml;
+            document.getElementById('profile-change-password-form').addEventListener('submit', async (e) => { e.preventDefault(); const oldPassword = document.getElementById('profile-old-password').value; const newPassword = document.getElementById('profile-new-password').value; const confirmPassword = document.getElementById('profile-confirm-password').value; if (!oldPassword || !newPassword || !confirmPassword) return showToast('Error', 'Please fill all password fields.', 'error'); if (newPassword !== confirmPassword) return showToast('Error', 'New passwords do not match.', 'error'); if (newPassword.length < 6) return showToast('Error', 'Password must be at least 6 characters.', 'error'); const updateBtn = document.getElementById('update-password-btn'); updateBtn.disabled = true; updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...'; const user = auth.currentUser; const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPassword); try { await user.reauthenticateWithCredential(credential); await user.updatePassword(newPassword); showToast('Success!', 'Your password has been updated successfully.', 'success'); document.getElementById('profile-change-password-form').reset(); } catch (error) { let msg = 'An error occurred. Please try again.'; if (error.code === 'auth/wrong-password') msg = 'The old password you entered is incorrect.'; window.showToast('Update Failed', msg, 'error'); } finally { updateBtn.disabled = false; updateBtn.innerHTML = 'Update Password'; } });
+        }
+
+        function showToast(title, message, type = 'info', duration = 5000) { const container = document.getElementById('toast-container'); if (!container) return; const toast = document.createElement('div'); const typeClasses = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' }; toast.className = `toast`; toast.innerHTML = `<div class="flex items-center"><div class="w-10 h-10 rounded-l-md flex items-center justify-center text-white text-lg ${typeClasses[type] || 'bg-gray-500'}"><i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i></div><div class="px-4 py-2"><p class="font-bold text-gray-800">${title}</p><p class="text-sm text-gray-600">${message}</p></div></div>`; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, duration); };
+        
+        window.uploadToImgBB = async (file) => {
+            if (!IMGBB_API_KEY || IMGBB_API_KEY.startsWith('%')) {
+                showToast('Upload Failed', 'Image upload service is not available.', 'error');
+                return null;
+            }
+            const formData = new FormData();
+            formData.append('image', file);
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success) return result.data.url;
+                else throw new Error(result.error.message);
+            } catch (error) {
+                console.error('Image Upload Error:', error);
+                showToast('Upload Failed', error.message, 'error');
+                return null;
+            }
+        };
+
+        // --- APP INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey.startsWith('%')) {
+                document.body.innerHTML = `<div style="text-align:center; padding: 20px; font-family: sans-serif; color: #333;"><h1>Application Error</h1><p>Configuration load nahi ho saki.</p><p style="color: #d9534f; font-weight: bold;">Error: Vercel Environment Variables theek se set nahi hain. NEXT_PUBLIC_ prefix check karein.</p></div>`;
+                return;
+            }
+
+            try {
+                app = firebase.initializeApp(FIREBASE_CONFIG);
+                db = firebase.database();
+                auth = firebase.auth();
+
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        initializeVendorPanel(user);
+                    } else {
+                        document.getElementById('loginOverlay').style.display = 'flex';
+                        document.getElementById('vendorLayout').classList.add('hidden');
+                    }
+                });
+
+                const loginForm = document.getElementById('loginForm');
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('vendor-email').value;
+                    const password = document.getElementById('vendor-password').value;
+                    const submitButton = loginForm.querySelector('button[type="submit"]');
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Logging in...';
+                    auth.signInWithEmailAndPassword(email, password)
+                        .catch((error) => {
+                            let msg = 'Login fail ho gaya. Dobara try karein.';
+                            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                                msg = 'Galat email ya password.';
+                            }
+                            showToast('Login Failed', msg, 'error');
+                        })
+                        .finally(() => {
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Login';
+                        });
+                });
+                
+                document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+                
+                document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('vendor-email').value;
+                    if (!email) return showToast('Error', 'Please enter your email address first.', 'error');
+                    auth.sendPasswordResetEmail(email)
+                        .then(() => showToast('Check Your Email', `Password reset link sent to ${email}.`, 'success'))
+                        .catch((error) => showToast('Error', error.message, 'error'));
+                });
+
+                const sidebar = document.getElementById('sidebar');
+                const sidebarOverlay = document.getElementById('sidebarOverlay');
+                document.getElementById('sidebarToggle').addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); sidebarOverlay.classList.toggle('hidden'); });
+                sidebarOverlay.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); });
+
+                const modal = document.getElementById('universalModal');
+                const closeModal = () => modal.classList.remove('active');
+                document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+                document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+                modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+            } catch (error) {
+                console.error("Firebase Init Error:", error);
+                document.body.innerHTML = "Error initializing the application. Check console.";
+            }
+        });
+    </script>
+
 </body>
 </html>
+
+
