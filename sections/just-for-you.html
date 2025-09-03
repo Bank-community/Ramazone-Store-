@@ -6,6 +6,7 @@
 
 <!-- Sirf Just For You Section ke liye CSS -->
 <style>
+    /* === MOBILE FIRST STYLES (Ye mobile ke liye hain) === */
     #just-for-you-section { 
         padding: 1.5rem 1rem; 
     } 
@@ -103,7 +104,7 @@
         border-radius: 0.75rem; 
         overflow: hidden; 
         position: relative; 
-        padding-top: 100%; 
+        padding-top: 100%; /* Square aspect ratio banaye rakhta hai */
     } 
 
     .jfy-main-product img { 
@@ -166,6 +167,72 @@
         font-weight: 600; 
         color: #16a34a; 
         margin-top: 0.125rem; 
+    }
+
+    /* === YAHAN BADLAV KIYA GAYA HAI: Desktop ke liye Media Query === */
+    @media (min-width: 768px) {
+        #just-for-you-section {
+            padding: 2rem;
+        }
+
+        .jfy-main-container {
+            flex-direction: row; /* Main layout ko horizontal kar diya */
+            aspect-ratio: auto; /* Aspect ratio hata diya */
+            max-width: 1200px; /* Ek maximum चौड़ाई set kar di */
+            margin: 0 auto; /* Page ke beech mein laaya */
+            padding: 1.5rem;
+            gap: 2rem;
+            align-items: stretch; /* Sabhi items ko barabar height di */
+        }
+        
+        .jfy-main-title {
+            writing-mode: vertical-rl; /* Title ko vertical kar diya */
+            transform: rotate(180deg);
+            margin: 0;
+            text-align: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        
+        .jfy-grid {
+            grid-template-columns: 2fr 3fr; /* Poster ko zyada jagah di */
+            gap: 1.5rem;
+            flex-grow: 1;
+            align-items: stretch;
+        }
+
+        .jfy-poster-card, .jfy-deals-card, .jfy-main-product, .jfy-sub-product-item {
+            border-radius: 1.25rem; /* Kone aur zyada gol kar diye */
+        }
+
+        .jfy-deals-card {
+            flex-direction: row; /* Deals ko horizontal kar diya */
+            gap: 1.5rem;
+        }
+
+        .jfy-main-product {
+            flex: 3; /* Main product ko zyada jagah di */
+            padding-top: 0; /* Aspect ratio trick hata di */
+        }
+
+        .jfy-main-product img {
+            position: relative; /* Image ko normal flow mein laaya */
+        }
+
+        .jfy-sub-products {
+            flex: 2; /* Sub-products ko kam jagah di */
+            grid-template-columns: 1fr; /* Sub-products ko vertical stack kar diya */
+            gap: 1.5rem;
+        }
+        
+        .jfy-sub-product-item .details {
+            padding: 0.75rem;
+        }
+        
+        .jfy-sub-product-item .name {
+            font-size: 0.8rem;
+        }
     }
 </style>
 

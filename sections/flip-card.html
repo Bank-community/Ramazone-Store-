@@ -1,5 +1,5 @@
 <section class="section-container reveal" id="flipcard-section">
-     <div class="flip-card-container w-full aspect-[16/7]">
+     <div class="flip-card-container w-full">
         <!-- Flip card ka content yahaan main.js se dynamically load hoga -->
         <div class="flip-card-inner" id="flip-card-inner-content">
         </div>
@@ -8,13 +8,15 @@
 
 <!-- Sirf Flip Card Section ke liye CSS -->
 <style>
+    /* === MOBILE FIRST STYLES (Ye mobile ke liye hain) === */
     #flipcard-section { 
         padding-top: 0.5rem; 
     }
 
     .flip-card-container { 
         perspective: 1000px; 
-        padding: 0 1rem; 
+        padding: 0 1rem;
+        aspect-ratio: 16 / 7; /* Aspect ratio mobile par maintain rakhega */
     } 
 
     .flip-card-inner { 
@@ -56,6 +58,26 @@
         0%, 45% { transform: rotateY(0deg); } 
         50%, 95% { transform: rotateY(180deg); } 
         100% { transform: rotateY(0deg); } 
+    }
+
+    /* === YAHAN BADLAV KIYA GAYA HAI: Desktop ke liye Media Query === */
+    @media (min-width: 768px) {
+        #flipcard-section {
+            padding: 1.5rem 2rem; /* Desktop par upar-neeche zyada space */
+        }
+
+        .flip-card-container {
+            max-width: 900px; /* Card ki maximum चौड़ाई fix kar di */
+            margin: 0 auto; /* Card ko page ke beech mein laaya */
+            padding: 0; /* Side padding ki ab zarurat nahi */
+            height: 350px; /* Ek fix height de di */
+            aspect-ratio: auto; /* Aspect ratio ko hata diya */
+        }
+
+        .flip-card-front, 
+        .flip-card-back {
+            border-radius: 1.5rem; /* Kone thode aur gol kar diye */
+        }
     }
 </style>
 

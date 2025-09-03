@@ -4,6 +4,7 @@
 
 <!-- Sirf Category Section ke liye CSS -->
 <style>
+    /* === MOBILE FIRST STYLES (Ye mobile ke liye hain) === */
     #normal-category-section { 
         padding: 0.5rem 0; 
     }
@@ -76,6 +77,59 @@
         overflow: hidden; 
         text-overflow: ellipsis; 
         width: 100%; 
+    }
+
+    /* === YAHAN BADLAV KIYA GAYA HAI: Desktop ke liye Media Query === */
+    @media (min-width: 768px) {
+        #normal-category-section {
+            padding: 1.5rem 2rem; /* Desktop par zyada space */
+            background-color: #f9fafb; /* Halka sa background color */
+        }
+
+        .category-master-scroller {
+            overflow-x: visible; /* Horizontal scroll band kar diya */
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .category-rows-container {
+            display: flex;
+            flex-direction: row; /* Ab items ek hi line mein aayenge */
+            flex-wrap: wrap; /* Agar jagah kam ho to agli line mein chale jaayenge */
+            justify-content: center;
+            gap: 1rem; /* Items ke beech thodi zyada jagah */
+            max-width: 1100px; /* Ek maximum चौड़ाई set kar di */
+        }
+
+        .category-row {
+            /* Iski zarurat nahi, parent se styles aa rahe hain */
+            /* Lekin double-width card ke liye, isko flex rehne dete hain */
+            gap: 1rem;
+        }
+
+        .category-card {
+            width: 80px; /* Card ko thoda bada kar diya */
+            transition: transform 0.2s;
+        }
+
+        .category-card:hover {
+            transform: translateY(-4px); /* Hover par halka sa upar uthega */
+        }
+
+        .category-card--double { 
+            width: 180px; /* Double card ko bhi thoda bada kar diya */
+        }
+
+        .category-card .img-wrapper {
+            height: 80px; /* Image container ko bhi bada kar diya */
+            border-radius: 16px;
+        }
+
+        .category-name {
+            font-size: 0.75rem; /* Text size thoda sa badha diya */
+            margin-top: 0.5rem;
+        }
     }
 </style>
 
