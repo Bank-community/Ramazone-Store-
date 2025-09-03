@@ -383,16 +383,14 @@ function renderHighlightedProducts() {
     }
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: Pura function theek kiya gaya ===
 function loadMoreDeals() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const loader = document.getElementById('deals-loader');
     if (isLoadingDeals || !wrapper || !loader) return;
 
-    // Check karo ki aur products bache hain ya nahi
     if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length && currentlyDisplayedDeals > 0) {
-        loader.style.display = 'none'; // Sab load ho gaya, ab loader ko hamesha ke liye chhupa do
-        if (dealsObserver) dealsObserver.disconnect(); // Observer ka kaam khatam
+        loader.style.display = 'none'; 
+        if (dealsObserver) dealsObserver.disconnect();
         return;
     }
 
@@ -408,20 +406,14 @@ function loadMoreDeals() {
     }
 
     isLoadingDeals = true;
-    loader.style.display = 'flex'; // Loading shuru, loader dikhao
+    loader.style.display = 'flex'; 
 
-    // Network delay ka anubhav dene ke liye setTimeout
     setTimeout(() => {
         const productsHTML = productsToLoad.map(p => createProductCardHTML(p, 'grid-item')).join('');
         wrapper.insertAdjacentHTML('beforeend', productsHTML);
         currentlyDisplayedDeals += productsToLoad.length;
         isLoadingDeals = false;
 
-        // **SABSE ZAROORI BADLAV:** Loader ko yahaan mat chhupao.
-        // Usko bas tabhi chhupana hai jab saare products load ho jaayein.
-        // Isliye loader ko dikhte rehne do taaki agla scroll detect ho sake.
-
-        // Agar saare products load ho gaye hain, to ab loader ko chhupa do.
         if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) {
             loader.style.display = 'none';
             if (dealsObserver) dealsObserver.disconnect();
@@ -461,6 +453,7 @@ function renderVideosSection(videoData) {
     slider.innerHTML = videoData.map(video => `<a href="${video.youtubeUrl || '#'}" target="_blank" class="video-card"><img src="${video.imageUrl || 'https://placehold.co/600x400/black/white?text=Video'}" alt="${video.title}" loading="lazy"><i class="fas fa-play-circle play-icon"></i><div class="video-card-overlay"><h3 class="video-card-title">${video.title}</h3><p class="video-card-desc">${video.description || ''}</p></div></a>`).join('');
 }
 
+// === YAHAN BADLAV KIYA GAYA HAI: JUST FOR YOU SECTION LOGIC UPDATE KIYA GAYA ===
 function renderJustForYouSection(jfyData) {
     const section = document.getElementById('just-for-you-section');
     if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
@@ -468,12 +461,65 @@ function renderJustForYouSection(jfyData) {
     const mainProduct = allProductsCache.find(p => p.id === topDeals?.mainProductId);
     const subProduct1 = allProductsCache.find(p => p.id === topDeals?.subProductIds?.[0]);
     const subProduct2 = allProductsCache.find(p => p.id === topDeals?.subProductIds?.[1]);
-    if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { section.style.display = 'none'; return; }
+
+    if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { 
+        section.style.display = 'none'; 
+        return; 
+    }
+
+    // --- Naya Logic Shuru ---
+    // 1. Pata lagao ki user desktop par hai ya nahi.
+    const isDesktop = window.innerWidth >= 768;
+
+    // 2. Main product ke liye kaunsi image istemal karni hai, yah tay karo.
+    let mainProductImage = mainProduct.images?.[0] || 'https://placehold.co/600x600/e2e8f0/64748b?text=Image'; // Default (khadi) image.
+
+    // Agar user desktop par hai AUR admin ne custom image upload ki hai, to custom image istemal karo.
+    if (isDesktop && topDeals.mainProductImageUrl) {
+        mainProductImage = topDeals.mainProductImageUrl;
+    }
+    // --- Naya Logic Khatm ---
+
     const getDiscount = p => p && p.originalPrice > p.displayPrice ? `<p class="discount">${Math.round(((p.originalPrice - p.displayPrice) / p.originalPrice) * 100)}% OFF</p>` : '';
     const getAddButton = p => p && (p.displayPrice < 500 || p.category === 'grocery') ? `<button class="add-btn standard-card-add-btn" data-id="${p.id}">+</button>` : "";
+
     const jfyContent = document.getElementById('jfy-content');
     if (jfyContent) {
-        jfyContent.innerHTML = `<div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};"><h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2><div class="jfy-grid"><a href="${poster.linkUrl || '#'}" class="jfy-poster-card"><div class="jfy-poster-slider-container"><div class="jfy-poster-slider">${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image"></div>`).join('')}</div><div class="jfy-slider-dots"></div></div></a><div class="jfy-deals-card"><div class="relative jfy-main-product"><a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProduct.images?.[0] || ''}" alt="${mainProduct.name}"></a>${getAddButton(mainProduct)}</div><div class="jfy-sub-products"><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct1.id}"><div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}"></div><div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div></a><div class="absolute bottom-2 right-2">${getAddButton(subProduct1)}</div></div><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct2.id}"><div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}"></div><div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div></a><div class="absolute bottom-2 right-2">${getAddButton(subProduct2)}</div></div></div></div></div></div>`;
+        jfyContent.innerHTML = `
+            <div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};">
+                <h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2>
+                <div class="jfy-grid">
+                    <a href="${poster.linkUrl || '#'}" class="jfy-poster-card">
+                        <div class="jfy-poster-slider-container">
+                            <div class="jfy-poster-slider">${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image"></div>`).join('')}</div>
+                            <div class="jfy-slider-dots"></div>
+                        </div>
+                    </a>
+                    <div class="jfy-deals-card">
+                        <div class="relative jfy-main-product">
+                            <!-- Yahaan 'mainProductImage' variable ka istemal kiya gaya hai -->
+                            <a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProductImage}" alt="${mainProduct.name}"></a>
+                            ${getAddButton(mainProduct)}
+                        </div>
+                        <div class="jfy-sub-products">
+                            <div class="relative jfy-sub-product-item">
+                                <a href="./product-details.html?id=${subProduct1.id}">
+                                    <div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}"></div>
+                                    <div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div>
+                                </a>
+                                <div class="absolute bottom-2 right-2">${getAddButton(subProduct1)}</div>
+                            </div>
+                            <div class="relative jfy-sub-product-item">
+                                <a href="./product-details.html?id=${subProduct2.id}">
+                                    <div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}"></div>
+                                    <div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div>
+                                </a>
+                                <div class="absolute bottom-2 right-2">${getAddButton(subProduct2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
     }
     section.style.display = 'block';
     if (poster.images && poster.images.length > 0) initializeJfySlider(poster.images.length);
