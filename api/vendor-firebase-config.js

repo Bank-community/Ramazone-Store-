@@ -1,0 +1,24 @@
+// /api/vendor-firebase-config.js
+
+// Yeh Vercel ke liye ek serverless function hai.
+// Ismein ab sirf wahi 3 keys hain jo Vendor Panel ke liye zaroori hain.
+// Aapko Vercel project settings mein in variables ko set karna hoga.
+
+export default function handler(request, response) {
+  // Environment variables ko process.env se access karein
+  const firebaseConfig = {
+    apiKey: process.env.FIREBASE_API_KEY,
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+  };
+
+  // Check karein ki saari keys maujood hain ya nahi
+  if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.databaseURL) {
+    return response.status(500).json({ error: "Server par Firebase environment variables poori tarah se set nahi hain." });
+  }
+
+  // Config ko 200 OK status ke saath JSON response mein bhejein
+  response.status(200).json(firebaseConfig);
+}
+
+
