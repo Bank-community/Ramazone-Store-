@@ -11,44 +11,53 @@ window.currentVendorProductsCache = [];
 window.allCategoriesCache = [];
 
 
-// --- SERVER SE CONFIGURATION FETCH KARNE KA FUNCTION ---
-async function fetchConfigurations() {
+// --- NAYA SEQUENTIAL CONFIGURATION FETCH FUNCTION ---
+// Pehle hum Promise.all se dono file ek saath mang rahe the.
+// Ab hum Firebase config PEHLE mangenge.
+async function fetchFirebaseConfig() {
     try {
-        // === YAHAN NAAM BADLA GAYA HAI ===
-        const [firebaseResponse, imgbbResponse] = await Promise.all([
-            fetch('/api/get-vendor-firebase'), // Purana naam: /api/vendor-firebase-config
-            fetch('/api/vendor-image-config')
-        ]);
-
-        if (!firebaseResponse.ok || !imgbbResponse.ok) {
-            const firebaseError = firebaseResponse.ok ? '' : `Firebase Config (Error ${firebaseResponse.status})`;
-            const imgbbError = imgbbResponse.ok ? '' : `Image Config (Error ${imgbbResponse.status})`;
-            throw new Error(`Connection failed. Check: ${firebaseError} ${imgbbError}`);
+        const response = await fetch('/api/get-vendor-firebase');
+        if (!response.ok) {
+            throw new Error(`Firebase Config (Error ${response.status})`);
         }
-
-        const firebaseConfig = await firebaseResponse.json();
-        const imgbbConfig = await imgbbResponse.json();
-
-        if (!firebaseConfig.apiKey || !imgbbConfig.apiKey) {
-             throw new Error('API keys server response mein nahi hain. Environment Variables check karein.');
+        const config = await response.json();
+        if (!config.apiKey) {
+            throw new Error('Firebase API key server response mein nahi hai.');
         }
-        
-        FIREBASE_CONFIG = firebaseConfig;
-        IMGBB_API_KEY = imgbbConfig.apiKey;
-        
-        console.log("Configurations loaded successfully.");
+        FIREBASE_CONFIG = config;
+        console.log("Firebase configuration loaded successfully.");
         return true;
-
     } catch (error) {
-        console.error("Configuration load karne mein fail:", error);
-        document.body.innerHTML = `<div style="text-align:center; padding: 20px; font-family: sans-serif; color: #333;"><h1>Application Error</h1><p>Configuration load nahi ho saki. Administrator se sampark karein.</p><p style="color: #d9534f; font-weight: bold; margin-top: 10px; padding: 10px; background: #f2dede; border-radius: 5px;">${error.message}</p></div>`;
+        console.error("Firebase config load karne mein fail:", error);
+        document.body.innerHTML = `<div style="text-align:center; padding: 20px; font-family: sans-serif; color: #333;"><h1>Application Error</h1><p>Configuration load nahi ho saki.</p><p style="color: #d9534f; font-weight: bold; margin-top: 10px; padding: 10px; background: #f2dede; border-radius: 5px;">${error.message}</p></div>`;
+        return false;
+    }
+}
+
+// Firebase config milne ke BAAD hum Image config mangenge.
+async function fetchImageConfig() {
+    try {
+        const response = await fetch('/api/vendor-image-config');
+        if (!response.ok) {
+            throw new Error(`Image Config (Error ${response.status})`);
+        }
+        const config = await response.json();
+        if (!config.apiKey) {
+            throw new Error('Image API key server response mein nahi hai.');
+        }
+        IMGBB_API_KEY = config.apiKey;
+        console.log("Image configuration loaded successfully.");
+        return true;
+    } catch (error) {
+        // Agar image config fail hoti hai, to hum sirf ek warning dikhayenge, app ko rokेंगे nahi.
+        console.error("Image config load karne mein fail:", error);
+        showToast('Warning', 'Image upload service shuru nahi ho saki. Aap kaam kar sakte hain, lekin image upload shayad na ho.', 'error', 8000);
         return false;
     }
 }
 
 
 // --- CORE FUNCTIONS (Unchanged) ---
-
 async function loadPage(pageUrl) {
     const mainContentArea = document.getElementById('main-content-area');
     mainContentArea.innerHTML = `<div class="w-full flex justify-center items-center p-10"><div class="loader"></div></div>`;
@@ -118,6 +127,9 @@ async function initializeVendorPanel(user) {
 
         setupEventListeners();
         
+        // Image config ko background mein load karein
+        fetchImageConfig();
+
         document.querySelector('.sidebar-link[data-page="sections/dashboard.html"]').click();
 
     } catch (error) {
@@ -174,26 +186,55 @@ function renderProfilePage() {
 }
 
 window.showToast = (title, message, type = 'info', duration = 5000) => { const container = document.getElementById('toast-container'); if (!container) return; const toast = document.createElement('div'); const typeClasses = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' }; toast.className = `toast`; toast.innerHTML = `<div class="flex items-center"><div class="w-10 h-10 rounded-l-md flex items-center justify-center text-white text-lg ${typeClasses[type] || 'bg-gray-500'}"><i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i></div><div class="px-4 py-2"><p class="font-bold text-gray-800">${title}</p><p class="text-sm text-gray-600">${message}</p></div></div>`; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, duration); };
-window.uploadToImgBB = async (file) => { const formData = new FormData(); formData.append('image', file); try { const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData }); const result = await response.json(); if (result.success) { return result.data.url; } else { throw new Error(result.error.message); } } catch (error) { console.error('Image Upload Error:', error); showToast('Upload Failed', error.message, 'error'); return null; } };
+window.uploadToImgBB = async (file) => {
+    if (!IMGBB_API_KEY) {
+        showToast('Upload Failed', 'Image upload service is not available.', 'error');
+        return null;
+    }
+    const formData = new FormData(); 
+    formData.append('image', file); 
+    try { 
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData }); 
+        const result = await response.json(); 
+        if (result.success) { 
+            return result.data.url; 
+        } else { 
+            throw new Error(result.error.message); 
+        } 
+    } catch (error) { 
+        console.error('Image Upload Error:', error); 
+        showToast('Upload Failed', error.message, 'error'); 
+        return null; 
+    } 
+};
 
 
-// --- APP INITIALIZATION (Final) ---
+// --- APP INITIALIZATION (Final with Sequential Loading) ---
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingOverlay = document.createElement('div');
     loadingOverlay.id = 'config-loading-overlay';
     loadingOverlay.innerHTML = `<div style="position:fixed; inset:0; background: #f9fafb; z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1rem; font-family: Inter, sans-serif;"><div class="loader"></div><p>Panel ko surakshit roop se shuru kiya ja raha hai...</p></div>`;
     document.body.prepend(loadingOverlay);
 
-    const configurationsLoaded = await fetchConfigurations();
+    // Step 1: Pehle sirf Firebase config fetch karein
+    const firebaseLoaded = await fetchFirebaseConfig();
     
-    if (configurationsLoaded) {
+    // Step 2: Agar Firebase load ho gaya, tabhi aage badhein
+    if (firebaseLoaded) {
         loadingOverlay.remove();
         try {
             app = firebase.initializeApp(FIREBASE_CONFIG);
             db = firebase.database();
             auth = firebase.auth();
 
-            auth.onAuthStateChanged(user => { if (user) { initializeVendorPanel(user); } else { document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('vendorLayout').classList.add('hidden'); } });
+            auth.onAuthStateChanged(user => { 
+                if (user) { 
+                    initializeVendorPanel(user); 
+                } else { 
+                    document.getElementById('loginOverlay').style.display = 'flex'; 
+                    document.getElementById('vendorLayout').classList.add('hidden'); 
+                } 
+            });
             const loginForm = document.getElementById('loginForm'); const logoutBtn = document.getElementById('logout-btn'); const forgotPasswordLink = document.getElementById('forgot-password-link');
             loginForm.addEventListener('submit', (e) => { e.preventDefault(); const email = document.getElementById('vendor-email').value; const password = document.getElementById('vendor-password').value; const submitButton = loginForm.querySelector('button[type="submit"]'); submitButton.disabled = true; submitButton.textContent = 'Logging in...'; auth.signInWithEmailAndPassword(email, password) .catch((error) => { let msg = error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' ? 'Galat email ya password.' : 'Login fail ho gaya. Dobara try karein.'; showToast('Login Failed', msg, 'error'); }) .finally(() => { submitButton.disabled = false; submitButton.textContent = 'Login'; }); });
             logoutBtn.addEventListener('click', () => { auth.signOut(); });
