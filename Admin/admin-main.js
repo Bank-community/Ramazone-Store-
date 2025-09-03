@@ -8,6 +8,7 @@ const firebaseConfig = {
     messagingSenderId: "747691299697",
     appId: "1:747691299697:web:20dda42f47c7b39d495cd0",
 };
+// === API KEY UPDATED AS PER YOUR REQUEST ===
 const IMGBB_API_KEY = 'f513510bd9ce285f80f9df4d3648451a';
 const IMGBB_API_URL = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
 
@@ -179,9 +180,35 @@ window.showToast = (title, message, type = 'info', duration = 5000) => {
     setTimeout(() => progressBar.style.width = '100%', 50);
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, duration);
 };
+
+// === IMAGE UPLOAD FUNCTION ADDED (FIXED) ===
 window.uploadToImgBB = async (file) => {
-    // ... (upload function remains unchanged)
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const response = await fetch(IMGBB_API_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('ImgBB Upload Success:', result.data.url);
+            return result.data.url; // Return the uploaded image URL
+        } else {
+            // Agar API se error aaye to use dikhayein
+            throw new Error(result.error.message || 'Unknown error from ImgBB');
+        }
+    } catch (error) {
+        console.error('Image Upload Error:', error);
+        // User ko saaf error message dikhayein
+        showToast('Upload Failed', `Image could not be uploaded: ${error.message}`, 'error');
+        return null; // Failure batane ke liye null return karein
+    }
 };
+
 
 // --- APP INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -260,3 +287,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Firebase Init Error:", error);
     }
 });
+
