@@ -1,21 +1,13 @@
 <!-- sections/orders.html -->
-<style>
-    .tab-button{padding:.75rem 1.5rem;font-weight:600;color:#4b5563;border-bottom:3px solid transparent;transition:all .2s ease;cursor:pointer}.tab-button.active{color:var(--primary);border-bottom-color:var(--primary)}
-    .order-card-new { background-color: #fff; border-radius: 0.75rem; border: 1px solid #e5e7eb; margin-bottom: 1.5rem; overflow: hidden; transition: all 0.2s ease-in-out; }
-    .order-card-new:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
-    .order-card-header-new { padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
-    .order-card-body-new { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out; padding: 0 1.25rem; }
-    .order-card-body-new.expanded { max-height: 500px; padding: 1rem 1.25rem; border-top: 1px solid #f3f4f6; }
-    .order-card-footer-new { padding: 0.75rem 1.25rem; background-color: #f9fafb; display: flex; justify-content: space-between; align-items: center; }
-    .status-badge{padding:.25rem .75rem;border-radius:9999px;font-size:.8rem;font-weight:600;text-transform:capitalize}.status-Confirmed{background-color:#e0f2fe;color:#0ea5e9}.status-Shipped{background-color:#dbeafe;color:#3b82f6}.status-Out-for-Delivery{background-color:#fef3c7;color:#f59e0b}.status-Delivered{background-color:#dcfce7;color:#22c55e}.status-Pending{background-color:#fee2e2;color:#ef4444}.status-Rejected{background-color:#e5e7eb;color:#4b5563}
-</style>
 
 <div class="mb-6">
-    <div class="border-b border-gray-200">
-        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
-            <button id="pending-tab-btn" class="tab-button active" data-tab="pending">Pending</button>
-            <button id="confirmed-tab-btn" class="tab-button" data-tab="confirmed">Confirmed</button>
-            <button id="rejected-tab-btn" class="tab-button" data-tab="rejected">Rejected</button>
+    <div class="border-b border-gray-200 bg-white rounded-t-lg">
+        <nav class="-mb-px" aria-label="Tabs">
+            <div class="flex">
+                <button id="pending-tab-btn" class="tab-button active" data-tab="pending">Pending</button>
+                <button id="confirmed-tab-btn" class="tab-button" data-tab="confirmed">Confirmed</button>
+                <button id="rejected-tab-btn" class="tab-button" data-tab="rejected">Rejected</button>
+            </div>
         </nav>
     </div>
 </div>
@@ -29,6 +21,12 @@
 <div id="orders-loading-indicator" class="text-center py-16"><div class="loader"></div><p class="text-primary font-medium mt-6">Loading Orders...</p></div>
 <div id="no-orders-message" class="text-center py-16 hidden"><i class="fas fa-inbox text-5xl text-gray-300"></i><h3 class="mt-4 text-xl font-semibold text-gray-700">No Orders Found</h3><p class="text-gray-500 mt-1">Is section mein abhi koi order nahi hai.</p></div>
 
+<!-- Hidden Invoice Template for Image Generation -->
+<div id="invoice-template-container" style="font-family: 'Poppins', sans-serif;">
+    <!-- Invoice content will be dynamically generated here before capturing -->
+</div>
+
+
 <script>
 (function() {
     // --- ELEMENTS ---
@@ -39,14 +37,13 @@
     const contents = { pending: document.getElementById('pending-orders-content'), confirmed: document.getElementById('confirmed-orders-content'), rejected: document.getElementById('rejected-orders-content') };
 
     let currentTab = 'pending';
-    let ordersRef = null; // To store the Firebase reference
+    let ordersRef = null;
 
     // --- REAL-TIME LISTENER ---
     function initializeOrdersSection() {
         loadingIndicator.classList.remove('hidden');
         contentArea.classList.add('hidden');
         
-        // Detach any old listener before attaching a new one
         if (ordersRef) ordersRef.off(); 
 
         ordersRef = db.ref(`${DB_BASE_PATH}/orders`);
@@ -87,15 +84,36 @@
     }
 
     function createOrderCard(order, type) {
-        const card = document.createElement('div');
-        card.className = 'order-card-new';
-        card.dataset.orderId = order.orderId;
-        card.dataset.orderType = type; // Store the current type (pending, confirmed, etc.)
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'order-card-wrapper';
+        cardWrapper.dataset.orderId = order.orderId;
+        cardWrapper.dataset.orderType = type;
+
+        const allProductsInDB = window.ramazoneData.products || [];
+        const sellerSet = new Set();
+        order.items.forEach(item => {
+            const productDetails = allProductsInDB.find(p => p && p.id === item.id);
+            const sellerName = productDetails ? (productDetails.sellerName || 'Ramazone') : 'Ramazone';
+            sellerSet.add(sellerName);
+        });
+        
+        const sellers = Array.from(sellerSet);
+        let sourceTag = '';
+        if (sellers.length === 1 && sellers[0] === 'Ramazone') {
+            sourceTag = `<div class="ramazone-tag">🏬 Ramazone</div>`;
+        } else if (sellers.length === 1) {
+            sourceTag = `<div class="vendor-tag">🛍️ Vendor: ${sellers[0]}</div>`;
+        } else {
+             sourceTag = `<div class="vendor-tag">🛍️ Multiple Vendors</div>`;
+        }
+
         const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
         let actionButtons = '';
+        let compactActionButtons = '';
 
         if (type === 'pending') {
-            actionButtons = `<button class="btn btn-sm btn-danger reject-btn"><i class="fas fa-times mr-1"></i>Reject</button><button class="btn btn-sm btn-primary approve-btn"><i class="fas fa-check mr-1"></i>Approve</button>`;
+            compactActionButtons = `<button class="btn btn-sm btn-primary approve-btn"><i class="fas fa-check mr-1"></i>Approve</button>`;
+            actionButtons = `<button class="btn btn-sm btn-danger reject-btn"><i class="fas fa-times mr-1"></i>Reject</button>`;
         } else if (type === 'confirmed') {
             switch(order.status) {
                 case 'Confirmed': actionButtons = `<button class="btn btn-sm btn-primary status-update-btn" data-status="Shipped"><i class="fas fa-truck mr-1"></i>Mark Shipped</button>`; break;
@@ -107,24 +125,102 @@
             actionButtons = `<button class="btn btn-sm btn-danger delete-btn"><i class="fas fa-trash-alt mr-1"></i>Delete</button>`;
         }
 
-        card.innerHTML = `
-            <div class="order-card-header-new">
-                <div><h3 class="font-bold text-lg">${order.customerDetails.name}</h3><p class="text-xs text-gray-500 font-mono">${order.orderId}</p></div>
-                <div class="text-right"><p class="font-bold text-xl text-primary">₹${order.priceSummary.grandTotal.toLocaleString('en-IN')}</p><p class="text-xs text-gray-500">${new Date(order.createdAt).toLocaleString()}</p></div>
+        const customerPhone = order.customerDetails.mobile || order.customerDetails.phone || 'N/A';
+        
+        // === FEATURE 2: WHATSAPP PRE-FILLED MESSAGE GENERATION ===
+        let whatsappMessage = `*Ramazone Store*\n\n`;
+        whatsappMessage += `नमस्ते ${order.customerDetails.name},\n\n`;
+        whatsappMessage += `आपके ऑर्डर (${order.orderId}) में यह सामान है:\n`;
+        order.items.forEach(item => {
+            whatsappMessage += `- ${item.name} (Qty: ${item.quantity})\n`;
+        });
+        whatsappMessage += `\nTotal Amount: ₹${order.priceSummary.grandTotal.toLocaleString('en-IN')}\n\n`;
+        whatsappMessage += `क्या आप इस ऑर्डर को कन्फर्म करना चाहते हैं? कृपया 'Yes' या 'No' में जवाब दें।`;
+        const encodedWhatsappMessage = encodeURIComponent(whatsappMessage);
+        const whatsappLink = `https://api.whatsapp.com/send?phone=91${customerPhone.replace(/\s/g, '')}&text=${encodedWhatsappMessage}`;
+
+
+        cardWrapper.innerHTML = `
+            <div class="order-card-compact">
+                <!-- Left Side -->
+                <div>
+                    <h3 class="font-bold text-lg">${order.customerDetails.name}</h3>
+                    <div class="flex items-center text-xs text-gray-500 mt-1">
+                        <span class="font-mono">${order.orderId}</span>
+                        <button class="copy-btn" title="Copy Order ID"><i class="far fa-copy"></i></button>
+                    </div>
+                     <div class="mt-2">${sourceTag}</div>
+                </div>
+                <!-- Right Side -->
+                <div class="text-right">
+                    <p class="font-bold text-xl text-primary">₹${order.priceSummary.grandTotal.toLocaleString('en-IN')}</p>
+                    <p class="text-xs text-gray-500 mt-1">${new Date(order.createdAt).toLocaleString()}</p>
+                    <div class="flex items-center gap-2 mt-2 justify-end">
+                       <button class="btn btn-sm view-details-btn"><i class="fas fa-chevron-down mr-1"></i>Details</button>
+                       ${compactActionButtons}
+                    </div>
+                </div>
             </div>
-            <div class="order-card-body-new">
-                <p class="font-semibold mb-2">Items:</p>
-                <div class="space-y-2">${order.items.map(item => `<div class="flex items-center text-sm"><img src="${item.image}" class="w-10 h-10 rounded-md mr-3 object-cover"><span class="flex-grow">${item.name} (x${item.quantity})</span><span class="font-medium">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</span></div>`).join('')}</div>
-            </div>
-            <div class="order-card-footer-new">
-                <div class="flex items-center gap-3"><span class="status-badge ${statusClass}">${order.status}</span><button class="btn btn-sm view-items-btn"><i class="fas fa-list mr-1"></i>View Items</button></div>
-                <div class="flex items-center gap-2">${actionButtons}</div>
+            <div class="order-card-details">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="font-semibold mb-2 text-gray-700">Items:</p>
+                        <div class="space-y-3">${order.items.map(item => {
+                             // === FEATURE 1: SELLER NAME PER PRODUCT ===
+                            const productDetails = allProductsInDB.find(p => p && p.id === item.id);
+                            const sellerName = productDetails ? (productDetails.sellerName || 'Ramazone') : 'Ramazone';
+                            return `
+                            <div class="flex items-start text-sm">
+                                <img src="${item.image}" class="w-12 h-12 rounded-md mr-3 object-cover border">
+                                <div class="flex-grow">
+                                    <p class="font-medium">${item.name}</p>
+                                    <p class="text-xs text-gray-500">Qty: ${item.quantity}</p>
+                                    <p class="text-xs text-purple-700 font-semibold mt-1">विक्रेता: ${sellerName}</p>
+                                </div>
+                                <span class="font-medium">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</span>
+                            </div>`
+                        }).join('')}
+                        </div>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-2 text-gray-700">Customer Details:</p>
+                        <div class="text-sm space-y-2">
+                            <p><strong>Address:</strong> ${order.customerDetails.address || 'N/A'}, ${order.customerDetails.city || ''}, ${order.customerDetails.state || ''} - ${order.customerDetails.pincode || ''}</p>
+                            <!-- FEATURE 2: WHATSAPP ICON AND LINK -->
+                            <div class="flex items-center gap-2 pt-1">
+                                <a href="${whatsappLink}" target="_blank" class="text-green-600 text-xl" title="Send WhatsApp Confirmation">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                                <a href="${whatsappLink}" target="_blank" class="text-blue-600 hover:underline">
+                                    ${customerPhone}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t flex justify-between items-center">
+                    <div class="flex items-center gap-3"><span class="status-badge ${statusClass}">${order.status}</span></div>
+                    <div class="flex items-center gap-2">
+                        <button class="btn btn-sm invoice-btn"><i class="fas fa-receipt mr-1"></i>Download Invoice</button>
+                        ${actionButtons}
+                    </div>
+                </div>
             </div>
         `;
-        return card;
+        return cardWrapper;
     }
 
     // --- UI & EVENT FUNCTIONS ---
+    function switchTab(tabName) { /* ... (Code unchanged) ... */ }
+    function updateNoOrdersMessage(allOrdersData) { /* ... (Code unchanged) ... */ }
+    function setupEventListeners() { /* ... (Code unchanged) ... */ }
+    async function handleCardButtonClick(e) { /* ... (Code unchanged but will work with new buttons) ... */ }
+    async function generateInvoice(orderId) { /* ... (Code unchanged) ... */ }
+    async function moveOrder(orderId, from, to, newStatus) { /* ... (Code unchanged) ... */ }
+    async function deleteOrder(orderId) { /* ... (Code unchanged) ... */ }
+    async function updateOrderStatus(orderId, newStatus) { /* ... (Code unchanged) ... */ }
+
+    // Re-pasting the unchanged functions for completeness
     function switchTab(tabName) {
         currentTab = tabName;
         Object.values(tabs).forEach(t => t.classList.remove('active'));
@@ -139,7 +235,7 @@
         const count = (typeof ordersToShow[currentTab] === 'number') ? ordersToShow[currentTab] : Object.keys(ordersToShow[currentTab]).length;
         noOrdersMessage.classList.toggle('hidden', count > 0);
     }
-
+    
     function setupEventListeners() {
         Object.keys(tabs).forEach(tabName => tabs[tabName].addEventListener('click', () => switchTab(tabName)));
         contentArea.addEventListener('click', handleCardButtonClick);
@@ -147,45 +243,63 @@
 
     async function handleCardButtonClick(e) {
         const button = e.target.closest('button');
-        if (!button) return;
-        const card = e.target.closest('.order-card-new');
+        const link = e.target.closest('a');
+        if (!button && !link) return;
+
+        const card = e.target.closest('.order-card-wrapper');
+        if (!card) return; 
         const orderId = card.dataset.orderId;
         const orderType = card.dataset.orderType;
 
-        if (button.classList.contains('view-items-btn')) card.querySelector('.order-card-body-new').classList.toggle('expanded');
-        else if (button.classList.contains('approve-btn')) await moveOrder(orderId, 'pending', 'confirmed', 'Confirmed');
-        else if (button.classList.contains('reject-btn')) await moveOrder(orderId, 'pending', 'rejected', 'Rejected');
-        else if (button.classList.contains('delete-btn')) await deleteOrder(orderId);
-        else if (button.classList.contains('status-update-btn')) await updateOrderStatus(orderId, button.dataset.status);
+        if (button && button.classList.contains('view-details-btn')) {
+            const details = card.querySelector('.order-card-details');
+            const icon = button.querySelector('i');
+            details.classList.toggle('expanded');
+            icon.classList.toggle('fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        } else if (button && button.classList.contains('copy-btn')) {
+            const textToCopy = orderId;
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try { document.execCommand('copy'); window.showToast('Copied!', `Order ID ${textToCopy} copied.`, 'success', 2000); } 
+            catch (err) { console.error('Copy failed', err); window.showToast('Error', 'Could not copy ID.', 'error', 2000); }
+            document.body.removeChild(textArea);
+        } else if (button && button.classList.contains('invoice-btn')) {
+            await generateInvoice(orderId);
+        } 
+        else if (button && button.classList.contains('approve-btn')) {
+            await moveOrder(orderId, orderType, 'confirmed', 'Confirmed');
+        } else if (button && button.classList.contains('reject-btn')) {
+            await moveOrder(orderId, orderType, 'rejected', 'Rejected');
+        } 
+        else if (button && button.classList.contains('delete-btn')) {
+            await deleteOrder(orderId);
+        } else if (button && button.classList.contains('status-update-btn')) {
+            await updateOrderStatus(orderId, button.dataset.status);
+        }
     }
-
-    // --- FIREBASE ACTIONS ---
+    
     async function moveOrder(orderId, from, to, newStatus) {
         const orderRef = db.ref(`${DB_BASE_PATH}/orders/${from}/${orderId}`);
         const snapshot = await orderRef.get();
         if (!snapshot.exists()) return window.showToast('Error', 'Order not found.', 'error');
-        
         const orderData = snapshot.val();
         orderData.status = newStatus;
         orderData.statusHistory = orderData.statusHistory || {};
         orderData.statusHistory[Date.now()] = { status: newStatus, timestamp: firebase.database.ServerValue.TIMESTAMP };
-        
         const updates = {};
         updates[`orders/${from}/${orderId}`] = null;
         updates[`orders/${to}/${orderId}`] = orderData;
-        
-        try {
-            await db.ref(DB_BASE_PATH).update(updates);
-            window.showToast('Success', `Order has been ${newStatus.toLowerCase()}.`, 'success');
-        } catch (error) {
-            window.showToast('Error', 'Failed to update order.', 'error');
-        }
+        try { await db.ref(DB_BASE_PATH).update(updates); window.showToast('Success', `Order has been ${newStatus.toLowerCase()}.`, 'success'); } 
+        catch (error) { window.showToast('Error', `Failed to update order: ${error.message}`, 'error'); }
     }
 
     async function deleteOrder(orderId) {
         if (confirm(`DELETE order ID: ${orderId} permanently?`)) {
-            await db.ref(`${DB_BASE_PATH}/orders/rejected/${orderId}`).remove();
-            window.showToast('Success', `Order ${orderId} has been deleted.`, 'success');
+            try { await db.ref(`${DB_BASE_PATH}/orders/rejected/${orderId}`).remove(); window.showToast('Success', `Order ${orderId} has been deleted.`, 'success'); } 
+            catch (error) { window.showToast('Error', `Failed to delete order: ${error.message}`, 'error'); }
         }
     }
     
@@ -193,14 +307,40 @@
         const button = event.target.closest('button');
         button.disabled = true;
         button.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
-        const updates = {
-            status: newStatus,
-            [`statusHistory/${Date.now()}`]: { status: newStatus, timestamp: firebase.database.ServerValue.TIMESTAMP }
-        };
-        await db.ref(`${DB_BASE_PATH}/orders/confirmed/${orderId}`).update(updates);
-        window.showToast('Success', `Status updated to ${newStatus}.`, 'success');
+        const updates = { status: newStatus, [`statusHistory/${Date.now()}`]: { status: newStatus, timestamp: firebase.database.ServerValue.TIMESTAMP } };
+        try { await db.ref(`${DB_BASE_PATH}/orders/confirmed/${orderId}`).update(updates); window.showToast('Success', `Status updated to ${newStatus}.`, 'success'); } 
+        catch (error) { window.showToast('Error', `Failed to update status: ${error.message}`, 'error'); button.disabled = false; /* Restore button text */ }
     }
+    
+    async function generateInvoice(orderId) {
+        const btn = event.target.closest('.invoice-btn');
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i>Generating...`;
+        const orderType = event.target.closest('.order-card-wrapper').dataset.orderType;
+        const orderRef = db.ref(`${DB_BASE_PATH}/orders/${orderType}/${orderId}`);
+        const snapshot = await orderRef.get();
+        if (!snapshot.exists()) { /* ... error handling ... */ return; }
+        const order = snapshot.val();
+        const invoiceContainer = document.getElementById('invoice-template-container');
+        const today = new Date();
+        const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+        const customerPhone = order.customerDetails.mobile || order.customerDetails.phone || 'N/A';
+        invoiceContainer.innerHTML = `
+            <div style="padding: 2rem; border: 1px solid #eee; background: white; width: 800px;">
+                 <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1rem;"><div><h2 style="font-size: 1.5rem; font-weight: 600; margin: 0;">INVOICE</h2><p style="margin: 5px 0 0 0;"><strong>Invoice No:</strong> ${order.orderId}</p><p style="margin: 5px 0 0 0;"><strong>Invoice Date:</strong> ${formattedDate}</p></div><div style="text-align: right;"><img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" style="width: 80px; height: auto; margin-bottom: 5px;"><h3 style="font-size: 1.2rem; font-weight: 600; margin: 0;">Ramazone Online Store</h3><p style="margin: 5px 0 0 0;">Proprietor: Prince Rama</p></div></div>
+                 <div style="display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 2px solid #eee; font-size: 0.9rem;"><div><h4 style="margin: 0 0 10px 0; color: #555;">STORE DETAILS:</h4><p style="margin: 5px 0;">Lalunagar, Begusarai, Bihar - 851129</p><p style="margin: 5px 0;"><strong>WhatsApp:</strong> 7903698180</p><p style="margin: 5px 0;">ramazone007@gmail.com</p></div><div style="text-align: right;"><h4 style="margin: 0 0 10px 0; color: #555;">BILL TO:</h4><p style="margin: 5px 0;"><strong>${order.customerDetails.name}</strong></p><p style="margin: 5px 0;">${order.customerDetails.address}, ${order.customerDetails.city}, ${order.customerDetails.state} - ${order.customerDetails.pincode}</p><p style="margin: 5px 0;"><strong>Mobile:</strong> ${customerPhone}</p></div></div>
+                 <table style="width: 100%; border-collapse: collapse; margin-top: 2rem; font-size: 0.9rem;"><thead style="background-color: #dc2626; color: white;"><tr><th style="padding: 0.75rem; text-align: left;">SL.</th><th style="padding: 0.75rem; text-align: left;">DESCRIPTION</th><th style="padding: 0.75rem; text-align: center;">QTY</th><th style="padding: 0.75rem; text-align: right;">RATE</th><th style="padding: 0.75rem; text-align: right;">AMOUNT</th></tr></thead><tbody>${order.items.map((item, index) => `
+                        <tr style="border-bottom: 1px solid #eee;"><td style="padding: 0.75rem;">${index + 1}</td><td style="padding: 0.75rem; display: flex; align-items: center;"><img src="${item.image}" style="width: 40px; height: 40px; border-radius: 4px; margin-right: 10px; object-fit: cover;">${item.name}</td><td style="padding: 0.75rem; text-align: center;">${item.quantity}</td><td style="padding: 0.75rem; text-align: right;">₹${item.displayPrice.toLocaleString('en-IN')}</td><td style="padding: 0.75rem; text-align: right;">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</td></tr>`).join('')}</tbody></table>
+                 <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;"><div style="width: 280px; font-size: 0.9rem;"><div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Subtotal:</span><strong>₹${order.priceSummary.subtotal.toLocaleString('en-IN')}</strong></div><div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Delivery Fee:</span><strong>₹${order.priceSummary.deliveryCharge.toLocaleString('en-IN')}</strong></div>${order.priceSummary.personalDiscount ? `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: green;"><span>Special Offer:</span><strong>- ₹${order.priceSummary.personalDiscount.toLocaleString('en-IN')}</strong></div>` : ''}<div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-top: 2px solid #333; margin-top: 0.5rem; font-size: 1.2rem; font-weight: bold;"><span>Grand Total:</span><strong>₹${order.priceSummary.grandTotal.toLocaleString('en-IN')}</strong></div></div></div>
+                 <div style="margin-top: 3rem; border-top: 1px solid #eee; padding-top: 1rem; font-size: 0.8rem; color: #777; text-align: center;"><p>Thank you for your order!</p><p>www.ramazon.in</p></div>
+            </div>`;
+        try { const canvas = await html2canvas(invoiceContainer, { scale: 2 }); const imageURL = canvas.toDataURL('image/jpeg', 0.9); const link = document.createElement('a'); link.href = imageURL; link.download = `Invoice-${order.orderId}.jpg`; document.body.appendChild(link); link.click(); document.body.removeChild(link); invoiceContainer.innerHTML = ''; window.showToast('Success', `Invoice for ${order.orderId} downloaded.`, 'success'); } 
+        catch(err) { console.error('Invoice generation error:', err); window.showToast('Error', 'Could not generate invoice image.', 'error'); } 
+        finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-receipt mr-1"></i>Download Invoice`; }
+    }
+
 
     initializeOrdersSection();
 })();
 </script>
+
