@@ -453,7 +453,7 @@ function renderVideosSection(videoData) {
     slider.innerHTML = videoData.map(video => `<a href="${video.youtubeUrl || '#'}" target="_blank" class="video-card"><img src="${video.imageUrl || 'https://placehold.co/600x400/black/white?text=Video'}" alt="${video.title}" loading="lazy"><i class="fas fa-play-circle play-icon"></i><div class="video-card-overlay"><h3 class="video-card-title">${video.title}</h3><p class="video-card-desc">${video.description || ''}</p></div></a>`).join('');
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: JUST FOR YOU SECTION LOGIC UPDATE KIYA GAYA ===
+// === YAHAN BADLAV KIYA GAYA HAI: ADD TO CART BUTTONS REMOVED FROM THIS SECTION ===
 function renderJustForYouSection(jfyData) {
     const section = document.getElementById('just-for-you-section');
     if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
@@ -467,22 +467,14 @@ function renderJustForYouSection(jfyData) {
         return; 
     }
 
-    // --- Naya Logic Shuru ---
-    // 1. Pata lagao ki user desktop par hai ya nahi.
     const isDesktop = window.innerWidth >= 768;
-
-    // 2. Main product ke liye kaunsi image istemal karni hai, yah tay karo.
-    let mainProductImage = mainProduct.images?.[0] || 'https://placehold.co/600x600/e2e8f0/64748b?text=Image'; // Default (khadi) image.
-
-    // Agar user desktop par hai AUR admin ne custom image upload ki hai, to custom image istemal karo.
+    let mainProductImage = mainProduct.images?.[0] || 'https://placehold.co/600x600/e2e8f0/64748b?text=Image';
     if (isDesktop && topDeals.mainProductImageUrl) {
         mainProductImage = topDeals.mainProductImageUrl;
     }
-    // --- Naya Logic Khatm ---
-
+    
     const getDiscount = p => p && p.originalPrice > p.displayPrice ? `<p class="discount">${Math.round(((p.originalPrice - p.displayPrice) / p.originalPrice) * 100)}% OFF</p>` : '';
-    const getAddButton = p => p && (p.displayPrice < 500 || p.category === 'grocery') ? `<button class="add-btn standard-card-add-btn" data-id="${p.id}">+</button>` : "";
-
+    
     const jfyContent = document.getElementById('jfy-content');
     if (jfyContent) {
         jfyContent.innerHTML = `
@@ -497,9 +489,7 @@ function renderJustForYouSection(jfyData) {
                     </a>
                     <div class="jfy-deals-card">
                         <div class="relative jfy-main-product">
-                            <!-- Yahaan 'mainProductImage' variable ka istemal kiya gaya hai -->
                             <a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProductImage}" alt="${mainProduct.name}"></a>
-                            ${getAddButton(mainProduct)}
                         </div>
                         <div class="jfy-sub-products">
                             <div class="relative jfy-sub-product-item">
@@ -507,14 +497,12 @@ function renderJustForYouSection(jfyData) {
                                     <div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}"></div>
                                     <div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div>
                                 </a>
-                                <div class="absolute bottom-2 right-2">${getAddButton(subProduct1)}</div>
                             </div>
                             <div class="relative jfy-sub-product-item">
                                 <a href="./product-details.html?id=${subProduct2.id}">
                                     <div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}"></div>
                                     <div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div>
                                 </a>
-                                <div class="absolute bottom-2 right-2">${getAddButton(subProduct2)}</div>
                             </div>
                         </div>
                     </div>
@@ -596,5 +584,4 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4e3) }
-
 
