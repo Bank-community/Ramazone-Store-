@@ -55,7 +55,6 @@
     <div id="toast-notification"></div>
     <div id="variant-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden"><div id="variant-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300"><div class="flex justify-between items-center p-4 border-b"><h3 id="variant-modal-title" class="text-lg font-bold">Select Option</h3><button id="variant-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">×</button></div><div id="variant-modal-body" class="p-4 overflow-y-auto space-y-3"></div></div></div>
 
-    <!-- UPDATED: Sticky Action Bar for Add/Go to Cart -->
     <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-3 z-40 border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-4">
             <div class="grid grid-cols-2 gap-3">
@@ -78,27 +77,32 @@
         </div>
     </div>
 
+    <div id="bundle-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
+        <div id="bundle-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-bold">Bundle Offer</h3>
+                <button id="bundle-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+            </div>
+            <div id="bundle-modal-body" class="p-4 sm:p-6 overflow-y-auto"></div>
+            <div id="bundle-modal-footer" class="p-4 bg-gray-50 border-t"></div>
+        </div>
+    </div>
+
+    <!-- === YAHAN BADLAV KIYA GAYA HAI: GO TO CART NOTIFICATION BAR === -->
+    <div id="go-to-cart-notification" class="fixed bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-gray-800 text-white rounded-lg shadow-xl p-3 z-[60] flex items-center justify-between transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle text-green-400 mr-3"></i>
+            <div>
+                <p class="font-bold text-sm">Added to Cart</p>
+                <p id="notification-cart-summary" class="text-xs text-gray-300">1 item in cart</p>
+            </div>
+        </div>
+        <a href="order.html" class="bg-white text-gray-800 font-bold text-sm py-2 px-4 rounded-md">Go to Cart</a>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="product-details-main.js"></script>
-
-    <!-- NEW: Bundle Details Modal -->
-<div id="bundle-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
-    <div id="bundle-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
-        <div class="flex justify-between items-center p-4 border-b">
-            <h3 class="text-lg font-bold">Bundle Offer</h3>
-            <button id="bundle-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
-        </div>
-        <div id="bundle-modal-body" class="p-4 sm:p-6 overflow-y-auto">
-            <!-- Bundle details will be injected here by JS -->
-        </div>
-        <div id="bundle-modal-footer" class="p-4 bg-gray-50 border-t">
-             <!-- Footer content like Add to Cart button will be here -->
-        </div>
-    </div>
-</div>
-
-    
 </body>
 </html>
 

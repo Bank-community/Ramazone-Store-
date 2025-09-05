@@ -2,9 +2,10 @@
 let mediaItems = [], currentMediaIndex = 0, currentProductData = null, currentProductId = null;
 let allProductsCache = [];
 let selectedVariants = {};
-let selectedPack = null; // This will store the selected pack object { name, price }
+let selectedPack = null; 
 let appThemeColor = '#4F46E5';
 let database;
+let goToCartNotificationTimer = null; // Notification ke liye timer
 
 // --- DOM ELEMENTS ---
 let slider, sliderWrapper;
@@ -12,7 +13,7 @@ let slider, sliderWrapper;
 // --- SLIDER STATE ---
 let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, animationID;
 
-// --- CART FUNCTIONS (AWARE OF VARIANTS AND PACKS) ---
+// --- CART FUNCTIONS ---
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
 
@@ -50,7 +51,10 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
         cart.push({ id: productId, quantity: quantity, variants: variants || {}, pack: pack || null });
     }
     saveCart(cart);
-    if(showToastMsg) showToast(`${product.name} ${pack ? `(${pack.name})` : ''} added to cart!`, 'success');
+    if(showToastMsg) {
+        showToast(`${product.name} ${pack ? `(${pack.name})` : ''} added to cart!`, 'success');
+        showGoToCartNotification(); // Single item ke liye notification yahan se call hoga
+    }
     updateCartIcon();
     if (productId === currentProductId) {
         updateStickyActionBar();
@@ -81,6 +85,42 @@ function updateCartIcon() {
     if (cartCountElement) {
         cartCountElement.textContent = totalQuantity > 0 ? totalQuantity : '';
     }
+}
+
+// === YAHAN BADLAV KIYA GAYA HAI: BUNDLE DISCOUNT LOGIC ===
+function applyAndSaveBundleDiscount(prod1Id, prod2Id, price) {
+    let discounts = JSON.parse(localStorage.getItem('ramazoneDiscounts')) || [];
+    const discountId = `bundle_${prod1Id}_${prod2Id}`;
+    // Duplicate discount add karne se roko
+    if (!discounts.find(d => d.id === discountId)) {
+        discounts.push({
+            id: discountId,
+            type: 'BUNDLE',
+            productIds: [prod1Id, prod2Id],
+            bundlePrice: price
+        });
+        localStorage.setItem('ramazoneDiscounts', JSON.stringify(discounts));
+    }
+}
+
+// === YAHAN BADLAV KIYA GAYA HAI: GO TO CART NOTIFICATION LOGIC ===
+function showGoToCartNotification() {
+    const notification = document.getElementById('go-to-cart-notification');
+    const summaryEl = document.getElementById('notification-cart-summary');
+    if (!notification || !summaryEl) return;
+
+    clearTimeout(goToCartNotificationTimer);
+
+    const totalQuantity = getTotalCartQuantity();
+    summaryEl.textContent = `${totalQuantity} item${totalQuantity > 1 ? 's' : ''} in cart`;
+
+    notification.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+    notification.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+
+    goToCartNotificationTimer = setTimeout(() => {
+        notification.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
+        notification.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+    }, 3000); // 3-second timer
 }
 
 function updateStickyActionBar() {
@@ -166,16 +206,12 @@ async function initializeApp() {
     }
 }
 
-// --- UPDATED FUNCTION ---
 async function fetchAllData() {
     const snapshot = await database.ref('ramazone').get();
     if (snapshot.exists()) {
         const data = snapshot.val();
         appThemeColor = data.config?.themeColor || '#4F46E5';
         document.documentElement.style.setProperty('--primary-color', appThemeColor);
-
-        // ** YAHAN BADLAV KIYA GAYA HAI **
-        // Sirf unhi products ko cache mein daalo jo hidden nahi hain.
         const allProds = Object.values(data.products || {});
         allProductsCache = allProds.filter(p => p && p.isVisible !== false);
     }
@@ -187,11 +223,7 @@ function fetchProductData() {
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product ID not found.</p>';
         return;
     }
-
-    // allProductsCache ab pehle se hi filtered hai.
     const product = allProductsCache.find(p => p && p.id == currentProductId);
-
-    // Agar product nahi milta (kyunki woh hidden hai), toh error dikhao.
     if (product) {
         currentProductData = product;
         loadPageSectionsAndData(product);
@@ -277,9 +309,14 @@ function handleOptionsClick(event) {
     if (bundleAddBtn) {
         event.preventDefault();
         const { current, linked } = bundleAddBtn.dataset;
+        const bundleCard = bundleAddBtn.closest('.product-bundle-card');
+        const price = bundleCard.dataset.price;
+
         addToCart(current, 1, {}, null, false);
         addToCart(linked, 1, {}, null, false);
+        if(price) applyAndSaveBundleDiscount(current, linked, price);
         showToast('Bundle added to cart!', 'success');
+        showGoToCartNotification();
         return;
     }
 
@@ -319,7 +356,7 @@ function renderProductOptions(data) {
 
     if (data.combos && data.combos.productBundle) {
         const bundle = data.combos.productBundle;
-        const linkedProduct = allProductsCache.find(p => p.id === bundle.linkedProductId); // Cache is filtered
+        const linkedProduct = allProductsCache.find(p => p.id === bundle.linkedProductId); 
         if (linkedProduct) {
             const bundleHTML = createProductBundle(data, linkedProduct, bundle.bundlePrice);
             container.insertAdjacentHTML('beforeend', bundleHTML);
@@ -442,12 +479,16 @@ function openBundleModal(currentId, linkedId, bundlePrice) {
     `;
     const modalFooter = document.getElementById('bundle-modal-footer');
     modalFooter.innerHTML = `<button id="add-bundle-to-cart-btn" class="w-full text-white font-bold py-3 px-4 rounded-xl text-lg" style="background-color: var(--primary-color);">Add Bundle to Cart</button>`;
+
     document.getElementById('add-bundle-to-cart-btn').onclick = () => {
         addToCart(currentId, 1, {}, null, false);
         addToCart(linkedId, 1, {}, null, false);
+        applyAndSaveBundleDiscount(currentId, linkedId, bundlePrice);
         showToast('Bundle added to cart!', 'success');
+        showGoToCartNotification();
         closeBundleModal();
     };
+
     const overlay = document.getElementById('bundle-modal-overlay');
     overlay.classList.remove('hidden');
     setTimeout(() => overlay.classList.add('active'), 10);
