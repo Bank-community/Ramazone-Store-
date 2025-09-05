@@ -134,16 +134,13 @@ function createSingleItemCard(item) {
     </div>`;
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: BUNDLE DISCOUNT LOGIC ADDED ===
 function updatePriceSummary() {
-    // 1. Calculate Subtotal
     const subtotal = orderItems.reduce((acc, item) => {
         const isPack = item.pack && item.pack.name !== 'Single Item';
         const price = isPack ? Number(item.pack.price) : Number(item.displayPrice);
         return acc + (price * item.quantity);
     }, 0);
 
-    // 2. Calculate Bundle Discount
     const bundleDiscounts = JSON.parse(localStorage.getItem('ramazoneDiscounts')) || [];
     let totalBundleDiscount = 0;
     let appliedBundleInfo = '';
@@ -169,18 +166,13 @@ function updatePriceSummary() {
         });
     }
 
-    // 3. Calculate Other Discounts and Fees
     const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
     const selectedDelivery = document.querySelector('input[name="delivery"]:checked').value;
     deliveryFee = (selectedDelivery === 'Ramazone' && subtotal < FREE_DELIVERY_THRESHOLD) ? ramazoneDeliveryCharge : 0;
-
-    // 4. Calculate Grand Total
     const grandTotal = subtotal - couponDiscount - totalBundleDiscount + deliveryFee;
 
-    // 5. Update UI
     document.getElementById('subtotal-price').textContent = `₹${subtotal.toLocaleString('en-IN')}`;
 
-    // Update Bundle Discount UI
     const summaryContainer = document.getElementById('price-summary-container');
     let bundleRow = document.getElementById('bundle-discount-row');
     if (totalBundleDiscount > 0) {
@@ -196,7 +188,6 @@ function updatePriceSummary() {
         bundleRow.style.display = 'none';
     }
 
-    // Update Coupon UI
     const couponRow = document.getElementById('coupon-discount-row');
     if (appliedCoupon) {
         document.getElementById('coupon-discount-amount').textContent = `- ₹${couponDiscount.toLocaleString('en-IN')}`;
@@ -205,7 +196,6 @@ function updatePriceSummary() {
         couponRow.style.display = 'none';
     }
 
-    // Update Delivery and Total UI
     document.getElementById('delivery-fee').textContent = deliveryFee > 0 ? `+ ₹${deliveryFee.toLocaleString('en-IN')}` : 'Free';
     document.getElementById('grand-total').textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
     document.getElementById('footer-total-price').textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
@@ -264,7 +254,6 @@ function handleCartActions(event) {
     }
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: placeOrder CLEARS BUNDLE DISCOUNTS ===
 async function placeOrder(event) {
     event.preventDefault();
     const form = document.getElementById('customer-details-form');
@@ -331,7 +320,7 @@ async function placeOrder(event) {
         message += `*Delivery:* ${deliveryFee > 0 ? `₹${deliveryFee.toLocaleString('en-IN')}` : 'Free'}\n--------------------\n*Total:* *₹${grandTotal.toLocaleString('en-IN')}*\n*Payment:* ${orderData.paymentMethod}`;
 
         saveCart([]);
-        localStorage.removeItem('ramazoneDiscounts'); // Clear the discount after use
+        localStorage.removeItem('ramazoneDiscounts');
         document.getElementById('order-page-content').innerHTML = `<div class="text-center p-8 bg-white rounded-lg shadow"><i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i><h2 class="text-2xl font-bold text-gray-800">Order Placed!</h2><p class="mt-4 font-semibold text-lg">Your Order ID:</p><div class="bg-gray-100 text-gray-800 font-bold text-2xl p-3 rounded-lg mt-2 inline-block select-all">${orderId}</div><p class="text-sm text-gray-500 mt-2">We will keep you updated.</p><a href="index.html" class="shop-now-btn mt-6">Continue Shopping</a></div>`;
         document.getElementById('sticky-order-footer').style.display = 'none';
         window.location.href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`;
@@ -347,7 +336,69 @@ function applyCoupon() { const code = document.getElementById('coupon-input').va
 function removeCoupon() { appliedCoupon = null; showToast('Coupon removed.', 'info'); document.getElementById('coupon-input').value = ''; document.getElementById('coupon-section').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('hidden'); updatePriceSummary(); }
 function generateOrderId() { const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let result = 'RMZ'; for (let i = 0; i < 8; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); } return result; }
 async function searchOrder() { const orderId = document.getElementById('order-id-input').value.trim().toUpperCase(); const searchStatusEl = document.getElementById('search-status'); const searchResultEl = document.getElementById('order-search-result'); if (!orderId) { searchStatusEl.textContent = 'Please enter an Order ID.'; searchStatusEl.className = 'text-center my-2 text-sm text-yellow-600'; return; } searchStatusEl.textContent = 'Searching...'; searchStatusEl.className = 'text-center my-2 text-sm text-blue-600'; searchResultEl.classList.add('hidden'); try { const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get(); if (snapshot.exists()) { const orderData = snapshot.val(); renderSearchResult(orderData); searchStatusEl.textContent = `Showing results for Order ID: ${orderId}`; searchStatusEl.className = 'text-center my-2 text-sm text-green-600'; } else { searchStatusEl.textContent = 'Order not found or not confirmed yet.'; searchStatusEl.className = 'text-center my-2 text-sm text-red-600'; } } catch (error) { console.error("Order search failed:", error); searchStatusEl.textContent = 'An error occurred.'; searchStatusEl.className = 'text-center my-2 text-sm text-red-600'; } }
-function renderSearchResult(orderData) { const searchResultEl = document.getElementById('order-search-result'); renderDeliveryTracker(orderData.status, document.getElementById('delivery-tracker-container')); searchResultEl.classList.remove('hidden'); }
+
+// === YAHAN BADLAV KIYA GAYA HAI: Naya function to render detailed order summary ===
+function renderSearchResult(orderData) {
+    const searchResultEl = document.getElementById('order-search-result');
+    const summaryContainer = document.getElementById('order-summary-details');
+
+    const customerDetailsHTML = `
+        <div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Shipping To:</h3>
+            <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                <p class="font-semibold">${orderData.customerDetails.name}</p>
+                <p>${orderData.customerDetails.address}</p>
+            </div>
+        </div>
+    `;
+
+    const itemsHTML = `
+        <div>
+            <h3 class="text-lg font-bold text-gray-800 mt-4 mb-2">Items Ordered:</h3>
+            <div class="space-y-3">
+                ${orderData.items.map(item => `
+                    <div class="flex items-center gap-4 border-b pb-3 last:border-b-0">
+                        <img src="${item.image || ''}" alt="${item.name}" class="w-16 h-16 object-cover rounded-md border">
+                        <div class="flex-grow">
+                            <p class="font-semibold text-gray-800">${item.name}</p>
+                            <p class="text-sm text-gray-500">Quantity: ${item.quantity}</p>
+                        </div>
+                        <p class="font-semibold">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</p>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    const summary = orderData.priceSummary;
+    const totalSavings = (summary.coupon ? Number(summary.coupon.discount) : 0) + Math.abs(summary.bundleDiscount || 0);
+
+    const priceDetailsHTML = `
+        <div>
+            <h3 class="text-lg font-bold text-gray-800 mt-4 mb-2">Price Details:</h3>
+            <div class="space-y-2 text-sm pt-2 border-t">
+                <div class="flex justify-between"><span class="text-gray-600">Subtotal</span><span class="font-medium text-gray-800">₹${summary.subtotal.toLocaleString('en-IN')}</span></div>
+                ${summary.coupon ? `<div class="flex justify-between text-green-600"><span>Coupon (${summary.coupon.code})</span><span class="font-medium">- ₹${Number(summary.coupon.discount).toLocaleString('en-IN')}</span></div>` : ''}
+                ${summary.bundleDiscount < 0 ? `<div class="flex justify-between text-green-600"><span>Bundle Offer</span><span class="font-medium">- ₹${Math.abs(summary.bundleDiscount).toLocaleString('en-IN')}</span></div>` : ''}
+                <div class="flex justify-between"><span class="text-gray-600">Delivery Fee</span><span class="font-medium text-gray-800">${summary.deliveryFee > 0 ? `₹${summary.deliveryFee.toLocaleString('en-IN')}` : 'Free'}</span></div>
+                <div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t"><span>Total Paid</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div>
+            </div>
+        </div>
+    `;
+
+    const savingsHTML = totalSavings > 0 ? `
+        <div class="bg-green-50 text-green-800 font-semibold text-center p-3 rounded-lg mt-4">
+            🎉 You Saved a total of ₹${totalSavings.toLocaleString('en-IN')} on this order!
+        </div>
+    ` : '';
+
+    summaryContainer.innerHTML = customerDetailsHTML + itemsHTML + priceDetailsHTML + savingsHTML;
+
+    renderDeliveryTracker(orderData.status, document.getElementById('delivery-tracker-container'));
+    searchResultEl.classList.remove('hidden');
+}
+
+
 function renderDeliveryTracker(status, container) { if (status === 'Rejected') { container.innerHTML = `<div class="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg"><i class="fas fa-times-circle text-red-500 text-3xl mr-4"></i><div><h3 class="font-bold text-red-700">Order Rejected</h3><p class="text-sm text-red-600">This order was rejected. Please contact support for more details.</p></div></div>`; return; } const statuses = ['Confirmed', 'Shipped', 'Out for Delivery', 'Delivered']; const icons = ['fa-check', 'fa-truck-fast', 'fa-truck-ramp-box', 'fa-star']; const currentStatusIndex = statuses.indexOf(status); let stepsHtml = statuses.map((s, index) => { const isCompleted = index <= currentStatusIndex; return `<div class="tracker-step ${isCompleted ? 'completed' : ''}"><div class="step-icon"><i class="fas ${icons[index]}"></i></div><p class="step-label">${s.replace(' ', '\n')}</p></div>`; }).join(''); const progressPercentage = currentStatusIndex >= 0 ? (currentStatusIndex / (statuses.length - 1)) * 100 : 0; container.innerHTML = `<div class="relative"><div class="tracker-line"><div class="tracker-progress-line" style="width: ${progressPercentage}%;"></div></div><div class="delivery-tracker">${stepsHtml}</div></div>`; }
 async function downloadInvoiceDirectly(event) { const btn = event.currentTarget; const orderId = document.getElementById('order-id-input').value.trim().toUpperCase(); if (!orderId) { showToast('No order loaded.', 'error'); return; } btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Downloading...`; try { const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get(); if (!snapshot.exists()) { throw new Error('Could not find order data.'); } const orderData = snapshot.val(); const summary = orderData.priceSummary; const storeDetails = { name: 'Ramazone Online Store', owner: 'Prince Rama', address: 'Lalunagar, Begusarai, Bihar - 851129', phone: 'WhatsApp: 7903698180', email: 'ramazone007@gmail.com', website: 'www.ramazon.in' }; const mobileNumberHTML = orderData.customerDetails.mobile ? `<p style="margin: 4px 0 0; color: #666;"><strong>Mobile:</strong> ${orderData.customerDetails.mobile}</p>` : ''; const tableHTML = `<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;"><thead><tr style="background-color: #DC2626; color: #FFFFFF;"><th style="padding: 0.8rem; text-align: left; white-space: nowrap;">SL.</th><th style="padding: 0.8rem; text-align: left; white-space: nowrap;">DESCRIPTION</th><th style="padding: 0.8rem; text-align: center; white-space: nowrap;">QTY</th><th style="padding: 0.8rem; text-align: right; white-space: nowrap;">RATE</th><th style="padding: 0.8rem; text-align: right; white-space: nowrap;">AMOUNT</th></tr></thead><tbody>${orderData.items.map((item, index) => `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 0.8rem;">${index + 1}</td><td style="padding: 0.8rem;"><div style="display: flex; align-items: center; min-width: 200px;"><img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 12px;" crossOrigin="anonymous"><span style="font-weight: 500;">${item.name}</span></div></td><td style="padding: 0.8rem; text-align: center;">${item.quantity}</td><td style="padding: 0.8rem; text-align: right;">₹${item.displayPrice.toLocaleString('en-IN')}</td><td style="padding: 0.8rem; text-align: right; font-weight: 500;">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</td></tr>`).join('')}</tbody></table></div>`; const invoiceHTML = `<div style="width: 210mm; min-height: 297mm; padding: 15mm; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; color: #333; font-size: 11pt; display: flex; flex-direction: column; background: white;"><header style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 4px solid #DC2626;"><div><h1 style="font-size: 2.5rem; font-weight: bold; color: #DC2626; margin: 0;">INVOICE</h1><p style="margin: 8px 0 0; font-size: 1rem; color: #555;"><strong>Invoice No:</strong> ${orderData.orderId}</p><p style="margin: 4px 0 0; font-size: 1rem; color: #555;"><strong>Invoice Date:</strong> ${new Date(orderData.createdAt).toLocaleDateString()}</p></div><div style="text-align: right;"><img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" style="height: 65px; margin-bottom: 8px; margin-left: auto;" crossOrigin="anonymous"><p style="margin: 0; font-weight: bold; font-size: 1.1rem;">${storeDetails.name}</p><p style="margin: 4px 0 0; font-size: 0.9rem; color: #555;">Proprietor: ${storeDetails.owner}</p></div></header><section style="margin-top: 2rem; display: flex; justify-content: space-between; font-size: 0.9rem; line-height: 1.5;"><div><p style="font-weight: bold; color: #555;">STORE DETAILS:</p><p style="margin: 4px 0 0;">${storeDetails.address}</p><p style="margin: 4px 0 0;">${storeDetails.phone}</p><p style="margin: 4px 0 0;">${storeDetails.email}</p></div><div style="text-align: right;"><p style="font-weight: bold; color: #555;">BILL TO:</p><p style="margin: 4px 0 0;">${orderData.customerDetails.name}</p><p style="margin: 4px 0 0; color: #666; max-width: 250px;">${orderData.customerDetails.address}</p>${mobileNumberHTML}</div></section><section style="margin-top: 2.5rem; flex-grow: 1;">${tableHTML}</section><section style="margin-top: 2rem; display: flex; justify-content: flex-end;"><div style="width: 300px; font-size: 0.9rem;"><div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Subtotal:</span><span>₹${summary.subtotal.toLocaleString('en-IN')}</span></div>${summary.coupon ? `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: #16a34a;"><span>Coupon (${summary.coupon.code}):</span><span>- ₹${summary.coupon.discount.toLocaleString('en-IN')}</span></div>` : ''}${summary.bundleDiscount < 0 ? `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: #16a34a;"><span>Bundle Offer:</span><span>- ₹${Math.abs(summary.bundleDiscount).toLocaleString('en-IN')}</span></div>` : ''}<div style="display: flex; justify-content: space-between; padding: 0.5rem 0;"><span>Delivery Fee:</span><span>${summary.deliveryFee > 0 ? `₹${summary.deliveryFee.toLocaleString('en-IN')}` : 'Free'}</span></div><div style="display: flex; justify-content: space-between; padding: 0.75rem 0; margin-top: 0.5rem; border-top: 2px solid #333; font-weight: bold; font-size: 1.3rem;"><span>Grand Total:</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div></div></section><footer style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #eee; padding-top: 1rem;"><div style="font-size: 0.8rem; color: #888;"><p style="margin: 0;">Thank you for your order!</p><p style="margin: 4px 0 0; font-weight: bold;">${storeDetails.website}</p></div><div style="text-align: center;"><p style="font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif; margin: 0; color: #333;">Ramazone</p><p style="margin: 0; border-top: 1px solid #555; padding-top: 4px; font-size: 0.8rem; font-weight: bold;">Authorized Signatory</p></div></footer></div>`; const renderContainer = document.createElement('div'); renderContainer.style.position = 'absolute'; renderContainer.style.left = '-9999px'; document.body.appendChild(renderContainer); renderContainer.innerHTML = invoiceHTML; const invoiceElement = renderContainer.querySelector('div'); const canvas = await html2canvas(invoiceElement, { scale: 3, useCORS: true, allowTaint: true }); const link = document.createElement('a'); link.download = `Ramazone-Invoice-${orderId}.png`; link.href = canvas.toDataURL('image/png'); link.click(); document.body.removeChild(renderContainer); } catch (error) { console.error("Invoice download failed:", error); showToast(error.message, 'error'); } finally { btn.disabled = false; btn.innerHTML = `<i class="fas fa-download mr-2"></i>Download Invoice`; } }
 function showToast(message, type = "info") { const toast = document.getElementById("toast-notification"); if(!toast) return; toast.textContent = message; toast.className = 'toast show'; if(type === 'success') toast.classList.add('success'); if(type === 'error') toast.classList.add('error'); setTimeout(() => toast.classList.remove("show"), 3000); }

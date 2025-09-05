@@ -153,13 +153,18 @@
     
     <div id="search-status" class="text-center my-2 text-sm max-w-4xl mx-auto px-4"></div>
 
+    <!-- === YAHAN BADLAV KIYA GAYA HAI: ORDER SUMMARY KE LIYE NAYA CONTAINER ADD KIYA GAYA HAI === -->
     <div id="order-search-result" class="max-w-4xl mx-auto p-4 space-y-6 pb-28 hidden">
+        <!-- Naya container order details ke liye -->
+        <div id="order-summary-details" class="bg-white rounded-lg shadow p-4 sm:p-6 space-y-4">
+            <!-- JS se details yahan aayengi -->
+        </div>
+
         <div class="bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 class="text-xl font-bold mb-4 text-gray-800">Delivery Status</h2>
             <div id="delivery-tracker-container" class="py-4"></div>
         </div>
         <div class="text-center">
-            <!-- This button will now trigger a direct download -->
             <button id="view-invoice-btn" class="invoice-btn-red px-8 py-3 rounded-xl text-lg font-bold text-white shadow-lg">
                 <i class="fas fa-download mr-2"></i>Download Invoice
             </button>
@@ -206,8 +211,6 @@
     </div>
 
     <div id="toast-notification"></div>
-    
-    <!-- The invoice modal is no longer needed and has been removed -->
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
