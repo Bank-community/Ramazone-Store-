@@ -369,6 +369,29 @@ async function downloadInvoiceDirectly(event) {
 
         const totalQuantity = orderData.items.reduce((sum, item) => sum + item.quantity, 0);
 
+        let tfootRows = '';
+        let rightSideRows = 0;
+
+        let summaryRowsHTML = `<td colspan="2" style="text-align: right; border: 1px solid #999; padding: 0.6rem;">Sub Total:</td><td style="text-align: right; border: 1px solid #999; padding: 0.6rem;">₹${summary.subtotal.toLocaleString('en-IN')}</td>`;
+        rightSideRows++;
+
+        if (summary.coupon) {
+            summaryRowsHTML += `<tr><td colspan="2" style="text-align: right; border: 1px solid #999; padding: 0.6rem;">Coupon Discount:</td><td style="text-align: right; border: 1px solid #999; padding: 0.6rem;">- ₹${Number(summary.coupon.discount).toLocaleString('en-IN')}</td></tr>`;
+            rightSideRows++;
+        }
+        if (summary.bundleDiscount < 0) {
+            summaryRowsHTML += `<tr><td colspan="2" style="text-align: right; border: 1px solid #999; padding: 0.6rem;">Bundle Offer:</td><td style="text-align: right; border: 1px solid #999; padding: 0.6rem;">- ₹${Math.abs(summary.bundleDiscount).toLocaleString('en-IN')}</td></tr>`;
+            rightSideRows++;
+        }
+        if (summary.deliveryFee > 0) {
+             summaryRowsHTML += `<tr><td colspan="2" style="text-align: right; border: 1px solid #999; padding: 0.6rem;">Delivery Fee:</td><td style="text-align: right; border: 1px solid #999; padding: 0.6rem;">₹${summary.deliveryFee.toLocaleString('en-IN')}</td></tr>`;
+             rightSideRows++;
+        }
+
+        summaryRowsHTML += `<tr><td colspan="2" style="text-align: right; background-color: #DC2626; color: white; font-weight: bold; border: 1px solid #999; padding: 0.8rem;">Total Payable:</td><td style="text-align: right; background-color: #DC2626; color: white; font-weight: bold; border: 1px solid #999; padding: 0.8rem;">₹${summary.grandTotal.toLocaleString('en-IN')}</td></tr>`;
+        rightSideRows++;
+
+
         const tableHTML = `<div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; border: 1px solid #999;">
                 <thead>
@@ -401,38 +424,32 @@ async function downloadInvoiceDirectly(event) {
                         </tr>`;
                     }).join('')}
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td rowspan="${rightSideRows}" colspan="5" style="vertical-align: top; border: 1px solid #999; padding: 0.6rem;">
+                            <p style="margin:0; font-weight: bold;">Total Amounts (In Words):</p>
+                            <p style="margin: 4px 0;">${numberToWords(summary.grandTotal)}</p>
+                            <p style="margin: 12px 0 0; font-weight: bold;">Total Quantity: ${totalQuantity}</p>
+                        </td>
+                        ${summaryRowsHTML}
+                    </tr>
+                </tfoot>
             </table>
         </div>`;
 
-        const summaryFooterHTML = `
-        <section style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: flex-start; border-top: 2px solid #333; padding-top: 1rem;">
-             <div style="font-size: 0.9rem; color: #555; width: 60%;">
-                <p style="margin:0; font-weight: bold;">Total Amounts (In Words):</p>
-                <p style="margin: 4px 0;">${numberToWords(summary.grandTotal)}</p>
-                <p style="margin: 12px 0 0; font-weight: bold;">Total Quantity: ${totalQuantity}</p>
-            </div>
-            <div style="width: 35%; font-size: 0.9rem;">
-                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;"><span>Sub Total:</span><span>₹${summary.subtotal.toLocaleString('en-IN')}</span></div>
-                ${summary.coupon ? `<div style="display: flex; justify-content: space-between; padding: 0.4rem 0; color: #16a34a;"><span>Coupon Discount:</span><span>- ₹${Number(summary.coupon.discount).toLocaleString('en-IN')}</span></div>` : ''}
-                ${summary.bundleDiscount < 0 ? `<div style="display: flex; justify-content: space-between; padding: 0.4rem 0; color: #16a34a;"><span>Bundle Offer:</span><span>- ₹${Math.abs(summary.bundleDiscount).toLocaleString('en-IN')}</span></div>` : ''}
-                ${summary.deliveryFee > 0 ? `<div style="display: flex; justify-content: space-between; padding: 0.4rem 0;"><span>Delivery Fee:</span><span>₹${summary.deliveryFee.toLocaleString('en-IN')}</span></div>` : ''}
-                <div style="display: flex; justify-content: space-between; padding: 0.6rem; margin-top: 0.5rem; background-color: #DC2626; color: white; font-weight: bold; font-size: 1.1rem;"><span>Total Payable:</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div>
-            </div>
-        </section>`;
-
         const oldFooterHTML = `
-        <footer style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #eee; padding-top: 1rem;">
+        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #eee; padding-top: 1rem;">
             <div style="font-size: 0.8rem; color: #888;">
                 <p style="margin: 0;">Thank you for your order!</p>
                 <p style="margin: 4px 0 0; font-weight: bold;">${storeDetails.website}</p>
             </div>
             <div style="text-align: center;">
-                <p style="font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif; margin: 0; color: #333;">Ramazone</p>
+                <p style="font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif; margin: 0 0 4px 0; color: #333;">Ramazone</p>
                 <p style="margin: 0; border-top: 1px solid #555; padding-top: 4px; font-size: 0.8rem; font-weight: bold;">Authorized Signatory</p>
             </div>
         </footer>`;
 
-        const invoiceHTML = `<div style="width: 210mm; min-height: 297mm; padding: 5mm; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; color: #333; font-size: 11pt; display: flex; flex-direction: column; background: white; border: 1px solid #333;">
+        const invoiceHTML = `<div style="width: 210mm; min-height: 297mm; padding: 10mm; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; color: #333; font-size: 11pt; display: flex; flex-direction: column; background: white; border: 1px solid #333;">
             <header style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 4px solid #DC2626;">
                 <div>
                     <h1 style="font-size: 2.5rem; font-weight: bold; color: #DC2626; margin: 0;">INVOICE</h1>
@@ -459,7 +476,6 @@ async function downloadInvoiceDirectly(event) {
                 </div>
             </section>
             <section style="margin-top: 2.5rem; flex-grow: 1;">${tableHTML}</section>
-            ${summaryFooterHTML}
             ${oldFooterHTML}
         </div>`;
 
@@ -475,3 +491,5 @@ async function downloadInvoiceDirectly(event) {
 
 function showToast(message, type = "info") { const toast = document.getElementById("toast-notification"); if(!toast) return; toast.textContent = message; toast.className = 'toast show'; if(type === 'success') toast.classList.add('success'); if(type === 'error') toast.classList.add('error'); setTimeout(() => toast.classList.remove("show"), 3000); }
 async function checkAutoOrderStatus() { const todaysOrders = getTodaysOrders(); if (todaysOrders.length === 0) return; if (todaysOrders.length > 1) { const notification = document.getElementById('all-orders-notification'); document.getElementById('all-orders-summary').textContent = `You have ${todaysOrders.length} orders today:`; document.getElementById('all-orders-list').innerHTML = todaysOrders.map(o => `<div class="flex items-center gap-2"><span class="font-mono">${o.id}</span><button data-id="${o.id}" class="copy-id-btn text-indigo-500 hover:text-indigo-700"><i class="far fa-copy"></i></button></div>`).join(''); notification.classList.remove('hidden'); } const lastOrder = todaysOrders[todaysOrders.length - 1]; const orderId = lastOrder.id; let orderData = null; for (const status of ['pending', 'confirmed', 'rejected']) { const snapshot = await database.ref(`ramazone/orders/${status}/${orderId}`).get(); if (snapshot.exists()) { orderData = snapshot.val(); break; } } if (!orderData || !orderData.items || orderData.items.length === 0) return; const firstItem = orderData.items[0]; const productPreviewContainer = document.getElementById('auto-status-product-preview'); productPreviewContainer.innerHTML = `<img src="${firstItem.image || 'https://placehold.co/128x128'}" alt="${firstItem.name}"><div class="status-product-details"><h4>${firstItem.name}</h4><p>₹${Number(firstItem.displayPrice).toLocaleString('en-IN')} &times; ${firstItem.quantity}</p></div>`; const footerContainer = document.getElementById('auto-status-footer'); const orderDate = new Date(orderData.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); footerContainer.innerHTML = `<span class="order-date">Ordered on: ${orderDate}</span><button class="view-more-btn" data-order-id="${orderId}">View More &rarr;</button>`; renderDeliveryTracker(orderData.status, document.getElementById('auto-status-tracker')); document.getElementById('auto-status-container').classList.remove('hidden'); }
+
+
