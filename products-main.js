@@ -96,8 +96,33 @@ async function loadPageData() {
         setupDynamicPlaceholder();
         setupScrollBehavior();
         document.getElementById('loading-indicator').style.display = 'none';
+
+        // === YAHAN BADLAV KIYA GAYA HAI: Auto-dismiss logic for search overlay ===
         if (urlParams.get('focus') === 'true') {
-            document.getElementById('search-input').focus();
+            const searchInput = document.getElementById('search-input');
+            searchInput.focus(); // This triggers the search overlay via the 'focus' event listener in setupSearch()
+
+            let autoCloseTimer = null;
+
+            // This handler will be called on the first scroll event
+            const scrollDismissHandler = () => {
+                clearTimeout(autoCloseTimer); // Cancel the 3-second timer because the user scrolled
+                if (document.body.classList.contains('search-active')) {
+                    searchInput.blur(); // Blur the input to hide the overlay
+                }
+                // The listener is set with { once: true }, so it removes itself automatically.
+            };
+
+            // This timer will fire after 3 seconds if the user does nothing
+            autoCloseTimer = setTimeout(() => {
+                window.removeEventListener('scroll', scrollDismissHandler); // If the timer fires, we must remove the scroll listener to prevent it from firing later
+                if (document.body.classList.contains('search-active')) {
+                    searchInput.blur(); // Blur the input to hide the overlay
+                }
+            }, 3000);
+
+            // Add the scroll listener that only fires once
+            window.addEventListener('scroll', scrollDismissHandler, { once: true });
         }
     } catch (error) {
         console.error("Initialization or data fetch failed:", error);
@@ -116,7 +141,6 @@ async function fetchAllData(db) {
             searchScrollingTexts = homepageData.search.scrollingTexts;
         }
 
-        // ** YAHAN BADLAV KIYA GAYA HAI **
         // Pehle sabhi products ko filter karo jo visible hain
         const visibleProducts = (data.products || []).filter(p => p && p.isVisible !== false);
 
@@ -195,7 +219,7 @@ function filterAndDisplayProducts() {
     const searchInput = document.getElementById('search-input').value.toLowerCase();
     grid.innerHTML = '';
     noProductsMsg.classList.add('hidden');
-    let filteredProducts = allProducts; // allProducts ab pehle se hi filtered hai
+    let filteredProducts = allProducts;
     if (currentCategory !== 'All') {
         filteredProducts = filteredProducts.filter(prod => prod && prod.category === currentCategory);
     }
@@ -305,7 +329,7 @@ function setupSearch() {
             suggestionsContainer.classList.add('hidden');
             return;
         }
-        const suggestions = allProducts.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5); // allProducts ab filtered hai
+        const suggestions = allProducts.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `
                 <a href="./product-details.html?id=${prod.id}" class="suggestion-item">
