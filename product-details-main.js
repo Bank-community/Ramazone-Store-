@@ -35,7 +35,7 @@ const packsMatch = (p1, p2) => {
 
 const getCartItem = (productId, variants, pack) => {
     const cart = getCart();
-    return cart.find(item => item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
+    return cart.find(item => !item.isBundle && item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
 };
 
 function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
@@ -43,7 +43,7 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
     const product = allProductsCache.find(p => p && p.id === productId);
     if (!product) return;
 
-    let existingItemIndex = cart.findIndex(item => item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
+    let existingItemIndex = cart.findIndex(item => !item.isBundle && item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
 
     if (existingItemIndex > -1) {
         cart[existingItemIndex].quantity += quantity;
@@ -53,12 +53,48 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
     saveCart(cart);
     if(showToastMsg) {
         showToast(`${product.name} ${pack ? `(${pack.name})` : ''} added to cart!`, 'success');
-        showGoToCartNotification(); // Single item ke liye notification yahan se call hoga
+        showGoToCartNotification();
     }
     updateCartIcon();
     if (productId === currentProductId) {
         updateStickyActionBar();
     }
+}
+
+// === YAHAN BADLAV KIYA GAYA HAI: BUNDLE KE LIYE NAYA ADD TO CART FUNCTION ===
+function addBundleToCart(prod1Id, prod2Id, bundlePrice) {
+    const cart = getCart();
+    const prod1 = allProductsCache.find(p => p.id === prod1Id);
+    const prod2 = allProductsCache.find(p => p.id === prod2Id);
+    if (!prod1 || !prod2) {
+        showToast('One of the bundle products is unavailable.', 'error');
+        return;
+    }
+
+    const bundleId = `BUNDLE_${[prod1Id, prod2Id].sort().join('_')}`;
+    const existingBundleIndex = cart.findIndex(item => item.isBundle && item.bundleId === bundleId);
+
+    if (existingBundleIndex > -1) {
+        cart[existingBundleIndex].quantity += 1;
+    } else {
+        const bundleObject = {
+            isBundle: true,
+            bundleId: bundleId,
+            bundleName: `${prod1.name} + ${prod2.name}`,
+            quantity: 1,
+            bundlePrice: Number(bundlePrice),
+            items: [
+                { id: prod1.id, name: prod1.name, image: prod1.images?.[0] || '' },
+                { id: prod2.id, name: prod2.name, image: prod2.images?.[0] || '' }
+            ]
+        };
+        cart.push(bundleObject);
+    }
+
+    saveCart(cart);
+    showToast('Bundle added to cart!', 'success');
+    showGoToCartNotification();
+    updateCartIcon();
 }
 
 function updateCartItemQuantity(productId, newQuantity, variants, pack) {
@@ -77,7 +113,11 @@ function updateCartItemQuantity(productId, newQuantity, variants, pack) {
     }
 }
 
-const getTotalCartQuantity = () => { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); };
+// Total quantity ab bundle ko bhi ginta hai
+const getTotalCartQuantity = () => { 
+    const cart = getCart(); 
+    return cart.reduce((total, item) => total + item.quantity, 0); 
+};
 
 function updateCartIcon() {
     const totalQuantity = getTotalCartQuantity();
@@ -87,20 +127,8 @@ function updateCartIcon() {
     }
 }
 
-// === BUNDLE DISCOUNT LOGIC ===
-function applyAndSaveBundleDiscount(prod1Id, prod2Id, price) {
-    let discounts = JSON.parse(localStorage.getItem('ramazoneDiscounts')) || [];
-    const discountId = `bundle_${prod1Id}_${prod2Id}`;
-    if (!discounts.find(d => d.id === discountId)) {
-        discounts.push({
-            id: discountId,
-            type: 'BUNDLE',
-            productIds: [prod1Id, prod2Id],
-            bundlePrice: price
-        });
-        localStorage.setItem('ramazoneDiscounts', JSON.stringify(discounts));
-    }
-}
+// --- YAHAN BADLAV KIYA GAYA HAI: Is function ki ab zaroorat nahi ---
+// const applyAndSaveBundleDiscount = (...) // This function has been removed.
 
 // === GO TO CART NOTIFICATION LOGIC ===
 function showGoToCartNotification() {
@@ -124,6 +152,7 @@ function showGoToCartNotification() {
 
 function updateStickyActionBar() {
     if (!currentProductId) return;
+    // Bundle products ke liye action bar abhi support nahi karta hai
     const cartItem = getCartItem(currentProductId, selectedVariants, selectedPack);
 
     const qtyWrapper = document.getElementById('quantity-selector-wrapper');
@@ -290,21 +319,17 @@ function populateDataAndAttachListeners(data) {
     setupHeaderScrollEffect();
 }
 
+// --- YAHAN BADLAV KIYA GAYA HAI: Bundle add logic update hua hai ---
 function handleOptionsClick(event) {
     const bundleCard = event.target.closest('.product-bundle-card');
     const bundleAddBtn = event.target.closest('.quick-add-btn[data-bundle="true"]');
 
     if (bundleAddBtn) {
         event.preventDefault();
-        const { current, linked } = bundleAddBtn.dataset;
-        const bundleCard = bundleAddBtn.closest('.product-bundle-card');
-        const price = bundleCard.dataset.price;
+        const bundleCardEl = bundleAddBtn.closest('.product-bundle-card');
+        const { current, linked, price } = bundleCardEl.dataset;
 
-        addToCart(current, 1, {}, null, false);
-        addToCart(linked, 1, {}, null, false);
-        if(price) applyAndSaveBundleDiscount(current, linked, price);
-        showToast('Bundle added to cart!', 'success');
-        showGoToCartNotification();
+        addBundleToCart(current, linked, price);
         return;
     }
 
@@ -400,7 +425,7 @@ function createProductBundle(currentProduct, linkedProduct, bundlePrice) {
                     <p class="text-sm text-gray-600">${currentProduct.name} + ${linkedProduct.name}</p>
                     <p class="bundle-price">₹${bundlePrice.toLocaleString('en-IN')}</p>
                 </div>
-                <button class="quick-add-btn" data-bundle="true" data-current="${currentProduct.id}" data-linked="${linkedProduct.id}" style="position: static; transform: none;">+</button>
+                <button class="quick-add-btn" data-bundle="true" style="position: static; transform: none;">+</button>
             </div>
         </div>
     `;
@@ -441,6 +466,7 @@ function attachOptionSelectorListeners(wrapper) {
     });
 }
 
+// --- YAHAN BADLAV KIYA GAYA HAI: Bundle modal se add logic update hua hai ---
 function openBundleModal(currentId, linkedId, bundlePrice) {
     const currentProd = allProductsCache.find(p => p.id === currentId);
     const linkedProd = allProductsCache.find(p => p.id === linkedId);
@@ -469,11 +495,7 @@ function openBundleModal(currentId, linkedId, bundlePrice) {
     modalFooter.innerHTML = `<button id="add-bundle-to-cart-btn" class="w-full text-white font-bold py-3 px-4 rounded-xl text-lg" style="background-color: var(--primary-color);">Add Bundle to Cart</button>`;
 
     document.getElementById('add-bundle-to-cart-btn').onclick = () => {
-        addToCart(currentId, 1, {}, null, false);
-        addToCart(linkedId, 1, {}, null, false);
-        applyAndSaveBundleDiscount(currentId, linkedId, bundlePrice);
-        showToast('Bundle added to cart!', 'success');
-        showGoToCartNotification();
+        addBundleToCart(currentId, linkedId, bundlePrice);
         closeBundleModal();
     };
 
@@ -538,138 +560,16 @@ function setupActionControls() {
     setupShareButton();
 }
 
-function openVariantModal(variantType) {
-    const variant = currentProductData.variants.find(v => v.type === variantType);
-    if (!variant) return;
-    const overlay = document.getElementById("variant-modal-overlay");
-    const titleEl = document.getElementById("variant-modal-title");
-    const bodyEl = document.getElementById("variant-modal-body");
-    titleEl.textContent = `Select ${variant.type}`;
-    bodyEl.innerHTML = "";
-    variant.options.forEach(option => {
-        const isSelected = selectedVariants[variant.type] === option.name;
-        const optionEl = document.createElement("div");
-        optionEl.className = `variant-option ${isSelected ? "selected" : ""}`;
-        let contentHTML = (variant.type.toLowerCase() === 'color' && option.value)
-            ? `<div class="color-swatch" style="background-color: ${option.value};"></div> <span class="flex-grow">${option.name}</span>`
-            : `<span>${option.name}</span>`;
-        optionEl.innerHTML = contentHTML;
-        optionEl.addEventListener("click", () => {
-            selectedVariants[variant.type] = option.name;
-            updateVariantButtonDisplay(variant.type, option.name);
-            updateStickyActionBar();
-            closeVariantModal();
-        });
-        bodyEl.appendChild(optionEl);
-    });
-    overlay.classList.remove("hidden");
-    setTimeout(() => overlay.classList.add("active"), 10);
-}
-
-function closeVariantModal() {
-    const overlay = document.getElementById("variant-modal-overlay");
-    overlay.classList.remove("active");
-    setTimeout(() => overlay.classList.add("hidden"), 300);
-}
-
-function updateVariantButtonDisplay(type, value) {
-    const btn = document.querySelector(`.variant-btn[data-variant-type="${type}"] .value`);
-    if (btn) btn.textContent = value;
-}
-
-function setupVariantModal() {
-    const overlay = document.getElementById("variant-modal-overlay");
-    document.getElementById("variant-modal-close").addEventListener("click", closeVariantModal);
-    overlay.addEventListener("click", e => { if (e.target === overlay) closeVariantModal(); });
-    document.getElementById('options-container').addEventListener('click', e => {
-        const btn = e.target.closest('.variant-btn');
-        if (btn) { openVariantModal(btn.dataset.variantType); }
-    });
-}
-
-function updatePriceDisplay(newPrice) {
-    const finalPriceEl = document.getElementById("price-final");
-    const originalPriceEl = document.getElementById("price-original");
-    const percentageDiscountEl = document.getElementById("price-percentage-discount");
-    const displayPrice = newPrice ? Number(newPrice) : Number(currentProductData.displayPrice);
-    const originalPrice = Number(currentProductData.originalPrice);
-    finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`;
-    if (originalPrice > displayPrice) {
-        const discount = Math.round(100 * (originalPrice - displayPrice) / originalPrice);
-        percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`;
-        originalPriceEl.textContent = `₹${originalPrice.toLocaleString("en-IN")}`;
-        percentageDiscountEl.style.display = "flex";
-        originalPriceEl.style.display = "inline";
-    } else {
-        percentageDiscountEl.style.display = "none";
-        originalPriceEl.style.display = "none";
-    }
-}
-
-function createHandpickedCard(product) {
-    const displayPrice = Number(product.displayPrice);
-    const originalPriceNum = Number(product.originalPrice);
-    const discount = originalPriceNum > displayPrice ? Math.round(100 * ((originalPriceNum - displayPrice) / originalPriceNum)) : 0;
-    const priceHTML = `<div class="mt-2"><p class="text-lg font-bold text-gray-900">₹${displayPrice.toLocaleString("en-IN")}</p>${originalPriceNum > displayPrice ? `<div class="flex items-center gap-2 text-sm mt-1"><span class="text-gray-500 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</span><span class="font-semibold text-green-600">${discount}% OFF</span></div>` : ""}` + "</div>";
-    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
-
-    const showAddButton = displayPrice < 500 || product.category === 'grocery';
-    const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : "";
-
-    return `<div class="h-full block bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-                <a href="?id=${product.id}" class="block">
-                    <div class="relative">
-                        <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}">
-                        ${ratingTag}
-                        ${addButton}
-                    </div>
-                    <div class="p-3">
-                        <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
-                        ${priceHTML}
-                    </div>
-                </a>
-            </div>`;
-}
-
-function createCarouselCard(product) {
-    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
-    const originalPriceNum = Number(product.originalPrice);
-    const displayPriceNum = Number(product.displayPrice);
-    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
-
-    const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`;
-
-    return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`;
-}
-
-// === YAHAN BADLAV KIYA GAYA HAI: Recently Viewed ke liye naya card function ===
-function createRecentlyViewedCard(product) {
-    // Screenshot ke adhar par naya, simple card style (sirf image aur naam)
-    return `
-        <a href="?id=${product.id}" class="recently-viewed-item block bg-white">
-            <div class="relative">
-                <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}">
-            </div>
-            <div class="p-2 text-center">
-                <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4>
-            </div>
-        </a>
-    `;
-}
-
-function createGridCard(product) {
-    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
-    const originalPriceNum = Number(product.originalPrice);
-    const displayPriceNum = Number(product.displayPrice);
-    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0;
-
-    const showAddButton = displayPriceNum < 500 || product.category === 'grocery';
-    const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : "";
-
-    return `<a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2 sm:p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`;
-}
-
-// --- UNCHANGED HELPER FUNCTIONS ---
+// Baki ke sabhi functions (unchanged helper functions) pehle jaise hi rahenge...
+function openVariantModal(variantType) { const variant = currentProductData.variants.find(v => v.type === variantType); if (!variant) return; const overlay = document.getElementById("variant-modal-overlay"); const titleEl = document.getElementById("variant-modal-title"); const bodyEl = document.getElementById("variant-modal-body"); titleEl.textContent = `Select ${variant.type}`; bodyEl.innerHTML = ""; variant.options.forEach(option => { const isSelected = selectedVariants[variant.type] === option.name; const optionEl = document.createElement("div"); optionEl.className = `variant-option ${isSelected ? "selected" : ""}`; let contentHTML = (variant.type.toLowerCase() === 'color' && option.value) ? `<div class="color-swatch" style="background-color: ${option.value};"></div> <span class="flex-grow">${option.name}</span>` : `<span>${option.name}</span>`; optionEl.innerHTML = contentHTML; optionEl.addEventListener("click", () => { selectedVariants[variant.type] = option.name; updateVariantButtonDisplay(variant.type, option.name); updateStickyActionBar(); closeVariantModal(); }); bodyEl.appendChild(optionEl); }); overlay.classList.remove("hidden"); setTimeout(() => overlay.classList.add("active"), 10); }
+function closeVariantModal() { const overlay = document.getElementById("variant-modal-overlay"); overlay.classList.remove("active"); setTimeout(() => overlay.classList.add("hidden"), 300); }
+function updateVariantButtonDisplay(type, value) { const btn = document.querySelector(`.variant-btn[data-variant-type="${type}"] .value`); if (btn) btn.textContent = value; }
+function setupVariantModal() { const overlay = document.getElementById("variant-modal-overlay"); document.getElementById("variant-modal-close").addEventListener("click", closeVariantModal); overlay.addEventListener("click", e => { if (e.target === overlay) closeVariantModal(); }); document.getElementById('options-container').addEventListener('click', e => { const btn = e.target.closest('.variant-btn'); if (btn) { openVariantModal(btn.dataset.variantType); } }); }
+function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : Number(currentProductData.displayPrice); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; if (originalPrice > displayPrice) { const discount = Math.round(100 * (originalPrice - displayPrice) / originalPrice); percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${originalPrice.toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
+function createHandpickedCard(product) { const displayPrice = Number(product.displayPrice); const originalPriceNum = Number(product.originalPrice); const discount = originalPriceNum > displayPrice ? Math.round(100 * ((originalPriceNum - displayPrice) / originalPriceNum)) : 0; const priceHTML = `<div class="mt-2"><p class="text-lg font-bold text-gray-900">₹${displayPrice.toLocaleString("en-IN")}</p>${originalPriceNum > displayPrice ? `<div class="flex items-center gap-2 text-sm mt-1"><span class="text-gray-500 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</span><span class="font-semibold text-green-600">${discount}% OFF</span></div>` : ""}` + "</div>"; const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const showAddButton = displayPrice < 500 || product.category === 'grocery'; const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : ""; return `<div class="h-full block bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden"><a href="?id=${product.id}" class="block"><div class="relative"><img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>${priceHTML}</div></a></div>`; }
+function createCarouselCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`; return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
+function createRecentlyViewedCard(product) { return ` <a href="?id=${product.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4> </div> </a> `; }
+function createGridCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const showAddButton = displayPriceNum < 500 || product.category === 'grocery'; const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : ""; return `<a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2 sm:p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
 function renderDescription(data) { const descriptionContainer = document.getElementById("product-description"); const descriptionSection = document.getElementById("description-section"); const returnPolicyEl = document.getElementById("return-policy-info"); let hasContent = false; descriptionContainer.innerHTML = ""; returnPolicyEl.style.display = "none"; if (data.description && Array.isArray(data.description) && data.description.length > 0) { let descriptionHtml = '<ul class="space-y-3 list-inside">'; data.description.forEach(block => { if (block.details) { descriptionHtml += `<li class="text-base text-gray-600 leading-relaxed">${block.details}</li>`; hasContent = true; } }); descriptionHtml += '</ul>'; descriptionContainer.innerHTML = descriptionHtml; } if (data.returnPolicy && data.returnPolicy.type) { let policyText = ''; switch (data.returnPolicy.type) { case 'days': policyText = `${data.returnPolicy.value} Days Return Available`; break; case 'no_return': policyText = 'No Return Available'; break; case 'custom': policyText = data.returnPolicy.value; break; } if (policyText) { returnPolicyEl.innerHTML = `<i class="fas fa-undo-alt w-5 text-center"></i> <span>${policyText}</span>`; returnPolicyEl.style.display = "flex"; hasContent = true; } } if (hasContent) { descriptionSection.style.display = "block"; } else { descriptionSection.style.display = "none"; } }
 function renderAdvancedHighlights(specData) { const container = document.getElementById("advanced-highlights-section"); if (!specData || !specData.blocks || specData.blocks.length === 0) { container.style.display = "none"; return; } let html = `<div class="p-4 sm:p-6 lg:p-8 border-t border-b border-gray-200 my-4"><h2 class="text-xl font-bold text-gray-900 mb-4">Highlights</h2>`; if (specData.specScore || specData.specTag) { html += '<div class="flex items-center gap-3 mb-6">'; if (specData.specScore) { html += `<div class="spec-score font-bold">${specData.specScore}</div>`; } if (specData.specTag) { html += `<div class="spec-tag">${specData.specTag}</div>`; } html += '</div>'; } html += '<div class="space-y-6">'; specData.blocks.forEach(block => { const subtitleStyle = "color: #B8860B; font-weight: 500;"; html += `<div class="flex items-start gap-4"><div class="flex-shrink-0 w-8 h-8 text-gray-600 pt-1">${block.icon || ""}</div><div class="flex-grow"><p class="text-sm text-gray-500">${block.category || ""}</p><h4 class="text-md font-semibold text-gray-800 mt-1">${block.title || ""}</h4><p class="text-sm mt-1" style="${subtitleStyle}">${block.subtitle || ""}</p></div></div>`; }); html += '</div></div>'; container.innerHTML = html; container.style.display = "block"; }
 function renderMediaGallery() { const gallery=document.getElementById("thumbnail-gallery");gallery.innerHTML="",slider.innerHTML="",mediaItems.forEach((item,index)=>{const e=document.createElement("div");e.className="media-item","image"===item.type?e.innerHTML=`<img src="${item.src}" alt="Product image ${index+1}" draggable="false">`:getYoutubeEmbedUrl(item.src)&&(e.innerHTML=`<iframe src="${getYoutubeEmbedUrl(item.src)}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`),slider.appendChild(e);const t=document.createElement("div");t.className="aspect-square thumbnail";const l=document.createElement("img");l.src="image"===item.type?item.src:item.thumbnail,t.appendChild(l),"video"===item.type&&((n=document.createElement("div")).className="play-icon",n.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="50%" height="50%"><path d="M8 5v14l11-7z"/></svg>',t.appendChild(n));var n;t.addEventListener("click",()=>showMedia(index)),gallery.appendChild(t)}),mediaItems.length>0&&showMedia(0)}
