@@ -87,11 +87,10 @@ function updateCartIcon() {
     }
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: BUNDLE DISCOUNT LOGIC ===
+// === BUNDLE DISCOUNT LOGIC ===
 function applyAndSaveBundleDiscount(prod1Id, prod2Id, price) {
     let discounts = JSON.parse(localStorage.getItem('ramazoneDiscounts')) || [];
     const discountId = `bundle_${prod1Id}_${prod2Id}`;
-    // Duplicate discount add karne se roko
     if (!discounts.find(d => d.id === discountId)) {
         discounts.push({
             id: discountId,
@@ -103,7 +102,7 @@ function applyAndSaveBundleDiscount(prod1Id, prod2Id, price) {
     }
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: GO TO CART NOTIFICATION LOGIC ===
+// === GO TO CART NOTIFICATION LOGIC ===
 function showGoToCartNotification() {
     const notification = document.getElementById('go-to-cart-notification');
     const summaryEl = document.getElementById('notification-cart-summary');
@@ -120,7 +119,7 @@ function showGoToCartNotification() {
     goToCartNotificationTimer = setTimeout(() => {
         notification.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
         notification.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
-    }, 3000); // 3-second timer
+    }, 3000);
 }
 
 function updateStickyActionBar() {
@@ -154,14 +153,8 @@ function updateStickyActionBar() {
 function setupHeaderScrollEffect() {
     const defaultHeader = document.getElementById('default-header-content');
     const searchHeader = document.getElementById('search-header-content');
-
-    if (!defaultHeader || !searchHeader) {
-        console.warn("Header elements for scroll effect not found.");
-        return;
-    }
-
+    if (!defaultHeader || !searchHeader) return;
     const SCROLL_THRESHOLD = 50;
-
     window.addEventListener('scroll', () => {
         if (window.scrollY > SCROLL_THRESHOLD) {
             if (!defaultHeader.classList.contains('header-hidden')) {
@@ -173,16 +166,11 @@ function setupHeaderScrollEffect() {
             if (defaultHeader.classList.contains('header-hidden')) {
                 defaultHeader.classList.remove('header-hidden');
                 searchHeader.classList.add('header-hidden');
-                setTimeout(() => {
-                    if (window.scrollY <= SCROLL_THRESHOLD) {
-                       searchHeader.classList.add('hidden');
-                    }
-                }, 300);
+                setTimeout(() => { if (window.scrollY <= SCROLL_THRESHOLD) searchHeader.classList.add('hidden'); }, 300);
             }
         }
     }, { passive: true });
 }
-
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
@@ -524,9 +512,7 @@ function handleQuickAdd(event) {
                     }
                 });
             }
-
             addToCart(productId, 1, defaultVariants, null); 
-
             quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
             quickAddButton.classList.add('added');
             setTimeout(() => {
@@ -656,6 +642,21 @@ function createCarouselCard(product) {
     return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`;
 }
 
+// === YAHAN BADLAV KIYA GAYA HAI: Recently Viewed ke liye naya card function ===
+function createRecentlyViewedCard(product) {
+    // Screenshot ke adhar par naya, simple card style (sirf image aur naam)
+    return `
+        <a href="?id=${product.id}" class="recently-viewed-item block bg-white">
+            <div class="relative">
+                <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}">
+            </div>
+            <div class="p-2 text-center">
+                <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4>
+            </div>
+        </a>
+    `;
+}
+
 function createGridCard(product) {
     const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
     const originalPriceNum = Number(product.originalPrice);
@@ -687,7 +688,7 @@ function setupShareButton() { document.getElementById("share-button").addEventLi
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
 function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; viewedIds = viewedIds.filter(e => e !== newId); viewedIds.unshift(newId); viewedIds = viewedIds.slice(0, 10); localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds)); loadRecentlyViewed(viewedIds); }
 function loadHandpickedSimilarProducts(similarIds) { const section = document.getElementById("handpicked-similar-section"), container = document.getElementById("handpicked-similar-container"); if (!similarIds || similarIds.length === 0) return void (section.style.display = "none"); container.innerHTML = ""; let hasContent = !1; similarIds.forEach(id => { const product = allProductsCache.find(p => p && p.id === id); product && (container.innerHTML += createHandpickedCard(product), hasContent = !0) }), hasContent && (section.style.display = "block")}
-function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e);n&&(container.innerHTML+=createCarouselCard(n),t++)}),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
+function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
 

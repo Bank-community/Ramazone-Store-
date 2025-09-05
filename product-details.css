@@ -175,7 +175,7 @@
     padding: 6px 12px; border-radius: 8px;
 }
 
-/* === "You Might Also Like" Carousel Style === */
+/* --- "You Might Also Like" Carousel Style --- */
 #handpicked-similar-container {
     display: flex;
     gap: 12px;
@@ -208,7 +208,7 @@
     align-items: center; justify-content: center;
 }
 
-/* === NEW/FIXED: Styles for Modal Close Button & Navigation === */
+/* --- Styles for Modal Close Button & Navigation --- */
 .modal-nav {
     cursor: pointer;
     position: absolute;
@@ -222,35 +222,15 @@
     user-select: none;
     background-color: rgba(0,0,0,0.3);
 }
-.modal-nav.next {
-    right: 0;
-    border-radius: 3px 0 0 3px;
-}
-.modal-nav.prev {
-    left: 0;
-}
-.modal-nav:hover {
-    background-color: rgba(0,0,0,0.6);
-}
+.modal-nav.next { right: 0; border-radius: 3px 0 0 3px; }
+.modal-nav.prev { left: 0; }
+.modal-nav:hover { background-color: rgba(0,0,0,0.6); }
 
-/* This is the new style for the close button (×) */
 #image-modal .close {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
-    transition: 0.3s;
-    cursor: pointer;
-    z-index: 1002; /* Ensure it's above other modal elements */
+    position: absolute; top: 15px; right: 35px; color: #f1f1f1;
+    font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 1002;
 }
-#image-modal .close:hover,
-#image-modal .close:focus {
-    color: #bbb;
-    text-decoration: none;
-}
-/* ============================================================= */
+#image-modal .close:hover, #image-modal .close:focus { color: #bbb; text-decoration: none; }
 
 #variant-modal-overlay.active, #bundle-modal-overlay.active { display: flex; }
 #variant-modal-content, #bundle-modal-content {
@@ -306,8 +286,22 @@
 .quick-add-btn:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .quick-add-btn.added { background-color: #22c55e; color: white; border-color: #22c55e; }
 
+/* === YAHAN BADLAV KIYA GAYA HAI: Carousel ke liye global style === */
+.carousel-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px; /* <-- Cardon ke beech space yahan se aayega */
+    padding: 0 1rem; /* Side mein thoda padding */
+}
+.carousel-container::-webkit-scrollbar { display: none; }
+.carousel-container { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* --- General Card & Carousel Styles --- */
-.carousel-item { flex: 0 0 45%; scroll-snap-align: start; }
+.carousel-item { 
+    flex: 0 0 45%; 
+    scroll-snap-align: start; 
+}
 @media (min-width: 640px) { .carousel-item { flex: 0 0 30%; } }
 @media (min-width: 1024px) { .carousel-item { flex: 0 0 20%; } }
 
@@ -317,6 +311,19 @@
     border-radius: 6px; display: flex; align-items: center; gap: 4px;
 }
 .card-rating-tag .fa-star { font-size: 10px; }
+
+/* === YAHAN BADLAV KIYA GAYA HAI: Recently Viewed section ke naye styles === */
+.recently-viewed-item {
+    flex: 0 0 28%; /* Ek baar mein ~3.5 cards dikhane ke liye */
+    scroll-snap-align: start;
+    border: 1px solid #e5e7eb; /* Halka border */
+    overflow: hidden;
+    /* Koi border-radius nahi */
+}
+.recently-viewed-item img {
+    /* img par bhi koi radius nahi */
+    border-radius: 0;
+}
 
 /* === Header Scroll Effect Styles === */
 .header-search-bar {
