@@ -57,7 +57,7 @@
     color: #f59e0b;
 }
 
-/* --- Variant & Option Selectors --- */
+/* --- Variant Selectors --- */
 .variant-btn {
     background-color: #f3f4f6;
     border: 1px solid #e5e7eb;
@@ -77,105 +77,81 @@
     color: var(--primary-color);
 }
 
-.option-selector {
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s ease;
-}
-.option-selector:hover { background-color: #f9fafb; }
-.option-selector .option-type { color: #6b7280; }
-.option-selector .option-value { font-weight: 600; color: #111827; }
-.option-selector .arrow-icon { transition: transform 0.3s ease; }
-.option-selector.active .arrow-icon { transform: rotate(180deg); }
-
-.option-panel {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease-out, padding 0.4s ease-out;
-    padding: 0;
-}
-.option-panel.active {
-    max-height: 300px;
-    padding-top: 0.75rem;
-}
-
-.option-cards-wrapper {
-    display: flex;
+/* --- Combo Pack CSS --- */
+.combo-pack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 0.75rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
 }
-.option-cards-wrapper::-webkit-scrollbar { display: none; }
-.option-cards-wrapper { -ms-overflow-style: none; scrollbar-width: none; }
-
-.option-card {
-    flex: 0 0 auto;
-    min-width: 120px;
-    padding: 0.75rem;
+.combo-pack-card {
     border: 2px solid #e5e7eb;
-    border-radius: 0.5rem;
-    text-align: center;
     background-color: #ffffff;
+    padding: 0.75rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0; /* ZERO RADIUS as requested */
 }
-.option-card:hover { border-color: #a5b4fc; }
-.option-card.selected { border-color: var(--primary-color); background-color: #eef2ff; }
-.option-card .card-title { font-weight: 600; color: #1f2937; margin-bottom: 2px; }
-.option-card .card-price { font-size: 0.9rem; color: #4b5563; }
-.option-card .card-original-price { font-size: 0.8rem; text-decoration: line-through; color: #9ca3af; }
-
-/* --- Product Bundle Card --- */
-.product-bundle-card {
+.combo-pack-card:hover {
+    border-color: #a5b4fc;
+    transform: translateY(-2px);
+}
+.combo-pack-card.selected {
+    border-color: var(--primary-color);
+    background-color: #eef2ff;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1);
+}
+.combo-pack-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    margin-right: 0.5rem;
+    border-radius: 4px;
+}
+.combo-pack-savings {
+    font-size: 0.75rem; /* 12px */
+    margin-top: 0.5rem;
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
     align-items: center;
-    gap: 1rem;
-    width: 100%;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    background-color: #f9fafb;
-    cursor: pointer;
 }
+.best-value-tag {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    background-color: #16a34a; /* Green */
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 20px;
+    transform: translateX(30%) translateY(50%) rotate(45deg);
+    transform-origin: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    width: 100px;
+    text-align: center;
+}
+
+/* --- Product Bundle Card (No changes) --- */
+.product-bundle-card { display: flex; align-items: center; gap: 1rem; width: 100%; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; background-color: #f9fafb; cursor: pointer; }
 .product-bundle-card .bundle-images { display: flex; align-items: center; }
-.product-bundle-card .bundle-images img {
-    width: 50px; height: 50px; object-fit: cover;
-    border-radius: 0.375rem; border: 2px solid white;
-}
+.product-bundle-card .bundle-images img { width: 50px; height: 50px; object-fit: cover; border-radius: 0.375rem; border: 2px solid white; }
 .product-bundle-card .bundle-images img:nth-child(2) { margin-left: -20px; }
-.product-bundle-card .bundle-info .bundle-price {
-    font-size: 1.125rem; font-weight: 700; color: var(--primary-color);
-}
+.product-bundle-card .bundle-info .bundle-price { font-size: 1.125rem; font-weight: 700; color: var(--primary-color); }
 
 /* --- Price & Sticky Bar --- */
-.lowest-price-tag {
-    background-color: #16a34a; color: white; font-size: 0.8rem; font-weight: 600;
-    padding: 4px 10px; border-radius: 0.2rem; display: inline-block; margin-bottom: 0.5rem;
-}
-.quantity-selector button {
-    width: 44px; height: 44px; font-size: 1.5rem; font-weight: 500;
-    color: var(--primary-color); background-color: #eef2ff; transition: background-color 0.2s;
-}
+.lowest-price-tag { background-color: #16a34a; color: white; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 0.2rem; display: inline-block; margin-bottom: 0.5rem; }
+.quantity-selector button { width: 44px; height: 44px; font-size: 1.5rem; font-weight: 500; color: var(--primary-color); background-color: #eef2ff; transition: background-color 0.2s; }
 .quantity-selector button:hover { background-color: #e0e7ff; }
 .quantity-selector button:disabled { color: #9ca3af; background-color: #f3f4f6; cursor: not-allowed; }
 .quantity-selector span { font-size: 1.125rem; font-weight: 600; }
 
 /* --- Highlights Section --- */
-.spec-score {
-    background-color: #fefce8; color: #ca8a04; border: 1px solid #facc15;
-    padding: 6px 12px; border-radius: 8px;
-}
-.spec-tag {
-    background-color: #f0fdf4; color: #16a34a; border: 1px solid #4ade80;
-    padding: 6px 12px; border-radius: 8px;
-}
+.spec-score { background-color: #fefce8; color: #ca8a04; border: 1px solid #facc15; padding: 6px 12px; border-radius: 8px; }
+.spec-tag { background-color: #f0fdf4; color: #16a34a; border: 1px solid #4ade80; padding: 6px 12px; border-radius: 8px; }
 
-/* --- "You Might Also Like" Carousel Style --- */
+/* --- Handpicked "You Might Also Like" Section --- */
 #handpicked-similar-container {
     display: flex;
     gap: 12px;
@@ -186,163 +162,98 @@
 #handpicked-similar-container::-webkit-scrollbar { display: none; }
 #handpicked-similar-container { -ms-overflow-style: none; scrollbar-width: none; }
 #handpicked-similar-container > div {
-    flex: 0 0 31%;
+    flex: 0 0 45%;
+    max-width: 180px;
     scroll-snap-align: start;
 }
-#handpicked-similar-container > div { border-radius: 6px !important; }
 #handpicked-similar-container .p-3 { padding: 0.6rem; }
 #handpicked-similar-container h4 { margin-bottom: 0.1rem; }
 #handpicked-similar-container .text-lg { font-size: 1rem; line-height: 1.4rem; }
 #handpicked-similar-container .text-sm { font-size: 0.8rem; }
 
+/* --- Other Product Grids --- */
 .other-products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-@media (min-width: 640px) {
-    .other-products-grid { grid-template-columns: repeat(3, 1fr); }
-}
+@media (min-width: 640px) { .other-products-grid { grid-template-columns: repeat(3, 1fr); } }
 
 /* --- Modals (Image, Variant, Bundle) --- */
-#image-modal, #variant-modal-overlay, #bundle-modal-overlay {
-    display: none; position: fixed; z-index: 1001; left: 0; top: 0;
-    width: 100%; height: 100%; overflow: auto;
-    background-color: rgba(0,0,0,0.8);
-    align-items: center; justify-content: center;
-}
-
-/* --- Styles for Modal Close Button & Navigation --- */
-.modal-nav {
-    cursor: pointer;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 16px;
-    color: white;
-    font-weight: bold;
-    font-size: 24px;
-    transition: 0.3s ease;
-    user-select: none;
-    background-color: rgba(0,0,0,0.3);
-}
+#image-modal, #variant-modal-overlay, #bundle-modal-overlay { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+.modal-nav { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); padding: 16px; color: white; font-weight: bold; font-size: 24px; transition: 0.3s ease; user-select: none; background-color: rgba(0,0,0,0.3); }
 .modal-nav.next { right: 0; border-radius: 3px 0 0 3px; }
 .modal-nav.prev { left: 0; }
 .modal-nav:hover { background-color: rgba(0,0,0,0.6); }
-
-#image-modal .close {
-    position: absolute; top: 15px; right: 35px; color: #f1f1f1;
-    font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 1002;
-}
+#image-modal .close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 1002; }
 #image-modal .close:hover, #image-modal .close:focus { color: #bbb; text-decoration: none; }
-
 #variant-modal-overlay.active, #bundle-modal-overlay.active { display: flex; }
-#variant-modal-content, #bundle-modal-content {
-    transform: scale(0.95); opacity: 0; transition: all 0.3s;
-}
-#variant-modal-overlay.active #variant-modal-content,
-#bundle-modal-overlay.active #bundle-modal-content {
-    transform: scale(1); opacity: 1;
-}
-.variant-option {
-    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
-    border: 1px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;
-}
+#variant-modal-content, #bundle-modal-content { transform: scale(0.95); opacity: 0; transition: all 0.3s; }
+#variant-modal-overlay.active #variant-modal-content, #bundle-modal-overlay.active #bundle-modal-content { transform: scale(1); opacity: 1; }
+.variant-option { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
 .variant-option:hover { background-color: #f9fafb; }
 .variant-option.selected { border-color: var(--primary-color); background-color: #eef2ff; font-weight: 600; }
 .color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d1d5db; }
-
-/* Bundle Modal Specifics */
 .bundle-modal-products { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
-.bundle-modal-products img {
-    width: 100px; height: 100px; object-fit: cover; border-radius: 0.5rem;
-    border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+.bundle-modal-products img { width: 100px; height: 100px; object-fit: cover; border-radius: 0.5rem; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .bundle-modal-products .plus-icon { font-size: 1.5rem; color: #6b7280; margin: 0 0.5rem; }
 .bundle-modal-products img:nth-child(3) { margin-left: -30px; }
 .bundle-modal-details .product-names { font-size: 1.125rem; font-weight: 600; text-align: center; margin-bottom: 1.5rem; }
 .bundle-price-summary { background-color: #f9fafb; border-radius: 0.75rem; padding: 1rem; text-align: center; }
 .bundle-price-summary .final-price { font-size: 2rem; font-weight: 800; color: var(--primary-color); }
 .bundle-price-summary .original-price-info { font-size: 1rem; color: #6b7280; margin-top: 0.25rem; }
-.bundle-price-summary .savings-badge {
-    display: inline-block; background-color: #dcfce7; color: #166534; font-weight: 600;
-    padding: 0.25rem 0.75rem; border-radius: 9999px; margin-top: 0.75rem;
-}
-
-/* --- Header Cart Icon --- */
+.bundle-price-summary .savings-badge { display: inline-block; background-color: #dcfce7; color: #166534; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px; margin-top: 0.75rem; }
 .header-cart-link { position: relative; color: #4B5563; }
-#cart-item-count {
-    position: absolute; top: -1px; right: 1px; background-color: red; color: white;
-    border-radius: 50%; padding: 3px; font-size: 10px; font-weight: bold;
-    min-width: 19px; text-align: center; line-height: 14px; border: 1.5px solid white;
-}
+#cart-item-count { position: absolute; top: -1px; right: 1px; background-color: red; color: white; border-radius: 50%; padding: 3px; font-size: 10px; font-weight: bold; min-width: 19px; text-align: center; line-height: 14px; border: 1.5px solid white; }
 
-/* --- Quick Add Button on Cards --- */
+/* --- YAHAN BADA BADLAV KIYA GAYA HAI: Quick Add Button Styles --- */
+/* Common button styles */
 .quick-add-btn {
-    position: absolute; bottom: 8px; right: 8px; background-color: white;
-    color: var(--primary-color); width: 38px; height: 38px;
-    border-radius: 4px; border: 1.3px solid #000000;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 500; cursor: pointer;
+    background-color: white;
+    color: var(--primary-color);
+    border: 1.3px solid #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 500;
+    cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transition: all 0.2s ease-in-out;
 }
-.quick-add-btn:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.quick-add-btn.added { background-color: #22c55e; color: white; border-color: #22c55e; }
-
-/* === YAHAN BADLAV KIYA GAYA HAI: Carousel ke liye global style === */
-.carousel-container {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 12px; /* <-- Cardon ke beech space yahan se aayega */
-    padding: 0 1rem; /* Side mein thoda padding */
+.quick-add-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
+.quick-add-btn.added {
+    background-color: #22c55e;
+    color: white;
+    border-color: #22c55e;
+}
+/* For Carousels and Grids (button on top of image) */
+.carousel-item .relative .quick-add-btn,
+.other-products-grid .relative .quick-add-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 38px;
+    height: 38px;
+    border-radius: 4px; /* Chhota radius */
+}
+/* For "You Might Also Like" section (full-width button at bottom) */
+#handpicked-similar-container .quick-add-btn {
+    width: 100%;
+    border-radius: 6px;
+    font-size: 18px;
+    padding: 6px;
+}
+.carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; padding: 0 1rem; }
 .carousel-container::-webkit-scrollbar { display: none; }
 .carousel-container { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* --- General Card & Carousel Styles --- */
-.carousel-item { 
-    flex: 0 0 45%; 
-    scroll-snap-align: start; 
-}
+.carousel-item { flex: 0 0 45%; scroll-snap-align: start; }
 @media (min-width: 640px) { .carousel-item { flex: 0 0 30%; } }
 @media (min-width: 1024px) { .carousel-item { flex: 0 0 20%; } }
-
-.card-rating-tag {
-    position: absolute; top: 8px; right: 8px; background-color: #16a34a; color: white;
-    font-size: 12px; font-weight: 600; padding: 3px 7px;
-    border-radius: 6px; display: flex; align-items: center; gap: 4px;
-}
+.card-rating-tag { position: absolute; top: 8px; right: 8px; background-color: #16a34a; color: white; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
 .card-rating-tag .fa-star { font-size: 10px; }
+.recently-viewed-item { flex: 0 0 28%; scroll-snap-align: start; border: 1px solid #e5e7eb; overflow: hidden; }
+.recently-viewed-item img { border-radius: 0; }
+.header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; text-decoration: none; cursor: pointer; }
+.header-hidden { opacity: 0; pointer-events: none; max-height: 0px; padding-top: 0px !important; padding-bottom: 0px !important; overflow: hidden; }
 
-/* === YAHAN BADLAV KIYA GAYA HAI: Recently Viewed section ke naye styles === */
-.recently-viewed-item {
-    flex: 0 0 28%; /* Ek baar mein ~3.5 cards dikhane ke liye */
-    scroll-snap-align: start;
-    border: 1px solid #e5e7eb; /* Halka border */
-    overflow: hidden;
-    /* Koi border-radius nahi */
-}
-.recently-viewed-item img {
-    /* img par bhi koi radius nahi */
-    border-radius: 0;
-}
-
-/* === Header Scroll Effect Styles === */
-.header-search-bar {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    background-color: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 10px 14px;
-    text-decoration: none;
-    cursor: pointer;
-}
-.header-hidden {
-    opacity: 0;
-    pointer-events: none;
-    max-height: 0px;
-    padding-top: 0px !important;
-    padding-bottom: 0px !important;
-    overflow: hidden;
-}
 
