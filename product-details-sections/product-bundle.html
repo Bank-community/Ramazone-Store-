@@ -1,0 +1,117 @@
+<!-- ================================================================== -->
+<!-- === YEH BUNDLE CARD KA ANTIM AUR SIMPLE TEMPLATE HAI === -->
+<!-- Iska design aapke naye sample par aadharit hai aur iski CSS poori tarah se alag hai. -->
+<!-- ================================================================== -->
+
+<style>
+    /* Yeh unique class kisi bhi bahari CSS se takraav ko rokegi */
+    .ramazone-simple-bundle-card {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem; /* 12px */
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem; /* 12px */
+        padding: 0.75rem; /* 12px - Kam ki gayi padding */
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        cursor: pointer;
+        transition: box-shadow 0.2s ease-in-out;
+    }
+    .ramazone-simple-bundle-card:hover {
+        box-shadow: 0 8px 15px rgba(0,0,0,0.07);
+    }
+
+    /* Product ki tasveerein */
+    .ramazone-simple-bundle-card .bundle-images {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .ramazone-simple-bundle-card .bundle-images img {
+        width: 40px; /* Chhoti tasveerein */
+        height: 40px;
+        object-fit: cover;
+        border-radius: 0.5rem; /* 8px */
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .ramazone-simple-bundle-card .bundle-images img:not(:first-child) {
+        margin-left: -20px; /* Overlapping effect */
+    }
+
+    /* Product ka naam aur keemat */
+    .ramazone-simple-bundle-card .bundle-details {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+    .ramazone-simple-bundle-card .bundle-details .product-names {
+        font-weight: 600;
+        color: #374151;
+        line-height: 1.4;
+        font-size: 0.9rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .ramazone-simple-bundle-card .price-info {
+         display: flex;
+         align-items: baseline;
+         gap: 0.5rem;
+    }
+    .ramazone-simple-bundle-card .price-info .final-price {
+        font-size: 1.125rem; /* text-lg */
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    .ramazone-simple-bundle-card .price-info .original-price {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        text-decoration: line-through;
+    }
+
+    /* Aapki pasand ka naya button style */
+    .ramazone-simple-bundle-card .final-bundle-plus-btn {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px; /* Chaukor button, gol kono ke saath */
+        background-color: white;
+        border: 1.5px solid #000000; /* Kaala border */
+        color: #1f2937;
+        font-size: 24px;
+        font-weight: bold; /* Bold Plus ka nishaan */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .ramazone-simple-bundle-card .final-bundle-plus-btn:hover {
+        background-color: #f3f4f6;
+        transform: scale(1.05);
+    }
+</style>
+
+<!-- ============================================================ -->
+<!-- === NAYA AUR SIMPLE HTML STRUCTURE === -->
+<!-- ============================================================ -->
+<div class="ramazone-simple-bundle-card product-bundle-card" data-product-ids="{{productIds}}" data-price="{{bundlePrice}}">
+    <div class="bundle-images">
+        {{bundleImages}}
+    </div>
+    <div class="bundle-details">
+        <p class="product-names">{{bundleNames}}</p>
+        <div class="price-info">
+            <span class="final-price">₹{{bundlePriceFormatted}}</span>
+            <!-- MRP (original price) ab JavaScript se aayega, agar zaroori hua to -->
+            {{originalPriceHTML}}
+        </div>
+    </div>
+    <!-- Button jiska class naam poori tarah se naya hai -->
+    <button class="final-bundle-plus-btn" data-bundle="true" title="Add Bundle to Cart">+</button>
+</div>
+
+

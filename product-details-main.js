@@ -61,27 +61,18 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
     }
 }
 
-// --- === YAHAN BADA BADLAV KIYA GAYA HAI: Multi-product bundle ko cart mein add karne ka naya logic === ---
 function addBundleToCart(productIds, bundlePrice) {
     const cart = getCart();
-
-    // Bundle ke sabhi products ko cache se fetch karo
     const bundleProducts = productIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
-
-    // Agar koi product nahi milta hai to error dikhao
     if (bundleProducts.length !== productIds.length) {
         showToast('One of the bundle products is unavailable.', 'error');
         return;
     }
-
     const bundleId = `BUNDLE_${productIds.sort().join('_')}`;
     const existingBundleIndex = cart.findIndex(item => item.isBundle && item.bundleId === bundleId);
-
     if (existingBundleIndex > -1) {
-        // Agar bundle pehle se cart mein hai, to quantity badhao
         cart[existingBundleIndex].quantity += 1;
     } else {
-        // Naya bundle object banao
         const bundleObject = {
             isBundle: true,
             bundleId: bundleId,
@@ -96,18 +87,15 @@ function addBundleToCart(productIds, bundlePrice) {
         };
         cart.push(bundleObject);
     }
-
     saveCart(cart);
     showToast('Bundle added to cart!', 'success');
     showGoToCartNotification();
     updateCartIcon();
 }
 
-
 function updateCartItemQuantity(productId, newQuantity, variants, pack) {
     let cart = getCart();
     const itemIndex = cart.findIndex(item => item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
-
     if (itemIndex > -1) {
         if (newQuantity > 0) {
             cart[itemIndex].quantity = newQuantity;
@@ -134,15 +122,11 @@ function showGoToCartNotification() {
     const notification = document.getElementById('go-to-cart-notification');
     const summaryEl = document.getElementById('notification-cart-summary');
     if (!notification || !summaryEl) return;
-
     clearTimeout(goToCartNotificationTimer);
-
     const totalQuantity = getTotalCartQuantity();
     summaryEl.textContent = `${totalQuantity} item${totalQuantity > 1 ? 's' : ''} in cart`;
-
     notification.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
     notification.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
-
     goToCartNotificationTimer = setTimeout(() => {
         notification.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
         notification.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
@@ -152,14 +136,12 @@ function showGoToCartNotification() {
 function updateStickyActionBar() {
     if (!currentProductId) return;
     const cartItem = getCartItem(currentProductId, selectedVariants, selectedPack);
-
     const qtyWrapper = document.getElementById('quantity-selector-wrapper');
     const qtyDisplay = document.getElementById('quantity-display');
     const decreaseBtn = document.getElementById('decrease-quantity');
     const addToCartBtn = document.getElementById('add-to-cart-btn');
     const goToCartBtn = document.getElementById('go-to-cart-btn');
     const mainActionContainer = document.getElementById('main-action-container');
-
     if (cartItem) {
         qtyDisplay.textContent = cartItem.quantity;
         decreaseBtn.disabled = cartItem.quantity <= 1;
@@ -199,7 +181,6 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
-// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
@@ -254,16 +235,12 @@ async function loadPageSectionsAndData(data) {
             fetch('product-details-sections/product-main-info.html').then(res => res.text()),
             fetch('product-details-sections/similar-products.html').then(res => res.text())
         ]);
-
         document.getElementById('media-gallery-container').innerHTML = mediaHtml;
         document.getElementById('product-main-info-container').innerHTML = infoHtml;
         document.getElementById('similar-products-container-wrapper').innerHTML = similarHtml;
-
         populateDataAndAttachListeners(data);
-
         document.getElementById('loading-indicator').style.display = 'none';
         document.getElementById('product-content').style.display = 'block';
-
     } catch (error) {
         console.error("Error loading page sections:", error);
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Could not load sections.</p>';
@@ -275,7 +252,6 @@ function populateDataAndAttachListeners(data) {
     document.querySelector('meta[property="og:title"]').setAttribute("content", data.name);
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
-
     slider = document.getElementById('media-slider');
     sliderWrapper = document.getElementById('main-media-wrapper');
     mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
@@ -283,7 +259,6 @@ function populateDataAndAttachListeners(data) {
     showMedia(0);
     setupSliderControls();
     setupImageModal();
-
     if (data.rating && data.reviewCount) {
         document.getElementById("rating-section").style.display = "flex";
         renderStars(data.rating, document.getElementById("product-rating-stars"));
@@ -293,36 +268,34 @@ function populateDataAndAttachListeners(data) {
         document.getElementById("seller-info").textContent = `Seller by: ${data.sellerName}`;
         document.getElementById("seller-info").style.display = "block";
     }
-
     updatePriceDisplay();
     renderProductOptions(data); 
     setupVariantModal();
     setupBundleModal();
-
     renderAdvancedHighlights(data.specHighlights);
     renderDescription(data);
     setupActionControls();
-
     updateRecentlyViewed(data.id);
     loadHandpickedSimilarProducts(data.similarProductIds);
     loadCategoryBasedProducts(data.category);
     loadOtherProducts(data.category);
-
     updateCartIcon();
     updateStickyActionBar();
-
     document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
     document.getElementById('options-container').addEventListener('click', handleOptionsClick);
-
     setupHeaderScrollEffect();
 }
 
+
+// === YEH FUNCTION UPDATE KIYA GAYA HAI ===
 function handleOptionsClick(event) {
     const bundleCard = event.target.closest('.product-bundle-card');
-    const bundleAddBtn = event.target.closest('.quick-add-btn[data-bundle="true"]');
+    // Hum ab naye button class '.final-bundle-plus-btn' ko dhoondh rahe hain
+    const bundleAddBtn = event.target.closest('.final-bundle-plus-btn[data-bundle="true"]');
 
     if (bundleAddBtn) {
         event.preventDefault();
+        event.stopPropagation(); // Modal khulne se rokne ke liye
         const bundleCardEl = bundleAddBtn.closest('.product-bundle-card');
         const productIds = bundleCardEl.dataset.productIds.split(',');
         const bundlePrice = bundleCardEl.dataset.price;
@@ -338,6 +311,7 @@ function handleOptionsClick(event) {
     }
 }
 
+// === YEH FUNCTION BHI UPDATE KIYA GAYA HAI ===
 function renderProductOptions(data) {
     const container = document.getElementById('options-container');
     if (!container) return;
@@ -365,59 +339,65 @@ function renderProductOptions(data) {
         attachComboPackListeners(container.lastElementChild);
     }
 
-    // --- === YAHAN BADLAV KIYA GAYA HAI: Naya multi-product bundle render karne ka logic === ---
+    // Yeh naya logic hai jo simple bundle template ko istemal karta hai
     if (data.combos && data.combos.productBundle && data.combos.productBundle.linkedProductIds) {
         const bundle = data.combos.productBundle;
         const linkedProducts = bundle.linkedProductIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
 
-        // Agar sabhi linked products milte hain, tabhi bundle dikhao
         if (linkedProducts.length === bundle.linkedProductIds.length) {
-            const allBundleProducts = [data, ...linkedProducts];
-            const bundleHTML = createProductBundle(allBundleProducts, bundle.bundlePrice);
-            container.insertAdjacentHTML('beforeend', bundleHTML);
+            (async () => {
+                try {
+                    const response = await fetch('product-details-sections/product-bundle.html');
+                    if (!response.ok) throw new Error('Bundle template not found');
+                    let templateHTML = await response.text();
+
+                    const allBundleProducts = [data, ...linkedProducts];
+                    const bundlePrice = Number(bundle.bundlePrice);
+                    const productIds = allBundleProducts.map(p => p.id).join(',');
+
+                    const imagesHTML = allBundleProducts.map(p => `<img src="${p.images?.[0] || ''}" alt="${p.name}">`).join('');
+                    const namesHTML = allBundleProducts.map(p => p.name).join(' + ');
+
+                    const originalTotal = allBundleProducts.reduce((sum, p) => sum + Number(p.displayPrice), 0);
+
+                    // Naya logic: Original price (MRP) sirf tab dikhega jab wo bundle price se zyada ho.
+                    let originalPriceHTML = '';
+                    if (originalTotal > bundlePrice) {
+                        originalPriceHTML = `<span class="original-price">₹${originalTotal.toLocaleString('en-IN')}</span>`;
+                    }
+
+                    // Template mein ab "Save" wala data nahi bhara ja raha hai
+                    templateHTML = templateHTML
+                        .replace('{{productIds}}', productIds)
+                        .replace('{{bundlePrice}}', bundlePrice)
+                        .replace('{{bundleImages}}', imagesHTML)
+                        .replace('{{bundleNames}}', namesHTML)
+                        .replace('{{bundlePriceFormatted}}', bundlePrice.toLocaleString('en-IN'))
+                        .replace('{{originalPriceHTML}}', originalPriceHTML);
+
+                    container.insertAdjacentHTML('beforeend', templateHTML);
+                } catch (error) {
+                    console.error("Failed to load or process bundle template:", error);
+                }
+            })();
         }
     }
 }
 
-// (Combo Pack functions mein koi badlav nahi)
+
 function createComboPackGrid(options, productData) { const singleItemOriginalPrice = Number(productData.originalPrice) > Number(productData.displayPrice) ? Number(productData.originalPrice) : Number(productData.displayPrice); let bestValueIndex = -1; let maxSavings = -1; const calculatedOptions = options.map((opt, index) => { const quantity = parseInt(opt.name.split(' ')[0]) || 1; const packMrp = singleItemOriginalPrice * quantity; const packPrice = Number(opt.price); let savings = 0; let discount = 0; if (packMrp > packPrice) { savings = packMrp - packPrice; discount = Math.round((savings / packMrp) * 100); } if (savings > maxSavings) { maxSavings = savings; bestValueIndex = index; } return { ...opt, packMrp, discount, savings }; }); const cardsHTML = calculatedOptions.map((opt, index) => { const isBestValue = index === bestValueIndex && maxSavings > 0; const isSelected = index === 0; return ` <div class="combo-pack-card ${isSelected ? 'selected' : ''}" data-value="${opt.name}" data-price="${opt.price || ''}"> ${isBestValue ? '<div class="best-value-tag">Best Value</div>' : ''} <div class="flex items-center"> <img src="${productData.images[0]}" class="combo-pack-icon" alt="product icon"> <div class="flex-grow"> <p class="font-bold text-gray-800">${opt.name}</p> <p class="text-xl font-extrabold" style="color: var(--primary-color);">₹${Number(opt.price).toLocaleString('en-IN')}</p> </div> </div> ${opt.discount > 0 ? ` <div class="combo-pack-savings"> <span class="line-through text-gray-400">₹${opt.packMrp.toLocaleString('en-IN')}</span> <span class="font-semibold text-green-600">${opt.discount}% OFF</span> <span class="font-bold text-green-700">(Save ₹${opt.savings.toLocaleString('en-IN')})</span> </div> ` : ''} </div> `; }).join(''); return ` <div class="combo-pack-container mt-4"> <h3 class="text-md font-bold text-gray-800 mb-2">Available Combo Packs</h3> <div class="combo-pack-grid">${cardsHTML}</div> </div> `; }
 function attachComboPackListeners(container) { const cards = container.querySelectorAll('.combo-pack-card'); cards.forEach(card => { card.addEventListener('click', (e) => { cards.forEach(c => c.classList.remove('selected')); card.classList.add('selected'); const selectedValue = card.dataset.value; const selectedPrice = card.dataset.price; if (selectedValue === 'Single Item') { selectedPack = null; } else { selectedPack = { name: selectedValue, price: selectedPrice }; } updatePriceDisplay(selectedPrice); updateStickyActionBar(); }); }); }
 function createVariantButton(variant) { const firstOptionName = variant.options[0].name; return ` <button class="variant-btn" data-variant-type="${variant.type}"> <span>${variant.type}: <span class="value">${firstOptionName}</span></span> <i class="fas fa-chevron-down text-xs"></i> </button> `; }
 
-// --- === YAHAN BADA BADLAV KIYA GAYA HAI: Multi-product bundle card banane ka naya logic === ---
-function createProductBundle(products, bundlePrice) {
-    const productIds = products.map(p => p.id).join(',');
-    const imagesHTML = products.map(p => `<img src="${p.images[0]}" alt="${p.name}">`).join('');
-    const namesHTML = products.map(p => p.name).join(' + ');
-
-    return `
-        <div class="mt-4">
-            <h3 class="text-md font-bold text-gray-800 mb-2">Frequently Bought Together</h3>
-            <div class="product-bundle-card" data-product-ids="${productIds}" data-price="${bundlePrice}">
-                <div class="bundle-images">${imagesHTML}</div>
-                <div class="bundle-info flex-grow">
-                    <p class="text-sm text-gray-600">${namesHTML}</p>
-                    <p class="bundle-price">₹${Number(bundlePrice).toLocaleString('en-IN')}</p>
-                </div>
-                <button class="quick-add-btn" data-bundle="true" style="position: static; transform: none;">+</button>
-            </div>
-        </div>
-    `;
-}
-
-// --- === YAHAN BADA BADLAV KIYA GAYA HAI: Multi-product bundle modal ka naya logic === ---
 function openBundleModal(productIds, bundlePrice) {
     const products = productIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
     if (products.length !== productIds.length) return;
-
     const originalTotal = products.reduce((sum, p) => sum + Number(p.displayPrice), 0);
     const savings = originalTotal - bundlePrice;
     const discountPercent = Math.round((savings / originalTotal) * 100);
-
     const modalBody = document.getElementById('bundle-modal-body');
     const imagesHTML = products.map(p => `<img src="${p.images[0]}" alt="${p.name}">`).join('<span class="plus-icon">+</span>');
     const namesHTML = products.map(p => p.name).join(' + ');
-
     modalBody.innerHTML = `
         <div class="bundle-modal-products">${imagesHTML}</div>
         <div class="bundle-modal-details">
@@ -430,15 +410,12 @@ function openBundleModal(productIds, bundlePrice) {
             </div>
         </div>
     `;
-
     const modalFooter = document.getElementById('bundle-modal-footer');
     modalFooter.innerHTML = `<button id="add-bundle-to-cart-btn" class="w-full text-white font-bold py-3 px-4 rounded-xl text-lg" style="background-color: var(--primary-color);">Add Bundle to Cart</button>`;
-
     document.getElementById('add-bundle-to-cart-btn').onclick = () => {
         addBundleToCart(productIds, bundlePrice);
         closeBundleModal();
     };
-
     const overlay = document.getElementById('bundle-modal-overlay');
     overlay.classList.remove('hidden');
     setTimeout(() => overlay.classList.add('active'), 10);
@@ -446,13 +423,13 @@ function openBundleModal(productIds, bundlePrice) {
 
 function closeBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
 function setupBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); document.getElementById('bundle-modal-close').addEventListener('click', closeBundleModal); overlay.addEventListener('click', e => { if (e.target === overlay) closeBundleModal(); }); }
+
 function handleQuickAdd(event) {
     const quickAddButton = event.target.closest('.quick-add-btn');
     if (quickAddButton && !quickAddButton.dataset.bundle) {
         event.preventDefault();
         const productId = quickAddButton.dataset.id;
         const product = allProductsCache.find(p => p && p.id === productId);
-
         if (product) {
             let defaultVariants = {};
             if (product.variants && Array.isArray(product.variants)) {
@@ -503,4 +480,5 @@ function loadHandpickedSimilarProducts(similarIds) { const section = document.ge
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
+
 
