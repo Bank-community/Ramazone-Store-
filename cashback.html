@@ -889,9 +889,20 @@
                         t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.uid] });
                         t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
                     });
+                    
+                    // BUG FIX: The 'showSuccessPopup' function did not exist.
+                    // Replaced it with direct manipulation of the success modal.
                     const now = new Date();
-                    showSuccessPopup({ amount: amount, receiver: 'Ramazone Store', txnId: newTxnRef.id, datetime: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}` });
-                } catch (error) { showToast("Payment failed. Please try again."); }
+                    document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
+                    document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
+                    document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
+                    document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+                    openModal('payment-success-modal');
+
+                } catch (error) { 
+                    console.error("Payment transaction failed:", error);
+                    showToast("Payment failed. Please try again."); 
+                }
             }, 'scan-pay-modal');
         }
         async function handleCashbackRequest(e) {
@@ -1383,5 +1394,4 @@
     </script>
 </body>
 </html>
-
 
