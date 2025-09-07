@@ -160,8 +160,12 @@
             border-radius: 4px;
         }
         .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px var(--shadow-medium); }
+        .action-card.disabled { background-color: #f8f9fa; cursor: not-allowed; color: #adb5bd; }
+        .action-card.disabled .icon { filter: grayscale(100%); opacity: 0.5; }
         .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+        .action-card.disabled .card-text { color: #adb5bd; }
+
 
         #open-notification-center-btn { padding: 10px; }
         #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
@@ -393,6 +397,8 @@
                         <div id="open-network-view" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg"><span class="card-text">Network</span></div>
                         <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
                         <div id="open-credit-request-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg"><span class="card-text">Credit Request</span></div>
+                        <!-- NEW FEATURE: Daily Reward Card -->
+                        <div id="daily-reward-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/493409/gift.svg"><span class="card-text">Daily Reward</span></div>
                         <div id="open-notification-center-btn" class="action-card"><div class="notification-content-wrapper"><div class="notification-text-container"><span class="notification-text-line notification-text-line1"></span><span class="notification-text-line notification-text-line2"></span></div><div class="notification-percentage"></div></div></div>
                     </div>
                 </section>
@@ -400,7 +406,16 @@
                 <div class="section">
                     <h2 class="section-title">All Transactions</h2>
                     <div id="transaction-summary"><span class="summary-label">Total Amount</span><span class="summary-amount">₹0.00</span></div>
-                    <div class="filter-bar" id="filter-bar"><button class="filter-btn active" data-filter="all">All</button><button class="filter-btn" data-filter="cashback">Cashback</button><button class="filter-btn" data-filter="commission">Commission</button><button class="filter-btn" data-filter="payment">Payments</button><button class="filter-btn" data-filter="credit">Credit</button><button class="filter-btn" data-filter="due_payment">Due Paid</button></div>
+                    <div class="filter-bar" id="filter-bar">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="cashback">Cashback</button>
+                        <button class="filter-btn" data-filter="commission">Commission</button>
+                        <button class="filter-btn" data-filter="payment">Payments</button>
+                        <button class="filter-btn" data-filter="credit">Credit</button>
+                        <button class="filter-btn" data-filter="due_payment">Due Paid</button>
+                        <!-- NEW FILTER: Daily Bonus -->
+                        <button class="filter-btn" data-filter="bonus">Bonus</button>
+                    </div>
                     <div id="unified-history-list" class="history-list"></div>
                 </div>
             </main>
@@ -600,6 +615,23 @@
             
             const payDueBtn = document.getElementById('pay-due-amount-btn');
             payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
+
+            // NEW: Update Daily Reward Button UI
+            const dailyRewardBtn = document.getElementById('daily-reward-btn');
+            const lastCheckIn = dbData.lastCheckInDate?.toDate();
+            const today = new Date();
+            const totalDays = dbData.totalCheckInDays || 0;
+
+            if (totalDays >= 130) {
+                dailyRewardBtn.classList.add('disabled');
+                dailyRewardBtn.querySelector('.card-text').textContent = 'Reward Limit Reached';
+            } else if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
+                dailyRewardBtn.classList.add('disabled');
+                dailyRewardBtn.querySelector('.card-text').textContent = 'Claimed Today';
+            } else {
+                dailyRewardBtn.classList.remove('disabled');
+                dailyRewardBtn.querySelector('.card-text').textContent = 'Daily Reward';
+            }
         }
 
         function getDueNotificationData(dbData) {
@@ -718,7 +750,7 @@
             combinedHistory = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
             renderUnifiedHistory();
         }
-        // FIXED: Transaction filter logic
+        
         function renderUnifiedHistory() {
             const listEl = document.getElementById('unified-history-list');
             const summaryEl = document.getElementById('transaction-summary');
@@ -733,6 +765,8 @@
                 if (activeFilter === 'payment') return item.type === 'payment';
                 if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'credit_request';
                 if (activeFilter === 'due_payment') return item.type === 'due_payment';
+                // NEW: Filter for bonus
+                if (activeFilter === 'bonus') return item.type === 'bonus' || item.type === 'referral_bonus';
                 return false;
             });
 
@@ -785,6 +819,69 @@
         }
         
         // --- Feature Logic (Payment, QR, etc.) ---
+        
+        // NEW FEATURE: Handle Daily Check-in Logic
+        async function handleDailyCheckIn() {
+            const btn = document.getElementById('daily-reward-btn');
+            if (btn.classList.contains('disabled')) {
+                showToast("Aap aaj ka reward pehle hi le chuke hain.");
+                return;
+            }
+
+            const userRef = doc(db, 'users', currentUser.uid);
+            try {
+                let rewardAmount = 0;
+                const totalDays = currentUserData.totalCheckInDays || 0;
+                
+                if (totalDays < 30) {
+                    rewardAmount = 0.10;
+                } else if (totalDays < 130) {
+                    rewardAmount = 0.05;
+                } else {
+                    showToast("Aapne sabhi daily rewards claim kar liye hain.");
+                    btn.classList.add('disabled');
+                    return;
+                }
+
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists()) throw "User does not exist!";
+                    
+                    const data = userDoc.data();
+                    const lastCheckIn = data.lastCheckInDate?.toDate();
+                    const today = new Date();
+                    if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
+                        throw "Already claimed today!";
+                    }
+
+                    transaction.update(userRef, {
+                        wallet: increment(rewardAmount),
+                        lifetimeEarning: increment(rewardAmount),
+                        lastCheckInDate: serverTimestamp(),
+                        totalCheckInDays: increment(1)
+                    });
+
+                    const newTxnRef = doc(collection(db, "transactions"));
+                    transaction.set(newTxnRef, {
+                        type: 'bonus',
+                        amount: rewardAmount,
+                        description: `Daily Check-in Reward (Day ${totalDays + 1})`,
+                        status: 'completed',
+                        timestamp: serverTimestamp(),
+                        involvedUsers: [currentUser.uid]
+                    });
+                });
+                
+                showToast(`Badhai ho! Aapko ₹${rewardAmount.toFixed(2)} ka reward mila hai.`);
+
+            } catch (error) {
+                if (error !== "Already claimed today!") {
+                    console.error("Error claiming daily reward: ", error);
+                    showToast("Reward claim karne mein error hua. Dobara try karein.");
+                }
+            }
+        }
+
         function generateDueQR() {
             if (!currentUserData || currentUserData.dueAmount <= 0) {
                 showToast("No due amount to pay.");
@@ -890,8 +987,6 @@
                         t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
                     });
                     
-                    // BUG FIX: The 'showSuccessPopup' function did not exist.
-                    // Replaced it with direct manipulation of the success modal.
                     const now = new Date();
                     document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
                     document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
@@ -1297,7 +1392,14 @@
                     }
                     registerButton.textContent = 'Saving Data...';
                     await updateProfile(tempUser, { displayName: name });
-                    const newUserDoc = { uid: tempUser.uid, name, mobile, password, wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 };
+                    // NEW: Added gamification fields to new user document
+                    const newUserDoc = { 
+                        uid: tempUser.uid, name, mobile, password, 
+                        wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
+                        referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, 
+                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0,
+                        lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
+                    };
                     await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
                     await signOut(auth);
                     toggleView('login-view');
@@ -1389,9 +1491,13 @@
             });
             document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
             document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
+            
+            // NEW: Event Listener for Daily Reward
+            document.getElementById('daily-reward-btn').addEventListener('click', handleDailyCheckIn);
         }
         document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
     </script>
 </body>
 </html>
+
 
