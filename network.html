@@ -7,364 +7,307 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
-    --bg-page: #f0f2f5; /* Slightly updated background for professional look */
-    --bg-card: #ffffff; 
-    --text-primary: #1c2028;
-    --text-secondary: #5a647e; 
-    --border-color: #e8eef3; 
-    --brand-red: #e50914;
-    --accent-green: #27ae60; 
-    --due-red: #ff6b6b;
-    --brand-blue: #0052D4; 
-    --link-blue: #0056b3;
-    --line-color: #ced4da;
-    --shadow-light: rgba(0, 0, 0, 0.05);
-    --shadow-medium: rgba(0, 0, 0, 0.1);
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { height: 100%; }
-body {
-    font-family: 'Poppins', sans-serif; 
-    background-color: var(--bg-page);
-    color: var(--text-primary);
-    min-height: 100%;
-}
-.container { 
-    width: 100%; 
-    max-width: 100%; 
-    margin: 0;
-}
-.view { display: none; background-color: var(--bg-page); min-height: 100vh; }
-#login-view, #registration-view { padding: 20px; background-color: var(--bg-card); }
+            --bg-page: #f0f2f5; 
+            --bg-card: #ffffff; 
+            --text-primary: #1c2028;
+            --text-secondary: #5a647e; 
+            --border-color: #e8eef3; 
+            --brand-red: #e50914;
+            --accent-green: #27ae60; 
+            --due-red: #ff6b6b;
+            --brand-blue: #0052D4; 
+            --link-blue: #0056b3;
+            --line-color: #ced4da;
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { height: 100%; }
+        body {
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100%;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 100%; 
+            margin: 0;
+        }
+        .view { display: none; background-color: var(--bg-page); min-height: 100vh; }
+        #login-view, #registration-view { padding: 20px; background-color: var(--bg-card); }
+        #dashboard-view { padding: 0; }
+        .view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        
+        #network-view.active, #notification-view.active {
+            display: flex; width: 100%; max-width: 100%;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* --- Login/Register --- */
+        .auth-container { padding: 20px; border-radius: 16px; margin-top: 40px; background-color: var(--bg-card); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .main-logo { max-width: 200px; margin: 0 auto 30px auto; display: block; }
+        h1 { text-align: center; font-size: 22px; font-weight: 600; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: 500; color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; display: block; }
+        input[type="text"], input[type="tel"], input[type="password"], input[type="number"] {
+            width: 100%; padding: 12px; background-color: var(--bg-page); border: 1px solid #ced4da;
+            border-radius: 8px; font-size: 16px;
+        }
+        button { width: 100%; padding: 14px; background: var(--brand-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
+        .form-link { text-align: center; margin-top: 25px; color: var(--text-secondary); font-size: 14px; }
+        .form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
+        .error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
+        
+        /* --- Dashboard UI --- */
+        .header-wrapper {
+             background-color: var(--bg-card);
+             padding: 0;
+             position: sticky;
+             top: 0;
+             z-index: 100;
+             box-shadow: 0 2px 4px var(--shadow-light);
+        }
+        .header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-left, .header-right { flex: 1; }
+        .header-center { flex: 2; text-align: center; }
+        .header-logo { height: 30px; }
+        .header-right { text-align: right; }
+        .header-profile-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            object-fit: cover; border: 2px solid var(--brand-red);
+            cursor: pointer;
+        }
+        #header-notification-btn {
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
 
-/* UPDATED: Dashboard no longer has global padding to allow full-width elements */
-#dashboard-view { padding: 0; }
-.view.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        .wallet-card-wrapper {
+            margin-bottom: 24px;
+        }
+        .wallet-card {
+            background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
+            color: white; padding: 24px;
+            text-align: center;
+            border-radius: 0;
+        }
 
-#network-view.active, #notification-view.active {
-    display: flex; width: 100%; max-width: 100%;
-}
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* --- Login/Register --- */
-.auth-container { padding: 20px; border-radius: 16px; margin-top: 40px; background-color: var(--bg-card); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-.main-logo { max-width: 200px; margin: 0 auto 30px auto; display: block; }
-h1 { text-align: center; font-size: 22px; font-weight: 600; margin-bottom: 30px; }
-.form-group { margin-bottom: 20px; }
-label { font-weight: 500; color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; display: block; }
-input[type="text"], input[type="tel"], input[type="password"], input[type="number"] {
-    width: 100%; padding: 12px; background-color: var(--bg-page); border: 1px solid #ced4da;
-    border-radius: 8px; font-size: 16px;
-}
-button { width: 100%; padding: 14px; background: var(--brand-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
-button:disabled { background-color: #aaa; cursor: not-allowed; }
-.form-link { text-align: center; margin-top: 25px; color: var(--text-secondary); font-size: 14px; }
-.form-link a { color: var(--brand-red); text-decoration: none; font-weight: 600; }
-.error-message { color: var(--due-red); font-size: 14px; text-align: center; margin-top: 15px; display: none; }
-
-/* --- UPDATED: Dashboard UI --- */
-.header-wrapper {
-     background-color: var(--bg-card); /* Header background is white */
-     padding: 0;
-     position: sticky;
-     top: 0;
-     z-index: 100;
-     box-shadow: 0 2px 4px var(--shadow-light);
-}
-.header {
-    padding: 12px 16px; /* Internal padding for header content */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.header-left, .header-right { flex: 1; }
-.header-center { flex: 2; text-align: center; }
-.header-logo { height: 30px; }
-.header-right { text-align: right; }
-.header-profile-avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    object-fit: cover; border: 2px solid var(--brand-red);
-    cursor: pointer;
-}
-#header-notification-btn {
-    cursor: pointer;
-    color: var(--text-secondary);
-}
-
-.wallet-card-wrapper {
-    margin-bottom: 24px; /* Space between wallet and actions */
-}
-.wallet-card {
-    background: linear-gradient(45deg, #0052D4, #4364F7, #6FB1FC);
-    color: white; padding: 24px;
-    text-align: center;
-    border-radius: 0; /* Sharp corners */
-}
-
-#wallet-user-name {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    display: block;
-}
-.wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); }
-#wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; margin-bottom: 20px; }
-.wallet-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 20px; }
-.wallet-footer-item { text-align: center; }
-.wallet-footer-item p { font-size: 12px; color: rgba(255,255,255,0.8); margin: 0; }
-.wallet-footer-item .amount { font-size: 16px; font-weight: 600; }
-#wallet-share-btn { cursor: pointer; }
-#wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
-#wallet-referral-container { margin-top: 20px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; background-color: rgba(0,0,0,0.15); padding: 5px 12px; border-radius: 20px; }
-#wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
-#copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
-#copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
-.wallet-sub-items { grid-column: 1 / -1; display: flex; justify-content: space-around; margin-top: 15px; }
-
-.actions-section {
-    margin-bottom: 24px;
-    padding: 0 16px; /* Internal padding for content */
-}
-.section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-.dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.action-card { 
-    background-color: var(--bg-card); padding: 15px 10px; text-align: center; cursor: pointer; 
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 12px var(--shadow-light);
-    display: flex; flex-direction: column; justify-content: center; align-items: center; aspect-ratio: 1/1;
-    position: relative; overflow: hidden;
-    border-radius: 4px; /* Sharp corners */
-}
-.action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px var(--shadow-medium); }
-.action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
-.action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
-
-#open-notification-center-btn { 
-    padding: 10px;
-}
-#open-notification-center-btn .notification-content-wrapper {
-     flex-direction: column; justify-content: center; align-items: center; gap: 4px;
-}
-#open-notification-center-btn .notification-text-container { 
-    font-size: 12px; font-weight: 600; text-align: center;
-}
-#open-notification-center-btn .notification-percentage { 
-    font-size: 22px; font-weight: 800; margin-top: 4px;
-}
-
-.notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
-.notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
-.notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
-.notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
-.notification-percentage { transform: scale(1); opacity: 0; }
-@keyframes fade-in-out { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
-.animate .notification-text-line1 { animation: typing-hold 4.2s steps(30, end) infinite; }
-.animate .notification-text-line2 { animation: typing-hold 4.2s steps(30, end) 0.2s infinite; }
-@keyframes typing-hold { 0% { width: 0; } 28.5% { width: 100%; } 100% { width: 100%; } }
-.animate .notification-percentage { animation: simple-fade-in-hold 4.2s infinite; }
-@keyframes simple-fade-in-hold { 0%, 33% { opacity: 0; } 38%, 100% { opacity: 1; } }
-
-.section { 
-    background: var(--bg-card); 
-    padding: 24px 16px; /* Internal padding for content */
-    border-radius: 0; /* Sharp corners */
-}
-
-#transaction-summary {
-    background-color: var(--bg-page); border-radius: 10px; padding: 12px 15px;
-    margin-bottom: 15px; display: none;
-    justify-content: space-between; align-items: center;
-    border: 1px solid var(--border-color);
-}
-#transaction-summary .summary-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
-#transaction-summary .summary-amount { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-
-.filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
-.filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; }
-.filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
-.history-list { display: flex; flex-direction: column; gap: 12px; }
-.history-item { 
-    display: flex; align-items: center; justify-content: space-between; 
-    padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
-    cursor: pointer; transition: background-color 0.2s;
-}
-.history-item:hover { background-color: #fafafa; }
-.history-item:last-child { border-bottom: none; }
-.history-info .title { font-weight: 500; font-size: 15px; }
-.history-info .date { font-size: 13px; color: var(--text-secondary); }
-.history-amount .amount.credit { color: var(--accent-green); }
-.history-amount .amount.debit { color: var(--due-red); }
-.history-amount .amount.rejected { color: var(--due-red); }
-.history-amount .status { font-size: 12px; text-transform: capitalize; }
-
-/* --- Modals (Radius Unchanged) --- */
-.modal-overlay { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background-color: rgba(0,0,0,0.6); display: none; 
-    justify-content: center; align-items: center; z-index: 1000; padding: 15px;
-}
-.modal-overlay.active { display: flex; }
-.modal-content { 
-    background-color: var(--bg-card); padding: 25px; border-radius: 16px; 
-    width: 100%; max-width: 400px; position: relative;
-    animation: fadeInScale 0.3s ease-out;
-}
-@keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-.modal-content h3 { text-align: center; font-size: 20px; margin-bottom: 20px; }
-.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-.btn-secondary { background: #e8eef3; color: var(--text-primary); }
-#password-verification-modal { z-index: 1001; }
-#profile-modal .modal-content { padding-top: 15px; }
-#modal-profile-img-container { text-align: center; margin-bottom: 15px; position: relative; }
-#modal-profile-img {
-    width: 80px; height: 80px; border-radius: 50%;
-    object-fit: cover; border: 3px solid var(--brand-red);
-    cursor: pointer; transition: transform 0.2s;
-}
-#modal-profile-img:hover { transform: scale(1.05); }
-#edit-profile-pic-icon {
-    position: absolute; bottom: 0; right: calc(50% - 40px);
-    background-color: var(--text-primary); color: white;
-    width: 28px; height: 28px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    border: 2px solid var(--bg-card); cursor: pointer;
-}
-#edit-profile-pic-icon svg { width: 14px; height: 14px; }
-#profile-modal #logout-btn { background-color: var(--text-secondary); margin-top: 20px; }
-#scanner-container { width: 100%; max-width: 250px; aspect-ratio: 1/1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background: #000; }
-#scanner-video { width: 100%; height: 100%; object-fit: cover; }
-.professional-modal .modal-content { padding: 30px; max-width: 380px; text-align: center; }
-.professional-modal .success-icon {
-    width: 80px; height: 80px; background-color: var(--accent-green);
-    border-radius: 50%; margin: 0 auto 20px auto; display: flex;
-    align-items: center; justify-content: center;
-}
-.professional-modal .success-icon svg { width: 40px; height: 40px; stroke: white; stroke-width: 4; }
-.professional-modal h2 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
-.professional-modal .amount { font-size: 36px; font-weight: 700; color: var(--brand-red); margin-bottom: 25px; }
-.professional-modal .details-box {
-    background-color: var(--bg-page); border-radius: 12px; padding: 15px;
-    text-align: left; margin-bottom: 30px;
-}
-.professional-modal .detail-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; }
-.professional-modal .detail-item:last-child { margin-bottom: 0; }
-.professional-modal .detail-item .label { color: var(--text-secondary); }
-.professional-modal .detail-item .value { font-weight: 600; }
-.professional-modal .action-btn { width: 100%; }
-#transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
-#transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 30px; }
-#transaction-details-modal .status-badge {
-    background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px;
-    border-radius: 15px; font-size: 13px; font-weight: 600;
-}
-#transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
-#transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
-#transaction-details-modal .action-btn { background-color: var(--text-secondary); }
-.modal-close-btn { 
-    position: absolute; top: 10px; right: 15px; 
-    background: transparent; border: none; 
-    font-size: 28px; font-weight: bold;
-    cursor: pointer; color: #aaa; line-height: 1; padding: 0;
-}
-.modal-close-btn:hover { color: #000; }
-.toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
-.toast-notification.show { bottom: 30px; }
-.fullscreen-view { flex-direction: column; height: 100vh; padding: 0; background-color: var(--bg-page); }
-.fullscreen-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 15px; border-bottom: 1px solid var(--border-color); 
-    flex-shrink: 0; background-color: var(--bg-card);
-}
-.fullscreen-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; flex-grow: 1; }
-.fullscreen-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
-.fullscreen-header .header-action svg { width: 24px; height: 24px; stroke: var(--text-secondary); }
-.network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
-.network-tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
-.network-tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
-.network-content-container { flex-grow: 1; overflow: hidden; position: relative; }
-.network-tab-content { display: none; width: 100%; height: 100%; }
-.network-tab-content.active { display: block; }
-#downline-content { width: 100%; height: 100%; overflow: auto; text-align: center; background-color: #ffffff; }
-.tree-container { position: relative; display: inline-block; padding: 40px; white-space: nowrap; }
-#connector-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; }
-.tree { display: inline-flex; flex-direction: column; align-items: center; }
-.node-children { display: flex; justify-content: center; padding-top: 80px; position: relative; }
-.node-wrapper { display: flex; flex-direction: column; align-items: center; padding: 0 35px; position: relative; }
-.node {
-    display: flex; flex-direction: column; align-items: center;
-    background-color: white; padding: 15px; border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    width: 150px; 
-    position: relative; z-index: 2;
-    cursor: pointer; border: 1px solid #e9ecef;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.node:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12); }
-.node-avatar {
-    width: 65px; height: 65px; border-radius: 50%;
-    background-color: var(--brand-red); color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px; font-weight: 700; margin-bottom: 10px;
-    overflow: hidden;
-}
-.node-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.node-name { font-weight: 600; font-size: 16px; }
-.node-earning { font-size: 13px; color: var(--accent-green); }
-.commission-tag {
-    position: absolute; background-color: var(--text-secondary);
-    color: white; padding: 3px 8px; font-size: 12px;
-    border-radius: 5px; font-weight: 600; z-index: 3;
-    transform: translate(-50%, -50%);
-}
-#upline-list { display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 25px; }
-.upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
-.upline-member .node { width: 160px; }
-.upline-member.current-user .node { border: 2px solid var(--brand-blue); }
-.upline-member:not(:last-child)::after { 
-    content: ''; width: 2px; height: 25px; background-color: var(--line-color); 
-    position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-}
-.upline-commission {
-    position: absolute; top: -12px; left: calc(50% + 20px); font-size: 13px;
-    color: var(--text-secondary); font-weight: 600; background-color: var(--bg-page);
-    padding: 0 5px;
-}
-#network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
-#notification-center-list {
-    flex-grow: 1; overflow-y: auto; padding: 15px;
-    display: flex; flex-direction: column; gap: 15px;
-}
-.notification-center-item {
-    padding: 20px; border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    text-align: center;
-}
-.notification-center-item .title { font-size: 16px; font-weight: 600; line-height: 1.4; word-break: break-all; }
-.notification-center-item .title a { color: var(--link-blue) !important; text-decoration: underline; }
-.notification-center-item .percentage { font-size: 40px; font-weight: 800; margin-top: 10px; }
-.notification-center-item .paragraph {
-    font-size: 14px; color: inherit; opacity: 0.9;
-    margin-top: 15px; line-height: 1.6; white-space: pre-wrap;
-}
-#popup-notification {
-    position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
-    width: 90%; max-width: 450px; padding: 15px; border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999;
-    display: flex; align-items: center; justify-content: space-between;
-    transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-#popup-notification.show { top: 20px; }
-.popup-notification-content { display: flex; align-items: center; gap: 15px; }
-.popup-notification-icon { font-size: 28px; font-weight: 800; }
-.popup-notification-text .title { font-size: 14px; font-weight: 600; }
-.popup-notification-text .percentage { font-size: 24px; font-weight: 800; }
-#popup-notification-close { background: none; border: none; font-size: 24px; cursor: pointer; opacity: 0.7; padding: 0; line-height: 1; }
+        #wallet-user-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .wallet-balance-label { font-size: 14px; color: rgba(255,255,255,0.8); }
+        #wallet-balance { font-size: 40px; font-weight: 700; line-height: 1; margin-bottom: 20px; }
+        .wallet-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 20px; }
+        .wallet-footer-item { text-align: center; }
+        .wallet-footer-item p { font-size: 12px; color: rgba(255,255,255,0.8); margin: 0; }
+        .wallet-footer-item .amount { font-size: 16px; font-weight: 600; }
+        #wallet-share-btn { cursor: pointer; }
+        #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
+        #wallet-referral-container { margin-top: 20px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; background-color: rgba(0,0,0,0.15); padding: 5px 12px; border-radius: 20px; }
+        #wallet-referral-id { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
+        #copy-referral-btn { background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; }
+        #copy-referral-btn svg { width: 16px; height: 16px; stroke: white; }
+        
+        .due-payment-section {
+            grid-column: 1 / -1;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        #pay-due-amount-btn {
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 6px 24px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            display: none; /* JS toggles this */
+            width: auto;
+        }
 
 
+        .actions-section {
+            margin-bottom: 24px;
+            padding: 0 16px;
+        }
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .action-card { 
+            background-color: var(--bg-card); padding: 15px 10px; text-align: center; cursor: pointer; 
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; aspect-ratio: 1/1;
+            position: relative; overflow: hidden;
+            border-radius: 4px;
+        }
+        .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px var(--shadow-medium); }
+        .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
+        .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+
+        #open-notification-center-btn { padding: 10px; }
+        #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
+        #open-notification-center-btn .notification-text-container { font-size: 12px; font-weight: 600; text-align: center; }
+        #open-notification-center-btn .notification-percentage { font-size: 22px; font-weight: 800; margin-top: 4px; }
+        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
+        .notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
+        .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
+        .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
+        .notification-percentage { transform: scale(1); opacity: 0; }
+        @keyframes fade-in-out { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
+        .animate .notification-text-line1 { animation: typing-hold 4.2s steps(30, end) infinite; }
+        .animate .notification-text-line2 { animation: typing-hold 4.2s steps(30, end) 0.2s infinite; }
+        @keyframes typing-hold { 0% { width: 0; } 28.5% { width: 100%; } 100% { width: 100%; } }
+        .animate .notification-percentage { animation: simple-fade-in-hold 4.2s infinite; }
+        @keyframes simple-fade-in-hold { 0%, 33% { opacity: 0; } 38%, 100% { opacity: 1; } }
+
+        .section { 
+            background: var(--bg-card); 
+            padding: 24px 16px;
+            border-radius: 0;
+        }
+
+        #transaction-summary {
+            background-color: var(--bg-page); border-radius: 10px; padding: 12px 15px;
+            margin-bottom: 15px; display: none;
+            justify-content: space-between; align-items: center;
+            border: 1px solid var(--border-color);
+        }
+        #transaction-summary .summary-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+        #transaction-summary .summary-amount { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .filter-btn { padding: 6px 14px; border: 1px solid #ccc; background: transparent; color: var(--text-secondary); border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+        .filter-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
+        .history-list { display: flex; flex-direction: column; gap: 12px; }
+        .history-item { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
+            cursor: pointer; transition: background-color 0.2s;
+        }
+        .history-item:hover { background-color: #fafafa; }
+        .history-item:last-child { border-bottom: none; }
+        .history-info .title { font-weight: 500; font-size: 15px; }
+        .history-info .date { font-size: 13px; color: var(--text-secondary); }
+        .history-amount .amount.credit { color: var(--accent-green); }
+        .history-amount .amount.debit { color: var(--due-red); }
+        .history-amount .amount.rejected { color: var(--due-red); }
+        .history-amount .status { font-size: 12px; text-transform: capitalize; }
+
+        /* --- Modals --- */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.6); display: none; 
+            justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content { 
+            background-color: var(--bg-card); padding: 25px; border-radius: 16px; 
+            width: 100%; max-width: 400px; position: relative;
+            animation: fadeInScale 0.3s ease-out;
+        }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-content h3 { text-align: center; font-size: 20px; margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-secondary { background: #e8eef3; color: var(--text-primary); }
+        #password-verification-modal { z-index: 1001; }
+        #profile-modal .modal-content { padding-top: 15px; }
+        #modal-profile-img-container { text-align: center; margin-bottom: 15px; position: relative; }
+        #modal-profile-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--brand-red); cursor: pointer; transition: transform 0.2s; }
+        #modal-profile-img:hover { transform: scale(1.05); }
+        #edit-profile-pic-icon { position: absolute; bottom: 0; right: calc(50% - 40px); background-color: var(--text-primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-card); cursor: pointer; }
+        #edit-profile-pic-icon svg { width: 14px; height: 14px; }
+        #profile-modal #logout-btn { background-color: var(--text-secondary); margin-top: 20px; }
+        #scanner-container { width: 100%; max-width: 250px; aspect-ratio: 1/1; margin: 0 auto 15px; border-radius: 10px; overflow: hidden; background: #000; }
+        #scanner-video { width: 100%; height: 100%; object-fit: cover; }
+        .professional-modal .modal-content { padding: 30px; max-width: 380px; text-align: center; }
+        .professional-modal .success-icon { width: 80px; height: 80px; background-color: var(--accent-green); border-radius: 50%; margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center; }
+        .professional-modal .success-icon svg { width: 40px; height: 40px; stroke: white; stroke-width: 4; }
+        .professional-modal h2 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+        .professional-modal .amount { font-size: 36px; font-weight: 700; color: var(--brand-red); margin-bottom: 25px; }
+        .professional-modal .details-box { background-color: var(--bg-page); border-radius: 12px; padding: 15px; text-align: left; margin-bottom: 30px; }
+        .professional-modal .detail-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; }
+        .professional-modal .detail-item:last-child { margin-bottom: 0; }
+        .professional-modal .detail-item .label { color: var(--text-secondary); }
+        .professional-modal .detail-item .value { font-weight: 600; }
+        .professional-modal .action-btn { width: 100%; }
+        #transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
+        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 30px; }
+        #transaction-details-modal .status-badge { background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px; border-radius: 15px; font-size: 13px; font-weight: 600; }
+        #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
+        #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
+        #transaction-details-modal .action-btn { background-color: var(--text-secondary); }
+        .modal-close-btn { position: absolute; top: 10px; right: 15px; background: transparent; border: none; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; line-height: 1; padding: 0; }
+        .modal-close-btn:hover { color: #000; }
+        .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
+        .toast-notification.show { bottom: 30px; }
+        .fullscreen-view { flex-direction: column; height: 100vh; padding: 0; background-color: var(--bg-page); }
+        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background-color: var(--bg-card); }
+        .fullscreen-header h1 { font-size: 18px; font-weight: 600; margin: 0; text-align: center; flex-grow: 1; }
+        .fullscreen-header .header-action { display: flex; cursor: pointer; align-items: center; justify-content: center; }
+        .fullscreen-header .header-action svg { width: 24px; height: 24px; stroke: var(--text-secondary); }
+        .network-tabs { display: flex; gap: 10px; padding: 15px; flex-shrink: 0; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);}
+        .network-tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+        .network-tab-btn.active { background-color: var(--brand-red); color: white; border-color: var(--brand-red); }
+        .network-content-container { flex-grow: 1; overflow: hidden; position: relative; }
+        .network-tab-content { display: none; width: 100%; height: 100%; }
+        .network-tab-content.active { display: block; }
+        #downline-content { width: 100%; height: 100%; overflow: auto; text-align: center; background-color: #ffffff; }
+        .tree-container { position: relative; display: inline-block; padding: 40px; white-space: nowrap; }
+        #connector-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; }
+        .tree { display: inline-flex; flex-direction: column; align-items: center; }
+        .node-children { display: flex; justify-content: center; padding-top: 80px; position: relative; }
+        .node-wrapper { display: flex; flex-direction: column; align-items: center; padding: 0 35px; position: relative; }
+        .node { display: flex; flex-direction: column; align-items: center; background-color: white; padding: 15px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); width: 150px; position: relative; z-index: 2; cursor: pointer; border: 1px solid #e9ecef; transition: transform 0.2s, box-shadow 0.2s; }
+        .node:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12); }
+        .node-avatar { width: 65px; height: 65px; border-radius: 50%; background-color: var(--brand-red); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; margin-bottom: 10px; overflow: hidden; }
+        .node-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .node-name { font-weight: 600; font-size: 16px; }
+        .node-earning { font-size: 13px; color: var(--accent-green); }
+        .commission-tag { position: absolute; background-color: var(--text-secondary); color: white; padding: 3px 8px; font-size: 12px; border-radius: 5px; font-weight: 600; z-index: 3; transform: translate(-50%, -50%); }
+        #upline-list { display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 25px; }
+        .upline-member { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .upline-member .node { width: 160px; }
+        .upline-member.current-user .node { border: 2px solid var(--brand-blue); }
+        .upline-member:not(:last-child)::after { content: ''; width: 2px; height: 25px; background-color: var(--line-color); position: absolute; top: -25px; left: 50%; transform: translateX(-50%); }
+        .upline-commission { position: absolute; top: -12px; left: calc(50% + 20px); font-size: 13px; color: var(--text-secondary); font-weight: 600; background-color: var(--bg-page); padding: 0 5px; }
+        #network-loader, .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+        #notification-center-list { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .notification-center-item { padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .notification-center-item.due-notification-item { background-color: #fff5f5; border: 1px solid var(--due-red); }
+        .notification-center-item .title { font-size: 16px; font-weight: 600; line-height: 1.4; word-break: break-all; }
+        .notification-center-item .title a { color: var(--link-blue) !important; text-decoration: underline; }
+        .notification-center-item .percentage { font-size: 40px; font-weight: 800; margin-top: 10px; }
+        .notification-center-item .paragraph { font-size: 14px; color: inherit; opacity: 0.9; margin-top: 15px; line-height: 1.6; white-space: pre-wrap; }
+        #popup-notification { position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; padding: 15px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; display: flex; align-items: center; justify-content: space-between; transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #popup-notification.show { top: 20px; }
+        .popup-notification-content { display: flex; align-items: center; gap: 15px; }
+        .popup-notification-icon { font-size: 28px; font-weight: 800; }
+        .popup-notification-text .title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+        .popup-notification-text .percentage { font-size: 16px; font-weight: 600; margin-top: 2px; }
+        #popup-notification-close { background: none; border: none; font-size: 24px; cursor: pointer; opacity: 0.7; padding: 0; line-height: 1; }
+        /* Due Payment QR Modal styles */
+        #due-qr-code { margin: 15px auto; display: flex; justify-content: center; align-items: center; }
+        #due-qr-code canvas, #due-qr-code img { border-radius: 8px; }
+        .qr-instructions { font-size: 13px; color: var(--text-secondary); margin-top: 15px; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -427,8 +370,12 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                             <div class="wallet-footer-item"><p>Lifetime Earning</p><span id="lifetime-earning" class="amount">₹0.00</span></div>
                             <div id="wallet-share-btn" title="Share App"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></div>
                             <div class="wallet-footer-item"><p>Total Credit</p><span id="credit-limit" class="amount">₹0.00</span></div>
-                            <div class="wallet-sub-items">
-                                <div class="wallet-footer-item"><p>Due Amount</p><span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span></div>
+                            <div class="due-payment-section">
+                                <div class="wallet-footer-item">
+                                    <p>Due Amount</p>
+                                    <span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span>
+                                </div>
+                                <button id="pay-due-amount-btn">Pay Now</button>
                             </div>
                         </div>
                         <div id="wallet-referral-container">
@@ -439,45 +386,21 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 </section>
                 
                 <section class="actions-section">
-                    
+                    <h2 class="section-title">Quick Actions</h2>
                     <div class="dashboard-actions">
                         <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
                         <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                        <div id="open-network-view" class="action-card">
-                            <img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg">
-                            <span class="card-text">Network</span>
-                        </div>
+                        <div id="open-network-view" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg"><span class="card-text">Network</span></div>
                         <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
-                        <div id="open-credit-request-modal" class="action-card">
-                            <img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg">
-                            <span class="card-text">Credit Request</span>
-                        </div>
-                        <div id="open-notification-center-btn" class="action-card">
-                            <div class="notification-content-wrapper">
-                                <div class="notification-text-container">
-                                    <span class="notification-text-line notification-text-line1"></span>
-                                    <span class="notification-text-line notification-text-line2"></span>
-                                </div>
-                                <div class="notification-percentage"></div>
-                            </div>
-                        </div>
+                        <div id="open-credit-request-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg"><span class="card-text">Credit Request</span></div>
+                        <div id="open-notification-center-btn" class="action-card"><div class="notification-content-wrapper"><div class="notification-text-container"><span class="notification-text-line notification-text-line1"></span><span class="notification-text-line notification-text-line2"></span></div><div class="notification-percentage"></div></div></div>
                     </div>
                 </section>
 
                 <div class="section">
                     <h2 class="section-title">All Transactions</h2>
-                    <div id="transaction-summary">
-                        <span class="summary-label">Total Amount</span>
-                        <span class="summary-amount">₹0.00</span>
-                    </div>
-                    <div class="filter-bar" id="filter-bar">
-                        <button class="filter-btn active" data-filter="all">All</button>
-                        <button class="filter-btn" data-filter="cashback">Cashback</button>
-                        <button class="filter-btn" data-filter="commission">Commission</button>
-                        <button class="filter-btn" data-filter="payment">Payments</button>
-                        <button class="filter-btn" data-filter="credit">Credit</button>
-                        <button class="filter-btn" data-filter="due_payment">Due Paid</button>
-                    </div>
+                    <div id="transaction-summary"><span class="summary-label">Total Amount</span><span class="summary-amount">₹0.00</span></div>
+                    <div class="filter-bar" id="filter-bar"><button class="filter-btn active" data-filter="all">All</button><button class="filter-btn" data-filter="cashback">Cashback</button><button class="filter-btn" data-filter="commission">Commission</button><button class="filter-btn" data-filter="payment">Payments</button><button class="filter-btn" data-filter="credit">Credit</button><button class="filter-btn" data-filter="due_payment">Due Paid</button></div>
                     <div id="unified-history-list" class="history-list"></div>
                 </div>
             </main>
@@ -487,138 +410,68 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
     
     <!-- Network View -->
     <div id="network-view" class="view fullscreen-view">
-        <div class="fullscreen-header">
-            <div id="network-nav-btn" class="header-action" title="Back">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            </div>
-            <h1 id="network-title">My Network</h1>
-            <div id="network-refresh-btn" class="header-action" title="Refresh">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-            </div>
-        </div>
-        <div class="network-tabs">
-            <button class="network-tab-btn active" data-tab="downline">My Team</button>
-            <button class="network-tab-btn" data-tab="upline">My Sponsor</button>
-        </div>
-        <div class="network-content-container">
-            <div id="downline-content" class="network-tab-content active">
-                <div class="tree-container">
-                    <svg id="connector-svg"></svg>
-                    <div id="tree-root"></div>
-                    <div id="commission-tags-container"></div>
-                </div>
-            </div>
-            <div id="upline-content" class="network-tab-content">
-                <div id="upline-list"></div>
-            </div>
-        </div>
+        <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
+        <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
+        <div class="network-content-container"><div id="downline-content" class="network-tab-content active"><div class="tree-container"><svg id="connector-svg"></svg><div id="tree-root"></div><div id="commission-tags-container"></div></div></div><div id="upline-content" class="network-tab-content"><div id="upline-list"></div></div></div>
         <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
     </div>
 
     <!-- Notification View -->
     <div id="notification-view" class="view fullscreen-view">
-        <div class="fullscreen-header">
-            <div id="notification-back-btn" class="header-action" title="Back to Dashboard">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            </div>
-            <h1>Latest Offers</h1>
-            <div class="header-action" style="width: 24px;"></div>
-        </div>
-        <div id="notification-center-list"></div>
+       <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
+       <div id="notification-center-list"></div>
     </div>
 
-    <!-- All Modals are unchanged -->
-    <div id="password-verification-modal" class="modal-overlay"> <div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div> </div>
-    <div id="cashback-modal" class="modal-overlay"> <div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div> </div>
-    <div id="credit-request-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Credit Request</h3>
-            <form id="credit-request-form">
-                <div class="form-group"><label for="credit-amount">Amount (₹)</label><input type="number" id="credit-amount" min="1" required></div>
-                <div style="background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px; font-size: 13px; color: #8a6d3b; margin-bottom: 15px;">
-                    <b>Attention:</b> हर महीने आपको अपनी due amount 1 से 7 तारीख के बीच चुकानी होगी। ऐसा न करने पर बकाया क्रेडिट amount पर 10% का जुर्माना लगाया जाएगा।"
-                </div>
-                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="credit-tnc-checkbox" style="width: auto; height: 18px;">
-                    <label for="credit-tnc-checkbox" style="margin-bottom: 0;">I agree to the Terms & Conditions.</label>
-                </div>
-                <p id="credit-error-msg" class="error-message"></p>
-                <div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="credit-submit-btn" disabled>Request Credit</button></div>
-            </form>
-        </div>
-    </div>
-    <div id="scan-pay-modal" class="modal-overlay"> <div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div> </div>
-    <div id="profile-modal" class="modal-overlay"> 
-        <div class="modal-content"> 
-            <div id="modal-profile-img-container">
-                <img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture">
-                <div id="edit-profile-pic-icon" title="Change Profile Picture"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div>
+    <!-- All Modals -->
+    <div id="password-verification-modal" class="modal-overlay"><div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div></div>
+    <div id="cashback-modal" class="modal-overlay"><div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div></div>
+    <div id="credit-request-modal" class="modal-overlay"><div class="modal-content"><h3>Credit Request</h3><form id="credit-request-form"><div class="form-group"><label for="credit-amount">Amount (₹)</label><input type="number" id="credit-amount" min="1" required></div><div style="background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px; font-size: 13px; color: #8a6d3b; margin-bottom: 15px;"><b>Attention:</b> हर महीने आपको अपनी due amount 1 से 7 तारीख के बीच चुकानी होगी। ऐसा न करने पर बकाया क्रेडिट amount पर 10% का जुर्माना लगाया जाएगा।"</div><div class="form-group" style="display: flex; align-items: center; gap: 10px;"><input type="checkbox" id="credit-tnc-checkbox" style="width: auto; height: 18px;"><label for="credit-tnc-checkbox" style="margin-bottom: 0;">I agree to the Terms & Conditions.</label></div><p id="credit-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="credit-submit-btn" disabled>Request Credit</button></div></form></div></div>
+    <div id="scan-pay-modal" class="modal-overlay"><div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div></div>
+    <div id="profile-modal" class="modal-overlay"><div class="modal-content"><div id="modal-profile-img-container"><img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture"><div id="edit-profile-pic-icon" title="Change Profile Picture"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div></div><h3>My Profile</h3><div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div><div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div><form id="password-change-form" style="margin-top: 20px;"><div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div><div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div><button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p></form><button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button><div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div></div></div>
+    <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
+    <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span><span class="value" id="success-modal-datetime"></span></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
+    <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="details-modal-txn-id"></span></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
+
+    <!-- Due Payment QR Modal -->
+    <div id="due-payment-modal" class="modal-overlay">
+        <div class="modal-content" style="text-align: center;">
+            <button class="modal-close-btn" data-close-modal>&times;</button>
+            <h3>Pay Your Due Amount</h3>
+            
+            <div id="due-qr-card" style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; display: inline-block; margin: 20px 0;">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" style="width: 150px; margin: 0 auto 15px auto; display: block;">
+                <div id="due-qr-code"></div>
+                <p id="due-qr-amount" style="font-size: 24px; font-weight: 700; color: var(--brand-red); margin-top: 10px;"></p>
+                <p id="due-qr-upi-id" style="font-weight: 600; margin-top: 5px; color: var(--text-primary);"></p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Scan using any UPI app</p>
             </div>
-            <h3>My Profile</h3> 
-            <div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div> 
-            <div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div> 
-            <form id="password-change-form" style="margin-top: 20px;"> 
-                <div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div> 
-                <div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div> 
-                <button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p> 
-            </form> 
-            <button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button> 
-            <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div> 
-        </div> 
-    </div>
-    <div id="profile-picture-modal" class="modal-overlay">
-        <div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;">
-            <button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button>
-            <img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;">
-        </div>
-    </div>
-    <div id="payment-success-modal" class="modal-overlay professional-modal">
-        <div class="modal-content">
-            <div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <h2>Payment Successful!</h2>
-            <p class="amount" id="success-modal-amount"></p>
-            <div class="details-box">
-                <div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div>
-                <div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div>
-                <div class="detail-item"><span class="label">Date & Time</span><span class="value" id="success-modal-datetime"></span></div>
+    
+            <p class="qr-instructions">
+                Payment karne ke baad, kripya transaction ka screenshot
+                <br>
+                hamare WhatsApp number par bhejkar confirm karein.
+            </p>
+            <div class="modal-actions">
+                <button id="download-qr-btn" class="btn-secondary">Download QR Card</button>
             </div>
-            <button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button>
         </div>
     </div>
-    <div id="transaction-details-modal" class="modal-overlay professional-modal">
-        <div class="modal-content">
-            <p class="amount" id="details-modal-amount"></p><hr>
-            <div class="details-list">
-                <div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div>
-                <div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div>
-                <div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div>
-                 <div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div>
-                <div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="details-modal-txn-id"></span></div>
-            </div>
-            <button class="action-btn" data-close-modal>Close</button>
-        </div>
-    </div>
+
     <div id="toast-notification" class="toast-notification"></div>
-    <div id="popup-notification">
-        <div class="popup-notification-content">
-            <div class="popup-notification-icon">🔥</div>
-            <div class="popup-notification-text">
-                <div class="title" id="popup-notification-title"></div>
-                <div class="percentage" id="popup-notification-percentage"></div>
-            </div>
-        </div>
-        <button id="popup-notification-close">&times;</button>
-    </div>
+    <div id="popup-notification"><div class="popup-notification-content"><div class="popup-notification-icon">🔥</div><div class="popup-notification-text"><div class="title" id="popup-notification-title"></div><div class="percentage" id="popup-notification-percentage"></div></div></div><button id="popup-notification-close">&times;</button></div>
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- App Initialization and Global Variables ---
         let app, auth, db;
         let imgbbApiKey;
         let currentUser = null;
         let currentUserData = null;
+        let combinedHistory = []; // Global store for all history items
         let activeListeners = [];
         let scannerAnimation = null;
         let allTransactions = [];
@@ -627,23 +480,23 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
         let activeFilter = 'all';
         let pendingAction = null;
         let isUplineLoaded = false;
-        let lastShownNotificationId = null;
         let popupTimeout = null;
+        let initialPopupShown = false;
         const commissionRates = [30, 25, 20, 15, 10];
         const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
         let historyStack = [];
         const networkLoader = document.getElementById('network-loader');
         const networkTitleEl = document.getElementById('network-title');
+        const UPI_ID = "princekumar954684-1@okicici";
 
+        // --- Core Functions (Config, UI Toggles) ---
         async function fetchConfigsAndInit() {
             try {
                 const [firebaseConfigRes, imageConfigRes] = await Promise.all([
                     fetch('/api/cashback-config'),
                     fetch('/api/image-config')
                 ]);
-                if (!firebaseConfigRes.ok || !imageConfigRes.ok) {
-                    throw new Error('Failed to load app configuration from server.');
-                }
+                if (!firebaseConfigRes.ok || !imageConfigRes.ok) throw new Error('Failed to load app configuration.');
                 const firebaseConfig = await firebaseConfigRes.json();
                 const imageConfig = await imageConfigRes.json();
                 imgbbApiKey = imageConfig.apiKey;
@@ -653,7 +506,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 initializeAppLogic();
             } catch (error) {
                 console.error("Critical Initialization Error:", error);
-                document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load application settings. Please check your connection and try again later.</p></div>`;
+                document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load settings. Please try again later.</p></div>`;
             }
         }
         const showToast = (message) => {
@@ -662,6 +515,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
+        // FIXED: Network page viewport logic
         const toggleView = (viewId) => {
             const viewportMeta = document.querySelector('meta[name="viewport"]');
             if (viewId === 'network-view') {
@@ -683,77 +537,56 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
         };
         const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
         const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
-        const showSuccessPopup = (details) => {
-            document.getElementById('success-modal-amount').textContent = `- ₹${details.amount.toFixed(2)}`;
-            document.getElementById('success-modal-receiver').textContent = details.receiver;
-            document.getElementById('success-modal-txn-id').textContent = details.txnId;
-            document.getElementById('success-modal-datetime').textContent = details.datetime;
-            openModal('payment-success-modal');
-        };
-        const showTransactionDetails = (item) => {
-            const amount = item.amount || item.cashbackAmount || 0;
-            let sign = '+';
-            let typeClass = 'credit';
-            if (item.type === 'payment' || item.amount < 0) {
-                sign = '-';
-                typeClass = 'debit';
-            }
-             if (item.status === 'rejected' || item.status === 'refunded') { 
-                typeClass = 'rejected'; 
-            }
-            document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
-            document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
-            const statusEl = document.getElementById('details-modal-status');
-            statusEl.textContent = item.status || 'Completed';
-            statusEl.className = 'value status-badge';
-            if (item.status) statusEl.classList.add(item.status);
-            document.getElementById('details-modal-desc').textContent = item.description;
-            document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
-            document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-            document.getElementById('details-modal-txn-id').textContent = item.id;
-            openModal('transaction-details-modal');
-        };
+        
+        // --- Realtime Data Handling ---
         function attachRealtimeListeners(user) {
             detachAllListeners();
             const uid = user.uid;
-            const userUnsubscribe = onSnapshot(doc(db, 'users', uid), (doc) => {
-                if (doc.exists()) {
-                    currentUserData = { uid: doc.id, ...doc.data() };
-                    updateDashboardUI(currentUserData, user);
-                }
-            });
-            const transUnsubscribe = onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
-                allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
-                combineAndRenderHistory();
-            });
-            const cashbackRequestsUnsubscribe = onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-                cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
-                combineAndRenderHistory();
-            });
-            const creditRequestsUnsubscribe = onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-                creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
-                combineAndRenderHistory();
-            });
-            const latestNotificationUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
-                if (!snapshot.empty) {
-                    const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-                    updateNotificationUI(latestNotif);
-                } else {
-                    updateNotificationUI(null);
-                }
-            });
-            const allNotificationsUnsubscribe = onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)), (snapshot) => {
-                renderNotificationCenter(snapshot);
-            });
-            activeListeners.push(userUnsubscribe, transUnsubscribe, cashbackRequestsUnsubscribe, creditRequestsUnsubscribe, latestNotificationUnsubscribe, allNotificationsUnsubscribe);
+            const listeners = [
+                onSnapshot(doc(db, 'users', uid), (doc) => {
+                    if (doc.exists()) {
+                        currentUserData = { uid: doc.id, ...doc.data() };
+                        updateDashboardUI(currentUserData, user);
+                        renderNotificationCenter();
+                        
+                        if (!initialPopupShown) {
+                            handleDueNotificationPopup(currentUserData);
+                            initialPopupShown = true;
+                        }
+                    }
+                }),
+                onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
+                    allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
+                    combineAndRenderHistory();
+                }),
+                onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+                    cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
+                    combineAndRenderHistory();
+                }),
+                onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+                    creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
+                    combineAndRenderHistory();
+                }),
+                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
+                     if (!snapshot.empty) {
+                        const latestOffer = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+                        updateOfferNotificationCard(latestOffer);
+                     } else {
+                        updateOfferNotificationCard(null);
+                     }
+                })
+            ];
+            activeListeners.push(...listeners);
         }
         function detachAllListeners() {
             activeListeners.forEach(unsub => unsub());
             activeListeners = [];
+            initialPopupShown = false;
         }
+
+        // --- UI Update and Notification Logic ---
         function updateDashboardUI(dbData, authUser) {
-            const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/80x80/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
-            
+            const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
             document.getElementById('header-profile-avatar').src = profilePicUrl;
             document.getElementById('wallet-user-name').textContent = authUser.displayName;
             document.getElementById('modal-profile-img').src = profilePicUrl;
@@ -764,106 +597,145 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
             document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
             document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
             document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
+            
+            const payDueBtn = document.getElementById('pay-due-amount-btn');
+            payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
         }
-        function updateNotificationUI(notifData) {
-            const thumbNotifCard = document.getElementById('open-notification-center-btn');
-            if (!notifData) {
-                thumbNotifCard.querySelector('.notification-content-wrapper').style.opacity = 0;
-                return;
-            }
-            const updateElement = (card, title, percentage, animate) => {
-                const [text1, text2 = ''] = (title || '').split('|').map(t => t.trim());
-                const wrapper = card.querySelector('.notification-content-wrapper');
-                const line1 = wrapper.querySelector('.notification-text-line1');
-                const line2 = wrapper.querySelector('.notification-text-line2');
-                const percentEl = wrapper.querySelector('.notification-percentage');
-                line1.textContent = text1;
-                line2.textContent = text2;
-                percentEl.textContent = `${percentage}%`;
-                wrapper.classList.remove('animate');
-                void wrapper.offsetWidth;
-                if (animate) {
-                    wrapper.classList.add('animate');
-                } else {
-                    wrapper.style.opacity = 1;
-                    line1.style.width = 'auto';
-                    line2.style.width = 'auto';
-                    percentEl.style.transform = 'scale(1)';
-                }
-            };
-            thumbNotifCard.style.backgroundColor = notifData.thumbnailBgColor || 'var(--bg-card)';
-            thumbNotifCard.style.color = notifData.thumbnailTextColor || 'var(--text-primary)';
-            thumbNotifCard.style.setProperty('--thumbnail-border-color', notifData.thumbnailBorderColor || 'var(--border-color)');
-            thumbNotifCard.style.setProperty('--thumbnail-border-width', notifData.thumbnailBorderWidth ? `${notifData.thumbnailBorderWidth}px` : '1px');
-            updateElement(thumbNotifCard, notifData.thumbnailTitle, notifData.thumbnailPercentage, notifData.thumbnailAnimation !== false);
-            if (notifData.id !== lastShownNotificationId) {
-                lastShownNotificationId = notifData.id;
-                showPopupNotification(notifData);
-            }
-        }
-        function renderNotificationCenter(snapshot) {
-            const listEl = document.getElementById('notification-center-list');
-            listEl.innerHTML = ''; 
-            if (snapshot.empty) {
-                listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
-                return;
-            }
-            snapshot.forEach(doc => {
-                const notif = doc.data();
-                const item = document.createElement('div');
-                item.className = 'notification-center-item';
-                item.style.backgroundColor = notif.mainBgColor;
-                item.style.color = notif.mainTextColor;
-                const linkify = (text) => {
-                    if (!text) return '';
-                    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-                    return text.replace(urlRegex, (url) => {
-                        let href = url;
-                        if (!href.match(/^[a-zA-Z]+:\/\//)) {
-                            href = 'http://' + href;
-                        }
-                        return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`;
-                    });
+
+        function getDueNotificationData(dbData) {
+            if (!dbData) return null;
+            const today = new Date();
+            const dayOfMonth = today.getDate();
+            if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
+                return {
+                    id: 'due_notification_priority',
+                    title: `Payment Due: ₹${dbData.dueAmount.toFixed(2)}`,
+                    popupTitle: `Namaste ${dbData.name}, aapka bhugtan baki hai.`,
+                    popupPercentage: `Amount: ₹${dbData.dueAmount.toFixed(2)}`,
+                    paragraph: `Kripya apna ₹${dbData.dueAmount.toFixed(2)} ka due amount 7 tarikh se pehle pay karein. Dhanyavad!`,
                 };
-                const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
-                item.innerHTML = `
-                    <div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div>
-                    <div class="percentage">${notif.mainPercentage}%</div>
-                    ${paragraphHTML}
-                `;
-                listEl.appendChild(item);
-            });
+            }
+            return null;
         }
-        function showPopupNotification(notifData) {
-            if (popupTimeout) clearTimeout(popupTimeout);
-            const popup = document.getElementById('popup-notification');
-            popup.style.backgroundColor = notifData.mainBgColor;
-            popup.style.color = notifData.mainTextColor;
-            document.getElementById('popup-notification-title').textContent = (notifData.mainTitle || '').replace('|', ' ');
-            document.getElementById('popup-notification-percentage').textContent = `${notifData.mainPercentage}%`;
-            document.getElementById('popup-notification-close').style.color = notifData.mainTextColor;
-            popup.classList.add('show');
-            popupTimeout = setTimeout(() => popup.classList.remove('show'), 5000);
+        
+        function handleDueNotificationPopup(dbData) {
+            const dueNotification = getDueNotificationData(dbData);
+            if (dueNotification) {
+                showPopupNotification({
+                    popupBgColor: 'var(--due-red)',
+                    popupTextColor: 'white',
+                    popupIcon: '⚠️',
+                    popupTitle: dueNotification.popupTitle,
+                    popupPercentage: dueNotification.popupPercentage
+                }, 4000);
+            }
+        }
+        
+        function updateOfferNotificationCard(offerData) {
+            const thumbNotifCard = document.getElementById('open-notification-center-btn');
+            const wrapper = thumbNotifCard.querySelector('.notification-content-wrapper');
+
+            if (!offerData) {
+                wrapper.style.opacity = 0;
+                wrapper.classList.remove('animate');
+                return;
+            }
+
+            thumbNotifCard.style.backgroundColor = offerData.thumbnailBgColor || 'var(--bg-card)';
+            thumbNotifCard.style.color = offerData.thumbnailTextColor || 'var(--text-primary)';
+            
+            const [text1, text2 = ''] = (offerData.thumbnailTitle || '').split('|').map(t => t.trim());
+            wrapper.querySelector('.notification-text-line1').textContent = text1;
+            wrapper.querySelector('.notification-text-line2').textContent = text2;
+            wrapper.querySelector('.notification-percentage').textContent = `${offerData.thumbnailPercentage}%`;
+            
+            wrapper.classList.remove('animate');
+            void wrapper.offsetWidth;
+            if (offerData.thumbnailAnimation !== false) {
+                 wrapper.classList.add('animate');
+            } else {
+                 wrapper.style.opacity = 1;
+            }
+        }
+
+        function showPopupNotification(notifData, duration = 4000) {
+             if (popupTimeout) clearTimeout(popupTimeout);
+             const popup = document.getElementById('popup-notification');
+             popup.style.backgroundColor = notifData.popupBgColor || '#333';
+             popup.style.color = notifData.popupTextColor || 'white';
+             document.getElementById('popup-notification-icon').textContent = notifData.popupIcon || '🔥';
+             document.getElementById('popup-notification-title').innerHTML = (notifData.popupTitle || '').replace('|', '<br>');
+             document.getElementById('popup-notification-percentage').textContent = notifData.popupPercentage || '';
+             document.getElementById('popup-notification-close').style.color = notifData.popupTextColor || 'white';
+             popup.classList.add('show');
+             popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
+        }
+
+        async function renderNotificationCenter() {
+            const listEl = document.getElementById('notification-center-list');
+            listEl.innerHTML = '';
+            
+            const dueNotification = getDueNotificationData(currentUserData);
+            if (dueNotification) {
+                const item = document.createElement('div');
+                item.className = 'notification-center-item due-notification-item';
+                item.innerHTML = `<div class="title" style="color: var(--due-red);">${dueNotification.title}</div><p class="paragraph">${dueNotification.paragraph}</p>`;
+                listEl.appendChild(item);
+            }
+            
+            try {
+                const snapshot = await getDocs(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)));
+                if (snapshot.empty && !dueNotification) {
+                    listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const notif = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'notification-center-item';
+                    item.style.backgroundColor = notif.mainBgColor;
+                    item.style.color = notif.mainTextColor;
+                    const linkify = (text) => {
+                        if (!text) return '';
+                        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+                        return text.replace(urlRegex, (url) => `<a href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`);
+                    };
+                    const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
+                    item.innerHTML = `<div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div><div class="percentage">${notif.mainPercentage}%</div>${paragraphHTML}`;
+                    listEl.appendChild(item);
+                });
+            } catch (error) {
+                console.error("Error fetching notifications for center:", error);
+                if (!dueNotification) {
+                    listEl.innerHTML = '<p class="empty-state">Could not load notifications.</p>';
+                }
+            }
         }
         function combineAndRenderHistory() {
             const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
             const formattedCashbackRequests = cashbackRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
             const formattedCreditRequests = creditRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
-            const combined = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
-            renderUnifiedHistory(combined);
+            combinedHistory = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
+            renderUnifiedHistory();
         }
-        function renderUnifiedHistory(items) {
+        // FIXED: Transaction filter logic
+        function renderUnifiedHistory() {
             const listEl = document.getElementById('unified-history-list');
             const summaryEl = document.getElementById('transaction-summary');
             const summaryAmountEl = summaryEl.querySelector('.summary-amount');
             const summaryLabelEl = summaryEl.querySelector('.summary-label');
             listEl.innerHTML = '';
-            const itemsToRender = items.filter(item => {
+
+            const itemsToRender = combinedHistory.filter(item => {
                 if (activeFilter === 'all') return true;
                 if (activeFilter === 'cashback') return item.type === 'cashback';
-                if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'due_payment' || item.type === 'credit_request';
-                return item.type === activeFilter;
+                if (activeFilter === 'commission') return item.type === 'commission';
+                if (activeFilter === 'payment') return item.type === 'payment';
+                if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'credit_request';
+                if (activeFilter === 'due_payment') return item.type === 'due_payment';
+                return false;
             });
+
             if (itemsToRender.length > 0 && activeFilter !== 'all') {
                 const total = itemsToRender.reduce((sum, item) => sum + Math.abs(item.amount || item.cashbackAmount || 0), 0);
                 const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
@@ -873,10 +745,12 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
             } else {
                 summaryEl.style.display = 'none';
             }
+
             if (itemsToRender.length === 0) {
-                listEl.innerHTML = `<div class="empty-state" style="border:none; padding: 20px 0; text-align:center; color: var(--text-secondary);"><h4>No Transactions</h4></div>`;
+                listEl.innerHTML = `<div class="empty-state" style="padding: 20px 0; text-align:center; color: var(--text-secondary);">No Transactions Found for this filter.</div>`;
                 return;
             }
+
             itemsToRender.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'history-item';
@@ -884,10 +758,72 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 const amount = item.amount || item.cashbackAmount || 0;
                 let sign = '+';
                 let typeClass = 'credit';
-                if(item.type === 'due_payment' || item.type === 'payment' || item.amount < 0) { typeClass = 'debit'; sign = '-'; }
+                if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { typeClass = 'debit'; sign = '-'; }
                 if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
                 itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || ''}</span></div>`;
                 listEl.appendChild(itemDiv);
+            });
+        }
+        function showTransactionDetails(item) {
+            const amount = item.amount || item.cashbackAmount || 0;
+            let sign = '+', typeClass = 'credit';
+            if (item.type === 'payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
+            if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
+            
+            document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
+            document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
+            const statusEl = document.getElementById('details-modal-status');
+            statusEl.textContent = item.status || 'Completed';
+            statusEl.className = 'value status-badge';
+            if (item.status) statusEl.classList.add(item.status);
+
+            document.getElementById('details-modal-desc').textContent = item.description;
+            document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+            document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+            document.getElementById('details-modal-txn-id').textContent = item.id;
+            openModal('transaction-details-modal');
+        }
+        
+        // --- Feature Logic (Payment, QR, etc.) ---
+        function generateDueQR() {
+            if (!currentUserData || currentUserData.dueAmount <= 0) {
+                showToast("No due amount to pay.");
+                return;
+            }
+            const amount = currentUserData.dueAmount;
+            const upiLink = `upi://pay?pa=${UPI_ID}&pn=Ramazone%20Cashback&am=${amount.toFixed(2)}&cu=INR&tn=DuePaymentFor-${currentUserData.mobile}`;
+            const qrContainer = document.getElementById('due-qr-code');
+            qrContainer.innerHTML = ''; 
+            
+            new QRCode(qrContainer, {
+                text: upiLink,
+                width: 200,
+                height: 200,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            document.getElementById('due-qr-amount').textContent = `Pay: ₹ ${amount.toFixed(2)}`;
+            document.getElementById('due-qr-upi-id').textContent = UPI_ID;
+            openModal('due-payment-modal');
+        }
+        function downloadQRCard() {
+            const cardElement = document.getElementById('due-qr-card');
+            if (!cardElement) {
+                showToast("QR Card element not found.");
+                return;
+            }
+            showToast("Preparing download...");
+            html2canvas(cardElement, { scale: 3, useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = `Ramazone-Due-Payment-${currentUserData.dueAmount.toFixed(2)}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error("Error downloading QR card:", err);
+                showToast("Download failed. Please try again.");
             });
         }
         async function handleProfilePictureUpload(event) {
@@ -953,9 +889,20 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                         t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.uid] });
                         t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
                     });
+                    
+                    // BUG FIX: The 'showSuccessPopup' function did not exist.
+                    // Replaced it with direct manipulation of the success modal.
                     const now = new Date();
-                    showSuccessPopup({ amount: amount, receiver: 'Ramazone Store', txnId: newTxnRef.id, datetime: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}` });
-                } catch (error) { showToast("Payment failed. Please try again."); }
+                    document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
+                    document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
+                    document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
+                    document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+                    openModal('payment-success-modal');
+
+                } catch (error) { 
+                    console.error("Payment transaction failed:", error);
+                    showToast("Payment failed. Please try again."); 
+                }
             }, 'scan-pay-modal');
         }
         async function handleCashbackRequest(e) {
@@ -1159,6 +1106,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 }, 100);
                 updateNetworkNavButton();
             } catch (error) {
+                console.error(error);
                 treeRoot.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
             } finally {
                 networkLoader.style.display = 'none';
@@ -1285,11 +1233,14 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 if (uplineData.length <= 1) { uplineContainer.innerHTML += '<div class="empty-state">Aapke paas koi sponsor nahi hai.</div>'; }
                 isUplineLoaded = true;
             } catch (error) {
+                console.error("Error loading upline:", error);
                 uplineContainer.innerHTML = '<div class="empty-state">Sponsor load karne mein error hua.</div>';
             } finally {
                 networkLoader.style.display = 'none';
             }
         }
+        
+        // --- Initialization and Event Listeners ---
         function initializeAppLogic() {
             onAuthStateChanged(auth, user => {
                 if (user && user.displayName) {
@@ -1301,17 +1252,15 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                     handleReferralLink();
                 }
             });
+            
             document.getElementById('login-form').addEventListener('submit', e => {
                 e.preventDefault();
                 const mobile = document.getElementById('login-mobile').value;
                 const password = document.getElementById('login-password').value;
                 const errorMsgEl = document.getElementById('login-error-msg');
-                errorMsgEl.style.display = 'none';
+                hideErrorMessage(errorMsgEl);
                 signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
-                    .catch(() => {
-                        errorMsgEl.textContent = "Galat mobile ya password.";
-                        errorMsgEl.style.display = 'block';
-                    });
+                    .catch(() => showErrorMessage(errorMsgEl, "Galat mobile ya password."));
             });
             document.getElementById('register-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -1331,7 +1280,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
                     tempUser = userCredential.user;
-                    let upline = []; let referredBy = 'none';
+                    let upline = [], referredBy = 'none';
                     if (referralCode) {
                         registerButton.textContent = 'Verifying Code...';
                         const q = query(collection(db, 'users'), where("referralId", "==", referralCode));
@@ -1348,11 +1297,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                     }
                     registerButton.textContent = 'Saving Data...';
                     await updateProfile(tempUser, { displayName: name });
-                    const newUserDoc = {
-                        uid: tempUser.uid, name, mobile, password, wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0,
-                        referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`,
-                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 
-                    };
+                    const newUserDoc = { uid: tempUser.uid, name, mobile, password, wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 };
                     await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
                     await signOut(auth);
                     toggleView('login-view');
@@ -1361,9 +1306,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                     alert("Registration safal hua! Ab login karein.");
                 } catch (error) {
                     if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
-                    let message = "Registration fail ho gaya. Dobara try karein.";
-                    if (error.code === 'auth/email-already-in-use') message = "Yah mobile number pehle se register hai.";
-                    showErrorMessage(errorMsgEl, message);
+                    showErrorMessage(errorMsgEl, error.code === 'auth/email-already-in-use' ? "Yah mobile number pehle se register hai." : "Registration fail ho gaya. Dobara try karein.");
                 } finally {
                     registerButton.disabled = false; registerButton.textContent = 'Register Karein';
                 }
@@ -1372,20 +1315,14 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
             document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
             document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
             document.getElementById('header-profile-avatar').addEventListener('click', () => openModal('profile-modal'));
-            // NEW: Event listener for header notification icon
             document.getElementById('header-notification-btn').addEventListener('click', () => toggleView('notification-view'));
-            document.getElementById('modal-profile-img').addEventListener('click', () => {
-                document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src;
-                openModal('profile-picture-modal');
-            });
+            document.getElementById('modal-profile-img').addEventListener('click', () => { document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src; openModal('profile-picture-modal'); });
             document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
             document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
             document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
             document.getElementById('open-credit-request-modal').addEventListener('click', () => {
                 if (!currentUserData) return showToast("Please wait for data to load.");
-                if (currentUserData.dueAmount > 0) {
-                    return showToast(`Please clear your due amount of ₹${currentUserData.dueAmount.toFixed(2)} first.`);
-                }
+                if (currentUserData.dueAmount > 0) return showToast(`Please clear your due amount of ₹${currentUserData.dueAmount.toFixed(2)} first.`);
                 const level = currentUserData.creditLevel || 0;
                 const maxAmount = creditLevels[level] || creditLevels[creditLevels.length - 1];
                 const amountInput = document.getElementById('credit-amount');
@@ -1394,13 +1331,8 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 openModal('credit-request-modal');
             });
             document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
-            document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => {
-                document.getElementById('credit-submit-btn').disabled = !e.target.checked;
-            });
-            document.getElementById('popup-notification-close').addEventListener('click', () => {
-                if (popupTimeout) clearTimeout(popupTimeout);
-                document.getElementById('popup-notification').classList.remove('show');
-            });
+            document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => { document.getElementById('credit-submit-btn').disabled = !e.target.checked; });
+            document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
             document.getElementById('open-notification-center-btn').addEventListener('click', () => toggleView('notification-view'));
             document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
@@ -1420,7 +1352,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                 document.querySelector('#filter-bar .active')?.classList.remove('active');
                 target.classList.add('active');
                 activeFilter = target.dataset.filter;
-                combineAndRenderHistory();
+                renderUnifiedHistory();
             });
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
             document.getElementById('open-network-view').addEventListener('click', () => {
@@ -1440,9 +1372,7 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
             });
             document.getElementById('network-refresh-btn').addEventListener('click', () => {
                 const currentRoot = historyStack[historyStack.length - 1];
-                if (currentRoot) {
-                    updateNetworkTreeView(currentRoot.uid, 0);
-                }
+                if (currentRoot) updateNetworkTreeView(currentRoot.uid, 0);
             });
             document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
                 const target = e.target.closest('.network-tab-btn');
@@ -1457,10 +1387,11 @@ button:disabled { background-color: #aaa; cursor: not-allowed; }
                     updateNetworkTreeView(currentUserData.uid, 0);
                 }
             });
+            document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
+            document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
         }
         document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
     </script>
 </body>
 </html>
-
 
