@@ -16,7 +16,7 @@
             --bg-card: #ffffff; 
             --text-primary: #1c2028;
             --text-secondary: #5a647e; 
-            --border-color: #e8eef3; 
+            --border-color: #e8ef3; 
             --brand-red: #e50914;
             --accent-green: #27ae60; 
             --due-red: #ff6b6b;
@@ -144,7 +144,6 @@
             width: auto;
         }
 
-
         .actions-section {
             margin-bottom: 24px;
             padding: 0 16px;
@@ -160,16 +159,47 @@
             border-radius: 4px;
         }
         .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px var(--shadow-medium); }
+        .action-card.disabled { background-color: #f8f9fa; cursor: not-allowed; color: #adb5bd; }
+        .action-card.disabled .icon { filter: grayscale(100%); opacity: 0.5; }
         .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+        .action-card.disabled .card-text { color: #adb5bd; }
 
-        #open-notification-center-btn { padding: 10px; }
-        #open-notification-center-btn .notification-content-wrapper { flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
-        #open-notification-center-btn .notification-text-container { font-size: 12px; font-weight: 600; text-align: center; }
-        #open-notification-center-btn .notification-percentage { font-size: 22px; font-weight: 800; margin-top: 4px; }
-        .notification-content-wrapper { opacity: 0; display: flex; align-items: center; gap: 8px; }
+        /* --- NEW: Cashback Card Banner Styles --- */
+        #open-cashback-modal {
+            padding-top: 35px; /* Make space for the banner */
+            justify-content: center;
+        }
+        #cashback-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 30px; /* Fixed height for the banner */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #cashback-banner .notification-content-wrapper {
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            height: 100%;
+        }
+        #cashback-banner .notification-text-container {
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+        #cashback-banner .notification-percentage {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
         .notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
-        .notification-text-container { display: flex; flex-direction: column; line-height: 1.1; }
         .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
         .notification-percentage { transform: scale(1); opacity: 0; }
         @keyframes fade-in-out { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
@@ -201,7 +231,7 @@
         .history-item { 
             display: flex; align-items: center; justify-content: space-between; 
             padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
-            cursor: pointer; transition: background-color 0.2s;
+            cursor: pointer; transition: background-color: 0.2s;
         }
         .history-item:hover { background-color: #fafafa; }
         .history-item:last-child { border-bottom: none; }
@@ -388,19 +418,40 @@
                 <section class="actions-section">
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="dashboard-actions">
-                        <div id="open-cashback-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/499839/money.svg"><span class="card-text">Cashback</span></div>
+                        <!-- UPDATED: Cashback card with banner -->
+                        <div id="open-cashback-modal" class="action-card">
+                            <div id="cashback-banner">
+                                <div class="notification-content-wrapper">
+                                    <div class="notification-text-container">
+                                        <span class="notification-text-line notification-text-line1"></span>
+                                        <span class="notification-text-line notification-text-line2"></span>
+                                    </div>
+                                    <div class="notification-percentage"></div>
+                                 </div>
+                            </div>
+                            <img class="icon" src="https://www.svgrepo.com/show/499839/money.svg">
+                            <span class="card-text">Cashback</span>
+                        </div>
                         <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
                         <div id="open-network-view" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg"><span class="card-text">Network</span></div>
                         <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
                         <div id="open-credit-request-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg"><span class="card-text">Credit Request</span></div>
-                        <div id="open-notification-center-btn" class="action-card"><div class="notification-content-wrapper"><div class="notification-text-container"><span class="notification-text-line notification-text-line1"></span><span class="notification-text-line notification-text-line2"></span></div><div class="notification-percentage"></div></div></div>
+                        <div id="daily-reward-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/279392/coins-money.svg"><span class="card-text">Daily Reward</span></div>
                     </div>
                 </section>
 
                 <div class="section">
                     <h2 class="section-title">All Transactions</h2>
                     <div id="transaction-summary"><span class="summary-label">Total Amount</span><span class="summary-amount">₹0.00</span></div>
-                    <div class="filter-bar" id="filter-bar"><button class="filter-btn active" data-filter="all">All</button><button class="filter-btn" data-filter="cashback">Cashback</button><button class="filter-btn" data-filter="commission">Commission</button><button class="filter-btn" data-filter="payment">Payments</button><button class="filter-btn" data-filter="credit">Credit</button><button class="filter-btn" data-filter="due_payment">Due Paid</button></div>
+                    <div class="filter-bar" id="filter-bar">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="cashback">Cashback</button>
+                        <button class="filter-btn" data-filter="commission">Commission</button>
+                        <button class="filter-btn" data-filter="payment">Payments</button>
+                        <button class="filter-btn" data-filter="credit">Credit</button>
+                        <button class="filter-btn" data-filter="due_payment">Due Paid</button>
+                        <button class="filter-btn" data-filter="bonus">Bonus</button>
+                    </div>
                     <div id="unified-history-list" class="history-list"></div>
                 </div>
             </main>
@@ -600,6 +651,23 @@
             
             const payDueBtn = document.getElementById('pay-due-amount-btn');
             payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
+
+            // NEW: Update Daily Reward Button UI
+            const dailyRewardBtn = document.getElementById('daily-reward-btn');
+            const lastCheckIn = dbData.lastCheckInDate?.toDate();
+            const today = new Date();
+            const totalDays = dbData.totalCheckInDays || 0;
+
+            if (totalDays >= 130) {
+                dailyRewardBtn.classList.add('disabled');
+                dailyRewardBtn.querySelector('.card-text').textContent = 'Reward Limit Reached';
+            } else if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
+                dailyRewardBtn.classList.add('disabled');
+                dailyRewardBtn.querySelector('.card-text').textContent = 'Claimed Today';
+            } else {
+                dailyRewardBtn.classList.remove('disabled');
+                dailyRewardBtn.querySelector('.card-text').textContent = 'Daily Reward';
+            }
         }
 
         function getDueNotificationData(dbData) {
@@ -632,8 +700,11 @@
         }
         
         function updateOfferNotificationCard(offerData) {
-            const thumbNotifCard = document.getElementById('open-notification-center-btn');
-            const wrapper = thumbNotifCard.querySelector('.notification-content-wrapper');
+            // UPDATED: Target the new banner inside the cashback card
+            const banner = document.getElementById('cashback-banner');
+            if (!banner) return;
+            
+            const wrapper = banner.querySelector('.notification-content-wrapper');
 
             if (!offerData) {
                 wrapper.style.opacity = 0;
@@ -641,8 +712,8 @@
                 return;
             }
 
-            thumbNotifCard.style.backgroundColor = offerData.thumbnailBgColor || 'var(--bg-card)';
-            thumbNotifCard.style.color = offerData.thumbnailTextColor || 'var(--text-primary)';
+            banner.style.backgroundColor = offerData.thumbnailBgColor || '#ffc107'; // Default to yellow
+            banner.style.color = offerData.thumbnailTextColor || '#212529'; // Default to dark text
             
             const [text1, text2 = ''] = (offerData.thumbnailTitle || '').split('|').map(t => t.trim());
             wrapper.querySelector('.notification-text-line1').textContent = text1;
@@ -718,7 +789,7 @@
             combinedHistory = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
             renderUnifiedHistory();
         }
-        // FIXED: Transaction filter logic
+        
         function renderUnifiedHistory() {
             const listEl = document.getElementById('unified-history-list');
             const summaryEl = document.getElementById('transaction-summary');
@@ -733,6 +804,7 @@
                 if (activeFilter === 'payment') return item.type === 'payment';
                 if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'credit_request';
                 if (activeFilter === 'due_payment') return item.type === 'due_payment';
+                if (activeFilter === 'bonus') return item.type === 'bonus' || item.type === 'referral_bonus';
                 return false;
             });
 
@@ -785,6 +857,68 @@
         }
         
         // --- Feature Logic (Payment, QR, etc.) ---
+        
+        async function handleDailyCheckIn() {
+            const btn = document.getElementById('daily-reward-btn');
+            if (btn.classList.contains('disabled')) {
+                showToast("Aap aaj ka reward pehle hi le chuke hain.");
+                return;
+            }
+
+            const userRef = doc(db, 'users', currentUser.uid);
+            try {
+                let rewardAmount = 0;
+                const totalDays = currentUserData.totalCheckInDays || 0;
+                
+                if (totalDays < 30) {
+                    rewardAmount = 0.10;
+                } else if (totalDays < 130) {
+                    rewardAmount = 0.05;
+                } else {
+                    showToast("Aapne sabhi daily rewards claim kar liye hain.");
+                    btn.classList.add('disabled');
+                    return;
+                }
+
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists()) throw "User does not exist!";
+                    
+                    const data = userDoc.data();
+                    const lastCheckIn = data.lastCheckInDate?.toDate();
+                    const today = new Date();
+                    if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
+                        throw "Already claimed today!";
+                    }
+
+                    transaction.update(userRef, {
+                        wallet: increment(rewardAmount),
+                        lifetimeEarning: increment(rewardAmount),
+                        lastCheckInDate: serverTimestamp(),
+                        totalCheckInDays: increment(1)
+                    });
+
+                    const newTxnRef = doc(collection(db, "transactions"));
+                    transaction.set(newTxnRef, {
+                        type: 'bonus',
+                        amount: rewardAmount,
+                        description: `Daily Check-in Reward (Day ${totalDays + 1})`,
+                        status: 'completed',
+                        timestamp: serverTimestamp(),
+                        involvedUsers: [currentUser.uid]
+                    });
+                });
+                
+                showToast(`Badhai ho! Aapko ₹${rewardAmount.toFixed(2)} ka reward mila hai.`);
+
+            } catch (error) {
+                if (error !== "Already claimed today!") {
+                    console.error("Error claiming daily reward: ", error);
+                    showToast("Reward claim karne mein error hua. Dobara try karein.");
+                }
+            }
+        }
+
         function generateDueQR() {
             if (!currentUserData || currentUserData.dueAmount <= 0) {
                 showToast("No due amount to pay.");
@@ -890,8 +1024,6 @@
                         t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
                     });
                     
-                    // BUG FIX: The 'showSuccessPopup' function did not exist.
-                    // Replaced it with direct manipulation of the success modal.
                     const now = new Date();
                     document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
                     document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
@@ -1297,7 +1429,13 @@
                     }
                     registerButton.textContent = 'Saving Data...';
                     await updateProfile(tempUser, { displayName: name });
-                    const newUserDoc = { uid: tempUser.uid, name, mobile, password, wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0 };
+                    const newUserDoc = { 
+                        uid: tempUser.uid, name, mobile, password, 
+                        wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
+                        referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, 
+                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0,
+                        lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
+                    };
                     await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
                     await signOut(auth);
                     toggleView('login-view');
@@ -1333,7 +1471,7 @@
             document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
             document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => { document.getElementById('credit-submit-btn').disabled = !e.target.checked; });
             document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
-            document.getElementById('open-notification-center-btn').addEventListener('click', () => toggleView('notification-view'));
+            // REMOVED: Event listener for the old notification button
             document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
             document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
             document.getElementById('rescan-btn').addEventListener('click', startScanner);
@@ -1389,9 +1527,12 @@
             });
             document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
             document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
+            
+            document.getElementById('daily-reward-btn').addEventListener('click', handleDailyCheckIn);
         }
         document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
     </script>
 </body>
 </html>
+
 
