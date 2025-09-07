@@ -445,7 +445,7 @@ function setupVariantModal() { const overlay = document.getElementById("variant-
 function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; let discount = 0; let packOriginalPrice = originalPrice; if (selectedPack) { const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; packOriginalPrice = originalPrice * quantity; } if (packOriginalPrice > displayPrice) { discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); } if (discount > 0) { percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${packOriginalPrice.toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
 
 // === YEH FUNCTION POORI TARAH SE UPDATE KIYA GAYA HAI ===
-// Ab yeh naye 'ENHANCED' HTML template ko load karke cards banata hai.
+// Ab yeh naye 'COMPACT VERTICAL' HTML template ko load karke cards banata hai.
 async function loadHandpickedSimilarProducts(similarIds) {
     const section = document.getElementById("handpicked-similar-section");
     const container = document.getElementById("handpicked-similar-container");
@@ -483,7 +483,6 @@ async function loadHandpickedSimilarProducts(similarIds) {
                 const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
 
                 // === BUG FIX: Ab yeh 'g' flag ke saath replace karega ===
-                // Isse {{productName}} jaisi saari placeholders sahi se badal jayengi.
                 const populatedHTML = templateHTML
                     .replace(/\{\{productId\}\}/g, product.id)
                     .replace(/\{\{productName\}\}/g, product.name)
