@@ -16,7 +16,6 @@
         /* Stepper Styling */
         .stepper { display: flex; justify-content: space-between; align-items: center; position: relative; }
         .step { display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 1; transition: all 0.3s ease; }
-        /* === UPDATE: Clickable cursor for completed steps === */
         .step.completed { cursor: pointer; }
         .step-icon { width: 36px; height: 36px; border-radius: 50%; background-color: #e5e7eb; color: #6b7280; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #e5e7eb; transition: all 0.3s ease; }
         .step-label { margin-top: 8px; font-size: 0.75rem; font-weight: 600; color: #6b7280; }
@@ -32,17 +31,18 @@
         .step-content.active, #order-status-container.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* General Styles */
+        /* === UPDATE: Text color fix for selected options === */
+        .option-label.selected { background-color: #4f46e5; color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,.1); }
+
+        /* Other Retained Styles */
         .form-input { display: block; width: 100%; border-radius: 0.5rem; border: 1px solid #D1D5DB; padding: 0.75rem 1rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
         .btn-primary { background-color: #4F46E5; color: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         .btn-primary:hover { background-color: #4338ca; }
         .invoice-btn-red { background-color: #ef4444; }
         .quantity-selector-order button { color: #4F46E5; }
-        .option-label.selected{background-color:#4f46e5;}
         #empty-cart-message .shop-now-btn { background-color: #4F46E5; }
-        .delivery-tracker{display:flex;align-items:flex-start;justify-content:space-between;position:relative}.tracker-step{display:flex;flex-direction:column;align-items:center;text-align:center;width:80px;position:relative;z-index:1}.step-icon{width:40px;height:40px;border-radius:50%;background-color:#e0e0e0;color:#9e9e9e;display:flex;align-items:center;justify-content:center;transition:all .3s ease;border:3px solid #e0e0e0}.step-label{font-size:12px;margin-top:8px;font-weight:600;color:#616161}.tracker-line{position:absolute;top:18.5px;left:40px;right:40px;height:4px;background-color:#e0e0e0;z-index:0}.tracker-progress-line{position:absolute;top:0;left:0;height:100%;background-color:#22c55e;transition:width .5s ease}.tracker-step.completed .step-icon{background-color:#22c55e;color:#fff;border-color:#22c55e;animation:pop .3s ease-out}.tracker-step.completed .step-label{color:#22c55e}@keyframes pop{0%{transform:scale(.9)}100%{transform:scale(1)}}
-        /* Retaining all other necessary styles from previous version */
+        .delivery-tracker{display:flex;align-items:flex-start;justify-content:space-between;position:relative}.tracker-step{display:flex;flex-direction:column;align-items:center;text-align:center;width:80px;position:relative;z-index:1}.tracker-step .step-icon{width:40px;height:40px;border-radius:50%;background-color:#e0e0e0;color:#9e9e9e;display:flex;align-items:center;justify-content:center;transition:all .3s ease;border:3px solid #e0e0e0}.tracker-step .step-label{font-size:12px;margin-top:8px;font-weight:600;color:#616161}.tracker-line{position:absolute;top:18.5px;left:40px;right:40px;height:4px;background-color:#e0e0e0;z-index:0}.tracker-progress-line{position:absolute;top:0;left:0;height:100%;background-color:#22c55e;transition:width .5s ease}.tracker-step.completed .step-icon{background-color:#22c55e;color:#fff;border-color:#22c55e;animation:pop .3s ease-out}.tracker-step.completed .step-label{color:#22c55e}@keyframes pop{0%{transform:scale(.9)}100%{transform:scale(1)}}
         .btn-secondary { background-color: #e5e7eb; color: #374151; }
         .btn-secondary:hover { background-color: #d1d5db; }
         .btn-full { width: 100%; }
@@ -57,7 +57,7 @@
         .delete-item-btn:hover { background-color: #ef4444; border-color: #ef4444; }
         .delete-item-btn img { width: 16px; height: 16px; transition: filter 0.2s ease; }
         .delete-item-btn:hover img { filter: brightness(0) invert(1); }
-        .option-group{display:flex;border:1px solid #d1d5db;border-radius:.75rem;overflow:hidden}.option-label{flex:1;padding:.75rem;text-align:center;cursor:pointer;background-color:#f9fafb;color:#4b5563;transition:all .2s ease;font-weight:500;font-size:.875rem}.option-label.selected{box-shadow:inset 0 2px 4px rgba(0,0,0,.1)}.option-label input{display:none}
+        .option-group{display:flex;border:1px solid #d1d5db;border-radius:.75rem;overflow:hidden}.option-label{flex:1;padding:.75rem;text-align:center;cursor:pointer;background-color:#f9fafb;color:#4b5563;transition:all .2s ease;font-weight:500;font-size:.875rem}.option-label input{display:none}
         #empty-cart-message { text-align: center; padding: 4rem 1rem; }
         #empty-cart-message i { font-size: 4rem; color: #d1d5db; }
         #empty-cart-message h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; color: #111827; }
@@ -75,9 +75,12 @@
 
     <main class="max-w-4xl mx-auto p-4 pb-28">
         <div id="search-status" class="text-center my-2 text-sm"></div>
+
+        <!-- === UPDATE: New container for Recent Order Status === -->
+        <div id="recent-order-status-container" class="mb-6"></div>
+
         <div id="checkout-flow-container" class="hidden">
             <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <!-- === UPDATE: Stepper icons are now clickable via data-step attribute === -->
                 <div id="stepper" class="stepper">
                     <div class="stepper-line"><div id="stepper-progress" class="stepper-progress"></div></div>
                     <div id="step-icon-1" class="step" data-step="1"><div class="step-icon"><i class="fas fa-shopping-cart"></i></div><div class="step-label">Cart</div></div>
@@ -89,7 +92,6 @@
             <!-- STEP 1: CART SUMMARY -->
             <div id="step-cart" class="step-content">
                 <div class="bg-white rounded-lg shadow p-4 sm:p-6"><h2 class="text-xl font-bold mb-4 text-gray-800">1. Your Items</h2><div id="order-items-container" class="space-y-4"></div></div>
-                <!-- === UPDATE: New Price Summary Structure === -->
                 <div class="bg-white rounded-lg shadow p-4 sm:p-6 mt-6"><h2 class="text-xl font-bold mb-4 text-gray-800">Price Summary</h2><div id="price-summary-container-step1" class="space-y-2 text-sm pt-4 border-t"></div></div>
                 <div class="mt-6"><button id="btn-to-address" class="btn btn-primary btn-full"><i class="fas fa-arrow-right"></i> Proceed to Address</button></div>
             </div>
@@ -101,7 +103,6 @@
             <!-- STEP 3: DELIVERY & PAYMENT -->
             <div id="step-payment" class="step-content">
                 <div class="bg-white rounded-lg shadow p-4 sm:p-6 space-y-6"><div><h3 class="text-xl font-bold text-gray-800 mb-3">3. Delivery Option</h3><div id="delivery-option-group" class="option-group"><label class="option-label selected"><input type="radio" name="delivery" value="Self" checked>Self Delivery</label><label class="option-label"><input type="radio" name="delivery" value="Ramazone"><span id="ramazone-delivery-label"></span></label></div><p id="ramazone-delivery-info" class="text-xs text-gray-500 mt-2 text-center"></p></div><div class="border-t pt-6"><h3 class="text-xl font-bold text-gray-800 mb-3">4. Payment Method</h3><div id="payment-option-group" class="option-group"><label class="option-label selected"><input type="radio" name="payment" value="Cash on Delivery" checked>Cash on Delivery</label><label class="option-label"><input type="radio" name="payment" value="Online Payment">Online Payment</label></div></div></div>
-                <!-- === UPDATE: New Price Summary Structure in final step === -->
                 <div class="bg-white rounded-lg shadow p-4 sm:p-6 mt-6"><h2 class="text-xl font-bold mb-4 text-gray-800">Final Price Details</h2><div class="space-y-3"><div id="coupon-section" class="flex items-center justify-between gap-2"><input type="text" id="coupon-input" placeholder="Have a coupon code?" class="form-input flex-grow"><button id="apply-coupon-btn" class="btn btn-primary !py-2.5 !px-4">Apply</button></div><div id="applied-coupon-div" class="hidden items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg"><p class="text-sm font-semibold text-green-700">Coupon <span id="applied-coupon-code" class="font-bold"></span> applied!</p><button id="remove-coupon-btn" class="text-red-500 hover:text-red-700 font-bold text-lg">&times;</button></div><div id="price-summary-container-step3" class="space-y-2 text-sm pt-4 border-t"></div></div></div>
                 <div class="mt-6 flex gap-4"><button id="btn-back-to-address" class="btn btn-secondary flex-1"><i class="fas fa-arrow-left"></i> Back</button><button id="place-order-btn" class="btn btn-primary flex-1"><i class="fas fa-check"></i> Place Order</button></div>
             </div>
