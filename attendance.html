@@ -11,37 +11,24 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Guard Attendance">
     <meta name="application-name" content="Guard Attendance">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
         pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.7;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
-            font-size: 0.875rem; /* 14px */
+            white-space: pre-wrap; word-wrap: break-word; line-height: 1.7;
+            padding: 1rem; border-radius: 0.5rem; transition: all 0.3s ease;
+            border: 1px solid transparent; font-size: 0.875rem; /* 14px */
         }
-        @media (min-width: 768px) {
-            pre {
-                font-size: 1rem; /* 16px */
-            }
-        }
+        @media (min-width: 768px) { pre { font-size: 1rem; /* 16px */ } }
         pre.editable {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
             background-color: #fefcbf1a;
         }
-        pre:focus {
-            outline: none;
-        }
+        pre:focus { outline: none; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -60,17 +47,17 @@
             </button>
         </div>
         
-        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
+        <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
             <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Guard Attendance Report</h2>
             <div id="guardReportContainer">
                 </div>
-            <p id="saveStatus" class="text-sm text-gray-500 h-4 mb-2 text-right"></p>
-            <div class="flex justify-end items-center mt-4">
+            <div class="flex justify-between items-center mt-4">
+                <p id="saveStatus" class="text-sm text-gray-500 h-4"></p>
                 <button id="editBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
                     ✏️ Edit Report
                 </button>
             </div>
-        </div>
+        </main>
 
     </div>
 
@@ -82,25 +69,31 @@
             const saveStatusElement = document.getElementById('saveStatus');
             const editBtn = document.getElementById('editBtn');
             const shareButton = document.getElementById('whatsappShareBtn');
-            const storageKey = 'savedGuardReportText';
             const oldDateRegex = /\d{2}\/\d{2}\/\d{4}/g;
+
+            // --- Storage Keys for Day and Night Shifts ---
+            const dayStorageKey = 'savedDayGuardReportText';
+            const nightStorageKey = 'savedNightGuardReportText';
+            let activeStorageKey = ''; // This will be set to the correct key on load
 
             // --- Guard Report Templates ---
             const dayGuardTemplate = `
-W/H :-  *Rudransh warehouse* Date :- 10/09/2025
+W/H :-  *Rudransh warehouse*
+Date :- 10/09/2025
 Company :- Adya Security 
 Shift :- Day 
-Guard name:-  *Santosh Kumar* Attendance:- Present 🖐️
-Phone no: 9534674555
-            `.trim();
+Guard name:-  *Santosh Kumar*
+Attendance:- Present 🖐️
+Phone no: 9534674555`.trim();
 
             const nightGuardTemplate = `
-W/H :-  *Rudransh warehouse* Date :- 10/09/2025
+W/H :-  *Rudransh warehouse*
+Date :- 10/09/2025
 Company :- Adya Security 
 Shift :- Night 
-Guard name:-  *Manikant* Attendance:- Present 🖐️
-Phone no: 9534674555
-            `.trim();
+Guard name:-  *Manikant*
+Attendance:- Present 🖐️
+Phone no: 9534674555`.trim();
 
             // --- Get Today's Date ---
             const today = new Date();
@@ -109,41 +102,42 @@ Phone no: 9534674555
             const year = today.getFullYear();
             const formattedDate = `${day}/${month}/${year}`;
             
-            // --- Function to update dates in the report ---
+            // --- Function to update date in a report string ---
             function updateReportDate(reportText) {
                 return reportText.replace(oldDateRegex, formattedDate);
             }
 
-            // --- Function to show guard report based on time ---
-            function showGuardReportByTime() {
+            // --- CORRECTED Function to load the right report based on time ---
+            function loadCorrectGuardReport() {
                 const currentHour = today.getHours(); // 0-23
-                let currentReportText;
-
-                // Day shift: 6 AM (6) to 3:59 PM (15)
+                let templateText;
+                
+                // Day shift: 6 AM (hour 6) to 3:59 PM (hour 15)
                 if (currentHour >= 6 && currentHour < 16) { 
-                    currentReportText = dayGuardTemplate;
-                } else { // Night shift: 4 PM (16) to 5:59 AM (5)
-                    currentReportText = nightGuardTemplate;
+                    templateText = dayGuardTemplate;
+                    activeStorageKey = dayStorageKey;
+                } else { // Night shift: 4 PM (hour 16) to 5:59 AM (hour 5)
+                    templateText = nightGuardTemplate;
+                    activeStorageKey = nightStorageKey;
                 }
 
-                // Check if there's a saved report in localStorage
-                const savedReport = localStorage.getItem(storageKey);
-                if (savedReport) {
-                    // If a saved report exists, use it after updating its date
-                    guardReportContainer.innerHTML = `<pre id="editableGuardReport" class="text-gray-800" contenteditable="false">${updateReportDate(savedReport)}</pre>`;
-                } else {
-                    // Otherwise, use the template after updating its date
-                    guardReportContainer.innerHTML = `<pre id="editableGuardReport" class="text-gray-800" contenteditable="false">${updateReportDate(currentReportText)}</pre>`;
-                }
+                // Check localStorage for a saved version of the CURRENT shift's report
+                const savedReport = localStorage.getItem(activeStorageKey);
+                
+                // Use the saved report if it exists, otherwise use the default template
+                const reportToShow = savedReport ? savedReport : templateText;
+                
+                // Display the final report after updating its date
+                guardReportContainer.innerHTML = `<pre id="editableGuardReport" class="text-gray-800" contenteditable="false">${updateReportDate(reportToShow)}</pre>`;
             }
 
             // --- Initial Load ---
-            showGuardReportByTime();
+            loadCorrectGuardReport();
 
             // --- Event Listeners ---
             editBtn.addEventListener('click', function() {
                 const editableReportElement = document.getElementById('editableGuardReport');
-                if (!editableReportElement) return; // Exit if element not found
+                if (!editableReportElement) return;
 
                 const isEditable = editableReportElement.getAttribute('contenteditable') === 'true';
                 if (isEditable) {
@@ -163,13 +157,14 @@ Phone no: 9534674555
             });
 
             let saveTimeout;
-            guardReportContainer.addEventListener('input', function(event) {
+            guardReportContainer.addEventListener('input', function() {
                 const editableReportElement = document.getElementById('editableGuardReport');
                 if (editableReportElement && editableReportElement.getAttribute('contenteditable') === 'true') {
                     saveStatusElement.textContent = 'Saving...';
                     clearTimeout(saveTimeout);
                     saveTimeout = setTimeout(() => {
-                        localStorage.setItem(storageKey, editableReportElement.innerText);
+                        // Save the text to the correct storage (day or night)
+                        localStorage.setItem(activeStorageKey, editableReportElement.innerText);
                         saveStatusElement.textContent = 'Saved!';
                         setTimeout(() => { saveStatusElement.textContent = ''; }, 2000);
                     }, 1000);
