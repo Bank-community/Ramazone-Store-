@@ -80,7 +80,10 @@ function updatePriceSummary() {
     document.getElementById('price-summary-container-step1').innerHTML = summaryStep1HTML;
 
     const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
-    const deliveryFee = (document.querySelector('input[name="delivery"]:checked').value === 'Ramazone' && subtotal < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0;
+    // Assuming the value for pickup is "Pickup" in the HTML.
+    const deliveryOption = document.querySelector('input[name="delivery"]:checked').value;
+    const deliveryFee = (deliveryOption === 'Ramazone' && subtotal < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0;
+    
     const grandTotal = subtotal - couponDiscount + deliveryFee;
     let summaryStep3HTML = `<div class="flex justify-between"><span class="text-gray-600">Total MRP</span><span class="font-medium text-gray-800 line-through">₹${totalMRP.toLocaleString('en-IN')}</span></div>`;
     if(totalSavings > 0) summaryStep3HTML += `<div class="flex justify-between text-green-600"><span>Product Savings</span><span>- ₹${totalSavings.toLocaleString('en-IN')}</span></div>`;
@@ -113,20 +116,89 @@ function applyCoupon() { const code = document.getElementById('coupon-input').va
 function removeCoupon() { appliedCoupon = null; showToast('Coupon removed.', 'info'); document.getElementById('coupon-input').value = ''; document.getElementById('coupon-section').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('hidden'); updatePriceSummary(); }
 
 // --- ORDER PLACEMENT & WHATSAPP MESSAGE ---
-async function placeOrder(e) { e.preventDefault(); const btn = e.currentTarget; btn.textContent = 'Placing...'; btn.disabled = true; const orderId = 'RMZ' + Math.random().toString(36).substr(2, 8).toUpperCase(); const customerDetails = { name: document.getElementById('customer-name').value, mobile: document.getElementById('customer-mobile').value, address: document.getElementById('customer-address').value }; let subtotal = 0, totalMRP = 0; orderItems.forEach(item => { const isPack = item.pack && item.pack.name !== 'Single Item'; const price = isPack ? Number(item.pack.price) : Number(item.displayPrice); const mrp = Number(item.originalPrice) > price ? Number(item.originalPrice) : price; subtotal += price * item.quantity; totalMRP += mrp * item.quantity; }); const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0; const deliveryFee = (document.querySelector('input[name="delivery"]:checked').value === 'Ramazone' && subtotal < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0; const grandTotal = subtotal - couponDiscount + deliveryFee; const orderData = { orderId, customerDetails, grandTotal, paymentMethod: document.querySelector('input[name="payment"]:checked').value, deliveryMethod: document.querySelector('input[name="delivery"]:checked').value, items: orderItems.map(item => ({ id: item.id, name: (item.pack && item.pack.name !== 'Single Item') ? `${item.name} (${item.pack.name})` : item.name, quantity: item.quantity, displayPrice: (item.pack && item.pack.name !== 'Single Item') ? item.pack.price : item.displayPrice, originalPrice: item.originalPrice || item.displayPrice, image: item.images?.[0] || '' })), priceSummary: { subtotal, totalMRP, coupon: appliedCoupon, deliveryFee, grandTotal }, status: 'Pending', createdAt: firebase.database.ServerValue.TIMESTAMP }; try { await database.ref(`ramazone/orders/pending/${orderId}`).set(orderData); const sellerPhoneNumber = '917903698180'; 
-// === UPDATE: Enhanced WhatsApp Message ===
-let message = `🛍️ *New Ramazone Order* 🛍️\n\n*ID:* ${orderId}\n\n*Customer:*\n${customerDetails.name}\n${customerDetails.mobile}\n${customerDetails.address}\n\n*Items:*\n`; 
-orderData.items.forEach((item, i) => { message += `${i+1}. *${item.name}* (x${item.quantity}) - *₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}*\n`; }); 
-message += `\n--- *Price Details* ---\n`;
-message += `*Total MRP:* ₹${totalMRP.toLocaleString('en-IN')}\n`;
-const totalSavings = totalMRP - subtotal + couponDiscount;
-if (totalSavings > 0) message += `*Total Savings:* *-₹${totalSavings.toLocaleString('en-IN')}*\n`;
-if(couponDiscount > 0) message += `*Coupon (${appliedCoupon.code}):* -₹${couponDiscount.toLocaleString('en-IN')}\n`;
-message += `*Delivery Fee:* ${deliveryFee > 0 ? `₹${deliveryFee.toLocaleString('en-IN')}` : 'Free'}\n--------------------\n`;
-message += `*Grand Total:* *₹${grandTotal.toLocaleString('en-IN')}*\n\n`;
-message += `*Payment:* ${orderData.paymentMethod}\n`;
-message += `*Delivery:* ${orderData.deliveryMethod} Delivery`;
-saveCart([]); localStorage.setItem('ramazoneRecentOrderId', orderId); window.location.href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`; } catch (error) { console.error("Failed to place order:", error); showToast('Could not place order.', 'error'); btn.textContent = 'Place Order'; btn.disabled = false; } }
+async function placeOrder(e) {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    btn.textContent = 'Placing...';
+    btn.disabled = true;
+
+    const orderId = 'RMZ' + Math.random().toString(36).substr(2, 8).toUpperCase();
+    const customerDetails = {
+        name: document.getElementById('customer-name').value,
+        mobile: document.getElementById('customer-mobile').value,
+        address: document.getElementById('customer-address').value
+    };
+
+    let subtotal = 0, totalMRP = 0;
+    orderItems.forEach(item => {
+        const isPack = item.pack && item.pack.name !== 'Single Item';
+        const price = isPack ? Number(item.pack.price) : Number(item.displayPrice);
+        const mrp = Number(item.originalPrice) > price ? Number(item.originalPrice) : price;
+        subtotal += price * item.quantity;
+        totalMRP += mrp * item.quantity;
+    });
+
+    const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
+    const deliveryOption = document.querySelector('input[name="delivery"]:checked').value;
+    const deliveryFee = (deliveryOption === 'Ramazone' && subtotal < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0;
+    const grandTotal = subtotal - couponDiscount + deliveryFee;
+
+    const orderData = {
+        orderId,
+        customerDetails,
+        grandTotal,
+        paymentMethod: document.querySelector('input[name="payment"]:checked').value,
+        deliveryMethod: deliveryOption, // Use the stored delivery option
+        items: orderItems.map(item => ({
+            id: item.id,
+            name: (item.pack && item.pack.name !== 'Single Item') ? `${item.name} (${item.pack.name})` : item.name,
+            quantity: item.quantity,
+            displayPrice: (item.pack && item.pack.name !== 'Single Item') ? item.pack.price : item.displayPrice,
+            originalPrice: item.originalPrice || item.displayPrice,
+            image: item.images?.[0] || ''
+        })),
+        priceSummary: { subtotal, totalMRP, coupon: appliedCoupon, deliveryFee, grandTotal },
+        status: 'Pending',
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    try {
+        await database.ref(`ramazone/orders/pending/${orderId}`).set(orderData);
+        const sellerPhoneNumber = '917903698180';
+        
+        let message = `🛍️ *New Ramazone Order* 🛍️\n\n*ID:* ${orderId}\n\n*Customer:*\n${customerDetails.name}\n${customerDetails.mobile}\n${customerDetails.address}\n\n*Items:*\n`;
+        orderData.items.forEach((item, i) => {
+            message += `${i+1}. *${item.name}* (x${item.quantity}) - *₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}*\n`;
+        });
+        message += `\n--- *Price Details* ---\n`;
+        message += `*Total MRP:* ₹${totalMRP.toLocaleString('en-IN')}\n`;
+        const totalSavings = totalMRP - subtotal + couponDiscount;
+        if (totalSavings > 0) message += `*Total Savings:* *-₹${totalSavings.toLocaleString('en-IN')}*\n`;
+        if (couponDiscount > 0) message += `*Coupon (${appliedCoupon.code}):* -₹${couponDiscount.toLocaleString('en-IN')}\n`;
+        message += `*Delivery Fee:* ${deliveryFee > 0 ? `₹${deliveryFee.toLocaleString('en-IN')}` : 'Free'}\n--------------------\n`;
+        message += `*Grand Total:* *₹${grandTotal.toLocaleString('en-IN')}*\n\n`;
+        message += `*Payment:* ${orderData.paymentMethod}\n`;
+
+        // === UPDATE: Smart Delivery Method Text for WhatsApp ===
+        // Ab yahan "Pickup" ke liye alag se message banega.
+        if (orderData.deliveryMethod === 'Pickup') {
+            message += `*Delivery:* Customer Pickup`;
+        } else {
+            message += `*Delivery:* ${orderData.deliveryMethod} Delivery`;
+        }
+        
+        saveCart([]);
+        localStorage.setItem('ramazoneRecentOrderId', orderId);
+        window.location.href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`;
+
+    } catch (error) {
+        console.error("Failed to place order:", error);
+        showToast('Could not place order.', 'error');
+        btn.textContent = 'Place Order';
+        btn.disabled = false;
+    }
+}
+
 
 // --- ORDER STATUS, INVOICE, and RECENT ORDER ---
 async function searchOrder() { const orderId = document.getElementById('order-id-input').value.trim().toUpperCase(); const searchStatusEl = document.getElementById('search-status'); if (!orderId) { searchStatusEl.textContent = 'Please enter an Order ID.'; return; } searchStatusEl.textContent = 'Searching...'; document.getElementById('checkout-flow-container').classList.add('hidden'); document.getElementById('order-status-container').classList.remove('active'); try { const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get(); if (snapshot.exists()) { const orderData = snapshot.val(); renderSearchResult(orderData); searchStatusEl.innerHTML = `Showing results for Order ID: <span class="font-bold text-green-600">${orderId}</span>`; document.getElementById('order-status-container').classList.add('active'); } else { searchStatusEl.textContent = 'Order not found or not confirmed yet.'; } } catch (error) { searchStatusEl.textContent = 'An error occurred during search.'; } }
@@ -137,5 +209,4 @@ async function downloadInvoiceDirectly(orderData) { const btn = document.getElem
 async function checkAndDisplayRecentOrder() { const orderId = localStorage.getItem('ramazoneRecentOrderId'); if (!orderId) return; let orderData = null; for (const status of ['pending', 'confirmed', 'rejected']) { const snapshot = await database.ref(`ramazone/orders/${status}/${orderId}`).get(); if (snapshot.exists()) { orderData = snapshot.val(); break; } } if (!orderData || orderData.status === 'Delivered') { localStorage.removeItem('ramazoneRecentOrderId'); return; } const container = document.getElementById('recent-order-status-container'); container.innerHTML = `<div class="bg-white rounded-lg shadow p-4 sm:p-6"><h2 class="text-xl font-bold mb-4 text-gray-800">Your Recent Order Status <span class="font-mono text-base text-indigo-600">(${orderId})</span></h2><div id="recent-delivery-tracker"></div><div class="text-center mt-4"><button onclick="document.getElementById('order-id-input').value='${orderId}'; document.getElementById('search-order-btn').click();" class="text-indigo-600 font-semibold text-sm">View Full Details</button></div></div>`; renderDeliveryTracker(orderData.status, document.getElementById('recent-delivery-tracker')); }
 function numberToWords(num) { const a=["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],b=["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];if((num=num.toString()).length>9)return"overflow";const n=("000000000"+num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);if(!n)return;let str="";str+=n[1]!=0?(a[Number(n[1])]||b[n[1][0]]+" "+a[n[1][1]])+" crore ":"";str+=n[2]!=0?(a[Number(n[2])]||b[n[2][0]]+" "+a[n[2][1]])+" lakh ":"";str+=n[3]!=0?(a[Number(n[3])]||b[n[3][0]]+" "+a[n[3][1]])+" thousand ":"";str+=n[4]!=0?(a[Number(n[4])]||b[n[4][0]]+" "+a[n[4][1]])+" hundred ":"";str+=n[5]!=0?(str!=""?"and ":"")+(a[Number(n[5])]||b[n[5][0]]+" "+a[n[5][1]]):"";return str.replace(/\s+/g," ").trim().split(" ").map(w=>w.charAt(0).toUpperCase()+w.substr(1)).join(" ")+" Rupees Only"}
 function showToast(message, type = "info") { const toast = document.getElementById("toast-notification"); if (!toast) return; toast.textContent = message; toast.className = 'show'; if (type === 'success') toast.style.backgroundColor = '#16a34a'; else if (type === 'error') toast.style.backgroundColor = '#ef4444'; else toast.style.backgroundColor = '#333'; setTimeout(() => toast.classList.remove("show"), 3000); }
-
 
