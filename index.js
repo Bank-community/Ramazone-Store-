@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = 5000;
 
 // यह आपकी html, css, js फाइलों को serve करेगा
 app.use(express.static('.'));
@@ -16,6 +16,6 @@ app.get('/api/firebase-config', (req, res) => {
   res.json(firebaseConfig);
 });
 
-app.listen(port, () => {
-  console.log(`Server is running!`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on port ${port}!`);
 });
