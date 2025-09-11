@@ -1,18 +1,19 @@
 // --- GLOBAL STATE ---
 let allProductsCache = [];
+let allCategoriesCache = [];
 let database;
 let deferredInstallPrompt = null;
-let festiveCountdownInterval = null; // Timer interval for festive collection
+let festiveCountdownInterval = null; 
 
 // **INFINITE SCROLL STATE FOR DEALS**
-let dealsOfTheDayProducts = []; // Saare deals products yahaan store honge
-let currentlyDisplayedDeals = 0; // Kitne products abhi dikh rahe hain
-const dealsPerPage = 10; // Ek baar mein kitne load karne hain
-let isLoadingDeals = false; // Kya abhi loading chal rahi hai?
-let dealsObserver = null; // Intersection Observer ka instance
+let dealsOfTheDayProducts = []; 
+let currentlyDisplayedDeals = 0; 
+const dealsPerPage = 10; 
+let isLoadingDeals = false; 
+let dealsObserver = null; 
 
 
-// --- PWA LOGIC (Kept for future) ---
+// --- PWA LOGIC ---
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
@@ -81,8 +82,10 @@ function showToast(message, type = "info") { const toast = document.getElementBy
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
+
 async function initializeApp() {
     try {
+        await loadCoreComponents();
         const response = await fetch('/api/firebase-config');
         if (!response.ok) throw new Error(`Server error`);
         const config = await response.json();
@@ -94,18 +97,36 @@ async function initializeApp() {
             throw new Error("Invalid Firebase config");
         }
     } catch (error) {
-        console.error("Firebase Init Error:", error);
-        document.getElementById('main-content-area').innerHTML = `<p class="text-center p-8">Application could not start. Please try again later.</p>`;
+        console.error("Initialization Error:", error);
+        document.body.innerHTML = `<p class="text-center p-8 text-red-500">Application could not start. Please check connection and try again later.</p>`;
     }
 }
 
-// --- DATA LOADING ---
+async function loadCoreComponents() {
+    try {
+        const searchContainer = document.getElementById('search-bar-container');
+        if (searchContainer) {
+            const response = await fetch('sections/search-bar.html');
+            if (!response.ok) throw new Error('Search bar section not found');
+            searchContainer.innerHTML = await response.text();
+        }
+    } catch (error) {
+        console.error("Core component load error:", error);
+    }
+}
+
 function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
         const data = snapshot.val() || {};
         let products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
         allProductsCache = products.filter(p => p && p.isVisible !== false);
+
+        const homepageData = data.homepage || {};
+        if (homepageData.normalCategories) {
+            allCategoriesCache = homepageData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
+        }
+
         await loadPageStructure();
         renderAllSections(data);
     }, (error) => {
@@ -149,6 +170,71 @@ function renderAllSections(data) {
     updateCartIcon();
     setupScrollAnimations();
     setupHeaderScrollEffect();
+    setupHomepageSearch();
+}
+
+// --- HOMEPAGE LIVE SEARCH LOGIC (UPDATED) ---
+function setupHomepageSearch() {
+    const searchInput = document.getElementById('home-search-input');
+    if (!searchInput) return;
+
+    const suggestionsContainer = document.getElementById('home-search-suggestions');
+    const categorySuggestionsContainer = document.getElementById('home-category-suggestions');
+    const searchOverlay = document.getElementById('search-overlay');
+    const headerSearchTrigger = document.getElementById('header-search-trigger');
+
+    // Category suggestions abhi bhi banenge, lekin focus par dikhenge nahi
+    categorySuggestionsContainer.innerHTML = allCategoriesCache.map(cat => `<span class="suggestion-tag" data-category="${cat.name}">${cat.name}</span>`).join('');
+    categorySuggestionsContainer.addEventListener('click', e => {
+        if (e.target.classList.contains('suggestion-tag')) {
+            const categoryName = e.target.dataset.category;
+            window.location.href = `./products.html?category=${encodeURIComponent(categoryName)}`;
+        }
+    });
+
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        if (query.length < 1) {
+            suggestionsContainer.classList.add('hidden');
+            return;
+        }
+        const suggestions = allProductsCache.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+        if (suggestions.length > 0) {
+            suggestionsContainer.innerHTML = suggestions.map(prod => `
+                <a href="./product-details.html?id=${prod.id}" class="suggestion-item">
+                    <img src="${(prod.images && prod.images[0]) || 'https://placehold.co/100x100/e2e8f0/64748b?text=?'}" alt="${prod.name}">
+                    <span class="text-sm text-gray-700">${prod.name}</span>
+                </a>`).join('');
+            suggestionsContainer.classList.remove('hidden');
+        } else {
+            suggestionsContainer.classList.add('hidden');
+        }
+    });
+
+    // === YAHAN BADLAV KIYA GAYA HAI ===
+    // Ab search active hone par sirf overlay dikhega, category tags nahi.
+    const activateSearchMode = () => { 
+        document.body.classList.add('search-active'); 
+        // categorySuggestionsContainer.classList.remove('hidden'); // <-- YEH LINE HATA DI GAYI HAI
+    };
+
+    // Search band hone par sab kuch hide ho jayega.
+    const deactivateSearchMode = () => { 
+        document.body.classList.remove('search-active'); 
+        categorySuggestionsContainer.classList.add('hidden'); 
+        suggestionsContainer.classList.add('hidden'); 
+    };
+
+    searchInput.addEventListener('focus', activateSearchMode);
+    searchOverlay.addEventListener('click', () => searchInput.blur());
+    searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
+
+    if (headerSearchTrigger) {
+        headerSearchTrigger.addEventListener('click', () => {
+            searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => searchInput.focus(), 300);
+        });
+    }
 }
 
 // --- HEADER SCROLL EFFECT LOGIC ---
@@ -165,47 +251,27 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
-
 // --- RECENTLY VIEWED SECTION LOGIC ---
 function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed-section');
     const container = document.getElementById('recently-viewed-container');
-    if (!section || !container) {
-        return;
-    }
+    if (!section || !container) { return; }
     try {
         const viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || [];
-        if (viewedIds.length === 0) {
-            section.style.display = 'none';
-            return;
-        }
+        if (viewedIds.length === 0) { section.style.display = 'none'; return; }
         let cardsHTML = '';
         let productsFound = 0;
         viewedIds.forEach(id => {
             const product = allProductsCache.find(p => p && p.id === id);
             if (product) {
                 const imageUrl = (product.images && product.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-                cardsHTML += `
-                    <a href="./product-details.html?id=${product.id}" class="rv-card">
-                        <img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy">
-                        <p>${product.name || 'Product Name'}</p>
-                    </a>
-                `;
+                cardsHTML += `<a href="./product-details.html?id=${product.id}" class="rv-card"><img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy"><p>${product.name || 'Product Name'}</p></a>`;
                 productsFound++;
             }
         });
-        if (productsFound > 0) {
-            container.innerHTML = cardsHTML;
-            section.style.display = 'block';
-        } else {
-            section.style.display = 'none';
-        }
-    } catch (error) {
-        console.error("Error rendering recently viewed products:", error);
-        section.style.display = 'none';
-    }
+        if (productsFound > 0) { container.innerHTML = cardsHTML; section.style.display = 'block'; } else { section.style.display = 'none'; }
+    } catch (error) { console.error("Error rendering recently viewed products:", error); section.style.display = 'none'; }
 }
-
 
 // --- FESTIVE COLLECTION SPECIFIC LOGIC ---
 function startCountdownTimer(endTimeString, elementId) {
@@ -257,38 +323,14 @@ function renderFestiveCollection(collectionData) {
     const headline = document.getElementById('festive-headline');
     const timerEl = document.getElementById('festive-countdown-timer');
     const arrowEl = document.getElementById('festive-view-all-link');
-
-    if (arrowEl) {
-        arrowEl.href = 'festive-products.html';
-    }
-
-    if (headline) {
-        const headlineColor = collectionData.headlineColor || 'var(--text-dark)';
-        headline.innerText = collectionData.title || 'Special Offers';
-        headline.style.color = headlineColor;
-        if (timerEl) timerEl.style.color = headlineColor;
-        if (arrowEl) arrowEl.style.color = headlineColor;
-    }
-    if (collectionData.endTime) {
-        startCountdownTimer(collectionData.endTime, 'festive-countdown-timer');
-    }
+    if (arrowEl) { arrowEl.href = 'festive-products.html'; }
+    if (headline) { const headlineColor = collectionData.headlineColor || 'var(--text-dark)'; headline.innerText = collectionData.title || 'Special Offers'; headline.style.color = headlineColor; if (timerEl) timerEl.style.color = headlineColor; if (arrowEl) arrowEl.style.color = headlineColor; }
+    if (collectionData.endTime) { startCountdownTimer(collectionData.endTime, 'festive-countdown-timer'); }
     const slider = document.getElementById('festive-product-slider');
     const metadata = collectionData.productMetadata || {};
     const limit = collectionData.productsToShow || collectionData.productIds.length;
-    let productsHTML = collectionData.productIds.slice(0, limit).map(id => {
-        const product = allProductsCache.find(p => p && p.id === id);
-        if (!product) return '';
-        return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
-    }).join('');
-
-    productsHTML += `
-        <a href="festive-products.html" class="view-all-card">
-            <div class="view-all-circle">
-                <i class="fas fa-arrow-right"></i>
-            </div>
-            <span>View All</span>
-        </a>
-    `;
+    let productsHTML = collectionData.productIds.slice(0, limit).map(id => { const product = allProductsCache.find(p => p && p.id === id); if (!product) return ''; return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage }); }).join('');
+    productsHTML += `<a href="festive-products.html" class="view-all-card"><div class="view-all-circle"><i class="fas fa-arrow-right"></i></div><span>View All</span></a>`;
     slider.innerHTML = productsHTML;
 }
 
@@ -298,7 +340,6 @@ function createProductCardHTML(prod, cardClass = '') {
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
     const ratingTag = prod.rating ? `<div class="card-rating-tag rating-tag-bottom-left">${prod.rating} <i class="fas fa-star"></i></div>` : '';
     const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
-
     let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
     let originalPriceHTML = '', discountHTML = '';
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
@@ -308,7 +349,6 @@ function createProductCardHTML(prod, cardClass = '') {
     }
     const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
     const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
-
     return `<div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a></div></div>`;
 }
 
@@ -342,12 +382,7 @@ function setupGlobalEventListeners() {
 
 function setupScrollAnimations() {
     const obs = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (e.isIntersecting) {
-                e.target.classList.add('visible');
-                obs.unobserve(e.target);
-            }
-        });
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 }
@@ -357,27 +392,17 @@ function renderHighlightedProducts() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const section = document.getElementById('highlighted-products-section');
     if (!wrapper || !section) { if (section) section.style.display = 'none'; return; }
-
     dealsOfTheDayProducts = getDealsOfTheDayProducts();
-
-    if (dealsOfTheDayProducts.length === 0) {
-        section.style.display = 'none';
-        return;
-    }
-
+    if (dealsOfTheDayProducts.length === 0) { section.style.display = 'none'; return; }
     section.style.display = 'block';
     wrapper.innerHTML = ''; 
     currentlyDisplayedDeals = 0;
-    if (dealsObserver) dealsObserver.disconnect(); // Purana observer reset karo
-
+    if (dealsObserver) dealsObserver.disconnect();
     loadMoreDeals(); 
-
     const loader = document.getElementById('deals-loader');
     if (loader) {
         dealsObserver = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && !isLoadingDeals) {
-                loadMoreDeals();
-            }
+            if (entries[0].isIntersecting && !isLoadingDeals) { loadMoreDeals(); }
         }, { threshold: 1.0 });
         dealsObserver.observe(loader);
     }
@@ -387,41 +412,19 @@ function loadMoreDeals() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const loader = document.getElementById('deals-loader');
     if (isLoadingDeals || !wrapper || !loader) return;
-
-    if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length && currentlyDisplayedDeals > 0) {
-        loader.style.display = 'none'; 
-        if (dealsObserver) dealsObserver.disconnect();
-        return;
-    }
-
-    const productsToLoad = dealsOfTheDayProducts.slice(
-        currentlyDisplayedDeals, 
-        currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage)
-    );
-
-    if (productsToLoad.length === 0) {
-        loader.style.display = 'none';
-        if (dealsObserver) dealsObserver.disconnect();
-        return;
-    }
-
+    if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length && currentlyDisplayedDeals > 0) { loader.style.display = 'none'; if (dealsObserver) dealsObserver.disconnect(); return; }
+    const productsToLoad = dealsOfTheDayProducts.slice(currentlyDisplayedDeals, currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage));
+    if (productsToLoad.length === 0) { loader.style.display = 'none'; if (dealsObserver) dealsObserver.disconnect(); return; }
     isLoadingDeals = true;
     loader.style.display = 'flex'; 
-
     setTimeout(() => {
         const productsHTML = productsToLoad.map(p => createProductCardHTML(p, 'grid-item')).join('');
         wrapper.insertAdjacentHTML('beforeend', productsHTML);
         currentlyDisplayedDeals += productsToLoad.length;
         isLoadingDeals = false;
-
-        if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) {
-            loader.style.display = 'none';
-            if (dealsObserver) dealsObserver.disconnect();
-        }
-
+        if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) { loader.style.display = 'none'; if (dealsObserver) dealsObserver.disconnect(); }
     }, 500);
 }
-
 
 // --- OTHER RENDER FUNCTIONS ---
 function renderSlider(sliderData) {
@@ -453,7 +456,6 @@ function renderVideosSection(videoData) {
     slider.innerHTML = videoData.map(video => `<a href="${video.youtubeUrl || '#'}" target="_blank" class="video-card"><img src="${video.imageUrl || 'https://placehold.co/600x400/black/white?text=Video'}" alt="${video.title}" loading="lazy"><i class="fas fa-play-circle play-icon"></i><div class="video-card-overlay"><h3 class="video-card-title">${video.title}</h3><p class="video-card-desc">${video.description || ''}</p></div></a>`).join('');
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: ADD TO CART BUTTONS REMOVED FROM THIS SECTION ===
 function renderJustForYouSection(jfyData) {
     const section = document.getElementById('just-for-you-section');
     if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
@@ -461,59 +463,18 @@ function renderJustForYouSection(jfyData) {
     const mainProduct = allProductsCache.find(p => p.id === topDeals?.mainProductId);
     const subProduct1 = allProductsCache.find(p => p.id === topDeals?.subProductIds?.[0]);
     const subProduct2 = allProductsCache.find(p => p.id === topDeals?.subProductIds?.[1]);
-
-    if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { 
-        section.style.display = 'none'; 
-        return; 
-    }
-
+    if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { section.style.display = 'none'; return; }
     const isDesktop = window.innerWidth >= 768;
     let mainProductImage = mainProduct.images?.[0] || 'https://placehold.co/600x600/e2e8f0/64748b?text=Image';
-    if (isDesktop && topDeals.mainProductImageUrl) {
-        mainProductImage = topDeals.mainProductImageUrl;
-    }
-    
+    if (isDesktop && topDeals.mainProductImageUrl) { mainProductImage = topDeals.mainProductImageUrl; }
     const getDiscount = p => p && p.originalPrice > p.displayPrice ? `<p class="discount">${Math.round(((p.originalPrice - p.displayPrice) / p.originalPrice) * 100)}% OFF</p>` : '';
-    
     const jfyContent = document.getElementById('jfy-content');
-    if (jfyContent) {
-        jfyContent.innerHTML = `
-            <div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};">
-                <h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2>
-                <div class="jfy-grid">
-                    <a href="${poster.linkUrl || '#'}" class="jfy-poster-card">
-                        <div class="jfy-poster-slider-container">
-                            <div class="jfy-poster-slider">${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image"></div>`).join('')}</div>
-                            <div class="jfy-slider-dots"></div>
-                        </div>
-                    </a>
-                    <div class="jfy-deals-card">
-                        <div class="relative jfy-main-product">
-                            <a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProductImage}" alt="${mainProduct.name}"></a>
-                        </div>
-                        <div class="jfy-sub-products">
-                            <div class="relative jfy-sub-product-item">
-                                <a href="./product-details.html?id=${subProduct1.id}">
-                                    <div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}"></div>
-                                    <div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div>
-                                </a>
-                            </div>
-                            <div class="relative jfy-sub-product-item">
-                                <a href="./product-details.html?id=${subProduct2.id}">
-                                    <div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}"></div>
-                                    <div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }
+    if (jfyContent) { jfyContent.innerHTML = `<div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};"><h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2><div class="jfy-grid"><a href="${poster.linkUrl || '#'}" class="jfy-poster-card"><div class="jfy-poster-slider-container"><div class="jfy-poster-slider">${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image"></div>`).join('')}</div><div class="jfy-slider-dots"></div></div></a><div class="jfy-deals-card"><div class="relative jfy-main-product"><a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProductImage}" alt="${mainProduct.name}"></a></div><div class="jfy-sub-products"><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct1.id}"><div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}"></div><div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div></a></div><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct2.id}"><div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}"></div><div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div></a></div></div></div></div></div>`; }
     section.style.display = 'block';
     if (poster.images && poster.images.length > 0) initializeJfySlider(poster.images.length);
 }
 
-function renderSearch(searchData) { if (!searchData?.scrollingTexts?.length) return; const texts = searchData.scrollingTexts; let i = 0; const el = document.getElementById("categoryText"); if (window.searchInterval) clearInterval(window.searchInterval); window.searchInterval = setInterval(() => { if (el) { el.style.opacity = 0; setTimeout(() => { el.innerText = texts[i]; el.style.opacity = 1; i = (i + 1) % texts.length; }, 300); } }, 2500); }
+function renderSearch(searchData) { const searchInput = document.getElementById('home-search-input'); if (!searchInput || !searchData?.scrollingTexts?.length) { if(searchInput) searchInput.placeholder = "Search for products..."; return; } const texts = searchData.scrollingTexts; let i = 0; if (window.searchInterval) clearInterval(window.searchInterval); const updatePlaceholder = () => { if (searchInput && document.activeElement !== searchInput) { searchInput.placeholder = `Search for ${texts[i]}...`; i = (i + 1) % texts.length; } }; updatePlaceholder(); window.searchInterval = setInterval(updatePlaceholder, 3000); }
 function renderInfoMarquee(text) { const section = document.getElementById('info-marquee-section'); if (!text) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; section.querySelector('#info-marquee-text').innerHTML = text; }
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data?.front || !data.back) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
 function renderFooter(data) { if (!data) return; document.getElementById('menu-play-link').href = data.playLink || '#'; document.getElementById('menu-cashback-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const submenuContainer = document.getElementById('follow-submenu'); const desktopContainer = document.getElementById('desktop-social-links'); submenuContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', name: 'YouTube' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', name: 'Instagram' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', name: 'Facebook' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', name: 'WhatsApp' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; submenuContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="submenu-item"><img src="${p.icon}" alt="${key}"><span>${p.name}</span></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
@@ -521,67 +482,18 @@ function setupSideMenu() { const menuToggleBtn = document.getElementById('menu-t
 
 // --- SLIDER LOGIC ---
 let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
-function initializeSlider(count) {
-    const slider = document.getElementById("main-slider");
-    const dots = document.getElementById("slider-dots-container");
-    totalSlides = count;
-    if (totalSlides <= 1) { if (dots) dots.style.display = "none"; return; }
-    slider.appendChild(slider.children[0].cloneNode(true));
-    slider.insertBefore(slider.children[totalSlides - 1].cloneNode(true), slider.children[0]);
-    slider.style.transform = `translateX(-${100 * currentSlide}%)`;
-    dots.innerHTML = Array.from({ length: totalSlides }, (_, i) => `<div class="dot" data-slide="${i + 1}"><div class="timer"></div></div>`).join('');
-    dots.addEventListener("click", e => { const dot = e.target.closest(".dot"); if (dot) goToSlide(parseInt(dot.dataset.slide)); });
-    let startPos = 0;
-    const swipeThreshold = 50;
-    const getPositionX = e => e.type.includes("mouse") ? e.pageX : e.touches[0].clientX;
-    const swipeStart = e => { startPos = getPositionX(e); clearInterval(sliderInterval); };
-    const swipeEnd = e => {
-        const endPos = e.type.includes("touch") ? e.changedTouches[0].clientX : e.pageX;
-        if (Math.abs(endPos - startPos) > swipeThreshold) {
-            moveSlide(endPos < startPos ? 1 : -1);
-        }
-        resetSliderInterval();
-    };
-    slider.addEventListener("mousedown", swipeStart);
-    slider.addEventListener("touchstart", swipeStart, { passive: true });
-    slider.addEventListener("mouseup", swipeEnd);
-    slider.addEventListener("touchend", swipeEnd);
-    slider.addEventListener("transitionend", () => {
-        isTransitioning = false;
-        if (currentSlide === 0 || currentSlide === totalSlides + 1) {
-            slider.classList.remove("transitioning");
-            currentSlide = (currentSlide === 0) ? totalSlides : 1;
-            slider.style.transform = `translateX(-${100 * currentSlide}%)`;
-        }
-    });
-    updateDots();
-    resetSliderInterval();
-}
+function initializeSlider(count) { const slider = document.getElementById("main-slider"); const dots = document.getElementById("slider-dots-container"); totalSlides = count; if (totalSlides <= 1) { if (dots) dots.style.display = "none"; return; } slider.appendChild(slider.children[0].cloneNode(true)); slider.insertBefore(slider.children[totalSlides - 1].cloneNode(true), slider.children[0]); slider.style.transform = `translateX(-${100 * currentSlide}%)`; dots.innerHTML = Array.from({ length: totalSlides }, (_, i) => `<div class="dot" data-slide="${i + 1}"><div class="timer"></div></div>`).join(''); dots.addEventListener("click", e => { const dot = e.target.closest(".dot"); if (dot) goToSlide(parseInt(dot.dataset.slide)); }); let startPos = 0; const swipeThreshold = 50; const getPositionX = e => e.type.includes("mouse") ? e.pageX : e.touches[0].clientX; const swipeStart = e => { startPos = getPositionX(e); clearInterval(sliderInterval); }; const swipeEnd = e => { const endPos = e.type.includes("touch") ? e.changedTouches[0].clientX : e.pageX; if (Math.abs(endPos - startPos) > swipeThreshold) { moveSlide(endPos < startPos ? 1 : -1); } resetSliderInterval(); }; slider.addEventListener("mousedown", swipeStart); slider.addEventListener("touchstart", swipeStart, { passive: true }); slider.addEventListener("mouseup", swipeEnd); slider.addEventListener("touchend", swipeEnd); slider.addEventListener("transitionend", () => { isTransitioning = false; if (currentSlide === 0 || currentSlide === totalSlides + 1) { slider.classList.remove("transitioning"); currentSlide = (currentSlide === 0) ? totalSlides : 1; slider.style.transform = `translateX(-${100 * currentSlide}%)`; } }); updateDots(); resetSliderInterval(); }
 function moveSlide(dir) { if (isTransitioning) return; isTransitioning = true; const slider = document.getElementById("main-slider"); slider.classList.add("transitioning"); currentSlide += dir; slider.style.transform = `translateX(-${100 * currentSlide}%)`; updateDots(); }
 function goToSlide(num) { if (isTransitioning || currentSlide === num) return; moveSlide(num - currentSlide); resetSliderInterval(); }
-function updateDots() {
-    const dots = document.querySelectorAll(".slider-dots .dot");
-    dots.forEach(d => { d.classList.remove("active"); const timer = d.querySelector(".timer"); if (timer) { timer.style.transition = "none"; timer.style.width = "0%"; } });
-    let activeDotIndex = (currentSlide - 1 + totalSlides) % totalSlides;
-    const activeDot = dots[activeDotIndex];
-    if (activeDot) {
-        activeDot.classList.add("active");
-        const timer = activeDot.querySelector(".timer");
-        if (timer) { void timer.offsetWidth; timer.style.transition = "width 5000ms linear"; timer.style.width = "100%"; }
-    }
-}
+function updateDots() { const dots = document.querySelectorAll(".slider-dots .dot"); dots.forEach(d => { d.classList.remove("active"); const timer = d.querySelector(".timer"); if (timer) { timer.style.transition = "none"; timer.style.width = "0%"; } }); let activeDotIndex = (currentSlide - 1 + totalSlides) % totalSlides; const activeDot = dots[activeDotIndex]; if (activeDot) { activeDot.classList.add("active"); const timer = activeDot.querySelector(".timer"); if (timer) { void timer.offsetWidth; timer.style.transition = "width 5000ms linear"; timer.style.width = "100%"; } } }
 function resetSliderInterval() { clearInterval(sliderInterval); sliderInterval = setInterval(() => moveSlide(1), 5000); }
 
 // --- JFY SLIDER LOGIC ---
 let jfyCurrentSlide = 1, jfyTotalSlides = 0, jfySliderInterval, jfyIsTransitioning = false;
-function initializeJfySlider(count) {
-    const slider = document.querySelector(".jfy-poster-slider"), dots = document.querySelector(".jfy-slider-dots");
-    if (!slider) return; if ((jfyTotalSlides = count) <= 1) return void (dots && (dots.style.display = "none"));
-    slider.appendChild(slider.children[0].cloneNode(!0)), slider.insertBefore(slider.children[jfyTotalSlides - 1].cloneNode(!0), slider.children[0]), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, slider.addEventListener("transitionend", () => { jfyIsTransitioning = !1, 0 === jfyCurrentSlide && (slider.classList.remove("transitioning"), jfyCurrentSlide = jfyTotalSlides, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`), jfyCurrentSlide === jfyTotalSlides + 1 && (slider.classList.remove("transitioning"), jfyCurrentSlide = 1, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`) }), dots.innerHTML = ""; for (let i = 0; i < jfyTotalSlides; i++)dots.innerHTML += '<div class="dot" data-slide="'.concat(i + 1, '"></div>');
-    dots.addEventListener("click", e => { e.target.closest(".dot") && goToJfySlide(e.target.closest(".dot").dataset.slide) }), updateJfyDots(), resetJfySliderInterval()
-}
+function initializeJfySlider(count) { const slider = document.querySelector(".jfy-poster-slider"), dots = document.querySelector(".jfy-slider-dots"); if (!slider) return; if ((jfyTotalSlides = count) <= 1) return void (dots && (dots.style.display = "none")); slider.appendChild(slider.children[0].cloneNode(!0)), slider.insertBefore(slider.children[jfyTotalSlides - 1].cloneNode(!0), slider.children[0]), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, slider.addEventListener("transitionend", () => { jfyIsTransitioning = !1, 0 === jfyCurrentSlide && (slider.classList.remove("transitioning"), jfyCurrentSlide = jfyTotalSlides, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`), jfyCurrentSlide === jfyTotalSlides + 1 && (slider.classList.remove("transitioning"), jfyCurrentSlide = 1, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`) }), dots.innerHTML = ""; for (let i = 0; i < jfyTotalSlides; i++)dots.innerHTML += '<div class="dot" data-slide="'.concat(i + 1, '"></div>'); dots.addEventListener("click", e => { e.target.closest(".dot") && goToJfySlide(e.target.closest(".dot").dataset.slide) }), updateJfyDots(), resetJfySliderInterval() }
 function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide += dir, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4e3) }
+
 

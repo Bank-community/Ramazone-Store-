@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ramazone</title>
     
-    <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#4F46E5"/>
     <link rel="apple-touch-icon" href="https://i.ibb.co/WvTg0bc5/20240813-084352.png">
-    <!-- <link rel="manifest" href="manifest.json"> -->
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,39 +15,29 @@
 </head>
 <body class="bg-white">
 
-    <!-- === UPDATED HEADER === -->
+    <!-- Yeh elements global hain, isliye yahan rahenge -->
+    <div id="search-overlay"></div>
+    <div id="home-category-suggestions" class="hidden"></div>
+
     <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-2 flex items-center justify-between">
-                <!-- Left side: Menu Button -->
                 <div class="w-10">
-                    <button id="menu-toggle-btn" class="p-2 -ml-2">
-                        <img src="https://www.svgrepo.com/show/532195/menu.svg" alt="Menu" class="h-6 w-6">
-                    </button>
+                    <button id="menu-toggle-btn" class="p-2 -ml-2"><img src="https://www.svgrepo.com/show/532195/menu.svg" alt="Menu" class="h-6 w-6"></button>
                 </div>
-                
-                <!-- Center Area (Logo and Search) - YAHAN BADLAV KIYA GAYA HAI -->
                 <div id="header-center-area" class="flex-grow text-center relative">
-                    <!-- Logo Container -->
                     <div id="header-logo-container">
                          <a href="./index.html"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="inline-block" style="max-height: 40px;"></a>
                     </div>
-                    <!-- Hidden Search Bar for Scroll -->
                     <div id="header-search-container" class="absolute inset-0">
-                        <a href="./products.html?focus=true" class="search-link-header">
+                        <div class="search-link-header" id="header-search-trigger">
                             <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                             <span>Search...</span>
-                        </a>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Right side Icons -->
                 <div class="w-auto flex justify-end items-center gap-2">
-                    <!-- NEW: Install App Button -->
-                    <button id="install-app-btn" class="p-2 hidden">
-                        <img src="https://www.svgrepo.com/show/308714/mobile-download-phone-smartphone.svg" alt="Install App" class="h-6 w-6">
-                    </button>
-                    <!-- Cart Icon -->
+                    <button id="install-app-btn" class="p-2 hidden"><img src="https://www.svgrepo.com/show/308714/mobile-download-phone-smartphone.svg" alt="Install App" class="h-6 w-6"></button>
                     <a href="order.html" id="header-cart-link" class="header-cart-link">
                         <i class="fas fa-shopping-cart text-xl"></i>
                         <span id="cart-item-count"></span>
@@ -59,70 +47,36 @@
         </div>
     </header>
 
-    <!-- Side Menu Structure -->
     <div id="menu-overlay"></div>
     <nav id="side-menu">
-        <div class="p-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold">Menu</h2>
-        </div>
-        <div class="menu-items">
-            <a href="./index.html" class="menu-item active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a>
-            <a href="./order.html" class="menu-item" id="menu-cart-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart"><span>Cart</span></a>
-            <a href="#" class="menu-item" id="menu-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span></a>
-            <a href="#" class="menu-item" id="menu-cashback-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback"><span>Cashback</span></a>
-            <div id="menu-follow-item" class="menu-item">
-                <img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span>
-                <i class="fas fa-chevron-down text-xs ml-auto"></i>
-            </div>
-            <div id="follow-submenu" class="submenu"></div>
-        </div>
+        <div class="p-4 border-b border-gray-200"><h2 class="text-xl font-bold">Menu</h2></div>
+        <div class="menu-items"><a href="./index.html" class="menu-item active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a><a href="./order.html" class="menu-item" id="menu-cart-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart"><span>Cart</span></a><a href="#" class="menu-item" id="menu-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span></a><a href="#" class="menu-item" id="menu-cashback-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback"><span>Cashback</span></a><div id="menu-follow-item" class="menu-item"><img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span><i class="fas fa-chevron-down text-xs ml-auto"></i></div><div id="follow-submenu" class="submenu"></div></div>
     </nav>
     
-    <div id="search-container">
-         <a id="search-link" href="./products.html?focus=true">
-            <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 S0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <span class="text-gray-500">Search for&nbsp;&nbsp;<span id="categoryText" class="text-gray-800 font-medium">Products...</span></span>
-        </a>
-    </div>
+    <!-- YAHAN SEARCH BAR LOAD HOGA -->
+    <div id="search-bar-container"></div>
 
     <div class="slider-wrapper">
-        <div class="slider-container">
-            <div class="slider" id="main-slider"></div>
-        </div>
+        <div class="slider-container"><div class="slider" id="main-slider"></div></div>
         <div class="slider-dots" id="slider-dots-container"></div>
     </div>
     
     <main id="main-content-area" class="mb-16 md:mb-0">
-        <!-- Dynamic content will be loaded here by main.js -->
+        <!-- Baaki sections yahan load honge -->
     </main>
 
-    <!-- === YAHAN BADLAV KIYA GAYA HAI: Infinite Scroll Loader === -->
-    <div id="deals-loader" class="deals-loader-container hidden">
-        <div class="spinner"></div>
-    </div>
-
+    <div id="deals-loader" class="deals-loader-container hidden"><div class="spinner"></div></div>
     <div class="social-media-links" id="social-links-container" style="display: none;"></div>
-    
     <div id="toast-notification"></div>
 
     <footer id="desktop-footer">
-        <div class="container mx-auto">
-            <div class="footer-grid">
-                <div class="footer-column"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4"><p>Aapki Apni Dukaan.</p></div>
-                <div class="footer-column"><h3>Quick Links</h3><a href="#">About Us</a><a href="#">Contact Us</a></div>
-                <div class="footer-column"><h3>Help</h3><a href="#">Payments</a><a href="#">Shipping</a><a href="#">FAQ</a></div>
-                <div class="footer-column"><h3>Follow Us</h3><div id="desktop-social-links" class="flex gap-4"></div></div>
-            </div>
-            <div class="footer-bottom">&copy; <span id="copyright-year">2025</span> Ramazone. All Rights Reserved.</div>
-        </div>
+        <div class="container mx-auto"><div class="footer-grid"><div class="footer-column"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4"><p>Aapki Apni Dukaan.</p></div><div class="footer-column"><h3>Quick Links</h3><a href="#">About Us</a><a href="#">Contact Us</a></div><div class="footer-column"><h3>Help</h3><a href="#">Payments</a><a href="#">Shipping</a><a href="#">FAQ</a></div><div class="footer-column"><h3>Follow Us</h3><div id="desktop-social-links" class="flex gap-4"></div></div></div><div class="footer-bottom">&copy; <span id="copyright-year">2025</span> Ramazone. All Rights Reserved.</div></div>
     </footer>
-
-    <!-- Service Worker Registration Script is REMOVED -->
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
     <script src="main.js"></script>
 </body>
 </html>
+
 
