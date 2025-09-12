@@ -412,6 +412,7 @@ function openBundleModal(productIds, bundlePrice) {
 function closeBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
 function setupBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); document.getElementById('bundle-modal-close').addEventListener('click', closeBundleModal); overlay.addEventListener('click', e => { if (e.target === overlay) closeBundleModal(); }); }
 
+// === YAHAN BADLAV KIYA GAYA HAI: Button ko wapas '+' karne ka logic joda gaya hai ===
 function handleQuickAdd(event) {
     const quickAddButton = event.target.closest('.quick-add-btn');
     if (quickAddButton && !quickAddButton.dataset.bundle) {
@@ -428,10 +429,12 @@ function handleQuickAdd(event) {
                 });
             }
             addToCart(productId, 1, defaultVariants, null);
-            quickAddButton.textContent = 'Added'; // Text badla
+            quickAddButton.innerHTML = '<i class="fas fa-check"></i>'; // 'Added' ke bajaye checkmark
             quickAddButton.classList.add('added');
+
+            // 1.5 second baad button ko wapas normal karne ke liye
             setTimeout(() => {
-                quickAddButton.textContent = 'Add'; // Text wapas badla
+                quickAddButton.innerHTML = '+'; // Wapas '+'
                 quickAddButton.classList.remove('added');
             }, 1500);
         }
@@ -444,8 +447,6 @@ function updateVariantButtonDisplay(type, value) { const btn = document.querySel
 function setupVariantModal() { const overlay = document.getElementById("variant-modal-overlay"); document.getElementById("variant-modal-close").addEventListener("click", closeVariantModal); overlay.addEventListener("click", e => { if (e.target === overlay) closeVariantModal(); }); document.getElementById('options-container').addEventListener('click', e => { const btn = e.target.closest('.variant-btn'); if (btn) { openVariantModal(btn.dataset.variantType); } }); }
 function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; let discount = 0; let packOriginalPrice = originalPrice; if (selectedPack) { const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; packOriginalPrice = originalPrice * quantity; } if (packOriginalPrice > displayPrice) { discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); } if (discount > 0) { percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${packOriginalPrice.toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
 
-// === YEH FUNCTION POORI TARAH SE UPDATE KIYA GAYA HAI ===
-// Ab yeh naye 'COMPACT VERTICAL' HTML template ko load karke cards banata hai.
 async function loadHandpickedSimilarProducts(similarIds) {
     const section = document.getElementById("handpicked-similar-section");
     const container = document.getElementById("handpicked-similar-container");
@@ -455,22 +456,19 @@ async function loadHandpickedSimilarProducts(similarIds) {
         return;
     }
 
-    if(!container || !section) return; // Suraksha check
+    if(!container || !section) return;
 
-    container.innerHTML = ""; // Purana content saaf karein
+    container.innerHTML = "";
     let hasContent = false;
 
     try {
-        // Step 1: Naye card ka template ek baar fetch karein
         const response = await fetch('product-details-sections/you-might-like-card.html');
         if (!response.ok) throw new Error('YML card template not found');
         const templateHTML = await response.text();
 
-        // Step 2: Har product ke liye template ko data se bharein
         similarIds.forEach(id => {
             const product = allProductsCache.find(p => p && p.id === id);
             if (product) {
-                // Price ka HTML taiyaar karein
                 const displayPrice = Number(product.displayPrice);
                 const originalPriceNum = Number(product.originalPrice);
 
@@ -479,10 +477,8 @@ async function loadHandpickedSimilarProducts(similarIds) {
                     priceHTML += `<span class="original-price">₹${originalPriceNum.toLocaleString("en-IN")}</span>`;
                 }
 
-                // Rating tag ka HTML taiyaar karein
                 const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
 
-                // === BUG FIX: Ab yeh 'g' flag ke saath replace karega ===
                 const populatedHTML = templateHTML
                     .replace(/\{\{productId\}\}/g, product.id)
                     .replace(/\{\{productName\}\}/g, product.name)
@@ -531,5 +527,4 @@ function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.g
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
-
 
