@@ -4,6 +4,7 @@ let allCategoriesCache = [];
 let database;
 let deferredInstallPrompt = null;
 let festiveCountdownInterval = null; 
+let goToCartNotificationTimer = null; // Naye notification ke liye timer
 
 // **INFINITE SCROLL STATE FOR DEALS**
 let dealsOfTheDayProducts = []; 
@@ -53,6 +54,8 @@ window.addEventListener('appinstalled', () => {
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
 function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
 
+// === YAHAN BADLAV KIYA GAYA HAI ===
+// Ab yeh 'showHomeGoToCartNotification' function ko call karega
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
     const product = allProductsCache.find(p => p && p.id === productId);
@@ -72,9 +75,36 @@ function addToCart(productId, quantityToAdd = 1) {
         cart.push({ id: productId, quantity: quantityToAdd, variants: selectedVariants });
     }
     saveCart(cart);
-    showToast(`${product.name} added to cart!`);
+
+    // Purana toast hatakar naya notification function call kiya gaya hai
+    // showToast(`${product.name} added to cart!`);
+    showHomeGoToCartNotification();
+
     updateCartIcon();
 }
+
+// === YEH NAYA FUNCTION JODA GAYA HAI ===
+function showHomeGoToCartNotification() {
+    const notification = document.getElementById('home-go-to-cart-notification');
+    const summaryEl = document.getElementById('home-notification-summary');
+    if (!notification || !summaryEl) return;
+
+    // Purana timer saaf karein
+    clearTimeout(goToCartNotificationTimer);
+
+    // Summary text update karein
+    const totalQuantity = getTotalCartQuantity();
+    summaryEl.textContent = `${totalQuantity} item${totalQuantity > 1 ? 's' : ''} in your cart`;
+
+    // Notification dikhayein
+    notification.classList.add('visible');
+
+    // 4 second baad hide karne ke liye timer set karein
+    goToCartNotificationTimer = setTimeout(() => {
+        notification.classList.remove('visible');
+    }, 4000);
+}
+
 
 function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
 function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { cartCountElement.textContent = totalQuantity > 0 ? totalQuantity : ''; } }
@@ -173,7 +203,7 @@ function renderAllSections(data) {
     setupHomepageSearch();
 }
 
-// --- HOMEPAGE LIVE SEARCH LOGIC (UPDATED) ---
+// --- HOMEPAGE LIVE SEARCH LOGIC ---
 function setupHomepageSearch() {
     const searchInput = document.getElementById('home-search-input');
     if (!searchInput) return;
@@ -183,7 +213,6 @@ function setupHomepageSearch() {
     const searchOverlay = document.getElementById('search-overlay');
     const headerSearchTrigger = document.getElementById('header-search-trigger');
 
-    // Category suggestions abhi bhi banenge, lekin focus par dikhenge nahi
     categorySuggestionsContainer.innerHTML = allCategoriesCache.map(cat => `<span class="suggestion-tag" data-category="${cat.name}">${cat.name}</span>`).join('');
     categorySuggestionsContainer.addEventListener('click', e => {
         if (e.target.classList.contains('suggestion-tag')) {
@@ -211,14 +240,10 @@ function setupHomepageSearch() {
         }
     });
 
-    // === YAHAN BADLAV KIYA GAYA HAI ===
-    // Ab search active hone par sirf overlay dikhega, category tags nahi.
     const activateSearchMode = () => { 
         document.body.classList.add('search-active'); 
-        // categorySuggestionsContainer.classList.remove('hidden'); // <-- YEH LINE HATA DI GAYI HAI
     };
 
-    // Search band hone par sab kuch hide ho jayega.
     const deactivateSearchMode = () => { 
         document.body.classList.remove('search-active'); 
         categorySuggestionsContainer.classList.add('hidden'); 
@@ -495,5 +520,4 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4e3) }
-
 

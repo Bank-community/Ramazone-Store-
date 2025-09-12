@@ -15,7 +15,6 @@
 </head>
 <body class="bg-white">
 
-    <!-- Yeh elements global hain, isliye yahan rahenge -->
     <div id="search-overlay"></div>
     <div id="home-category-suggestions" class="hidden"></div>
 
@@ -53,7 +52,6 @@
         <div class="menu-items"><a href="./index.html" class="menu-item active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a><a href="./order.html" class="menu-item" id="menu-cart-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart"><span>Cart</span></a><a href="#" class="menu-item" id="menu-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span></a><a href="#" class="menu-item" id="menu-cashback-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback"><span>Cashback</span></a><div id="menu-follow-item" class="menu-item"><img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span><i class="fas fa-chevron-down text-xs ml-auto"></i></div><div id="follow-submenu" class="submenu"></div></div>
     </nav>
     
-    <!-- YAHAN SEARCH BAR LOAD HOGA -->
     <div id="search-bar-container"></div>
 
     <div class="slider-wrapper">
@@ -62,8 +60,7 @@
     </div>
     
     <main id="main-content-area" class="mb-16 md:mb-0">
-        <!-- Baaki sections yahan load honge -->
-    </main>
+        </main>
 
     <div id="deals-loader" class="deals-loader-container hidden"><div class="spinner"></div></div>
     <div class="social-media-links" id="social-links-container" style="display: none;"></div>
@@ -73,10 +70,16 @@
         <div class="container mx-auto"><div class="footer-grid"><div class="footer-column"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4"><p>Aapki Apni Dukaan.</p></div><div class="footer-column"><h3>Quick Links</h3><a href="#">About Us</a><a href="#">Contact Us</a></div><div class="footer-column"><h3>Help</h3><a href="#">Payments</a><a href="#">Shipping</a><a href="#">FAQ</a></div><div class="footer-column"><h3>Follow Us</h3><div id="desktop-social-links" class="flex gap-4"></div></div></div><div class="footer-bottom">&copy; <span id="copyright-year">2025</span> Ramazone. All Rights Reserved.</div></div>
     </footer>
 
+    <div id="home-go-to-cart-notification" class="fixed bottom-4 right-4 left-4 md:left-auto md:max-w-md bg-white rounded-lg shadow-2xl p-4 transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out z-50 pointer-events-none flex items-center justify-between">
+        <div>
+            <p class="font-bold text-gray-800">Successfully added to cart!</p>
+            <p id="home-notification-summary" class="text-sm text-gray-600"></p>
+        </div>
+        <a href="order.html" class="text-white font-bold py-2 px-5 rounded-lg text-sm" style="background-color: var(--primary-color);">View Cart</a>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
-
-
