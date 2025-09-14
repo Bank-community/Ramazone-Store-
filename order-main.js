@@ -2,12 +2,12 @@
 let allProductsCache = [], validCoupons = [], orderItems = [];
 let appliedCoupon = null, database, currentStep = 1;
 let ramazoneConfig = { deliveryCharge: 15, freeDeliveryThreshold: 500, minOrderForDelivery: 0 };
-let editingAddressIndex = null; // Naya state variable address edit karne ke liye
+let editingAddressIndex = null; // State variable for address editing
 
 // --- HELPERS ---
 const getCart = () => { try { return JSON.parse(localStorage.getItem('ramazoneCart')) || []; } catch (e) { return []; } };
 const saveCart = (cart) => localStorage.setItem('ramazoneCart', JSON.stringify(cart));
-// --- NAYE HELPERS ADDRESS KE LIYE ---
+// --- Address Helpers ---
 const getSavedAddresses = () => { try { return JSON.parse(localStorage.getItem('ramazoneSavedAddresses')) || []; } catch (e) { return []; } };
 const saveAddresses = (addresses) => localStorage.setItem('ramazoneSavedAddresses', JSON.stringify(addresses));
 
@@ -29,7 +29,7 @@ async function initializeOrderPage() {
 
         if (getCart().length > 0) {
             document.getElementById('checkout-flow-container').classList.remove('hidden');
-            renderSavedAddresses(); // Page load par saved addresses dikhayein
+            renderSavedAddresses(); 
             navigateToStep(1);
             loadOrderFromCart();
         } else {
@@ -79,12 +79,10 @@ function updatePriceAndValidation() {
     let subtotal = 0, totalMRP = 0;
     orderItems.forEach(item => { const isPack = item.pack && item.pack.name !== 'Single Item'; const price = isPack ? Number(item.pack.price) : Number(item.displayPrice); const mrp = Number(item.originalPrice) > price ? Number(item.originalPrice) : price; subtotal += price * item.quantity; totalMRP += mrp * item.quantity; });
     const totalSavings = totalMRP - subtotal;
-
     let summaryStep1HTML = `<div class="flex justify-between"><span class="text-gray-600">Total MRP</span><span class="font-medium text-gray-800 line-through">₹${totalMRP.toLocaleString('en-IN')}</span></div>`;
     if (totalSavings > 0) summaryStep1HTML += `<div class="flex justify-between text-green-600"><span class="font-semibold">Product Savings</span><span class="font-semibold">- ₹${totalSavings.toLocaleString('en-IN')}</span></div>`;
     summaryStep1HTML += `<div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t"><span>Subtotal</span><span>₹${subtotal.toLocaleString('en-IN')}</span></div>`;
     document.getElementById('price-summary-container-step1').innerHTML = summaryStep1HTML;
-
     const deliveryOption = document.querySelector('input[name="delivery"]:checked').value;
     const placeOrderBtn = document.getElementById('place-order-btn');
     const deliveryNotice = document.getElementById('delivery-minimum-notice');
@@ -99,11 +97,9 @@ function updatePriceAndValidation() {
     placeOrderBtn.disabled = !isOrderable;
     if (!isOrderable) { placeOrderBtn.textContent = `Minimum Order ₹${ramazoneConfig.minOrderForDelivery}`; } 
     else { placeOrderBtn.innerHTML = `<i class="fas fa-check"></i> Place Order`; }
-
     const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
     const deliveryFee = (deliveryOption === 'Ramazone' && subtotal < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0;
     const grandTotal = subtotal - couponDiscount + deliveryFee;
-
     let summaryStep3HTML = `<div class="flex justify-between"><span class="text-gray-600">Total MRP</span><span class="font-medium text-gray-800 line-through">₹${totalMRP.toLocaleString('en-IN')}</span></div>`;
     if(totalSavings > 0) summaryStep3HTML += `<div class="flex justify-between text-green-600"><span>Product Savings</span><span>- ₹${totalSavings.toLocaleString('en-IN')}</span></div>`;
     if(couponDiscount > 0) summaryStep3HTML += `<div class="flex justify-between text-green-600"><span>Coupon Discount</span><span>- ₹${couponDiscount.toLocaleString('en-IN')}</span></div>`;
@@ -112,40 +108,33 @@ function updatePriceAndValidation() {
     document.getElementById('price-summary-container-step3').innerHTML = summaryStep3HTML;
 }
 
-// --- SAVED ADDRESS MANAGEMENT (NAYA LOGIC) ---
+// --- SAVED ADDRESS MANAGEMENT (UPDATED LOGIC) ---
 
 function renderSavedAddresses() {
     const container = document.getElementById('saved-address-container');
     const addresses = getSavedAddresses();
-
     if (addresses.length === 0) {
         container.innerHTML = `<p class="text-center text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">Aapke paas koi saved address nahi hai.</p>`;
         return;
     }
-
     container.innerHTML = addresses.map((addr, index) => `
-        <div class="address-card p-3 rounded-lg flex items-center justify-between gap-4 ${addr.isPrime ? 'prime' : ''}">
+        <div class="address-card p-3 rounded-lg flex items-center justify-between gap-4 cursor-pointer ${addr.isPrime ? 'prime' : ''}" data-index="${index}">
             <div class="flex-grow">
                 <p class="font-bold text-gray-800 flex items-center">
-                    ${addr.name}
-                    ${addr.isPrime ? '<span class="prime-badge">PRIME</span>' : ''}
+                    ${addr.name} ${addr.isPrime ? '<span class="prime-badge">PRIME</span>' : ''}
                 </p>
                 <p class="text-sm text-gray-600">${addr.mobile}</p>
                 <p class="text-sm text-gray-600 truncate">${addr.address}</p>
             </div>
             <div class="address-actions flex flex-col sm:flex-row gap-2 items-center">
-                <button class="btn btn-primary !py-1 !px-3" data-action="use" data-index="${index}"><i class="fas fa-check-circle m-0"></i></button>
                 <button class="btn btn-secondary !py-1 !px-3" data-action="edit" data-index="${index}"><i class="fas fa-edit m-0"></i></button>
                 <button class="btn !bg-red-100 !text-red-600 hover:!bg-red-200 !py-1 !px-3" data-action="delete" data-index="${index}"><i class="fas fa-trash m-0"></i></button>
                 ${!addr.isPrime ? `<button class="btn btn-secondary !py-1 !px-3" data-action="set-prime" data-index="${index}"><i class="fas fa-star m-0"></i></button>` : ''}
             </div>
         </div>
     `).join('');
-
     const primeAddress = addresses.find(addr => addr.isPrime);
-    if (primeAddress) {
-        fillFormWithAddress(primeAddress);
-    }
+    if (primeAddress) { fillFormWithAddress(primeAddress); }
 }
 
 function fillFormWithAddress(address) {
@@ -154,12 +143,14 @@ function fillFormWithAddress(address) {
     document.getElementById('customer-address').value = address.address;
 }
 
+// === YAHAN BADLAV KIYA GAYA HAI: Ab poora card clickable hai ===
 function handleAddressManagement(e) {
-    const button = e.target.closest('button');
-    if (!button || !button.dataset.action) return;
+    const card = e.target.closest('.address-card');
+    if (!card) return;
 
-    const action = button.dataset.action;
-    const index = parseInt(button.dataset.index);
+    const button = e.target.closest('button[data-action]');
+    const action = button ? button.dataset.action : 'use'; // Agar button nahi to action 'use' hoga
+    const index = parseInt(card.dataset.index);
     let addresses = getSavedAddresses();
 
     if (action === 'use') {
@@ -186,45 +177,52 @@ function handleAddressManagement(e) {
 
 function handleSaveOrUpdateAddress() {
     const form = document.getElementById('customer-details-form');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
+    if (!form.checkValidity()) { form.reportValidity(); return; }
     const newAddress = {
         name: document.getElementById('customer-name').value.trim(),
         mobile: document.getElementById('customer-mobile').value.trim(),
         address: document.getElementById('customer-address').value.trim(),
         isPrime: false
     };
-
     let addresses = getSavedAddresses();
-    if (editingAddressIndex !== null) { // Update existing address
+    if (editingAddressIndex !== null) {
         const wasPrime = addresses[editingAddressIndex].isPrime;
         newAddress.isPrime = wasPrime;
         addresses[editingAddressIndex] = newAddress;
         showToast('Address update ho gaya!', 'success');
-    } else { // Save new address
-        if (addresses.length >= 2) {
-            showToast('Aap sirf 2 address save kar sakte hain.', 'error');
-            return;
-        }
-        if (addresses.length === 0) {
-            newAddress.isPrime = true; // Pehla address prime hoga
-        }
+    } else {
+        if (addresses.length >= 2) { showToast('Aap sirf 2 address save kar sakte hain.', 'error'); return; }
+        if (addresses.length === 0) { newAddress.isPrime = true; }
         addresses.push(newAddress);
         showToast('Address save ho gaya!', 'success');
     }
-
     saveAddresses(addresses);
     renderSavedAddresses();
-
-    // Reset form and editing state
     editingAddressIndex = null;
     document.getElementById('address-form-title').textContent = 'Add a New Shipping Address';
     document.querySelector('#save-address-btn span').textContent = 'Save this Address';
     form.reset();
 }
 
+// === YAHAN NAYA FUNCTION JODA GAYA HAI: Address ko auto-save karne ke liye ===
+function autoSaveAddress(customerDetails) {
+    let addresses = getSavedAddresses();
+    const addressExists = addresses.some(addr => 
+        addr.name.trim().toLowerCase() === customerDetails.name.trim().toLowerCase() &&
+        addr.mobile.trim() === customerDetails.mobile.trim() &&
+        addr.address.trim().toLowerCase() === customerDetails.address.trim().toLowerCase()
+    );
+    if (addressExists || addresses.length >= 2) {
+        return; // Address pehle se hai ya jagah nahi hai
+    }
+    const newAddress = {
+        ...customerDetails,
+        isPrime: addresses.length === 0 // Agar pehla hai to prime bana do
+    };
+    addresses.push(newAddress);
+    saveAddresses(addresses);
+    showToast('Aapka address bhavishya ke liye save ho gaya hai.', 'success');
+}
 
 // --- EVENT LISTENERS & NAVIGATION ---
 function setupEventListeners() {
@@ -240,8 +238,6 @@ function setupEventListeners() {
     document.getElementById('remove-coupon-btn').addEventListener('click', removeCoupon);
     document.getElementById('search-order-btn').addEventListener('click', searchOrder);
     document.getElementById('stepper').addEventListener('click', (e) => { const stepElement = e.target.closest('.step'); if (stepElement && stepElement.classList.contains('completed')) { navigateToStep(parseInt(stepElement.dataset.step)); } });
-
-    // --- NAYE EVENT LISTENERS ADDRESS KE LIYE ---
     document.getElementById('save-address-btn').addEventListener('click', handleSaveOrUpdateAddress);
     document.getElementById('saved-address-container').addEventListener('click', handleAddressManagement);
 }
@@ -252,10 +248,50 @@ function updateProgressBar() { document.querySelectorAll('.step').forEach((step,
 function applyCoupon() { const code = document.getElementById('coupon-input').value.trim().toLowerCase(); if (!code) return; if (appliedCoupon) { showToast('Coupon already applied.', 'error'); return; } const foundCoupon = validCoupons.find(c => c.code.toLowerCase() === code); if (foundCoupon) { appliedCoupon = foundCoupon; showToast(`Coupon "${foundCoupon.code}" applied!`, 'success'); document.getElementById('coupon-section').classList.add('hidden'); document.getElementById('applied-coupon-code').textContent = foundCoupon.code; document.getElementById('applied-coupon-div').classList.remove('hidden'); } else { appliedCoupon = null; showToast('Invalid coupon code.', 'error'); } updatePriceAndValidation(); }
 function removeCoupon() { appliedCoupon = null; showToast('Coupon removed.', 'info'); document.getElementById('coupon-input').value = ''; document.getElementById('coupon-section').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('hidden'); updatePriceAndValidation(); }
 
-// --- ORDER PLACEMENT & WHATSAPP MESSAGE ---
-async function placeOrder(e) { e.preventDefault(); const btn = e.currentTarget; btn.textContent = 'Placing...'; btn.disabled = true; const orderId = 'RMZ' + Math.random().toString(36).substr(2, 8).toUpperCase(); const customerDetails = { name: document.getElementById('customer-name').value, mobile: document.getElementById('customer-mobile').value, address: document.getElementById('customer-address').value }; let subtotal = 0, totalMRP = 0; orderItems.forEach(item => { const isPack = item.pack && item.pack.name !== 'Single Item'; const price = isPack ? Number(item.pack.price) : Number(item.displayPrice); const mrp = Number(item.originalPrice) > price ? Number(item.originalPrice) : price; subtotal += price * item.quantity; totalMRP += mrp * item.quantity; }); const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0; const deliveryOption = document.querySelector('input[name="delivery"]:checked').value; const deliveryFee = (deliveryOption === 'Ramazone' && subtotal < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0; const grandTotal = subtotal - couponDiscount + deliveryFee; const orderData = { orderId, customerDetails, grandTotal, paymentMethod: document.querySelector('input[name="payment"]:checked').value, deliveryMethod: deliveryOption, items: orderItems.map(item => ({ id: item.id, name: (item.pack && item.pack.name !== 'Single Item') ? `${item.name} (${item.pack.name})` : item.name, quantity: item.quantity, displayPrice: (item.pack && item.pack.name !== 'Single Item') ? item.pack.price : item.displayPrice, originalPrice: item.originalPrice || item.displayPrice, image: item.images?.[0] || '' })), priceSummary: { subtotal, totalMRP, coupon: appliedCoupon, deliveryFee, grandTotal }, status: 'Pending', createdAt: firebase.database.ServerValue.TIMESTAMP }; try { await database.ref(`ramazone/orders/pending/${orderId}`).set(orderData); const sellerPhoneNumber = '917903698180'; let message = `🛍️ *New Ramazone Order* 🛍️\n\n*ID:* ${orderId}\n\n*Customer:*\n${customerDetails.name}\n${customerDetails.mobile}\n${customerDetails.address}\n\n*Items:*\n`; orderData.items.forEach((item, i) => { message += `${i+1}. *${item.name}* (x${item.quantity}) - *₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}*\n`; }); message += `\n--- *Price Details* ---\n`; message += `*Total MRP:* ₹${totalMRP.toLocaleString('en-IN')}\n`; const totalSavings = totalMRP - subtotal + couponDiscount; if (totalSavings > 0) message += `*Total Savings:* *-₹${totalSavings.toLocaleString('en-IN')}*\n`; if (couponDiscount > 0) message += `*Coupon (${appliedCoupon.code}):* -₹${couponDiscount.toLocaleString('en-IN')}\n`; message += `*Delivery Fee:* ${deliveryFee > 0 ? `₹${deliveryFee.toLocaleString('en-IN')}` : 'Free'}\n--------------------\n`; message += `*Grand Total:* *₹${grandTotal.toLocaleString('en-IN')}*\n\n`; message += `*Payment:* ${orderData.paymentMethod}\n`; if (orderData.deliveryMethod === 'Pickup') { message += `*Delivery:* Customer Pickup`; } else { message += `*Delivery:* ${orderData.deliveryMethod} Delivery`; } saveCart([]); localStorage.setItem('ramazoneRecentOrderId', orderId); window.location.href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`; } catch (error) { console.error("Failed to place order:", error); showToast('Could not place order.', 'error'); btn.textContent = 'Place Order'; btn.disabled = false; } }
+// --- ORDER PLACEMENT & WHATSAPP MESSAGE (UPDATED) ---
+async function placeOrder(e) {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    const form = document.getElementById('customer-details-form');
+    if (!form.checkValidity()) { form.reportValidity(); showToast('Please fill all shipping details.', 'error'); return; }
 
-// --- BAAKI KA CODE PEHLE JAISA HI HAI ---
+    btn.textContent = 'Placing...';
+    btn.disabled = true;
+
+    const customerDetails = { name: document.getElementById('customer-name').value, mobile: document.getElementById('customer-mobile').value, address: document.getElementById('customer-address').value };
+
+    // === YAHAN BADLAV KIYA GAYA HAI: Address auto-save hoga ===
+    autoSaveAddress(customerDetails);
+
+    const orderId = 'RMZ' + Math.random().toString(36).substr(2, 8).toUpperCase();
+    let subtotal = 0, totalMRP = 0;
+    orderItems.forEach(item => { const isPack = item.pack && item.pack.name !== 'Single Item'; const price = isPack ? Number(item.pack.price) : Number(item.displayPrice); const mrp = Number(item.originalPrice) > price ? Number(item.originalPrice) : price; subtotal += price * item.quantity; totalMRP += mrp * item.quantity; });
+    const couponDiscount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
+    const deliveryOption = document.querySelector('input[name="delivery"]:checked').value;
+    const deliveryFee = (deliveryOption === 'Ramazone' && subtotal < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0;
+    const grandTotal = subtotal - couponDiscount + deliveryFee;
+    const orderData = { orderId, customerDetails, grandTotal, paymentMethod: document.querySelector('input[name="payment"]:checked').value, deliveryMethod: deliveryOption, items: orderItems.map(item => ({ id: item.id, name: (item.pack && item.pack.name !== 'Single Item') ? `${item.name} (${item.pack.name})` : item.name, quantity: item.quantity, displayPrice: (item.pack && item.pack.name !== 'Single Item') ? item.pack.price : item.displayPrice, originalPrice: item.originalPrice || item.displayPrice, image: item.images?.[0] || '' })), priceSummary: { subtotal, totalMRP, coupon: appliedCoupon, deliveryFee, grandTotal }, status: 'Pending', createdAt: firebase.database.ServerValue.TIMESTAMP };
+    try {
+        await database.ref(`ramazone/orders/pending/${orderId}`).set(orderData);
+        const sellerPhoneNumber = '917903698180';
+        let message = `🛍️ *New Ramazone Order* 🛍️\n\n*ID:* ${orderId}\n\n*Customer:*\n${customerDetails.name}\n${customerDetails.mobile}\n${customerDetails.address}\n\n*Items:*\n`;
+        orderData.items.forEach((item, i) => { message += `${i+1}. *${item.name}* (x${item.quantity}) - *₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}*\n`; });
+        message += `\n--- *Price Details* ---\n`;
+        message += `*Total MRP:* ₹${totalMRP.toLocaleString('en-IN')}\n`;
+        const totalSavings = totalMRP - subtotal + couponDiscount;
+        if (totalSavings > 0) message += `*Total Savings:* *-₹${totalSavings.toLocaleString('en-IN')}*\n`;
+        if (couponDiscount > 0) message += `*Coupon (${appliedCoupon.code}):* -₹${couponDiscount.toLocaleString('en-IN')}\n`;
+        message += `*Delivery Fee:* ${deliveryFee > 0 ? `₹${deliveryFee.toLocaleString('en-IN')}` : 'Free'}\n--------------------\n`;
+        message += `*Grand Total:* *₹${grandTotal.toLocaleString('en-IN')}*\n\n`;
+        message += `*Payment:* ${orderData.paymentMethod}\n`;
+        if (orderData.deliveryMethod === 'Pickup') { message += `*Delivery:* Customer Pickup`; } else { message += `*Delivery:* ${orderData.deliveryMethod} Delivery`; }
+        saveCart([]);
+        localStorage.setItem('ramazoneRecentOrderId', orderId);
+        window.location.href = `https://wa.me/${sellerPhoneNumber}?text=${encodeURIComponent(message)}`;
+    } catch (error) { console.error("Failed to place order:", error); showToast('Could not place order.', 'error'); btn.textContent = 'Place Order'; btn.disabled = false; }
+}
+
+// --- ORDER STATUS, INVOICE, and RECENT ORDER (No changes below this line) ---
 async function searchOrder() { const orderId = document.getElementById('order-id-input').value.trim().toUpperCase(); const searchStatusEl = document.getElementById('search-status'); if (!orderId) { searchStatusEl.textContent = 'Please enter an Order ID.'; return; } searchStatusEl.textContent = 'Searching...'; document.getElementById('checkout-flow-container').classList.add('hidden'); document.getElementById('order-status-container').classList.remove('active'); try { const snapshot = await database.ref(`ramazone/orders/confirmed/${orderId}`).get(); if (snapshot.exists()) { const orderData = snapshot.val(); renderSearchResult(orderData); searchStatusEl.innerHTML = `Showing results for Order ID: <span class="font-bold text-green-600">${orderId}</span>`; document.getElementById('order-status-container').classList.add('active'); } else { searchStatusEl.textContent = 'Order not found or not confirmed yet.'; } } catch (error) { searchStatusEl.textContent = 'An error occurred during search.'; } }
 function renderSearchResult(orderData) { const statusContainer = document.getElementById('order-status-container'); const summary = orderData.priceSummary; const totalSavings = (summary.totalMRP || summary.subtotal) - summary.subtotal + (summary.coupon ? Number(summary.coupon.discount) : 0); const savingsHTML = totalSavings > 0 ? `<div class="bg-green-50 text-green-800 font-semibold text-center p-3 rounded-lg mt-4">🎉 You Saved ₹${totalSavings.toLocaleString('en-IN')} on this order!</div>` : ''; const resultHTML = `<div class="space-y-6"><div class="bg-white rounded-lg shadow p-4 sm:p-6 space-y-4"><div><h3 class="text-lg font-bold mb-2">Shipping To:</h3><div class="text-sm bg-gray-50 p-3 rounded-lg"><p class="font-semibold">${orderData.customerDetails.name}</p><p>${orderData.customerDetails.address}</p></div></div><div><h3 class="text-lg font-bold mt-4 mb-2">Items Ordered:</h3><div class="space-y-3">${orderData.items.map(item => `<div class="flex items-center gap-4 border-b pb-3 last:border-b-0"><img src="${item.image || ''}" alt="${item.name}" class="w-16 h-16 object-cover rounded-md border"><div class="flex-grow"><p class="font-semibold">${item.name}</p><p class="text-sm">Qty: ${item.quantity}</p></div><p class="font-semibold">₹${(item.displayPrice * item.quantity).toLocaleString('en-IN')}</p></div>`).join('')}</div></div><div><h3 class="text-lg font-bold mt-4 mb-2">Price Details:</h3><div class="space-y-2 text-sm pt-2 border-t"><div class="flex justify-between"><span>Total MRP</span><span class="line-through">₹${(summary.totalMRP || summary.subtotal).toLocaleString('en-IN')}</span></div><div class="flex justify-between text-green-600"><span>Discount</span><span>- ₹${totalSavings.toLocaleString('en-IN')}</span></div><div class="flex justify-between"><span>Delivery Fee</span><span>${summary.deliveryFee > 0 ? `₹${summary.deliveryFee.toLocaleString('en-IN')}` : 'Free'}</span></div><div class="flex justify-between text-lg font-bold pt-2 border-t"><span>Total Paid</span><span>₹${summary.grandTotal.toLocaleString('en-IN')}</span></div></div></div>${savingsHTML}</div><div class="bg-white rounded-lg shadow p-4 sm:p-6"><h2 class="text-xl font-bold mb-4">Delivery Status</h2><div id="delivery-tracker-container" class="py-4"></div></div><div class="text-center"><button id="view-invoice-btn" class="btn btn-primary invoice-btn-red !px-8 !py-3"><i class="fas fa-download"></i>Download Invoice</button></div></div>`; statusContainer.innerHTML = resultHTML; renderDeliveryTracker(orderData.status, document.getElementById('delivery-tracker-container')); document.getElementById('view-invoice-btn').addEventListener('click', () => downloadInvoiceDirectly(orderData)); }
 function renderDeliveryTracker(status, container) { if (status === 'Rejected') { container.innerHTML = `<div class="flex items-center p-3 bg-red-50 rounded-lg"><i class="fas fa-times-circle text-red-500 text-3xl mr-4"></i><div><h3 class="font-bold text-red-700">Order Rejected</h3></div></div>`; return; } const statuses = ['Confirmed', 'Shipped', 'Out for Delivery', 'Delivered']; const icons = ['fa-check', 'fa-truck-fast', 'fa-truck-ramp-box', 'fa-star']; const currentStatusIndex = statuses.indexOf(status); let stepsHtml = statuses.map((s, index) => `<div class="tracker-step ${index <= currentStatusIndex ? 'completed' : ''}"><div class="step-icon"><i class="fas ${icons[index]}"></i></div><p class="step-label">${s.replace(' ', '\n')}</p></div>`).join(''); container.innerHTML = `<div class="relative"><div class="tracker-line"><div class="tracker-progress-line" style="width: ${currentStatusIndex >= 0 ? (currentStatusIndex / (statuses.length - 1)) * 100 : 0}%;"></div></div><div class="delivery-tracker">${stepsHtml}</div></div>`; }
@@ -263,4 +299,5 @@ async function downloadInvoiceDirectly(orderData) { const btn = document.getElem
 async function checkAndDisplayRecentOrder() { const orderId = localStorage.getItem('ramazoneRecentOrderId'); if (!orderId) return; let orderData = null; for (const status of ['pending', 'confirmed', 'rejected']) { const snapshot = await database.ref(`ramazone/orders/${status}/${orderId}`).get(); if (snapshot.exists()) { orderData = snapshot.val(); break; } } if (!orderData || orderData.status === 'Delivered') { localStorage.removeItem('ramazoneRecentOrderId'); return; } const container = document.getElementById('recent-order-status-container'); container.innerHTML = `<div class="bg-white rounded-lg shadow p-4 sm:p-6"><h2 class="text-xl font-bold mb-4 text-gray-800">Your Recent Order Status <span class="font-mono text-base text-indigo-600">(${orderId})</span></h2><div id="recent-delivery-tracker"></div><div class="text-center mt-4"><button onclick="document.getElementById('order-id-input').value='${orderId}'; document.getElementById('search-order-btn').click();" class="text-indigo-600 font-semibold text-sm">View Full Details</button></div></div>`; renderDeliveryTracker(orderData.status, document.getElementById('recent-delivery-tracker')); }
 function numberToWords(num) { const a=["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],b=["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];if((num=num.toString()).length>9)return"overflow";const n=("000000000"+num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);if(!n)return;let str="";str+=n[1]!=0?(a[Number(n[1])]||b[n[1][0]]+" "+a[n[1][1]])+" crore ":"";str+=n[2]!=0?(a[Number(n[2])]||b[n[2][0]]+" "+a[n[2][1]])+" lakh ":"";str+=n[3]!=0?(a[Number(n[3])]||b[n[3][0]]+" "+a[n[3][1]])+" thousand ":"";str+=n[4]!=0?(a[Number(n[4])]||b[n[4][0]]+" "+a[n[4][1]])+" hundred ":"";str+=n[5]!=0?(str!=""?"and ":"")+(a[Number(n[5])]||b[n[5][0]]+" "+a[n[5][1]]):"";return str.replace(/\s+/g," ").trim().split(" ").map(w=>w.charAt(0).toUpperCase()+w.substr(1)).join(" ")+" Rupees Only"}
 function showToast(message, type = "info") { const toast = document.getElementById("toast-notification"); if (!toast) return; toast.textContent = message; toast.style.transition = 'opacity 0.3s, visibility 0.3s'; toast.style.opacity = '1'; toast.style.visibility = 'visible'; if (type === 'success') toast.style.backgroundColor = '#16a34a'; else if (type === 'error') toast.style.backgroundColor = '#ef4444'; else toast.style.backgroundColor = '#333'; setTimeout(() => { toast.style.opacity = '0'; toast.style.visibility = 'hidden'; }, 3000); }
+
 
