@@ -238,14 +238,8 @@ Phone no: 9534674555`.trim();
                 if (!reportElement) return;
 
                 const reportText = reportElement.innerText;
-                const groupLink = 'https://chat.whatsapp.com/Eb7wESxuqeC0Xh4LLrjFWU';
-                
-                // रिपोर्ट टेक्स्ट और ग्रुप लिंक को एक साथ जोड़ें
-                const fullMessage = `${reportText}\n\nGroup Link:\n${groupLink}`;
-
-                const encodedText = encodeURIComponent(fullMessage);
+                const encodedText = encodeURIComponent(reportText);
                 const whatsappUrl = `whatsapp://send?text=${encodedText}`;
-                
                 window.open(whatsappUrl, '_blank');
             });
         });
@@ -253,3 +247,4 @@ Phone no: 9534674555`.trim();
 
 </body>
 </html>
+
