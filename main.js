@@ -54,8 +54,6 @@ window.addEventListener('appinstalled', () => {
 function getCart() { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } }
 function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); }
 
-// === YAHAN BADLAV KIYA GAYA HAI ===
-// Ab yeh 'showHomeGoToCartNotification' function ko call karega
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
     const product = allProductsCache.find(p => p && p.id === productId);
@@ -76,35 +74,22 @@ function addToCart(productId, quantityToAdd = 1) {
     }
     saveCart(cart);
 
-    // Purana toast hatakar naya notification function call kiya gaya hai
-    // showToast(`${product.name} added to cart!`);
     showHomeGoToCartNotification();
-
     updateCartIcon();
 }
 
-// === YEH NAYA FUNCTION JODA GAYA HAI ===
 function showHomeGoToCartNotification() {
     const notification = document.getElementById('home-go-to-cart-notification');
     const summaryEl = document.getElementById('home-notification-summary');
     if (!notification || !summaryEl) return;
-
-    // Purana timer saaf karein
     clearTimeout(goToCartNotificationTimer);
-
-    // Summary text update karein
     const totalQuantity = getTotalCartQuantity();
     summaryEl.textContent = `${totalQuantity} item${totalQuantity > 1 ? 's' : ''} in your cart`;
-
-    // Notification dikhayein
     notification.classList.add('visible');
-
-    // 4 second baad hide karne ke liye timer set karein
     goToCartNotificationTimer = setTimeout(() => {
         notification.classList.remove('visible');
     }, 4000);
 }
-
 
 function getTotalCartQuantity() { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); }
 function updateCartIcon() { const totalQuantity = getTotalCartQuantity(); const cartCountElement = document.getElementById('cart-item-count'); if (cartCountElement) { cartCountElement.textContent = totalQuantity > 0 ? totalQuantity : ''; } }
@@ -117,20 +102,22 @@ async function initializeApp() {
     try {
         await loadCoreComponents();
         const response = await fetch('/api/firebase-config');
-        if (!response.ok) throw new Error(`Server error`);
+        if (!response.ok) throw new Error(`API Key fetch error! Status: ${response.status}`);
         const config = await response.json();
-        if (config.apiKey) {
+
+        if (config && config.apiKey) {
             firebase.initializeApp(config);
             database = firebase.database();
             loadAllData();
         } else {
-            throw new Error("Invalid Firebase config");
+            throw new Error("Invalid or missing Firebase config received from API.");
         }
     } catch (error) {
         console.error("Initialization Error:", error);
-        document.body.innerHTML = `<p class="text-center p-8 text-red-500">Application could not start. Please check connection and try again later.</p>`;
+        document.getElementById('main-content-area').innerHTML = `<div class="text-center p-8"><p class="font-bold text-red-600">Application Failed to Start</p><p class="text-gray-600 mt-2">Could not connect to the database. Please check your internet connection or contact support.</p><p class="text-xs text-gray-400 mt-4">${error.message}</p></div>`;
     }
 }
+
 
 async function loadCoreComponents() {
     try {
@@ -318,27 +305,66 @@ function startCountdownTimer(endTimeString, elementId) {
     festiveCountdownInterval = setInterval(update, 1000);
 }
 
+// --- UNIVERSAL HELPER FUNCTIONS ---
+
 function createFestiveCardHTML(prod, options = {}) {
     if (!prod) return '';
     const { soldPercentage } = options;
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
     const ratingTag = prod.rating ? `<div class="card-rating-tag rating-tag-bottom-left">${prod.rating} <i class="fas fa-star"></i></div>` : '';
     const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
-    let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
-    let originalPriceHTML = '', discountHTML = '';
+
+    let priceHTML = `<p class="display-price">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
+    let originalPriceHTML = '';
+    let discountHTML = '';
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
-        originalPriceHTML = `<p class="text-xs text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
-        if (discount > 0) discountHTML = `<p class="text-xs font-semibold text-green-600">${discount}% OFF</p>`;
+        originalPriceHTML = `<p class="original-price">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
+        if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
     }
+
+    const productPageUrl = `${window.location.origin}/product-details.html?id=${prod.id}`;
+    const whatsappMessage = `Hello! I am interested in this product:\n\n*Name:* ${prod.name}\n*Price:* ₹${Number(prod.displayPrice).toLocaleString("en-IN")}\n*Link:* ${productPageUrl}\n\nPlease provide more details.`;
+    const whatsappLink = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`;
+
     let progressBarHTML = '';
     if (typeof soldPercentage === 'number' && soldPercentage >= 0) {
         progressBarHTML = `<div class="progress-bar-container"><div class="progress-bar-inner" style="width: ${soldPercentage}%"></div><span class="progress-bar-text">${soldPercentage}% Sold</span></div>`;
     }
-    const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
-    const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
-    return `<div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}" class="block"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a>${progressBarHTML}</div></div>`;
+
+    return `
+    <div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+        <div class="relative">
+            <a href="./product-details.html?id=${prod.id}" class="block relative">
+                <img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">
+                ${ratingTag}
+                ${offerTag}
+            </a>
+        </div>
+        <div class="p-2 flex flex-col justify-between flex-grow">
+            <div>
+                <a href="./product-details.html?id=${prod.id}" class="block">
+                    <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4>
+                    <div class="flex items-center justify-between gap-2 flex-wrap mb-2">
+                        <div class="flex items-baseline gap-2">
+                            ${priceHTML}
+                            ${originalPriceHTML}
+                        </div>
+                        ${discountHTML}
+                    </div>
+                </a>
+                ${progressBarHTML}
+            </div>
+            <div class="product-card-actions">
+                <a href="${whatsappLink}" target="_blank" class="whatsapp-btn">
+                    <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" alt="WhatsApp">
+                </a>
+                <button class="add-text-btn add-btn" data-id="${prod.id}">Add</button>
+            </div>
+        </div>
+    </div>`;
 }
+
 
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
@@ -359,23 +385,58 @@ function renderFestiveCollection(collectionData) {
     slider.innerHTML = productsHTML;
 }
 
-// --- UNIVERSAL HELPER FUNCTIONS ---
+// === YAHAN BADLAV KIYA GAYA HAI: Margins (mb-1, mb-2) aur h-10 hataya gaya ===
 function createProductCardHTML(prod, cardClass = '') {
     if (!prod) return '';
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
     const ratingTag = prod.rating ? `<div class="card-rating-tag rating-tag-bottom-left">${prod.rating} <i class="fas fa-star"></i></div>` : '';
     const offerTag = prod.offerText ? `<div class="product-offer-tag offer-tag-top-left" style="color:${prod.offerTextColor||'white'}; background-color:${prod.offerBackgroundColor||'#4F46E5'}">${prod.offerText}</div>` : '';
-    let priceHTML = `<p class="text-base font-bold" style="color: var(--primary-color)">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
-    let originalPriceHTML = '', discountHTML = '';
+
+    let priceHTML = `<p class="display-price">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
+    let originalPriceHTML = '';
+    let discountHTML = '';
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
-        originalPriceHTML = `<p class="text-xs text-gray-400 line-through">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
-        if (discount > 0) discountHTML = `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>`;
+        originalPriceHTML = `<p class="original-price">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
+        if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
     }
-    const showAddButton = Number(prod.displayPrice) < 500 || prod.category === 'grocery';
-    const addButtonHTML = showAddButton ? `<button class="add-btn standard-card-add-btn" data-id="${prod.id}">+</button>` : "";
-    return `<div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"><div class="relative"><a href="./product-details.html?id=${prod.id}" class="block relative"><img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">${ratingTag}${offerTag}</a>${addButtonHTML}</div><div class="p-2"><a href="./product-details.html?id=${prod.id}"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4><div class="flex items-baseline gap-2">${priceHTML}${originalPriceHTML}</div>${discountHTML}</a></div></div>`;
+
+    const productPageUrl = `${window.location.origin}/product-details.html?id=${prod.id}`;
+    const whatsappMessage = `Hello! I am interested in this product:\n\n*Name:* ${prod.name}\n*Price:* ₹${Number(prod.displayPrice).toLocaleString("en-IN")}\n*Image:* ${imageUrl}\n*Link:* ${productPageUrl}\n\nPlease provide more details.`;
+    const whatsappLink = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`;
+
+    return `
+    <div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
+        <div class="relative">
+            <a href="./product-details.html?id=${prod.id}" class="block relative">
+                <img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">
+                ${ratingTag}
+                ${offerTag}
+            </a>
+        </div>
+        <div class="p-3 flex flex-col justify-between flex-grow">
+            <div>
+                <a href="./product-details.html?id=${prod.id}" class="block">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-1">${prod.name || 'Product Name'}</h4>
+                    <div class="flex items-center justify-between gap-2 flex-wrap mb-2">
+                        <div class="flex items-baseline gap-2">
+                            ${priceHTML}
+                            ${originalPriceHTML}
+                        </div>
+                        ${discountHTML}
+                    </div>
+                </a>
+            </div>
+            <div class="product-card-actions">
+                <a href="${whatsappLink}" target="_blank" class="whatsapp-btn">
+                    <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" alt="WhatsApp">
+                </a>
+                <button class="add-text-btn add-btn" data-id="${prod.id}">Add</button>
+            </div>
+        </div>
+    </div>`;
 }
+
 
 function getDealsOfTheDayProducts() {
     if (!allProductsCache || allProductsCache.length === 0) return [];
@@ -394,12 +455,22 @@ function setupGlobalEventListeners() {
             const productId = addButton.dataset.id;
             if (productId) {
                 addToCart(productId);
-                addButton.classList.add('added');
-                addButton.innerHTML = '<i class="fas fa-check"></i>';
-                setTimeout(() => {
-                    addButton.classList.remove('added');
-                    addButton.innerHTML = '+';
-                }, 1500);
+
+                if (addButton.classList.contains('add-text-btn')) {
+                    addButton.classList.add('added');
+                    addButton.textContent = 'Added ✓';
+                    setTimeout(() => {
+                        addButton.classList.remove('added');
+                        addButton.textContent = 'Add';
+                    }, 1500);
+                } else { 
+                     addButton.classList.add('added');
+                     addButton.innerHTML = '<i class="fas fa-check"></i>';
+                     setTimeout(() => {
+                         addButton.classList.remove('added');
+                         addButton.innerHTML = '+';
+                     }, 1500);
+                }
             }
         }
     });
@@ -519,5 +590,6 @@ function initializeJfySlider(count) { const slider = document.querySelector(".jf
 function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide += dir, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
-function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4e3) }
+function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(4), 4e3) }
+
 
