@@ -412,7 +412,6 @@ function openBundleModal(productIds, bundlePrice) {
 function closeBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
 function setupBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); document.getElementById('bundle-modal-close').addEventListener('click', closeBundleModal); overlay.addEventListener('click', e => { if (e.target === overlay) closeBundleModal(); }); }
 
-// === YAHAN BADLAV KIYA GAYA HAI: Button ko wapas '+' karne ka logic joda gaya hai ===
 function handleQuickAdd(event) {
     const quickAddButton = event.target.closest('.quick-add-btn');
     if (quickAddButton && !quickAddButton.dataset.bundle) {
@@ -429,12 +428,10 @@ function handleQuickAdd(event) {
                 });
             }
             addToCart(productId, 1, defaultVariants, null);
-            quickAddButton.innerHTML = '<i class="fas fa-check"></i>'; // 'Added' ke bajaye checkmark
+            quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
             quickAddButton.classList.add('added');
-
-            // 1.5 second baad button ko wapas normal karne ke liye
             setTimeout(() => {
-                quickAddButton.innerHTML = '+'; // Wapas '+'
+                quickAddButton.innerHTML = '+';
                 quickAddButton.classList.remove('added');
             }, 1500);
         }
@@ -521,7 +518,54 @@ function getPositionX(event) { return event.type.includes("mouse")?event.pageX:e
 function animation() { setSliderPosition(),isDragging&&requestAnimationFrame(animation)}
 function setSliderPosition() { slider.style.transform=`translateX(${currentTranslate}px)`}
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
-function setupShareButton() { document.getElementById("share-button").addEventListener("click",async()=>{const e=currentProductData.name.replace(/\*/g,"").trim(),t=`*${e}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;navigator.share?await navigator.share({text:t}):navigator.clipboard.writeText(window.location.href).then(()=>showToast("Link Copied!"))})}
+
+// === YAHAN BADLAV KIYA GAYA HAI: Share function ko behtar banaya gaya hai ===
+function setupShareButton() {
+    document.getElementById("share-button").addEventListener("click", async () => {
+        if (!currentProductData) return;
+
+        const productName = currentProductData.name.replace(/\*/g, "").trim();
+        const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
+        const productUrl = window.location.href;
+
+        // Yah message WhatsApp jaise apps mein dikhega
+        const shareMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨\n${productUrl}`;
+
+        // Web Share API ke liye data object
+        const shareData = {
+            title: productName,    // Share sheet ka title
+            text: shareMessage,    // Share kiya jaane wala mukhya text
+            url: productUrl,       // Yah URL preview generate karega
+        };
+
+        try {
+            // Web Share API ka istemal karne ki koshish
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else if (navigator.clipboard) {
+                // Fallback: Agar share API nahi hai to poora message clipboard mein copy karein
+                await navigator.clipboard.writeText(shareMessage);
+                showToast("Link and details copied!");
+            } else {
+                // Last fallback: Sirf URL copy karein
+                const textArea = document.createElement('textarea');
+                textArea.value = productUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast("Link Copied!");
+            }
+        } catch (err) {
+            console.error("Error sharing:", err);
+            // Agar user share dialog ko cancel karta hai to error na dikhayein
+            if (err.name !== 'AbortError') {
+                 showToast("Sharing failed.", "error");
+            }
+        }
+    });
+}
+
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
 function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; viewedIds = viewedIds.filter(e => e !== newId); viewedIds.unshift(newId); viewedIds = viewedIds.slice(0, 10); localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds)); loadRecentlyViewed(viewedIds); }
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
