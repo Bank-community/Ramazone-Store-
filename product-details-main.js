@@ -519,7 +519,7 @@ function animation() { setSliderPosition(),isDragging&&requestAnimationFrame(ani
 function setSliderPosition() { slider.style.transform=`translateX(${currentTranslate}px)`}
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
 
-// === YAHAN BADLAV KIYA GAYA HAI: Share function ko behtar banaya gaya hai ===
+// === YAHAN BADLAV KIYA GAYA HAI: Double URL ki problem ko theek kiya gaya hai ===
 function setupShareButton() {
     document.getElementById("share-button").addEventListener("click", async () => {
         if (!currentProductData) return;
@@ -528,23 +528,25 @@ function setupShareButton() {
         const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
         const productUrl = window.location.href;
 
-        // Yah message WhatsApp jaise apps mein dikhega
-        const shareMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨\n${productUrl}`;
+        // Base message (bina URL ke)
+        const baseMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨`;
+
+        // Poora message (URL ke saath) - sirf copy karne ke liye
+        const clipboardMessage = `${baseMessage}\n${productUrl}`;
 
         // Web Share API ke liye data object
         const shareData = {
-            title: productName,    // Share sheet ka title
-            text: shareMessage,    // Share kiya jaane wala mukhya text
-            url: productUrl,       // Yah URL preview generate karega
+            title: productName,
+            text: baseMessage, // Yahan ab URL nahi hai
+            url: productUrl,   // URL ko alag se yahan rakha gaya hai
         };
 
         try {
-            // Web Share API ka istemal karne ki koshish
             if (navigator.share) {
                 await navigator.share(shareData);
             } else if (navigator.clipboard) {
-                // Fallback: Agar share API nahi hai to poora message clipboard mein copy karein
-                await navigator.clipboard.writeText(shareMessage);
+                // Agar share API nahi hai to poora message (URL ke saath) copy hoga
+                await navigator.clipboard.writeText(clipboardMessage);
                 showToast("Link and details copied!");
             } else {
                 // Last fallback: Sirf URL copy karein
@@ -558,7 +560,6 @@ function setupShareButton() {
             }
         } catch (err) {
             console.error("Error sharing:", err);
-            // Agar user share dialog ko cancel karta hai to error na dikhayein
             if (err.name !== 'AbortError') {
                  showToast("Sharing failed.", "error");
             }
@@ -571,4 +572,5 @@ function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.g
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
+
 
