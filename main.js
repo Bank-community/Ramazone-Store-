@@ -329,11 +329,12 @@ function createFestiveCardHTML(prod, options = {}) {
 
     let progressBarHTML = '';
     if (typeof soldPercentage === 'number' && soldPercentage >= 0) {
-        progressBarHTML = `<div class="progress-bar-container"><div class="progress-bar-inner" style="width: ${soldPercentage}%"></div><span class="progress-bar-text">${soldPercentage}% Sold</span></div>`;
+        progressBarHTML = `<div class="progress-bar-container mb-1"><div class="progress-bar-inner" style="width: ${soldPercentage}%"></div><span class="progress-bar-text">${soldPercentage}% Sold</span></div>`;
     }
 
+    // === YAHAN GADBADI THEEK KI GAYI HAI: Sabhi details ko ek parent div (.p-2) mein dala gaya hai ===
     return `
-    <div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+    <div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
         <div class="relative">
             <a href="./product-details.html?id=${prod.id}" class="block relative">
                 <img src="${imageUrl}" class="w-full object-cover aspect-square" alt="${prod.name || 'Product'}" loading="lazy">
@@ -341,10 +342,10 @@ function createFestiveCardHTML(prod, options = {}) {
                 ${offerTag}
             </a>
         </div>
-        <div class="p-2 flex flex-col justify-between flex-grow">
+        <div class="p-3 flex flex-col justify-between flex-grow">
             <div>
                 <a href="./product-details.html?id=${prod.id}" class="block">
-                    <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${prod.name || 'Product Name'}</h4>
+                    <h4 class="text-sm font-semibold text-gray-800 mb-1">${prod.name || 'Product Name'}</h4>
                     <div class="flex items-center justify-between gap-2 flex-wrap mb-2">
                         <div class="flex items-baseline gap-2">
                             ${priceHTML}
@@ -364,6 +365,9 @@ function createFestiveCardHTML(prod, options = {}) {
         </div>
     </div>`;
 }
+
+
+
 
 
 function renderFestiveCollection(collectionData) {
