@@ -3,7 +3,7 @@ const urlsToCache = [
   '.',
   'cashback.html',
   'manifest.json',
-  'https://i.ibb.co/wNSkXVyB/1759931691895.png', // App Icon
+  'https://i.ibb.co/CpxWpNfN/20251008-194445.png', // App Icon
   'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap' // Google Font
 ];
 
