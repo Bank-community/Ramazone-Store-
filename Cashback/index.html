@@ -543,1025 +543,1070 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // --- App Initialization and Global Variables ---
-        let app, auth, db;
-        let imgbbApiKey;
-        let currentUser = null;
-        let currentUserData = null;
-        let combinedHistory = []; // Global store for all history items
-        let activeListeners = [];
-        let scannerAnimation = null;
-        let allTransactions = [];
-        let cashbackRequests = [];
-        let creditRequests = [];
-        let activeFilter = 'all';
-        let pendingAction = null;
-        let isUplineLoaded = false;
-        let popupTimeout = null;
-        let initialPopupShown = false;
-        const commissionRates = [30, 25, 20, 15, 10];
-        const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
-        let historyStack = [];
-        const networkLoader = document.getElementById('network-loader');
-        const networkTitleEl = document.getElementById('network-title');
-        const UPI_ID = "princekumar954684-1@okicici";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Core Functions (Config, UI Toggles) ---
-        async function fetchConfigsAndInit() {
-            try {
-                const [firebaseConfigRes, imageConfigRes] = await Promise.all([
-                    fetch('/api/cashback-config'),
-                    fetch('/api/image-config')
-                ]);
-                if (!firebaseConfigRes.ok || !imageConfigRes.ok) throw new Error('Failed to load app configuration.');
-                const firebaseConfig = await firebaseConfigRes.json();
-                const imageConfig = await imageConfigRes.json();
-                imgbbApiKey = imageConfig.apiKey;
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                initializeAppLogic();
-            } catch (error) {
-                console.error("Critical Initialization Error:", error);
-                document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load settings. Please try again later.</p></div>`;
-            }
-        }
-        const showToast = (message) => {
-            const toast = document.getElementById('toast-notification');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        };
-        // FIXED: Network page viewport logic
-        const toggleView = (viewId) => {
-            const viewportMeta = document.querySelector('meta[name="viewport"]');
-            if (viewId === 'network-view') {
-                viewportMeta.setAttribute('content', 'width=1200');
+// --- App Initialization and Global Variables ---
+let app, auth, db;
+let imgbbApiKey;
+
+// ======================= PWA Install Button Logic START =======================
+let deferredPrompt; // Yah variable install prompt ko store karega
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Browser ke default prompt ko rokein
+  e.preventDefault();
+  // Prompt ko baad mein istemal karne ke liye save karein
+  deferredPrompt = e;
+  // Hamare custom button ko dikhayein
+  const installBtn = document.getElementById('install-pwa-btn');
+  if (installBtn) {
+    installBtn.style.display = 'flex';
+  }
+});
+
+// Yah sunishchit karne ke liye ki app install hone ke baad button chhip jaye
+window.addEventListener('appinstalled', () => {
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (installBtn) {
+        installBtn.style.display = 'none';
+    }
+    deferredPrompt = null;
+    console.log('PWA was installed');
+});
+
+function handleInstallClick() {
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (installBtn && deferredPrompt) {
+        // Button ko chhipa dein kyunki prompt dikhne wala hai
+        installBtn.style.display = 'none';
+        // Install prompt dikhayein
+        deferredPrompt.prompt();
+        // User ke chunav ka intezar karein
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
             } else {
-                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                console.log('User dismissed the install prompt');
             }
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            const viewElement = document.getElementById(viewId);
-            if(viewElement) {
-                viewElement.classList.add('active');
+            deferredPrompt = null;
+        });
+    }
+}
+// ======================= PWA Install Button Logic END =======================
+
+let currentUser = null;
+let currentUserData = null;
+let combinedHistory = []; // Global store for all history items
+let activeListeners = [];
+let scannerAnimation = null;
+let allTransactions = [];
+let cashbackRequests = [];
+let creditRequests = [];
+let activeFilter = 'all';
+let pendingAction = null;
+let isUplineLoaded = false;
+let popupTimeout = null;
+let initialPopupShown = false;
+const commissionRates = [30, 25, 20, 15, 10];
+const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
+let historyStack = [];
+const networkLoader = document.getElementById('network-loader');
+const networkTitleEl = document.getElementById('network-title');
+const UPI_ID = "princekumar954684-1@okicici";
+
+// --- Core Functions (Config, UI Toggles) ---
+async function fetchConfigsAndInit() {
+    try {
+        const [firebaseConfigRes, imageConfigRes] = await Promise.all([
+            fetch('/api/cashback-config'),
+            fetch('/api/image-config')
+        ]);
+        if (!firebaseConfigRes.ok || !imageConfigRes.ok) throw new Error('Failed to load app configuration.');
+        const firebaseConfig = await firebaseConfigRes.json();
+        const imageConfig = await imageConfigRes.json();
+        imgbbApiKey = imageConfig.apiKey;
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        initializeAppLogic();
+    } catch (error) {
+        console.error("Critical Initialization Error:", error);
+        document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load settings. Please try again later.</p></div>`;
+    }
+}
+const showToast = (message) => {
+    const toast = document.getElementById('toast-notification');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+};
+const toggleView = (viewId) => {
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (viewId === 'network-view') {
+        viewportMeta.setAttribute('content', 'width=1200');
+    } else {
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const viewElement = document.getElementById(viewId);
+    if(viewElement) {
+        viewElement.classList.add('active');
+    }
+};
+const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
+const closeModal = (modalId) => {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.remove('active');
+    if (modalId === 'scan-pay-modal') stopScanner();
+};
+const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
+const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
+
+// --- Realtime Data Handling ---
+function attachRealtimeListeners(user) {
+    detachAllListeners();
+    const uid = user.uid;
+    const listeners = [
+        onSnapshot(doc(db, 'users', uid), (doc) => {
+            if (doc.exists()) {
+                currentUserData = { uid: doc.id, ...doc.data() };
+                updateDashboardUI(currentUserData, user);
+                renderNotificationCenter();
+                
+                if (!initialPopupShown) {
+                    handleDueNotificationPopup(currentUserData);
+                    initialPopupShown = true;
+                }
             }
+        }),
+        onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
+            allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
+            combineAndRenderHistory();
+        }),
+        onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+            cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
+            combineAndRenderHistory();
+        }),
+        onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
+            creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
+            combineAndRenderHistory();
+        }),
+        onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
+             if (!snapshot.empty) {
+                const latestOffer = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+                updateOfferNotificationCard(latestOffer);
+             } else {
+                updateOfferNotificationCard(null);
+             }
+        })
+    ];
+    activeListeners.push(...listeners);
+}
+function detachAllListeners() {
+    activeListeners.forEach(unsub => unsub());
+    activeListeners = [];
+    initialPopupShown = false;
+}
+
+// --- UI Update and Notification Logic ---
+function updateDashboardUI(dbData, authUser) {
+    const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
+    document.getElementById('header-profile-avatar').src = profilePicUrl;
+    document.getElementById('wallet-user-name').textContent = authUser.displayName;
+    document.getElementById('modal-profile-img').src = profilePicUrl;
+    document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
+    document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+    document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
+    document.getElementById('due-amount').textContent = `₹ ${(dbData.dueAmount || 0).toFixed(2)}`;
+    document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
+    document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
+    document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
+    
+    const payDueBtn = document.getElementById('pay-due-amount-btn');
+    payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
+
+    const dailyRewardBtn = document.getElementById('daily-reward-btn');
+    const lastCheckIn = dbData.lastCheckInDate?.toDate();
+    const today = new Date();
+    const totalDays = dbData.totalCheckInDays || 0;
+
+    if (totalDays >= 30) {
+        dailyRewardBtn.classList.add('disabled');
+        dailyRewardBtn.querySelector('.card-text').textContent = 'Reward Limit Reached';
+    } else if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
+        dailyRewardBtn.classList.add('disabled');
+        dailyRewardBtn.querySelector('.card-text').textContent = 'Claimed Today';
+    } else {
+        dailyRewardBtn.classList.remove('disabled');
+        dailyRewardBtn.querySelector('.card-text').textContent = 'Daily Reward';
+    }
+}
+
+function getDueNotificationData(dbData) {
+    if (!dbData) return null;
+    const today = new Date();
+    const dayOfMonth = today.getDate();
+    if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
+        return {
+            id: 'due_notification_priority',
+            title: `Payment Due: ₹${dbData.dueAmount.toFixed(2)}`,
+            popupTitle: `Namaste ${dbData.name}, aapka bhugtan baki hai.`,
+            popupPercentage: `Amount: ₹${dbData.dueAmount.toFixed(2)}`,
+            paragraph: `Kripya apna ₹${dbData.dueAmount.toFixed(2)} ka due amount 7 tarikh se pehle pay karein. Dhanyavad!`,
         };
-        const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
-        const closeModal = (modalId) => {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.remove('active');
-            if (modalId === 'scan-pay-modal') stopScanner();
-        };
-        const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
-        const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
+    }
+    return null;
+}
+
+function handleDueNotificationPopup(dbData) {
+    const dueNotification = getDueNotificationData(dbData);
+    if (dueNotification) {
+        showPopupNotification({
+            popupBgColor: 'var(--due-red)',
+            popupTextColor: 'white',
+            popupIcon: '⚠️',
+            popupTitle: dueNotification.popupTitle,
+            popupPercentage: dueNotification.popupPercentage
+        }, 4000);
+    }
+}
+
+function updateOfferNotificationCard(offerData) {
+    const banner = document.getElementById('cashback-banner');
+    if (!banner) return;
+    
+    const wrapper = banner.querySelector('.notification-content-wrapper');
+
+    if (!offerData) {
+        wrapper.style.opacity = 0;
+        wrapper.classList.remove('animate');
+        return;
+    }
+
+    banner.style.backgroundColor = offerData.thumbnailBgColor || '#ffc107';
+    banner.style.color = offerData.thumbnailTextColor || '#212529';
+    
+    const [text1, text2 = ''] = (offerData.thumbnailTitle || '').split('|').map(t => t.trim());
+    wrapper.querySelector('.notification-text-line1').textContent = text1;
+    wrapper.querySelector('.notification-text-line2').textContent = text2;
+    wrapper.querySelector('.notification-percentage').textContent = `${offerData.thumbnailPercentage}%`;
+    
+    wrapper.classList.remove('animate');
+    void wrapper.offsetWidth;
+    if (offerData.thumbnailAnimation !== false) {
+         wrapper.classList.add('animate');
+    } else {
+         wrapper.style.opacity = 1;
+    }
+}
+
+function showPopupNotification(notifData, duration = 4000) {
+     if (popupTimeout) clearTimeout(popupTimeout);
+     const popup = document.getElementById('popup-notification');
+     popup.style.backgroundColor = notifData.popupBgColor || '#333';
+     popup.style.color = notifData.popupTextColor || 'white';
+     document.getElementById('popup-notification-icon').textContent = notifData.popupIcon || '🔥';
+     document.getElementById('popup-notification-title').innerHTML = (notifData.popupTitle || '').replace('|', '<br>');
+     document.getElementById('popup-notification-percentage').textContent = notifData.popupPercentage || '';
+     document.getElementById('popup-notification-close').style.color = notifData.popupTextColor || 'white';
+     popup.classList.add('show');
+     popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
+}
+
+async function renderNotificationCenter() {
+    const listEl = document.getElementById('notification-center-list');
+    listEl.innerHTML = '';
+    
+    const dueNotification = getDueNotificationData(currentUserData);
+    if (dueNotification) {
+        const item = document.createElement('div');
+        item.className = 'notification-center-item due-notification-item';
+        item.innerHTML = `<div class="title" style="color: var(--due-red);">${dueNotification.title}</div><p class="paragraph">${dueNotification.paragraph}</p>`;
+        listEl.appendChild(item);
+    }
+    
+    try {
+        const snapshot = await getDocs(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)));
+        if (snapshot.empty && !dueNotification) {
+            listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
+            return;
+        }
+        snapshot.forEach(doc => {
+            const notif = doc.data();
+            const item = document.createElement('div');
+            item.className = 'notification-center-item';
+            item.style.backgroundColor = notif.mainBgColor;
+            item.style.color = notif.mainTextColor;
+            const linkify = (text) => {
+                if (!text) return '';
+                const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+                return text.replace(urlRegex, (url) => `<a href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`);
+            };
+            const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
+            item.innerHTML = `<div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div><div class="percentage">${notif.mainPercentage}%</div>${paragraphHTML}`;
+            listEl.appendChild(item);
+        });
+    } catch (error) {
+        console.error("Error fetching notifications for center:", error);
+        if (!dueNotification) {
+            listEl.innerHTML = '<p class="empty-state">Could not load notifications.</p>';
+        }
+    }
+}
+function combineAndRenderHistory() {
+    const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
+    const formattedCashbackRequests = cashbackRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
+    const formattedCreditRequests = creditRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
+    combinedHistory = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
+    renderUnifiedHistory();
+}
+
+function renderUnifiedHistory() {
+    const listEl = document.getElementById('unified-history-list');
+    const summaryEl = document.getElementById('transaction-summary');
+    const summaryAmountEl = summaryEl.querySelector('.summary-amount');
+    const summaryLabelEl = summaryEl.querySelector('.summary-label');
+    listEl.innerHTML = '';
+
+    const itemsToRender = combinedHistory.filter(item => {
+        if (activeFilter === 'all') return true;
+        if (activeFilter === 'cashback') return item.type === 'cashback';
+        if (activeFilter === 'commission') return item.type === 'commission';
+        if (activeFilter === 'payment') return item.type === 'payment';
+        if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'credit_request';
+        if (activeFilter === 'due_payment') return item.type === 'due_payment';
+        if (activeFilter === 'bonus') return item.type === 'bonus' || item.type === 'referral_bonus';
+        return false;
+    });
+
+    if (itemsToRender.length > 0 && activeFilter !== 'all') {
+        const total = itemsToRender.reduce((sum, item) => sum + Math.abs(item.amount || item.cashbackAmount || 0), 0);
+        const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
+        summaryLabelEl.textContent = `Total ${filterText}`;
+        summaryAmountEl.textContent = `₹ ${total.toFixed(2)}`;
+        summaryEl.style.display = 'flex';
+    } else {
+        summaryEl.style.display = 'none';
+    }
+
+    if (itemsToRender.length === 0) {
+        listEl.innerHTML = `<div class="empty-state" style="padding: 20px 0; text-align:center; color: var(--text-secondary);">No Transactions Found for this filter.</div>`;
+        return;
+    }
+
+    itemsToRender.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'history-item';
+        itemDiv.addEventListener('click', () => showTransactionDetails(item));
+        const amount = item.amount || item.cashbackAmount || 0;
+        let sign = '+';
+        let typeClass = 'credit';
+        if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { typeClass = 'debit'; sign = '-'; }
+        if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
+        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || ''}</span></div>`;
+        listEl.appendChild(itemDiv);
+    });
+}
+function showTransactionDetails(item) {
+    const amount = item.amount || item.cashbackAmount || 0;
+    let sign = '+', typeClass = 'credit';
+    if (item.type === 'payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
+    if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
+    
+    document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
+    document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
+    const statusEl = document.getElementById('details-modal-status');
+    statusEl.textContent = item.status || 'Completed';
+    statusEl.className = 'value status-badge';
+    if (item.status) statusEl.classList.add(item.status);
+
+    document.getElementById('details-modal-desc').textContent = item.description;
+    document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+    document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+    document.getElementById('details-modal-txn-id').textContent = item.id;
+    openModal('transaction-details-modal');
+}
+
+// --- Feature Logic (Payment, QR, etc.) ---
+async function handleDailyCheckIn() {
+    const btn = document.getElementById('daily-reward-btn');
+    if (btn.classList.contains('disabled')) {
+        showToast("Aap reward pehle hi claim kar chuke hain ya limit poori ho gayi hai.");
+        return;
+    }
+
+    const userRef = doc(db, 'users', currentUser.uid);
+    try {
+        const totalDays = currentUserData.totalCheckInDays || 0;
         
-        // --- Realtime Data Handling ---
-        function attachRealtimeListeners(user) {
+        if (totalDays >= 30) {
+            showToast("Aapne sabhi 30 din ke daily rewards claim kar liye hain.");
+            btn.classList.add('disabled');
+            return;
+        }
+
+        const rewardAmount = 0.05;
+
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) throw "User does not exist!";
+            
+            const data = userDoc.data();
+            const lastCheckIn = data.lastCheckInDate?.toDate();
+            const today = new Date();
+            
+            if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
+                throw "Already claimed today!";
+            }
+
+            transaction.update(userRef, {
+                wallet: increment(rewardAmount),
+                lifetimeEarning: increment(rewardAmount),
+                lastCheckInDate: serverTimestamp(),
+                totalCheckInDays: increment(1)
+            });
+
+            const newTxnRef = doc(collection(db, "transactions"));
+            transaction.set(newTxnRef, {
+                type: 'bonus',
+                amount: rewardAmount,
+                description: `Daily Check-in Reward (Day ${totalDays + 1})`,
+                status: 'completed',
+                timestamp: serverTimestamp(),
+                involvedUsers: [currentUser.uid]
+            });
+        });
+        
+        showToast(`Badhai ho! Aapko ₹${rewardAmount.toFixed(2)} ka reward mila hai.`);
+
+    } catch (error) {
+        if (error === "Already claimed today!") {
+            showToast("Aap aaj ka reward pehle hi le chuke hain.");
+        } else {
+            console.error("Error claiming daily reward: ", error);
+            showToast("Reward claim karne mein error hua. Dobara try karein.");
+        }
+    }
+}
+
+function generateDueQR() {
+    if (!currentUserData || currentUserData.dueAmount <= 0) {
+        showToast("No due amount to pay.");
+        return;
+    }
+    const amount = currentUserData.dueAmount;
+    const upiLink = `upi://pay?pa=${UPI_ID}&pn=Ramazone%20Cashback&am=${amount.toFixed(2)}&cu=INR&tn=DuePaymentFor-${currentUserData.mobile}`;
+    const qrContainer = document.getElementById('due-qr-code');
+    qrContainer.innerHTML = ''; 
+    
+    new QRCode(qrContainer, {
+        text: upiLink,
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+    document.getElementById('due-qr-amount').textContent = `Pay: ₹ ${amount.toFixed(2)}`;
+    document.getElementById('due-qr-upi-id').textContent = UPI_ID;
+    openModal('due-payment-modal');
+}
+function downloadQRCard() {
+    const cardElement = document.getElementById('due-qr-card');
+    if (!cardElement) {
+        showToast("QR Card element not found.");
+        return;
+    }
+    showToast("Preparing download...");
+    html2canvas(cardElement, { scale: 3, useCORS: true }).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `Ramazone-Due-Payment-${currentUserData.dueAmount.toFixed(2)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }).catch(err => {
+        console.error("Error downloading QR card:", err);
+        showToast("Download failed. Please try again.");
+    });
+}
+async function handleProfilePictureUpload(event) {
+    const file = event.target.files[0];
+    if (!file || !currentUser) return;
+    if (!imgbbApiKey) { showToast("Image hosting service is not available."); return; }
+    showToast("Uploading picture...");
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, { method: "POST", body: formData });
+        const result = await response.json();
+        if (result.success) {
+            const imageUrl = result.data.url;
+            await updateDoc(doc(db, "users", currentUser.uid), { profilePictureUrl: imageUrl });
+            showToast("Profile picture updated!");
+        } else { throw new Error(result.error.message || "Failed to upload image."); }
+    } catch (error) {
+        console.error("Image upload failed:", error);
+        showToast("Upload failed. Please try again.");
+    } finally { event.target.value = ''; }
+}
+function verifyPasswordAndExecute(action, sourceModalId) {
+    if (sourceModalId) closeModal(sourceModalId);
+    pendingAction = action;
+    openModal('password-verification-modal');
+}
+async function handleVerificationConfirm() {
+    const password = document.getElementById('verification-password').value;
+    const errorMsg = document.getElementById('verification-error-msg');
+    const confirmBtn = document.getElementById('verification-confirm-btn');
+    hideErrorMessage(errorMsg);
+    if (!password) return showErrorMessage(errorMsg, "Password is required.");
+    confirmBtn.disabled = true; confirmBtn.textContent = "Verifying...";
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, password);
+    try {
+        await reauthenticateWithCredential(user, credential);
+        closeModal('password-verification-modal');
+        if (pendingAction) await pendingAction();
+    } catch (error) {
+        showErrorMessage(errorMsg, "Incorrect password.");
+    } finally {
+        confirmBtn.disabled = false; confirmBtn.textContent = "Confirm";
+        document.getElementById('verification-password').value = '';
+        pendingAction = null;
+    }
+}
+function handlePayment() {
+    const amount = parseFloat(document.getElementById('payment-amount').value);
+    const errorMsg = document.getElementById('payment-error-msg');
+    hideErrorMessage(errorMsg);
+    if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
+    if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
+    verifyPasswordAndExecute(async () => {
+        try {
+            const newTxnRef = doc(collection(db, "transactions"));
+            await runTransaction(db, async (t) => {
+                const userRef = doc(db, "users", currentUserData.uid);
+                const configRef = doc(db, "app_settings", "config");
+                t.update(userRef, { wallet: increment(-amount) });
+                t.update(configRef, { rmz_wallet_balance: increment(amount) });
+                t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.uid] });
+                t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
+            });
+            
+            const now = new Date();
+            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
+            document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
+            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
+            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+            openModal('payment-success-modal');
+
+        } catch (error) { 
+            console.error("Payment transaction failed:", error);
+            showToast("Payment failed. Please try again."); 
+        }
+    }, 'scan-pay-modal');
+}
+async function handleCashbackRequest(e) {
+    e.preventDefault();
+    const btn = document.getElementById('cashback-submit-btn');
+    const errorMsg = document.getElementById('cashback-error-msg');
+    hideErrorMessage(errorMsg);
+    btn.disabled = true; btn.textContent = "Submitting...";
+    const productName = document.getElementById("product-name").value.trim();
+    const productPrice = parseFloat(document.getElementById("product-price").value);
+    if (!productName || isNaN(productPrice) || productPrice < 10) {
+        showErrorMessage(errorMsg, "Sahi details daalein.");
+        btn.disabled = false; btn.textContent = "Request"; return;
+    }
+    try {
+        const configDoc = await getDoc(doc(db, "app_settings", "config"));
+        const cashbackPercentage = configDoc.exists() && configDoc.data().cashback_percentage ? configDoc.data().cashback_percentage : 2;
+        const cashbackAmount = productPrice * (cashbackPercentage / 100);
+        await addDoc(collection(db, "cashback_requests"), {
+            userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
+            productName, productPrice, cashbackAmount, status: "pending", requestDate: serverTimestamp(), claimed: false
+        });
+        showToast(`Your cashback request for ₹${cashbackAmount.toFixed(2)} has been submitted.`);
+        document.getElementById('cashback-request-form').reset();
+        closeModal('cashback-modal');
+    } catch (error) { 
+        showErrorMessage(errorMsg, `Error: ${error.message}`);
+    } finally {
+        btn.disabled = false; btn.textContent = "Request";
+    }
+}
+async function handleCreditRequest(e) {
+    e.preventDefault();
+    const btn = document.getElementById('credit-submit-btn');
+    const errorMsg = document.getElementById('credit-error-msg');
+    const amountInput = document.getElementById('credit-amount');
+    hideErrorMessage(errorMsg);
+    const amount = parseFloat(amountInput.value);
+    const maxAmount = parseFloat(amountInput.max);
+    if (isNaN(amount) || amount <= 0 || amount > maxAmount) {
+        showErrorMessage(errorMsg, `Amount 1 se ${maxAmount} ke beech hona chahiye.`);
+        return;
+    }
+    btn.disabled = true; btn.textContent = "Submitting...";
+    verifyPasswordAndExecute(async () => {
+        try {
+            await addDoc(collection(db, "credit_requests"), {
+                userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
+                amount: amount, status: "pending", requestDate: serverTimestamp()
+            });
+            showToast(`₹${amount.toFixed(2)} ka credit request bhej diya gaya hai.`);
+            document.getElementById('credit-request-form').reset();
+            document.getElementById('credit-tnc-checkbox').checked = false;
+            btn.disabled = true;
+        } catch (error) {
+            showToast("Request fail ho gaya. Dobara try karein.");
+        } finally {
+            closeModal('credit-request-modal');
+        }
+    }, 'credit-request-modal');
+    setTimeout(() => { btn.disabled = false; btn.textContent = "Request Credit"; }, 500);
+}
+async function handlePasswordChange(e) {
+    e.preventDefault();
+    const form = document.getElementById('password-change-form');
+    const btn = document.getElementById('password-change-btn');
+    const errorMsgEl = document.getElementById('password-change-error-msg');
+    hideErrorMessage(errorMsgEl);
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    if (newPassword.length < 6) {
+        showErrorMessage(errorMsgEl, "Naya password kam se kam 6 character ka hona chahiye.");
+        return;
+    }
+    btn.disabled = true; btn.textContent = "Updating...";
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    try {
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, newPassword);
+        await updateDoc(doc(db, "users", user.uid), { password: newPassword });
+        showToast("Password safaltapoorvak badal gaya!");
+        form.reset();
+        closeModal('profile-modal');
+    } catch (error) {
+        if (error.code === 'auth/wrong-password') {
+            showErrorMessage(errorMsgEl, "Aapka purana password galat hai.");
+        } else {
+            showErrorMessage(errorMsgEl, "Ek error aayi. Dobara try karein.");
+        }
+    } finally {
+        btn.disabled = false; btn.textContent = "Password Badlein";
+    }
+}
+function startScanner() {
+    stopScanner();
+    const video = document.getElementById('scanner-video');
+    const statusEl = document.getElementById('scanner-status');
+    document.getElementById('payment-form').style.display = 'none';
+    document.getElementById('scan-pay-initial-actions').style.display = 'flex';
+    statusEl.textContent = 'Starting camera...';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
+        video.srcObject = stream;
+        video.play();
+        statusEl.textContent = 'Scanning for QR code...';
+        scannerAnimation = requestAnimationFrame(tick);
+    }).catch(() => statusEl.textContent = 'Could not access camera.');
+    const tick = () => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+            if (code && code.data === '@RamazoneStoreCashback') { handleSuccessfulScan(code.data); return; }
+        }
+        if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
+    };
+}
+function stopScanner() {
+    if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
+    scannerAnimation = null;
+    const video = document.getElementById('scanner-video');
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+}
+function handleSuccessfulScan(data) {
+    stopScanner();
+    document.getElementById('receiver-id-display').textContent = data;
+    document.getElementById('payment-form').style.display = 'block';
+    document.getElementById('scan-pay-initial-actions').style.display = 'none';
+    document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
+}
+function handleQrUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const image = new Image();
+        image.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.width; canvas.height = image.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+            if (code && code.data === '@RamazoneStoreCashback') handleSuccessfulScan(code.data);
+            else showToast("No valid QR code found.");
+        };
+        image.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+function handleShare() {
+    if (!currentUserData) return;
+    const { referralId, name, lifetimeEarning } = currentUserData;
+    const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
+    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
+    if (navigator.share) navigator.share({ text: shareText });
+    else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
+}
+function handleWhatsAppSupport() {
+    if (!currentUserData) return showToast("Please wait for your data to load.");
+    const { name, referralId, lifetimeEarning, mobile } = currentUserData;
+    const message = `Name: ${name}\nMobile: ${mobile}\nReferral ID: ${referralId}\nLifetime Earning: ₹${(lifetimeEarning || 0).toFixed(2)}\n\nHelp Me`;
+    const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+}
+function handleReferralLink() {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+        toggleView('registration-view');
+        document.getElementById('reg-referral').value = refCode.toUpperCase();
+    } else {
+        toggleView('login-view');
+    }
+}
+async function updateNetworkTreeView(userId, level = 0) {
+    networkLoader.style.display = 'block';
+    const treeRoot = document.getElementById('tree-root');
+    treeRoot.innerHTML = '';
+    try {
+        const rootUserDoc = await getDoc(doc(db, 'users', userId));
+        if (!rootUserDoc.exists()) throw new Error("User not found");
+        const rootUserData = { uid: rootUserDoc.id, ...rootUserDoc.data() };
+        networkTitleEl.textContent = `${rootUserData.name}'s Network`;
+        const treeData = await buildTreeData(rootUserData, level, 4);
+        treeRoot.innerHTML = createTreeHTML(treeData);
+        attachNodeClickListeners();
+        setTimeout(() => {
+            drawConnectors();
+            if (!treeData.children || treeData.children.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-state';
+                emptyMessage.style.paddingTop = '20px';
+                emptyMessage.textContent = `${rootUserData.name} ke network mein koi member nahi hai.`;
+                treeRoot.querySelector('.tree').appendChild(emptyMessage);
+            }
+        }, 100);
+        updateNetworkNavButton();
+    } catch (error) {
+        console.error(error);
+        treeRoot.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
+    } finally {
+        networkLoader.style.display = 'none';
+    }
+}
+async function buildTreeData(userData, currentLevel, maxLevel) {
+    if (currentLevel >= maxLevel) {
+        return { ...userData, children: [], level: currentLevel };
+    }
+    const referrals = await getDirectReferrals(userData.uid);
+    const children = await Promise.all(referrals.map(ref => buildTreeData(ref, currentLevel + 1, maxLevel)));
+    return { ...userData, children, level: currentLevel };
+}
+function createTreeHTML(nodeData) {
+    let html = `<div class="tree">`;
+    const avatarHTML = nodeData.profilePictureUrl ? `<img src="${nodeData.profilePictureUrl}" alt="${nodeData.name}">` : nodeData.name.charAt(0).toUpperCase();
+    html += `<div class="node-wrapper"><div class="node" data-uid="${nodeData.uid}"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${nodeData.name}</div><div class="node-earning">₹${(nodeData.lifetimeEarning || 0).toLocaleString()}</div></div></div>`;
+    if (nodeData.children && nodeData.children.length > 0) {
+        html += '<div class="node-children">';
+        nodeData.children.forEach(child => {
+            html += `<div class="node-wrapper" data-level="${child.level}">${createTreeHTML(child)}</div>`;
+        });
+        html += '</div>';
+    }
+    html += `</div>`;
+    return html;
+}
+function attachNodeClickListeners() {
+    document.querySelectorAll('.node').forEach(nodeEl => {
+        nodeEl.addEventListener('click', () => {
+            const clickedUid = nodeEl.dataset.uid;
+            const currentRootUid = historyStack[historyStack.length - 1].uid;
+            if (clickedUid !== currentRootUid) {
+                networkLoader.style.display = 'block';
+                getDoc(doc(db, 'users', clickedUid)).then(userDoc => {
+                    if (userDoc.exists()) {
+                        const userData = { uid: userDoc.id, ...userDoc.data() };
+                        historyStack.push(userData);
+                        updateNetworkTreeView(userData.uid, 0);
+                    }
+                });
+            }
+        });
+    });
+}
+function drawConnectors() {
+    const svg = document.getElementById('connector-svg');
+    const treeContainer = document.querySelector('.tree-container');
+    const tagsContainer = document.getElementById('commission-tags-container');
+    svg.innerHTML = '';
+    tagsContainer.innerHTML = '';
+    const allParentWrappers = document.querySelectorAll('.tree');
+    allParentWrappers.forEach(parentTree => {
+        const parentNode = parentTree.querySelector(':scope > .node-wrapper > .node');
+        const childrenContainer = parentTree.querySelector(':scope > .node-children');
+        if (!childrenContainer) return;
+        const parentRect = parentNode.getBoundingClientRect();
+        const containerRect = treeContainer.getBoundingClientRect();
+        const startX = parentRect.left + parentRect.width / 2 - containerRect.left;
+        const startY = parentRect.top + parentRect.height - containerRect.top;
+        const horizontalLineY = startY + 40;
+        svg.appendChild(createPath(`M ${startX} ${startY} V ${horizontalLineY}`));
+        const childrenWrappers = Array.from(childrenContainer.children);
+        if (childrenWrappers.length === 0) return;
+        const firstChildNode = childrenWrappers[0].querySelector('.node');
+        const lastChildNode = childrenWrappers[childrenWrappers.length - 1].querySelector('.node');
+        const hLineStartX = firstChildNode.getBoundingClientRect().left + firstChildNode.offsetWidth / 2 - containerRect.left;
+        const hLineEndX = lastChildNode.getBoundingClientRect().left + lastChildNode.offsetWidth / 2 - containerRect.left;
+        if (childrenWrappers.length > 1) {
+            svg.appendChild(createPath(`M ${hLineStartX} ${horizontalLineY} H ${hLineEndX}`));
+        }
+        childrenWrappers.forEach(childWrapper => {
+            const childNode = childWrapper.querySelector('.node');
+            const childRect = childNode.getBoundingClientRect();
+            const childX = childRect.left + childRect.width / 2 - containerRect.left;
+            const childY = childRect.top - containerRect.top;
+            svg.appendChild(createPath(`M ${childX} ${horizontalLineY} V ${childY}`));
+            const level = parseInt(childWrapper.dataset.level);
+            if (!isNaN(level) && level > 0 && level <= commissionRates.length) {
+                const tag = document.createElement('div');
+                tag.className = 'commission-tag';
+                tag.textContent = `${commissionRates[level - 1]}%`;
+                tag.style.left = `${childX}px`;
+                tag.style.top = `${horizontalLineY + (childY - horizontalLineY) / 2}px`;
+                tagsContainer.appendChild(tag);
+            }
+        });
+    });
+}
+function createPath(d) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d); path.setAttribute('stroke', 'var(--line-color)');
+    path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
+    return path;
+}
+function updateNetworkNavButton() {
+    const navBtn = document.getElementById('network-nav-btn');
+    navBtn.title = historyStack.length > 1 ? "Go Back" : "Back to Dashboard";
+}
+async function getDirectReferrals(userId) {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (!userDoc.exists()) return [];
+    const referralId = userDoc.data().referralId;
+    if (!referralId) return [];
+    const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+}
+async function loadUpline() {
+    const uplineContainer = document.getElementById('upline-list');
+    uplineContainer.innerHTML = '';
+    networkLoader.style.display = 'block';
+    try {
+        const uplineUIDs = currentUserData.upline || [];
+        const uplineDocs = await Promise.all(uplineUIDs.map(uid => getDoc(doc(db, 'users', uid))));
+        const uplineData = uplineDocs.map(doc => doc.exists() ? {uid: doc.id, ...doc.data()} : null).filter(Boolean);
+        uplineData.push(currentUserData);
+        uplineContainer.innerHTML = uplineData.reverse().map((member, index, arr) => {
+            const isCurrentUser = member.uid === currentUserData.uid;
+            const level = arr.length - 1 - index;
+            const avatarHTML = member.profilePictureUrl ? `<img src="${member.profilePictureUrl}" alt="${member.name}">` : member.name.charAt(0).toUpperCase();
+            return `<div class="upline-member ${isCurrentUser ? 'current-user' : ''}">${!isCurrentUser && level < commissionRates.length ? `<div class="upline-commission">${commissionRates[level]}%</div>` : ''}<div class="node"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${member.name} ${isCurrentUser ? '(Aap)' : ''}</div>${!isCurrentUser ? `<div class="node-earning">Sponsor</div>` : ''}</div></div>`;
+        }).join('');
+        if (uplineData.length <= 1) { uplineContainer.innerHTML += '<div class="empty-state">Aapke paas koi sponsor nahi hai.</div>'; }
+        isUplineLoaded = true;
+    } catch (error) {
+        console.error("Error loading upline:", error);
+        uplineContainer.innerHTML = '<div class="empty-state">Sponsor load karne mein error hua.</div>';
+    } finally {
+        networkLoader.style.display = 'none';
+    }
+}
+
+// --- Initialization and Event Listeners ---
+function initializeAppLogic() {
+    onAuthStateChanged(auth, user => {
+        if (user && user.displayName) {
+            currentUser = user;
+            attachRealtimeListeners(user);
+            toggleView('dashboard-view');
+        } else {
             detachAllListeners();
-            const uid = user.uid;
-            const listeners = [
-                onSnapshot(doc(db, 'users', uid), (doc) => {
-                    if (doc.exists()) {
-                        currentUserData = { uid: doc.id, ...doc.data() };
-                        updateDashboardUI(currentUserData, user);
-                        renderNotificationCenter();
-                        
-                        if (!initialPopupShown) {
-                            handleDueNotificationPopup(currentUserData);
-                            initialPopupShown = true;
-                        }
-                    }
-                }),
-                onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
-                    allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
-                    combineAndRenderHistory();
-                }),
-                onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-                    cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
-                    combineAndRenderHistory();
-                }),
-                onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-                    creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
-                    combineAndRenderHistory();
-                }),
-                onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
-                     if (!snapshot.empty) {
-                        const latestOffer = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-                        updateOfferNotificationCard(latestOffer);
-                     } else {
-                        updateOfferNotificationCard(null);
-                     }
-                })
-            ];
-            activeListeners.push(...listeners);
+            handleReferralLink();
         }
-        function detachAllListeners() {
-            activeListeners.forEach(unsub => unsub());
-            activeListeners = [];
-            initialPopupShown = false;
+    });
+    
+    document.getElementById('login-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const mobile = document.getElementById('login-mobile').value;
+        const password = document.getElementById('login-password').value;
+        const errorMsgEl = document.getElementById('login-error-msg');
+        hideErrorMessage(errorMsgEl);
+        signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
+            .catch(() => showErrorMessage(errorMsgEl, "Galat mobile ya password."));
+    });
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const registerButton = e.target.querySelector('button');
+        const errorMsgEl = document.getElementById('register-error-msg');
+        hideErrorMessage(errorMsgEl);
+        registerButton.disabled = true; registerButton.textContent = 'Registering...';
+        const name = document.getElementById('reg-name').value.trim();
+        const mobile = document.getElementById('reg-mobile').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
+        if (!name || !mobile || password.length < 6) {
+            showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
+            registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
         }
-
-        // --- UI Update and Notification Logic ---
-        function updateDashboardUI(dbData, authUser) {
-            const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
-            document.getElementById('header-profile-avatar').src = profilePicUrl;
-            document.getElementById('wallet-user-name').textContent = authUser.displayName;
-            document.getElementById('modal-profile-img').src = profilePicUrl;
-            document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
-            document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
-            document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
-            document.getElementById('due-amount').textContent = `₹ ${(dbData.dueAmount || 0).toFixed(2)}`;
-            document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
-            document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
-            document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
-            
-            const payDueBtn = document.getElementById('pay-due-amount-btn');
-            payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
-
-            // UPDATE: Daily Reward Button UI Logic
-            const dailyRewardBtn = document.getElementById('daily-reward-btn');
-            const lastCheckIn = dbData.lastCheckInDate?.toDate();
-            const today = new Date();
-            const totalDays = dbData.totalCheckInDays || 0;
-
-            if (totalDays >= 30) { // Changed limit from 130 to 30
-                dailyRewardBtn.classList.add('disabled');
-                dailyRewardBtn.querySelector('.card-text').textContent = 'Reward Limit Reached';
-            } else if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
-                dailyRewardBtn.classList.add('disabled');
-                dailyRewardBtn.querySelector('.card-text').textContent = 'Claimed Today';
-            } else {
-                dailyRewardBtn.classList.remove('disabled');
-                dailyRewardBtn.querySelector('.card-text').textContent = 'Daily Reward';
-            }
-        }
-
-        function getDueNotificationData(dbData) {
-            if (!dbData) return null;
-            const today = new Date();
-            const dayOfMonth = today.getDate();
-            if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
-                return {
-                    id: 'due_notification_priority',
-                    title: `Payment Due: ₹${dbData.dueAmount.toFixed(2)}`,
-                    popupTitle: `Namaste ${dbData.name}, aapka bhugtan baki hai.`,
-                    popupPercentage: `Amount: ₹${dbData.dueAmount.toFixed(2)}`,
-                    paragraph: `Kripya apna ₹${dbData.dueAmount.toFixed(2)} ka due amount 7 tarikh se pehle pay karein. Dhanyavad!`,
-                };
-            }
-            return null;
-        }
-        
-        function handleDueNotificationPopup(dbData) {
-            const dueNotification = getDueNotificationData(dbData);
-            if (dueNotification) {
-                showPopupNotification({
-                    popupBgColor: 'var(--due-red)',
-                    popupTextColor: 'white',
-                    popupIcon: '⚠️',
-                    popupTitle: dueNotification.popupTitle,
-                    popupPercentage: dueNotification.popupPercentage
-                }, 4000);
-            }
-        }
-        
-        function updateOfferNotificationCard(offerData) {
-            const banner = document.getElementById('cashback-banner');
-            if (!banner) return;
-            
-            const wrapper = banner.querySelector('.notification-content-wrapper');
-
-            if (!offerData) {
-                wrapper.style.opacity = 0;
-                wrapper.classList.remove('animate');
-                return;
-            }
-
-            banner.style.backgroundColor = offerData.thumbnailBgColor || '#ffc107';
-            banner.style.color = offerData.thumbnailTextColor || '#212529';
-            
-            const [text1, text2 = ''] = (offerData.thumbnailTitle || '').split('|').map(t => t.trim());
-            wrapper.querySelector('.notification-text-line1').textContent = text1;
-            wrapper.querySelector('.notification-text-line2').textContent = text2;
-            wrapper.querySelector('.notification-percentage').textContent = `${offerData.thumbnailPercentage}%`;
-            
-            wrapper.classList.remove('animate');
-            void wrapper.offsetWidth;
-            if (offerData.thumbnailAnimation !== false) {
-                 wrapper.classList.add('animate');
-            } else {
-                 wrapper.style.opacity = 1;
-            }
-        }
-
-        function showPopupNotification(notifData, duration = 4000) {
-             if (popupTimeout) clearTimeout(popupTimeout);
-             const popup = document.getElementById('popup-notification');
-             popup.style.backgroundColor = notifData.popupBgColor || '#333';
-             popup.style.color = notifData.popupTextColor || 'white';
-             document.getElementById('popup-notification-icon').textContent = notifData.popupIcon || '🔥';
-             document.getElementById('popup-notification-title').innerHTML = (notifData.popupTitle || '').replace('|', '<br>');
-             document.getElementById('popup-notification-percentage').textContent = notifData.popupPercentage || '';
-             document.getElementById('popup-notification-close').style.color = notifData.popupTextColor || 'white';
-             popup.classList.add('show');
-             popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
-        }
-
-        async function renderNotificationCenter() {
-            const listEl = document.getElementById('notification-center-list');
-            listEl.innerHTML = '';
-            
-            const dueNotification = getDueNotificationData(currentUserData);
-            if (dueNotification) {
-                const item = document.createElement('div');
-                item.className = 'notification-center-item due-notification-item';
-                item.innerHTML = `<div class="title" style="color: var(--due-red);">${dueNotification.title}</div><p class="paragraph">${dueNotification.paragraph}</p>`;
-                listEl.appendChild(item);
-            }
-            
-            try {
-                const snapshot = await getDocs(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)));
-                if (snapshot.empty && !dueNotification) {
-                    listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
-                    return;
-                }
-                snapshot.forEach(doc => {
-                    const notif = doc.data();
-                    const item = document.createElement('div');
-                    item.className = 'notification-center-item';
-                    item.style.backgroundColor = notif.mainBgColor;
-                    item.style.color = notif.mainTextColor;
-                    const linkify = (text) => {
-                        if (!text) return '';
-                        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-                        return text.replace(urlRegex, (url) => `<a href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`);
-                    };
-                    const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
-                    item.innerHTML = `<div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div><div class="percentage">${notif.mainPercentage}%</div>${paragraphHTML}`;
-                    listEl.appendChild(item);
-                });
-            } catch (error) {
-                console.error("Error fetching notifications for center:", error);
-                if (!dueNotification) {
-                    listEl.innerHTML = '<p class="empty-state">Could not load notifications.</p>';
-                }
-            }
-        }
-        function combineAndRenderHistory() {
-            const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
-            const formattedCashbackRequests = cashbackRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
-            const formattedCreditRequests = creditRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
-            combinedHistory = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
-            renderUnifiedHistory();
-        }
-        
-        function renderUnifiedHistory() {
-            const listEl = document.getElementById('unified-history-list');
-            const summaryEl = document.getElementById('transaction-summary');
-            const summaryAmountEl = summaryEl.querySelector('.summary-amount');
-            const summaryLabelEl = summaryEl.querySelector('.summary-label');
-            listEl.innerHTML = '';
-
-            const itemsToRender = combinedHistory.filter(item => {
-                if (activeFilter === 'all') return true;
-                if (activeFilter === 'cashback') return item.type === 'cashback';
-                if (activeFilter === 'commission') return item.type === 'commission';
-                if (activeFilter === 'payment') return item.type === 'payment';
-                if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'credit_request';
-                if (activeFilter === 'due_payment') return item.type === 'due_payment';
-                if (activeFilter === 'bonus') return item.type === 'bonus' || item.type === 'referral_bonus';
-                return false;
-            });
-
-            if (itemsToRender.length > 0 && activeFilter !== 'all') {
-                const total = itemsToRender.reduce((sum, item) => sum + Math.abs(item.amount || item.cashbackAmount || 0), 0);
-                const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
-                summaryLabelEl.textContent = `Total ${filterText}`;
-                summaryAmountEl.textContent = `₹ ${total.toFixed(2)}`;
-                summaryEl.style.display = 'flex';
-            } else {
-                summaryEl.style.display = 'none';
-            }
-
-            if (itemsToRender.length === 0) {
-                listEl.innerHTML = `<div class="empty-state" style="padding: 20px 0; text-align:center; color: var(--text-secondary);">No Transactions Found for this filter.</div>`;
-                return;
-            }
-
-            itemsToRender.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'history-item';
-                itemDiv.addEventListener('click', () => showTransactionDetails(item));
-                const amount = item.amount || item.cashbackAmount || 0;
-                let sign = '+';
-                let typeClass = 'credit';
-                if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { typeClass = 'debit'; sign = '-'; }
-                if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
-                itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || ''}</span></div>`;
-                listEl.appendChild(itemDiv);
-            });
-        }
-        function showTransactionDetails(item) {
-            const amount = item.amount || item.cashbackAmount || 0;
-            let sign = '+', typeClass = 'credit';
-            if (item.type === 'payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
-            if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
-            
-            document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
-            document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
-            const statusEl = document.getElementById('details-modal-status');
-            statusEl.textContent = item.status || 'Completed';
-            statusEl.className = 'value status-badge';
-            if (item.status) statusEl.classList.add(item.status);
-
-            document.getElementById('details-modal-desc').textContent = item.description;
-            document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
-            document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-            document.getElementById('details-modal-txn-id').textContent = item.id;
-            openModal('transaction-details-modal');
-        }
-        
-        // --- Feature Logic (Payment, QR, etc.) ---
-        
-        // UPDATE: Daily Check-in logic changed
-        async function handleDailyCheckIn() {
-            const btn = document.getElementById('daily-reward-btn');
-            if (btn.classList.contains('disabled')) {
-                showToast("Aap reward pehle hi claim kar chuke hain ya limit poori ho gayi hai.");
-                return;
-            }
-
-            const userRef = doc(db, 'users', currentUser.uid);
-            try {
-                const totalDays = currentUserData.totalCheckInDays || 0;
-                
-                // Check if user has already completed the 30-day reward cycle
-                if (totalDays >= 30) {
-                    showToast("Aapne sabhi 30 din ke daily rewards claim kar liye hain.");
-                    btn.classList.add('disabled');
-                    return;
-                }
-
-                // Set the reward amount
-                const rewardAmount = 0.05;
-
-                await runTransaction(db, async (transaction) => {
-                    const userDoc = await transaction.get(userRef);
-                    if (!userDoc.exists()) throw "User does not exist!";
-                    
-                    const data = userDoc.data();
-                    const lastCheckIn = data.lastCheckInDate?.toDate();
-                    const today = new Date();
-                    
-                    if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
-                        throw "Already claimed today!";
-                    }
-
-                    transaction.update(userRef, {
-                        wallet: increment(rewardAmount),
-                        lifetimeEarning: increment(rewardAmount),
-                        lastCheckInDate: serverTimestamp(),
-                        totalCheckInDays: increment(1)
-                    });
-
-                    const newTxnRef = doc(collection(db, "transactions"));
-                    transaction.set(newTxnRef, {
-                        type: 'bonus',
-                        amount: rewardAmount,
-                        description: `Daily Check-in Reward (Day ${totalDays + 1})`,
-                        status: 'completed',
-                        timestamp: serverTimestamp(),
-                        involvedUsers: [currentUser.uid]
-                    });
-                });
-                
-                showToast(`Badhai ho! Aapko ₹${rewardAmount.toFixed(2)} ka reward mila hai.`);
-
-            } catch (error) {
-                if (error === "Already claimed today!") {
-                    showToast("Aap aaj ka reward pehle hi le chuke hain.");
-                } else {
-                    console.error("Error claiming daily reward: ", error);
-                    showToast("Reward claim karne mein error hua. Dobara try karein.");
-                }
-            }
-        }
-
-        function generateDueQR() {
-            if (!currentUserData || currentUserData.dueAmount <= 0) {
-                showToast("No due amount to pay.");
-                return;
-            }
-            const amount = currentUserData.dueAmount;
-            const upiLink = `upi://pay?pa=${UPI_ID}&pn=Ramazone%20Cashback&am=${amount.toFixed(2)}&cu=INR&tn=DuePaymentFor-${currentUserData.mobile}`;
-            const qrContainer = document.getElementById('due-qr-code');
-            qrContainer.innerHTML = ''; 
-            
-            new QRCode(qrContainer, {
-                text: upiLink,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-            document.getElementById('due-qr-amount').textContent = `Pay: ₹ ${amount.toFixed(2)}`;
-            document.getElementById('due-qr-upi-id').textContent = UPI_ID;
-            openModal('due-payment-modal');
-        }
-        function downloadQRCard() {
-            const cardElement = document.getElementById('due-qr-card');
-            if (!cardElement) {
-                showToast("QR Card element not found.");
-                return;
-            }
-            showToast("Preparing download...");
-            html2canvas(cardElement, { scale: 3, useCORS: true }).then(canvas => {
-                const link = document.createElement('a');
-                link.href = canvas.toDataURL('image/png');
-                link.download = `Ramazone-Due-Payment-${currentUserData.dueAmount.toFixed(2)}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }).catch(err => {
-                console.error("Error downloading QR card:", err);
-                showToast("Download failed. Please try again.");
-            });
-        }
-        async function handleProfilePictureUpload(event) {
-            const file = event.target.files[0];
-            if (!file || !currentUser) return;
-            if (!imgbbApiKey) { showToast("Image hosting service is not available."); return; }
-            showToast("Uploading picture...");
-            const formData = new FormData();
-            formData.append("image", file);
-            try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, { method: "POST", body: formData });
-                const result = await response.json();
-                if (result.success) {
-                    const imageUrl = result.data.url;
-                    await updateDoc(doc(db, "users", currentUser.uid), { profilePictureUrl: imageUrl });
-                    showToast("Profile picture updated!");
-                } else { throw new Error(result.error.message || "Failed to upload image."); }
-            } catch (error) {
-                console.error("Image upload failed:", error);
-                showToast("Upload failed. Please try again.");
-            } finally { event.target.value = ''; }
-        }
-        function verifyPasswordAndExecute(action, sourceModalId) {
-            if (sourceModalId) closeModal(sourceModalId);
-            pendingAction = action;
-            openModal('password-verification-modal');
-        }
-        async function handleVerificationConfirm() {
-            const password = document.getElementById('verification-password').value;
-            const errorMsg = document.getElementById('verification-error-msg');
-            const confirmBtn = document.getElementById('verification-confirm-btn');
-            hideErrorMessage(errorMsg);
-            if (!password) return showErrorMessage(errorMsg, "Password is required.");
-            confirmBtn.disabled = true; confirmBtn.textContent = "Verifying...";
-            const user = auth.currentUser;
-            const credential = EmailAuthProvider.credential(user.email, password);
-            try {
-                await reauthenticateWithCredential(user, credential);
-                closeModal('password-verification-modal');
-                if (pendingAction) await pendingAction();
-            } catch (error) {
-                showErrorMessage(errorMsg, "Incorrect password.");
-            } finally {
-                confirmBtn.disabled = false; confirmBtn.textContent = "Confirm";
-                document.getElementById('verification-password').value = '';
-                pendingAction = null;
-            }
-        }
-        function handlePayment() {
-            const amount = parseFloat(document.getElementById('payment-amount').value);
-            const errorMsg = document.getElementById('payment-error-msg');
-            hideErrorMessage(errorMsg);
-            if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
-            if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
-            verifyPasswordAndExecute(async () => {
-                try {
-                    const newTxnRef = doc(collection(db, "transactions"));
-                    await runTransaction(db, async (t) => {
-                        const userRef = doc(db, "users", currentUserData.uid);
-                        const configRef = doc(db, "app_settings", "config");
-                        t.update(userRef, { wallet: increment(-amount) });
-                        t.update(configRef, { rmz_wallet_balance: increment(amount) });
-                        t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.uid] });
-                        t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
-                    });
-                    
-                    const now = new Date();
-                    document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
-                    document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
-                    document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
-                    document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-                    openModal('payment-success-modal');
-
-                } catch (error) { 
-                    console.error("Payment transaction failed:", error);
-                    showToast("Payment failed. Please try again."); 
-                }
-            }, 'scan-pay-modal');
-        }
-        async function handleCashbackRequest(e) {
-            e.preventDefault();
-            const btn = document.getElementById('cashback-submit-btn');
-            const errorMsg = document.getElementById('cashback-error-msg');
-            hideErrorMessage(errorMsg);
-            btn.disabled = true; btn.textContent = "Submitting...";
-            const productName = document.getElementById("product-name").value.trim();
-            const productPrice = parseFloat(document.getElementById("product-price").value);
-            if (!productName || isNaN(productPrice) || productPrice < 10) {
-                showErrorMessage(errorMsg, "Sahi details daalein.");
-                btn.disabled = false; btn.textContent = "Request"; return;
-            }
-            try {
-                const configDoc = await getDoc(doc(db, "app_settings", "config"));
-                const cashbackPercentage = configDoc.exists() && configDoc.data().cashback_percentage ? configDoc.data().cashback_percentage : 2;
-                const cashbackAmount = productPrice * (cashbackPercentage / 100);
-                await addDoc(collection(db, "cashback_requests"), {
-                    userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
-                    productName, productPrice, cashbackAmount, status: "pending", requestDate: serverTimestamp(), claimed: false
-                });
-                showToast(`Your cashback request for ₹${cashbackAmount.toFixed(2)} has been submitted.`);
-                document.getElementById('cashback-request-form').reset();
-                closeModal('cashback-modal');
-            } catch (error) { 
-                showErrorMessage(errorMsg, `Error: ${error.message}`);
-            } finally {
-                btn.disabled = false; btn.textContent = "Request";
-            }
-        }
-        async function handleCreditRequest(e) {
-            e.preventDefault();
-            const btn = document.getElementById('credit-submit-btn');
-            const errorMsg = document.getElementById('credit-error-msg');
-            const amountInput = document.getElementById('credit-amount');
-            hideErrorMessage(errorMsg);
-            const amount = parseFloat(amountInput.value);
-            const maxAmount = parseFloat(amountInput.max);
-            if (isNaN(amount) || amount <= 0 || amount > maxAmount) {
-                showErrorMessage(errorMsg, `Amount 1 se ${maxAmount} ke beech hona chahiye.`);
-                return;
-            }
-            btn.disabled = true; btn.textContent = "Submitting...";
-            verifyPasswordAndExecute(async () => {
-                try {
-                    await addDoc(collection(db, "credit_requests"), {
-                        userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
-                        amount: amount, status: "pending", requestDate: serverTimestamp()
-                    });
-                    showToast(`₹${amount.toFixed(2)} ka credit request bhej diya gaya hai.`);
-                    document.getElementById('credit-request-form').reset();
-                    document.getElementById('credit-tnc-checkbox').checked = false;
-                    btn.disabled = true;
-                } catch (error) {
-                    showToast("Request fail ho gaya. Dobara try karein.");
-                } finally {
-                    closeModal('credit-request-modal');
-                }
-            }, 'credit-request-modal');
-            setTimeout(() => { btn.disabled = false; btn.textContent = "Request Credit"; }, 500);
-        }
-        async function handlePasswordChange(e) {
-            e.preventDefault();
-            const form = document.getElementById('password-change-form');
-            const btn = document.getElementById('password-change-btn');
-            const errorMsgEl = document.getElementById('password-change-error-msg');
-            hideErrorMessage(errorMsgEl);
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            if (newPassword.length < 6) {
-                showErrorMessage(errorMsgEl, "Naya password kam se kam 6 character ka hona chahiye.");
-                return;
-            }
-            btn.disabled = true; btn.textContent = "Updating...";
-            const user = auth.currentUser;
-            const credential = EmailAuthProvider.credential(user.email, currentPassword);
-            try {
-                await reauthenticateWithCredential(user, credential);
-                await updatePassword(user, newPassword);
-                await updateDoc(doc(db, "users", user.uid), { password: newPassword });
-                showToast("Password safaltapoorvak badal gaya!");
-                form.reset();
-                closeModal('profile-modal');
-            } catch (error) {
-                if (error.code === 'auth/wrong-password') {
-                    showErrorMessage(errorMsgEl, "Aapka purana password galat hai.");
-                } else {
-                    showErrorMessage(errorMsgEl, "Ek error aayi. Dobara try karein.");
-                }
-            } finally {
-                btn.disabled = false; btn.textContent = "Password Badlein";
-            }
-        }
-        function startScanner() {
-            stopScanner();
-            const video = document.getElementById('scanner-video');
-            const statusEl = document.getElementById('scanner-status');
-            document.getElementById('payment-form').style.display = 'none';
-            document.getElementById('scan-pay-initial-actions').style.display = 'flex';
-            statusEl.textContent = 'Starting camera...';
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
-                video.srcObject = stream;
-                video.play();
-                statusEl.textContent = 'Scanning for QR code...';
-                scannerAnimation = requestAnimationFrame(tick);
-            }).catch(() => statusEl.textContent = 'Could not access camera.');
-            const tick = () => {
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-                    if (code && code.data === '@RamazoneStoreCashback') { handleSuccessfulScan(code.data); return; }
-                }
-                if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
-            };
-        }
-        function stopScanner() {
-            if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
-            scannerAnimation = null;
-            const video = document.getElementById('scanner-video');
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-                video.srcObject = null;
-            }
-        }
-        function handleSuccessfulScan(data) {
-            stopScanner();
-            document.getElementById('receiver-id-display').textContent = data;
-            document.getElementById('payment-form').style.display = 'block';
-            document.getElementById('scan-pay-initial-actions').style.display = 'none';
-            document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
-        }
-        function handleQrUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                const image = new Image();
-                image.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = image.width; canvas.height = image.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-                    const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-                    if (code && code.data === '@RamazoneStoreCashback') handleSuccessfulScan(code.data);
-                    else showToast("No valid QR code found.");
-                };
-                image.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        function handleShare() {
-            if (!currentUserData) return;
-            const { referralId, name, lifetimeEarning } = currentUserData;
-            const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
-            const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
-            if (navigator.share) navigator.share({ text: shareText });
-            else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
-        }
-        function handleWhatsAppSupport() {
-            if (!currentUserData) return showToast("Please wait for your data to load.");
-            const { name, referralId, lifetimeEarning, mobile } = currentUserData;
-            const message = `Name: ${name}\nMobile: ${mobile}\nReferral ID: ${referralId}\nLifetime Earning: ₹${(lifetimeEarning || 0).toFixed(2)}\n\nHelp Me`;
-            const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-        }
-        function handleReferralLink() {
-            const params = new URLSearchParams(window.location.search);
-            const refCode = params.get('ref');
-            if (refCode) {
-                toggleView('registration-view');
-                document.getElementById('reg-referral').value = refCode.toUpperCase();
-            } else {
-                toggleView('login-view');
-            }
-        }
-        async function updateNetworkTreeView(userId, level = 0) {
-            networkLoader.style.display = 'block';
-            const treeRoot = document.getElementById('tree-root');
-            treeRoot.innerHTML = '';
-            try {
-                const rootUserDoc = await getDoc(doc(db, 'users', userId));
-                if (!rootUserDoc.exists()) throw new Error("User not found");
-                const rootUserData = { uid: rootUserDoc.id, ...rootUserDoc.data() };
-                networkTitleEl.textContent = `${rootUserData.name}'s Network`;
-                const treeData = await buildTreeData(rootUserData, level, 4);
-                treeRoot.innerHTML = createTreeHTML(treeData);
-                attachNodeClickListeners();
-                setTimeout(() => {
-                    drawConnectors();
-                    if (!treeData.children || treeData.children.length === 0) {
-                        const emptyMessage = document.createElement('div');
-                        emptyMessage.className = 'empty-state';
-                        emptyMessage.style.paddingTop = '20px';
-                        emptyMessage.textContent = `${rootUserData.name} ke network mein koi member nahi hai.`;
-                        treeRoot.querySelector('.tree').appendChild(emptyMessage);
-                    }
-                }, 100);
-                updateNetworkNavButton();
-            } catch (error) {
-                console.error(error);
-                treeRoot.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
-            } finally {
-                networkLoader.style.display = 'none';
-            }
-        }
-        async function buildTreeData(userData, currentLevel, maxLevel) {
-            if (currentLevel >= maxLevel) {
-                return { ...userData, children: [], level: currentLevel };
-            }
-            const referrals = await getDirectReferrals(userData.uid);
-            const children = await Promise.all(referrals.map(ref => buildTreeData(ref, currentLevel + 1, maxLevel)));
-            return { ...userData, children, level: currentLevel };
-        }
-        function createTreeHTML(nodeData) {
-            let html = `<div class="tree">`;
-            const avatarHTML = nodeData.profilePictureUrl ? `<img src="${nodeData.profilePictureUrl}" alt="${nodeData.name}">` : nodeData.name.charAt(0).toUpperCase();
-            html += `<div class="node-wrapper"><div class="node" data-uid="${nodeData.uid}"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${nodeData.name}</div><div class="node-earning">₹${(nodeData.lifetimeEarning || 0).toLocaleString()}</div></div></div>`;
-            if (nodeData.children && nodeData.children.length > 0) {
-                html += '<div class="node-children">';
-                nodeData.children.forEach(child => {
-                    html += `<div class="node-wrapper" data-level="${child.level}">${createTreeHTML(child)}</div>`;
-                });
-                html += '</div>';
-            }
-            html += `</div>`;
-            return html;
-        }
-        function attachNodeClickListeners() {
-            document.querySelectorAll('.node').forEach(nodeEl => {
-                nodeEl.addEventListener('click', () => {
-                    const clickedUid = nodeEl.dataset.uid;
-                    const currentRootUid = historyStack[historyStack.length - 1].uid;
-                    if (clickedUid !== currentRootUid) {
-                        networkLoader.style.display = 'block';
-                        getDoc(doc(db, 'users', clickedUid)).then(userDoc => {
-                            if (userDoc.exists()) {
-                                const userData = { uid: userDoc.id, ...userDoc.data() };
-                                historyStack.push(userData);
-                                updateNetworkTreeView(userData.uid, 0);
-                            }
-                        });
-                    }
-                });
-            });
-        }
-        function drawConnectors() {
-            const svg = document.getElementById('connector-svg');
-            const treeContainer = document.querySelector('.tree-container');
-            const tagsContainer = document.getElementById('commission-tags-container');
-            svg.innerHTML = '';
-            tagsContainer.innerHTML = '';
-            const allParentWrappers = document.querySelectorAll('.tree');
-            allParentWrappers.forEach(parentTree => {
-                const parentNode = parentTree.querySelector(':scope > .node-wrapper > .node');
-                const childrenContainer = parentTree.querySelector(':scope > .node-children');
-                if (!childrenContainer) return;
-                const parentRect = parentNode.getBoundingClientRect();
-                const containerRect = treeContainer.getBoundingClientRect();
-                const startX = parentRect.left + parentRect.width / 2 - containerRect.left;
-                const startY = parentRect.top + parentRect.height - containerRect.top;
-                const horizontalLineY = startY + 40;
-                svg.appendChild(createPath(`M ${startX} ${startY} V ${horizontalLineY}`));
-                const childrenWrappers = Array.from(childrenContainer.children);
-                if (childrenWrappers.length === 0) return;
-                const firstChildNode = childrenWrappers[0].querySelector('.node');
-                const lastChildNode = childrenWrappers[childrenWrappers.length - 1].querySelector('.node');
-                const hLineStartX = firstChildNode.getBoundingClientRect().left + firstChildNode.offsetWidth / 2 - containerRect.left;
-                const hLineEndX = lastChildNode.getBoundingClientRect().left + lastChildNode.offsetWidth / 2 - containerRect.left;
-                if (childrenWrappers.length > 1) {
-                    svg.appendChild(createPath(`M ${hLineStartX} ${horizontalLineY} H ${hLineEndX}`));
-                }
-                childrenWrappers.forEach(childWrapper => {
-                    const childNode = childWrapper.querySelector('.node');
-                    const childRect = childNode.getBoundingClientRect();
-                    const childX = childRect.left + childRect.width / 2 - containerRect.left;
-                    const childY = childRect.top - containerRect.top;
-                    svg.appendChild(createPath(`M ${childX} ${horizontalLineY} V ${childY}`));
-                    const level = parseInt(childWrapper.dataset.level);
-                    if (!isNaN(level) && level > 0 && level <= commissionRates.length) {
-                        const tag = document.createElement('div');
-                        tag.className = 'commission-tag';
-                        tag.textContent = `${commissionRates[level - 1]}%`;
-                        tag.style.left = `${childX}px`;
-                        tag.style.top = `${horizontalLineY + (childY - horizontalLineY) / 2}px`;
-                        tagsContainer.appendChild(tag);
-                    }
-                });
-            });
-        }
-        function createPath(d) {
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', d); path.setAttribute('stroke', 'var(--line-color)');
-            path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
-            return path;
-        }
-        function updateNetworkNavButton() {
-            const navBtn = document.getElementById('network-nav-btn');
-            navBtn.title = historyStack.length > 1 ? "Go Back" : "Back to Dashboard";
-        }
-        async function getDirectReferrals(userId) {
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (!userDoc.exists()) return [];
-            const referralId = userDoc.data().referralId;
-            if (!referralId) return [];
-            const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-        }
-        async function loadUpline() {
-            const uplineContainer = document.getElementById('upline-list');
-            uplineContainer.innerHTML = '';
-            networkLoader.style.display = 'block';
-            try {
-                const uplineUIDs = currentUserData.upline || [];
-                const uplineDocs = await Promise.all(uplineUIDs.map(uid => getDoc(doc(db, 'users', uid))));
-                const uplineData = uplineDocs.map(doc => doc.exists() ? {uid: doc.id, ...doc.data()} : null).filter(Boolean);
-                uplineData.push(currentUserData);
-                uplineContainer.innerHTML = uplineData.reverse().map((member, index, arr) => {
-                    const isCurrentUser = member.uid === currentUserData.uid;
-                    const level = arr.length - 1 - index;
-                    const avatarHTML = member.profilePictureUrl ? `<img src="${member.profilePictureUrl}" alt="${member.name}">` : member.name.charAt(0).toUpperCase();
-                    return `<div class="upline-member ${isCurrentUser ? 'current-user' : ''}">${!isCurrentUser && level < commissionRates.length ? `<div class="upline-commission">${commissionRates[level]}%</div>` : ''}<div class="node"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${member.name} ${isCurrentUser ? '(Aap)' : ''}</div>${!isCurrentUser ? `<div class="node-earning">Sponsor</div>` : ''}</div></div>`;
-                }).join('');
-                if (uplineData.length <= 1) { uplineContainer.innerHTML += '<div class="empty-state">Aapke paas koi sponsor nahi hai.</div>'; }
-                isUplineLoaded = true;
-            } catch (error) {
-                console.error("Error loading upline:", error);
-                uplineContainer.innerHTML = '<div class="empty-state">Sponsor load karne mein error hua.</div>';
-            } finally {
-                networkLoader.style.display = 'none';
-            }
-        }
-        
-        // --- Initialization and Event Listeners ---
-        function initializeAppLogic() {
-            onAuthStateChanged(auth, user => {
-                if (user && user.displayName) {
-                    currentUser = user;
-                    attachRealtimeListeners(user);
-                    toggleView('dashboard-view');
-                } else {
-                    detachAllListeners();
-                    handleReferralLink();
-                }
-            });
-            
-            document.getElementById('login-form').addEventListener('submit', e => {
-                e.preventDefault();
-                const mobile = document.getElementById('login-mobile').value;
-                const password = document.getElementById('login-password').value;
-                const errorMsgEl = document.getElementById('login-error-msg');
-                hideErrorMessage(errorMsgEl);
-                signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
-                    .catch(() => showErrorMessage(errorMsgEl, "Galat mobile ya password."));
-            });
-            document.getElementById('register-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const registerButton = e.target.querySelector('button');
-                const errorMsgEl = document.getElementById('register-error-msg');
-                hideErrorMessage(errorMsgEl);
-                registerButton.disabled = true; registerButton.textContent = 'Registering...';
-                const name = document.getElementById('reg-name').value.trim();
-                const mobile = document.getElementById('reg-mobile').value.trim();
-                const password = document.getElementById('reg-password').value;
-                const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
-                if (!name || !mobile || password.length < 6) {
-                    showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
+        let tempUser = null;
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+            tempUser = userCredential.user;
+            let upline = [], referredBy = 'none';
+            if (referralCode) {
+                registerButton.textContent = 'Verifying Code...';
+                const q = query(collection(db, 'users'), where("referralId", "==", referralCode));
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.empty) {
+                    await tempUser.delete();
+                    showErrorMessage(errorMsgEl, "Aapka referral code galat hai.");
                     registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
                 }
-                let tempUser = null;
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
-                    tempUser = userCredential.user;
-                    let upline = [], referredBy = 'none';
-                    if (referralCode) {
-                        registerButton.textContent = 'Verifying Code...';
-                        const q = query(collection(db, 'users'), where("referralId", "==", referralCode));
-                        const querySnapshot = await getDocs(q);
-                        if (querySnapshot.empty) {
-                            await tempUser.delete();
-                            showErrorMessage(errorMsgEl, "Aapka referral code galat hai.");
-                            registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
-                        }
-                        const referrerDoc = querySnapshot.docs[0];
-                        const referrerData = referrerDoc.data();
-                        referredBy = referralCode;
-                        upline = [referrerDoc.id, ...(referrerData.upline || [])].slice(0, 5);
-                    }
-                    registerButton.textContent = 'Saving Data...';
-                    await updateProfile(tempUser, { displayName: name });
-                    const newUserDoc = { 
-                        uid: tempUser.uid, name, mobile, password, 
-                        wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
-                        referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, 
-                        referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0,
-                        lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
-                    };
-                    await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
-                    await signOut(auth);
-                    toggleView('login-view');
-                    document.getElementById('login-form').reset();
-                    document.getElementById('register-form').reset();
-                    alert("Registration safal hua! Ab login karein.");
-                } catch (error) {
-                    if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
-                    showErrorMessage(errorMsgEl, error.code === 'auth/email-already-in-use' ? "Yah mobile number pehle se register hai." : "Registration fail ho gaya. Dobara try karein.");
-                } finally {
-                    registerButton.disabled = false; registerButton.textContent = 'Register Karein';
-                }
-            });
-            document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
-            document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
-            document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
-            document.getElementById('header-profile-avatar').addEventListener('click', () => openModal('profile-modal'));
-            document.getElementById('header-notification-btn').addEventListener('click', () => toggleView('notification-view'));
-            document.getElementById('modal-profile-img').addEventListener('click', () => { document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src; openModal('profile-picture-modal'); });
-            document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
-            document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
-            document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
-            document.getElementById('open-credit-request-modal').addEventListener('click', () => {
-                if (!currentUserData) return showToast("Please wait for data to load.");
-                if (currentUserData.dueAmount > 0) return showToast(`Please clear your due amount of ₹${currentUserData.dueAmount.toFixed(2)} first.`);
-                const level = currentUserData.creditLevel || 0;
-                const maxAmount = creditLevels[level] || creditLevels[creditLevels.length - 1];
-                const amountInput = document.getElementById('credit-amount');
-                amountInput.max = maxAmount;
-                amountInput.placeholder = `Max ₹${maxAmount}`;
-                openModal('credit-request-modal');
-            });
-            document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
-            document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => { document.getElementById('credit-submit-btn').disabled = !e.target.checked; });
-            document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
-            document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
-            document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
-            document.getElementById('rescan-btn').addEventListener('click', startScanner);
-            document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
-            document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
-            document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
-            document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
-            document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
-            document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
-            document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
-            document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
-            document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
-            document.getElementById('filter-bar').addEventListener('click', e => {
-                const target = e.target.closest('.filter-btn');
-                if (!target) return;
-                document.querySelector('#filter-bar .active')?.classList.remove('active');
-                target.classList.add('active');
-                activeFilter = target.dataset.filter;
-                renderUnifiedHistory();
-            });
-            document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
-            document.getElementById('open-network-view').addEventListener('click', () => {
-                if (!currentUserData) return;
-                toggleView('network-view');
-                historyStack = [currentUserData];
-                updateNetworkTreeView(currentUserData.uid, 0);
-            });
-            document.getElementById('network-nav-btn').addEventListener('click', () => {
-                if (historyStack.length > 1) {
-                    historyStack.pop();
-                    const prevUserData = historyStack[historyStack.length - 1];
-                    updateNetworkTreeView(prevUserData.uid, 0);
-                } else {
-                    toggleView('dashboard-view');
-                }
-            });
-            document.getElementById('network-refresh-btn').addEventListener('click', () => {
-                const currentRoot = historyStack[historyStack.length - 1];
-                if (currentRoot) updateNetworkTreeView(currentRoot.uid, 0);
-            });
-            document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
-                const target = e.target.closest('.network-tab-btn');
-                if (!target || target.classList.contains('active')) return;
-                document.querySelector('#network-view .network-tab-btn.active').classList.remove('active');
-                target.classList.add('active');
-                document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
-                document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
-                if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
-                if (target.dataset.tab === 'downline') { 
-                    historyStack = [currentUserData];
-                    updateNetworkTreeView(currentUserData.uid, 0);
-                }
-            });
-
-            document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
-            document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
-            
-            document.getElementById('daily-reward-btn').addEventListener('click', handleDailyCheckIn);
+                const referrerDoc = querySnapshot.docs[0];
+                const referrerData = referrerDoc.data();
+                referredBy = referralCode;
+                upline = [referrerDoc.id, ...(referrerData.upline || [])].slice(0, 5);
+            }
+            registerButton.textContent = 'Saving Data...';
+            await updateProfile(tempUser, { displayName: name });
+            const newUserDoc = { 
+                uid: tempUser.uid, name, mobile, password, 
+                wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
+                referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, 
+                referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0,
+                lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
+            };
+            await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
+            await signOut(auth);
+            toggleView('login-view');
+            document.getElementById('login-form').reset();
+            document.getElementById('register-form').reset();
+            alert("Registration safal hua! Ab login karein.");
+        } catch (error) {
+            if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
+            showErrorMessage(errorMsgEl, error.code === 'auth/email-already-in-use' ? "Yah mobile number pehle se register hai." : "Registration fail ho gaya. Dobara try karein.");
+        } finally {
+            registerButton.disabled = false; registerButton.textContent = 'Register Karein';
         }
-        document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+    });
+
+    // PWA Install button click listener
+    document.getElementById('install-pwa-btn').addEventListener('click', handleInstallClick);
+
+    document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
+    document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
+    document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
+    document.getElementById('header-profile-avatar').addEventListener('click', () => openModal('profile-modal'));
+    document.getElementById('header-notification-btn').addEventListener('click', () => toggleView('notification-view'));
+    document.getElementById('modal-profile-img').addEventListener('click', () => { document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src; openModal('profile-picture-modal'); });
+    document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
+    document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
+    document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
+    document.getElementById('open-credit-request-modal').addEventListener('click', () => {
+        if (!currentUserData) return showToast("Please wait for data to load.");
+        if (currentUserData.dueAmount > 0) return showToast(`Please clear your due amount of ₹${currentUserData.dueAmount.toFixed(2)} first.`);
+        const level = currentUserData.creditLevel || 0;
+        const maxAmount = creditLevels[level] || creditLevels[creditLevels.length - 1];
+        const amountInput = document.getElementById('credit-amount');
+        amountInput.max = maxAmount;
+        amountInput.placeholder = `Max ₹${maxAmount}`;
+        openModal('credit-request-modal');
+    });
+    document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
+    document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => { document.getElementById('credit-submit-btn').disabled = !e.target.checked; });
+    document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
+    document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
+    document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
+    document.getElementById('rescan-btn').addEventListener('click', startScanner);
+    document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
+    document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
+    document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
+    document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
+    document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
+    document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
+    document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
+    document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
+    document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
+    document.getElementById('filter-bar').addEventListener('click', e => {
+        const target = e.target.closest('.filter-btn');
+        if (!target) return;
+        document.querySelector('#filter-bar .active')?.classList.remove('active');
+        target.classList.add('active');
+        activeFilter = target.dataset.filter;
+        renderUnifiedHistory();
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
+    document.getElementById('open-network-view').addEventListener('click', () => {
+        if (!currentUserData) return;
+        toggleView('network-view');
+        historyStack = [currentUserData];
+        updateNetworkTreeView(currentUserData.uid, 0);
+    });
+    document.getElementById('network-nav-btn').addEventListener('click', () => {
+        if (historyStack.length > 1) {
+            historyStack.pop();
+            const prevUserData = historyStack[historyStack.length - 1];
+            updateNetworkTreeView(prevUserData.uid, 0);
+        } else {
+            toggleView('dashboard-view');
+        }
+    });
+    document.getElementById('network-refresh-btn').addEventListener('click', () => {
+        const currentRoot = historyStack[historyStack.length - 1];
+        if (currentRoot) updateNetworkTreeView(currentRoot.uid, 0);
+    });
+    document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
+        const target = e.target.closest('.network-tab-btn');
+        if (!target || target.classList.contains('active')) return;
+        document.querySelector('#network-view .network-tab-btn.active').classList.remove('active');
+        target.classList.add('active');
+        document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
+        if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
+        if (target.dataset.tab === 'downline') { 
+            historyStack = [currentUserData];
+            updateNetworkTreeView(currentUserData.uid, 0);
+        }
+    });
+    document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
+    document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
+    
+    document.getElementById('daily-reward-btn').addEventListener('click', handleDailyCheckIn);
+}
+document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+
+
     </script>
 
 <script>
