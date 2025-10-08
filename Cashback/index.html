@@ -1525,6 +1525,7 @@
                     updateNetworkTreeView(currentUserData.uid, 0);
                 }
             });
+
             document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
             document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
             
@@ -1532,5 +1533,19 @@
         }
         document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
     </script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('sw.js').then(function(registration) {
+                console.log('Service Worker registered with scope:', registration.scope);
+            }, function(err) {
+                console.log('Service Worker registration failed:', err);
+            });
+        });
+    }
+</script>
+
+
 </body>
 </html>
