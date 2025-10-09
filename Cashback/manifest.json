@@ -1,6 +1,7 @@
 {
   "name": "RMZ Pay",
   "short_name": "RMZ Pay",
+  "id": "/Cashback/",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
@@ -22,4 +23,5 @@
     }
   ]
 }
+
 
