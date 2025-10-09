@@ -542,7 +542,8 @@
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
     
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -550,50 +551,100 @@ import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, quer
 let app, auth, db;
 let imgbbApiKey;
 
-// ======================= PWA Install Button Logic START =======================
+// ======================= PWA Install & Update Logic START =======================
 let deferredPrompt; // Yah variable install prompt ko store karega
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  // Browser ke default prompt ko rokein
-  e.preventDefault();
-  // Prompt ko baad mein istemal karne ke liye save karein
-  deferredPrompt = e;
-  // Hamare custom button ko dikhayein
-  const installBtn = document.getElementById('install-pwa-btn');
-  if (installBtn) {
-    installBtn.style.display = 'flex';
-  }
-});
+/**
+ * PWA install hai ya nahi, iski jaanch karne ke liye function.
+ * Yah pehle modern तरीका (getInstalledRelatedApps) use karta hai, aur fallback ke roop mein purana तरीका.
+ * @returns {Promise<boolean>} - Agar PWA installed hai to true, nahi to false.
+ */
+async function isPwaInstalled() {
+    // Modern API: Yah manifest ID ke aadhar par check karta hai.
+    if ('getInstalledRelatedApps' in navigator) {
+        try {
+            const relatedApps = await navigator.getInstalledRelatedApps();
+            // Hum check karte hain ki list mein hamari ID ("/Cashback/") wala app hai ya nahi.
+            const isInstalled = relatedApps.some(app => app.id === '/Cashback/');
+            console.log(isInstalled ? 'Manifest ID ke anusaar PWA installed hai.' : 'Manifest ID ke anusaar PWA installed nahi hai.');
+            return isInstalled;
+        } catch (error) {
+            console.error('Error checking getInstalledRelatedApps:', error);
+            // Agar modern API mein koi error aaye, to purane tarike se check karein.
+            return window.matchMedia('(display-mode: standalone)').matches;
+        }
+    }
 
-// Yah sunishchit karne ke liye ki app install hone ke baad button chhip jaye
+    // Fallback un browsers ke liye jinmein getInstalledRelatedApps nahi hai.
+    console.log('Fallback (display-mode) se installation status check kiya ja raha hai.');
+    return window.matchMedia('(display-mode: standalone)').matches;
+}
+
+/**
+ * Install button ko setup karne aur uski visibility control karne ka function.
+ */
+async function setupPwaInstallButton() {
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (!installBtn) return;
+
+    // Sabse pehle check karein ki app pehle se installed to nahi hai.
+    const installed = await isPwaInstalled();
+    if (installed) {
+        console.log('PWA pehle se installed hai. Install button nahi dikhega.');
+        installBtn.style.display = 'none';
+        return; // Agar installed hai, to aage kuch nahi karna.
+    }
+
+    // Agar installed nahi hai, to browser ke install prompt event ka intezar karein.
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('`beforeinstallprompt` event fire hua.');
+        // Browser ke default prompt ko rokein.
+        e.preventDefault();
+        // Prompt ko baad mein istemal karne ke liye save karein.
+        deferredPrompt = e;
+        // Hamare custom "Install App" button ko dikhayein.
+        installBtn.style.display = 'flex';
+    });
+}
+
+/**
+ * Jab user install button par click karega to yah function chalega.
+ */
+function handleInstallClick() {
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (!deferredPrompt) {
+        console.log('deferredPrompt available nahi hai.');
+        return;
+    }
+    
+    // Button ko chhupa dein kyunki prompt dikhne wala hai.
+    installBtn.style.display = 'none';
+    
+    // Install prompt dikhayein.
+    deferredPrompt.prompt();
+    
+    // User ke chunav (install ya cancel) ka intezar karein.
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('User ne PWA install kar liya.');
+        } else {
+            console.log('User ne install prompt ko dismiss kar diya.');
+        }
+        deferredPrompt = null;
+    });
+}
+
+// Jab app safaltapoorvak install ho jaye, to is event ko sunein.
 window.addEventListener('appinstalled', () => {
     const installBtn = document.getElementById('install-pwa-btn');
     if (installBtn) {
         installBtn.style.display = 'none';
     }
     deferredPrompt = null;
-    console.log('PWA was installed');
+    console.log('PWA safaltapoorvak install ho gaya!');
 });
+// ======================= PWA Install & Update Logic END =======================
 
-function handleInstallClick() {
-    const installBtn = document.getElementById('install-pwa-btn');
-    if (installBtn && deferredPrompt) {
-        // Button ko chhipa dein kyunki prompt dikhne wala hai
-        installBtn.style.display = 'none';
-        // Install prompt dikhayein
-        deferredPrompt.prompt();
-        // User ke chunav ka intezar karein
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('User accepted the install prompt');
-            } else {
-                console.log('User dismissed the install prompt');
-            }
-            deferredPrompt = null;
-        });
-    }
-}
-// ======================= PWA Install Button Logic END =======================
 
 let currentUser = null;
 let currentUserData = null;
@@ -1455,6 +1506,9 @@ function initializeAppLogic() {
             handleReferralLink();
         }
     });
+
+    // PWA Install button logic ko setup karein
+    setupPwaInstallButton();
     
     document.getElementById('login-form').addEventListener('submit', e => {
         e.preventDefault();
@@ -1607,6 +1661,10 @@ function initializeAppLogic() {
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
 
+        
+        
+        
+        
     </script>
 
 <script>
