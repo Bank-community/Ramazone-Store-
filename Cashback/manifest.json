@@ -1,27 +1,23 @@
 {
-  "name": "RMZ Pay",
+  "name": "Ramazone Cashback",
   "short_name": "RMZ Pay",
-  "id": "/Cashback/",
-  "start_url": ".",
-  "scope": ".",
-  "display": "standalone",
-  "background_color": "#f0f2f5",
-  "theme_color": "#e50914",
-  "description": "RMZ Pay Cashback and Network App.",
+  "description": "Cashback and payment solutions by Ramazone.",
   "icons": [
     {
-      "src": "https://i.ibb.co/0VzN1b3h/20251008-194847.png",
-      "sizes": "192x192",
+      "src": "/Cashback/icon-192.png",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "192x192"
     },
     {
-      "src": "https://i.ibb.co/0VzN1b3h/20251008-194847.png",
-      "sizes": "512x512",
+      "src": "/Cashback/icon-512.png",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "512x512"
     }
-  ]
+  ],
+  "start_url": "/Cashback/",
+  "scope": "/Cashback/",
+  "id": "/Cashback/",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#e50914"
 }
-
-
