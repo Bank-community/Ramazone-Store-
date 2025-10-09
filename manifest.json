@@ -1,0 +1,20 @@
+{
+  "name": "Ramazone",
+  "short_name": "Ramazone",
+  "start_url": "/",
+  "scope": "/",
+  "display": "minimal-ui",
+  "description": "The main Ramazone website.",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/WvTg0bc5/20240813-084352.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.ibb.co/WvTg0bc5/20240813-084352.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
