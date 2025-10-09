@@ -4,13 +4,13 @@
   "description": "Cashback and payment solutions by Ramazone.",
   "icons": [
     {
-      "src": "/Cashback/icons/icon-192.png",
+      "src": "https://i.ibb.co/0VzN1b3h/20251008-194847.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/Cashback/icons/icon-512.png",
+      "src": "https://i.ibb.co/0VzN1b3h/20251008-194847.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
