@@ -1,5 +1,5 @@
 // कैश का नाम और वर्जन। जब भी आप ऐप में बड़ा बदलाव करें, तो v1 को v2, v3, आदि में बदल दें।
-const CACHE_NAME = 'rmz-pay-cache-v2';
+const CACHE_NAME = 'rmz-pay-cache-v3';
 
 // वे सभी फाइलें जो ऐप को ऑफलाइन चलाने के लिए ज़रूरी हैं।
 // ध्यान दें: सभी पाथ '/' से शुरू हो रहे हैं, जो डोमेन का रूट है।
@@ -10,7 +10,7 @@ const urlsToCache = [
   '/Cashback/manifest.json',
 
   // Logos and Icons (HTML में इस्तेमाल किए गए)
-  'https://i.ibb.co/Jj0f3QQz/20250708-182433.png', // Main Logo
+  'https://i.ibb.co/0VzN1b3h/20251008-194847.png', // Main Logo
   'https://www.svgrepo.com/show/491787/cashback-ui-web.svg',
   'https://www.svgrepo.com/show/503562/scan-qrcode.svg',
   'https://www.svgrepo.com/show/228705/collaboration-team.svg',
