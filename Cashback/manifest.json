@@ -4,14 +4,16 @@
   "description": "Cashback and payment solutions by Ramazone.",
   "icons": [
     {
-      "src": "/Cashback/icon-192.png",
+      "src": "/Cashback/icons/icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "/Cashback/icon-512.png",
+      "src": "/Cashback/icons/icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/Cashback/",
@@ -21,3 +23,4 @@
   "background_color": "#f0f2f5",
   "theme_color": "#e50914"
 }
+
