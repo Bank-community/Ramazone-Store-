@@ -332,7 +332,6 @@ function createFestiveCardHTML(prod, options = {}) {
         progressBarHTML = `<div class="progress-bar-container mb-1"><div class="progress-bar-inner" style="width: ${soldPercentage}%"></div><span class="progress-bar-text">${soldPercentage}% Sold</span></div>`;
     }
 
-    // === YAHAN GADBADI THEEK KI GAYI HAI: Sabhi details ko ek parent div (.p-2) mein dala gaya hai ===
     return `
     <div class="product-card carousel-item h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
         <div class="relative">
@@ -366,10 +365,6 @@ function createFestiveCardHTML(prod, options = {}) {
     </div>`;
 }
 
-
-
-
-
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
     if (!container || !collectionData || !collectionData.productIds?.length) { if (container) container.style.display = 'none'; return; }
@@ -389,7 +384,6 @@ function renderFestiveCollection(collectionData) {
     slider.innerHTML = productsHTML;
 }
 
-// === YAHAN BADLAV KIYA GAYA HAI: Margins (mb-1, mb-2) aur h-10 hataya gaya ===
 function createProductCardHTML(prod, cardClass = '') {
     if (!prod) return '';
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
@@ -594,6 +588,5 @@ function initializeJfySlider(count) { const slider = document.querySelector(".jf
 function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide += dir, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
-function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(4), 4e3) }
-
+function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4000) }
 
