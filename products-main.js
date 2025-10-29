@@ -6,7 +6,7 @@ let currentSubcategory = 'All';
 let database;
 let searchScrollingTexts = [];
 
-// --- === CART FUNCTIONS (UPDATED) === ---
+// --- CART FUNCTIONS (No Change) ---
 function getCart() { 
     try { 
         const cart = localStorage.getItem('ramazoneCart'); 
@@ -18,23 +18,14 @@ function getCart() {
 function saveCart(cart) { 
     localStorage.setItem('ramazoneCart', JSON.stringify(cart)); 
 }
-
-/**
- * === NEW FUNCTION ADDED ===
- * Product ko cart mein add karta hai.
- */
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
-    // Product ko global 'allProducts' cache se dhoondhein
     const product = allProducts.find(p => p && p.id === productId);
-    
     if (!product) { 
         console.error('Product not found in cache:', productId);
         showToast('Could not add item to cart.', 'error'); 
         return; 
     }
-    
-    // Default variants logic (agar product mein hai toh)
     let selectedVariants = {};
     if (product.variants && Array.isArray(product.variants)) {
         product.variants.forEach(variant => {
@@ -43,30 +34,23 @@ function addToCart(productId, quantityToAdd = 1) {
             }
         });
     }
-    
     const existingItemIndex = cart.findIndex(item => 
         item.id === productId && 
         JSON.stringify(item.variants || {}) === JSON.stringify(selectedVariants)
     );
-    
     if (existingItemIndex > -1) {
-        // Item pehle se hai, quantity badhao
         cart[existingItemIndex].quantity += quantityToAdd;
     } else {
-        // Naya item hai, cart mein push karo
         cart.push({ id: productId, quantity: quantityToAdd, variants: selectedVariants });
     }
-    
     saveCart(cart);
-    showToast('Successfully added to cart!', 'success'); // Success message
+    showToast('Successfully added to cart!', 'success'); 
     updateCartIcon();
 }
-
 function getTotalCartQuantity() { 
     const cart = getCart(); 
     return cart.reduce((total, item) => total + item.quantity, 0); 
 }
-
 function updateCartIcon() { 
     const totalQuantity = getTotalCartQuantity(); 
     const cartCountElement = document.getElementById('cart-item-count'); 
@@ -80,22 +64,15 @@ function updateCartIcon() {
         } 
     } 
 }
-
-/**
- * === TOAST FUNCTION (UPDATED) ===
- * Ab 'success' (green) aur 'error' (red) types ko support karta hai.
- */
 function showToast(message, type = "info") { 
     const toast = document.getElementById("toast-notification");
     toast.textContent = message;
-    // Type ke hisaab se color badlein
     toast.style.backgroundColor = "error" === type ? "#ef4444" : "success" === type ? "#16a34a" : "#333";
     toast.style.opacity = 1; 
     setTimeout(() => { toast.style.opacity = 0; }, 2500);
 }
 
-
-// --- INITIALIZATION (No changes) ---
+// --- INITIALIZATION (No Change) ---
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 function loadFirebaseScripts() {
@@ -133,15 +110,13 @@ async function initializeApp() {
     }
 }
 
-
 async function loadPageData() {
+    // (No Change)
     try {
         await fetchAllData(database);
         const urlParams = new URLSearchParams(window.location.search);
         const categoryFromUrl = urlParams.get('category') || 'All';
-
         displayCategories(); 
-
         if(categoryFromUrl !== 'All') {
             const catButton = document.querySelector(`.category-btn[data-category="${categoryFromUrl}"]`);
             if(catButton) {
@@ -154,17 +129,12 @@ async function loadPageData() {
             currentCategory = 'All';
             filterAndDisplayProducts();
         }
-
         setupSearch();
         updateCartIcon();
         setupDynamicPlaceholder();
         setupScrollBehavior();
-        
-        // === NEW EVENT LISTENER SETUP ===
-        setupProductCardEventListeners(); // Add button clicks ke liye listener
-        
+        setupProductCardEventListeners(); 
         document.getElementById('loading-indicator').style.display = 'none';
-
     } catch (error) {
         console.error("Initialization or data fetch failed:", error);
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Data load nahi ho saka.</p>';
@@ -172,7 +142,7 @@ async function loadPageData() {
 }
 
 async function fetchAllData(db) {
-    // (No changes here)
+    // (No Change)
     const dbRef = db.ref('ramazone');
     const snapshot = await dbRef.get();
     if (snapshot.exists()) {
@@ -188,7 +158,7 @@ async function fetchAllData(db) {
 }
 
 function setupDynamicPlaceholder() {
-    // (No changes here)
+    // (No Change)
     const searchInput = document.getElementById('search-input');
     if (!searchInput || !searchScrollingTexts || searchScrollingTexts.length === 0) {
         searchInput.placeholder = "Search for products...";
@@ -203,10 +173,9 @@ function setupDynamicPlaceholder() {
     setInterval(updatePlaceholder, 3000);
 }
 
-// --- CATEGORY & SUBCATEGORY LOGIC (No changes) ---
-
+// --- CATEGORY & SUBCATEGORY LOGIC (No Change) ---
 function displayCategories() {
-    // (No changes here)
+    // (No Change)
     const categoryBar = document.getElementById('category-filter-bar');
     categoryBar.innerHTML = '';
     const allBtn = document.createElement('button');
@@ -242,9 +211,8 @@ function displayCategories() {
         filterAndDisplayProducts();
     });
 }
-
 function displaySubcategories(subcategories) {
-    // (No changes here)
+    // (No Change)
     const subcategoryContainer = document.getElementById('subcategory-filter-container');
     const subcategoryBar = document.getElementById('subcategory-filter-bar');
     subcategoryBar.innerHTML = '';
@@ -273,9 +241,9 @@ function displaySubcategories(subcategories) {
     });
 }
 
-// --- FILTER & DISPLAY (No changes) ---
+// --- FILTER & DISPLAY (No Change) ---
 function filterAndDisplayProducts() {
-    // (No changes here)
+    // (No Change)
     const grid = document.getElementById('products-grid');
     const noProductsMsg = document.getElementById('no-products-message');
     const searchInput = document.getElementById('search-input').value.toLowerCase();
@@ -300,50 +268,33 @@ function filterAndDisplayProducts() {
     }
 }
 
-
-/**
- * === HTML FUNCTION (MAJOR UPDATE) ===
- * Product card ka naya HTML structure generate karta hai.
- */
+// --- PRODUCT CARD HTML (No Change) ---
 function createProductCardHTML(prod) {
     if (!prod) return '';
-    
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-    // Screenshot ke according rating tag (Top-Left, Green)
     const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
-    
     let priceHTML = '';
     let originalPriceHTML = '';
     let discountHTML = '';
-
-    // Price logic
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
         originalPriceHTML = `<p class="original-price">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
         if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
     }
     priceHTML = `<p class="display-price">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
-
-    // WhatsApp link logic
     const productPageUrl = `${window.location.origin}/product-details.html?id=${prod.id}`;
     const whatsappMessage = `Hello! I am interested in this product:\n\n*Name:* ${prod.name}\n*Price:* ₹${Number(prod.displayPrice).toLocaleString("en-IN")}\n*Link:* ${productPageUrl}\n\nPlease provide more details.`;
-    const whatsappLink = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`; // Hardcoded number from main.js
-    
+    const whatsappLink = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`; 
     const titleHTML = `<h2 class="product-name">${prod.name}</h2>`;
-
-    // Naya Card HTML structure
     return `
     <div class="product-card">
-        <!-- Image container with link -->
         <div class="product-media-container">
             <a href="./product-details.html?id=${prod.id}" class="block absolute inset-0">
                 <img src="${imageUrl}" alt="${prod.name || 'Product'}" loading="lazy">
             </a>
             ${ratingTag}
         </div>
-        <!-- Text and buttons container -->
         <div class="product-card-info">
-            <!-- Title and price link -->
             <a href="./product-details.html?id=${prod.id}">
                 ${titleHTML}
                 <div class="price-container">
@@ -352,7 +303,6 @@ function createProductCardHTML(prod) {
                     ${discountHTML}
                 </div>
             </a>
-            <!-- Action buttons -->
             <div class="product-card-actions">
                 <a href="${whatsappLink}" target="_blank" class="whatsapp-btn">
                     <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" alt="WhatsApp">
@@ -362,11 +312,10 @@ function createProductCardHTML(prod) {
         </div>
     </div>`;
 }
-// === END OF HTML FUNCTION UPDATE ===
 
-
+// --- SCROLL BEHAVIOR (No Change) ---
 function setupScrollBehavior() {
-    // (No changes here)
+    // (No Change)
     const header = document.getElementById('main-header');
     if (!header) return;
     let lastScrollY = window.scrollY;
@@ -384,13 +333,19 @@ function setupScrollBehavior() {
     }, { passive: true });
 }
 
+/**
+ * === SEARCH FUNCTION (UPDATED) ===
+ * Ab 'search-form' ke submit event ko handle karta hai.
+ */
 function setupSearch() {
-    // (No changes here)
     const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form'); // NEW: Form ko select karein
     const suggestionsContainer = document.getElementById('search-suggestions');
     const categorySuggestionsContainer = document.getElementById('category-suggestions');
     const searchOverlay = document.getElementById('search-overlay');
+    
     categorySuggestionsContainer.innerHTML = allCategories.map(cat => `<span class="suggestion-tag" data-category="${cat.name}">${cat.name}</span>`).join('');
+    
     categorySuggestionsContainer.addEventListener('click', e => {
         if(e.target.classList.contains('suggestion-tag')) {
             const categoryName = e.target.dataset.category;
@@ -399,55 +354,65 @@ function setupSearch() {
             searchInput.blur();
         }
     });
+
+    // --- NEW: Submit Event Listener ---
+    // Jab user keyboard par 'Search' / 'Enter' dabata hai
+    if (searchForm) {
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault(); // Page ko reload hone se rokein
+            searchInput.blur();     // Keyboard ko hide karein
+        });
+    }
+    // --- END OF NEW LISTENER ---
+
+    // Live search (jaise type karein)
     searchInput.addEventListener('input', () => {
         currentCategory = 'All'; currentSubcategory = 'All'; 
         document.querySelectorAll('.category-btn.active, .subcategory-btn.active').forEach(b=>b.classList.remove('active'));
         document.querySelector('.category-btn[data-category="All"]').classList.add('active');
         document.getElementById('subcategory-filter-container').classList.add('hidden');
-        filterAndDisplayProducts();
+        
+        filterAndDisplayProducts(); // Live results dikhayein
+        
         const query = searchInput.value.toLowerCase();
-        if (query.length < 1) { suggestionsContainer.classList.add('hidden'); return; }
+        if (query.length < 1) { 
+            suggestionsContainer.classList.add('hidden'); 
+            return; 
+        }
         const suggestions = allProducts.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `<a href="./product-details.html?id=${prod.id}" class="suggestion-item"><img src="${(prod.images && prod.images[0]) || 'https://placehold.co/100x100/e2e8f0/64748b?text=?'}" alt="${prod.name}"><span class="text-sm text-gray-700">${prod.name}</span></a>`).join('');
             suggestionsContainer.classList.remove('hidden');
-        } else { suggestionsContainer.classList.add('hidden'); }
+        } else { 
+            suggestionsContainer.classList.add('hidden'); 
+        }
     });
+    
+    // Search UI ko activate/deactivate karna (No Change)
     const activateSearchMode = () => { document.body.classList.add('search-active'); categorySuggestionsContainer.classList.remove('hidden'); };
     const deactivateSearchMode = () => { document.body.classList.remove('search-active'); categorySuggestionsContainer.classList.add('hidden'); suggestionsContainer.classList.add('hidden'); };
+    
     searchInput.addEventListener('focus', activateSearchMode);
     searchOverlay.addEventListener('click', () => searchInput.blur());
     searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
 }
 
-/**
- * === NEW FUNCTION ADDED ===
- * Yeh function 'products-grid' par ek click listener lagata hai.
- * Jab 'Add' button click hota hai, toh yeh addToCart ko call karta hai.
- */
+
+// --- PRODUCT CARD EVENT LISTENER (No Change) ---
 function setupProductCardEventListeners() {
     const grid = document.getElementById('products-grid');
     if (!grid) return;
 
-    // Event delegation ka istemal
     grid.addEventListener('click', function(event) {
-        // Check karein ki click '.add-btn' par hua hai
         const addButton = event.target.closest('.add-btn');
-        
         if (addButton) {
-            event.preventDefault(); // Agar button link ke andar ho toh page navigation rokein
+            event.preventDefault(); 
             const productId = addButton.dataset.id;
             
-            // Button ko dobara click hone se rokein jab tak feedback poora na ho
             if (productId && !addButton.classList.contains('added')) {
-                // Cart mein add karein
                 addToCart(productId);
-
-                // Visual feedback dein
                 addButton.classList.add('added');
                 addButton.textContent = 'Added ✓';
-                
-                // 1.5 seconds baad button ko normal karein
                 setTimeout(() => {
                     addButton.classList.remove('added');
                     addButton.textContent = 'Add';
@@ -456,4 +421,5 @@ function setupProductCardEventListeners() {
         }
     });
 }
+
 
