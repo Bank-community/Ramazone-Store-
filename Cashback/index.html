@@ -349,7 +349,9 @@
                     <div class="form-group"><label for="reg-name">Poora Naam</label><input type="text" id="reg-name" required></div>
                     <div class="form-group"><label for="reg-mobile">Mobile Number</label><input type="tel" id="reg-mobile" required></div>
                     <div class="form-group"><label for="reg-password">Password</label><input type="password" id="reg-password" required></div>
+                    <!-- REFERRAL FIELD REMOVED as per user request: 
                     <div class="form-group"><label for="reg-referral">Referral Code (Optional)</label><input type="text" id="reg-referral"></div>
+                    -->
                     <button type="submit">Register Karein</button><p id="register-error-msg" class="error-message"></p>
                 </form>
                 <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
@@ -400,7 +402,7 @@
                 
 
 <button id="install-pwa-btn" style="display: none;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></polyline></svg>
     <span>Install RMZ Pay App</span>
 </button>
 
@@ -469,7 +471,7 @@
     <!-- Other Modals (Remains) -->
     <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
     <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span><span class="value" id="success-modal-datetime"></span></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
-    <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="details-modal-txn-id"></span></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
+    <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span class="value" id="details-modal-txn-id"></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
 
     <div id="due-payment-modal" class="modal-overlay">
         <div class="modal-content" style="text-align: center;">
@@ -1081,8 +1083,7 @@ function handleQrUpload(event) {
 function handleShare() {
     if (!currentUserData) return;
     const { referralId, name, lifetimeEarning } = currentUserData;
-    const referralLink = `${window.location.origin}${window.location.pathname}?ref=${referralId}`;
-    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${referralLink}`;
+    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna! Mera code use karein: *${referralId}*\n\nAbhi join karein: ${window.location.origin}${window.location.pathname}`;
     if (navigator.share) navigator.share({ text: shareText });
     else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
 }
@@ -1091,15 +1092,9 @@ function handleWhatsAppSupport() {
     const whatsappUrl = `https://chat.whatsapp.com/E2HaPJMGCDm7ALrZ8FM1s5?mode=wwt`;
     window.open(whatsappUrl, '_blank');
 }
+// Referral Link logic simplified: no more checking for ?ref= in URL
 function handleReferralLink() {
-    const params = new URLSearchParams(window.location.search);
-    const refCode = params.get('ref');
-    if (refCode) {
-        toggleView('registration-view');
-        document.getElementById('reg-referral').value = refCode.toUpperCase();
-    } else {
-        toggleView('login-view');
-    }
+    toggleView('login-view');
 }
 // Removed Network View functions (as the feature is removed from dashboard)
 
@@ -1112,7 +1107,7 @@ function initializeAppLogic() {
             toggleView('dashboard-view');
         } else {
             detachAllListeners();
-            handleReferralLink();
+            handleReferralLink(); // Simplified, now just shows login
         }
     });
 
@@ -1135,11 +1130,11 @@ function initializeAppLogic() {
         const registerButton = e.target.querySelector('button');
         const errorMsgEl = document.getElementById('register-error-msg');
         hideErrorMessage(errorMsgEl);
-        registerButton.disabled = true; registerButton.textContent = 'Registering...';
         const name = document.getElementById('reg-name').value.trim();
         const mobile = document.getElementById('reg-mobile').value.trim();
         const password = document.getElementById('reg-password').value;
-        const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
+        // Referral Code logic removed as per user request.
+
         if (!name || !mobile || password.length < 6) {
             showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
             registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
@@ -1148,21 +1143,11 @@ function initializeAppLogic() {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
             tempUser = userCredential.user;
-            let upline = [], referredBy = 'none';
-            if (referralCode) {
-                registerButton.textContent = 'Verifying Code...';
-                const q = query(collection(db, 'users'), where("referralId", "==", referralCode));
-                const querySnapshot = await getDocs(q);
-                if (querySnapshot.empty) {
-                    await tempUser.delete();
-                    showErrorMessage(errorMsgEl, "Aapka referral code galat hai.");
-                    registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
-                }
-                const referrerDoc = querySnapshot.docs[0];
-                const referrerData = referrerDoc.data();
-                referredBy = referralCode;
-                upline = [referrerDoc.id, ...(referrerData.upline || [])].slice(0, 5);
-            }
+            
+            // Referral fields are now hardcoded to 'none' and empty array
+            const referredBy = 'none';
+            const upline = [];
+            
             registerButton.textContent = 'Saving Data...';
             await updateProfile(tempUser, { displayName: name });
             const newUserDoc = { 
