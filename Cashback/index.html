@@ -349,7 +349,7 @@
                     <div class="form-group"><label for="reg-name">Poora Naam</label><input type="text" id="reg-name" required></div>
                     <div class="form-group"><label for="reg-mobile">Mobile Number</label><input type="tel" id="reg-mobile" required></div>
                     <div class="form-group"><label for="reg-password">Password</label><input type="password" id="reg-password" required></div>
-                    <!-- REMOVED REFERRAL CODE INPUT FIELD -->
+                    <div class="form-group"><label for="reg-referral">Referral Code (Optional)</label><input type="text" id="reg-referral"></div>
                     <button type="submit">Register Karein</button><p id="register-error-msg" class="error-message"></p>
                 </form>
                 <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
@@ -503,12 +503,10 @@
         
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-// --- REALTIME DATABASE IMPORTS ---
-import { getDatabase, ref, onValue, set, update, push, runTransaction as rtdbRunTransaction, query, get, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
+import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- App Initialization and Global Variables ---
-let app, auth, db; // 'db' is now Realtime Database
+let app, auth, db;
 let imgbbApiKey;
 
 // ======================= PWA Install & Update Logic START =======================
@@ -519,13 +517,14 @@ async function isPwaInstalled() {
         try {
             const relatedApps = await navigator.getInstalledRelatedApps();
             const isInstalled = relatedApps.some(app => app.id === '/Cashback/');
-            console.log('Manifest ID ke anusaar PWA installed nahi hai.'); // Simplified logging
-            return window.matchMedia('(display-mode: standalone)').matches; // Fallback only
+            console.log(isInstalled ? 'Manifest ID ke anusaar PWA installed hai.' : 'Manifest ID ke anusaar PWA installed nahi hai.');
+            return isInstalled;
         } catch (error) {
             console.error('Error checking getInstalledRelatedApps:', error);
             return window.matchMedia('(display-mode: standalone)').matches;
         }
     }
+    console.log('Fallback (display-mode) se installation status check kiya ja raha hai.');
     return window.matchMedia('(display-mode: standalone)').matches;
 }
 
@@ -535,11 +534,13 @@ async function setupPwaInstallButton() {
 
     const installed = await isPwaInstalled();
     if (installed) {
+        console.log('PWA pehle se installed hai. Install button nahi dikhega.');
         installBtn.style.display = 'none';
         return;
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('`beforeinstallprompt` event fire hua.');
         e.preventDefault();
         deferredPrompt = e;
         installBtn.style.display = 'flex';
@@ -549,6 +550,7 @@ async function setupPwaInstallButton() {
 function handleInstallClick() {
     const installBtn = document.getElementById('install-pwa-btn');
     if (!deferredPrompt) {
+        console.log('deferredPrompt available nahi hai.');
         return;
     }
     
@@ -558,7 +560,9 @@ function handleInstallClick() {
     deferredPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === 'accepted') {
             console.log('User ne PWA install kar liya.');
-        } 
+        } else {
+            console.log('User ne install prompt ko dismiss kar diya.');
+        }
         deferredPrompt = null;
     });
 }
@@ -569,6 +573,7 @@ window.addEventListener('appinstalled', () => {
         installBtn.style.display = 'none';
     }
     deferredPrompt = null;
+    console.log('PWA safaltapoorvak install ho gaya!');
 });
 // ======================= PWA Install & Update Logic END =======================
 
@@ -585,24 +590,11 @@ let pendingAction = null;
 let isUplineLoaded = false;
 let popupTimeout = null;
 let initialPopupShown = false;
-const commissionRates = [30, 25, 20, 15, 10]; 
+const commissionRates = [30, 25, 20, 15, 10]; // Commission rates kept for legacy/unused
 let historyStack = [];
 const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
 const UPI_ID = "princekumar954684-1@okicici";
-
-// Utility functions
-const snapshotToArray = (snapshot) => {
-    const arr = [];
-    snapshot.forEach(childSnapshot => {
-        arr.push({ id: childSnapshot.key, ...childSnapshot.val() });
-    });
-    return arr;
-};
-
-function timestampToDate(timestamp) {
-    return new Date(timestamp);
-}
 
 // --- Core Functions (Config, UI Toggles) ---
 async function fetchConfigsAndInit() {
@@ -613,18 +605,11 @@ async function fetchConfigsAndInit() {
         ]);
         if (!firebaseConfigRes.ok || !imageConfigRes.ok) throw new Error('Failed to load app configuration.');
         const firebaseConfig = await firebaseConfigRes.json();
-        
-        // --- ADD RTDB URL TO CONFIG ---
-        firebaseConfig.databaseURL = "https://tipsplit-e3wes-default-rtdb.firebaseio.com"; 
-
         const imageConfig = await imageConfigRes.json();
         imgbbApiKey = imageConfig.apiKey;
-        
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
-        // --- RTDB INITIALIZATION ---
-        db = getDatabase(app); 
-        
+        db = getFirestore(app);
         initializeAppLogic();
     } catch (error) {
         console.error("Critical Initialization Error:", error);
@@ -638,6 +623,7 @@ const showToast = (message) => {
     setTimeout(() => toast.classList.remove('show'), 3000);
 };
 const toggleView = (viewId) => {
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const viewElement = document.getElementById(viewId);
     if(viewElement) {
@@ -651,46 +637,41 @@ const closeModal = (modalId) => {
     if (modalId === 'scan-pay-modal') stopScanner();
 };
 const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
-const hideErrorMessage = (element) => { if (element) { element.textContent = ''; element.style.display = 'none'; } };
+const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
 
-// --- Realtime Data Handling (RTDB) ---
+// --- Realtime Data Handling ---
 function attachRealtimeListeners(user) {
     detachAllListeners();
     const uid = user.uid;
-    
-    // 1. User Data Listener (RTDB)
-    activeListeners.push(onValue(ref(db, `users/${uid}`), (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            currentUserData = { uid: snapshot.key, ...data };
-            updateDashboardUI(currentUserData, user);
-            renderNotificationCenter(); 
-            if (!initialPopupShown) {
-                handleDueNotificationPopup(currentUserData);
-                initialPopupShown = true;
+    const listeners = [
+        onSnapshot(doc(db, 'users', uid), (doc) => {
+            if (doc.exists()) {
+                currentUserData = { uid: doc.id, ...doc.data() };
+                updateDashboardUI(currentUserData, user);
+                renderNotificationCenter(); // This now calls renderNotifications
+                if (!initialPopupShown) {
+                    handleDueNotificationPopup(currentUserData);
+                    initialPopupShown = true;
+                }
             }
-        }
-    }));
-    
-    // 2. Transaction Listener (RTDB - Listen to all and filter client side)
-    activeListeners.push(onValue(ref(db, 'transactions'), (snapshot) => {
-        const transactions = snapshotToArray(snapshot)
-            .filter(t => t.involvedUsers && t.involvedUsers.includes(uid));
-            
-        const validTypes = ['payment', 'due_payment'];
-        allTransactions = transactions
-            .filter(t => validTypes.includes(t.type))
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            
-        combineAndRenderHistory();
-    }));
-    
-    // 3. Notifications Listener (RTDB - Listen to all)
-    activeListeners.push(onValue(ref(db, 'notifications'), (snapshot) => {
-        allNotifications = snapshotToArray(snapshot)
-            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        renderNotificationCenter();
-    }));
+        }),
+        // Only listening to transactions, as per the new simplified structure. Filtering out 'credit' type.
+        onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
+            // Only keep 'payment' and 'due_payment' types. Commission removed. Credit removed.
+            const validTypes = ['payment', 'due_payment'];
+            allTransactions = snapshot.docs
+                .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }))
+                .filter(t => validTypes.includes(t.type));
+            combineAndRenderHistory();
+        }),
+        // Listener for Admin sent notifications
+        onSnapshot(query(collection(db, "notifications"), orderBy("createdAt", "desc")), (snapshot) => {
+            allNotifications = snapshot.docs
+                .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().createdAt?.toDate() }));
+            renderNotificationCenter();
+        }),
+    ];
+    activeListeners.push(...listeners);
 }
 function detachAllListeners() {
     activeListeners.forEach(unsub => unsub());
@@ -700,7 +681,6 @@ function detachAllListeners() {
 
 // --- UI Update and Notification Logic ---
 function updateDashboardUI(dbData, authUser) {
-    // NOTE: Referral UI is still present but will use placeholder data
     const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
     document.getElementById('header-profile-avatar').src = profilePicUrl;
     document.getElementById('wallet-user-name').textContent = authUser.displayName;
@@ -721,6 +701,7 @@ function getDueNotificationData(dbData) {
     if (!dbData) return null;
     const today = new Date();
     const dayOfMonth = today.getDate();
+    // Due period check (1st to 7th)
     if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
         return {
             id: 'due_notification_priority',
@@ -728,8 +709,7 @@ function getDueNotificationData(dbData) {
             popupTitle: `Namaste ${dbData.name}, aapka bhugtan baki hai.`,
             popupPercentage: `Amount: ₹${dbData.dueAmount.toFixed(2)}`,
             paragraph: `Kripya apna ₹${dbData.dueAmount.toFixed(2)} ka due amount 7 tarikh se pehle pay karein. Dhanyavad!`,
-            isDue: true,
-            createdAt: Date.now() 
+            isDue: true
         };
     }
     return null;
@@ -761,15 +741,21 @@ function showPopupNotification(notifData, duration = 4000) {
      popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
 }
 
-function renderNotificationCenter() {
+// FIX: This function is now responsible for displaying both Due and Admin-sent notifications
+async function renderNotificationCenter() {
     const listEl = document.getElementById('notification-center-list');
     listEl.innerHTML = '';
     
     const notificationsToRender = [];
+    
+    // 1. Add Due Payment Notification (if applicable)
     const dueNotification = getDueNotificationData(currentUserData);
     if (dueNotification) {
         notificationsToRender.push(dueNotification);
     }
+    
+    // 2. Add Admin Sent Notifications
+    // Add all fetched admin notifications
     notificationsToRender.push(...allNotifications);
 
     if (notificationsToRender.length === 0) {
@@ -777,17 +763,20 @@ function renderNotificationCenter() {
         return;
     }
 
+    // Sort to show due first, then admin notifications by date
     notificationsToRender.sort((a, b) => {
         if (a.isDue && !b.isDue) return -1;
         if (!a.isDue && b.isDue) return 1;
-        return (b.createdAt || 0) - (a.createdAt || 0);
+        if (a.date && b.date) return b.date - a.date;
+        return 0;
     });
+
 
     notificationsToRender.forEach(notif => {
         const item = document.createElement('div');
         item.className = 'notification-center-item';
-        const notificationDate = notif.createdAt ? timestampToDate(notif.createdAt) : null;
         
+        // Handle Due Notification
         if (notif.isDue) {
             item.classList.add('due-notification-item');
             item.innerHTML = `
@@ -797,20 +786,24 @@ function renderNotificationCenter() {
                     <button class="btn-secondary" style="background-color: var(--brand-red); color: white; width: auto; padding: 8px 15px; font-size: 14px; border-radius: 20px;" onclick="document.getElementById('pay-due-amount-btn').click(); toggleView('dashboard-view');">Pay Due Now</button>
                 </div>
             `;
-        } else {
+        } 
+        // Handle Admin Sent Notification
+        else {
             const linkHtml = notif.link ? `<a href="${notif.link}" target="_blank"> ${notif.title}</a>` : notif.title;
             item.innerHTML = `
                 <div class="title">${linkHtml}</div>
                 <p class="paragraph">${notif.text.replace(/\n/g, '<br>')}</p>
-                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">${notificationDate ? notificationDate.toLocaleString() : 'N/A'}</p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">${notif.date.toLocaleString()}</p>
             `;
         }
+        
         listEl.appendChild(item);
     });
 }
 
 function combineAndRenderHistory() {
-    combinedHistory = allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    // Only transactions (payment, due_payment) are in combinedHistory now
+    combinedHistory = allTransactions.sort((a, b) => (b.date || 0) - (a.date || 0));
     renderUnifiedHistory();
 }
 
@@ -822,6 +815,7 @@ function renderUnifiedHistory() {
 
     const itemsToRender = combinedHistory.filter(item => {
         if (activeFilter === 'all') return true;
+        // Commission filter removed
         if (activeFilter === 'payment') return item.type === 'payment';
         if (activeFilter === 'due_payment') return item.type === 'due_payment';
         return false;
@@ -839,20 +833,23 @@ function renderUnifiedHistory() {
         const amount = item.amount || 0;
         let sign = '+';
         let typeClass = 'credit';
+        // Check transaction type and amount sign
+        // Commission removed
         if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { 
             typeClass = 'debit'; sign = '-'; 
-        } 
+        } else if (item.type === 'commission') { // Keeping this check just in case legacy data exists, but it won't be reachable via the filter.
+            typeClass = 'credit'; sign = '+';
+        }
         if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
         
-        const transactionDate = item.timestamp ? timestampToDate(item.timestamp) : null;
-        
-        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${transactionDate ? transactionDate.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || 'Completed'}</span></div>`;
+        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || 'Completed'}</span></div>`;
         listEl.appendChild(itemDiv);
     });
 }
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
     let sign = '+', typeClass = 'credit';
+    // Commission removed
     if (item.type === 'payment' || item.type === 'due_payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
     
     document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
@@ -861,12 +858,10 @@ function showTransactionDetails(item) {
     statusEl.textContent = item.status || 'Completed';
     statusEl.className = 'value status-badge';
     if (item.status) statusEl.classList.add(item.status);
-    
-    const transactionDate = item.timestamp ? timestampToDate(item.timestamp) : null;
 
     document.getElementById('details-modal-desc').textContent = item.description;
-    document.getElementById('details-modal-date').textContent = transactionDate ? transactionDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
-    document.getElementById('details-modal-time').textContent = transactionDate ? transactionDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+    document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+    document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
     document.getElementById('details-modal-txn-id').textContent = item.id;
     openModal('transaction-details-modal');
 }
@@ -926,7 +921,7 @@ async function handleProfilePictureUpload(event) {
         const result = await response.json();
         if (result.success) {
             const imageUrl = result.data.url;
-            await update(ref(db, `users/${currentUser.uid}`), { profilePictureUrl: imageUrl });
+            await updateDoc(doc(db, "users", currentUser.uid), { profilePictureUrl: imageUrl });
             showToast("Profile picture updated!");
         } else { throw new Error(result.error.message || "Failed to upload image."); }
     } catch (error) {
@@ -960,8 +955,6 @@ async function handleVerificationConfirm() {
         pendingAction = null;
     }
 }
-
-// --- RTDB: handlePayment ---
 function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
@@ -970,60 +963,22 @@ function handlePayment() {
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
     verifyPasswordAndExecute(async () => {
         try {
-            const userRef = ref(db, `users/${currentUserData.uid}`);
-            const configRef = ref(db, `app_settings/config`);
-            const transactionRef = push(ref(db, 'transactions'));
-            const rmzTransactionRef = push(ref(db, 'rmz_wallet_transactions'));
-
-            let success = false;
-            
-            const userResult = await rtdbRunTransaction(userRef, (currentData) => {
-                if (currentData === null) return;
-                currentData.wallet = (currentData.wallet || 0) - amount;
-                return currentData;
+            const newTxnRef = doc(collection(db, "transactions"));
+            await runTransaction(db, async (t) => {
+                const userRef = doc(db, "users", currentUserData.uid);
+                const configRef = doc(db, "app_settings", "config");
+                t.update(userRef, { wallet: increment(-amount) });
+                t.update(configRef, { rmz_wallet_balance: increment(amount) });
+                t.set(newTxnRef, { type: 'payment', amount: -amount, description: 'Paid to Ramazone Store', status: 'completed', timestamp: serverTimestamp(), involvedUsers: [currentUserData.uid] });
+                t.set(doc(collection(db, "rmz_wallet_transactions")), { amount, senderId: currentUserData.uid, senderName: currentUserData.name, senderMobile: currentUserData.mobile, timestamp: serverTimestamp() });
             });
             
-            if (!userResult.committed) {
-                throw new Error("User transaction failed.");
-            }
-            
-            await rtdbRunTransaction(configRef, (currentData) => {
-                 if (currentData === null) currentData = { rmz_wallet_balance: 0 };
-                 currentData.rmz_wallet_balance = (currentData.rmz_wallet_balance || 0) + amount;
-                 return currentData;
-            });
-            
-            const transactionData = { 
-                id: transactionRef.key,
-                type: 'payment', 
-                amount: -amount, 
-                description: 'Paid to Ramazone Store', 
-                status: 'completed', 
-                timestamp: Date.now(), 
-                involvedUsers: [currentUserData.uid] 
-            };
-            await set(transactionRef, transactionData);
-
-            const rmzTransactionData = { 
-                id: rmzTransactionRef.key,
-                amount: amount, 
-                senderId: currentUserData.uid, 
-                senderName: currentUserData.name, 
-                senderMobile: currentUserData.mobile, 
-                timestamp: Date.now() 
-            };
-            await set(rmzTransactionRef, rmzTransactionData);
-            
-            success = true;
-
-            if (success) {
-                const now = new Date();
-                document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
-                document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
-                document.getElementById('success-modal-txn-id').textContent = transactionRef.key;
-                document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-                openModal('payment-success-modal');
-            }
+            const now = new Date();
+            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
+            document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
+            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
+            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+            openModal('payment-success-modal');
 
         } catch (error) { 
             console.error("Payment transaction failed:", error);
@@ -1049,7 +1004,7 @@ async function handlePasswordChange(e) {
     try {
         await reauthenticateWithCredential(user, credential);
         await updatePassword(user, newPassword);
-        await update(ref(db, `users/${user.uid}`), { password: newPassword });
+        await updateDoc(doc(db, "users", user.uid), { password: newPassword });
         showToast("Password safaltapoorvak badal gaya!");
         form.reset();
         closeModal('profile-modal');
@@ -1132,92 +1087,21 @@ function handleShare() {
     else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
 }
 function handleWhatsAppSupport() {
+    // UPDATED WhatsApp link to the group link
     const whatsappUrl = `https://chat.whatsapp.com/E2HaPJMGCDm7ALrZ8FM1s5?mode=wwt`;
     window.open(whatsappUrl, '_blank');
 }
 function handleReferralLink() {
-    // Referral code logic removed, always show login view for simplicity
     const params = new URLSearchParams(window.location.search);
     const refCode = params.get('ref');
     if (refCode) {
-        // Even if a referral code is in the URL, we skip processing it here.
-    }
-    toggleView('login-view');
-}
-
-// --- RTDB: Registration Logic (FIXED & SIMPLIFIED) ---
-document.getElementById('register-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const registerButton = e.target.querySelector('button');
-    const errorMsgEl = document.getElementById('register-error-msg');
-    hideErrorMessage(errorMsgEl);
-    registerButton.disabled = true; registerButton.textContent = 'Registering...';
-    
-    const name = document.getElementById('reg-name').value.trim();
-    const mobile = document.getElementById('reg-mobile').value.trim();
-    const password = document.getElementById('reg-password').value;
-    
-    if (!name || !mobile || password.length < 6) {
-        showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
-        registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
-    }
-    
-    let tempUser = null;
-    
-    try {
-        // 1. Create user in Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
-        tempUser = userCredential.user;
-        
-        registerButton.textContent = 'Saving Data...';
-        await updateProfile(tempUser, { displayName: name });
-        
-        // 2. Prepare user data for RTDB (Referral logic removed)
-        const newUserDoc = { 
-            name, mobile, password, 
-            wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
-            referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, 
-            referredBy: 'none', 
-            upline: [], // Empty upline array since referral is removed
-            createdAt: Date.now(), 
-            creditLevel: 0,
-            lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
-        };
-        
-        // 3. Save new user data to RTDB
-        await set(ref(db, `users/${tempUser.uid}`), newUserDoc);
-        
-        // 4. Finalize
-        await signOut(auth);
+        toggleView('registration-view');
+        document.getElementById('reg-referral').value = refCode.toUpperCase();
+    } else {
         toggleView('login-view');
-        document.getElementById('login-form').reset();
-        document.getElementById('register-form').reset();
-        alert("Registration safal hua! Ab login karein.");
-        
-    } catch (error) {
-        // If RTDB save fails, we must delete the partially created Auth user
-        if (tempUser) {
-             console.error("Attempting to delete Auth user after RTDB save failure:", tempUser.uid, error);
-             await tempUser.delete().catch(e => console.error("Failed to delete temp Auth user", e));
-        }
-        
-        console.error("Registration Error:", error);
-        
-        let customErrorMsg = "Registration fail ho gaya. Dobara try karein.";
-        if (error.code === 'auth/email-already-in-use') {
-            customErrorMsg = "Yah mobile number pehle se register hai.";
-        } else if (error.message.includes('permission_denied')) {
-             customErrorMsg = "Database mein save karne ki permission nahi hai. Kripya Admin se sampark karein (Permission Denied).";
-        }
-        
-        showErrorMessage(errorMsgEl, customErrorMsg);
-        
-    } finally {
-        registerButton.disabled = false; 
-        registerButton.textContent = 'Register Karein';
     }
-});
-
+}
+// Removed Network View functions (as the feature is removed from dashboard)
 
 // --- Initialization and Event Listeners ---
 function initializeAppLogic() {
@@ -1246,12 +1130,68 @@ function initializeAppLogic() {
         signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
             .catch(() => showErrorMessage(errorMsgEl, "Galat mobile ya password."));
     });
-    
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const registerButton = e.target.querySelector('button');
+        const errorMsgEl = document.getElementById('register-error-msg');
+        hideErrorMessage(errorMsgEl);
+        registerButton.disabled = true; registerButton.textContent = 'Registering...';
+        const name = document.getElementById('reg-name').value.trim();
+        const mobile = document.getElementById('reg-mobile').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
+        if (!name || !mobile || password.length < 6) {
+            showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
+            registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
+        }
+        let tempUser = null;
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
+            tempUser = userCredential.user;
+            let upline = [], referredBy = 'none';
+            if (referralCode) {
+                registerButton.textContent = 'Verifying Code...';
+                const q = query(collection(db, 'users'), where("referralId", "==", referralCode));
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.empty) {
+                    await tempUser.delete();
+                    showErrorMessage(errorMsgEl, "Aapka referral code galat hai.");
+                    registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
+                }
+                const referrerDoc = querySnapshot.docs[0];
+                const referrerData = referrerDoc.data();
+                referredBy = referralCode;
+                upline = [referrerDoc.id, ...(referrerData.upline || [])].slice(0, 5);
+            }
+            registerButton.textContent = 'Saving Data...';
+            await updateProfile(tempUser, { displayName: name });
+            const newUserDoc = { 
+                uid: tempUser.uid, name, mobile, password, 
+                wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
+                referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, 
+                referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0,
+                lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
+            };
+            await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
+            await signOut(auth);
+            toggleView('login-view');
+            document.getElementById('login-form').reset();
+            document.getElementById('register-form').reset();
+            alert("Registration safal hua! Ab login karein.");
+        } catch (error) {
+            if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
+            showErrorMessage(errorMsgEl, error.code === 'auth/email-already-in-use' ? "Yah mobile number pehle se register hai." : "Registration fail ho gaya. Dobara try karein.");
+        } finally {
+            registerButton.disabled = false; registerButton.textContent = 'Register Karein';
+        }
+    });
+
     // Navigation and Profile Listeners
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
     document.getElementById('header-profile-avatar').addEventListener('click', () => openModal('profile-modal'));
+    document.getElementById('header-notification-btn').addEventListener('click', () => toggleView('notification-view'));
     document.getElementById('modal-profile-img').addEventListener('click', () => { document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src; openModal('profile-picture-modal'); });
     document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
     document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
