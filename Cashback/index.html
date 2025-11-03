@@ -503,8 +503,8 @@
         
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-// --- REALTIME DATABASE IMPORTS (UPDATED) ---
-import { getDatabase, ref, onValue, set, update, push, runTransaction as rtdbRunTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+// --- REALTIME DATABASE IMPORTS (UPDATED WITH QUERY FUNCTIONS) ---
+import { getDatabase, ref, onValue, set, update, push, runTransaction as rtdbRunTransaction, query, get, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
 
 // --- App Initialization and Global Variables ---
@@ -1178,48 +1178,58 @@ function handleReferralLink() {
     }
 }
 
-// --- RTDB: Registration Logic ---
+// --- RTDB: Registration Logic (FIXED) ---
 document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const registerButton = e.target.querySelector('button');
     const errorMsgEl = document.getElementById('register-error-msg');
     hideErrorMessage(errorMsgEl);
     registerButton.disabled = true; registerButton.textContent = 'Registering...';
+    
     const name = document.getElementById('reg-name').value.trim();
     const mobile = document.getElementById('reg-mobile').value.trim();
     const password = document.getElementById('reg-password').value;
     const referralCode = document.getElementById('reg-referral').value.trim().toUpperCase();
+    
     if (!name || !mobile || password.length < 6) {
         showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
         registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
     }
+    
     let tempUser = null;
+    
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
         tempUser = userCredential.user;
         
         let upline = [], referredBy = 'none';
+        
         if (referralCode) {
             registerButton.textContent = 'Verifying Code...';
-            // --- RTDB: Query to find referrer ---
-            const qRef = ref(db, 'users');
-            const snapshot = await new Promise(resolve => onValue(qRef, (snap) => resolve(snap), { onlyOnce: true }));
+            
+            // --- FIX: Use proper RTDB query (get + orderByChild) ---
+            const usersRef = ref(db, 'users');
+            // Query RTDB to find the user with the matching referralId
+            const referralQuery = query(usersRef, orderByChild('referralId'), equalTo(referralCode));
+            const snapshot = await get(referralQuery);
             
             let referrerData = null;
             let referrerUid = null;
             
             snapshot.forEach(childSnap => {
-                if (childSnap.val().referralId === referralCode) {
-                    referrerData = childSnap.val();
-                    referrerUid = childSnap.key;
-                }
+                // Should only iterate once if referralId is unique (which it should be)
+                referrerData = childSnap.val();
+                referrerUid = childSnap.key;
             });
             
             if (!referrerData) {
+                // Registration will still proceed if we fail to delete the user on the client side,
+                // but the error message is crucial. We must delete the Auth user if the referral fails.
                 await tempUser.delete();
                 showErrorMessage(errorMsgEl, "Aapka referral code galat hai.");
                 registerButton.disabled = false; registerButton.textContent = 'Register Karein'; return;
             }
+            
             referredBy = referralCode;
             upline = [referrerUid, ...(referrerData.upline || [])].slice(0, 5);
         }
@@ -1231,12 +1241,12 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
             name, mobile, password, 
             wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
             referralId: `RMZC${Math.floor(100+Math.random()*900)}B${Math.floor(100+Math.random()*900)}`, 
-            referredBy, upline, createdAt: Date.now(), // Use RTDB timestamp method
+            referredBy, upline, createdAt: Date.now(), 
             creditLevel: 0,
             lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
         };
         
-        // --- RTDB: Save new user data ---
+        // --- RTDB: Save new user data (This is the critical line) ---
         await set(ref(db, `users/${tempUser.uid}`), newUserDoc);
         
         await signOut(auth);
@@ -1244,11 +1254,26 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         document.getElementById('login-form').reset();
         document.getElementById('register-form').reset();
         alert("Registration safal hua! Ab login karein.");
+        
     } catch (error) {
-        if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
-        showErrorMessage(errorMsgEl, error.code === 'auth/email-already-in-use' ? "Yah mobile number pehle se register hai." : "Registration fail ho gaya. Dobara try karein.");
+        // Handle cleanup if user was partially created but saving failed
+        if (tempUser) {
+             console.error("Attempting to delete partially created Auth user:", tempUser.uid);
+             await tempUser.delete().catch(e => console.error("Failed to delete temp Auth user", e));
+        }
+        
+        console.error("Registration Error:", error);
+        
+        let customErrorMsg = "Registration fail ho gaya. Dobara try karein.";
+        if (error.code === 'auth/email-already-in-use') {
+            customErrorMsg = "Yah mobile number pehle se register hai.";
+        }
+        
+        showErrorMessage(errorMsgEl, customErrorMsg);
+        
     } finally {
-        registerButton.disabled = false; registerButton.textContent = 'Register Karein';
+        registerButton.disabled = false; 
+        registerButton.textContent = 'Register Karein';
     }
 });
 
@@ -1286,7 +1311,6 @@ function initializeAppLogic() {
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
     document.getElementById('header-profile-avatar').addEventListener('click', () => openModal('profile-modal'));
-    document.getElementById('header-notification-btn').addEventListener('click', () => toggleView('notification-view'));
     document.getElementById('modal-profile-img').addEventListener('click', () => { document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src; openModal('profile-picture-modal'); });
     document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
     document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
