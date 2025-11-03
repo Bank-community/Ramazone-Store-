@@ -325,7 +325,6 @@
             color: white;
             border-color: var(--brand-red);
         }
-        /* Disable style removed to allow click, reliance on JS logic now */
         .rmz-pay-option-btn:disabled { 
             opacity: 0.6;
             cursor: not-allowed;
@@ -499,12 +498,12 @@
             
             <!-- NEW: Option Buttons -->
             <div id="rmz-pay-options">
-                <button id="select-scan-btn" class="rmz-pay-option-btn">Scan QR</button>
+                <button id="select-scan-btn" class="rmz-pay-option-btn active">Scan QR</button>
                 <button id="select-direct-pay-btn" class="rmz-pay-option-btn">RMZ Payment</button>
             </div>
 
             <!-- QR Scanner Section -->
-            <div id="qr-scanner-section" style="display: none;">
+            <div id="qr-scanner-section" style="display: block;">
                 <div id="scanner-container"><video id="scanner-video" playsinline></video></div>
                 <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
                 <button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button>
@@ -663,8 +662,6 @@ const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Fixed ID for store paymen
 // --- Core Functions (Config, UI Toggles) ---
 async function fetchConfigsAndInit() {
     try {
-        // NOTE: The previous code was using a mock fetch API. We'll use the provided hardcoded config here for Firebase, but keep the API Key placeholder logic.
-        
         // Use hardcoded config for demonstration in a single file
         const firebaseConfig = {
             // Placeholder: Assume these values are correctly populated by the environment
@@ -706,8 +703,6 @@ const closeModal = (modalId) => {
     if (modal) modal.classList.remove('active');
     if (modalId === 'scan-pay-modal') {
         stopScanner();
-        // Reset modal to default scan view when closing
-        // showScanView(); // Removed: We now rely on handleRmzPayButtonClick to set default view
     }
 };
 const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
@@ -1053,8 +1048,9 @@ async function handleVerificationConfirm() {
         pendingAction = null;
     }
 }
+
+// *** UPDATED AND FIXED handlePayment function ***
 function handlePayment() {
-    // This function is now used for direct RMZ Store payment only (QR scan result also calls handleSuccessfulScan which shows payment form)
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
     hideErrorMessage(errorMsg);
@@ -1062,7 +1058,10 @@ function handlePayment() {
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
     verifyPasswordAndExecute(async () => {
         try {
-            const newTxnRef = doc(collection(db, "transactions"));
+            // NOTE: We generate the transaction ID *outside* the transaction block 
+            // so we can use it in the success message immediately after.
+            const newTxnRef = doc(collection(db, "transactions")); 
+
             await runTransaction(db, async (t) => {
                 const userRef = doc(db, "users", currentUserData.uid);
                 const configRef = doc(db, "app_settings", "config");
@@ -1070,8 +1069,8 @@ function handlePayment() {
                 // 1. Update user wallet (Debit)
                 t.update(userRef, { wallet: increment(-amount) });
                 
-                // 2. Update Admin RMZ wallet balance (Credit)
-                t.update(configRef, { rmz_wallet_balance: increment(amount) });
+                // 2. Update Admin RMZ wallet balance (Credit) - Using set/merge to create if missing
+                t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
                 
                 // 3. Add Transaction record for the User
                 t.set(newTxnRef, { 
@@ -1102,11 +1101,13 @@ function handlePayment() {
             openModal('payment-success-modal');
 
         } catch (error) { 
-            console.error("Payment transaction failed:", error);
-            showToast("Payment failed. Please try again."); 
+            console.error("Payment transaction failed during Firestore transaction:", error);
+            showToast("Payment failed. Please check your balance or try again later."); 
         }
     }, 'scan-pay-modal');
 }
+// *** END handlePayment function ***
+
 
 // --- NEW/UPDATED RMZ Pay Modal Logic ---
 
@@ -1386,12 +1387,12 @@ function initializeAppLogic() {
     document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
     
     // Payment/QR Listeners
-    document.getElementById('rescan-btn').addEventListener('click', startScanner);
+    document.getElementById('rescan-btn').addEventListener('click', showScanView); // Use showScanView to re-start scan correctly
     document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
     
-    // NEW: Option Button Listeners (FIXED LOGIC)
+    // NEW: Option Button Listeners 
     document.getElementById('select-scan-btn').addEventListener('click', showScanView);
     document.getElementById('select-direct-pay-btn').addEventListener('click', showDirectPayView);
     
