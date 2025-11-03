@@ -432,7 +432,7 @@
                     <div id="transaction-summary"><span class="summary-label">Total Amount</span><span class="summary-amount">₹0.00</span></div>
                     <div class="filter-bar" id="filter-bar">
                         <button class="filter-btn active" data-filter="all">All</button>
-                        <button class="filter-btn" data-filter="commission">Commission</button>
+                        <!-- Commission Filter Removed -->
                         <button class="filter-btn" data-filter="payment">Payments</button>
                         <button class="filter-btn" data-filter="due_payment">Due Paid</button>
                     </div>
@@ -584,12 +584,13 @@ let combinedHistory = []; // Global store for all history items
 let activeListeners = [];
 let scannerAnimation = null;
 let allTransactions = [];
+let allNotifications = []; // New array to store sent notifications
 let activeFilter = 'all';
 let pendingAction = null;
 let isUplineLoaded = false;
 let popupTimeout = null;
 let initialPopupShown = false;
-const commissionRates = [30, 25, 20, 15, 10];
+const commissionRates = [30, 25, 20, 15, 10]; // Commission rates kept for legacy/unused
 let historyStack = [];
 const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
@@ -647,22 +648,27 @@ function attachRealtimeListeners(user) {
             if (doc.exists()) {
                 currentUserData = { uid: doc.id, ...doc.data() };
                 updateDashboardUI(currentUserData, user);
-                renderNotificationCenter();
+                renderNotificationCenter(); // This now calls renderNotifications
                 if (!initialPopupShown) {
                     handleDueNotificationPopup(currentUserData);
                     initialPopupShown = true;
                 }
             }
         }),
-        // Only listening to transactions, as per the new simplified structure
+        // Only listening to transactions, as per the new simplified structure. Filtering out 'credit' type.
         onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
-            // Filter out transactions related to removed features if they somehow persist in database,
-            // though they shouldn't exist in a clean setup.
-            const validTypes = ['payment', 'commission', 'due_payment'];
+            // Only keep 'payment' and 'due_payment' types. Commission removed. Credit removed.
+            const validTypes = ['payment', 'due_payment'];
             allTransactions = snapshot.docs
                 .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }))
                 .filter(t => validTypes.includes(t.type));
             combineAndRenderHistory();
+        }),
+        // Listener for Admin sent notifications
+        onSnapshot(query(collection(db, "notifications"), orderBy("createdAt", "desc")), (snapshot) => {
+            allNotifications = snapshot.docs
+                .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().createdAt?.toDate() }));
+            renderNotificationCenter();
         }),
     ];
     activeListeners.push(...listeners);
@@ -703,6 +709,7 @@ function getDueNotificationData(dbData) {
             popupTitle: `Namaste ${dbData.name}, aapka bhugtan baki hai.`,
             popupPercentage: `Amount: ₹${dbData.dueAmount.toFixed(2)}`,
             paragraph: `Kripya apna ₹${dbData.dueAmount.toFixed(2)} ka due amount 7 tarikh se pehle pay karein. Dhanyavad!`,
+            isDue: true
         };
     }
     return null;
@@ -734,26 +741,68 @@ function showPopupNotification(notifData, duration = 4000) {
      popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
 }
 
+// FIX: This function is now responsible for displaying both Due and Admin-sent notifications
 async function renderNotificationCenter() {
     const listEl = document.getElementById('notification-center-list');
     listEl.innerHTML = '';
     
+    const notificationsToRender = [];
+    
+    // 1. Add Due Payment Notification (if applicable)
     const dueNotification = getDueNotificationData(currentUserData);
     if (dueNotification) {
-        const item = document.createElement('div');
-        item.className = 'notification-center-item due-notification-item';
-        item.innerHTML = `<div class="title" style="color: var(--due-red);">${dueNotification.title}</div><p class="paragraph">${dueNotification.paragraph}</p>`;
-        listEl.appendChild(item);
+        notificationsToRender.push(dueNotification);
     }
     
-    // Since all other notification fetching logic was removed, only show due or empty state
-    if (!dueNotification) {
+    // 2. Add Admin Sent Notifications
+    // Add all fetched admin notifications
+    notificationsToRender.push(...allNotifications);
+
+    if (notificationsToRender.length === 0) {
         listEl.innerHTML = '<p class="empty-state">No new notifications right now.</p>';
+        return;
     }
+
+    // Sort to show due first, then admin notifications by date
+    notificationsToRender.sort((a, b) => {
+        if (a.isDue && !b.isDue) return -1;
+        if (!a.isDue && b.isDue) return 1;
+        if (a.date && b.date) return b.date - a.date;
+        return 0;
+    });
+
+
+    notificationsToRender.forEach(notif => {
+        const item = document.createElement('div');
+        item.className = 'notification-center-item';
+        
+        // Handle Due Notification
+        if (notif.isDue) {
+            item.classList.add('due-notification-item');
+            item.innerHTML = `
+                <div class="title" style="color: var(--due-red);">${notif.title}</div>
+                <p class="paragraph">${notif.paragraph}</p>
+                <div style="margin-top: 15px;">
+                    <button class="btn-secondary" style="background-color: var(--brand-red); color: white; width: auto; padding: 8px 15px; font-size: 14px; border-radius: 20px;" onclick="document.getElementById('pay-due-amount-btn').click(); toggleView('dashboard-view');">Pay Due Now</button>
+                </div>
+            `;
+        } 
+        // Handle Admin Sent Notification
+        else {
+            const linkHtml = notif.link ? `<a href="${notif.link}" target="_blank"> ${notif.title}</a>` : notif.title;
+            item.innerHTML = `
+                <div class="title">${linkHtml}</div>
+                <p class="paragraph">${notif.text.replace(/\n/g, '<br>')}</p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">${notif.date.toLocaleString()}</p>
+            `;
+        }
+        
+        listEl.appendChild(item);
+    });
 }
 
 function combineAndRenderHistory() {
-    // Only transactions (payment, commission, due_payment) are in combinedHistory now
+    // Only transactions (payment, due_payment) are in combinedHistory now
     combinedHistory = allTransactions.sort((a, b) => (b.date || 0) - (a.date || 0));
     renderUnifiedHistory();
 }
@@ -766,7 +815,7 @@ function renderUnifiedHistory() {
 
     const itemsToRender = combinedHistory.filter(item => {
         if (activeFilter === 'all') return true;
-        if (activeFilter === 'commission') return item.type === 'commission';
+        // Commission filter removed
         if (activeFilter === 'payment') return item.type === 'payment';
         if (activeFilter === 'due_payment') return item.type === 'due_payment';
         return false;
@@ -785,8 +834,12 @@ function renderUnifiedHistory() {
         let sign = '+';
         let typeClass = 'credit';
         // Check transaction type and amount sign
-        if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { typeClass = 'debit'; sign = '-'; }
-        if (item.type === 'commission') { typeClass = 'credit'; sign = '+'; }
+        // Commission removed
+        if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { 
+            typeClass = 'debit'; sign = '-'; 
+        } else if (item.type === 'commission') { // Keeping this check just in case legacy data exists, but it won't be reachable via the filter.
+            typeClass = 'credit'; sign = '+';
+        }
         if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
         
         itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || 'Completed'}</span></div>`;
@@ -796,9 +849,8 @@ function renderUnifiedHistory() {
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
     let sign = '+', typeClass = 'credit';
+    // Commission removed
     if (item.type === 'payment' || item.type === 'due_payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
-    if (item.type === 'commission') { sign = '+'; typeClass = 'credit'; }
-    if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
     
     document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
     document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
