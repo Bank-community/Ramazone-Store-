@@ -166,7 +166,6 @@
         }
         .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px var(--shadow-medium); }
         .action-card.disabled { background-color: #f8f9fa; cursor: not-allowed; color: #adb5bd; }
-        .action-card.disabled .icon { filter: grayscale(100%); opacity: 0.5; }
         .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
         .action-card.disabled .card-text { color: #adb5bd; }
@@ -349,9 +348,7 @@
                     <div class="form-group"><label for="reg-name">Poora Naam</label><input type="text" id="reg-name" required></div>
                     <div class="form-group"><label for="reg-mobile">Mobile Number</label><input type="tel" id="reg-mobile" required></div>
                     <div class="form-group"><label for="reg-password">Password</label><input type="password" id="reg-password" required></div>
-                    <!-- REFERRAL FIELD REMOVED as per user request: 
-                    <div class="form-group"><label for="reg-referral">Referral Code (Optional)</label><input type="text" id="reg-referral"></div>
-                    -->
+                    <!-- REFERRAL FIELD REMOVED -->
                     <button type="submit">Register Karein</button><p id="register-error-msg" class="error-message"></p>
                 </form>
                 <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
@@ -437,6 +434,8 @@
                         <!-- Commission Filter Removed -->
                         <button class="filter-btn" data-filter="payment">Payments</button>
                         <button class="filter-btn" data-filter="due_payment">Due Paid</button>
+                        <!-- NEW FILTER: Credit Given -->
+                        <button class="filter-btn" data-filter="credit_given">Credit</button>
                     </div>
                     <div id="unified-history-list" class="history-list"></div>
                 </div>
@@ -645,6 +644,10 @@ const hideErrorMessage = (element) => { if (element) { element.style.display = '
 function attachRealtimeListeners(user) {
     detachAllListeners();
     const uid = user.uid;
+    
+    // Updated validTypes to include 'credit_given'
+    const validTypes = ['payment', 'due_payment', 'credit_given']; 
+
     const listeners = [
         onSnapshot(doc(db, 'users', uid), (doc) => {
             if (doc.exists()) {
@@ -657,10 +660,9 @@ function attachRealtimeListeners(user) {
                 }
             }
         }),
-        // Only listening to transactions, as per the new simplified structure. Filtering out 'credit' type.
+        // Only listening to transactions, now including 'credit_given'
         onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
-            // Only keep 'payment' and 'due_payment' types. Commission removed. Credit removed.
-            const validTypes = ['payment', 'due_payment'];
+            
             allTransactions = snapshot.docs
                 .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }))
                 .filter(t => validTypes.includes(t.type));
@@ -804,7 +806,7 @@ async function renderNotificationCenter() {
 }
 
 function combineAndRenderHistory() {
-    // Only transactions (payment, due_payment) are in combinedHistory now
+    // Now includes payment, due_payment, and credit_given
     combinedHistory = allTransactions.sort((a, b) => (b.date || 0) - (a.date || 0));
     renderUnifiedHistory();
 }
@@ -817,9 +819,10 @@ function renderUnifiedHistory() {
 
     const itemsToRender = combinedHistory.filter(item => {
         if (activeFilter === 'all') return true;
-        // Commission filter removed
         if (activeFilter === 'payment') return item.type === 'payment';
         if (activeFilter === 'due_payment') return item.type === 'due_payment';
+        // NEW FILTER: Show credit given transactions
+        if (activeFilter === 'credit_given') return item.type === 'credit_given';
         return false;
     });
 
@@ -835,24 +838,44 @@ function renderUnifiedHistory() {
         const amount = item.amount || 0;
         let sign = '+';
         let typeClass = 'credit';
-        // Check transaction type and amount sign
-        // Commission removed
-        if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { 
-            typeClass = 'debit'; sign = '-'; 
-        } else if (item.type === 'commission') { // Keeping this check just in case legacy data exists, but it won't be reachable via the filter.
-            typeClass = 'credit'; sign = '+';
+        
+        // Determine sign and class based on transaction type
+        if(item.type === 'payment' || item.type === 'due_payment') { 
+            // Payments and Due Payments are debits (negative in wallet)
+            typeClass = 'debit'; 
+            sign = '-'; 
+        } else if (item.type === 'credit_given') {
+            // Credit Given is a credit (positive in wallet)
+            typeClass = 'credit'; 
+            sign = '+';
         }
+
+        // Use Math.abs for display as sign is handled separately
+        const displayAmount = Math.abs(amount).toFixed(2);
+
         if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
         
-        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || 'Completed'}</span></div>`;
+        // Customizing title for credit given for clarity
+        const title = item.type === 'credit_given' ? `Admin Credit` : item.description;
+
+        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${title}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${displayAmount}</div><span class="status">${item.status || 'Completed'}</span></div>`;
         listEl.appendChild(itemDiv);
     });
 }
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
     let sign = '+', typeClass = 'credit';
-    // Commission removed
-    if (item.type === 'payment' || item.type === 'due_payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
+    let description = item.description;
+    
+    // Determine sign and class based on transaction type
+    if (item.type === 'payment' || item.type === 'due_payment') { 
+        sign = '-'; 
+        typeClass = 'debit'; 
+    } else if (item.type === 'credit_given') {
+        sign = '+';
+        typeClass = 'credit';
+        description = "Credit received from Ramazone Admin";
+    }
     
     document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
     document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
@@ -861,7 +884,7 @@ function showTransactionDetails(item) {
     statusEl.className = 'value status-badge';
     if (item.status) statusEl.classList.add(item.status);
 
-    document.getElementById('details-modal-desc').textContent = item.description;
+    document.getElementById('details-modal-desc').textContent = description;
     document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
     document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
     document.getElementById('details-modal-txn-id').textContent = item.id;
@@ -939,9 +962,9 @@ function verifyPasswordAndExecute(action, sourceModalId) {
 async function handleVerificationConfirm() {
     const password = document.getElementById('verification-password').value;
     const errorMsg = document.getElementById('verification-error-msg');
-    const confirmBtn = document.getElementById('verification-confirm-btn');
     hideErrorMessage(errorMsg);
     if (!password) return showErrorMessage(errorMsg, "Password is required.");
+    const confirmBtn = document.getElementById('verification-confirm-btn');
     confirmBtn.disabled = true; confirmBtn.textContent = "Verifying...";
     const user = auth.currentUser;
     const credential = EmailAuthProvider.credential(user.email, password);
