@@ -299,6 +299,32 @@
         #due-qr-code { margin: 15px auto; display: flex; justify-content: center; align-items: center; }
         #due-qr-code canvas, #due-qr-code img { border-radius: 8px; }
         .qr-instructions { font-size: 13px; color: var(--text-secondary); margin-top: 15px; line-height: 1.5; }
+        
+        /* RMZ Pay Options Style */
+        #rmz-pay-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .rmz-pay-option-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        .rmz-pay-option-btn:hover {
+            border-color: var(--brand-red);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .rmz-pay-option-btn.active {
+            background-color: var(--brand-red);
+            color: white;
+            border-color: var(--brand-red);
+        }
 
 
 #install-pwa-btn {
@@ -461,48 +487,37 @@
     <!-- Password Verification Modal (Remains) -->
     <div id="password-verification-modal" class="modal-overlay"><div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div></div>
     
-    <!-- UPDATED: Scan and Pay Modal renamed and refactored for options -->
-    <div id="payment-modal" class="modal-overlay">
-        <div class="modal-content">
+    <!-- Scan and Pay Modal (UPDATED) -->
+    <div id="scan-pay-modal" class="modal-overlay">
+        <div class="modal-content"> 
+            <h3>RMZ Pay Options</h3> 
             
-            <!-- 1. Payment Options View -->
-            <div id="payment-options-view" style="text-align: center;">
-                <h3>Payment Select Karein</h3>
-                <button id="show-scanner-btn" style="margin-bottom: 15px;">
-                    <img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg" style="width: 20px; height: 20px; filter: invert(1); margin-right: 10px; vertical-align: middle;">
-                    Scan QR
-                </button>
-                <button id="show-direct-pay-btn" style="background-color: var(--brand-blue); color: white; margin-bottom: 25px;">
-                    RMZ Payment
-                </button>
-                <button type="button" class="btn-secondary" data-close-modal style="background-color: #ddd;">Cancel</button>
+            <!-- NEW: Option Buttons -->
+            <div id="rmz-pay-options">
+                <button id="select-scan-btn" class="rmz-pay-option-btn active">Scan QR</button>
+                <button id="select-direct-pay-btn" class="rmz-pay-option-btn">RMZ Payment</button>
             </div>
 
-            <!-- 2. Scanner View (Initial: hidden) -->
-            <div id="scanner-view" style="display: none;">
-                <h3>Scan QR aur Pay Karein</h3>
+            <!-- QR Scanner Section -->
+            <div id="qr-scanner-section">
                 <div id="scanner-container"><video id="scanner-video" playsinline></video></div>
                 <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
                 <button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button>
-                <p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p>
-                <div class="modal-actions">
-                    <button type="button" id="back-to-options-scan-btn" class="btn-secondary">Back</button>
-                </div>
+                <p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> 
             </div>
 
-            <!-- 3. Payment Form View (Initial: hidden) -->
-            <div id="payment-form-view" style="display: none;">
-                <h3>RMZ Payment Karein</h3>
-                <p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 10px;">Aap Ramazone Store ko payment kar rahe hain:</p>
-                <p style="text-align:center; font-weight: 600; margin-bottom: 15px;"><span id="receiver-id-display">@RamazoneStoreCashback</span></p>
-                <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div>
-                <p id="payment-error-msg" class="error-message"></p>
+            <!-- Payment Form (Direct Pay / Post-Scan) -->
+            <div id="payment-form" style="display: none;"> 
+                <p style="text-align:center;">Paying to: <span id="receiver-id-display">Ramazone Store</span></p> 
+                <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> 
+                <p id="payment-error-msg" class="error-message"></p> 
                 <div class="modal-actions">
-                    <button type="button" id="back-to-options-pay-btn" class="btn-secondary">Cancel</button>
+                    <button type="button" id="rescan-btn" class="btn-secondary" style="display: none;">Scan Again</button>
                     <button id="pay-submit-btn" class="btn-primary">Pay Now</button>
-                </div>
-            </div>
-
+                </div> 
+            </div> 
+            
+            <div id="scan-pay-initial-actions" class="modal-actions" style="margin-top: 10px;"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> 
         </div>
     </div>
     
@@ -511,7 +526,7 @@
     
     <!-- Other Modals (Remains) -->
     <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
-    <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span><span class="value" id="success-modal-datetime"></span></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
+    <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span class="value" id="success-modal-datetime"></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
     <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span class="value" id="details-modal-txn-id"></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
 
     <div id="due-payment-modal" class="modal-overlay">
@@ -638,46 +653,28 @@ let historyStack = [];
 const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
 const UPI_ID = "princekumar954684-1@okicici";
-const RAMAZONE_STORE_ID = "@RamazoneStoreCashback"; // Fixed ID for RMZ payments
+const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Fixed ID for store payment
 
 // --- Core Functions (Config, UI Toggles) ---
 async function fetchConfigsAndInit() {
     try {
-        // NOTE: In a real environment, __firebase_config and __app_id would be used here.
-        // Keeping the structure as-is since the full config is hardcoded in the Admin part of the file.
-        // Assuming the necessary configs are available to initialize Firebase.
+        // NOTE: The previous code was using a mock fetch API. We'll use the provided hardcoded config here for Firebase, but keep the API Key placeholder logic.
         
-        // Mocking config fetch since actual API calls are commented out in the original file logic:
-        // const [firebaseConfigRes, imageConfigRes] = await Promise.all([
-        //     fetch('/api/cashback-config'),
-        //     fetch('/api/image-config')
-        // ]);
-        // if (!firebaseConfigRes.ok || !imageConfigRes.ok) throw new Error('Failed to load app configuration.');
-        // const firebaseConfig = await firebaseConfigRes.json();
-        // const imageConfig = await imageConfigRes.json();
-        // imgbbApiKey = imageConfig.apiKey;
-        
-        // Using mock/placeholder setup for imgbb key
-        imgbbApiKey = "YOUR_IMGBB_API_KEY_HERE"; 
-
-        // NOTE: Since this is a single file, the config object for the admin panel is reused for initialization.
-        // In a deployed environment, the correct configuration must be passed.
-        // For now, initializing with the hardcoded config found in the admin panel's script.
-        const mockFirebaseConfig = {
+        // Use hardcoded config for demonstration in a single file
+        const firebaseConfig = {
+            // Placeholder: Assume these values are correctly populated by the environment
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
             authDomain: "tipsplit-e3wes.firebaseapp.com",
             projectId: "tipsplit-e3wes",
             storageBucket: "tipsplit-e3wes.appspot.com",
             appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
         };
-        
-        app = initializeApp(mockFirebaseConfig);
+        // NOTE: imgbbApiKey is usually loaded externally, setting a dummy one for now.
+        imgbbApiKey = "DUMMY_API_KEY_FOR_IMGBB"; 
+
+        app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
-        
-        // Call Admin init logic if it exists (it's in the same file)
-        if (typeof initAdmin === 'function') initAdmin();
-        
         initializeAppLogic();
     } catch (error) {
         console.error("Critical Initialization Error:", error);
@@ -698,17 +695,20 @@ const toggleView = (viewId) => {
         viewElement.classList.add('active');
     }
 };
-// Updated closeModal to stop scanner when payment modal is closed.
 const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
 const closeModal = (modalId) => {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
-    if (modalId === 'payment-modal') stopScanner(); // Check if this is the payment modal
+    if (modalId === 'scan-pay-modal') {
+        stopScanner();
+        // Reset modal to default scan view when closing
+        showScanView();
+    }
 };
 const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
 const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
 
-// --- Realtime Data Handling (No change needed here) ---
+// --- Realtime Data Handling ---
 function attachRealtimeListeners(user) {
     detachAllListeners();
     const uid = user.uid;
@@ -751,7 +751,7 @@ function detachAllListeners() {
     initialPopupShown = false;
 }
 
-// --- UI Update and Notification Logic (No change needed here) ---
+// --- UI Update and Notification Logic ---
 function updateDashboardUI(dbData, authUser) {
     const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
     document.getElementById('header-profile-avatar').src = profilePicUrl;
@@ -1049,22 +1049,12 @@ async function handleVerificationConfirm() {
     }
 }
 function handlePayment() {
+    // This function is now used for direct RMZ Store payment only (QR scan result also calls handleSuccessfulScan which shows payment form)
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
     hideErrorMessage(errorMsg);
-    
-    // FIX: Check if we are ready to process payment
-    if (!currentUserData || !currentUser) {
-        showErrorMessage(errorMsg, "User data loading...");
-        return;
-    }
-
     if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
-    
-    // FIX: Close the payment modal before opening verification to prevent stacking
-    closeModal('payment-modal'); 
-    
     verifyPasswordAndExecute(async () => {
         try {
             const newTxnRef = doc(collection(db, "transactions"));
@@ -1072,33 +1062,33 @@ function handlePayment() {
                 const userRef = doc(db, "users", currentUserData.uid);
                 const configRef = doc(db, "app_settings", "config");
                 
-                // User Wallet update
+                // 1. Update user wallet (Debit)
                 t.update(userRef, { wallet: increment(-amount) });
                 
-                // Admin RMZ Wallet update
+                // 2. Update Admin RMZ wallet balance (Credit)
                 t.update(configRef, { rmz_wallet_balance: increment(amount) });
                 
-                // User Transaction record
+                // 3. Add Transaction record for the User
                 t.set(newTxnRef, { 
                     type: 'payment', 
-                    amount: -amount, // Negative for user's wallet
+                    amount: -amount, 
                     description: 'Paid to Ramazone Store', 
                     status: 'completed', 
                     timestamp: serverTimestamp(), 
                     involvedUsers: [currentUserData.uid] 
                 });
                 
-                // Admin RMZ Wallet Transaction record (for history in admin panel)
+                // 4. Add RMZ Wallet Transaction record for Admin Panel
                 t.set(doc(collection(db, "rmz_wallet_transactions")), { 
-                    amount, // Positive for RMZ wallet
+                    amount, 
                     senderId: currentUserData.uid, 
                     senderName: currentUserData.name, 
                     senderMobile: currentUserData.mobile, 
-                    timestamp: serverTimestamp(),
-                    description: 'Received from Customer Payment'
+                    timestamp: serverTimestamp() 
                 });
             });
             
+            // Show Success Modal
             const now = new Date();
             document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
             document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
@@ -1110,75 +1100,108 @@ function handlePayment() {
             console.error("Payment transaction failed:", error);
             showToast("Payment failed. Please try again."); 
         }
-    }, 'payment-modal'); // Pass 'payment-modal' to close it after verification success/fail
+    }, 'scan-pay-modal');
 }
 
+// --- NEW/UPDATED RMZ Pay Modal Logic ---
 
-// NEW FUNCTION: Show the initial options in the payment modal
-function showPaymentModalOptions() {
-    document.getElementById('payment-options-view').style.display = 'block';
-    document.getElementById('scanner-view').style.display = 'none';
-    document.getElementById('payment-form-view').style.display = 'none';
-    openModal('payment-modal');
+function showScanView() {
+    document.getElementById('qr-scanner-section').style.display = 'block';
+    document.getElementById('payment-form').style.display = 'none';
+    document.getElementById('select-scan-btn').classList.add('active');
+    document.getElementById('select-direct-pay-btn').classList.remove('active');
+    document.getElementById('rescan-btn').style.display = 'none'; // Only show rescan if scan failed
+    document.getElementById('receiver-id-display').textContent = '...'; 
+    document.getElementById('payment-amount').value = '';
+    hideErrorMessage(document.getElementById('payment-error-msg'));
+    // Start scanner only if this view is explicitly shown after modal open
+    // startScanner(); 
 }
 
-// UPDATED FUNCTION: Show scanner view
-function showScannerView() {
-    document.getElementById('payment-options-view').style.display = 'none';
-    document.getElementById('scanner-view').style.display = 'block';
-    document.getElementById('payment-form-view').style.display = 'none';
-    startScanner();
-}
-
-// NEW FUNCTION: Show direct pay form
-function showDirectPayForm() {
+function showDirectPayView() {
     stopScanner();
-    document.getElementById('payment-options-view').style.display = 'none';
-    document.getElementById('scanner-view').style.display = 'none';
-    document.getElementById('payment-form-view').style.display = 'block';
+    document.getElementById('qr-scanner-section').style.display = 'none';
+    document.getElementById('payment-form').style.display = 'block';
+    document.getElementById('select-direct-pay-btn').classList.add('active');
+    document.getElementById('select-scan-btn').classList.remove('active');
     
-    // Set receiver ID for clarity
-    document.getElementById('receiver-id-display').textContent = RAMAZONE_STORE_ID;
-    document.getElementById('back-to-options-pay-btn').textContent = "Cancel";
+    // Set fixed receiver ID for direct payment
+    document.getElementById('receiver-id-display').textContent = 'Ramazone Store';
+    document.getElementById('rescan-btn').style.display = 'none'; // Hide rescan button for direct pay
+    
+    // Clear amount and errors
+    document.getElementById('payment-amount').value = '';
+    hideErrorMessage(document.getElementById('payment-error-msg'));
 }
 
+function handleRmzPayButtonClick() {
+    openModal('scan-pay-modal');
+    // Default to Scan View on open
+    showScanView();
+    // Start scanner immediately upon opening the modal
+    startScanner(); 
+}
 
-// UPDATED startScanner function to fit the new UI flow
-function startScanner() {
-    // Ensure the form parts are reset/hidden when scanning starts
-    document.getElementById('payment-form-view').style.display = 'none'; 
+// --- Scanner/QR Code Functions (minor adjustments) ---
+
+async function handleSuccessfulScan(data) {
+    // Only proceed if the QR code is the Ramazone Store ID
+    if (data !== RAMAZONE_STORE_ID) {
+        showToast("Invalid QR code scanned. Only Ramazone Store QR is accepted.");
+        startScanner(); // Continue scanning
+        return;
+    }
     
-    stopScanner(); // Stop any existing stream
+    stopScanner();
+    document.getElementById('qr-scanner-section').style.display = 'none';
+    document.getElementById('payment-form').style.display = 'block';
+    document.getElementById('select-scan-btn').classList.add('active');
+    document.getElementById('select-direct-pay-btn').classList.remove('active');
+    
+    document.getElementById('receiver-id-display').textContent = 'Ramazone Store'; // Show store name
+    document.getElementById('rescan-btn').style.display = 'block'; // Show rescan button after successful scan
+    document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
+
+    // Re-enable option buttons for flexibility
+    document.getElementById('select-scan-btn').disabled = false;
+    document.getElementById('select-direct-pay-btn').disabled = false;
+}
+
+function startScanner() {
+    stopScanner();
     const video = document.getElementById('scanner-video');
     const statusEl = document.getElementById('scanner-status');
-    statusEl.textContent = 'Starting camera...';
     
+    // Hide payment form/show scanner elements
+    document.getElementById('qr-scanner-section').style.display = 'block';
+    document.getElementById('payment-form').style.display = 'none';
+    
+    // Disable direct pay button while scanning is active
+    document.getElementById('select-direct-pay-btn').disabled = true;
+
+    statusEl.textContent = 'Starting camera...';
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
         video.srcObject = stream;
         video.play();
         statusEl.textContent = 'Scanning for QR code...';
         scannerAnimation = requestAnimationFrame(tick);
     }).catch(() => {
-        statusEl.textContent = 'Could not access camera. Please use Upload QR.';
+        statusEl.textContent = 'Could not access camera.';
+        document.getElementById('select-direct-pay-btn').disabled = false; // Re-enable if camera fails
     });
-    
     const tick = () => {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // Check for the *specific* RMZ store QR code
+            // Check for the fixed Ramazone Store QR code
             const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-            if (code && code.data === RAMAZONE_STORE_ID) { 
-                handleSuccessfulScan(code.data); 
-                return; 
-            }
+            if (code && code.data === RAMAZONE_STORE_ID) { handleSuccessfulScan(code.data); return; }
         }
         if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
     };
 }
-
 
 function stopScanner() {
     if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
@@ -1188,16 +1211,6 @@ function stopScanner() {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
-}
-function handleSuccessfulScan(data) {
-    stopScanner();
-    document.getElementById('scanner-view').style.display = 'none';
-    document.getElementById('payment-form-view').style.display = 'block';
-    
-    // Display the receiver ID (Ramazone Store ID)
-    document.getElementById('receiver-id-display').textContent = data; 
-    document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
-    document.getElementById('back-to-options-pay-btn').textContent = "Scan Again"; // Change cancel button to rescan
 }
 function handleQrUpload(event) {
     const file = event.target.files[0];
@@ -1218,7 +1231,10 @@ function handleQrUpload(event) {
     };
     reader.readAsDataURL(file);
 }
-function handlePasswordChange(e) {
+// --- END NEW/UPDATED RMZ Pay Modal Logic ---
+
+
+async function handlePasswordChange(e) {
     e.preventDefault();
     const form = document.getElementById('password-change-form');
     const btn = document.getElementById('password-change-btn');
@@ -1250,6 +1266,7 @@ function handlePasswordChange(e) {
         btn.disabled = false; btn.textContent = "Password Badlein";
     }
 }
+
 function handleShare() {
     if (!currentUserData) return;
     const { referralId, name, lifetimeEarning } = currentUserData;
@@ -1356,8 +1373,8 @@ function initializeAppLogic() {
     document.getElementById('shop-now-btn').addEventListener('click', () => {
         window.open('https://www.ramazone.in', '_blank');
     });
-    // UPDATED: RMZ Pay button now shows options
-    document.getElementById('scan-and-pay-btn').addEventListener('click', showPaymentModalOptions); 
+    // UPDATED: RMZ Pay button now calls the new handler
+    document.getElementById('scan-and-pay-btn').addEventListener('click', handleRmzPayButtonClick);
     document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
 
     // Wallet & Utility Listeners
@@ -1366,23 +1383,19 @@ function initializeAppLogic() {
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
     document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
     
-    // Payment/QR Listeners (New/Updated logic for multi-step modal)
-    document.getElementById('show-scanner-btn').addEventListener('click', showScannerView);
-    document.getElementById('show-direct-pay-btn').addEventListener('click', showDirectPayForm);
-    document.getElementById('back-to-options-scan-btn').addEventListener('click', showPaymentModalOptions);
-    
-    // Check if the "Cancel" button should go back to options or rescan
-    document.getElementById('back-to-options-pay-btn').addEventListener('click', (e) => {
-        if (e.target.textContent === "Scan Again") {
-            showScannerView();
-        } else {
-            showPaymentModalOptions();
-        }
-    });
-
+    // Payment/QR Listeners
+    document.getElementById('rescan-btn').addEventListener('click', startScanner);
     document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
+    
+    // NEW: Option Button Listeners
+    document.getElementById('select-scan-btn').addEventListener('click', () => {
+        showScanView();
+        startScanner(); // Start scanner when scan view is selected
+        document.getElementById('select-direct-pay-btn').disabled = true; // Disable until scanner is stopped/camera fails
+    });
+    document.getElementById('select-direct-pay-btn').addEventListener('click', showDirectPayView);
     
     // Verification Listener
     document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
@@ -1400,14 +1413,6 @@ function initializeAppLogic() {
     });
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 }
-
-// Function to call Admin Panel Init if it exists.
-function initAdmin() {
-    if (typeof window.init === 'function') {
-        window.init();
-    }
-}
-
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
 
@@ -1432,13 +1437,4 @@ document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
