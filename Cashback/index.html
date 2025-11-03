@@ -171,50 +171,8 @@
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
         .action-card.disabled .card-text { color: #adb5bd; }
 
-        /* --- NEW: Cashback Card Banner Styles --- */
-        #open-cashback-modal {
-            padding-top: 35px; /* Make space for the banner */
-            justify-content: center;
-        }
-        #cashback-banner {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 30px; /* Fixed height for the banner */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #cashback-banner .notification-content-wrapper {
-            opacity: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 100%;
-            height: 100%;
-        }
-        #cashback-banner .notification-text-container {
-            font-size: 11px;
-            font-weight: 600;
-            line-height: 1.1;
-        }
-        #cashback-banner .notification-percentage {
-            font-size: 15px;
-            font-weight: 800;
-        }
-
-        .notification-content-wrapper.animate { animation: fade-in-out 4.2s infinite; }
-        .notification-text-line { overflow: hidden; white-space: nowrap; width: 0; }
-        .notification-percentage { transform: scale(1); opacity: 0; }
-        @keyframes fade-in-out { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
-        .animate .notification-text-line1 { animation: typing-hold 4.2s steps(30, end) infinite; }
-        .animate .notification-text-line2 { animation: typing-hold 4.2s steps(30, end) 0.2s infinite; }
-        @keyframes typing-hold { 0% { width: 0; } 28.5% { width: 100%; } 100% { width: 100%; } }
-        .animate .notification-percentage { animation: simple-fade-in-hold 4.2s infinite; }
-        @keyframes simple-fade-in-hold { 0%, 33% { opacity: 0; } 38%, 100% { opacity: 1; } }
-
+        /* --- NEW: Cashback Card Banner Styles (REMOVED) --- */
+        
         .section { 
             background: var(--bg-card); 
             padding: 24px 16px;
@@ -452,38 +410,32 @@
                 <section class="actions-section">
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="dashboard-actions">
-                        <div id="open-cashback-modal" class="action-card">
-                            <div id="cashback-banner">
-                                <div class="notification-content-wrapper">
-                                    <div class="notification-text-container">
-                                        <span class="notification-text-line notification-text-line1"></span>
-                                        <span class="notification-text-line notification-text-line2"></span>
-                                    </div>
-                                    <div class="notification-percentage"></div>
-                                 </div>
-                            </div>
-                            <img class="icon" src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg">
-                            <span class="card-text">Cashback</span>
-                        </div>
+                        
+                        <!-- RMZ Pay (Remains) -->
                         <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                        <div id="open-network-view" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/228705/collaboration-team.svg"><span class="card-text">Network</span></div>
+                        
+                        <!-- Support (Remains) -->
                         <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
-                        <div id="open-credit-request-modal" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/513295/credit-card.svg"><span class="card-text">Credit Request</span></div>
-                        <div id="daily-reward-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/279392/coins-money.svg"><span class="card-text">Daily Reward</span></div>
+                        
+                        <!-- Credit Request changed to Shop Now and opens a link -->
+                        <div id="shop-now-btn" class="action-card">
+                            <!-- New Shopping Cart Icon -->
+                            <img class="icon" src="https://www.svgrepo.com/show/513364/shopping-cart.svg">
+                            <span class="card-text">Shop Now</span>
+                        </div>
+                        
                     </div>
                 </section>
 
                 <div class="section">
                     <h2 class="section-title">All Transactions</h2>
-                    <div id="transaction-summary"><span class="summary-label">Total Amount</span><span class="summary-amount">₹0.00</span></div>
+                    <!-- Removed transaction-summary display as it's not needed with limited filters -->
                     <div class="filter-bar" id="filter-bar">
                         <button class="filter-btn active" data-filter="all">All</button>
-                        <button class="filter-btn" data-filter="cashback">Cashback</button>
+                        <!-- Removed Cashback, Credit, Bonus filters as their features are removed -->
                         <button class="filter-btn" data-filter="commission">Commission</button>
                         <button class="filter-btn" data-filter="payment">Payments</button>
-                        <button class="filter-btn" data-filter="credit">Credit</button>
                         <button class="filter-btn" data-filter="due_payment">Due Paid</button>
-                        <button class="filter-btn" data-filter="bonus">Bonus</button>
                     </div>
                     <div id="unified-history-list" class="history-list"></div>
                 </div>
@@ -492,23 +444,33 @@
         
     </div>
     
+    <!-- Network View (Not removed, but not accessible from dashboard anymore) -->
     <div id="network-view" class="view fullscreen-view">
         <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
         <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
         <div class="network-content-container"><div id="downline-content" class="network-tab-content active"><div class="tree-container"><svg id="connector-svg"></svg><div id="tree-root"></div><div id="commission-tags-container"></div></div></div><div id="upline-content" class="network-tab-content"><div id="upline-list"></div></div></div>
         <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
     </div>
-
+    <!-- Notification View (Remains) -->
     <div id="notification-view" class="view fullscreen-view">
        <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
        <div id="notification-center-list"></div>
     </div>
 
+    <!-- Password Verification Modal (Remains) -->
     <div id="password-verification-modal" class="modal-overlay"><div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div></div>
-    <div id="cashback-modal" class="modal-overlay"><div class="modal-content"> <h3>Cashback Request</h3><form id="cashback-request-form"><div class="form-group"><label for="product-name">Product ka Naam</label><input type="text" id="product-name" required></div><div class="form-group"><label for="product-price">Product ka Price (₹)</label><input type="number" id="product-price" min="10" required></div><p id="cashback-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="cashback-submit-btn">Request</button></div></form></div></div>
-    <div id="credit-request-modal" class="modal-overlay"><div class="modal-content"><h3>Credit Request</h3><form id="credit-request-form"><div class="form-group"><label for="credit-amount">Amount (₹)</label><input type="number" id="credit-amount" min="1" required></div><div style="background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px; font-size: 13px; color: #8a6d3b; margin-bottom: 15px;"><b>Attention:</b> हर महीने आपको अपनी due amount 1 से 7 तारीख के बीच चुकानी होगी। ऐसा न करने पर बकाया क्रेडिट amount पर 10% का जुर्माना लगाया जाएगा।"</div><div class="form-group" style="display: flex; align-items: center; gap: 10px;"><input type="checkbox" id="credit-tnc-checkbox" style="width: auto; height: 18px;"><label for="credit-tnc-checkbox" style="margin-bottom: 0;">I agree to the Terms & Conditions.</label></div><p id="credit-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button type="submit" id="credit-submit-btn" disabled>Request Credit</button></div></form></div></div>
+    
+    <!-- Cashback Modal (REMOVED) -->
+    
+    <!-- Credit Request Modal (REMOVED) -->
+    
+    <!-- Scan and Pay Modal (Remains) -->
     <div id="scan-pay-modal" class="modal-overlay"><div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div></div>
+    
+    <!-- Profile Modal (Remains) -->
     <div id="profile-modal" class="modal-overlay"><div class="modal-content"><div id="modal-profile-img-container"><img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture"><div id="edit-profile-pic-icon" title="Change Profile Picture"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div></div><h3>My Profile</h3><div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div><div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div><form id="password-change-form" style="margin-top: 20px;"><div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div><div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div><button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p></form><button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button><div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div></div></div>
+    
+    <!-- Other Modals (Remains) -->
     <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
     <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span><span class="value" id="success-modal-datetime"></span></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
     <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="details-modal-txn-id"></span></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
@@ -538,6 +500,7 @@
     </div>
 
     <div id="toast-notification" class="toast-notification"></div>
+    <!-- Popup Notification (Remains, though without the offer listener it will be less used) -->
     <div id="popup-notification"><div class="popup-notification-content"><div class="popup-notification-icon">🔥</div><div class="popup-notification-text"><div class="title" id="popup-notification-title"></div><div class="percentage" id="popup-notification-percentage"></div></div></div><button id="popup-notification-close">&times;</button></div>
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
     
@@ -552,64 +515,43 @@ let app, auth, db;
 let imgbbApiKey;
 
 // ======================= PWA Install & Update Logic START =======================
-let deferredPrompt; // Yah variable install prompt ko store karega
+let deferredPrompt; 
 
-/**
- * PWA install hai ya nahi, iski jaanch karne ke liye function.
- * Yah pehle modern तरीका (getInstalledRelatedApps) use karta hai, aur fallback ke roop mein purana तरीका.
- * @returns {Promise<boolean>} - Agar PWA installed hai to true, nahi to false.
- */
 async function isPwaInstalled() {
-    // Modern API: Yah manifest ID ke aadhar par check karta hai.
     if ('getInstalledRelatedApps' in navigator) {
         try {
             const relatedApps = await navigator.getInstalledRelatedApps();
-            // Hum check karte hain ki list mein hamari ID ("/Cashback/") wala app hai ya nahi.
             const isInstalled = relatedApps.some(app => app.id === '/Cashback/');
             console.log(isInstalled ? 'Manifest ID ke anusaar PWA installed hai.' : 'Manifest ID ke anusaar PWA installed nahi hai.');
             return isInstalled;
         } catch (error) {
             console.error('Error checking getInstalledRelatedApps:', error);
-            // Agar modern API mein koi error aaye, to purane tarike se check karein.
             return window.matchMedia('(display-mode: standalone)').matches;
         }
     }
-
-    // Fallback un browsers ke liye jinmein getInstalledRelatedApps nahi hai.
     console.log('Fallback (display-mode) se installation status check kiya ja raha hai.');
     return window.matchMedia('(display-mode: standalone)').matches;
 }
 
-/**
- * Install button ko setup karne aur uski visibility control karne ka function.
- */
 async function setupPwaInstallButton() {
     const installBtn = document.getElementById('install-pwa-btn');
     if (!installBtn) return;
 
-    // Sabse pehle check karein ki app pehle se installed to nahi hai.
     const installed = await isPwaInstalled();
     if (installed) {
         console.log('PWA pehle se installed hai. Install button nahi dikhega.');
         installBtn.style.display = 'none';
-        return; // Agar installed hai, to aage kuch nahi karna.
+        return;
     }
 
-    // Agar installed nahi hai, to browser ke install prompt event ka intezar karein.
     window.addEventListener('beforeinstallprompt', (e) => {
         console.log('`beforeinstallprompt` event fire hua.');
-        // Browser ke default prompt ko rokein.
         e.preventDefault();
-        // Prompt ko baad mein istemal karne ke liye save karein.
         deferredPrompt = e;
-        // Hamare custom "Install App" button ko dikhayein.
         installBtn.style.display = 'flex';
     });
 }
 
-/**
- * Jab user install button par click karega to yah function chalega.
- */
 function handleInstallClick() {
     const installBtn = document.getElementById('install-pwa-btn');
     if (!deferredPrompt) {
@@ -617,13 +559,9 @@ function handleInstallClick() {
         return;
     }
     
-    // Button ko chhupa dein kyunki prompt dikhne wala hai.
     installBtn.style.display = 'none';
-    
-    // Install prompt dikhayein.
     deferredPrompt.prompt();
     
-    // User ke chunav (install ya cancel) ka intezar karein.
     deferredPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === 'accepted') {
             console.log('User ne PWA install kar liya.');
@@ -634,7 +572,6 @@ function handleInstallClick() {
     });
 }
 
-// Jab app safaltapoorvak install ho jaye, to is event ko sunein.
 window.addEventListener('appinstalled', () => {
     const installBtn = document.getElementById('install-pwa-btn');
     if (installBtn) {
@@ -652,15 +589,14 @@ let combinedHistory = []; // Global store for all history items
 let activeListeners = [];
 let scannerAnimation = null;
 let allTransactions = [];
-let cashbackRequests = [];
-let creditRequests = [];
+// Removed cashbackRequests, creditRequests variables
 let activeFilter = 'all';
 let pendingAction = null;
 let isUplineLoaded = false;
 let popupTimeout = null;
 let initialPopupShown = false;
 const commissionRates = [30, 25, 20, 15, 10];
-const creditLevels = [100, 150, 200, 250, 300, 500, 700, 1000];
+// Removed creditLevels variable
 let historyStack = [];
 const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
@@ -668,6 +604,7 @@ const UPI_ID = "princekumar954684-1@okicici";
 
 // --- Core Functions (Config, UI Toggles) ---
 async function fetchConfigsAndInit() {
+    // Removed config fetch for credit levels
     try {
         const [firebaseConfigRes, imageConfigRes] = await Promise.all([
             fetch('/api/cashback-config'),
@@ -694,11 +631,7 @@ const showToast = (message) => {
 };
 const toggleView = (viewId) => {
     const viewportMeta = document.querySelector('meta[name="viewport"]');
-    if (viewId === 'network-view') {
-        viewportMeta.setAttribute('content', 'width=1200');
-    } else {
-        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-    }
+    // Removed viewport width manipulation for network-view as it is inaccessible from dashboard
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const viewElement = document.getElementById(viewId);
     if(viewElement) {
@@ -724,7 +657,7 @@ function attachRealtimeListeners(user) {
                 currentUserData = { uid: doc.id, ...doc.data() };
                 updateDashboardUI(currentUserData, user);
                 renderNotificationCenter();
-                
+                // Removed due notification popup handler
                 if (!initialPopupShown) {
                     handleDueNotificationPopup(currentUserData);
                     initialPopupShown = true;
@@ -735,22 +668,9 @@ function attachRealtimeListeners(user) {
             allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
             combineAndRenderHistory();
         }),
-        onSnapshot(query(collection(db, "cashback_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-            cashbackRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
-            combineAndRenderHistory();
-        }),
-        onSnapshot(query(collection(db, "credit_requests"), where("userId", "==", uid), orderBy("requestDate", "desc")), (snapshot) => {
-            creditRequests = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().requestDate?.toDate() }));
-            combineAndRenderHistory();
-        }),
-        onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(1)), (snapshot) => {
-             if (!snapshot.empty) {
-                const latestOffer = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-                updateOfferNotificationCard(latestOffer);
-             } else {
-                updateOfferNotificationCard(null);
-             }
-        })
+        // Removed cashback_requests listener
+        // Removed credit_requests listener
+        // Removed notifications listener
     ];
     activeListeners.push(...listeners);
 }
@@ -777,23 +697,10 @@ function updateDashboardUI(dbData, authUser) {
     const payDueBtn = document.getElementById('pay-due-amount-btn');
     payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
 
-    const dailyRewardBtn = document.getElementById('daily-reward-btn');
-    const lastCheckIn = dbData.lastCheckInDate?.toDate();
-    const today = new Date();
-    const totalDays = dbData.totalCheckInDays || 0;
-
-    if (totalDays >= 30) {
-        dailyRewardBtn.classList.add('disabled');
-        dailyRewardBtn.querySelector('.card-text').textContent = 'Reward Limit Reached';
-    } else if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
-        dailyRewardBtn.classList.add('disabled');
-        dailyRewardBtn.querySelector('.card-text').textContent = 'Claimed Today';
-    } else {
-        dailyRewardBtn.classList.remove('disabled');
-        dailyRewardBtn.querySelector('.card-text').textContent = 'Daily Reward';
-    }
+    // Removed Daily Reward button logic
 }
 
+// Due notification logic (Simplified/kept only for runtime check, original offer notification is gone)
 function getDueNotificationData(dbData) {
     if (!dbData) return null;
     const today = new Date();
@@ -823,34 +730,7 @@ function handleDueNotificationPopup(dbData) {
     }
 }
 
-function updateOfferNotificationCard(offerData) {
-    const banner = document.getElementById('cashback-banner');
-    if (!banner) return;
-    
-    const wrapper = banner.querySelector('.notification-content-wrapper');
-
-    if (!offerData) {
-        wrapper.style.opacity = 0;
-        wrapper.classList.remove('animate');
-        return;
-    }
-
-    banner.style.backgroundColor = offerData.thumbnailBgColor || '#ffc107';
-    banner.style.color = offerData.thumbnailTextColor || '#212529';
-    
-    const [text1, text2 = ''] = (offerData.thumbnailTitle || '').split('|').map(t => t.trim());
-    wrapper.querySelector('.notification-text-line1').textContent = text1;
-    wrapper.querySelector('.notification-text-line2').textContent = text2;
-    wrapper.querySelector('.notification-percentage').textContent = `${offerData.thumbnailPercentage}%`;
-    
-    wrapper.classList.remove('animate');
-    void wrapper.offsetWidth;
-    if (offerData.thumbnailAnimation !== false) {
-         wrapper.classList.add('animate');
-    } else {
-         wrapper.style.opacity = 1;
-    }
-}
+// Removed updateOfferNotificationCard function
 
 function showPopupNotification(notifData, duration = 4000) {
      if (popupTimeout) clearTimeout(popupTimeout);
@@ -877,69 +757,32 @@ async function renderNotificationCenter() {
         listEl.appendChild(item);
     }
     
-    try {
-        const snapshot = await getDocs(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10)));
-        if (snapshot.empty && !dueNotification) {
-            listEl.innerHTML = '<p class="empty-state">No new offers right now.</p>';
-            return;
-        }
-        snapshot.forEach(doc => {
-            const notif = doc.data();
-            const item = document.createElement('div');
-            item.className = 'notification-center-item';
-            item.style.backgroundColor = notif.mainBgColor;
-            item.style.color = notif.mainTextColor;
-            const linkify = (text) => {
-                if (!text) return '';
-                const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-                return text.replace(urlRegex, (url) => `<a href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${url}</a>`);
-            };
-            const paragraphHTML = notif.mainParagraph ? `<p class="paragraph">${linkify(notif.mainParagraph)}</p>` : '';
-            item.innerHTML = `<div class="title">${linkify((notif.mainTitle || '').replace('|', '<br>'))}</div><div class="percentage">${notif.mainPercentage}%</div>${paragraphHTML}`;
-            listEl.appendChild(item);
-        });
-    } catch (error) {
-        console.error("Error fetching notifications for center:", error);
-        if (!dueNotification) {
-            listEl.innerHTML = '<p class="empty-state">Could not load notifications.</p>';
-        }
+    // Notifications are effectively gone since the listener was removed, only show due notification
+    if (!dueNotification) {
+        listEl.innerHTML = '<p class="empty-state">No new notifications right now.</p>';
     }
 }
 function combineAndRenderHistory() {
-    const formattedTransactions = allTransactions.map(t => ({ ...t, isTransaction: true }));
-    const formattedCashbackRequests = cashbackRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Cashback: ${r.productName}`, type: 'cashback', isTransaction: false }));
-    const formattedCreditRequests = creditRequests.filter(r => r.status === 'pending' || r.status === 'rejected').map(r => ({ ...r, description: `Credit Request`, type: 'credit_request', isTransaction: false, amount: r.amount }));
-    combinedHistory = [...formattedTransactions, ...formattedCashbackRequests, ...formattedCreditRequests].sort((a, b) => (b.date || 0) - (a.date || 0));
+    // Simplified to only include transactions
+    combinedHistory = allTransactions.sort((a, b) => (b.date || 0) - (a.date || 0));
     renderUnifiedHistory();
 }
 
 function renderUnifiedHistory() {
     const listEl = document.getElementById('unified-history-list');
     const summaryEl = document.getElementById('transaction-summary');
-    const summaryAmountEl = summaryEl.querySelector('.summary-amount');
-    const summaryLabelEl = summaryEl.querySelector('.summary-label');
+    // Removed summary logic
+    summaryEl.style.display = 'none';
     listEl.innerHTML = '';
 
     const itemsToRender = combinedHistory.filter(item => {
         if (activeFilter === 'all') return true;
-        if (activeFilter === 'cashback') return item.type === 'cashback';
         if (activeFilter === 'commission') return item.type === 'commission';
         if (activeFilter === 'payment') return item.type === 'payment';
-        if (activeFilter === 'credit') return item.type === 'credit' || item.type === 'credit_request';
         if (activeFilter === 'due_payment') return item.type === 'due_payment';
-        if (activeFilter === 'bonus') return item.type === 'bonus' || item.type === 'referral_bonus';
+        // Removed other filters
         return false;
     });
-
-    if (itemsToRender.length > 0 && activeFilter !== 'all') {
-        const total = itemsToRender.reduce((sum, item) => sum + Math.abs(item.amount || item.cashbackAmount || 0), 0);
-        const filterText = document.querySelector(`.filter-btn[data-filter="${activeFilter}"]`).textContent;
-        summaryLabelEl.textContent = `Total ${filterText}`;
-        summaryAmountEl.textContent = `₹ ${total.toFixed(2)}`;
-        summaryEl.style.display = 'flex';
-    } else {
-        summaryEl.style.display = 'none';
-    }
 
     if (itemsToRender.length === 0) {
         listEl.innerHTML = `<div class="empty-state" style="padding: 20px 0; text-align:center; color: var(--text-secondary);">No Transactions Found for this filter.</div>`;
@@ -950,7 +793,7 @@ function renderUnifiedHistory() {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
         itemDiv.addEventListener('click', () => showTransactionDetails(item));
-        const amount = item.amount || item.cashbackAmount || 0;
+        const amount = item.amount || 0;
         let sign = '+';
         let typeClass = 'credit';
         if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { typeClass = 'debit'; sign = '-'; }
@@ -960,7 +803,7 @@ function renderUnifiedHistory() {
     });
 }
 function showTransactionDetails(item) {
-    const amount = item.amount || item.cashbackAmount || 0;
+    const amount = item.amount || 0;
     let sign = '+', typeClass = 'credit';
     if (item.type === 'payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
     if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
@@ -980,66 +823,8 @@ function showTransactionDetails(item) {
 }
 
 // --- Feature Logic (Payment, QR, etc.) ---
-async function handleDailyCheckIn() {
-    const btn = document.getElementById('daily-reward-btn');
-    if (btn.classList.contains('disabled')) {
-        showToast("Aap reward pehle hi claim kar chuke hain ya limit poori ho gayi hai.");
-        return;
-    }
 
-    const userRef = doc(db, 'users', currentUser.uid);
-    try {
-        const totalDays = currentUserData.totalCheckInDays || 0;
-        
-        if (totalDays >= 30) {
-            showToast("Aapne sabhi 30 din ke daily rewards claim kar liye hain.");
-            btn.classList.add('disabled');
-            return;
-        }
-
-        const rewardAmount = 0.05;
-
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) throw "User does not exist!";
-            
-            const data = userDoc.data();
-            const lastCheckIn = data.lastCheckInDate?.toDate();
-            const today = new Date();
-            
-            if (lastCheckIn && lastCheckIn.toDateString() === today.toDateString()) {
-                throw "Already claimed today!";
-            }
-
-            transaction.update(userRef, {
-                wallet: increment(rewardAmount),
-                lifetimeEarning: increment(rewardAmount),
-                lastCheckInDate: serverTimestamp(),
-                totalCheckInDays: increment(1)
-            });
-
-            const newTxnRef = doc(collection(db, "transactions"));
-            transaction.set(newTxnRef, {
-                type: 'bonus',
-                amount: rewardAmount,
-                description: `Daily Check-in Reward (Day ${totalDays + 1})`,
-                status: 'completed',
-                timestamp: serverTimestamp(),
-                involvedUsers: [currentUser.uid]
-            });
-        });
-        
-        showToast(`Badhai ho! Aapko ₹${rewardAmount.toFixed(2)} ka reward mila hai.`);
-
-    } catch (error) {
-        if (error === "Already claimed today!") {
-            showToast("Aap aaj ka reward pehle hi le chuke hain.");
-        } else {
-            console.error("Error claiming daily reward: ", error);
-            showToast("Reward claim karne mein error hua. Dobara try karein.");
-        }
-    }
-}
+// Removed handleDailyCheckIn function
 
 function generateDueQR() {
     if (!currentUserData || currentUserData.dueAmount <= 0) {
@@ -1159,66 +944,8 @@ function handlePayment() {
         }
     }, 'scan-pay-modal');
 }
-async function handleCashbackRequest(e) {
-    e.preventDefault();
-    const btn = document.getElementById('cashback-submit-btn');
-    const errorMsg = document.getElementById('cashback-error-msg');
-    hideErrorMessage(errorMsg);
-    btn.disabled = true; btn.textContent = "Submitting...";
-    const productName = document.getElementById("product-name").value.trim();
-    const productPrice = parseFloat(document.getElementById("product-price").value);
-    if (!productName || isNaN(productPrice) || productPrice < 10) {
-        showErrorMessage(errorMsg, "Sahi details daalein.");
-        btn.disabled = false; btn.textContent = "Request"; return;
-    }
-    try {
-        const configDoc = await getDoc(doc(db, "app_settings", "config"));
-        const cashbackPercentage = configDoc.exists() && configDoc.data().cashback_percentage ? configDoc.data().cashback_percentage : 2;
-        const cashbackAmount = productPrice * (cashbackPercentage / 100);
-        await addDoc(collection(db, "cashback_requests"), {
-            userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
-            productName, productPrice, cashbackAmount, status: "pending", requestDate: serverTimestamp(), claimed: false
-        });
-        showToast(`Your cashback request for ₹${cashbackAmount.toFixed(2)} has been submitted.`);
-        document.getElementById('cashback-request-form').reset();
-        closeModal('cashback-modal');
-    } catch (error) { 
-        showErrorMessage(errorMsg, `Error: ${error.message}`);
-    } finally {
-        btn.disabled = false; btn.textContent = "Request";
-    }
-}
-async function handleCreditRequest(e) {
-    e.preventDefault();
-    const btn = document.getElementById('credit-submit-btn');
-    const errorMsg = document.getElementById('credit-error-msg');
-    const amountInput = document.getElementById('credit-amount');
-    hideErrorMessage(errorMsg);
-    const amount = parseFloat(amountInput.value);
-    const maxAmount = parseFloat(amountInput.max);
-    if (isNaN(amount) || amount <= 0 || amount > maxAmount) {
-        showErrorMessage(errorMsg, `Amount 1 se ${maxAmount} ke beech hona chahiye.`);
-        return;
-    }
-    btn.disabled = true; btn.textContent = "Submitting...";
-    verifyPasswordAndExecute(async () => {
-        try {
-            await addDoc(collection(db, "credit_requests"), {
-                userId: currentUserData.uid, userName: currentUserData.name, userMobile: currentUserData.mobile,
-                amount: amount, status: "pending", requestDate: serverTimestamp()
-            });
-            showToast(`₹${amount.toFixed(2)} ka credit request bhej diya gaya hai.`);
-            document.getElementById('credit-request-form').reset();
-            document.getElementById('credit-tnc-checkbox').checked = false;
-            btn.disabled = true;
-        } catch (error) {
-            showToast("Request fail ho gaya. Dobara try karein.");
-        } finally {
-            closeModal('credit-request-modal');
-        }
-    }, 'credit-request-modal');
-    setTimeout(() => { btn.disabled = false; btn.textContent = "Request Credit"; }, 500);
-}
+// Removed handleCashbackRequest function
+// Removed handleCreditRequest function
 async function handlePasswordChange(e) {
     e.preventDefault();
     const form = document.getElementById('password-change-form');
@@ -1320,10 +1047,8 @@ function handleShare() {
     else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
 }
 function handleWhatsAppSupport() {
-    if (!currentUserData) return showToast("Please wait for your data to load.");
-    const { name, referralId, lifetimeEarning, mobile } = currentUserData;
-    const message = `Name: ${name}\nMobile: ${mobile}\nReferral ID: ${referralId}\nLifetime Earning: ₹${(lifetimeEarning || 0).toFixed(2)}\n\nHelp Me`;
-    const whatsappUrl = `https://wa.me/message/RUJS4JVH3AUAD1?text=${encodeURIComponent(message)}`;
+    // UPDATED WhatsApp link
+    const whatsappUrl = `https://chat.whatsapp.com/E2HaPJMGCDm7ALrZ8FM1s5?mode=wwt`;
     window.open(whatsappUrl, '_blank');
 }
 function handleReferralLink() {
@@ -1336,163 +1061,8 @@ function handleReferralLink() {
         toggleView('login-view');
     }
 }
-async function updateNetworkTreeView(userId, level = 0) {
-    networkLoader.style.display = 'block';
-    const treeRoot = document.getElementById('tree-root');
-    treeRoot.innerHTML = '';
-    try {
-        const rootUserDoc = await getDoc(doc(db, 'users', userId));
-        if (!rootUserDoc.exists()) throw new Error("User not found");
-        const rootUserData = { uid: rootUserDoc.id, ...rootUserDoc.data() };
-        networkTitleEl.textContent = `${rootUserData.name}'s Network`;
-        const treeData = await buildTreeData(rootUserData, level, 4);
-        treeRoot.innerHTML = createTreeHTML(treeData);
-        attachNodeClickListeners();
-        setTimeout(() => {
-            drawConnectors();
-            if (!treeData.children || treeData.children.length === 0) {
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'empty-state';
-                emptyMessage.style.paddingTop = '20px';
-                emptyMessage.textContent = `${rootUserData.name} ke network mein koi member nahi hai.`;
-                treeRoot.querySelector('.tree').appendChild(emptyMessage);
-            }
-        }, 100);
-        updateNetworkNavButton();
-    } catch (error) {
-        console.error(error);
-        treeRoot.innerHTML = '<div class="empty-state">Network load karne mein error hua.</div>';
-    } finally {
-        networkLoader.style.display = 'none';
-    }
-}
-async function buildTreeData(userData, currentLevel, maxLevel) {
-    if (currentLevel >= maxLevel) {
-        return { ...userData, children: [], level: currentLevel };
-    }
-    const referrals = await getDirectReferrals(userData.uid);
-    const children = await Promise.all(referrals.map(ref => buildTreeData(ref, currentLevel + 1, maxLevel)));
-    return { ...userData, children, level: currentLevel };
-}
-function createTreeHTML(nodeData) {
-    let html = `<div class="tree">`;
-    const avatarHTML = nodeData.profilePictureUrl ? `<img src="${nodeData.profilePictureUrl}" alt="${nodeData.name}">` : nodeData.name.charAt(0).toUpperCase();
-    html += `<div class="node-wrapper"><div class="node" data-uid="${nodeData.uid}"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${nodeData.name}</div><div class="node-earning">₹${(nodeData.lifetimeEarning || 0).toLocaleString()}</div></div></div>`;
-    if (nodeData.children && nodeData.children.length > 0) {
-        html += '<div class="node-children">';
-        nodeData.children.forEach(child => {
-            html += `<div class="node-wrapper" data-level="${child.level}">${createTreeHTML(child)}</div>`;
-        });
-        html += '</div>';
-    }
-    html += `</div>`;
-    return html;
-}
-function attachNodeClickListeners() {
-    document.querySelectorAll('.node').forEach(nodeEl => {
-        nodeEl.addEventListener('click', () => {
-            const clickedUid = nodeEl.dataset.uid;
-            const currentRootUid = historyStack[historyStack.length - 1].uid;
-            if (clickedUid !== currentRootUid) {
-                networkLoader.style.display = 'block';
-                getDoc(doc(db, 'users', clickedUid)).then(userDoc => {
-                    if (userDoc.exists()) {
-                        const userData = { uid: userDoc.id, ...userDoc.data() };
-                        historyStack.push(userData);
-                        updateNetworkTreeView(userData.uid, 0);
-                    }
-                });
-            }
-        });
-    });
-}
-function drawConnectors() {
-    const svg = document.getElementById('connector-svg');
-    const treeContainer = document.querySelector('.tree-container');
-    const tagsContainer = document.getElementById('commission-tags-container');
-    svg.innerHTML = '';
-    tagsContainer.innerHTML = '';
-    const allParentWrappers = document.querySelectorAll('.tree');
-    allParentWrappers.forEach(parentTree => {
-        const parentNode = parentTree.querySelector(':scope > .node-wrapper > .node');
-        const childrenContainer = parentTree.querySelector(':scope > .node-children');
-        if (!childrenContainer) return;
-        const parentRect = parentNode.getBoundingClientRect();
-        const containerRect = treeContainer.getBoundingClientRect();
-        const startX = parentRect.left + parentRect.width / 2 - containerRect.left;
-        const startY = parentRect.top + parentRect.height - containerRect.top;
-        const horizontalLineY = startY + 40;
-        svg.appendChild(createPath(`M ${startX} ${startY} V ${horizontalLineY}`));
-        const childrenWrappers = Array.from(childrenContainer.children);
-        if (childrenWrappers.length === 0) return;
-        const firstChildNode = childrenWrappers[0].querySelector('.node');
-        const lastChildNode = childrenWrappers[childrenWrappers.length - 1].querySelector('.node');
-        const hLineStartX = firstChildNode.getBoundingClientRect().left + firstChildNode.offsetWidth / 2 - containerRect.left;
-        const hLineEndX = lastChildNode.getBoundingClientRect().left + lastChildNode.offsetWidth / 2 - containerRect.left;
-        if (childrenWrappers.length > 1) {
-            svg.appendChild(createPath(`M ${hLineStartX} ${horizontalLineY} H ${hLineEndX}`));
-        }
-        childrenWrappers.forEach(childWrapper => {
-            const childNode = childWrapper.querySelector('.node');
-            const childRect = childNode.getBoundingClientRect();
-            const childX = childRect.left + childRect.width / 2 - containerRect.left;
-            const childY = childRect.top - containerRect.top;
-            svg.appendChild(createPath(`M ${childX} ${horizontalLineY} V ${childY}`));
-            const level = parseInt(childWrapper.dataset.level);
-            if (!isNaN(level) && level > 0 && level <= commissionRates.length) {
-                const tag = document.createElement('div');
-                tag.className = 'commission-tag';
-                tag.textContent = `${commissionRates[level - 1]}%`;
-                tag.style.left = `${childX}px`;
-                tag.style.top = `${horizontalLineY + (childY - horizontalLineY) / 2}px`;
-                tagsContainer.appendChild(tag);
-            }
-        });
-    });
-}
-function createPath(d) {
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', d); path.setAttribute('stroke', 'var(--line-color)');
-    path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
-    return path;
-}
-function updateNetworkNavButton() {
-    const navBtn = document.getElementById('network-nav-btn');
-    navBtn.title = historyStack.length > 1 ? "Go Back" : "Back to Dashboard";
-}
-async function getDirectReferrals(userId) {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (!userDoc.exists()) return [];
-    const referralId = userDoc.data().referralId;
-    if (!referralId) return [];
-    const q = query(collection(db, 'users'), where('referredBy', '==', referralId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-}
-async function loadUpline() {
-    const uplineContainer = document.getElementById('upline-list');
-    uplineContainer.innerHTML = '';
-    networkLoader.style.display = 'block';
-    try {
-        const uplineUIDs = currentUserData.upline || [];
-        const uplineDocs = await Promise.all(uplineUIDs.map(uid => getDoc(doc(db, 'users', uid))));
-        const uplineData = uplineDocs.map(doc => doc.exists() ? {uid: doc.id, ...doc.data()} : null).filter(Boolean);
-        uplineData.push(currentUserData);
-        uplineContainer.innerHTML = uplineData.reverse().map((member, index, arr) => {
-            const isCurrentUser = member.uid === currentUserData.uid;
-            const level = arr.length - 1 - index;
-            const avatarHTML = member.profilePictureUrl ? `<img src="${member.profilePictureUrl}" alt="${member.name}">` : member.name.charAt(0).toUpperCase();
-            return `<div class="upline-member ${isCurrentUser ? 'current-user' : ''}">${!isCurrentUser && level < commissionRates.length ? `<div class="upline-commission">${commissionRates[level]}%</div>` : ''}<div class="node"><div class="node-avatar">${avatarHTML}</div><div class="node-name">${member.name} ${isCurrentUser ? '(Aap)' : ''}</div>${!isCurrentUser ? `<div class="node-earning">Sponsor</div>` : ''}</div></div>`;
-        }).join('');
-        if (uplineData.length <= 1) { uplineContainer.innerHTML += '<div class="empty-state">Aapke paas koi sponsor nahi hai.</div>'; }
-        isUplineLoaded = true;
-    } catch (error) {
-        console.error("Error loading upline:", error);
-        uplineContainer.innerHTML = '<div class="empty-state">Sponsor load karne mein error hua.</div>';
-    } finally {
-        networkLoader.style.display = 'none';
-    }
-}
+
+// Removed Network View functions (updateNetworkTreeView, buildTreeData, createTreeHTML, attachNodeClickListeners, drawConnectors, createPath, updateNetworkNavButton, getDirectReferrals, loadUpline)
 
 // --- Initialization and Event Listeners ---
 function initializeAppLogic() {
@@ -1586,19 +1156,14 @@ function initializeAppLogic() {
     document.getElementById('modal-profile-img').addEventListener('click', () => { document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src; openModal('profile-picture-modal'); });
     document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
     document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
-    document.getElementById('open-cashback-modal').addEventListener('click', () => openModal('cashback-modal'));
-    document.getElementById('open-credit-request-modal').addEventListener('click', () => {
-        if (!currentUserData) return showToast("Please wait for data to load.");
-        if (currentUserData.dueAmount > 0) return showToast(`Please clear your due amount of ₹${currentUserData.dueAmount.toFixed(2)} first.`);
-        const level = currentUserData.creditLevel || 0;
-        const maxAmount = creditLevels[level] || creditLevels[creditLevels.length - 1];
-        const amountInput = document.getElementById('credit-amount');
-        amountInput.max = maxAmount;
-        amountInput.placeholder = `Max ₹${maxAmount}`;
-        openModal('credit-request-modal');
+    
+    // Shop Now (replaces Credit Request) logic
+    document.getElementById('shop-now-btn').addEventListener('click', () => {
+        window.open('https://www.ramazone.in', '_blank');
     });
-    document.getElementById('credit-request-form').addEventListener('submit', handleCreditRequest);
-    document.getElementById('credit-tnc-checkbox').addEventListener('change', (e) => { document.getElementById('credit-submit-btn').disabled = !e.target.checked; });
+
+    // Removed Cashback modal and Credit Request modal listeners
+
     document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
     document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
     document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
@@ -1607,7 +1172,7 @@ function initializeAppLogic() {
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
     document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
     document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
-    document.getElementById('cashback-request-form').addEventListener('submit', handleCashbackRequest);
+    // Removed Cashback request form submit listener
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
     document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
@@ -1621,42 +1186,13 @@ function initializeAppLogic() {
         renderUnifiedHistory();
     });
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
-    document.getElementById('open-network-view').addEventListener('click', () => {
-        if (!currentUserData) return;
-        toggleView('network-view');
-        historyStack = [currentUserData];
-        updateNetworkTreeView(currentUserData.uid, 0);
-    });
-    document.getElementById('network-nav-btn').addEventListener('click', () => {
-        if (historyStack.length > 1) {
-            historyStack.pop();
-            const prevUserData = historyStack[historyStack.length - 1];
-            updateNetworkTreeView(prevUserData.uid, 0);
-        } else {
-            toggleView('dashboard-view');
-        }
-    });
-    document.getElementById('network-refresh-btn').addEventListener('click', () => {
-        const currentRoot = historyStack[historyStack.length - 1];
-        if (currentRoot) updateNetworkTreeView(currentRoot.uid, 0);
-    });
-    document.querySelector('#network-view .network-tabs').addEventListener('click', e => {
-        const target = e.target.closest('.network-tab-btn');
-        if (!target || target.classList.contains('active')) return;
-        document.querySelector('#network-view .network-tab-btn.active').classList.remove('active');
-        target.classList.add('active');
-        document.querySelectorAll('#network-view .network-tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(`${target.dataset.tab}-content`).classList.add('active');
-        if (target.dataset.tab === 'upline' && !isUplineLoaded) { loadUpline(); }
-        if (target.dataset.tab === 'downline') { 
-            historyStack = [currentUserData];
-            updateNetworkTreeView(currentUserData.uid, 0);
-        }
-    });
+    
+    // Removed Network View event listeners as card is removed
+    
     document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
     document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
     
-    document.getElementById('daily-reward-btn').addEventListener('click', handleDailyCheckIn);
+    // Removed daily-reward-btn listener
 }
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
@@ -1682,3 +1218,4 @@ document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
 </body>
 </html>
+
