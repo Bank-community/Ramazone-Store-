@@ -37,7 +37,6 @@
         body {
             font-family: 'Poppins', sans-serif; 
             background-color: var(--bg-page);
-            color: var(--text-primary);
             min-height: 100%;
         }
         .container { 
@@ -155,7 +154,8 @@
             padding: 0 16px;
         }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-        .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        /* Only 3 columns are needed now */
+        .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; } 
         .action-card { 
             background-color: var(--bg-card); padding: 15px 10px; text-align: center; cursor: pointer; 
             transition: transform 0.2s, box-shadow 0.2s;
@@ -170,8 +170,6 @@
         .action-card .icon { margin-bottom: 12px; width: 32px; height: 32px; }
         .action-card .card-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
         .action-card.disabled .card-text { color: #adb5bd; }
-
-        /* --- NEW: Cashback Card Banner Styles (REMOVED) --- */
         
         .section { 
             background: var(--bg-card); 
@@ -331,6 +329,7 @@
     <div class="container">
         <div id="login-view" class="view">
             <div class="auth-container">
+                <!-- Changed image placeholder to the actual Ramazone logo path -->
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" class="main-logo">
                 <h1>Customer Login</h1>
                 <form id="login-form">
@@ -411,28 +410,28 @@
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="dashboard-actions">
                         
-                        <!-- RMZ Pay (Remains) -->
-                        <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                        
-                        <!-- Support (Remains) -->
-                        <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
-                        
-                        <!-- Credit Request changed to Shop Now and opens a link -->
+                        <!-- 1st: Shop Now (Updated icon and text) -->
                         <div id="shop-now-btn" class="action-card">
-                            <!-- New Shopping Cart Icon -->
-                            <img class="icon" src="https://www.svgrepo.com/show/513364/shopping-cart.svg">
+                            <img class="icon" src="https://www.svgrepo.com/show/533042/cart-plus.svg" onerror="this.src='https://placehold.co/32x32/ff6b6b/FFFFFF?text=🛒'">
                             <span class="card-text">Shop Now</span>
                         </div>
+                        
+                        <!-- 2nd: RMZ Pay (Remains) -->
+                        <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
+                        
+                        <!-- 3rd: Support (Remains) -->
+                        <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
+                        
                         
                     </div>
                 </section>
 
                 <div class="section">
                     <h2 class="section-title">All Transactions</h2>
-                    <!-- Removed transaction-summary display as it's not needed with limited filters -->
+                    <!-- Summary element kept but hidden by default -->
+                    <div id="transaction-summary"><span class="summary-label">Total Amount</span><span class="summary-amount">₹0.00</span></div>
                     <div class="filter-bar" id="filter-bar">
                         <button class="filter-btn active" data-filter="all">All</button>
-                        <!-- Removed Cashback, Credit, Bonus filters as their features are removed -->
                         <button class="filter-btn" data-filter="commission">Commission</button>
                         <button class="filter-btn" data-filter="payment">Payments</button>
                         <button class="filter-btn" data-filter="due_payment">Due Paid</button>
@@ -444,13 +443,14 @@
         
     </div>
     
-    <!-- Network View (Not removed, but not accessible from dashboard anymore) -->
+    <!-- Network View (Kept for completeness, though inaccessible from dashboard) -->
     <div id="network-view" class="view fullscreen-view">
         <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
         <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
         <div class="network-content-container"><div id="downline-content" class="network-tab-content active"><div class="tree-container"><svg id="connector-svg"></svg><div id="tree-root"></div><div id="commission-tags-container"></div></div></div><div id="upline-content" class="network-tab-content"><div id="upline-list"></div></div></div>
         <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
     </div>
+
     <!-- Notification View (Remains) -->
     <div id="notification-view" class="view fullscreen-view">
        <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
@@ -459,10 +459,6 @@
 
     <!-- Password Verification Modal (Remains) -->
     <div id="password-verification-modal" class="modal-overlay"><div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div></div>
-    
-    <!-- Cashback Modal (REMOVED) -->
-    
-    <!-- Credit Request Modal (REMOVED) -->
     
     <!-- Scan and Pay Modal (Remains) -->
     <div id="scan-pay-modal" class="modal-overlay"><div class="modal-content"> <h3>Scan QR and Pay</h3> <div id="scanner-container"><video id="scanner-video" playsinline></video></div><input type="file" id="qr-file-input" accept="image/*" style="display: none;"><button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button><p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> <div id="payment-form" style="display: none;"> <p style="text-align:center;">Paying to: <span id="receiver-id-display"></span></p> <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> <p id="payment-error-msg" class="error-message"></p> <div class="modal-actions"><button type="button" id="rescan-btn" class="btn-secondary">Scan Again</button><button id="pay-submit-btn" class="btn-primary">Pay Now</button></div> </div> <div id="scan-pay-initial-actions" class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> </div></div>
@@ -500,7 +496,6 @@
     </div>
 
     <div id="toast-notification" class="toast-notification"></div>
-    <!-- Popup Notification (Remains, though without the offer listener it will be less used) -->
     <div id="popup-notification"><div class="popup-notification-content"><div class="popup-notification-icon">🔥</div><div class="popup-notification-text"><div class="title" id="popup-notification-title"></div><div class="percentage" id="popup-notification-percentage"></div></div></div><button id="popup-notification-close">&times;</button></div>
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
     
@@ -589,14 +584,12 @@ let combinedHistory = []; // Global store for all history items
 let activeListeners = [];
 let scannerAnimation = null;
 let allTransactions = [];
-// Removed cashbackRequests, creditRequests variables
 let activeFilter = 'all';
 let pendingAction = null;
 let isUplineLoaded = false;
 let popupTimeout = null;
 let initialPopupShown = false;
 const commissionRates = [30, 25, 20, 15, 10];
-// Removed creditLevels variable
 let historyStack = [];
 const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
@@ -604,7 +597,6 @@ const UPI_ID = "princekumar954684-1@okicici";
 
 // --- Core Functions (Config, UI Toggles) ---
 async function fetchConfigsAndInit() {
-    // Removed config fetch for credit levels
     try {
         const [firebaseConfigRes, imageConfigRes] = await Promise.all([
             fetch('/api/cashback-config'),
@@ -631,7 +623,6 @@ const showToast = (message) => {
 };
 const toggleView = (viewId) => {
     const viewportMeta = document.querySelector('meta[name="viewport"]');
-    // Removed viewport width manipulation for network-view as it is inaccessible from dashboard
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const viewElement = document.getElementById(viewId);
     if(viewElement) {
@@ -657,20 +648,22 @@ function attachRealtimeListeners(user) {
                 currentUserData = { uid: doc.id, ...doc.data() };
                 updateDashboardUI(currentUserData, user);
                 renderNotificationCenter();
-                // Removed due notification popup handler
                 if (!initialPopupShown) {
                     handleDueNotificationPopup(currentUserData);
                     initialPopupShown = true;
                 }
             }
         }),
+        // Only listening to transactions, as per the new simplified structure
         onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
-            allTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
+            // Filter out transactions related to removed features if they somehow persist in database,
+            // though they shouldn't exist in a clean setup.
+            const validTypes = ['payment', 'commission', 'due_payment'];
+            allTransactions = snapshot.docs
+                .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }))
+                .filter(t => validTypes.includes(t.type));
             combineAndRenderHistory();
         }),
-        // Removed cashback_requests listener
-        // Removed credit_requests listener
-        // Removed notifications listener
     ];
     activeListeners.push(...listeners);
 }
@@ -696,15 +689,13 @@ function updateDashboardUI(dbData, authUser) {
     
     const payDueBtn = document.getElementById('pay-due-amount-btn');
     payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
-
-    // Removed Daily Reward button logic
 }
 
-// Due notification logic (Simplified/kept only for runtime check, original offer notification is gone)
 function getDueNotificationData(dbData) {
     if (!dbData) return null;
     const today = new Date();
     const dayOfMonth = today.getDate();
+    // Due period check (1st to 7th)
     if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
         return {
             id: 'due_notification_priority',
@@ -729,8 +720,6 @@ function handleDueNotificationPopup(dbData) {
         }, 4000);
     }
 }
-
-// Removed updateOfferNotificationCard function
 
 function showPopupNotification(notifData, duration = 4000) {
      if (popupTimeout) clearTimeout(popupTimeout);
@@ -757,13 +746,14 @@ async function renderNotificationCenter() {
         listEl.appendChild(item);
     }
     
-    // Notifications are effectively gone since the listener was removed, only show due notification
+    // Since all other notification fetching logic was removed, only show due or empty state
     if (!dueNotification) {
         listEl.innerHTML = '<p class="empty-state">No new notifications right now.</p>';
     }
 }
+
 function combineAndRenderHistory() {
-    // Simplified to only include transactions
+    // Only transactions (payment, commission, due_payment) are in combinedHistory now
     combinedHistory = allTransactions.sort((a, b) => (b.date || 0) - (a.date || 0));
     renderUnifiedHistory();
 }
@@ -771,7 +761,6 @@ function combineAndRenderHistory() {
 function renderUnifiedHistory() {
     const listEl = document.getElementById('unified-history-list');
     const summaryEl = document.getElementById('transaction-summary');
-    // Removed summary logic
     summaryEl.style.display = 'none';
     listEl.innerHTML = '';
 
@@ -780,7 +769,6 @@ function renderUnifiedHistory() {
         if (activeFilter === 'commission') return item.type === 'commission';
         if (activeFilter === 'payment') return item.type === 'payment';
         if (activeFilter === 'due_payment') return item.type === 'due_payment';
-        // Removed other filters
         return false;
     });
 
@@ -796,16 +784,20 @@ function renderUnifiedHistory() {
         const amount = item.amount || 0;
         let sign = '+';
         let typeClass = 'credit';
+        // Check transaction type and amount sign
         if(item.type === 'due_payment' || item.type === 'payment' || amount < 0) { typeClass = 'debit'; sign = '-'; }
+        if (item.type === 'commission') { typeClass = 'credit'; sign = '+'; }
         if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
-        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || ''}</span></div>`;
+        
+        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${item.description}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div><span class="status">${item.status || 'Completed'}</span></div>`;
         listEl.appendChild(itemDiv);
     });
 }
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
     let sign = '+', typeClass = 'credit';
-    if (item.type === 'payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
+    if (item.type === 'payment' || item.type === 'due_payment' || amount < 0) { sign = '-'; typeClass = 'debit'; }
+    if (item.type === 'commission') { sign = '+'; typeClass = 'credit'; }
     if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
     
     document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
@@ -823,8 +815,6 @@ function showTransactionDetails(item) {
 }
 
 // --- Feature Logic (Payment, QR, etc.) ---
-
-// Removed handleDailyCheckIn function
 
 function generateDueQR() {
     if (!currentUserData || currentUserData.dueAmount <= 0) {
@@ -944,8 +934,6 @@ function handlePayment() {
         }
     }, 'scan-pay-modal');
 }
-// Removed handleCashbackRequest function
-// Removed handleCreditRequest function
 async function handlePasswordChange(e) {
     e.preventDefault();
     const form = document.getElementById('password-change-form');
@@ -1047,7 +1035,7 @@ function handleShare() {
     else navigator.clipboard.writeText(shareText).then(() => showToast("Referral ID Copied!"));
 }
 function handleWhatsAppSupport() {
-    // UPDATED WhatsApp link
+    // UPDATED WhatsApp link to the group link
     const whatsappUrl = `https://chat.whatsapp.com/E2HaPJMGCDm7ALrZ8FM1s5?mode=wwt`;
     window.open(whatsappUrl, '_blank');
 }
@@ -1061,8 +1049,7 @@ function handleReferralLink() {
         toggleView('login-view');
     }
 }
-
-// Removed Network View functions (updateNetworkTreeView, buildTreeData, createTreeHTML, attachNodeClickListeners, drawConnectors, createPath, updateNetworkNavButton, getDirectReferrals, loadUpline)
+// Removed Network View functions (as the feature is removed from dashboard)
 
 // --- Initialization and Event Listeners ---
 function initializeAppLogic() {
@@ -1077,9 +1064,11 @@ function initializeAppLogic() {
         }
     });
 
-    // PWA Install button logic ko setup karein
+    // PWA Install button click listener
     setupPwaInstallButton();
+    document.getElementById('install-pwa-btn').addEventListener('click', handleInstallClick);
     
+    // Auth listeners
     document.getElementById('login-form').addEventListener('submit', e => {
         e.preventDefault();
         const mobile = document.getElementById('login-mobile').value;
@@ -1145,9 +1134,7 @@ function initializeAppLogic() {
         }
     });
 
-    // PWA Install button click listener
-    document.getElementById('install-pwa-btn').addEventListener('click', handleInstallClick);
-
+    // Navigation and Profile Listeners
     document.getElementById('show-register-link').addEventListener('click', e => { e.preventDefault(); toggleView('registration-view'); });
     document.getElementById('show-login-link').addEventListener('click', e => { e.preventDefault(); toggleView('login-view'); });
     document.getElementById('logout-btn').addEventListener('click', () => { closeModal('profile-modal'); signOut(auth); });
@@ -1156,27 +1143,33 @@ function initializeAppLogic() {
     document.getElementById('modal-profile-img').addEventListener('click', () => { document.getElementById('full-profile-img').src = document.getElementById('modal-profile-img').src; openModal('profile-picture-modal'); });
     document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
     document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
+    document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
     
-    // Shop Now (replaces Credit Request) logic
+    // Quick Actions Listeners
     document.getElementById('shop-now-btn').addEventListener('click', () => {
         window.open('https://www.ramazone.in', '_blank');
     });
-
-    // Removed Cashback modal and Credit Request modal listeners
-
-    document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
-    document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
     document.getElementById('scan-and-pay-btn').addEventListener('click', () => { openModal('scan-pay-modal'); startScanner(); });
-    document.getElementById('rescan-btn').addEventListener('click', startScanner);
-    document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
+    document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
+
+    // Wallet & Utility Listeners
+    document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
+    document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
     document.getElementById('copy-referral-btn').addEventListener('click', () => { navigator.clipboard.writeText(currentUserData.referralId).then(() => showToast("Referral ID Copied!")); });
-    document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
-    // Removed Cashback request form submit listener
+    
+    // Payment/QR Listeners
+    document.getElementById('rescan-btn').addEventListener('click', startScanner);
+    document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
+    
+    // Verification Listener
     document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
-    document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
+
+    // Notification and History Listeners
+    document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
+    document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
     document.getElementById('filter-bar').addEventListener('click', e => {
         const target = e.target.closest('.filter-btn');
         if (!target) return;
@@ -1186,13 +1179,6 @@ function initializeAppLogic() {
         renderUnifiedHistory();
     });
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
-    
-    // Removed Network View event listeners as card is removed
-    
-    document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
-    document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
-    
-    // Removed daily-reward-btn listener
 }
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
