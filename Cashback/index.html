@@ -357,7 +357,6 @@
     <div class="container">
         <div id="login-view" class="view">
             <div class="auth-container">
-                <!-- Changed image placeholder to the actual Ramazone logo path -->
                 <img src="https://i.ibb.co/YF5pGz7j/20251104-162301.png" alt="Ramazone Logo" class="main-logo">
                 <h1>Customer Login</h1>
                 <form id="login-form">
@@ -377,7 +376,6 @@
                     <div class="form-group"><label for="reg-name">Poora Naam</label><input type="text" id="reg-name" required></div>
                     <div class="form-group"><label for="reg-mobile">Mobile Number</label><input type="tel" id="reg-mobile" required></div>
                     <div class="form-group"><label for="reg-password">Password</label><input type="password" id="reg-password" required></div>
-                    <!-- REFERRAL FIELD REMOVED -->
                     <button type="submit">Register Karein</button><p id="register-error-msg" class="error-message"></p>
                 </form>
                 <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
@@ -419,13 +417,7 @@
                                 <button id="pay-due-amount-btn">Pay Now</button>
                             </div>
                         </div>
-                        <!-- REMOVED REFERRAL CONTAINER:
-                        <div id="wallet-referral-container">
-                            <span id="wallet-referral-id">REF-CODE</span>
-                            <button id="copy-referral-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
                         </div>
-                        -->
-                    </div>
                 </section>
                 
 
@@ -440,16 +432,13 @@
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="dashboard-actions">
                         
-                        <!-- 1st: Shop Now (Updated icon and text) -->
                         <div id="shop-now-btn" class="action-card">
                             <img class="icon" src="https://www.svgrepo.com/show/533042/cart-plus.svg" onerror="this.src='https://placehold.co/32x32/ff6b6b/FFFFFF?text=🛒'">
                             <span class="card-text">Shop Now</span>
                         </div>
                         
-                        <!-- 2nd: RMZ Pay (Remains) -->
                         <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
                         
-                        <!-- 3rd: Support (Remains) -->
                         <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
                         
                         
@@ -458,17 +447,14 @@
 
                 <div class="section">
                     <h2 class="section-title">All Transactions</h2>
-                    <!-- Summary element: Visible and will be populated by JS -->
                     <div id="transaction-summary" style="display: flex;">
                         <span class="summary-label" id="summary-filter-label">Total Amount (All)</span>
                         <span class="summary-amount" id="summary-total-amount">₹0.00</span>
                     </div>
                     <div class="filter-bar" id="filter-bar">
                         <button class="filter-btn active" data-filter="all">All</button>
-                        <!-- Commission Filter Removed -->
                         <button class="filter-btn" data-filter="payment">Payments</button>
                         <button class="filter-btn" data-filter="due_payment">Due Paid</button>
-                        <!-- NEW FILTER: Credit Given -->
                         <button class="filter-btn" data-filter="credit_given">Credit</button>
                     </div>
                     <div id="unified-history-list" class="history-list"></div>
@@ -478,7 +464,6 @@
         
     </div>
     
-    <!-- Network View (Kept for completeness, though inaccessible from dashboard) -->
     <div id="network-view" class="view fullscreen-view">
         <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
         <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
@@ -486,27 +471,22 @@
         <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
     </div>
 
-    <!-- Notification View (Remains) -->
     <div id="notification-view" class="view fullscreen-view">
        <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
        <div id="notification-center-list"></div>
     </div>
 
-    <!-- Password Verification Modal (Remains) -->
     <div id="password-verification-modal" class="modal-overlay"><div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div></div>
     
-    <!-- Scan and Pay Modal (UPDATED) -->
     <div id="scan-pay-modal" class="modal-overlay">
         <div class="modal-content"> 
             <h3>RMZ Pay Options</h3> 
             
-            <!-- NEW: Option Buttons -->
             <div id="rmz-pay-options">
                 <button id="select-scan-btn" class="rmz-pay-option-btn active">Scan QR</button>
                 <button id="select-direct-pay-btn" class="rmz-pay-option-btn">RMZ Payment</button>
             </div>
 
-            <!-- QR Scanner Section -->
             <div id="qr-scanner-section" style="display: block;">
                 <div id="scanner-container"><video id="scanner-video" playsinline></video></div>
                 <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
@@ -514,7 +494,6 @@
                 <p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> 
             </div>
 
-            <!-- Payment Form (Direct Pay / Post-Scan) -->
             <div id="payment-form" style="display: none;"> 
                 <p style="text-align:center;">Paying to: <span id="receiver-id-display">Ramazone Store</span></p> 
                 <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> 
@@ -529,20 +508,13 @@
         </div>
     </div>
     
-    <!-- Profile Modal (REMOVED REFERRAL ELEMENTS) -->
     <div id="profile-modal" class="modal-overlay"><div class="modal-content"><div id="modal-profile-img-container"><img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture"><div id="edit-profile-pic-icon" title="Change Profile Picture"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div></div><h3>My Profile</h3><div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div>
-        <!-- REMOVED REFERRAL CONTAINER:
-        <div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div>
-        -->
         <form id="password-change-form" style="margin-top: 20px;"><div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div><div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div><button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p></form><button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button><div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div></div></div>
     
-    <!-- Other Modals (Remains) -->
     <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
     
-    <!-- Payment Success Modal (Remains the same structure) -->
     <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span class="value" id="success-modal-datetime"></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
     
-    <!-- NEW: Payment Failure Modal (Replaces the toast) -->
     <div id="payment-failure-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
             <div class="success-icon" style="background-color: var(--due-red);">
@@ -1104,20 +1076,19 @@ async function handleVerificationConfirm() {
     }
 }
 
-// *** UPDATED handlePayment function to use Failure Modal instead of Toast ***
-function handlePayment() {
+// *** UPDATED handlePayment function with defensive checks ***
+async function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
     hideErrorMessage(errorMsg);
     if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
     
-    // NOTE: newTxnRef is declared here to ensure it's accessible everywhere.
     let newTxnRef = doc(collection(db, "transactions")); 
 
     verifyPasswordAndExecute(async () => {
         try {
-            // Close the payment modal immediately on success path
+            // Close the payment modal immediately
             closeModal('scan-pay-modal'); 
 
             await runTransaction(db, async (t) => {
@@ -1150,8 +1121,11 @@ function handlePayment() {
                 });
             });
             
-            // Success: If we reach here, the transaction was committed successfully.
-            // Show Success Modal
+            // --- SUCCESS ---
+            // (Defensive) Ensure failure modal is not visible
+            closeModal('payment-failure-modal');
+            
+            // Populate and show Success Modal
             const now = new Date();
             document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
             document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
@@ -1160,11 +1134,16 @@ function handlePayment() {
             openModal('payment-success-modal');
 
         } catch (error) { 
+            // --- FAILURE ---
             console.error("Payment transaction failed during Firestore transaction:", error);
-            // NEW FIX: Show Failure Modal instead of Toast
+            
+            // (Defensive) Ensure success modal is not visible
+            closeModal('payment-success-modal');
+            
+            // Show Failure Modal
             openModal('payment-failure-modal'); 
         }
-    }); // Removed sourceModalId here as we close it inside try/catch block
+    });
 }
 // *** END handlePayment function ***
 
@@ -1498,4 +1477,3 @@ document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
 </body>
 </html>
-
