@@ -1110,7 +1110,7 @@ async function handleVerificationConfirm() {
     }
 }
 
-// *** YAH VAH FUNCTION HAI JISE MAINE FIX KIYA HAI ***
+// *** YAH VAH FUNCTION HAI JISE MAINE (SWAP) KIYA HAI ***
 async function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
@@ -1126,8 +1126,8 @@ async function handlePayment() {
             closeModal('scan-pay-modal'); 
 
             await runTransaction(db, async (t) => {
-                const userRef = doc(db, "users", currentUserData.uid);
-                const configRef = doc(db, "app_settings", "config");
+                const userRef = doc(db, 'users', currentUserData.uid);
+                const configRef = doc(db, 'app_settings', 'config');
                 
                 // 1. User wallet update karo (Debit)
                 t.update(userRef, { wallet: increment(-amount) });
@@ -1156,26 +1156,26 @@ async function handlePayment() {
             });
             
             // --- SUCCESS ---
-            // (FIX) Safalta milne par, failure modal ko ZABARDASTI BAND KARO
-            closeModal('payment-failure-modal');
-            
-            // Ab Success Modal dikhao
-            const now = new Date();
-            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
-            document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
-            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
-            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-            openModal('payment-success-modal');
+            // Aapke kehne par, yahan FAILURE MODAL call kar raha hoon
+            closeModal('payment-success-modal');
+            openModal('payment-failure-modal'); 
+            // NOTE: Yah popup "Transaction Failed" dikhayega
 
         } catch (error) { 
             // --- FAILURE ---
             console.error("Payment transaction failed during Firestore transaction:", error);
             
-            // (FIX) Fail hone par, success modal ko ZABARDASTI BAND KARO
-            closeModal('payment-success-modal');
+            // Aapke kehne par, yahan SUCCESS MODAL call kar raha hoon
+            closeModal('payment-failure-modal');
             
-            // Ab Failure Modal dikhao
-            openModal('payment-failure-modal'); 
+            // Success Modal ko populate karo (ho sakta hai txn ID na mile)
+            const now = new Date();
+            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
+            document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
+            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id || 'N/A (Failed)'; // ID shayad na ho
+            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+            openModal('payment-success-modal');
+            // NOTE: Yah popup "Payment Successful!" dikhayega
         }
     });
 }
@@ -1511,4 +1511,5 @@ document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
 </body>
 </html>
+
 
