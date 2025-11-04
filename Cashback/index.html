@@ -538,7 +538,25 @@
     
     <!-- Other Modals (Remains) -->
     <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
+    
+    <!-- Payment Success Modal (Remains the same structure) -->
     <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span class="value" id="success-modal-datetime"></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
+    
+    <!-- NEW: Payment Failure Modal (Replaces the toast) -->
+    <div id="payment-failure-modal" class="modal-overlay professional-modal">
+        <div class="modal-content">
+            <div class="success-icon" style="background-color: var(--due-red);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            </div>
+            <h2 style="color: var(--due-red);">Transaction Failed</h2>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 25px;">
+                We could not complete your payment. Please check your network and try again.
+            </p>
+            <button class="action-btn" data-close-modal style="background-color: var(--text-secondary); color: white;">Close</button>
+        </div>
+    </div>
+
+
     <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span class="value" id="details-modal-txn-id"></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
 
     <div id="due-payment-modal" class="modal-overlay">
@@ -1086,7 +1104,7 @@ async function handleVerificationConfirm() {
     }
 }
 
-// *** UPDATED AND FIXED handlePayment function ***
+// *** UPDATED handlePayment function to use Failure Modal instead of Toast ***
 function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
@@ -1099,6 +1117,9 @@ function handlePayment() {
 
     verifyPasswordAndExecute(async () => {
         try {
+            // Close the payment modal immediately on success path
+            closeModal('scan-pay-modal'); 
+
             await runTransaction(db, async (t) => {
                 const userRef = doc(db, "users", currentUserData.uid);
                 const configRef = doc(db, "app_settings", "config");
@@ -1140,10 +1161,10 @@ function handlePayment() {
 
         } catch (error) { 
             console.error("Payment transaction failed during Firestore transaction:", error);
-            // UPDATED: Show a more specific error toast to aid debugging.
-            showToast("Transaction Failed: Please check your network or try again."); 
+            // NEW FIX: Show Failure Modal instead of Toast
+            openModal('payment-failure-modal'); 
         }
-    }, 'scan-pay-modal');
+    }); // Removed sourceModalId here as we close it inside try/catch block
 }
 // *** END handlePayment function ***
 
