@@ -1056,12 +1056,12 @@ function handlePayment() {
     hideErrorMessage(errorMsg);
     if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
+    
+    // NOTE: newTxnRef is now declared outside the verification block to ensure it's accessible.
+    let newTxnRef = doc(collection(db, "transactions")); 
+
     verifyPasswordAndExecute(async () => {
         try {
-            // NOTE: We generate the transaction ID *outside* the transaction block 
-            // so we can use it in the success message immediately after.
-            const newTxnRef = doc(collection(db, "transactions")); 
-
             await runTransaction(db, async (t) => {
                 const userRef = doc(db, "users", currentUserData.uid);
                 const configRef = doc(db, "app_settings", "config");
@@ -1092,6 +1092,7 @@ function handlePayment() {
                 });
             });
             
+            // Success: If we reach here, the transaction was committed successfully.
             // Show Success Modal
             const now = new Date();
             document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
@@ -1102,7 +1103,8 @@ function handlePayment() {
 
         } catch (error) { 
             console.error("Payment transaction failed during Firestore transaction:", error);
-            showToast("Payment failed. Please check your balance or try again later."); 
+            // UPDATED: Show a more specific error toast to aid debugging.
+            showToast("Transaction Failed: Please check your network or try again."); 
         }
     }, 'scan-pay-modal');
 }
@@ -1352,7 +1354,8 @@ function initializeAppLogic() {
             toggleView('login-view');
             document.getElementById('login-form').reset();
             document.getElementById('register-form').reset();
-            alert("Registration safal hua! Ab login karein.");
+            // Using showToast instead of alert
+            showToast("Registration safal hua! Ab login karein.");
         } catch (error) {
             if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
             showErrorMessage(errorMsgEl, error.code === 'auth/email-already-in-use' ? "Yah mobile number pehle se register hai." : "Registration fail ho gaya. Dobara try karein.");
