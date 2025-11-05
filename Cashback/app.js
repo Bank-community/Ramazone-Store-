@@ -111,9 +111,80 @@ let currentTransactionForPayAgain = null;
 
 
 // --- Core Functions (Config, UI Toggles) ---
+// (FIXED) In sabhi ko 'const' se 'function' mein badla gaya taaki yeh 'fetchConfigsAndInit' se pehle load ho sakein (hoisting)
 
 /**
- * Firebase config fetch karein aur app ko initialize karein.
+ * Screen par ek chhota notification (toast) dikhayein.
+ * @param {string} message - Dikhane wala message.
+ */
+function showToast(message) {
+    const toast = document.getElementById('toast-notification');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/**
+ * Alag-alag app views (pages) ke beech switch karein.
+ * @param {string} viewId - Dikhane wale view ki ID.
+ */
+function toggleView(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const viewElement = document.getElementById(viewId);
+    if(viewElement) {
+        viewElement.classList.add('active');
+    }
+}
+
+/**
+ * Ek modal (popup) kholein.
+ * @param {string} modalId - Kholne wale modal ki ID.
+ */
+function openModal(modalId) {
+    document.getElementById(modalId)?.classList.add('active');
+}
+
+/**
+ * Ek modal (popup) band karein.
+ * @param {string} modalId - Band karne wale modal ki ID.
+ */
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.remove('active');
+    
+    // Agar payment modal band ho raha hai, toh scanner ko bhi stop karein (event payments.js se emit hoga)
+    if (modalId === 'scan-pay-modal') {
+        const stopEvent = new CustomEvent('stopScanner');
+        document.dispatchEvent(stopEvent);
+    }
+}
+
+/**
+ * Form mein error message dikhayein.
+ * @param {HTMLElement} element - Error message dikhane wala P element.
+ * @param {string} message - Error message.
+ */
+function showErrorMessage(element, message) {
+    if (element) { 
+        element.textContent = message; 
+        element.style.display = 'block'; 
+    }
+}
+
+/**
+ * Form se error message hatayein.
+ * @param {HTMLElement} element - Error message wala P element.
+ */
+function hideErrorMessage(element) {
+    if (element) { 
+        element.style.display = 'none'; 
+    }
+}
+// --- (END OF FIX) ---
+
+
+/**
+ * Firebase config fetch karein aur app ko initialize karein. (FIXED)
  */
 async function fetchConfigsAndInit() {
     try {
@@ -133,6 +204,7 @@ async function fetchConfigsAndInit() {
         db = getFirestore(app);
         
         // Expose core functions to payments.js
+        // (FIX) Yeh ab kaam karega kyunki 'showToast' etc. 'function' hain aur hoist ho chuke hain.
         window.RamazoneApp = {
             showToast,
             openModal,
@@ -148,66 +220,11 @@ async function fetchConfigsAndInit() {
         initializeAppLogic(); // Baaki ka app logic start karein
     } catch (error) {
         console.error("Critical Initialization Error:", error);
-        document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load settings. Please try again later.</p></div>`;
+        // Ab yeh error sirf tabhi aayega jab Firebase config galat hogi.
+        document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load settings. Please try again later.</p><p style="color: #999; font-size: 12px;">${error.message}</p></div>`;
     }
 }
 
-/**
- * Screen par ek chhota notification (toast) dikhayein.
- * @param {string} message - Dikhane wala message.
- */
-const showToast = (message) => {
-    const toast = document.getElementById('toast-notification');
-    toast.textContent = message;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-};
-
-/**
- * Alag-alag app views (pages) ke beech switch karein.
- * @param {string} viewId - Dikhane wale view ki ID.
- */
-const toggleView = (viewId) => {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const viewElement = document.getElementById(viewId);
-    if(viewElement) {
-        viewElement.classList.add('active');
-    }
-};
-
-/**
- * Ek modal (popup) kholein.
- * @param {string} modalId - Kholne wale modal ki ID.
- */
-const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
-
-/**
- * Ek modal (popup) band karein.
- * @param {string} modalId - Band karne wale modal ki ID.
- */
-const closeModal = (modalId) => {
-    const modal = document.getElementById(modalId);
-    if (modal) modal.classList.remove('active');
-    
-    // Agar payment modal band ho raha hai, toh scanner ko bhi stop karein (event payments.js se emit hoga)
-    if (modalId === 'scan-pay-modal') {
-        const stopEvent = new CustomEvent('stopScanner');
-        document.dispatchEvent(stopEvent);
-    }
-};
-
-/**
- * Form mein error message dikhayein.
- * @param {HTMLElement} element - Error message dikhane wala P element.
- * @param {string} message - Error message.
- */
-const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
-
-/**
- * Form se error message hatayein.
- * @param {HTMLElement} element - Error message wala P element.
- */
-const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
 
 // --- Realtime Data Handling ---
 
@@ -627,12 +644,16 @@ function handleDownloadReceipt(txnId) {
     const copyIconBtn = document.getElementById('details-copy-txn-id-icon-btn');
     const noteContainer = document.getElementById('details-modal-note-container'); // (NEW)
     
+    // Original display state ko save karein
+    const payAgainDisplay = payAgainBtn ? payAgainBtn.style.display : 'none';
+    const noteDisplay = noteContainer ? noteContainer.style.display : 'none';
+
     // Screenshot ke liye buttons ko chhupayein
     if(downloadBtn) downloadBtn.style.visibility = 'hidden';
     if(closeBtn) closeBtn.style.visibility = 'hidden';
-    if(payAgainBtn) payAgainBtn.style.visibility = 'hidden';
+    if(payAgainBtn) payAgainBtn.style.display = 'none'; // (FIX) visibility ki jagah display none
     if(copyIconBtn) copyIconBtn.style.visibility = 'hidden';
-    if(noteContainer) noteContainer.style.visibility = (noteContainer.style.display === 'none' ? 'none' : 'hidden'); // (NEW)
+    if(noteContainer && noteDisplay !== 'none') noteContainer.style.display = 'none'; // (FIX) visibility ki jagah display none
     
     showToast("Downloading receipt...");
 
@@ -648,13 +669,13 @@ function handleDownloadReceipt(txnId) {
             if (clonedCloseBtn) clonedCloseBtn.style.visibility = 'hidden';
 
             const clonedPayAgainBtn = doc.getElementById('details-pay-again-btn');
-            if (clonedPayAgainBtn) clonedPayAgainBtn.style.visibility = 'hidden';
+            if (clonedPayAgainBtn) clonedPayAgainBtn.style.display = 'none';
             
             const clonedCopyIconBtn = doc.getElementById('details-copy-txn-id-icon-btn');
             if (clonedCopyIconBtn) clonedCopyIconBtn.style.visibility = 'hidden';
             
             const clonedNoteContainer = doc.getElementById('details-modal-note-container'); // (NEW)
-            if (clonedNoteContainer) clonedNoteContainer.style.visibility = (clonedNoteContainer.style.display === 'none' ? 'none' : 'hidden');
+            if (clonedNoteContainer && clonedNoteContainer.style.display !== 'none') clonedNoteContainer.style.display = 'none';
         }
     }).then(canvas => {
         const link = document.createElement('a');
@@ -670,9 +691,9 @@ function handleDownloadReceipt(txnId) {
         // Buttons ko wapas dikhayein
         if(downloadBtn) downloadBtn.style.visibility = 'visible';
         if(closeBtn) closeBtn.style.visibility = 'visible';
-        if(payAgainBtn) payAgainBtn.style.visibility = 'visible';
+        if(payAgainBtn) payAgainBtn.style.display = payAgainDisplay; // Original state par restore karein
         if(copyIconBtn) copyIconBtn.style.visibility = 'visible';
-        if(noteContainer) noteContainer.style.visibility = 'visible'; // (NEW)
+        if(noteContainer) noteContainer.style.display = noteDisplay; // Original state par restore karein
     });
 }
 // --- END NEW Helpers ---
@@ -849,7 +870,7 @@ function handlePayAgain() {
         // Hamein 'otherParty' data ki zaroorat hogi (jo 'payments.js' save karega)
         if (!item.otherParty || !item.otherParty.mobile) {
             // Agar purana transaction hai jismein 'otherParty' save nahi hai
-            showToast("Could not find ID for this old transaction.");
+            showToast("Could not find ID. Please search manually.");
             // Sirf P2P tab kholein
             document.dispatchEvent(new CustomEvent('openPaymentTab', { 
                 detail: { tab: 'p2p' } 
