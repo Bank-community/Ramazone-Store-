@@ -1,23 +1,28 @@
+// --- Firebase modules import ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- App Initialization and Global Variables ---
 let app, auth, db;
-let imgbbApiKey;
+let imgbbApiKey; // Yeh config se load hoga
 
 // ======================= PWA Install & Update Logic START =======================
 let deferredPrompt; 
 
+/**
+ * Check karein ki PWA installed hai ya nahi.
+ */
 async function isPwaInstalled() {
     if ('getInstalledRelatedApps' in navigator) {
         try {
             const relatedApps = await navigator.getInstalledRelatedApps();
-            const isInstalled = relatedApps.some(app => app.id === '/Cashback/');
+            const isInstalled = relatedApps.some(app => app.id === '/Cashback/'); // Manifest ID se match karein
             console.log(isInstalled ? 'Manifest ID ke anusaar PWA installed hai.' : 'Manifest ID ke anusaar PWA installed nahi hai.');
             return isInstalled;
         } catch (error) {
             console.error('Error checking getInstalledRelatedApps:', error);
+            // Fallback agar API fail hota hai
             return window.matchMedia('(display-mode: standalone)').matches;
         }
     }
@@ -25,6 +30,9 @@ async function isPwaInstalled() {
     return window.matchMedia('(display-mode: standalone)').matches;
 }
 
+/**
+ * PWA install button ko setup karein.
+ */
 async function setupPwaInstallButton() {
     const installBtn = document.getElementById('install-pwa-btn');
     if (!installBtn) return;
@@ -36,14 +44,18 @@ async function setupPwaInstallButton() {
         return;
     }
 
+    // Install prompt ko listen karein
     window.addEventListener('beforeinstallprompt', (e) => {
         console.log('`beforeinstallprompt` event fire hua.');
-        e.preventDefault();
-        deferredPrompt = e;
-        installBtn.style.display = 'flex';
+        e.preventDefault(); // Prompt ko automatic dikhne se rokein
+        deferredPrompt = e; // Prompt ko save karein
+        installBtn.style.display = 'flex'; // Button dikhayein
     });
 }
 
+/**
+ * Install button click ko handle karein.
+ */
 function handleInstallClick() {
     const installBtn = document.getElementById('install-pwa-btn');
     if (!deferredPrompt) {
@@ -51,19 +63,21 @@ function handleInstallClick() {
         return;
     }
     
-    installBtn.style.display = 'none';
-    deferredPrompt.prompt();
+    installBtn.style.display = 'none'; // Button chhupayein
+    deferredPrompt.prompt(); // Install prompt dikhayein
     
+    // User ke choice ka wait karein
     deferredPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === 'accepted') {
             console.log('User ne PWA install kar liya.');
         } else {
             console.log('User ne install prompt ko dismiss kar diya.');
         }
-        deferredPrompt = null;
+        deferredPrompt = null; // Prompt ko clear karein
     });
 }
 
+// App install hone ke baad event listen karein
 window.addEventListener('appinstalled', () => {
     const installBtn = document.getElementById('install-pwa-btn');
     if (installBtn) {
@@ -75,103 +89,141 @@ window.addEventListener('appinstalled', () => {
 // ======================= PWA Install & Update Logic END =======================
 
 
+// --- Global State Variables ---
 let currentUser = null;
 let currentUserData = null;
-let combinedHistory = []; // Global store for all history items
-let activeListeners = [];
-let scannerAnimation = null;
+let combinedHistory = []; // Sabhi history items ke liye global store
+let activeListeners = []; // Realtime listeners ko track karne ke liye
+let scannerAnimation = null; // QR scanner animation frame
 let allTransactions = [];
-let allNotifications = []; // New array to store sent notifications
+let allNotifications = []; // Bheje gaye notifications
 let activeFilter = 'all';
-let pendingAction = null;
+let pendingAction = null; // Password verification ke baad run hone wala action
 let isUplineLoaded = false;
 let popupTimeout = null;
 let initialPopupShown = false;
-const commissionRates = [30, 25, 20, 15, 10]; // Commission rates kept for legacy/unused
+const commissionRates = [30, 25, 20, 15, 10]; // Legacy (unused)
 let historyStack = [];
 const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
-const UPI_ID = "princekumar954684-1@okicici";
-const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Fixed ID for store payment
+const UPI_ID = "princekumar954684-1@okicici"; // Due payment UPI ID
+const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Store payment QR ID
 
 // --- Core Functions (Config, UI Toggles) ---
+
+/**
+ * Firebase config fetch karein aur app ko initialize karein.
+ */
 async function fetchConfigsAndInit() {
     try {
-        // Use hardcoded config for demonstration in a single file
+        // Hardcoded config (jaisa pehle tha)
         const firebaseConfig = {
-            // Placeholder: Assume these values are correctly populated by the environment
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
             authDomain: "tipsplit-e3wes.firebaseapp.com",
             projectId: "tipsplit-e3wes",
             storageBucket: "tipsplit-e3wes.appspot.com",
             appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
         };
-        // NOTE: imgbbApiKey is usually loaded externally, setting a dummy one for now.
+        // Dummy ImgBB key
         imgbbApiKey = "DUMMY_API_KEY_FOR_IMGBB"; 
 
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
-        initializeAppLogic();
+        initializeAppLogic(); // Baaki ka app logic start karein
     } catch (error) {
         console.error("Critical Initialization Error:", error);
         document.body.innerHTML = `<div style="text-align: center; padding: 40px; font-family: 'Poppins', sans-serif;"><h2>Application Error</h2><p>Could not load settings. Please try again later.</p></div>`;
     }
 }
+
+/**
+ * Screen par ek chhota notification (toast) dikhayein.
+ * @param {string} message - Dikhane wala message.
+ */
 const showToast = (message) => {
     const toast = document.getElementById('toast-notification');
     toast.textContent = message;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
 };
+
+/**
+ * Alag-alag app views (pages) ke beech switch karein.
+ * @param {string} viewId - Dikhane wale view ki ID.
+ */
 const toggleView = (viewId) => {
-    const viewportMeta = document.querySelector('meta[name="viewport"]');
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const viewElement = document.getElementById(viewId);
     if(viewElement) {
         viewElement.classList.add('active');
     }
 };
+
+/**
+ * Ek modal (popup) kholein.
+ * @param {string} modalId - Kholne wale modal ki ID.
+ */
 const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
+
+/**
+ * Ek modal (popup) band karein.
+ * @param {string} modalId - Band karne wale modal ki ID.
+ */
 const closeModal = (modalId) => {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
     if (modalId === 'scan-pay-modal') {
-        stopScanner();
+        stopScanner(); // Agar scan modal hai, toh scanner band karein
     }
 };
+
+/**
+ * Form mein error message dikhayein.
+ * @param {HTMLElement} element - Error message dikhane wala P element.
+ * @param {string} message - Error message.
+ */
 const showErrorMessage = (element, message) => { if (element) { element.textContent = message; element.style.display = 'block'; } };
+
+/**
+ * Form se error message hatayein.
+ * @param {HTMLElement} element - Error message wala P element.
+ */
 const hideErrorMessage = (element) => { if (element) { element.style.display = 'none'; } };
 
 // --- Realtime Data Handling ---
+
+/**
+ * User ke data ke liye realtime listeners attach karein.
+ * @param {object} user - Firebase auth user object.
+ */
 function attachRealtimeListeners(user) {
-    detachAllListeners();
+    detachAllListeners(); // Purane listeners ko hatayein
     const uid = user.uid;
     
-    // Updated validTypes to include 'credit_given'
     const validTypes = ['payment', 'due_payment', 'credit_given']; 
 
     const listeners = [
+        // User document listener
         onSnapshot(doc(db, 'users', uid), (doc) => {
             if (doc.exists()) {
                 currentUserData = { uid: doc.id, ...doc.data() };
                 updateDashboardUI(currentUserData, user);
-                renderNotificationCenter(); // This now calls renderNotifications
+                renderNotificationCenter();
                 if (!initialPopupShown) {
                     handleDueNotificationPopup(currentUserData);
                     initialPopupShown = true;
                 }
             }
         }),
-        // Only listening to transactions, now including 'credit_given'
+        // Transactions listener
         onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
-            
             allTransactions = snapshot.docs
                 .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }))
                 .filter(t => validTypes.includes(t.type));
             combineAndRenderHistory();
         }),
-        // Listener for Admin sent notifications
+        // Admin Notifications listener
         onSnapshot(query(collection(db, "notifications"), orderBy("createdAt", "desc")), (snapshot) => {
             allNotifications = snapshot.docs
                 .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().createdAt?.toDate() }));
@@ -180,6 +232,10 @@ function attachRealtimeListeners(user) {
     ];
     activeListeners.push(...listeners);
 }
+
+/**
+ * Sabhi active realtime listeners ko band karein (logout par).
+ */
 function detachAllListeners() {
     activeListeners.forEach(unsub => unsub());
     activeListeners = [];
@@ -187,6 +243,12 @@ function detachAllListeners() {
 }
 
 // --- UI Update and Notification Logic ---
+
+/**
+ * Dashboard UI ko user ke data se update karein.
+ * @param {object} dbData - Firestore se user ka data.
+ * @param {object} authUser - Firebase auth se user ka data.
+ */
 function updateDashboardUI(dbData, authUser) {
     const profilePicUrl = dbData.profilePictureUrl || `https://placehold.co/40x40/e50914/FFFFFF?text=${authUser.displayName.charAt(0)}`;
     document.getElementById('header-profile-avatar').src = profilePicUrl;
@@ -202,11 +264,16 @@ function updateDashboardUI(dbData, authUser) {
     payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
 }
 
+/**
+ * Check karein ki due notification dikhana hai ya nahi.
+ * @param {object} dbData - Firestore user data.
+ * @returns {object|null} Notification data ya null.
+ */
 function getDueNotificationData(dbData) {
     if (!dbData) return null;
     const today = new Date();
     const dayOfMonth = today.getDate();
-    // Due period check (1st to 7th)
+    // Due period (1st se 7th)
     if (dbData.dueAmount > 0 && dayOfMonth >= 1 && dayOfMonth <= 7) {
         return {
             id: 'due_notification_priority',
@@ -220,6 +287,10 @@ function getDueNotificationData(dbData) {
     return null;
 }
 
+/**
+ * Login par due notification popup dikhayein (agar zaroori ho).
+ * @param {object} dbData - Firestore user data.
+ */
 function handleDueNotificationPopup(dbData) {
     const dueNotification = getDueNotificationData(dbData);
     if (dueNotification) {
@@ -233,6 +304,11 @@ function handleDueNotificationPopup(dbData) {
     }
 }
 
+/**
+ * Screen ke top par aane wala popup notification dikhayein.
+ * @param {object} notifData - Notification ka data (colors, text, icon).
+ * @param {number} duration - Kitni der dikhana hai (ms mein).
+ */
 function showPopupNotification(notifData, duration = 4000) {
      if (popupTimeout) clearTimeout(popupTimeout);
      const popup = document.getElementById('popup-notification');
@@ -246,19 +322,22 @@ function showPopupNotification(notifData, duration = 4000) {
      popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
 }
 
+/**
+ * Notification Center (poora page) ko render karein.
+ */
 async function renderNotificationCenter() {
     const listEl = document.getElementById('notification-center-list');
     listEl.innerHTML = '';
     
     const notificationsToRender = [];
     
-    // 1. Add Due Payment Notification (if applicable)
+    // 1. Due Payment Notification add karein
     const dueNotification = getDueNotificationData(currentUserData);
     if (dueNotification) {
         notificationsToRender.push(dueNotification);
     }
     
-    // 2. Add Admin Sent Notifications
+    // 2. Admin se bheje gaye Notifications add karein
     notificationsToRender.push(...allNotifications);
 
     if (notificationsToRender.length === 0) {
@@ -266,7 +345,7 @@ async function renderNotificationCenter() {
         return;
     }
 
-    // Sort to show due first, then admin notifications by date
+    // Sort karein (Due sabse upar, fir baaki date ke hisaab se)
     notificationsToRender.sort((a, b) => {
         if (a.isDue && !b.isDue) return -1;
         if (!a.isDue && b.isDue) return 1;
@@ -302,14 +381,19 @@ async function renderNotificationCenter() {
     });
 }
 
+/**
+ * Sabhi transactions ko combine karke render karein.
+ */
 function combineAndRenderHistory() {
     combinedHistory = allTransactions.sort((a, b) => (b.date || 0) - (a.date || 0));
     renderUnifiedHistory();
 }
 
+/**
+ * Transaction history list ko filter ke hisaab se render karein.
+ */
 function renderUnifiedHistory() {
     const listEl = document.getElementById('unified-history-list');
-    const summaryEl = document.getElementById('transaction-summary');
     const summaryAmountEl = document.getElementById('summary-total-amount');
     const summaryLabelEl = document.getElementById('summary-filter-label');
     listEl.innerHTML = '';
@@ -355,7 +439,7 @@ function renderUnifiedHistory() {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
         
-        itemDiv.style.cursor = 'pointer'; // Make it look clickable
+        itemDiv.style.cursor = 'pointer'; // Clickable dikhane ke liye
         itemDiv.addEventListener('click', () => showTransactionDetails(item));
         
         const amount = item.amount || 0;
@@ -380,7 +464,10 @@ function renderUnifiedHistory() {
     });
 }
 
-// --- UPDATED: showTransactionDetails with new layout ---
+/**
+ * Transaction Details ka popup dikhayein (Naye layout ke saath).
+ * @param {object} item - Click kiya gaya transaction item.
+ */
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
     let sign = '+', typeClass = 'credit';
@@ -395,6 +482,7 @@ function showTransactionDetails(item) {
         description = "Credit received from Ramazone Admin";
     }
     
+    // Amount aur basic details set karein
     document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
     document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
     const statusEl = document.getElementById('details-modal-status');
@@ -406,13 +494,12 @@ function showTransactionDetails(item) {
     document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
     document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
     
-    // NEW: Set text in the new Transaction ID box
+    // Naye Transaction ID box mein ID set karein
     document.getElementById('details-modal-txn-id-box').textContent = item.id;
     
-    // Add event listeners for new buttons
-    // Remove old listeners to prevent duplicates by cloning the button
+    // Naye buttons ke liye event listeners (purane listeners hatakar)
     const oldCopyBtn = document.getElementById('details-copy-txn-id-btn');
-    const newCopyBtn = oldCopyBtn.cloneNode(true); // Clone to remove listeners
+    const newCopyBtn = oldCopyBtn.cloneNode(true); // Clone karke listener hatayein
     oldCopyBtn.parentNode.replaceChild(newCopyBtn, oldCopyBtn);
     newCopyBtn.addEventListener('click', () => handleCopyTxnId(item.id));
     
@@ -424,7 +511,10 @@ function showTransactionDetails(item) {
     openModal('transaction-details-modal');
 }
 
-// --- NEW: Helper functions for modal actions ---
+/**
+ * Transaction ID ko clipboard par copy karein.
+ * @param {string} txnId - Copy karne wali ID.
+ */
 function handleCopyTxnId(txnId) {
     if (!navigator.clipboard) {
         showToast("Copying not supported on this device.");
@@ -438,14 +528,17 @@ function handleCopyTxnId(txnId) {
     });
 }
 
+/**
+ * Transaction receipt ka screenshot download karein.
+ * @param {string} txnId - Transaction ID (filename ke liye).
+ */
 function handleDownloadReceipt(txnId) {
     const receiptElement = document.querySelector('#transaction-details-modal .modal-content');
     const downloadBtn = document.getElementById('details-download-receipt-btn');
     const closeBtn = document.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
-    // Select the new copy button
     const copyBtn = document.getElementById('details-copy-txn-id-btn');
     
-    // Hide buttons temporarily for screenshot
+    // Screenshot ke liye buttons ko chhupayein
     if(downloadBtn) downloadBtn.style.visibility = 'hidden';
     if(closeBtn) closeBtn.style.visibility = 'hidden';
     if(copyBtn) copyBtn.style.visibility = 'hidden';
@@ -453,15 +546,14 @@ function handleDownloadReceipt(txnId) {
     showToast("Downloading receipt...");
 
     html2canvas(receiptElement, { 
-        scale: 2, // Higher quality
+        scale: 2, // Behtar quality
         useCORS: true,
         onclone: (doc) => {
-            // Ensure buttons are hidden in the cloned document too
+            // Cloned document mein bhi buttons ko chhupayein
             const clonedDownloadBtn = doc.getElementById('details-download-receipt-btn');
             if (clonedDownloadBtn) clonedDownloadBtn.style.visibility = 'hidden';
             const clonedCloseBtn = doc.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
             if (clonedCloseBtn) clonedCloseBtn.style.visibility = 'hidden';
-            // Find and hide the new copy button
             const clonedCopyBtn = doc.getElementById('details-copy-txn-id-btn');
             if (clonedCopyBtn) clonedCopyBtn.style.visibility = 'hidden';
         }
@@ -476,7 +568,7 @@ function handleDownloadReceipt(txnId) {
         console.error("Error downloading receipt:", err);
         showToast("Download failed.");
     }).finally(() => {
-        // Show buttons again, regardless of success or failure
+        // Buttons ko wapas dikhayein
         if(downloadBtn) downloadBtn.style.visibility = 'visible';
         if(closeBtn) closeBtn.style.visibility = 'visible';
         if(copyBtn) copyBtn.style.visibility = 'visible';
@@ -487,6 +579,9 @@ function handleDownloadReceipt(txnId) {
 
 // --- Feature Logic (Payment, QR, etc.) ---
 
+/**
+ * Due Payment ke liye QR code generate karein aur modal kholein.
+ */
 function generateDueQR() {
     if (!currentUserData || currentUserData.dueAmount <= 0) {
         showToast("No due amount to pay.");
@@ -509,6 +604,10 @@ function generateDueQR() {
     document.getElementById('due-qr-upi-id').textContent = UPI_ID;
     openModal('due-payment-modal');
 }
+
+/**
+ * Due Payment QR card ko download karein.
+ */
 function downloadQRCard() {
     const cardElement = document.getElementById('due-qr-card');
     if (!cardElement) {
@@ -528,6 +627,11 @@ function downloadQRCard() {
         showToast("Download failed. Please try again.");
     });
 }
+
+/**
+ * Profile picture upload ko handle karein.
+ * @param {Event} event - File input change event.
+ */
 async function handleProfilePictureUpload(event) {
     const file = event.target.files[0];
     if (!file || !currentUser) return;
@@ -548,11 +652,21 @@ async function handleProfilePictureUpload(event) {
         showToast("Upload failed. Please try again.");
     } finally { event.target.value = ''; }
 }
+
+/**
+ * Koi bhi action karne se pehle password verify karein.
+ * @param {Function} action - Password sahi hone par run hone wala function.
+ * @param {string} [sourceModalId] - Agar koi modal khula hai toh use band karne ke liye ID.
+ */
 function verifyPasswordAndExecute(action, sourceModalId) {
     if (sourceModalId) closeModal(sourceModalId);
     pendingAction = action;
     openModal('password-verification-modal');
 }
+
+/**
+ * Password verification modal ke confirm button ko handle karein.
+ */
 async function handleVerificationConfirm() {
     const password = document.getElementById('verification-password').value;
     const errorMsg = document.getElementById('verification-error-msg');
@@ -575,7 +689,9 @@ async function handleVerificationConfirm() {
     }
 }
 
-// --- UPDATED: handlePayment with correct Success/Fail logic ---
+/**
+ * Payment process ko handle karein (THEEK KIYA GAYA LOGIC).
+ */
 async function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
@@ -589,21 +705,26 @@ async function handlePayment() {
         try {
             closeModal('scan-pay-modal'); 
 
+            // Firebase Transaction shuru karein
             await runTransaction(db, async (t) => {
                 const userRef = doc(db, 'users', currentUserData.uid);
                 const configRef = doc(db, 'app_settings', 'config');
+                // 1. User ka wallet update (debit)
                 t.update(userRef, { wallet: increment(-amount) });
+                // 2. Admin ka wallet update (credit)
                 t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
+                // 3. User ke liye transaction record
                 t.set(newTxnRef, { 
                     type: 'payment', 
-                    amount: -amount, 
+                    amount: -amount, // User ke liye negative
                     description: 'Paid to Ramazone Store', 
                     status: 'completed', 
                     timestamp: serverTimestamp(), 
                     involvedUsers: [currentUserData.uid] 
                 });
+                // 4. Admin ke liye transaction record
                 t.set(doc(collection(db, "rmz_wallet_transactions")), { 
-                    amount, 
+                    amount, // Admin ke liye positive
                     senderId: currentUserData.uid, 
                     senderName: currentUserData.name, 
                     senderMobile: currentUserData.mobile, 
@@ -611,19 +732,19 @@ async function handlePayment() {
                 });
             });
             
-            // --- SUCCESS LOGIC (FIXED) ---
+            // --- SUCCESS LOGIC (THEEK KIYA GAYA) ---
             const now = new Date();
             document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
             document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
             document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
             document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-            // Correct modal is called
+            // Ab sahi modal call hoga
             openModal('payment-success-modal');
 
         } catch (error) { 
-            // --- FAILURE LOGIC (FIXED) ---
+            // --- FAILURE LOGIC (THEEK KIYA GAYA) ---
             console.error("Payment transaction failed during Firestore transaction:", error);
-            // Correct modal is called
+            // Ab sahi failure modal call hoga
             openModal('payment-failure-modal'); 
         }
     });
@@ -631,10 +752,13 @@ async function handlePayment() {
 // --- END handlePayment FIX ---
 
 
-// --- NEW/UPDATED RMZ Pay Modal Logic ---
+// --- RMZ Pay Modal (Scan/Direct) Logic ---
 
+/**
+ * Scan QR view dikhayein.
+ */
 function showScanView() {
-    stopScanner(); // Stop any existing scanner first
+    stopScanner(); // Pehle scanner band karein
     document.getElementById('qr-scanner-section').style.display = 'block';
     document.getElementById('payment-form').style.display = 'none';
     document.getElementById('select-scan-btn').classList.add('active');
@@ -643,39 +767,51 @@ function showScanView() {
     document.getElementById('receiver-id-display').textContent = '...'; 
     document.getElementById('payment-amount').value = '';
     hideErrorMessage(document.getElementById('payment-error-msg'));
-    startScanner(); // Start scanner immediately
+    startScanner(); // Scanner chalu karein
 }
 
+/**
+ * Direct Payment (bina scan) view dikhayein.
+ */
 function showDirectPayView() {
-    stopScanner(); // Crucial: Stop scanner if running
+    stopScanner(); // Scanner band karein
     document.getElementById('qr-scanner-section').style.display = 'none';
     document.getElementById('payment-form').style.display = 'block';
     document.getElementById('select-direct-pay-btn').classList.add('active');
     document.getElementById('select-scan-btn').classList.remove('active');
     
     document.getElementById('receiver-id-display').textContent = 'Ramazone Store';
-    document.getElementById('rescan-btn').style.display = 'none'; // Hide rescan button for direct pay
+    document.getElementById('rescan-btn').style.display = 'none'; 
     
     document.getElementById('payment-amount').value = '';
     hideErrorMessage(document.getElementById('payment-error-msg'));
 }
 
+/**
+ * Dashboard par "RMZ Pay" button click ko handle karein.
+ */
 function handleRmzPayButtonClick() {
     openModal('scan-pay-modal');
-    showScanView(); // Default to Scan View on open
+    showScanView(); // Default mein Scan view dikhayein
 }
 
-// --- Scanner/QR Code Functions (minor adjustments) ---
+// --- Scanner/QR Code Functions ---
 
+/**
+ * QR code scan successful hone par handle karein.
+ * @param {string} data - QR code se mila data.
+ */
 async function handleSuccessfulScan(data) {
+    // Sirf Ramazone Store ka QR hi accept karein
     if (data !== RAMAZONE_STORE_ID) {
         showToast("Invalid QR code scanned. Only Ramazone Store QR is accepted.");
-        startScanner(); // Continue scanning
+        startScanner(); // Scanning jaari rakhein
         return;
     }
     
     stopScanner();
     
+    // Scan ke baad payment form dikhayein
     document.getElementById('qr-scanner-section').style.display = 'none';
     document.getElementById('payment-form').style.display = 'block';
     document.getElementById('select-scan-btn').classList.add('active');
@@ -685,6 +821,9 @@ async function handleSuccessfulScan(data) {
     document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
 }
 
+/**
+ * QR code scanner ko start karein.
+ */
 function startScanner() {
     stopScanner();
     const video = document.getElementById('scanner-video');
@@ -702,19 +841,27 @@ function startScanner() {
         statusEl.textContent = 'Could not access camera.';
         document.getElementById('select-direct-pay-btn').disabled = false; 
     });
+    
     const tick = () => {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // QR code detect karein
             const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-            if (code && code.data === RAMAZONE_STORE_ID) { handleSuccessfulScan(code.data); return; }
+            if (code && code.data === RAMAZONE_STORE_ID) { 
+                handleSuccessfulScan(code.data); 
+                return; 
+            }
         }
         if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
     };
 }
 
+/**
+ * QR code scanner ko stop karein.
+ */
 function stopScanner() {
     if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
     scannerAnimation = null;
@@ -725,6 +872,11 @@ function stopScanner() {
     }
     document.getElementById('select-direct-pay-btn').disabled = false;
 }
+
+/**
+ * Gallery se QR code image upload ko handle karein.
+ * @param {Event} event - File input change event.
+ */
 function handleQrUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -744,9 +896,13 @@ function handleQrUpload(event) {
     };
     reader.readAsDataURL(file);
 }
-// --- END NEW/UPDATED RMZ Pay Modal Logic ---
+// --- END RMZ Pay Modal Logic ---
 
 
+/**
+ * Password change form ko handle karein.
+ * @param {Event} e - Form submit event.
+ */
 async function handlePasswordChange(e) {
     e.preventDefault();
     const form = document.getElementById('password-change-form');
@@ -780,6 +936,9 @@ async function handlePasswordChange(e) {
     }
 }
 
+/**
+ * App share function.
+ */
 function handleShare() {
     if (!currentUserData) return;
     const { name, lifetimeEarning } = currentUserData;
@@ -787,16 +946,29 @@ function handleShare() {
     if (navigator.share) navigator.share({ text: shareText });
     else navigator.clipboard.writeText(shareText).then(() => showToast("Share message copied to clipboard!"));
 }
+
+/**
+ * WhatsApp support chat kholein.
+ */
 function handleWhatsAppSupport() {
     const whatsappUrl = `https://chat.whatsapp.com/E2HaPJMGCDm7ALrZ8FM1s5?mode=wwt`;
     window.open(whatsappUrl, '_blank');
 }
+
+/**
+ * Referral link (ya default) load par login view dikhayein.
+ */
 function handleReferralLink() {
     toggleView('login-view');
 }
 
 // --- Initialization and Event Listeners ---
+
+/**
+ * Sabhi event listeners ko initialize karein.
+ */
 function initializeAppLogic() {
+    // Auth state listener
     onAuthStateChanged(auth, user => {
         if (user && user.displayName) {
             currentUser = user;
@@ -808,10 +980,11 @@ function initializeAppLogic() {
         }
     });
 
+    // PWA Install button
     setupPwaInstallButton();
     document.getElementById('install-pwa-btn').addEventListener('click', handleInstallClick);
     
-    // Auth listeners
+    // Auth forms
     document.getElementById('login-form').addEventListener('submit', e => {
         e.preventDefault();
         const mobile = document.getElementById('login-mobile').value;
@@ -821,6 +994,7 @@ function initializeAppLogic() {
         signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
             .catch(() => showErrorMessage(errorMsgEl, "Galat mobile ya password."));
     });
+    
     document.getElementById('register-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const registerButton = e.target.querySelector('button');
@@ -893,7 +1067,7 @@ function initializeAppLogic() {
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
     
-    // NEW: Option Button Listeners 
+    // RMZ Pay Option Buttons
     document.getElementById('select-scan-btn').addEventListener('click', showScanView);
     document.getElementById('select-direct-pay-btn').addEventListener('click', showDirectPayView);
     
@@ -911,9 +1085,12 @@ function initializeAppLogic() {
         activeFilter = target.dataset.filter;
         renderUnifiedHistory();
     });
+    
+    // Close modal buttons
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 }
 
-// Global initialization call
+// App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+
 
