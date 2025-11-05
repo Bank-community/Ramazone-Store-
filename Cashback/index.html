@@ -135,7 +135,7 @@
         #wallet-share-btn { cursor: pointer; }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
         
-        /* === PAY DUE BUTTON (MOVED) === */
+        /* === PAY DUE BUTTON (UPDATED) === */
         #pay-due-amount-btn {
             background-color: var(--brand-red);
             color: white;
@@ -147,7 +147,7 @@
             cursor: pointer;
             display: none; /* JS toggles this */
             width: auto;
-            margin-top: 8px; /* Added margin */
+            /* margin-top: 8px; REMOVED */
         }
         /* === END WALLET FOOTER UPDATE === */
 
@@ -242,15 +242,21 @@
         .professional-modal .detail-item .value { font-weight: 600; }
         .professional-modal .action-btn { width: 100%; }
         
-        /* --- TRANSACTION DETAILS MODAL (UPDATED) --- */
+        /* === TRANSACTION DETAILS MODAL (UPDATED CSS) === */
         #transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
-        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; } /* margin-bottom kam kiya */
-        #transaction-details-modal .status-badge { background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px; border-radius: 15px; font-size: 13px; font-weight: 600; }
+        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; }
+        
+        /* Status Badge Fix */
+        #transaction-details-modal .status-badge { 
+            background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px; border-radius: 15px; font-size: 13px; font-weight: 600;
+            display: inline-block; /* Wraps content */
+            width: auto; /* Wraps content */
+        }
         #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
         #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
         
         #transaction-details-modal .detail-item {
-            align-items: flex-start; 
+            align-items: center; /* Vertically center align items */
         }
         #transaction-details-modal .detail-item .value {
             text-align: right;
@@ -258,40 +264,41 @@
             flex-grow: 1;
             word-break: break-all;
         }
-        /* Naya container Transaction ID ke liye */
-        .txn-id-container {
-            text-align: center;
-            margin-top: 20px;
-            margin-bottom: 20px;
+        
+        /* Transaction ID Container (REMOVED) */
+        /* .txn-id-container { ... } */
+
+        /* New Copy Button Style */
+        #details-copy-txn-id-icon-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            line-height: 1;
+            opacity: 0.7;
+            transition: opacity 0.2s;
         }
-        #details-modal-txn-id-box {
-            background-color: var(--bg-page);
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 14px;
-            margin-top: 8px;
-            word-break: break-all; /* Yeh ID ko vertical hone se rokega */
-            text-align: center;
-            border: 1px solid #eee;
+        #details-copy-txn-id-icon-btn:hover {
+            opacity: 1;
         }
-        #details-copy-txn-id-btn {
-            width: 100%;
-            margin-top: 10px;
-            font-weight: 600;
+        #details-copy-txn-id-icon-btn svg {
+            width: 16px;
+            height: 16px;
         }
+
+        /* Updated Modal Actions */
         #transaction-details-modal .modal-actions {
             display: flex;
+            flex-direction: column; /* Stack buttons vertically */
             gap: 10px;
-            margin-top: 10px; /* Margin adjust kiya */
+            margin-top: 20px; 
         }
         #transaction-details-modal .action-btn,
         #transaction-details-modal .btn-secondary {
-            width: auto; 
-            flex: 1; 
+            width: 100%; /* Make buttons full-width */
+            flex: none; 
         }
-        /* --- END UPDATED STYLES --- */
+        /* === END UPDATED STYLES === */
 
         .modal-close-btn { position: absolute; top: 10px; right: 15px; background: transparent; border: none; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; line-height: 1; padding: 0; }
         .modal-close-btn:hover { color: #000; }
@@ -510,19 +517,21 @@
                         <p class="wallet-balance-label">Available Balance</p>
                         <p id="wallet-balance">₹ 0.00</p>
                         
-                        <!-- === WALLET FOOTER (UPDATED) === -->
+                        <!-- === WALLET FOOTER (UPDATED for Pay Now centering) === -->
                         <div class="wallet-footer">
-                            <!-- Item 1: Due Amount (Moved) -->
+                            <!-- Item 1: Due Amount -->
                             <div class="wallet-footer-item">
                                 <p>Due Amount</p>
                                 <span id="due-amount" class="amount" style="color: var(--due-red);">₹0.00</span>
-                                <!-- Pay Now Button (Moved) -->
-                                <button id="pay-due-amount-btn">Pay Now</button>
                             </div>
                             
-                            <!-- Item 2: Share Button -->
-                            <div id="wallet-share-btn" title="Share App">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            <!-- Item 2: Center Column (Share & Pay Now) -->
+                            <div class="wallet-footer-item" style="display: flex; flex-direction: column; align-items: center; justify-content: start; gap: 15px;">
+                                <div id="wallet-share-btn" title="Share App">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                                </div>
+                                <!-- Pay Now Button (Moved to Center) -->
+                                <button id="pay-due-amount-btn">Pay Now</button>
                             </div>
 
                             <!-- Item 3: Total Credit -->
@@ -530,9 +539,6 @@
                                 <p>Total Credit</p>
                                 <span id="credit-limit" class="amount">₹0.00</span>
                             </div>
-                            
-                            <!-- Lifetime Earning Section REMOVED -->
-                            <!-- Due Payment Section REMOVED (merged above) -->
                         </div>
                         <!-- === END WALLET FOOTER UPDATE === -->
 
@@ -818,21 +824,31 @@
                     <span class="label">Time</span>
                     <span class="value" id="details-modal-time"></span>
                 </div>
-                <!-- Transaction ID line yahan se hata di gayi hai -->
+                
+                <!-- === New Transaction ID Row === -->
+                <div class="detail-item">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="details-modal-txn-id-val" style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+                        <span id="details-modal-txn-id-text" style="font-weight: 600; font-size: 13px;"></span>
+                        <button id="details-copy-txn-id-icon-btn" title="Copy ID">
+                            <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 9.5V6.5C20 5.09562 20 4.39341 19.782 3.8733C19.5903 3.41449 19.2438 3.06798 18.785 2.87627C18.2649 2.65827 17.5627 2.65827 16.1582 2.65827H12.8418C11.4373 2.65827 10.7351 2.65827 10.215 2.87627C9.75617 3.06798 9.40966 3.41449 9.21796 3.8733C9 4.39341 9 5.09562 9 6.5V9.5M20 9.5V17.5C20 18.9044 20 19.6066 19.782 20.1267C19.5903 20.5855 19.2438 20.932 18.785 21.1237C18.2649 21.3417 17.5627 21.3417 16.1582 21.3417H12.8418C11.4373 21.3417 10.7351 21.3417 10.215 21.1237C9.75617 20.932 9.40966 20.5855 9.21796 20.1267C9 19.6066 9 18.9044 9 17.5V9.5M20 9.5H9M15 6.5V6C15 5.06812 15 4.60218 14.782 4.23463C14.5903 3.91039 14.2696 3.66699 13.9017 3.5233C13.4846 3.35711 13.0044 3.34199 12.0439 3.31175L11.9561 3.30872C10.9956 3.27848 10.5154 3.26336 10.0983 3.42955C9.73038 3.57322 9.40966 3.81662 9.21796 4.14086C9 4.50831 9 4.97425 9 5.90613V6.5M15 6.5H9M15 6.5H16.1582C17.5627 6.5 18.2649 6.5 18.785 6.71799C19.2438 6.90971 19.5903 7.25621 19.782 7.71502C20 8.23513 20 8.93734 20 10.3418V10.5M4 14.5V17.5C4 18.9044 4 19.6066 4.21796 20.1267C4.40966 20.5855 4.75617 20.932 5.215 21.1237C5.73513 21.3417 6.43734 21.3417 7.84177 21.3417H11.1582C12.5627 21.3417 13.2649 21.3417 13.785 21.1237C14.2438 20.932 14.5903 20.5855 14.782 20.1267C15 19.6066 15 18.9044 15 17.5V14.5C15 13.0956 15 12.3934 14.782 11.8733C14.5903 11.4145 14.2438 11.068 13.785 10.8763C13.2649 10.6583 12.5627 10.6583 11.1582 10.6583H7.84177C6.43734 10.6583 5.73513 10.6583 5.215 10.8763C4.75617 11.068 4.40966 11.4145 4.21796 11.8733C4 12.3934 4 13.0956 4 14.5Z" stroke="#5a647e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </span>
+                </div>
+                <!-- === END New Transaction ID Row === -->
+
             </div>
             
-            <!-- Naya Transaction ID Box (jaisa aapne suggest kiya) -->
-            <div class="txn-id-container">
-                <p class="label" style="font-size: 14px; color: var(--text-secondary);">Transaction ID</p>
-                <div id="details-modal-txn-id-box"></div> <!-- ID yahan dikhegi -->
-                <button id="details-copy-txn-id-btn" class="btn-secondary">Copy ID</button>
-            </div>
+            <!-- (REMOVED) Old Txn ID Box -->
+            <!-- <div class="txn-id-container"> ... </div> -->
 
-            <!-- Modal actions (Download button ke saath) -->
+            <!-- === UPDATED Modal Actions === -->
             <div class="modal-actions">
+                <button id="details-pay-again-btn" class="action-btn" style="background-color: var(--brand-red); display: none;">Pay Again</button>
                 <button id="details-download-receipt-btn" class="btn-secondary">Download</button>
-                <button class="action-btn" data-close-modal style="background-color: var(--text-secondary);">Close</button>
+                <button class="action-btn btn-secondary" data-close-modal>Close</button>
             </div>
+            <!-- === END Modal Actions === -->
         </div>
     </div>
     <!-- === END TRANSACTION DETAILS MODAL === -->
@@ -899,4 +915,5 @@
 
 </body>
 </html>
+
 
