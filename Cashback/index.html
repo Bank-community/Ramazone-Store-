@@ -190,7 +190,7 @@
         .history-item { 
             display: flex; align-items: center; justify-content: space-between; 
             padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
-            cursor: pointer; transition: background-color: 0.2s;
+            cursor: pointer; transition: background-color 0.2s;
         }
         .history-item:hover { background-color: #fafafa; }
         .history-item:last-child { border-bottom: none; }
@@ -241,7 +241,7 @@
         
         /* --- TRANSACTION DETAILS MODAL (UPDATED) --- */
         #transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
-        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; }
+        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; } /* margin-bottom kam kiya */
         #transaction-details-modal .status-badge { background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px; border-radius: 15px; font-size: 13px; font-weight: 600; }
         #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
         #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
@@ -281,7 +281,7 @@
         #transaction-details-modal .modal-actions {
             display: flex;
             gap: 10px;
-            margin-top: 10px; 
+            margin-top: 10px; /* Margin adjust kiya */
         }
         #transaction-details-modal .action-btn,
         #transaction-details-modal .btn-secondary {
@@ -374,6 +374,51 @@
             cursor: not-allowed;
         }
 
+        /* Payment Processing Modal Styles */
+        #payment-processing-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        #payment-processing-modal.active {
+            display: flex;
+        }
+        .payment-processing-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+        }
+        .payment-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: var(--brand-red);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .payment-processing-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .payment-processing-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
 
 #install-pwa-btn {
     width: 100%;
@@ -389,7 +434,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    transition: background-color: 0.3s;
+    transition: background-color 0.3s;
 }
 #install-pwa-btn:hover {
     background-color: #2ecc71;
@@ -504,7 +549,7 @@
         
         <!-- Network View (Hidden but functional) -->
         <div id="network-view" class="view fullscreen-view">
-            <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
+            <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
             <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
             <div class="network-content-container"><div id="downline-content" class="network-tab-content active"><div class="tree-container"><svg id="connector-svg"></svg><div id="tree-root"></div><div id="commission-tags-container"></div></div></div><div id="upline-content" class="network-tab-content"><div id="upline-list"></div></div></div>
             <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
@@ -516,11 +561,25 @@
            <div id="notification-center-list"></div>
         </div>
     </div>
-    
+        
     <!-- === MODALS === -->
 
     <!-- Password Verification Modal -->
-    <div id="password-verification-modal" class="modal-overlay"><div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div></div>
+    <div id="password-verification-modal" class="modal-overlay">
+        <div class="modal-content"> 
+            <h3>Verify Your Identity</h3>
+            <p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p>
+            <div class="form-group">
+                <label for="verification-password">Password</label>
+                <input type="password" id="verification-password" required>
+            </div>
+            <p id="verification-error-msg" class="error-message"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+                <button id="verification-confirm-btn" class="btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Scan and Pay Modal -->
     <div id="scan-pay-modal" class="modal-overlay">
@@ -531,45 +590,127 @@
                 <button id="select-direct-pay-btn" class="rmz-pay-option-btn">RMZ Payment</button>
             </div>
             <div id="qr-scanner-section" style="display: block;">
-                <div id="scanner-container"><video id="scanner-video" playsinline></video></div>
+                <div id="scanner-container">
+                    <video id="scanner-video" playsinline></video>
+                </div>
                 <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
                 <button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button>
                 <p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> 
             </div>
             <div id="payment-form" style="display: none;"> 
                 <p style="text-align:center;">Paying to: <span id="receiver-id-display">Ramazone Store</span></p> 
-                <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> 
+                <div class="form-group">
+                    <label for="payment-amount">Amount (₹)</label>
+                    <input type="number" id="payment-amount" min="5" required>
+                </div> 
                 <p id="payment-error-msg" class="error-message"></p> 
                 <div class="modal-actions">
                     <button type="button" id="rescan-btn" class="btn-secondary" style="display: none;">Scan Again</button>
                     <button id="pay-submit-btn" class="btn-primary">Pay Now</button>
                 </div> 
             </div> 
-            <div id="scan-pay-initial-actions" class="modal-actions" style="margin-top: 10px;"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> 
+            <div id="scan-pay-initial-actions" class="modal-actions" style="margin-top: 10px;">
+                <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+            </div> 
         </div>
     </div>
     
     <!-- Profile Modal -->
-    <div id="profile-modal" class="modal-overlay"><div class="modal-content"><div id="modal-profile-img-container"><img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture"><div id="edit-profile-pic-icon" title="Change Profile Picture"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div></div><h3>My Profile</h3><div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div>
-        <form id="password-change-form" style="margin-top: 20px;"><div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div><div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div><button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p></form><button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button><div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div></div></div>
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-profile-img-container">
+                <img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture">
+                <div id="edit-profile-pic-icon" title="Change Profile Picture">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3>My Profile</h3>
+            <div id="profile-payment-id-container">
+                <p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p>
+                <div id="profile-payment-id" style="text-align:center; font-weight:600;"></div>
+            </div>
+            <form id="password-change-form" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="current-password">Purana Password</label>
+                    <input type="password" id="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Naya Password</label>
+                    <input type="password" id="new-password" required>
+                </div>
+                <button type="submit" id="password-change-btn">Password Badlein</button>
+                <p id="password-change-error-msg" class="error-message"></p>
+            </form>
+            <button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button>
+            <div class="modal-actions" style="margin-top:10px;">
+                <button type="button" class="btn-secondary" data-close-modal>Close</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Full Profile Picture Modal -->
-    <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
+    <div id="profile-picture-modal" class="modal-overlay">
+        <div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;">
+            <button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button>
+            <img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;">
+        </div>
+    </div>
     
     <!-- Payment Success Modal -->
-    <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span class="value" id="success-modal-datetime"></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
+    <div id="payment-success-modal" class="modal-overlay professional-modal">
+        <div class="modal-content">
+            <div class="success-icon">
+                <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2>Payment Successful!</h2>
+            <p class="amount" id="success-modal-amount"></p>
+            <div class="details-box">
+                <div class="detail-item">
+                    <span class="label">Paid to</span>
+                    <span class="value" id="success-modal-receiver"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="success-modal-txn-id"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Date & Time</span>
+                    <span class="value" id="success-modal-datetime"></span>
+                </div>
+            </div>
+            <button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button>
+        </div>
+    </div>
     
     <!-- Payment Failure Modal -->
     <div id="payment-failure-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
             <div class="success-icon" style="background-color: var(--due-red);">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
             </div>
             <h2 style="color: var(--due-red);">Transaction Failed</h2>
             <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 25px;">
                 We could not complete your payment. Please check your network and try again.
             </p>
             <button class="action-btn" data-close-modal style="background-color: var(--text-secondary); color: white;">Close</button>
+        </div>
+    </div>
+
+    <!-- Payment Processing Modal -->
+    <div id="payment-processing-modal">
+        <div class="payment-processing-content">
+            <div class="payment-spinner"></div>
+            <div class="payment-processing-text">Processing Payment</div>
+            <div class="payment-processing-subtext">Please wait while we process your payment...</div>
         </div>
     </div>
 
@@ -644,15 +785,24 @@
 
     <!-- Toast and Popup Notifications -->
     <div id="toast-notification" class="toast-notification"></div>
-    <div id="popup-notification"><div class="popup-notification-content"><div class="popup-notification-icon">🔥</div><div class="popup-notification-text"><div class="title" id="popup-notification-title"></div><div class="percentage" id="popup-notification-percentage"></div></div></div><button id="popup-notification-close">&times;</button></div>
+    <div id="popup-notification">
+        <div class="popup-notification-content">
+            <div class="popup-notification-icon">🔥</div>
+            <div class="popup-notification-text">
+                <div class="title" id="popup-notification-title"></div>
+                <div class="percentage" id="popup-notification-percentage"></div>
+            </div>
+        </div>
+        <button id="popup-notification-close">&times;</button>
+    </div>
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
     
     <!-- 
       =================================================
-      === JAVASCRIPT FILE (CACHE BUSTING KE SAATH) ===
+      === JAVASCRIPT FILE (app.js) KO LINK KIYA GAYA ===
       =================================================
     -->
-    <script type="module" src="app.js?v=2"></script>
+    <script type="module" src="app.js"></script>
 
     <!-- Service Worker ke liye inline script -->
     <script>
@@ -670,5 +820,3 @@
 
 </body>
 </html>
-
-
