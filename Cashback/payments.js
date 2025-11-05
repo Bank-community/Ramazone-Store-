@@ -630,6 +630,7 @@ function initializePaymentListeners() {
     // app.js se core functions lein
     const App = window.RamazoneApp;
     if (!App) {
+        // Yeh error ab nahi aana chahiye, lekin suraksha ke liye rakha hai
         console.error("RamazoneApp core not found!");
         return;
     }
@@ -688,7 +689,20 @@ function initializePaymentListeners() {
     });
 }
 
-// DOM load hone par payment listeners ko initialize karein
-document.addEventListener('DOMContentLoaded', initializePaymentListeners);
+// (FIXED) 'load' event ka intezaar karein taaki HTML buttons (null) na milen.
+// Yeh 'app.js' ke load hone ka bhi intezaar karega.
+function attemptPaymentInit() {
+    if (window.RamazoneApp) {
+        // Ab app.js taiyaar hai, payment listeners ko initialize karein
+        initializePaymentListeners();
+    } else {
+        // Agar app.js abhi load nahi hua hai, 100ms wait karein aur dobara check karein
+        console.log("Waiting for app.js to load...");
+        setTimeout(attemptPaymentInit, 100);
+    }
+}
+
+// Page poori tarah load hone par hi initialization attempt karein
+window.addEventListener('load', attemptPaymentInit);
 
 
