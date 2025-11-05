@@ -264,6 +264,9 @@
             flex-grow: 1;
             word-break: break-all;
         }
+        
+        /* Transaction ID Container (REMOVED) */
+        /* .txn-id-container { ... } */
 
         /* New Copy Button Style */
         #details-copy-txn-id-icon-btn {
@@ -386,34 +389,7 @@
         /* === New Payment View CSS === */
         .payment-view { display: none; }
         .payment-view.active { display: block; animation: fadeIn 0.2s; }
-        
-        /* === NEW P2P Features CSS === */
-        #p2p-recent-contacts-list {
-            display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px;
-        }
-        .recent-contact-item {
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
-            cursor: pointer; width: 60px;
-        }
-        .recent-contact-item img {
-            width: 50px; height: 50px; border-radius: 50%; object-fit: cover;
-            border: 2px solid var(--border-color);
-        }
-        .recent-contact-item span {
-            font-size: 12px; font-weight: 500; color: var(--text-secondary);
-            width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;
-        }
-        #p2p-receiver-info {
-            flex-direction: column; align-items: center; gap: 10px;
-        }
-        #p2p-receiver-pic {
-            width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
-            border: 2px solid var(--border-color);
-        }
-        #p2p-receiver-name-text {
-            font-size: 16px; font-weight: 600;
-        }
-        /* === END New P2P CSS === */
+        /* === End New Payment View CSS === */
 
 
         /* Payment Processing Modal Styles */
@@ -605,12 +581,16 @@
         
         <!-- Network View (Hidden but functional) -->
         <div id="network-view" class="view fullscreen-view">
-            <!-- ... Network View content ... -->
+            <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
+            <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
+            <div class="network-content-container"><div id="downline-content" class="network-tab-content active"><div class="tree-container"><svg id="connector-svg"></svg><div id="tree-root"></div><div id="commission-tags-container"></div></div></div><div id="upline-content" class="network-tab-content"><div id="upline-list"></div></div></div>
+            <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
         </div>
 
         <!-- Notification View -->
         <div id="notification-view" class="view fullscreen-view">
-           <!-- ... Notification View content ... -->
+           <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
+           <div id="notification-center-list"></div>
         </div>
     </div>
         
@@ -618,7 +598,19 @@
 
     <!-- Password Verification Modal -->
     <div id="password-verification-modal" class="modal-overlay">
-        <!-- ... Password Verification Modal content ... -->
+        <div class="modal-content"> 
+            <h3>Verify Your Identity</h3>
+            <p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p>
+            <div class="form-group">
+                <label for="verification-password">Password</label>
+                <input type="password" id="verification-password" required>
+            </div>
+            <p id="verification-error-msg" class="error-message"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+                <button id="verification-confirm-btn" class="btn-primary">Confirm</button>
+            </div>
+        </div>
     </div>
     
     <!-- === Scan and Pay Modal (UPDATED) === -->
@@ -643,24 +635,8 @@
                 <p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> 
             </div>
 
-            <!-- 2. Pay to User (P2P) View (UPDATED) -->
+            <!-- 2. Pay to User (P2P) View -->
             <div id="p2p-pay-view" class="payment-view" style="display: none;">
-                
-                <!-- (NEW) Recent Contacts -->
-                <div id="p2p-recent-contacts-container" style="margin-bottom: 20px; display: none;">
-                    <p style="font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 10px;">Recent Contacts</p>
-                    <div id="p2p-recent-contacts-list" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px;">
-                        <!-- Recent contacts will be injected here by payments.js -->
-                        <!-- Example:
-                        <div class="recent-contact-item">
-                            <img src="https://placehold.co/50x50" alt="User">
-                            <span>Raju Kumar</span>
-                        </div>
-                        -->
-                    </div>
-                </div>
-
-                <!-- Search Form -->
                 <div class="form-group">
                     <label for="p2p-search-id">Enter Receiver's Payment ID</label>
                     <div style="display: flex; gap: 10px;">
@@ -668,26 +644,16 @@
                         <button id="p2p-search-btn" class="btn-secondary" style="width: auto; padding: 0 20px;">Search</button>
                     </div>
                 </div>
-                
-                <!-- (NEW) Div to show search result (receiver's name & pic) -->
-                <div id="p2p-receiver-info" style="text-align: center; margin: 20px 0; display: none; flex-direction: column; align-items: center; gap: 10px;">
-                    <img id="p2p-receiver-pic" src="" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color);">
-                    <p id="p2p-receiver-name-text" style="font-size: 16px; font-weight: 600;">Paying to: <strong></strong></p>
+                <!-- Div to show search result (receiver's name) -->
+                <div id="p2p-receiver-info" style="text-align: center; margin: 15px 0; display: none;">
+                    <!-- JS will fill this, e.g., <p>Paying to: <strong>User Name</strong></p> -->
                 </div>
-                
                 <!-- Payment form, hidden until user is found -->
                 <div id="p2p-payment-form" style="display: none;">
                     <div class="form-group">
                         <label for="p2p-payment-amount">Amount (₹)</label>
                         <input type="number" id="p2p-payment-amount" min="1" required>
                     </div>
-                    
-                    <!-- (NEW) Add Note Field -->
-                    <div class="form-group">
-                        <label for="p2p-payment-note">Add a Note (Optional)</label>
-                        <input type="text" id="p2p-payment-note" placeholder="e.g., For dinner">
-                    </div>
-
                     <p id="p2p-payment-error-msg" class="error-message"></p> 
                     <div class="modal-actions">
                         <button id="p2p-pay-submit-btn" class="btn-primary">Pay Now</button>
@@ -720,27 +686,116 @@
     
     <!-- Profile Modal -->
     <div id="profile-modal" class="modal-overlay">
-        <!-- ... Profile Modal content (with copy button) ... -->
+        <div class="modal-content">
+            <div id="modal-profile-img-container">
+                <img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture">
+                <div id="edit-profile-pic-icon" title="Change Profile Picture">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3>My Profile</h3>
+            
+            <!-- === Payment ID with Copy Button (UPDATED) === -->
+            <div id="profile-payment-id-container">
+                <p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; background-color: var(--bg-page); padding: 8px 12px; border-radius: 8px; margin-top: 5px;">
+                    <span id="profile-payment-id" style="font-weight:600; font-size: 15px; color: var(--text-primary);"></span>
+                    <button id="profile-copy-id-btn" title="Copy ID" style="background:none; border:none; cursor:pointer; padding:0; line-height: 1; color: var(--text-secondary);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- === END Payment ID Update === -->
+
+            <form id="password-change-form" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="current-password">Purana Password</label>
+                    <input type="password" id="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Naya Password</label>
+                    <input type="password" id="new-password" required>
+                </div>
+                <button type="submit" id="password-change-btn">Password Badlein</button>
+                <p id="password-change-error-msg" class="error-message"></p>
+            </form>
+            <button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button>
+            <div class="modal-actions" style="margin-top:10px;">
+                <button type="button" class="btn-secondary" data-close-modal>Close</button>
+            </div>
+        </div>
     </div>
     
     <!-- Full Profile Picture Modal -->
     <div id="profile-picture-modal" class="modal-overlay">
-        <!-- ... Full Profile Picture Modal content ... -->
+        <div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;">
+            <button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button>
+            <img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;">
+        </div>
     </div>
     
     <!-- Payment Success Modal -->
     <div id="payment-success-modal" class="modal-overlay professional-modal">
-        <!-- ... Payment Success Modal content (with download button) ... -->
+        <div class="modal-content">
+            <div class="success-icon">
+                <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2>Payment Successful!</h2>
+            <p class="amount" id="success-modal-amount"></p>
+            <div class="details-box">
+                <div class="detail-item">
+                    <span class="label">Paid to</span>
+                    <span class="value" id="success-modal-receiver"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="success-modal-txn-id"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Date & Time</span>
+                    <span class="value" id="success-modal-datetime"></span>
+                </div>
+            </div>
+            
+            <!-- === UPDATED Modal Actions === -->
+            <div class="modal-actions" style="flex-direction: column; gap: 10px;">
+                 <button id="success-download-receipt-btn" class="action-btn btn-secondary">Download Receipt</button>
+                 <button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button>
+            </div>
+            <!-- === END Updated Modal Actions === -->
+        </div>
     </div>
     
     <!-- Payment Failure Modal -->
     <div id="payment-failure-modal" class="modal-overlay professional-modal">
-        <!-- ... Payment Failure Modal content ... -->
+        <div class="modal-content">
+            <div class="success-icon" style="background-color: var(--due-red);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h2 style="color: var(--due-red);">Transaction Failed</h2>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 25px;">
+                We could not complete your payment. Please check your network and try again.
+            </p>
+            <button class="action-btn" data-close-modal style="background-color: var(--text-secondary); color: white;">Close</button>
+        </div>
     </div>
 
     <!-- Payment Processing Modal -->
     <div id="payment-processing-modal">
-        <!-- ... Payment Processing Modal content ... -->
+        <div class="payment-processing-content">
+            <div class="payment-spinner"></div>
+            <div class="payment-processing-text">Processing Payment</div>
+            <div class="payment-processing-subtext">Please wait while we process your payment...</div>
+        </div>
     </div>
 
     <!-- 
@@ -761,13 +816,6 @@
                     <span class="label">Description</span>
                     <span class="value" id="details-modal-desc"></span>
                 </div>
-                
-                <!-- (NEW) Note Field -->
-                <div class="detail-item" id="details-modal-note-container" style="display: none;">
-                    <span class="label">Note</span>
-                    <span class="value" id="details-modal-note" style="font-style: italic; white-space: pre-wrap; text-align: right;"></span>
-                </div>
-
                 <div class="detail-item">
                     <span class="label">Date</span>
                     <span class="value" id="details-modal-date"></span>
@@ -777,7 +825,7 @@
                     <span class="value" id="details-modal-time"></span>
                 </div>
                 
-                <!-- New Transaction ID Row -->
+                <!-- === New Transaction ID Row === -->
                 <div class="detail-item">
                     <span class="label">Transaction ID</span>
                     <span class="value" id="details-modal-txn-id-val" style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
@@ -787,14 +835,20 @@
                         </button>
                     </span>
                 </div>
+                <!-- === END New Transaction ID Row === -->
+
             </div>
             
-            <!-- UPDATED Modal Actions -->
+            <!-- (REMOVED) Old Txn ID Box -->
+            <!-- <div class="txn-id-container"> ... </div> -->
+
+            <!-- === UPDATED Modal Actions === -->
             <div class="modal-actions">
                 <button id="details-pay-again-btn" class="action-btn" style="background-color: var(--brand-red); display: none;">Pay Again</button>
                 <button id="details-download-receipt-btn" class="btn-secondary">Download</button>
                 <button class="action-btn btn-secondary" data-close-modal>Close</button>
             </div>
+            <!-- === END Modal Actions === -->
         </div>
     </div>
     <!-- === END TRANSACTION DETAILS MODAL === -->
@@ -802,13 +856,38 @@
 
     <!-- Due Payment Modal -->
     <div id="due-payment-modal" class="modal-overlay">
-        <!-- ... Due Payment Modal content ... -->
+        <div class="modal-content" style="text-align: center;">
+            <button class="modal-close-btn" data-close-modal>&times;</button>
+            <h3>Pay Your Due Amount</h3>
+            <div id="due-qr-card" style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; display: inline-block; margin: 20px 0;">
+                <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" style="width: 150px; margin: 0 auto 15px auto; display: block;">
+                <div id="due-qr-code"></div>
+                <p id="due-qr-amount" style="font-size: 24px; font-weight: 700; color: var(--brand-red); margin-top: 10px;"></p>
+                <p id="due-qr-upi-id" style="font-weight: 600; margin-top: 5px; color: var(--text-primary);"></p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Scan using any UPI app</p>
+            </div>
+            <p class="qr-instructions">
+                Payment karne ke baad, kripya transaction ka screenshot
+                <br>
+                hamare WhatsApp number par bhejkar confirm karein.
+            </p>
+            <div class="modal-actions">
+                <button id="download-qr-btn" class="btn-secondary">Download QR Card</button>
+            </div>
+        </div>
     </div>
 
     <!-- Toast and Popup Notifications -->
     <div id="toast-notification" class="toast-notification"></div>
     <div id="popup-notification">
-        <!-- ... Popup Notification content ... -->
+        <div class="popup-notification-content">
+            <div class="popup-notification-icon">🔥</div>
+            <div class="popup-notification-text">
+                <div class="title" id="popup-notification-title"></div>
+                <div class="percentage" id="popup-notification-percentage"></div>
+            </div>
+        </div>
+        <button id="popup-notification-close">&times;</button>
     </div>
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
     
