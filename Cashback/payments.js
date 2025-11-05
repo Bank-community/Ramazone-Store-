@@ -334,6 +334,7 @@ async function doRMZStorePayment(amount) {
                 status: 'completed', 
                 timestamp: serverTimestamp(), 
                 involvedUsers: [currentUserData.uid] // Sirf sender
+                // Yahan 'otherParty' ki zaroorat nahi, kyunki type 'payment' hai
             });
             
             // 4. Admin ke liye transaction record
@@ -391,7 +392,7 @@ function handleP2PPayment() {
 }
 
 /**
- * Asli P2P Payment Transaction (Password verify hone ke baad).
+ * Asli P2P Payment Transaction (Password verify hone ke baad). (UPDATED)
  * @param {number} amount - Pay karne wali amount.
  * @param {object} receiver - Receiver ka user object (jismein uid aur name ho).
  */
@@ -414,7 +415,7 @@ async function doP2PPayment(amount, receiver) {
                 throw new Error("Insufficient balance.");
             }
             
-            // Receiver ka doc check karein (zaroori nahi, lekin aage update ke liye)
+            // Receiver ka doc check karein
             const receiverDoc = await t.get(receiverRef);
             if (!receiverDoc.exists()) {
                 throw new Error("Receiver account does not exist.");
@@ -433,7 +434,12 @@ async function doP2PPayment(amount, receiver) {
                 description: `Paid to ${receiver.name}`, 
                 status: 'completed', 
                 timestamp: serverTimestamp(), 
-                involvedUsers: [sender.uid] // Sirf Sender
+                involvedUsers: [sender.uid], // Sirf Sender
+                // (NEW) "Pay Again" ke liye receiver ki info save karein
+                otherParty: {
+                    name: receiver.name,
+                    mobile: receiver.mobile 
+                }
             });
 
             // 4. Receiver ke liye transaction record (Credit)
@@ -443,7 +449,12 @@ async function doP2PPayment(amount, receiver) {
                 description: `Received from ${sender.name}`, 
                 status: 'completed', 
                 timestamp: serverTimestamp(), 
-                involvedUsers: [receiver.uid] // Sirf Receiver
+                involvedUsers: [receiver.uid], // Sirf Receiver
+                // (NEW) Receiver ki history mein sender ki info
+                otherParty: {
+                    name: sender.name,
+                    mobile: sender.mobile
+                }
             });
         });
         
@@ -477,7 +488,7 @@ function showSuccessModal(type, details) {
     document.getElementById('success-modal-txn-id').textContent = details.txnId;
     document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
     
-    // Download button ke liye naya event listener attach karein
+    // Download button ke liye naya event listener attach karein (cloneNode trick)
     const oldDownloadBtn = document.getElementById('success-download-receipt-btn');
     const newDownloadBtn = oldDownloadBtn.cloneNode(true);
     oldDownloadBtn.parentNode.replaceChild(newDownloadBtn, oldDownloadBtn);
@@ -521,7 +532,7 @@ function handleSuccessReceiptDownload(txnId) {
 
 
 /**
- * Payment module ke event listeners ko initialize karein.
+ * Payment module ke event listeners ko initialize karein. (UPDATED)
  */
 function initializePaymentListeners() {
     // app.js se core functions lein
@@ -560,13 +571,32 @@ function initializePaymentListeners() {
     // --- Password Verification ---
     document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
     
-    // --- Custom Event Listeners ---
+    // --- Custom Event Listeners (app.js se) ---
+    
     // Jab payment modal khule, use reset karein
     document.addEventListener('paymentModalOpened', resetPaymentModal);
-    // Jab modal band ho (app.js se), scanner ko stop karein
+    
+    // Jab modal band ho, scanner ko stop karein
     document.addEventListener('stopScanner', stopScanner);
+    
+    // (NEW) "Pay Again" event ko sunein
+    document.addEventListener('openPaymentTab', (e) => {
+        const detail = e.detail;
+        if (detail.tab === 'rmz-store') {
+            switchPaymentView('rmz-store-pay-view');
+        } else if (detail.tab === 'p2p') {
+            switchPaymentView('p2p-pay-view');
+            if (detail.searchId) {
+                // ID ko search box mein daalein
+                document.getElementById('p2p-search-id').value = detail.searchId;
+                // Auto-search trigger karein
+                handleP2PSearch();
+            }
+        }
+    });
 }
 
 // DOM load hone par payment listeners ko initialize karein
 document.addEventListener('DOMContentLoaded', initializePaymentListeners);
+
 
