@@ -1042,7 +1042,7 @@ function initializeAppLogic() {
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 }
 
-// App ko Dhyan se initialize karein
-document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+// (FIXED) App ko 'load' event par initialize karein, 'DOMContentLoaded' par nahi.
+window.addEventListener('load', fetchConfigsAndInit);
 
 
