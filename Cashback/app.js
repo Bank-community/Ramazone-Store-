@@ -498,6 +498,7 @@ function showTransactionDetails(item) {
     document.getElementById('details-modal-txn-id-box').textContent = item.id;
     
     // Naye buttons ke liye event listeners (purane listeners hatakar)
+    // Purane button ko clone karke naya banao taaki purana event listener nikal jaaye
     const oldCopyBtn = document.getElementById('details-copy-txn-id-btn');
     const newCopyBtn = oldCopyBtn.cloneNode(true); // Clone karke listener hatayein
     oldCopyBtn.parentNode.replaceChild(newCopyBtn, oldCopyBtn);
