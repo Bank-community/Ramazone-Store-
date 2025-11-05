@@ -106,6 +106,9 @@ const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
 const UPI_ID = "princekumar954684-1@okicici"; // Due payment UPI ID
 
+// (NEW) "Pay Again" ke liye current transaction ko store karein
+let currentTransactionForPayAgain = null;
+
 
 // --- Core Functions (Config, UI Toggles) ---
 
@@ -273,7 +276,6 @@ function updateDashboardUI(dbData, authUser) {
     document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
     
     // Lifetime Earning hata diya gaya
-    // document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`; 
     
     document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
     document.getElementById('due-amount').textContent = `₹ ${(dbData.dueAmount || 0).toFixed(2)}`;
@@ -471,6 +473,8 @@ function renderUnifiedHistory() {
         itemDiv.className = 'history-item';
         
         itemDiv.style.cursor = 'pointer'; // Clickable dikhane ke liye
+        
+        // (NEW) Click par item ka data save karein (data attribute se behtar hai)
         itemDiv.addEventListener('click', () => showTransactionDetails(item));
         
         const amount = item.amount || 0;
@@ -504,6 +508,11 @@ function renderUnifiedHistory() {
  * @param {object} item - Click kiya gaya transaction item.
  */
 function showTransactionDetails(item) {
+    // Sabse pehle, global variable aur "Pay Again" button ko reset karein
+    currentTransactionForPayAgain = null;
+    const payAgainBtn = document.getElementById('details-pay-again-btn');
+    payAgainBtn.style.display = 'none';
+
     const amount = item.amount || 0;
     let sign = '';
     let typeClass = '';
@@ -517,8 +526,18 @@ function showTransactionDetails(item) {
     } else if (item.type === 'payment' || item.type === 'due_payment' || item.type === 'p2p_sent') {
         sign = ''; // Amount pehle se negative hai
         typeClass = 'debit';
+        
+        // (NEW) Agar yeh "sent" transaction hai, toh "Pay Again" button dikhayein
+        currentTransactionForPayAgain = item; // Data save karein
+        payAgainBtn.style.display = 'block'; // Button dikhayein
     }
     
+    // (FIX) "Due Payment" par "Pay Again" nahi dikhna chahiye
+    if (item.type === 'due_payment') {
+         currentTransactionForPayAgain = null;
+         payAgainBtn.style.display = 'none';
+    }
+
     const displayAmount = (sign === '+') ? amount.toFixed(2) : Math.abs(amount).toFixed(2);
 
     // Amount aur basic details set karein
@@ -526,29 +545,35 @@ function showTransactionDetails(item) {
     document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
     const statusEl = document.getElementById('details-modal-status');
     statusEl.textContent = item.status || 'Completed';
-    statusEl.className = 'value status-badge';
+    statusEl.className = 'value status-badge'; // CSS class reset karein
     if (item.status) statusEl.classList.add(item.status);
 
     document.getElementById('details-modal-desc').textContent = description;
     document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
     document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
     
-    // Naye Transaction ID box mein ID set karein
-    document.getElementById('details-modal-txn-id-box').textContent = item.id;
+    // Naye Transaction ID Row mein ID set karein
+    document.getElementById('details-modal-txn-id-text').textContent = item.id;
     
-    // Naye buttons ke liye event listeners (purane listeners hatakar)
-    const oldCopyBtn = document.getElementById('details-copy-txn-id-btn');
+    // Naye buttons ke liye event listeners (purane listeners hatakar cloneNode trick se)
+    
+    // 1. Copy Icon Button
+    const oldCopyBtn = document.getElementById('details-copy-txn-id-icon-btn');
     const newCopyBtn = oldCopyBtn.cloneNode(true); // Clone karke listener hatayein
     oldCopyBtn.parentNode.replaceChild(newCopyBtn, oldCopyBtn);
     newCopyBtn.addEventListener('click', () => handleCopyTxnId(item.id));
     
+    // 2. Download Button
     const oldDownloadBtn = document.getElementById('details-download-receipt-btn');
     const newDownloadBtn = oldDownloadBtn.cloneNode(true);
     oldDownloadBtn.parentNode.replaceChild(newDownloadBtn, oldDownloadBtn);
     newDownloadBtn.addEventListener('click', () => handleDownloadReceipt(item.id));
     
+    // 3. "Pay Again" button ka listener pehle se `initializeAppLogic` mein laga hua hai.
+    
     openModal('transaction-details-modal');
 }
+
 
 /**
  * Transaction ID ko clipboard par copy karein.
@@ -568,19 +593,23 @@ function handleCopyTxnId(txnId) {
 }
 
 /**
- * Transaction receipt ka screenshot download karein.
+ * Transaction receipt ka screenshot download karein. (UPDATED)
  * @param {string} txnId - Transaction ID (filename ke liye).
  */
 function handleDownloadReceipt(txnId) {
     const receiptElement = document.querySelector('#transaction-details-modal .modal-content');
+    
+    // Sabhi buttons ko select karein
     const downloadBtn = document.getElementById('details-download-receipt-btn');
     const closeBtn = document.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
-    const copyBtn = document.getElementById('details-copy-txn-id-btn');
+    const payAgainBtn = document.getElementById('details-pay-again-btn'); // (NEW)
+    const copyIconBtn = document.getElementById('details-copy-txn-id-icon-btn'); // (NEW)
     
     // Screenshot ke liye buttons ko chhupayein
     if(downloadBtn) downloadBtn.style.visibility = 'hidden';
     if(closeBtn) closeBtn.style.visibility = 'hidden';
-    if(copyBtn) copyBtn.style.visibility = 'hidden';
+    if(payAgainBtn) payAgainBtn.style.visibility = 'hidden'; // (NEW)
+    if(copyIconBtn) copyIconBtn.style.visibility = 'hidden'; // (NEW)
     
     showToast("Downloading receipt...");
 
@@ -591,10 +620,15 @@ function handleDownloadReceipt(txnId) {
             // Cloned document mein bhi buttons ko chhupayein
             const clonedDownloadBtn = doc.getElementById('details-download-receipt-btn');
             if (clonedDownloadBtn) clonedDownloadBtn.style.visibility = 'hidden';
+            
             const clonedCloseBtn = doc.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
             if (clonedCloseBtn) clonedCloseBtn.style.visibility = 'hidden';
-            const clonedCopyBtn = doc.getElementById('details-copy-txn-id-btn');
-            if (clonedCopyBtn) clonedCopyBtn.style.visibility = 'hidden';
+
+            const clonedPayAgainBtn = doc.getElementById('details-pay-again-btn'); // (NEW)
+            if (clonedPayAgainBtn) clonedPayAgainBtn.style.visibility = 'hidden';
+            
+            const clonedCopyIconBtn = doc.getElementById('details-copy-txn-id-icon-btn'); // (NEW)
+            if (clonedCopyIconBtn) clonedCopyIconBtn.style.visibility = 'hidden';
         }
     }).then(canvas => {
         const link = document.createElement('a');
@@ -610,7 +644,8 @@ function handleDownloadReceipt(txnId) {
         // Buttons ko wapas dikhayein
         if(downloadBtn) downloadBtn.style.visibility = 'visible';
         if(closeBtn) closeBtn.style.visibility = 'visible';
-        if(copyBtn) copyBtn.style.visibility = 'visible';
+        if(payAgainBtn) payAgainBtn.style.visibility = 'visible'; // (NEW)
+        if(copyIconBtn) copyIconBtn.style.visibility = 'visible'; // (NEW)
     });
 }
 // --- END NEW Helpers ---
@@ -760,6 +795,54 @@ function handleShare() {
 }
 
 /**
+ * (NEW) "Pay Again" button click ko handle karein.
+ */
+function handlePayAgain() {
+    if (!currentTransactionForPayAgain) {
+        showToast("Could not find transaction details to pay again.");
+        return;
+    }
+    
+    const item = currentTransactionForPayAgain;
+    
+    // Pehle raseed modal ko band karein
+    closeModal('transaction-details-modal');
+    // Payment modal kholein
+    openModal('scan-pay-modal');
+    
+    if (item.type === 'payment') {
+        // Agar yeh RMZ Store ka payment tha
+        // 'payments.js' ko event bhejein ki RMZ tab khole
+        document.dispatchEvent(new CustomEvent('openPaymentTab', { 
+            detail: { tab: 'rmz-store' } 
+        }));
+        
+    } else if (item.type === 'p2p_sent') {
+        // Agar yeh P2P payment tha
+        // Hamein 'otherParty' data ki zaroorat hogi (jo 'payments.js' save karega)
+        if (!item.otherParty || !item.otherParty.mobile) {
+            showToast("Could not find receiver's ID for this old transaction.");
+            // Sirf P2P tab kholein
+            document.dispatchEvent(new CustomEvent('openPaymentTab', { 
+                detail: { tab: 'p2p' } 
+            }));
+            return;
+        }
+        
+        const paymentId = `${item.otherParty.mobile}@RMZ`;
+        
+        // 'payments.js' ko event bhejein ki P2P tab khole aur ID search kare
+        document.dispatchEvent(new CustomEvent('openPaymentTab', { 
+            detail: { 
+                tab: 'p2p',
+                searchId: paymentId 
+            } 
+        }));
+    }
+}
+
+
+/**
  * WhatsApp support chat kholein.
  */
 function handleWhatsAppSupport() {
@@ -861,8 +944,11 @@ function initializeAppLogic() {
     document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
     document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
     
-    // (NEW) Copy Payment ID button
+    // (UPDATED) Copy Payment ID button (profile modal)
     document.getElementById('profile-copy-id-btn').addEventListener('click', handleCopyPaymentId);
+    
+    // (NEW) "Pay Again" button (transaction details modal)
+    document.getElementById('details-pay-again-btn').addEventListener('click', handlePayAgain);
 
     // Quick Actions Listeners
     document.getElementById('shop-now-btn').addEventListener('click', () => {
@@ -908,4 +994,5 @@ function initializeAppLogic() {
 
 // App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+
 
