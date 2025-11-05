@@ -241,7 +241,7 @@
         
         /* --- TRANSACTION DETAILS MODAL (UPDATED) --- */
         #transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
-        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; } /* margin-bottom kam kiya */
+        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; }
         #transaction-details-modal .status-badge { background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px; border-radius: 15px; font-size: 13px; font-weight: 600; }
         #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
         #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
@@ -281,7 +281,7 @@
         #transaction-details-modal .modal-actions {
             display: flex;
             gap: 10px;
-            margin-top: 10px; /* Margin adjust kiya */
+            margin-top: 10px; 
         }
         #transaction-details-modal .action-btn,
         #transaction-details-modal .btn-secondary {
@@ -649,10 +649,10 @@
     
     <!-- 
       =================================================
-      === JAVASCRIPT FILE (app.js) KO LINK KIYA GAYA ===
+      === JAVASCRIPT FILE (CACHE BUSTING KE SAATH) ===
       =================================================
     -->
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=2"></script>
 
     <!-- Service Worker ke liye inline script -->
     <script>
