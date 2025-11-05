@@ -498,13 +498,13 @@ function renderUnifiedHistory() {
         if (item.type === 'credit_given') title = `Admin Credit`;
         // 'p2p_sent' aur 'p2p_received' ke liye description pehle se set hoga ("Paid to X", "Received from Y")
 
-        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${title}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${displayAmount}</div><span class="status">${item.status || 'Completed'}</span></div>`;
+        itemDiv.innerHTML = `<div class="history-details"><div class"history-info"><div class="title">${title}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${displayAmount}</div><span class="status">${item.status || 'Completed'}</span></div>`;
         listEl.appendChild(itemDiv);
     });
 }
 
 /**
- * Transaction Details ka popup dikhayein (Naye layout ke saath). (UPDATED)
+ * Transaction Details ka popup dikhayein. (UPDATED for Pay Back & Note)
  * @param {object} item - Click kiya gaya transaction item.
  */
 function showTransactionDetails(item) {
@@ -512,6 +512,7 @@ function showTransactionDetails(item) {
     currentTransactionForPayAgain = null;
     const payAgainBtn = document.getElementById('details-pay-again-btn');
     payAgainBtn.style.display = 'none';
+    payAgainBtn.textContent = 'Pay Again'; // Default text
 
     const amount = item.amount || 0;
     let sign = '';
@@ -523,17 +524,26 @@ function showTransactionDetails(item) {
         sign = '+';
         typeClass = 'credit';
         if (item.type === 'credit_given') description = "Credit received from Ramazone Admin";
-    } else if (item.type === 'payment' || item.type === 'due_payment' || item.type === 'p2p_sent') {
+        
+        // (NEW) Agar yeh P2P received hai, toh "Pay Back" button dikhayein
+        if (item.type === 'p2p_received') {
+            currentTransactionForPayAgain = item; // Data save karein
+            payAgainBtn.textContent = 'Pay Back'; // Button text badlein
+            payAgainBtn.style.display = 'block'; // Button dikhayein
+        }
+
+    } else if (item.type === 'payment' || item.type === 'p2p_sent') {
         sign = ''; // Amount pehle se negative hai
         typeClass = 'debit';
         
         // (NEW) Agar yeh "sent" transaction hai, toh "Pay Again" button dikhayein
         currentTransactionForPayAgain = item; // Data save karein
+        payAgainBtn.textContent = 'Pay Again'; // Default text
         payAgainBtn.style.display = 'block'; // Button dikhayein
     }
     
-    // (FIX) "Due Payment" par "Pay Again" nahi dikhna chahiye
-    if (item.type === 'due_payment') {
+    // (FIX) "Due Payment" aur "Admin Credit" par "Pay" button nahi dikhna chahiye
+    if (item.type === 'due_payment' || item.type === 'credit_given') {
          currentTransactionForPayAgain = null;
          payAgainBtn.style.display = 'none';
     }
@@ -552,6 +562,17 @@ function showTransactionDetails(item) {
     document.getElementById('details-modal-date').textContent = item.date ? item.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
     document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
     
+    // (NEW) Note ko handle karein
+    const noteContainer = document.getElementById('details-modal-note-container');
+    const noteEl = document.getElementById('details-modal-note');
+    if (item.note && item.note.trim() !== '') {
+        noteEl.textContent = item.note;
+        noteContainer.style.display = 'flex'; // 'flex' kyunki yeh detail-item hai
+    } else {
+        noteContainer.style.display = 'none';
+        noteEl.textContent = '';
+    }
+
     // Naye Transaction ID Row mein ID set karein
     document.getElementById('details-modal-txn-id-text').textContent = item.id;
     
@@ -569,7 +590,7 @@ function showTransactionDetails(item) {
     oldDownloadBtn.parentNode.replaceChild(newDownloadBtn, oldDownloadBtn);
     newDownloadBtn.addEventListener('click', () => handleDownloadReceipt(item.id));
     
-    // 3. "Pay Again" button ka listener pehle se `initializeAppLogic` mein laga hua hai.
+    // 3. "Pay Again" / "Pay Back" button ka listener pehle se `initializeAppLogic` mein laga hua hai.
     
     openModal('transaction-details-modal');
 }
@@ -593,23 +614,25 @@ function handleCopyTxnId(txnId) {
 }
 
 /**
- * Transaction receipt ka screenshot download karein. (UPDATED)
+ * Transaction receipt ka screenshot download karein. (UPDATED for Note)
  * @param {string} txnId - Transaction ID (filename ke liye).
  */
 function handleDownloadReceipt(txnId) {
     const receiptElement = document.querySelector('#transaction-details-modal .modal-content');
     
-    // Sabhi buttons ko select karein
+    // Sabhi buttons aur note container ko select karein
     const downloadBtn = document.getElementById('details-download-receipt-btn');
     const closeBtn = document.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
-    const payAgainBtn = document.getElementById('details-pay-again-btn'); // (NEW)
-    const copyIconBtn = document.getElementById('details-copy-txn-id-icon-btn'); // (NEW)
+    const payAgainBtn = document.getElementById('details-pay-again-btn');
+    const copyIconBtn = document.getElementById('details-copy-txn-id-icon-btn');
+    const noteContainer = document.getElementById('details-modal-note-container'); // (NEW)
     
     // Screenshot ke liye buttons ko chhupayein
     if(downloadBtn) downloadBtn.style.visibility = 'hidden';
     if(closeBtn) closeBtn.style.visibility = 'hidden';
-    if(payAgainBtn) payAgainBtn.style.visibility = 'hidden'; // (NEW)
-    if(copyIconBtn) copyIconBtn.style.visibility = 'hidden'; // (NEW)
+    if(payAgainBtn) payAgainBtn.style.visibility = 'hidden';
+    if(copyIconBtn) copyIconBtn.style.visibility = 'hidden';
+    if(noteContainer) noteContainer.style.visibility = (noteContainer.style.display === 'none' ? 'none' : 'hidden'); // (NEW)
     
     showToast("Downloading receipt...");
 
@@ -624,11 +647,14 @@ function handleDownloadReceipt(txnId) {
             const clonedCloseBtn = doc.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
             if (clonedCloseBtn) clonedCloseBtn.style.visibility = 'hidden';
 
-            const clonedPayAgainBtn = doc.getElementById('details-pay-again-btn'); // (NEW)
+            const clonedPayAgainBtn = doc.getElementById('details-pay-again-btn');
             if (clonedPayAgainBtn) clonedPayAgainBtn.style.visibility = 'hidden';
             
-            const clonedCopyIconBtn = doc.getElementById('details-copy-txn-id-icon-btn'); // (NEW)
+            const clonedCopyIconBtn = doc.getElementById('details-copy-txn-id-icon-btn');
             if (clonedCopyIconBtn) clonedCopyIconBtn.style.visibility = 'hidden';
+            
+            const clonedNoteContainer = doc.getElementById('details-modal-note-container'); // (NEW)
+            if (clonedNoteContainer) clonedNoteContainer.style.visibility = (clonedNoteContainer.style.display === 'none' ? 'none' : 'hidden');
         }
     }).then(canvas => {
         const link = document.createElement('a');
@@ -644,8 +670,9 @@ function handleDownloadReceipt(txnId) {
         // Buttons ko wapas dikhayein
         if(downloadBtn) downloadBtn.style.visibility = 'visible';
         if(closeBtn) closeBtn.style.visibility = 'visible';
-        if(payAgainBtn) payAgainBtn.style.visibility = 'visible'; // (NEW)
-        if(copyIconBtn) copyIconBtn.style.visibility = 'visible'; // (NEW)
+        if(payAgainBtn) payAgainBtn.style.visibility = 'visible';
+        if(copyIconBtn) copyIconBtn.style.visibility = 'visible';
+        if(noteContainer) noteContainer.style.visibility = 'visible'; // (NEW)
     });
 }
 // --- END NEW Helpers ---
@@ -795,7 +822,7 @@ function handleShare() {
 }
 
 /**
- * (NEW) "Pay Again" button click ko handle karein.
+ * "Pay Again" / "Pay Back" button click ko handle karein. (UPDATED)
  */
 function handlePayAgain() {
     if (!currentTransactionForPayAgain) {
@@ -817,11 +844,12 @@ function handlePayAgain() {
             detail: { tab: 'rmz-store' } 
         }));
         
-    } else if (item.type === 'p2p_sent') {
-        // Agar yeh P2P payment tha
+    } else if (item.type === 'p2p_sent' || item.type === 'p2p_received') {
+        // (NEW) Dono cases ko handle karein (Pay Again ya Pay Back)
         // Hamein 'otherParty' data ki zaroorat hogi (jo 'payments.js' save karega)
         if (!item.otherParty || !item.otherParty.mobile) {
-            showToast("Could not find receiver's ID for this old transaction.");
+            // Agar purana transaction hai jismein 'otherParty' save nahi hai
+            showToast("Could not find ID for this old transaction.");
             // Sirf P2P tab kholein
             document.dispatchEvent(new CustomEvent('openPaymentTab', { 
                 detail: { tab: 'p2p' } 
@@ -917,7 +945,8 @@ function initializeAppLogic() {
                 uid: tempUser.uid, name, mobile, password, 
                 wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
                 referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0,
-                lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
+                lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0,
+                profilePictureUrl: '' // (NEW) Profile pic ke liye khaali string
             };
             await setDoc(doc(db, 'users', tempUser.uid), newUserDoc);
             await signOut(auth);
@@ -947,7 +976,7 @@ function initializeAppLogic() {
     // (UPDATED) Copy Payment ID button (profile modal)
     document.getElementById('profile-copy-id-btn').addEventListener('click', handleCopyPaymentId);
     
-    // (NEW) "Pay Again" button (transaction details modal)
+    // (UPDATED) "Pay Again" / "Pay Back" button (transaction details modal)
     document.getElementById('details-pay-again-btn').addEventListener('click', handlePayAgain);
 
     // Quick Actions Listeners
