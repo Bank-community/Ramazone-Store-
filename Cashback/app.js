@@ -99,6 +99,7 @@ let allTransactions = [];
 let allNotifications = []; // Bheje gaye notifications
 let activeFilter = 'all';
 let pendingAction = null; // Password verification ke baad run hone wala action
+let p2pReceiverData = null; // === NEW: P2P payment ke receiver ka data store karne ke liye
 let isUplineLoaded = false;
 let popupTimeout = null;
 let initialPopupShown = false;
@@ -175,6 +176,7 @@ const closeModal = (modalId) => {
     if (modal) modal.classList.remove('active');
     if (modalId === 'scan-pay-modal') {
         stopScanner(); // Agar scan modal hai, toh scanner band karein
+        resetP2PForm(); // === NEW: P2P form ko reset karein
     }
 };
 
@@ -201,7 +203,8 @@ function attachRealtimeListeners(user) {
     detachAllListeners(); // Purane listeners ko hatayein
     const uid = user.uid;
     
-    const validTypes = ['payment', 'due_payment', 'credit_given']; 
+    // === UPDATED: P2P types ko include kiya gaya ===
+    const validTypes = ['payment', 'due_payment', 'credit_given', 'p2p_payment', 'p2p_received']; 
 
     const listeners = [
         // User document listener
@@ -255,7 +258,8 @@ function updateDashboardUI(dbData, authUser) {
     document.getElementById('wallet-user-name').textContent = authUser.displayName;
     document.getElementById('modal-profile-img').src = profilePicUrl;
     document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
-    document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+    // === UPDATED: Lifetime Earning hataya gaya ===
+    // document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
     document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
     document.getElementById('due-amount').textContent = `₹ ${(dbData.dueAmount || 0).toFixed(2)}`;
     document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
@@ -400,26 +404,29 @@ function renderUnifiedHistory() {
 
     const filterLabels = {
         all: "All Transactions",
-        payment: "Total Payments",
+        payment: "Total Payments", // === UPDATED: Isme P2P payments bhi shamil honge
         due_payment: "Total Due Paid",
-        credit_given: "Total Credit Received"
+        credit_given: "Total Credit Received" // === UPDATED: Isme P2P received bhi shamil honge
     };
 
+    // === UPDATED: P2P types ko filter logic mein add kiya gaya ===
     const itemsToRender = combinedHistory.filter(item => {
         if (activeFilter === 'all') return true;
-        if (activeFilter === 'payment') return item.type === 'payment';
+        if (activeFilter === 'payment') return item.type === 'payment' || item.type === 'p2p_payment';
         if (activeFilter === 'due_payment') return item.type === 'due_payment';
-        if (activeFilter === 'credit_given') return item.type === 'credit_given';
+        if (activeFilter === 'credit_given') return item.type === 'credit_given' || item.type === 'p2p_received';
         return false;
     });
     
     let totalAmount = 0;
     itemsToRender.forEach(item => {
         const amount = item.amount || 0;
+        // Logic change: amount positive/negative pehle se set hai
         totalAmount += amount; 
     });
 
     summaryLabelEl.textContent = `${filterLabels[activeFilter]}:`;
+    // === UPDATED: Total amount ab seedha use hoga ===
     summaryAmountEl.textContent = `₹ ${totalAmount.toFixed(2)}`;
 
     if (totalAmount > 0) {
@@ -435,6 +442,7 @@ function renderUnifiedHistory() {
         return;
     }
 
+    // === UPDATED: P2P types ke liye rendering logic ===
     itemsToRender.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
@@ -443,22 +451,16 @@ function renderUnifiedHistory() {
         itemDiv.addEventListener('click', () => showTransactionDetails(item));
         
         const amount = item.amount || 0;
-        let sign = '+';
-        let typeClass = 'credit';
+        let sign = amount >= 0 ? '+' : '-';
+        let typeClass = amount >= 0 ? 'credit' : 'debit';
         
-        if(item.type === 'payment' || item.type === 'due_payment') { 
-            typeClass = 'debit'; 
-            sign = '-'; 
-        } else if (item.type === 'credit_given') {
-            typeClass = 'credit'; 
-            sign = '+';
-        }
-
         const displayAmount = Math.abs(amount).toFixed(2);
         if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
         
-        const title = item.type === 'credit_given' ? `Admin Credit` : item.description;
-
+        let title = item.description; // Description ab seedha use hoga
+        if (item.type === 'credit_given') title = 'Admin Credit';
+        if (item.type === 'payment') title = 'Paid to Ramazone Store';
+        
         itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${title}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${displayAmount}</div><span class="status">${item.status || 'Completed'}</span></div>`;
         listEl.appendChild(itemDiv);
     });
@@ -470,17 +472,15 @@ function renderUnifiedHistory() {
  */
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
-    let sign = '+', typeClass = 'credit';
+    let sign = amount >= 0 ? '+' : '-';
+    let typeClass = amount >= 0 ? 'credit' : 'debit';
     let description = item.description;
-    
-    if (item.type === 'payment' || item.type === 'due_payment') { 
-        sign = '-'; 
-        typeClass = 'debit'; 
-    } else if (item.type === 'credit_given') {
-        sign = '+';
-        typeClass = 'credit';
-        description = "Credit received from Ramazone Admin";
-    }
+
+    // === UPDATED: Description ko behtar banaya gaya ===
+    if (item.type === 'payment') description = 'Paid to Ramazone Store';
+    else if (item.type === 'credit_given') description = 'Credit received from Ramazone Admin';
+    else if (item.type === 'due_payment') description = 'Due amount paid to Ramazone';
+    // p2p_payment aur p2p_received ke descriptions pehle se set hain
     
     // Amount aur basic details set karein
     document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
@@ -525,6 +525,18 @@ function handleCopyTxnId(txnId) {
     }, (err) => {
         showToast("Failed to copy ID.");
         console.error('Failed to copy text: ', err);
+    });
+}
+
+// === NEW: Profile Payment ID copy karne ke liye function ===
+function handleCopyPaymentId() {
+    if (!currentUserData) return;
+    const paymentId = `${currentUserData.mobile}@RMZ`;
+    navigator.clipboard.writeText(paymentId).then(() => {
+        showToast("Payment ID Copied!");
+    }).catch(err => {
+        showToast("Failed to copy ID.");
+        console.error('Failed to copy Payment ID: ', err);
     });
 }
 
@@ -690,34 +702,39 @@ async function handleVerificationConfirm() {
 }
 
 /**
- * Payment process ko handle karein (IMPROVED LOGIC).
+ * === UPDATED: Payment to Ramazone Store ===
  */
-async function handlePayment() {
-    const amount = parseFloat(document.getElementById('payment-amount').value);
-    const errorMsg = document.getElementById('payment-error-msg');
+async function handleStorePayment() {
+    const amountInput = document.getElementById('store-payment-amount');
+    const amount = parseFloat(amountInput.value);
+    const errorMsg = document.getElementById('store-payment-error-msg');
     hideErrorMessage(errorMsg);
-    if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
-    if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
+
+    if (isNaN(amount) || amount < 5) {
+        return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
+    }
+    if (currentUserData.wallet < amount) {
+        return showErrorMessage(errorMsg, "Insufficient balance.");
+    }
     
-    // Show processing modal
     document.getElementById('payment-processing-modal').classList.add('active');
     
     let newTxnRef = doc(collection(db, "transactions")); 
     let paymentSuccess = false;
     
     try {
-        // Firebase Transaction shuru karein
         await runTransaction(db, async (t) => {
             const userRef = doc(db, 'users', currentUserData.uid);
             const configRef = doc(db, 'app_settings', 'config');
             
-            // 1. User ka wallet update (debit)
-            t.update(userRef, { wallet: increment(-amount) });
+            const userDoc = await t.get(userRef);
+            if (!userDoc.exists() || userDoc.data().wallet < amount) {
+                throw new Error("Insufficient balance.");
+            }
             
-            // 2. Admin ka wallet update (credit)
+            t.update(userRef, { wallet: increment(-amount) });
             t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
             
-            // 3. User ke liye transaction record
             t.set(newTxnRef, { 
                 type: 'payment', 
                 amount: -amount, // User ke liye negative
@@ -727,9 +744,8 @@ async function handlePayment() {
                 involvedUsers: [currentUserData.uid] 
             });
             
-            // 4. Admin ke liye transaction record
             t.set(doc(collection(db, "rmz_wallet_transactions")), { 
-                amount, // Admin ke liye positive
+                amount, 
                 senderId: currentUserData.uid, 
                 senderName: currentUserData.name, 
                 senderMobile: currentUserData.mobile, 
@@ -739,12 +755,8 @@ async function handlePayment() {
             paymentSuccess = true;
         });
         
-        // --- SUCCESS LOGIC ---
         if (paymentSuccess) {
-            // Hide processing modal
             document.getElementById('payment-processing-modal').classList.remove('active');
-            
-            // Close scan-pay modal
             closeModal('scan-pay-modal');
             
             const now = new Date();
@@ -753,61 +765,203 @@ async function handlePayment() {
             document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
             document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
             
-            // Show success modal
             openModal('payment-success-modal');
+            amountInput.value = '';
         }
     } catch (error) { 
-        // --- FAILURE LOGIC ---
-        console.error("Payment transaction failed during Firestore transaction:", error);
-        
-        // Hide processing modal
+        console.error("Store Payment transaction failed:", error);
         document.getElementById('payment-processing-modal').classList.remove('active');
-        
-        // Show failure modal with specific error message
-        document.getElementById('payment-failure-modal').querySelector('.modal-content p').textContent = 
-            error.message || "We could not complete your payment. Please check your network and try again.";
-        
-        // Show failure modal
-        openModal('payment-failure-modal');
+        showErrorMessage(errorMsg, error.message || "Payment failed. Please try again.");
+        // Failure modal dikhana yahan optional hai, error message bhi kaafi hai
+        // openModal('payment-failure-modal'); 
     }
 }
-// --- END handlePayment FIX ---
+// --- END handleStorePayment ---
 
 
-// --- RMZ Pay Modal (Scan/Direct) Logic ---
+// --- === NEW: P2P Payment (Wallet Transfer) Logic === ---
 
 /**
+ * RMZ Pay Modal (Scan/Direct) Logic
  * Scan QR view dikhayein.
  */
 function showScanView() {
     stopScanner(); // Pehle scanner band karein
     document.getElementById('qr-scanner-section').style.display = 'block';
-    document.getElementById('payment-form').style.display = 'none';
+    document.getElementById('store-payment-form').style.display = 'none';
+    document.getElementById('p2p-payment-section').style.display = 'none';
+    
     document.getElementById('select-scan-btn').classList.add('active');
     document.getElementById('select-direct-pay-btn').classList.remove('active');
-    document.getElementById('rescan-btn').style.display = 'none'; 
-    document.getElementById('receiver-id-display').textContent = '...'; 
-    document.getElementById('payment-amount').value = '';
-    hideErrorMessage(document.getElementById('payment-error-msg'));
+    
+    document.getElementById('store-payment-amount').value = '';
+    hideErrorMessage(document.getElementById('store-payment-error-msg'));
     startScanner(); // Scanner chalu karein
 }
 
 /**
- * Direct Payment (bina scan) view dikhayein.
+ * P2P (Direct Payment) view dikhayein.
  */
-function showDirectPayView() {
+function showP2PView() {
     stopScanner(); // Scanner band karein
     document.getElementById('qr-scanner-section').style.display = 'none';
-    document.getElementById('payment-form').style.display = 'block';
+    document.getElementById('store-payment-form').style.display = 'none';
+    document.getElementById('p2p-payment-section').style.display = 'block';
+
     document.getElementById('select-direct-pay-btn').classList.add('active');
     document.getElementById('select-scan-btn').classList.remove('active');
     
-    document.getElementById('receiver-id-display').textContent = 'Ramazone Store';
-    document.getElementById('rescan-btn').style.display = 'none'; 
-    
-    document.getElementById('payment-amount').value = '';
-    hideErrorMessage(document.getElementById('payment-error-msg'));
+    resetP2PForm(); // Form ko initial state mein reset karein
 }
+
+/**
+ * P2P form ko reset karein (search state mein).
+ */
+function resetP2PForm() {
+    p2pReceiverData = null;
+    document.getElementById('p2p-user-search-section').style.display = 'block';
+    document.getElementById('p2p-user-payment-section').style.display = 'none';
+    document.getElementById('p2p-payment-id-input').value = '';
+    document.getElementById('p2p-payment-amount').value = '';
+    document.getElementById('p2p-receiver-name-display').textContent = '';
+    hideErrorMessage(document.getElementById('p2p-user-search-error-msg'));
+    hideErrorMessage(document.getElementById('p2p-payment-error-msg'));
+}
+
+/**
+ * Payment ID se user ko search karein.
+ */
+async function searchUserByPaymentID() {
+    const paymentIdInput = document.getElementById('p2p-payment-id-input').value.trim();
+    const errorMsgEl = document.getElementById('p2p-user-search-error-msg');
+    const searchBtn = document.getElementById('p2p-search-user-btn');
+    hideErrorMessage(errorMsgEl);
+
+    if (!paymentIdInput.endsWith('@RMZ')) {
+        return showErrorMessage(errorMsgEl, "Invalid Payment ID. ID should end with @RMZ");
+    }
+    
+    const mobile = paymentIdInput.split('@RMZ')[0];
+    if (mobile === currentUserData.mobile) {
+        return showErrorMessage(errorMsgEl, "You cannot send money to yourself.");
+    }
+    
+    searchBtn.disabled = true; searchBtn.textContent = 'Searching...';
+    
+    try {
+        const q = query(collection(db, "users"), where("mobile", "==", mobile));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            showErrorMessage(errorMsgEl, "Receiver not found.");
+            p2pReceiverData = null;
+        } else {
+            const receiverDoc = querySnapshot.docs[0];
+            p2pReceiverData = { uid: receiverDoc.id, ...receiverDoc.data() };
+            
+            document.getElementById('p2p-receiver-name-display').textContent = p2pReceiverData.name;
+            document.getElementById('p2p-user-search-section').style.display = 'none';
+            document.getElementById('p2p-user-payment-section').style.display = 'block';
+        }
+    } catch (error) {
+        console.error("Error searching user:", error);
+        showErrorMessage(errorMsgEl, "Error finding user. Please try again.");
+        p2pReceiverData = null;
+    } finally {
+        searchBtn.disabled = false; searchBtn.textContent = 'Search Receiver';
+    }
+}
+
+/**
+ * P2P (User-to-User) payment ko handle karein.
+ */
+async function handleP2PPayment() {
+    const amountInput = document.getElementById('p2p-payment-amount');
+    const amount = parseFloat(amountInput.value);
+    const errorMsgEl = document.getElementById('p2p-payment-error-msg');
+    hideErrorMessage(errorMsgEl);
+
+    if (isNaN(amount) || amount < 5) {
+        return showErrorMessage(errorMsgEl, "Minimum payment is ₹5.");
+    }
+    if (currentUserData.wallet < amount) {
+        return showErrorMessage(errorMsgEl, "Insufficient balance.");
+    }
+    if (!p2pReceiverData) {
+        return showErrorMessage(errorMsgEl, "No receiver selected. Please search again.");
+    }
+
+    document.getElementById('payment-processing-modal').classList.add('active');
+    
+    const senderRef = doc(db, 'users', currentUser.uid);
+    const receiverRef = doc(db, 'users', p2pReceiverData.uid);
+    let paymentSuccess = false;
+    let newTxnId = doc(collection(db, "transactions")).id; // ID pehle generate karein
+
+    try {
+        await runTransaction(db, async (t) => {
+            const senderDoc = await t.get(senderRef);
+            if (!senderDoc.exists() || senderDoc.data().wallet < amount) {
+                throw new Error("Insufficient balance.");
+            }
+            
+            // 1. Sender ka wallet update (debit)
+            t.update(senderRef, { wallet: increment(-amount) });
+            
+            // 2. Receiver ka wallet update (credit)
+            t.update(receiverRef, { wallet: increment(amount) });
+            
+            const timestamp = serverTimestamp();
+            const senderTxnData = {
+                type: 'p2p_payment',
+                amount: -amount,
+                description: `Paid to ${p2pReceiverData.name}`,
+                status: 'completed',
+                timestamp: timestamp,
+                involvedUsers: [currentUser.uid, p2pReceiverData.uid],
+                receiverName: p2pReceiverData.name,
+                senderName: currentUserData.name
+            };
+            // 3. Sender ke liye transaction record (same ID se)
+            t.set(doc(db, "transactions", newTxnId), senderTxnData);
+            
+            const receiverTxnData = {
+                type: 'p2p_received',
+                amount: amount,
+                description: `Received from ${currentUserData.name}`,
+                status: 'completed',
+                timestamp: timestamp,
+                involvedUsers: [p2pReceiverData.uid, currentUser.uid],
+                receiverName: p2pReceiverData.name,
+                senderName: currentUserData.name
+            };
+            // 4. Receiver ke liye transaction record (ALAG ID se, but 'involvedUsers' se link hoga)
+            t.set(doc(collection(db, "transactions")), receiverTxnData);
+            
+            paymentSuccess = true;
+        });
+
+        if (paymentSuccess) {
+            document.getElementById('payment-processing-modal').classList.remove('active');
+            closeModal('scan-pay-modal');
+            
+            const now = new Date();
+            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
+            document.getElementById('success-modal-receiver').textContent = p2pReceiverData.name;
+            document.getElementById('success-modal-txn-id').textContent = newTxnId;
+            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+            
+            openModal('payment-success-modal');
+            resetP2PForm();
+        }
+    } catch (error) {
+        console.error("P2P Payment transaction failed:", error);
+        document.getElementById('payment-processing-modal').classList.remove('active');
+        showErrorMessage(errorMsgEl, error.message || "Payment failed. Please try again.");
+    }
+}
+// --- === END P2P Logic === ---
+
 
 /**
  * Dashboard par "RMZ Pay" button click ko handle karein.
@@ -827,19 +981,22 @@ async function handleSuccessfulScan(data) {
     // Sirf Ramazone Store ka QR hi accept karein
     if (data !== RAMAZONE_STORE_ID) {
         showToast("Invalid QR code scanned. Only Ramazone Store QR is accepted.");
-        startScanner(); // Scanning jaari rakhein
+        // Scanning jaari rakhein (ya restart karein)
+        // Note: startScanner() dobara call karne se loop ban sakta hai, toast dikhana behtar hai.
         return;
     }
     
     stopScanner();
     
-    // Scan ke baad payment form dikhayein
+    // === UPDATED: Scan ke baad 'store payment' form dikhayein ===
     document.getElementById('qr-scanner-section').style.display = 'none';
-    document.getElementById('payment-form').style.display = 'block';
+    document.getElementById('p2p-payment-section').style.display = 'none';
+    document.getElementById('store-payment-form').style.display = 'block';
+    
     document.getElementById('select-scan-btn').classList.add('active');
     document.getElementById('select-direct-pay-btn').classList.remove('active');
-    document.getElementById('receiver-id-display').textContent = 'Ramazone Store'; 
-    document.getElementById('rescan-btn').style.display = 'block'; 
+    
+    document.getElementById('store-receiver-id-display').textContent = 'Ramazone Store'; 
     document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
 }
 
@@ -874,7 +1031,7 @@ function startScanner() {
             const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
             if (code && code.data === RAMAZONE_STORE_ID) { 
                 handleSuccessfulScan(code.data); 
-                return; 
+                return; // Scan safal hone par loop rokein
             }
         }
         if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
@@ -917,6 +1074,7 @@ function handleQrUpload(event) {
         image.src = e.target.result;
     };
     reader.readAsDataURL(file);
+    event.target.value = ''; // Input ko reset karein
 }
 // --- END RMZ Pay Modal Logic ---
 
@@ -963,8 +1121,8 @@ async function handlePasswordChange(e) {
  */
 function handleShare() {
     if (!currentUserData) return;
-    const { name, lifetimeEarning } = currentUserData;
-    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna!\n\nAbhi app download karein: ${window.location.origin}${window.location.pathname}`;
+    const { name, wallet } = currentUserData; // Lifetime earning se wallet mein change kiya
+    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app use kar raha/rahi hoon aur zabardast bachat kar raha/rahi hoon! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna!\n\nAbhi app download karein: ${window.location.origin}${window.location.pathname}`;
     if (navigator.share) navigator.share({ text: shareText });
     else navigator.clipboard.writeText(shareText).then(() => showToast("Share message copied to clipboard!"));
 }
@@ -1012,9 +1170,13 @@ function initializeAppLogic() {
         const mobile = document.getElementById('login-mobile').value;
         const password = document.getElementById('login-password').value;
         const errorMsgEl = document.getElementById('login-error-msg');
+        const loginBtn = e.target.querySelector('button');
         hideErrorMessage(errorMsgEl);
+        loginBtn.disabled = true; loginBtn.textContent = "Logging in...";
+        
         signInWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password)
-            .catch(() => showErrorMessage(errorMsgEl, "Galat mobile ya password."));
+            .catch(() => showErrorMessage(errorMsgEl, "Galat mobile ya password."))
+            .finally(() => { loginBtn.disabled = false; loginBtn.textContent = "Login"; });
     });
     
     document.getElementById('register-form').addEventListener('submit', async (e) => {
@@ -1025,6 +1187,8 @@ function initializeAppLogic() {
         const name = document.getElementById('reg-name').value.trim();
         const mobile = document.getElementById('reg-mobile').value.trim();
         const password = document.getElementById('reg-password').value;
+        
+        registerButton.disabled = true; registerButton.textContent = 'Registering...';
 
         if (!name || !mobile || password.length < 6) {
             showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
@@ -1070,6 +1234,8 @@ function initializeAppLogic() {
     document.getElementById('edit-profile-pic-icon').addEventListener('click', () => document.getElementById('profile-picture-input').click());
     document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
     document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
+    // === NEW: Copy Payment ID button listener ===
+    document.getElementById('copy-payment-id-btn').addEventListener('click', handleCopyPaymentId);
     
     // Quick Actions Listeners
     document.getElementById('shop-now-btn').addEventListener('click', () => {
@@ -1083,15 +1249,26 @@ function initializeAppLogic() {
     document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
     
-    // Payment/QR Listeners
-    document.getElementById('rescan-btn').addEventListener('click', showScanView);
-    document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
+    // Payment/QR Listeners (UPDATED)
+    // === UPDATED: Store Payment button + Password Verification ===
+    document.getElementById('store-pay-submit-btn').addEventListener('click', () => {
+        verifyPasswordAndExecute(handleStorePayment);
+    });
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
     
     // RMZ Pay Option Buttons
     document.getElementById('select-scan-btn').addEventListener('click', showScanView);
-    document.getElementById('select-direct-pay-btn').addEventListener('click', showDirectPayView);
+    document.getElementById('select-direct-pay-btn').addEventListener('click', showP2PView);
+    
+    // === NEW: P2P Payment Listeners + Password Verification ===
+    document.getElementById('p2p-search-user-btn').addEventListener('click', searchUserByPaymentID);
+    document.getElementById('p2p-change-user-btn').addEventListener('click', resetP2PForm);
+    document.getElementById('p2p-pay-submit-btn').addEventListener('click', () => {
+        verifyPasswordAndExecute(handleP2PPayment);
+    });
+    // === NEW: Rescan button listener (pehle galat ID pe tha) ===
+    document.getElementById('rescan-btn').addEventListener('click', showScanView);
     
     // Verification Listener
     document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
@@ -1114,3 +1291,4 @@ function initializeAppLogic() {
 
 // App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+
