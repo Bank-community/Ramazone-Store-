@@ -1,5 +1,5 @@
 // --- Firebase modules import ---
-import { getFirestore, doc, getDoc, setDoc, runTransaction, increment, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, runTransaction, increment, collection, query, where, getDocs, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 // --- Global variables for payment logic ---
@@ -40,6 +40,8 @@ function switchPaymentView(viewToShow) {
     } else if (viewToShow === 'p2p-pay-view') {
         activeButton = document.getElementById('select-p2p-btn');
         stopScanner();
+        // (NEW - Feature 3) Jaise hi P2P tab khule, recent contacts load karein
+        loadRecentContacts(); 
     } else if (viewToShow === 'rmz-store-pay-view') {
         activeButton = document.getElementById('select-rmz-store-btn');
         stopScanner();
@@ -51,7 +53,7 @@ function switchPaymentView(viewToShow) {
 }
 
 /**
- * Payment modal ko uski default state (Scan QR) par reset karein.
+ * Payment modal ko uski default state (Scan QR) par reset karein. (UPDATED)
  */
 function resetPaymentModal() {
     switchPaymentView('scan-qr-view');
@@ -60,10 +62,15 @@ function resetPaymentModal() {
     // Sabhi forms aur error messages ko reset karein
     document.getElementById('p2p-search-id').value = '';
     document.getElementById('p2p-receiver-info').style.display = 'none';
-    document.getElementById('p2p-receiver-info').textContent = '';
+    document.getElementById('p2p-receiver-name-text').textContent = '';
     document.getElementById('p2p-payment-form').style.display = 'none';
     document.getElementById('p2p-payment-amount').value = '';
+    document.getElementById('p2p-payment-note').value = ''; // (NEW) Note field ko reset karein
     hideErrorMessage(document.getElementById('p2p-payment-error-msg'));
+    
+    // (NEW) Recent contacts container ko chhupayein
+    document.getElementById('p2p-recent-contacts-container').style.display = 'none';
+    document.getElementById('p2p-recent-contacts-list').innerHTML = '';
     
     document.getElementById('rmz-payment-amount').value = '';
     hideErrorMessage(document.getElementById('rmz-payment-error-msg'));
@@ -85,8 +92,6 @@ async function handleSuccessfulScan(data) {
         document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
     } else {
         showToast("Invalid QR code. Only Ramazone Store QR is accepted.");
-        // Invalid QR par scanning jaari rakhein (ya user ko P2P ke liye guide karein)
-        // startScanner(); // Isse loop ban sakta hai, user ko khud rescan karne dein.
     }
 }
 
@@ -176,7 +181,78 @@ function handleQrUpload(event) {
 // --- P2P (Pay to User) Logic ---
 
 /**
- * Payment ID se user ko search karein.
+ * (NEW - Feature 3) Haal hi ke contacts ko load karein
+ */
+async function loadRecentContacts() {
+    const listEl = document.getElementById('p2p-recent-contacts-list');
+    const containerEl = document.getElementById('p2p-recent-contacts-container');
+    const sender = getCurrentUserData();
+    
+    listEl.innerHTML = ''; // Pehle se saaf karein
+    containerEl.style.display = 'none'; // Default mein chhupayein
+
+    if (!sender) return;
+
+    try {
+        const q = query(
+            collection(db, "transactions"),
+            where("involvedUsers", "array-contains", sender.uid),
+            where("type", "==", "p2p_sent"),
+            orderBy("timestamp", "desc"),
+            limit(5) // 5 fetch karein (duplicates ho sakte hain)
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+            return; // Koi recent nahi
+        }
+
+        const recentContacts = new Map();
+        // Unique contacts ki list banayein (Map ka istemal karke)
+        snapshot.docs.forEach(doc => {
+            const contact = doc.data().otherParty;
+            if (contact && contact.mobile && !recentContacts.has(contact.mobile)) {
+                recentContacts.set(contact.mobile, contact);
+            }
+        });
+
+        // Sirf 4 dikhayein
+        const contactsToDisplay = Array.from(recentContacts.values()).slice(0, 4);
+
+        if (contactsToDisplay.length > 0) {
+            containerEl.style.display = 'block'; // Container ko dikhayein
+            
+            contactsToDisplay.forEach(contact => {
+                const item = document.createElement('div');
+                item.className = 'recent-contact-item';
+                
+                // Profile pic (Feature 1)
+                const picUrl = contact.profilePictureUrl || `https://placehold.co/50x50/e8eef3/5a647e?text=${contact.name.charAt(0)}`;
+                
+                item.innerHTML = `
+                    <img src="${picUrl}" alt="${contact.name}">
+                    <span>${contact.name}</span>
+                `;
+                
+                // Click karne par ID ko search box mein daalein aur search karein
+                item.addEventListener('click', () => {
+                    document.getElementById('p2p-search-id').value = `${contact.mobile}@RMZ`;
+                    handleP2PSearch();
+                });
+                
+                listEl.appendChild(item);
+            });
+        }
+        
+    } catch (error) {
+        console.error("Error loading recent contacts:", error);
+    }
+}
+
+
+/**
+ * Payment ID se user ko search karein. (UPDATED - Feature 1)
  */
 async function handleP2PSearch() {
     const searchInput = document.getElementById('p2p-search-id');
@@ -185,6 +261,10 @@ async function handleP2PSearch() {
     const paymentForm = document.getElementById('p2p-payment-form');
     const errorMsgEl = document.getElementById('p2p-payment-error-msg');
     
+    // (NEW - Feature 1) Profile pic element
+    const receiverPicEl = document.getElementById('p2p-receiver-pic');
+    const receiverNameEl = document.getElementById('p2p-receiver-name-text');
+
     const paymentId = searchInput.value.trim();
     if (!paymentId.includes('@RMZ')) {
         showErrorMessage(errorMsgEl, "Invalid Payment ID format.");
@@ -215,8 +295,12 @@ async function handleP2PSearch() {
             const userDoc = querySnapshot.docs[0];
             p2pReceiver = { uid: userDoc.id, ...userDoc.data() };
             
-            receiverInfoEl.innerHTML = `Paying to: <strong style="color: var(--brand-red);">${p2pReceiver.name}</strong>`;
-            receiverInfoEl.style.display = 'block';
+            // (NEW - Feature 1) Profile Pic aur Name set karein
+            const picUrl = p2pReceiver.profilePictureUrl || `https://placehold.co/60x60/e50914/FFFFFF?text=${p2pReceiver.name.charAt(0)}`;
+            receiverPicEl.src = picUrl;
+            receiverNameEl.innerHTML = `Paying to: <strong>${p2pReceiver.name}</strong>`;
+            
+            receiverInfoEl.style.display = 'flex'; // 'flex' (HTML mein set kiya tha)
             paymentForm.style.display = 'block';
         }
     } catch (error) {
@@ -334,7 +418,7 @@ async function doRMZStorePayment(amount) {
                 status: 'completed', 
                 timestamp: serverTimestamp(), 
                 involvedUsers: [currentUserData.uid] // Sirf sender
-                // Yahan 'otherParty' ki zaroorat nahi, kyunki type 'payment' hai
+                // otherParty (Pay Again ke liye) pehle se `app.js` mein handle ho raha hai
             });
             
             // 4. Admin ke liye transaction record
@@ -366,13 +450,16 @@ async function doRMZStorePayment(amount) {
 }
 
 /**
- * P2P Payment ko initiate karein (Password verification ke liye).
+ * P2P Payment ko initiate karein (Password verification ke liye). (UPDATED)
  */
 function handleP2PPayment() {
     const amountInput = document.getElementById('p2p-payment-amount');
     const errorMsg = document.getElementById('p2p-payment-error-msg');
     const amount = parseFloat(amountInput.value);
     const currentUserData = getCurrentUserData();
+    
+    // (NEW - Feature 2) Note ko fetch karein
+    const note = document.getElementById('p2p-payment-note').value.trim();
 
     hideErrorMessage(errorMsg);
     if (!p2pReceiver) {
@@ -387,16 +474,17 @@ function handleP2PPayment() {
 
     // Password verification ke liye payment function ko pass karein
     verifyPasswordAndExecute(async () => {
-        await doP2PPayment(amount, p2pReceiver);
+        await doP2PPayment(amount, p2pReceiver, note); // (NEW) Note ko pass karein
     });
 }
 
 /**
- * Asli P2P Payment Transaction (Password verify hone ke baad). (UPDATED)
+ * Asli P2P Payment Transaction (Password verify hone ke baad). (UPDATED for Note & Profile Pic)
  * @param {number} amount - Pay karne wali amount.
- * @param {object} receiver - Receiver ka user object (jismein uid aur name ho).
+ * @param {object} receiver - Receiver ka user object.
+ * @param {string} note - (NEW) Payment ke saath bheja gaya sandesh.
  */
-async function doP2PPayment(amount, receiver) {
+async function doP2PPayment(amount, receiver, note) {
     const sender = getCurrentUserData();
     document.getElementById('payment-processing-modal').classList.add('active');
     closeModal('scan-pay-modal');
@@ -435,10 +523,12 @@ async function doP2PPayment(amount, receiver) {
                 status: 'completed', 
                 timestamp: serverTimestamp(), 
                 involvedUsers: [sender.uid], // Sirf Sender
-                // (NEW) "Pay Again" ke liye receiver ki info save karein
+                note: note || "", // (NEW) Note ko save karein
+                // (UPDATED) "Pay Again" aur "Recents" ke liye receiver ki info save karein
                 otherParty: {
                     name: receiver.name,
-                    mobile: receiver.mobile 
+                    mobile: receiver.mobile,
+                    profilePictureUrl: receiver.profilePictureUrl || "" // (NEW) Pic ko bhi save karein
                 }
             });
 
@@ -450,10 +540,12 @@ async function doP2PPayment(amount, receiver) {
                 status: 'completed', 
                 timestamp: serverTimestamp(), 
                 involvedUsers: [receiver.uid], // Sirf Receiver
-                // (NEW) Receiver ki history mein sender ki info
+                note: note || "", // (NEW) Note ko save karein
+                // (UPDATED) "Pay Back" ke liye sender ki info
                 otherParty: {
                     name: sender.name,
-                    mobile: sender.mobile
+                    mobile: sender.mobile,
+                    profilePictureUrl: sender.profilePictureUrl || "" // (NEW) Pic ko bhi save karein
                 }
             });
         });
@@ -532,7 +624,7 @@ function handleSuccessReceiptDownload(txnId) {
 
 
 /**
- * Payment module ke event listeners ko initialize karein. (UPDATED)
+ * Payment module ke event listeners ko initialize karein.
  */
 function initializePaymentListeners() {
     // app.js se core functions lein
@@ -579,7 +671,7 @@ function initializePaymentListeners() {
     // Jab modal band ho, scanner ko stop karein
     document.addEventListener('stopScanner', stopScanner);
     
-    // (NEW) "Pay Again" event ko sunein
+    // (UPDATED) "Pay Again" / "Pay Back" event ko sunein
     document.addEventListener('openPaymentTab', (e) => {
         const detail = e.detail;
         if (detail.tab === 'rmz-store') {
