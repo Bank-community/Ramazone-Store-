@@ -1,4 +1,4 @@
-Const CACHE_NAME = 'rmz-pay-cache-v1';
+Const CACHE_NAME = 'rmz-pay-cache-v2';
 const urlsToCache = [
   '.',
   'cashback.html',
