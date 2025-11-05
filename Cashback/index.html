@@ -124,8 +124,6 @@
         #wallet-share-btn { cursor: pointer; }
         #wallet-share-btn svg { width: 24px; height: 24px; stroke: white; }
         
-        /* Removed #wallet-referral-container styles */
-        
         .due-payment-section {
             grid-column: 1 / -1;
             margin-top: 15px;
@@ -152,7 +150,6 @@
             padding: 0 16px;
         }
         .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-        /* Only 3 columns are needed now */
         .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; } 
         .action-card { 
             background-color: var(--bg-card); padding: 15px 10px; text-align: center; cursor: pointer; 
@@ -174,10 +171,9 @@
             border-radius: 0;
         }
 
-        /* UPDATED: Show by default but can be hidden by JS */
         #transaction-summary {
             background-color: var(--bg-page); border-radius: 10px; padding: 12px 15px;
-            margin-bottom: 15px; display: flex; /* Changed from none */
+            margin-bottom: 15px; display: flex;
             justify-content: space-between; align-items: center;
             border: 1px solid var(--border-color);
         }
@@ -244,7 +240,42 @@
         #transaction-details-modal .status-badge { background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px; border-radius: 15px; font-size: 13px; font-weight: 600; }
         #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
         #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
-        #transaction-details-modal .action-btn { background-color: var(--text-secondary); }
+        
+        /* --- NEW/UPDATED STYLES FOR TRANSACTION DETAILS MODAL --- */
+        #transaction-details-modal .detail-item {
+            align-items: flex-start; /* Align items for copy button */
+        }
+        #transaction-details-modal .detail-item .value {
+            text-align: right;
+            padding: 0 10px;
+            flex-grow: 1; /* Allow value to take space */
+            word-break: break-all;
+        }
+        .copy-btn-icon {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 5px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            line-height: 1; /* For better alignment */
+        }
+        .copy-btn-icon:hover {
+            color: var(--brand-red);
+        }
+        #transaction-details-modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px; /* Was margin-bottom 30px on details-list */
+        }
+        #transaction-details-modal .action-btn,
+        #transaction-details-modal .btn-secondary {
+            width: auto; /* Override default */
+            flex: 1; /* Allow buttons to grow */
+        }
+        /* --- END NEW STYLES --- */
+
         .modal-close-btn { position: absolute; top: 10px; right: 15px; background: transparent; border: none; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; line-height: 1; padding: 0; }
         .modal-close-btn:hover { color: #000; }
         .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: var(--text-primary); color: white; padding: 12px 25px; border-radius: 25px; font-size: 15px; z-index: 2000; transition: bottom 0.5s ease; }
@@ -355,9 +386,9 @@
 <body>
 
     <div class="container">
+        <!-- Login View -->
         <div id="login-view" class="view">
             <div class="auth-container">
-                <!-- Changed image placeholder to the actual Ramazone logo path -->
                 <img src="https://i.ibb.co/YF5pGz7j/20251104-162301.png" alt="Ramazone Logo" class="main-logo">
                 <h1>Customer Login</h1>
                 <form id="login-form">
@@ -369,6 +400,7 @@
             </div>
         </div>
 
+        <!-- Registration View -->
         <div id="registration-view" class="view">
             <div class="auth-container">
                  <img src="https://i.ibb.co/YF5pGz7j/20251104-162301.png" alt="Ramazone Logo" class="main-logo">
@@ -377,13 +409,13 @@
                     <div class="form-group"><label for="reg-name">Poora Naam</label><input type="text" id="reg-name" required></div>
                     <div class="form-group"><label for="reg-mobile">Mobile Number</label><input type="tel" id="reg-mobile" required></div>
                     <div class="form-group"><label for="reg-password">Password</label><input type="password" id="reg-password" required></div>
-                    <!-- REFERRAL FIELD REMOVED -->
                     <button type="submit">Register Karein</button><p id="register-error-msg" class="error-message"></p>
                 </form>
                 <p class="form-link">Pehle se account hai? <a href="#" id="show-login-link">Yahan login karein</a></p>
             </div>
         </div>
 
+        <!-- Dashboard View -->
         <div id="dashboard-view" class="view active">
             <div class="header-wrapper">
                  <header class="header">
@@ -419,56 +451,36 @@
                                 <button id="pay-due-amount-btn">Pay Now</button>
                             </div>
                         </div>
-                        <!-- REMOVED REFERRAL CONTAINER:
-                        <div id="wallet-referral-container">
-                            <span id="wallet-referral-id">REF-CODE</span>
-                            <button id="copy-referral-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                        </div>
-                        -->
                     </div>
                 </section>
                 
-
-<button id="install-pwa-btn" style="display: none;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></polyline></svg>
-    <span>Install RMZ Pay App</span>
-</button>
-
-
+                <button id="install-pwa-btn" style="display: none; margin: 0 16px 24px 16px; width: calc(100% - 32px);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></polyline></svg>
+                    <span>Install RMZ Pay App</span>
+                </button>
 
                 <section class="actions-section">
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="dashboard-actions">
-                        
-                        <!-- 1st: Shop Now (Updated icon and text) -->
                         <div id="shop-now-btn" class="action-card">
                             <img class="icon" src="https://www.svgrepo.com/show/533042/cart-plus.svg" onerror="this.src='https://placehold.co/32x32/ff6b6b/FFFFFF?text=🛒'">
                             <span class="card-text">Shop Now</span>
                         </div>
-                        
-                        <!-- 2nd: RMZ Pay (Remains) -->
                         <div id="scan-and-pay-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/503562/scan-qrcode.svg"><span class="card-text">RMZ Pay</span></div>
-                        
-                        <!-- 3rd: Support (Remains) -->
                         <div id="whatsapp-support-btn" class="action-card"><img class="icon" src="https://www.svgrepo.com/show/452133/whatsapp.svg"><span class="card-text">Support</span></div>
-                        
-                        
                     </div>
                 </section>
 
                 <div class="section">
                     <h2 class="section-title">All Transactions</h2>
-                    <!-- Summary element: Visible and will be populated by JS -->
                     <div id="transaction-summary" style="display: flex;">
                         <span class="summary-label" id="summary-filter-label">Total Amount (All)</span>
                         <span class="summary-amount" id="summary-total-amount">₹0.00</span>
                     </div>
                     <div class="filter-bar" id="filter-bar">
                         <button class="filter-btn active" data-filter="all">All</button>
-                        <!-- Commission Filter Removed -->
                         <button class="filter-btn" data-filter="payment">Payments</button>
                         <button class="filter-btn" data-filter="due_payment">Due Paid</button>
-                        <!-- NEW FILTER: Credit Given -->
                         <button class="filter-btn" data-filter="credit_given">Credit</button>
                     </div>
                     <div id="unified-history-list" class="history-list"></div>
@@ -476,45 +488,40 @@
             </main>
         </div>
         
+        <!-- Network View -->
+        <div id="network-view" class="view fullscreen-view">
+            <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
+            <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
+            <div class="network-content-container"><div id="downline-content" class="network-tab-content active"><div class="tree-container"><svg id="connector-svg"></svg><div id="tree-root"></div><div id="commission-tags-container"></div></div></div><div id="upline-content" class="network-tab-content"><div id="upline-list"></div></div></div>
+            <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
+        </div>
+
+        <!-- Notification View -->
+        <div id="notification-view" class="view fullscreen-view">
+           <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
+           <div id="notification-center-list"></div>
+        </div>
     </div>
     
-    <!-- Network View (Kept for completeness, though inaccessible from dashboard) -->
-    <div id="network-view" class="view fullscreen-view">
-        <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
-        <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
-        <div class="network-content-container"><div id="downline-content" class="network-tab-content active"><div class="tree-container"><svg id="connector-svg"></svg><div id="tree-root"></div><div id="commission-tags-container"></div></div></div><div id="upline-content" class="network-tab-content"><div id="upline-list"></div></div></div>
-        <div id="network-loader" class="empty-state" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Loading...</div>
-    </div>
+    <!-- === MODALS === -->
 
-    <!-- Notification View (Remains) -->
-    <div id="notification-view" class="view fullscreen-view">
-       <div class="fullscreen-header"><div id="notification-back-btn" class="header-action" title="Back to Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1>Notifications</h1><div class="header-action" style="width: 24px;"></div></div>
-       <div id="notification-center-list"></div>
-    </div>
-
-    <!-- Password Verification Modal (Remains) -->
+    <!-- Password Verification Modal -->
     <div id="password-verification-modal" class="modal-overlay"><div class="modal-content"> <h3>Verify Your Identity</h3><p style="text-align:center; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px;">Please enter your password to continue.</p><div class="form-group"><label for="verification-password">Password</label><input type="password" id="verification-password" required></div><p id="verification-error-msg" class="error-message"></p><div class="modal-actions"><button type="button" class="btn-secondary" data-close-modal>Cancel</button><button id="verification-confirm-btn" class="btn-primary">Confirm</button></div></div></div>
     
-    <!-- Scan and Pay Modal (UPDATED) -->
+    <!-- Scan and Pay Modal -->
     <div id="scan-pay-modal" class="modal-overlay">
         <div class="modal-content"> 
             <h3>RMZ Pay Options</h3> 
-            
-            <!-- NEW: Option Buttons -->
             <div id="rmz-pay-options">
                 <button id="select-scan-btn" class="rmz-pay-option-btn active">Scan QR</button>
                 <button id="select-direct-pay-btn" class="rmz-pay-option-btn">RMZ Payment</button>
             </div>
-
-            <!-- QR Scanner Section -->
             <div id="qr-scanner-section" style="display: block;">
                 <div id="scanner-container"><video id="scanner-video" playsinline></video></div>
                 <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
                 <button id="upload-qr-btn" class="btn-secondary" style="width:100%; margin-top: 15px;">Upload QR Image</button>
                 <p id="scanner-status" style="text-align:center; margin-top:10px;">Scanning...</p> 
             </div>
-
-            <!-- Payment Form (Direct Pay / Post-Scan) -->
             <div id="payment-form" style="display: none;"> 
                 <p style="text-align:center;">Paying to: <span id="receiver-id-display">Ramazone Store</span></p> 
                 <div class="form-group"><label for="payment-amount">Amount (₹)</label><input type="number" id="payment-amount" min="5" required></div> 
@@ -524,25 +531,21 @@
                     <button id="pay-submit-btn" class="btn-primary">Pay Now</button>
                 </div> 
             </div> 
-            
             <div id="scan-pay-initial-actions" class="modal-actions" style="margin-top: 10px;"><button type="button" class="btn-secondary" data-close-modal>Cancel</button></div> 
         </div>
     </div>
     
-    <!-- Profile Modal (REMOVED REFERRAL ELEMENTS) -->
+    <!-- Profile Modal -->
     <div id="profile-modal" class="modal-overlay"><div class="modal-content"><div id="modal-profile-img-container"><img id="modal-profile-img" src="https://placehold.co/80x80/e50914/FFFFFF?text=R" alt="Profile Picture"><div id="edit-profile-pic-icon" title="Change Profile Picture"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div></div><h3>My Profile</h3><div id="profile-payment-id-container"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p><div id="profile-payment-id" style="text-align:center; font-weight:600;"></div></div>
-        <!-- REMOVED REFERRAL CONTAINER:
-        <div id="profile-referral-id-container" style="margin-top: 15px;"><p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Referral Code</p><div id="profile-referral-id" style="text-align:center; font-weight:600;"></div></div>
-        -->
         <form id="password-change-form" style="margin-top: 20px;"><div class="form-group"><label for="current-password">Purana Password</label><input type="password" id="current-password" required></div><div class="form-group"><label for="new-password">Naya Password</label><input type="password" id="new-password" required></div><button type="submit" id="password-change-btn">Password Badlein</button><p id="password-change-error-msg" class="error-message"></p></form><button id="logout-btn" style="width:100%; margin-top: 15px;" class="btn-secondary">Logout</button><div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-secondary" data-close-modal>Close</button></div></div></div>
     
-    <!-- Other Modals (Remains) -->
+    <!-- Full Profile Picture Modal -->
     <div id="profile-picture-modal" class="modal-overlay"><div class="modal-content" style="padding: 10px; background-color: transparent; text-align: center; box-shadow: none; width: auto;"><button class="modal-close-btn" data-close-modal style="color: white; font-size: 36px; top: 0px; right: 5px; text-shadow: 0 1px 3px black;">&times;</button><img id="full-profile-img" src="" alt="Profile Picture" style="max-width: 90vw; max-height: 80vh; border-radius: 16px;"></div></div>
     
-    <!-- Payment Success Modal (Remains the same structure) -->
+    <!-- Payment Success Modal -->
     <div id="payment-success-modal" class="modal-overlay professional-modal"><div class="modal-content"><div class="success-icon"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 27.2L21.84 35L38 19" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Payment Successful!</h2><p class="amount" id="success-modal-amount"></p><div class="details-box"><div class="detail-item"><span class="label">Paid to</span><span class="value" id="success-modal-receiver"></span></div><div class="detail-item"><span class="label">Transaction ID</span><span class="value" id="success-modal-txn-id"></span></div><div class="detail-item"><span class="label">Date & Time</span class="value" id="success-modal-datetime"></div></div><button class="action-btn" data-close-modal style="background-color: var(--brand-red); color: white;">Done</button></div></div>
     
-    <!-- NEW: Payment Failure Modal (Replaces the toast) -->
+    <!-- Payment Failure Modal -->
     <div id="payment-failure-modal" class="modal-overlay professional-modal">
         <div class="modal-content">
             <div class="success-icon" style="background-color: var(--due-red);">
@@ -556,14 +559,56 @@
         </div>
     </div>
 
+    <!-- 
+      =================================================
+      === TRANSACTION DETAILS MODAL (UPDATED) ===
+      =================================================
+    -->
+    <div id="transaction-details-modal" class="modal-overlay professional-modal">
+        <div class="modal-content">
+            <p class="amount" id="details-modal-amount"></p>
+            <hr>
+            <div class="details-list">
+                <div class="detail-item">
+                    <span class="label">Status</span>
+                    <span class="value status-badge" id="details-modal-status"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Description</span>
+                    <span class="value" id="details-modal-desc"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Date</span>
+                    <span class="value" id="details-modal-date"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Time</span>
+                    <span class="value" id="details-modal-time"></span>
+                </div>
+                <!-- UPDATED: Transaction ID line with Copy Button -->
+                <div class="detail-item">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="details-modal-txn-id"></span>
+                    <button id="details-copy-txn-id-btn" class="copy-btn-icon" title="Copy ID">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- UPDATED: Modal actions with Download button -->
+            <div class="modal-actions">
+                <button id="details-download-receipt-btn" class="btn-secondary">Download</button>
+                <button class="action-btn" data-close-modal style="background-color: var(--text-secondary);">Close</button>
+            </div>
+        </div>
+    </div>
+    <!-- === END TRANSACTION DETAILS MODAL === -->
 
-    <div id="transaction-details-modal" class="modal-overlay professional-modal"><div class="modal-content"><p class="amount" id="details-modal-amount"></p><hr><div class="details-list"><div class="detail-item"><span class="label">Status</span><span class="value status-badge" id="details-modal-status"></span></div><div class="detail-item"><span class="label">Description</span><span class="value" id="details-modal-desc"></span></div><div class="detail-item"><span class="label">Date</span><span class="value" id="details-modal-date"></span></div><div class="detail-item"><span class="label">Time</span><span class="value" id="details-modal-time"></span></div><div class="detail-item"><span class="label">Transaction ID</span class="value" id="details-modal-txn-id"></div></div><button class="action-btn" data-close-modal>Close</button></div></div>
 
+    <!-- Due Payment Modal -->
     <div id="due-payment-modal" class="modal-overlay">
         <div class="modal-content" style="text-align: center;">
             <button class="modal-close-btn" data-close-modal>&times;</button>
             <h3>Pay Your Due Amount</h3>
-            
             <div id="due-qr-card" style="background-color: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; display: inline-block; margin: 20px 0;">
                 <img src="https://i.ibb.co/Jj0f3QQz/20250708-182433.png" alt="Ramazone Logo" style="width: 150px; margin: 0 auto 15px auto; display: block;">
                 <div id="due-qr-code"></div>
@@ -571,7 +616,6 @@
                 <p id="due-qr-upi-id" style="font-weight: 600; margin-top: 5px; color: var(--text-primary);"></p>
                 <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Scan using any UPI app</p>
             </div>
-    
             <p class="qr-instructions">
                 Payment karne ke baad, kripya transaction ka screenshot
                 <br>
@@ -583,6 +627,7 @@
         </div>
     </div>
 
+    <!-- Toast and Popup Notifications -->
     <div id="toast-notification" class="toast-notification"></div>
     <div id="popup-notification"><div class="popup-notification-content"><div class="popup-notification-icon">🔥</div><div class="popup-notification-text"><div class="title" id="popup-notification-title"></div><div class="percentage" id="popup-notification-percentage"></div></div></div><button id="popup-notification-close">&times;</button></div>
     <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
@@ -788,8 +833,6 @@ function updateDashboardUI(dbData, authUser) {
     document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
     document.getElementById('due-amount').textContent = `₹ ${(dbData.dueAmount || 0).toFixed(2)}`;
     document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
-    // REMOVED: document.getElementById('profile-referral-id').textContent = dbData.referralId || 'N/A';
-    // REMOVED: document.getElementById('wallet-referral-id').textContent = dbData.referralId || 'N/A';
     
     const payDueBtn = document.getElementById('pay-due-amount-btn');
     payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
@@ -839,7 +882,6 @@ function showPopupNotification(notifData, duration = 4000) {
      popupTimeout = setTimeout(() => popup.classList.remove('show'), duration);
 }
 
-// FIX: This function is now responsible for displaying both Due and Admin-sent notifications
 async function renderNotificationCenter() {
     const listEl = document.getElementById('notification-center-list');
     listEl.innerHTML = '';
@@ -853,7 +895,6 @@ async function renderNotificationCenter() {
     }
     
     // 2. Add Admin Sent Notifications
-    // Add all fetched admin notifications
     notificationsToRender.push(...allNotifications);
 
     if (notificationsToRender.length === 0) {
@@ -874,7 +915,6 @@ async function renderNotificationCenter() {
         const item = document.createElement('div');
         item.className = 'notification-center-item';
         
-        // Handle Due Notification
         if (notif.isDue) {
             item.classList.add('due-notification-item');
             item.innerHTML = `
@@ -885,7 +925,6 @@ async function renderNotificationCenter() {
                 </div>
             `;
         } 
-        // Handle Admin Sent Notification
         else {
             const linkHtml = notif.link ? `<a href="${notif.link}" target="_blank"> ${notif.title}</a>` : notif.title;
             item.innerHTML = `
@@ -900,12 +939,10 @@ async function renderNotificationCenter() {
 }
 
 function combineAndRenderHistory() {
-    // Now includes payment, due_payment, and credit_given
     combinedHistory = allTransactions.sort((a, b) => (b.date || 0) - (a.date || 0));
     renderUnifiedHistory();
 }
 
-// UPDATED: Function to calculate total and render history/summary
 function renderUnifiedHistory() {
     const listEl = document.getElementById('unified-history-list');
     const summaryEl = document.getElementById('transaction-summary');
@@ -928,19 +965,15 @@ function renderUnifiedHistory() {
         return false;
     });
     
-    // Calculate Total Amount for the visible filter
     let totalAmount = 0;
     itemsToRender.forEach(item => {
         const amount = item.amount || 0;
-        // Payments and Due payments are negative in DB, Credits are positive. 
-        // We sum the actual amounts (signed).
         totalAmount += amount; 
     });
 
     summaryLabelEl.textContent = `${filterLabels[activeFilter]}:`;
     summaryAmountEl.textContent = `₹ ${totalAmount.toFixed(2)}`;
 
-    // Set color based on the total sum
     if (totalAmount > 0) {
         summaryAmountEl.style.color = 'var(--accent-green)';
     } else if (totalAmount < 0) {
@@ -957,30 +990,27 @@ function renderUnifiedHistory() {
     itemsToRender.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
-        // YAHAN PAR CLICK EVENT ADD KIYA GAYA HAI
+        
+        // --- UPDATED: Add click listener and cursor style ---
+        itemDiv.style.cursor = 'pointer'; // Make it look clickable
         itemDiv.addEventListener('click', () => showTransactionDetails(item));
+        // --- END UPDATE ---
         
         const amount = item.amount || 0;
         let sign = '+';
         let typeClass = 'credit';
         
-        // Determine sign and class based on transaction type
         if(item.type === 'payment' || item.type === 'due_payment') { 
-            // Payments and Due Payments are debits (negative in wallet)
             typeClass = 'debit'; 
             sign = '-'; 
         } else if (item.type === 'credit_given') {
-            // Credit Given is a credit (positive in wallet)
             typeClass = 'credit'; 
             sign = '+';
         }
 
-        // Use Math.abs for display as sign is handled separately
         const displayAmount = Math.abs(amount).toFixed(2);
-
         if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
         
-        // Customizing title for credit given for clarity
         const title = item.type === 'credit_given' ? `Admin Credit` : item.description;
 
         itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${title}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${displayAmount}</div><span class="status">${item.status || 'Completed'}</span></div>`;
@@ -988,7 +1018,7 @@ function renderUnifiedHistory() {
     });
 }
 
-// YAH FUNCTION TRANSACTION DETAILS MODAL DIKHATA HAI
+// --- UPDATED: showTransactionDetails with Copy/Download ---
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
     let sign = '+', typeClass = 'credit';
@@ -1016,9 +1046,80 @@ function showTransactionDetails(item) {
     document.getElementById('details-modal-time').textContent = item.date ? item.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
     document.getElementById('details-modal-txn-id').textContent = item.id;
     
-    // YAH VAH PROFESSIONAL POPUP HAI
+    // --- NEW FUNCTIONALITY: Add event listeners ---
+    // Remove old listeners to prevent duplicates by cloning the button
+    const oldCopyBtn = document.getElementById('details-copy-txn-id-btn');
+    const newCopyBtn = oldCopyBtn.cloneNode(true); // Clone to remove listeners
+    oldCopyBtn.parentNode.replaceChild(newCopyBtn, oldCopyBtn);
+    newCopyBtn.addEventListener('click', () => handleCopyTxnId(item.id));
+    
+    const oldDownloadBtn = document.getElementById('details-download-receipt-btn');
+    const newDownloadBtn = oldDownloadBtn.cloneNode(true);
+    oldDownloadBtn.parentNode.replaceChild(newDownloadBtn, oldDownloadBtn);
+    newDownloadBtn.addEventListener('click', () => handleDownloadReceipt(item.id));
+    // --- END NEW FUNCTIONALITY ---
+    
     openModal('transaction-details-modal');
 }
+
+// --- NEW: Helper functions for modal actions ---
+function handleCopyTxnId(txnId) {
+    if (!navigator.clipboard) {
+        showToast("Copying not supported on this device.");
+        return;
+    }
+    navigator.clipboard.writeText(txnId).then(() => {
+        showToast("Transaction ID Copied!");
+    }, (err) => {
+        showToast("Failed to copy ID.");
+        console.error('Failed to copy text: ', err);
+    });
+}
+
+function handleDownloadReceipt(txnId) {
+    const receiptElement = document.querySelector('#transaction-details-modal .modal-content');
+    const downloadBtn = document.getElementById('details-download-receipt-btn');
+    const closeBtn = document.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
+    const copyBtn = document.getElementById('details-copy-txn-id-btn');
+    
+    // Hide buttons temporarily for screenshot
+    if(downloadBtn) downloadBtn.style.visibility = 'hidden';
+    if(closeBtn) closeBtn.style.visibility = 'hidden';
+    if(copyBtn) copyBtn.style.visibility = 'hidden';
+    
+    showToast("Downloading receipt...");
+
+    html2canvas(receiptElement, { 
+        scale: 2, // Higher quality
+        useCORS: true,
+        onclone: (doc) => {
+            // Ensure buttons are hidden in the cloned document too
+            const clonedDownloadBtn = doc.getElementById('details-download-receipt-btn');
+            if (clonedDownloadBtn) clonedDownloadBtn.style.visibility = 'hidden';
+            const clonedCloseBtn = doc.querySelector('#transaction-details-modal .action-btn[data-close-modal]');
+            if (clonedCloseBtn) clonedCloseBtn.style.visibility = 'hidden';
+            const clonedCopyBtn = doc.getElementById('details-copy-txn-id-btn');
+            if (clonedCopyBtn) clonedCopyBtn.style.visibility = 'hidden';
+        }
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `Ramazone-Receipt-${txnId}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }).catch(err => {
+        console.error("Error downloading receipt:", err);
+        showToast("Download failed.");
+    }).finally(() => {
+        // Show buttons again, regardless of success or failure
+        if(downloadBtn) downloadBtn.style.visibility = 'visible';
+        if(closeBtn) closeBtn.style.visibility = 'visible';
+        if(copyBtn) copyBtn.style.visibility = 'visible';
+    });
+}
+// --- END NEW Helpers ---
+
 
 // --- Feature Logic (Payment, QR, etc.) ---
 
@@ -1110,7 +1211,6 @@ async function handleVerificationConfirm() {
     }
 }
 
-// *** YAH VAH FUNCTION HAI JISE MAINE (SWAP) KIYA HAI ***
 async function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
     const errorMsg = document.getElementById('payment-error-msg');
@@ -1122,20 +1222,13 @@ async function handlePayment() {
 
     verifyPasswordAndExecute(async () => {
         try {
-            // Pehle payment modal band karo
             closeModal('scan-pay-modal'); 
 
             await runTransaction(db, async (t) => {
                 const userRef = doc(db, 'users', currentUserData.uid);
                 const configRef = doc(db, 'app_settings', 'config');
-                
-                // 1. User wallet update karo (Debit)
                 t.update(userRef, { wallet: increment(-amount) });
-                
-                // 2. Admin RMZ wallet update karo (Credit)
                 t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
-                
-                // 3. User ke liye Transaction record banao
                 t.set(newTxnRef, { 
                     type: 'payment', 
                     amount: -amount, 
@@ -1144,8 +1237,6 @@ async function handlePayment() {
                     timestamp: serverTimestamp(), 
                     involvedUsers: [currentUserData.uid] 
                 });
-                
-                // 4. Admin Panel ke liye RMZ Wallet Transaction record banao
                 t.set(doc(collection(db, "rmz_wallet_transactions")), { 
                     amount, 
                     senderId: currentUserData.uid, 
@@ -1156,30 +1247,20 @@ async function handlePayment() {
             });
             
             // --- SUCCESS ---
-            // Aapke kehne par, yahan FAILURE MODAL call kar raha hoon
-            closeModal('payment-success-modal');
-            openModal('payment-failure-modal'); 
-            // NOTE: Yah popup "Transaction Failed" dikhayega
+            const now = new Date();
+            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
+            document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
+            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
+            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+            openModal('payment-success-modal');
 
         } catch (error) { 
             // --- FAILURE ---
             console.error("Payment transaction failed during Firestore transaction:", error);
-            
-            // Aapke kehne par, yahan SUCCESS MODAL call kar raha hoon
-            closeModal('payment-failure-modal');
-            
-            // Success Modal ko populate karo (ho sakta hai txn ID na mile)
-            const now = new Date();
-            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
-            document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
-            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id || 'N/A (Failed)'; // ID shayad na ho
-            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-            openModal('payment-success-modal');
-            // NOTE: Yah popup "Payment Successful!" dikhayega
+            openModal('payment-failure-modal'); 
         }
     });
 }
-// *** END handlePayment function ***
 
 
 // --- NEW/UPDATED RMZ Pay Modal Logic ---
@@ -1204,25 +1285,21 @@ function showDirectPayView() {
     document.getElementById('select-direct-pay-btn').classList.add('active');
     document.getElementById('select-scan-btn').classList.remove('active');
     
-    // Set fixed receiver ID for direct payment
     document.getElementById('receiver-id-display').textContent = 'Ramazone Store';
     document.getElementById('rescan-btn').style.display = 'none'; // Hide rescan button for direct pay
     
-    // Clear amount and errors
     document.getElementById('payment-amount').value = '';
     hideErrorMessage(document.getElementById('payment-error-msg'));
 }
 
 function handleRmzPayButtonClick() {
     openModal('scan-pay-modal');
-    // Default to Scan View on open
-    showScanView(); // Start with scan
+    showScanView(); // Default to Scan View on open
 }
 
 // --- Scanner/QR Code Functions (minor adjustments) ---
 
 async function handleSuccessfulScan(data) {
-    // Only proceed if the QR code is the Ramazone Store ID
     if (data !== RAMAZONE_STORE_ID) {
         showToast("Invalid QR code scanned. Only Ramazone Store QR is accepted.");
         startScanner(); // Continue scanning
@@ -1231,14 +1308,10 @@ async function handleSuccessfulScan(data) {
     
     stopScanner();
     
-    // After successful scan, switch to payment form view logic
     document.getElementById('qr-scanner-section').style.display = 'none';
     document.getElementById('payment-form').style.display = 'block';
-    
-    // Ensure 'Scan QR' button remains active after successful scan from scan view
     document.getElementById('select-scan-btn').classList.add('active');
     document.getElementById('select-direct-pay-btn').classList.remove('active');
-    
     document.getElementById('receiver-id-display').textContent = 'Ramazone Store'; 
     document.getElementById('rescan-btn').style.display = 'block'; 
     document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
@@ -1250,7 +1323,6 @@ function startScanner() {
     const statusEl = document.getElementById('scanner-status');
     
     statusEl.textContent = 'Starting camera...';
-    // Remove disabled state on options button upon successful camera startup attempt
     document.getElementById('select-direct-pay-btn').disabled = false; 
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
@@ -1260,7 +1332,6 @@ function startScanner() {
         scannerAnimation = requestAnimationFrame(tick);
     }).catch(() => {
         statusEl.textContent = 'Could not access camera.';
-        // If camera fails, ensure both options are fully available and stop scanner
         document.getElementById('select-direct-pay-btn').disabled = false; 
     });
     const tick = () => {
@@ -1269,7 +1340,6 @@ function startScanner() {
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // Check for the fixed Ramazone Store QR code
             const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
             if (code && code.data === RAMAZONE_STORE_ID) { handleSuccessfulScan(code.data); return; }
         }
@@ -1285,7 +1355,6 @@ function stopScanner() {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
-    // Ensure RMZ Payment button is enabled when scanner stops
     document.getElementById('select-direct-pay-btn').disabled = false;
 }
 function handleQrUpload(event) {
@@ -1346,21 +1415,17 @@ async function handlePasswordChange(e) {
 function handleShare() {
     if (!currentUserData) return;
     const { name, lifetimeEarning } = currentUserData;
-    // UPDATED: Removed referral ID from share message
     const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna!\n\nAbhi app download karein: ${window.location.origin}${window.location.pathname}`;
     if (navigator.share) navigator.share({ text: shareText });
     else navigator.clipboard.writeText(shareText).then(() => showToast("Share message copied to clipboard!"));
 }
 function handleWhatsAppSupport() {
-    // UPDATED WhatsApp link to the group link
     const whatsappUrl = `https://chat.whatsapp.com/E2HaPJMGCDm7ALrZ8FM1s5?mode=wwt`;
     window.open(whatsappUrl, '_blank');
 }
-// Referral Link logic simplified: no more checking for ?ref= in URL
 function handleReferralLink() {
     toggleView('login-view');
 }
-// Removed Network View functions (as the feature is removed from dashboard)
 
 // --- Initialization and Event Listeners ---
 function initializeAppLogic() {
@@ -1371,11 +1436,10 @@ function initializeAppLogic() {
             toggleView('dashboard-view');
         } else {
             detachAllListeners();
-            handleReferralLink(); // Simplified, now just shows login
+            handleReferralLink();
         }
     });
 
-    // PWA Install button click listener
     setupPwaInstallButton();
     document.getElementById('install-pwa-btn').addEventListener('click', handleInstallClick);
     
@@ -1397,7 +1461,6 @@ function initializeAppLogic() {
         const name = document.getElementById('reg-name').value.trim();
         const mobile = document.getElementById('reg-mobile').value.trim();
         const password = document.getElementById('reg-password').value;
-        // Referral Code logic removed as per user request.
 
         if (!name || !mobile || password.length < 6) {
             showErrorMessage(errorMsgEl, "Sahi naam, mobile number, aur kam se kam 6 character ka password daalein.");
@@ -1408,7 +1471,6 @@ function initializeAppLogic() {
             const userCredential = await createUserWithEmailAndPassword(auth, `${mobile}@ramazone.com`, password);
             tempUser = userCredential.user;
             
-            // REMOVED REFERRAL LOGIC
             const referredBy = 'none';
             const upline = [];
             
@@ -1417,7 +1479,6 @@ function initializeAppLogic() {
             const newUserDoc = { 
                 uid: tempUser.uid, name, mobile, password, 
                 wallet: 0, lifetimeEarning: 0, totalCreditGiven: 0, dueAmount: 0, 
-                // REMOVED referralId field
                 referredBy, upline, createdAt: serverTimestamp(), creditLevel: 0,
                 lastCheckInDate: null, totalCheckInDays: 0, referralRewardClaimed: false, totalPurchaseAmount: 0
             };
@@ -1426,7 +1487,6 @@ function initializeAppLogic() {
             toggleView('login-view');
             document.getElementById('login-form').reset();
             document.getElementById('register-form').reset();
-            // Using showToast instead of alert
             showToast("Registration safal hua! Ab login karein.");
         } catch (error) {
             if (tempUser) await tempUser.delete().catch(e => console.error("Failed to delete temp user", e));
@@ -1451,7 +1511,6 @@ function initializeAppLogic() {
     document.getElementById('shop-now-btn').addEventListener('click', () => {
         window.open('https://www.ramazone.in', '_blank');
     });
-    // UPDATED: RMZ Pay button now calls the new handler
     document.getElementById('scan-and-pay-btn').addEventListener('click', handleRmzPayButtonClick);
     document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
 
@@ -1459,10 +1518,9 @@ function initializeAppLogic() {
     document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
     document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
-    // REMOVED: document.getElementById('copy-referral-btn').addEventListener('click', ...
     
     // Payment/QR Listeners
-    document.getElementById('rescan-btn').addEventListener('click', showScanView); // Use showScanView to re-start scan correctly
+    document.getElementById('rescan-btn').addEventListener('click', showScanView);
     document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
@@ -1488,11 +1546,6 @@ function initializeAppLogic() {
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay').id)));
 }
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
-
-
-        
-        
-        
         
     </script>
 
@@ -1511,5 +1564,4 @@ document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
 
 </body>
 </html>
-
 
