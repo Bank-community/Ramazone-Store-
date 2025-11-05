@@ -1,7 +1,7 @@
 // --- Firebase modules import ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, runTransaction, increment, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, orderBy, limit, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- App Initialization and Global Variables ---
 let app, auth, db;
@@ -94,11 +94,9 @@ let currentUser = null;
 let currentUserData = null;
 let combinedHistory = []; // Sabhi history items ke liye global store
 let activeListeners = []; // Realtime listeners ko track karne ke liye
-let scannerAnimation = null; // QR scanner animation frame
 let allTransactions = [];
 let allNotifications = []; // Bheje gaye notifications
 let activeFilter = 'all';
-let pendingAction = null; // Password verification ke baad run hone wala action
 let isUplineLoaded = false;
 let popupTimeout = null;
 let initialPopupShown = false;
@@ -107,7 +105,7 @@ let historyStack = [];
 const networkLoader = document.getElementById('network-loader');
 const networkTitleEl = document.getElementById('network-title');
 const UPI_ID = "princekumar954684-1@okicici"; // Due payment UPI ID
-const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Store payment QR ID
+
 
 // --- Core Functions (Config, UI Toggles) ---
 
@@ -130,6 +128,20 @@ async function fetchConfigsAndInit() {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
+        
+        // Expose core functions to payments.js
+        window.RamazoneApp = {
+            showToast,
+            openModal,
+            closeModal,
+            showErrorMessage,
+            hideErrorMessage,
+            getCurrentUser: () => currentUser,
+            getCurrentUserData: () => currentUserData,
+            getDb: () => db,
+            getAuth: () => auth
+        };
+
         initializeAppLogic(); // Baaki ka app logic start karein
     } catch (error) {
         console.error("Critical Initialization Error:", error);
@@ -173,8 +185,11 @@ const openModal = (modalId) => document.getElementById(modalId)?.classList.add('
 const closeModal = (modalId) => {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
+    
+    // Agar payment modal band ho raha hai, toh scanner ko bhi stop karein (event payments.js se emit hoga)
     if (modalId === 'scan-pay-modal') {
-        stopScanner(); // Agar scan modal hai, toh scanner band karein
+        const stopEvent = new CustomEvent('stopScanner');
+        document.dispatchEvent(stopEvent);
     }
 };
 
@@ -201,7 +216,8 @@ function attachRealtimeListeners(user) {
     detachAllListeners(); // Purane listeners ko hatayein
     const uid = user.uid;
     
-    const validTypes = ['payment', 'due_payment', 'credit_given']; 
+    // Valid transaction types jo user ko dikhne chahiye
+    const validTypes = ['payment', 'due_payment', 'credit_given', 'p2p_sent', 'p2p_received']; 
 
     const listeners = [
         // User document listener
@@ -216,11 +232,11 @@ function attachRealtimeListeners(user) {
                 }
             }
         }),
-        // Transactions listener
+        // Transactions listener (UPDATED)
         onSnapshot(query(collection(db, "transactions"), where("involvedUsers", "array-contains", uid), orderBy("timestamp", "desc")), (snapshot) => {
             allTransactions = snapshot.docs
                 .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }))
-                .filter(t => validTypes.includes(t.type));
+                .filter(t => validTypes.includes(t.type)); // Sirf valid types hi filter karein
             combineAndRenderHistory();
         }),
         // Admin Notifications listener
@@ -245,7 +261,7 @@ function detachAllListeners() {
 // --- UI Update and Notification Logic ---
 
 /**
- * Dashboard UI ko user ke data se update karein.
+ * Dashboard UI ko user ke data se update karein. (UPDATED)
  * @param {object} dbData - Firestore se user ka data.
  * @param {object} authUser - Firebase auth se user ka data.
  */
@@ -255,10 +271,16 @@ function updateDashboardUI(dbData, authUser) {
     document.getElementById('wallet-user-name').textContent = authUser.displayName;
     document.getElementById('modal-profile-img').src = profilePicUrl;
     document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
-    document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`;
+    
+    // Lifetime Earning hata diya gaya
+    // document.getElementById('lifetime-earning').textContent = `₹ ${(dbData.lifetimeEarning || 0).toFixed(2)}`; 
+    
     document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
     document.getElementById('due-amount').textContent = `₹ ${(dbData.dueAmount || 0).toFixed(2)}`;
-    document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
+    
+    // Payment ID ko mobile number + @RMZ se set karein
+    const paymentId = `${dbData.mobile}@RMZ`;
+    document.getElementById('profile-payment-id').textContent = paymentId;
     
     const payDueBtn = document.getElementById('pay-due-amount-btn');
     payDueBtn.style.display = dbData.dueAmount > 0 ? 'block' : 'none';
@@ -390,7 +412,7 @@ function combineAndRenderHistory() {
 }
 
 /**
- * Transaction history list ko filter ke hisaab se render karein.
+ * Transaction history list ko filter ke hisaab se render karein. (UPDATED)
  */
 function renderUnifiedHistory() {
     const listEl = document.getElementById('unified-history-list');
@@ -400,23 +422,32 @@ function renderUnifiedHistory() {
 
     const filterLabels = {
         all: "All Transactions",
-        payment: "Total Payments",
+        payment: "Total Payments", // Isme RMZ Store aur P2P Sent dono aayenge
         due_payment: "Total Due Paid",
-        credit_given: "Total Credit Received"
+        credit_given: "Total Credit Received" // Isme Admin Credit aur P2P Received aayenge
     };
-
+    
+    // Filter logic ko update karein
     const itemsToRender = combinedHistory.filter(item => {
         if (activeFilter === 'all') return true;
-        if (activeFilter === 'payment') return item.type === 'payment';
+        if (activeFilter === 'payment') return item.type === 'payment' || item.type === 'p2p_sent';
         if (activeFilter === 'due_payment') return item.type === 'due_payment';
-        if (activeFilter === 'credit_given') return item.type === 'credit_given';
+        if (activeFilter === 'credit_given') return item.type === 'credit_given' || item.type === 'p2p_received';
         return false;
     });
     
+    // Total amount logic ko update karein
     let totalAmount = 0;
     itemsToRender.forEach(item => {
         const amount = item.amount || 0;
-        totalAmount += amount; 
+        // Credit (positive) types
+        if (item.type === 'credit_given' || item.type === 'p2p_received') {
+            totalAmount += amount;
+        } 
+        // Debit (negative) types - amount pehle se negative store ho sakta hai
+        else if (item.type === 'payment' || item.type === 'due_payment' || item.type === 'p2p_sent') {
+            totalAmount += amount; // Amount pehle se negative hai, isliye seedha add karein
+        }
     });
 
     summaryLabelEl.textContent = `${filterLabels[activeFilter]}:`;
@@ -443,21 +474,25 @@ function renderUnifiedHistory() {
         itemDiv.addEventListener('click', () => showTransactionDetails(item));
         
         const amount = item.amount || 0;
-        let sign = '+';
-        let typeClass = 'credit';
+        let sign = '';
+        let typeClass = '';
         
-        if(item.type === 'payment' || item.type === 'due_payment') { 
-            typeClass = 'debit'; 
-            sign = '-'; 
-        } else if (item.type === 'credit_given') {
+        // Types ko classify karein
+        if(item.type === 'credit_given' || item.type === 'p2p_received') {
             typeClass = 'credit'; 
             sign = '+';
+        } else if (item.type === 'payment' || item.type === 'due_payment' || item.type === 'p2p_sent') {
+            typeClass = 'debit'; 
+            sign = ''; // Amount pehle se negative hai
         }
 
-        const displayAmount = Math.abs(amount).toFixed(2);
+        const displayAmount = (sign === '+') ? amount.toFixed(2) : Math.abs(amount).toFixed(2);
         if (item.status === 'rejected' || item.status === 'refunded') { typeClass = 'rejected'; }
         
-        const title = item.type === 'credit_given' ? `Admin Credit` : item.description;
+        // Title ko logic ke hisaab se set karein
+        let title = item.description;
+        if (item.type === 'credit_given') title = `Admin Credit`;
+        // 'p2p_sent' aur 'p2p_received' ke liye description pehle se set hoga ("Paid to X", "Received from Y")
 
         itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${title}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${displayAmount}</div><span class="status">${item.status || 'Completed'}</span></div>`;
         listEl.appendChild(itemDiv);
@@ -465,25 +500,29 @@ function renderUnifiedHistory() {
 }
 
 /**
- * Transaction Details ka popup dikhayein (Naye layout ke saath).
+ * Transaction Details ka popup dikhayein (Naye layout ke saath). (UPDATED)
  * @param {object} item - Click kiya gaya transaction item.
  */
 function showTransactionDetails(item) {
     const amount = item.amount || 0;
-    let sign = '+', typeClass = 'credit';
+    let sign = '';
+    let typeClass = '';
     let description = item.description;
     
-    if (item.type === 'payment' || item.type === 'due_payment') { 
-        sign = '-'; 
-        typeClass = 'debit'; 
-    } else if (item.type === 'credit_given') {
+    // Types ko classify karein
+    if (item.type === 'credit_given' || item.type === 'p2p_received') {
         sign = '+';
         typeClass = 'credit';
-        description = "Credit received from Ramazone Admin";
+        if (item.type === 'credit_given') description = "Credit received from Ramazone Admin";
+    } else if (item.type === 'payment' || item.type === 'due_payment' || item.type === 'p2p_sent') {
+        sign = ''; // Amount pehle se negative hai
+        typeClass = 'debit';
     }
     
+    const displayAmount = (sign === '+') ? amount.toFixed(2) : Math.abs(amount).toFixed(2);
+
     // Amount aur basic details set karein
-    document.getElementById('details-modal-amount').textContent = `${sign} ₹${Math.abs(amount).toFixed(2)}`;
+    document.getElementById('details-modal-amount').textContent = `${sign} ₹${displayAmount}`;
     document.getElementById('details-modal-amount').style.color = typeClass === 'credit' ? 'var(--accent-green)' : 'var(--brand-red)';
     const statusEl = document.getElementById('details-modal-status');
     statusEl.textContent = item.status || 'Completed';
@@ -653,272 +692,23 @@ async function handleProfilePictureUpload(event) {
     } finally { event.target.value = ''; }
 }
 
-/**
- * Koi bhi action karne se pehle password verify karein.
- * @param {Function} action - Password sahi hone par run hone wala function.
- * @param {string} [sourceModalId] - Agar koi modal khula hai toh use band karne ke liye ID.
- */
-function verifyPasswordAndExecute(action, sourceModalId) {
-    if (sourceModalId) closeModal(sourceModalId);
-    pendingAction = action;
-    openModal('password-verification-modal');
-}
 
 /**
- * Password verification modal ke confirm button ko handle karein.
+ * Payment ID ko copy karein (Profile Modal se).
  */
-async function handleVerificationConfirm() {
-    const password = document.getElementById('verification-password').value;
-    const errorMsg = document.getElementById('verification-error-msg');
-    hideErrorMessage(errorMsg);
-    if (!password) return showErrorMessage(errorMsg, "Password is required.");
-    const confirmBtn = document.getElementById('verification-confirm-btn');
-    confirmBtn.disabled = true; confirmBtn.textContent = "Verifying...";
-    const user = auth.currentUser;
-    const credential = EmailAuthProvider.credential(user.email, password);
-    try {
-        await reauthenticateWithCredential(user, credential);
-        closeModal('password-verification-modal');
-        if (pendingAction) await pendingAction();
-    } catch (error) {
-        showErrorMessage(errorMsg, "Incorrect password.");
-    } finally {
-        confirmBtn.disabled = false; confirmBtn.textContent = "Confirm";
-        document.getElementById('verification-password').value = '';
-        pendingAction = null;
-    }
-}
-
-/**
- * Payment process ko handle karein (IMPROVED LOGIC).
- */
-async function handlePayment() {
-    const amount = parseFloat(document.getElementById('payment-amount').value);
-    const errorMsg = document.getElementById('payment-error-msg');
-    hideErrorMessage(errorMsg);
-    if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
-    if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
-    
-    // Show processing modal
-    document.getElementById('payment-processing-modal').classList.add('active');
-    
-    let newTxnRef = doc(collection(db, "transactions")); 
-    let paymentSuccess = false;
-    
-    try {
-        // Firebase Transaction shuru karein
-        await runTransaction(db, async (t) => {
-            const userRef = doc(db, 'users', currentUserData.uid);
-            const configRef = doc(db, 'app_settings', 'config');
-            
-            // 1. User ka wallet update (debit)
-            t.update(userRef, { wallet: increment(-amount) });
-            
-            // 2. Admin ka wallet update (credit)
-            t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
-            
-            // 3. User ke liye transaction record
-            t.set(newTxnRef, { 
-                type: 'payment', 
-                amount: -amount, // User ke liye negative
-                description: 'Paid to Ramazone Store', 
-                status: 'completed', 
-                timestamp: serverTimestamp(), 
-                involvedUsers: [currentUserData.uid] 
-            });
-            
-            // 4. Admin ke liye transaction record
-            t.set(doc(collection(db, "rmz_wallet_transactions")), { 
-                amount, // Admin ke liye positive
-                senderId: currentUserData.uid, 
-                senderName: currentUserData.name, 
-                senderMobile: currentUserData.mobile, 
-                timestamp: serverTimestamp() 
-            });
-            
-            paymentSuccess = true;
-        });
-        
-        // --- SUCCESS LOGIC ---
-        if (paymentSuccess) {
-            // Hide processing modal
-            document.getElementById('payment-processing-modal').classList.remove('active');
-            
-            // Close scan-pay modal
-            closeModal('scan-pay-modal');
-            
-            const now = new Date();
-            document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
-            document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
-            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
-            document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-            
-            // Show success modal
-            openModal('payment-success-modal');
-        }
-    } catch (error) { 
-        // --- FAILURE LOGIC ---
-        console.error("Payment transaction failed during Firestore transaction:", error);
-        
-        // Hide processing modal
-        document.getElementById('payment-processing-modal').classList.remove('active');
-        
-        // Show failure modal with specific error message
-        document.getElementById('payment-failure-modal').querySelector('.modal-content p').textContent = 
-            error.message || "We could not complete your payment. Please check your network and try again.";
-        
-        // Show failure modal
-        openModal('payment-failure-modal');
-    }
-}
-// --- END handlePayment FIX ---
-
-
-// --- RMZ Pay Modal (Scan/Direct) Logic ---
-
-/**
- * Scan QR view dikhayein.
- */
-function showScanView() {
-    stopScanner(); // Pehle scanner band karein
-    document.getElementById('qr-scanner-section').style.display = 'block';
-    document.getElementById('payment-form').style.display = 'none';
-    document.getElementById('select-scan-btn').classList.add('active');
-    document.getElementById('select-direct-pay-btn').classList.remove('active');
-    document.getElementById('rescan-btn').style.display = 'none'; 
-    document.getElementById('receiver-id-display').textContent = '...'; 
-    document.getElementById('payment-amount').value = '';
-    hideErrorMessage(document.getElementById('payment-error-msg'));
-    startScanner(); // Scanner chalu karein
-}
-
-/**
- * Direct Payment (bina scan) view dikhayein.
- */
-function showDirectPayView() {
-    stopScanner(); // Scanner band karein
-    document.getElementById('qr-scanner-section').style.display = 'none';
-    document.getElementById('payment-form').style.display = 'block';
-    document.getElementById('select-direct-pay-btn').classList.add('active');
-    document.getElementById('select-scan-btn').classList.remove('active');
-    
-    document.getElementById('receiver-id-display').textContent = 'Ramazone Store';
-    document.getElementById('rescan-btn').style.display = 'none'; 
-    
-    document.getElementById('payment-amount').value = '';
-    hideErrorMessage(document.getElementById('payment-error-msg'));
-}
-
-/**
- * Dashboard par "RMZ Pay" button click ko handle karein.
- */
-function handleRmzPayButtonClick() {
-    openModal('scan-pay-modal');
-    showScanView(); // Default mein Scan view dikhayein
-}
-
-// --- Scanner/QR Code Functions ---
-
-/**
- * QR code scan successful hone par handle karein.
- * @param {string} data - QR code se mila data.
- */
-async function handleSuccessfulScan(data) {
-    // Sirf Ramazone Store ka QR hi accept karein
-    if (data !== RAMAZONE_STORE_ID) {
-        showToast("Invalid QR code scanned. Only Ramazone Store QR is accepted.");
-        startScanner(); // Scanning jaari rakhein
+function handleCopyPaymentId() {
+    const paymentId = document.getElementById('profile-payment-id').textContent;
+    if (!navigator.clipboard) {
+        showToast("Copying not supported.");
         return;
     }
-    
-    stopScanner();
-    
-    // Scan ke baad payment form dikhayein
-    document.getElementById('qr-scanner-section').style.display = 'none';
-    document.getElementById('payment-form').style.display = 'block';
-    document.getElementById('select-scan-btn').classList.add('active');
-    document.getElementById('select-direct-pay-btn').classList.remove('active');
-    document.getElementById('receiver-id-display').textContent = 'Ramazone Store'; 
-    document.getElementById('rescan-btn').style.display = 'block'; 
-    document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
-}
-
-/**
- * QR code scanner ko start karein.
- */
-function startScanner() {
-    stopScanner();
-    const video = document.getElementById('scanner-video');
-    const statusEl = document.getElementById('scanner-status');
-    
-    statusEl.textContent = 'Starting camera...';
-    document.getElementById('select-direct-pay-btn').disabled = false; 
-
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
-        video.srcObject = stream;
-        video.play();
-        statusEl.textContent = 'Scanning for QR code...';
-        scannerAnimation = requestAnimationFrame(tick);
-    }).catch(() => {
-        statusEl.textContent = 'Could not access camera.';
-        document.getElementById('select-direct-pay-btn').disabled = false; 
+    navigator.clipboard.writeText(paymentId).then(() => {
+        showToast("Payment ID Copied!");
+    }).catch(err => {
+        showToast("Failed to copy ID.");
+        console.error('Failed to copy ID: ', err);
     });
-    
-    const tick = () => {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // QR code detect karein
-            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-            if (code && code.data === RAMAZONE_STORE_ID) { 
-                handleSuccessfulScan(code.data); 
-                return; 
-            }
-        }
-        if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
-    };
 }
-
-/**
- * QR code scanner ko stop karein.
- */
-function stopScanner() {
-    if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
-    scannerAnimation = null;
-    const video = document.getElementById('scanner-video');
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-    }
-    document.getElementById('select-direct-pay-btn').disabled = false;
-}
-
-/**
- * Gallery se QR code image upload ko handle karein.
- * @param {Event} event - File input change event.
- */
-function handleQrUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const image = new Image();
-        image.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = image.width; canvas.height = image.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-            if (code && code.data === RAMAZONE_STORE_ID) handleSuccessfulScan(code.data);
-            else showToast("No valid Ramazone QR code found.");
-        };
-        image.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-// --- END RMZ Pay Modal Logic ---
 
 
 /**
@@ -963,8 +753,8 @@ async function handlePasswordChange(e) {
  */
 function handleShare() {
     if (!currentUserData) return;
-    const { name, lifetimeEarning } = currentUserData;
-    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app se ab tak *₹${(lifetimeEarning || 0).toFixed(2)}* ki bachat ki hai! 🤑\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna!\n\nAbhi app download karein: ${window.location.origin}${window.location.pathname}`;
+    const { name } = currentUserData; // Lifetime earning hata diya
+    const shareText = `🎉 *Wow! Ek Zabardast Offer!* 🎉\n\nMai, *${name}*, Ramazone Cashback app use kar raha hoon!\n\nAap bhi is app ko use karein aur har khareed par dher saare paise bachayein. Miss mat karna!\n\nAbhi app download karein: ${window.location.origin}${window.location.pathname}`;
     if (navigator.share) navigator.share({ text: shareText });
     else navigator.clipboard.writeText(shareText).then(() => showToast("Share message copied to clipboard!"));
 }
@@ -1071,11 +861,22 @@ function initializeAppLogic() {
     document.getElementById('profile-picture-input').addEventListener('change', handleProfilePictureUpload);
     document.getElementById('password-change-form').addEventListener('submit', handlePasswordChange);
     
+    // (NEW) Copy Payment ID button
+    document.getElementById('profile-copy-id-btn').addEventListener('click', handleCopyPaymentId);
+
     // Quick Actions Listeners
     document.getElementById('shop-now-btn').addEventListener('click', () => {
         window.open('https://www.ramazone.in', '_blank');
     });
-    document.getElementById('scan-and-pay-btn').addEventListener('click', handleRmzPayButtonClick);
+    
+    // (UPDATED) Scan button sirf modal kholega
+    document.getElementById('scan-and-pay-btn').addEventListener('click', () => {
+        openModal('scan-pay-modal');
+        // Payment modal ke default state ko set karne ke liye event fire karein
+        const event = new CustomEvent('paymentModalOpened');
+        document.dispatchEvent(event);
+    });
+    
     document.getElementById('whatsapp-support-btn').addEventListener('click', handleWhatsAppSupport);
 
     // Wallet & Utility Listeners
@@ -1083,22 +884,15 @@ function initializeAppLogic() {
     document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
     
-    // Payment/QR Listeners
-    document.getElementById('rescan-btn').addEventListener('click', showScanView);
-    document.getElementById('pay-submit-btn').addEventListener('click', handlePayment);
-    document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
-    document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
+    // Payment/QR Listeners (REMOVED - Moved to payments.js)
     
-    // RMZ Pay Option Buttons
-    document.getElementById('select-scan-btn').addEventListener('click', showScanView);
-    document.getElementById('select-direct-pay-btn').addEventListener('click', showDirectPayView);
-    
-    // Verification Listener
-    document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
+    // Verification Listener (REMOVED - Moved to payments.js)
 
     // Notification and History Listeners
     document.getElementById('popup-notification-close').addEventListener('click', () => { if (popupTimeout) clearTimeout(popupTimeout); document.getElementById('popup-notification').classList.remove('show'); });
     document.getElementById('notification-back-btn').addEventListener('click', () => toggleView('dashboard-view'));
+    
+    // (UPDATED) Filter bar
     document.getElementById('filter-bar').addEventListener('click', e => {
         const target = e.target.closest('.filter-btn');
         if (!target) return;
@@ -1114,3 +908,4 @@ function initializeAppLogic() {
 
 // App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+
