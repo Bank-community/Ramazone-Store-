@@ -498,7 +498,6 @@ function showTransactionDetails(item) {
     document.getElementById('details-modal-txn-id-box').textContent = item.id;
     
     // Naye buttons ke liye event listeners (purane listeners hatakar)
-    // Purane button ko clone karke naya banao taaki purana event listener nikal jaaye
     const oldCopyBtn = document.getElementById('details-copy-txn-id-btn');
     const newCopyBtn = oldCopyBtn.cloneNode(true); // Clone karke listener hatayein
     oldCopyBtn.parentNode.replaceChild(newCopyBtn, oldCopyBtn);
@@ -691,7 +690,7 @@ async function handleVerificationConfirm() {
 }
 
 /**
- * Payment process ko handle karein (THEEK KIYA GAYA LOGIC).
+ * Payment process ko handle karein (IMPROVED LOGIC).
  */
 async function handlePayment() {
     const amount = parseFloat(document.getElementById('payment-amount').value);
@@ -700,55 +699,77 @@ async function handlePayment() {
     if (isNaN(amount) || amount < 5) return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
     if (currentUserData.wallet < amount) return showErrorMessage(errorMsg, "Insufficient balance.");
     
+    // Show processing modal
+    document.getElementById('payment-processing-modal').classList.add('active');
+    
     let newTxnRef = doc(collection(db, "transactions")); 
-
-    verifyPasswordAndExecute(async () => {
-        try {
-            closeModal('scan-pay-modal'); 
-
-            // Firebase Transaction shuru karein
-            await runTransaction(db, async (t) => {
-                const userRef = doc(db, 'users', currentUserData.uid);
-                const configRef = doc(db, 'app_settings', 'config');
-                // 1. User ka wallet update (debit)
-                t.update(userRef, { wallet: increment(-amount) });
-                // 2. Admin ka wallet update (credit)
-                t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
-                // 3. User ke liye transaction record
-                t.set(newTxnRef, { 
-                    type: 'payment', 
-                    amount: -amount, // User ke liye negative
-                    description: 'Paid to Ramazone Store', 
-                    status: 'completed', 
-                    timestamp: serverTimestamp(), 
-                    involvedUsers: [currentUserData.uid] 
-                });
-                // 4. Admin ke liye transaction record
-                t.set(doc(collection(db, "rmz_wallet_transactions")), { 
-                    amount, // Admin ke liye positive
-                    senderId: currentUserData.uid, 
-                    senderName: currentUserData.name, 
-                    senderMobile: currentUserData.mobile, 
-                    timestamp: serverTimestamp() 
-                });
+    let paymentSuccess = false;
+    
+    try {
+        // Firebase Transaction shuru karein
+        await runTransaction(db, async (t) => {
+            const userRef = doc(db, 'users', currentUserData.uid);
+            const configRef = doc(db, 'app_settings', 'config');
+            
+            // 1. User ka wallet update (debit)
+            t.update(userRef, { wallet: increment(-amount) });
+            
+            // 2. Admin ka wallet update (credit)
+            t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
+            
+            // 3. User ke liye transaction record
+            t.set(newTxnRef, { 
+                type: 'payment', 
+                amount: -amount, // User ke liye negative
+                description: 'Paid to Ramazone Store', 
+                status: 'completed', 
+                timestamp: serverTimestamp(), 
+                involvedUsers: [currentUserData.uid] 
             });
             
-            // --- SUCCESS LOGIC (THEEK KIYA GAYA) ---
+            // 4. Admin ke liye transaction record
+            t.set(doc(collection(db, "rmz_wallet_transactions")), { 
+                amount, // Admin ke liye positive
+                senderId: currentUserData.uid, 
+                senderName: currentUserData.name, 
+                senderMobile: currentUserData.mobile, 
+                timestamp: serverTimestamp() 
+            });
+            
+            paymentSuccess = true;
+        });
+        
+        // --- SUCCESS LOGIC ---
+        if (paymentSuccess) {
+            // Hide processing modal
+            document.getElementById('payment-processing-modal').classList.remove('active');
+            
+            // Close scan-pay modal
+            closeModal('scan-pay-modal');
+            
             const now = new Date();
             document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
             document.getElementById('success-modal-receiver').textContent = 'Ramazone Store';
             document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
             document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-            // Ab sahi modal call hoga
+            
+            // Show success modal
             openModal('payment-success-modal');
-
-        } catch (error) { 
-            // --- FAILURE LOGIC (THEEK KIYA GAYA) ---
-            console.error("Payment transaction failed during Firestore transaction:", error);
-            // Ab sahi failure modal call hoga
-            openModal('payment-failure-modal'); 
         }
-    });
+    } catch (error) { 
+        // --- FAILURE LOGIC ---
+        console.error("Payment transaction failed during Firestore transaction:", error);
+        
+        // Hide processing modal
+        document.getElementById('payment-processing-modal').classList.remove('active');
+        
+        // Show failure modal with specific error message
+        document.getElementById('payment-failure-modal').querySelector('.modal-content p').textContent = 
+            error.message || "We could not complete your payment. Please check your network and try again.";
+        
+        // Show failure modal
+        openModal('payment-failure-modal');
+    }
 }
 // --- END handlePayment FIX ---
 
@@ -1093,5 +1114,3 @@ function initializeAppLogic() {
 
 // App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
-
-
