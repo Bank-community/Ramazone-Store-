@@ -13,9 +13,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Third-party scripts for QR scanning and screenshot -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- CSS Styles -->
     <style>
         :root {
             --bg-page: #f0f2f5; 
@@ -235,13 +238,14 @@
         .professional-modal .detail-item .label { color: var(--text-secondary); }
         .professional-modal .detail-item .value { font-weight: 600; }
         .professional-modal .action-btn { width: 100%; }
+        
+        /* --- TRANSACTION DETAILS MODAL (UPDATED) --- */
         #transaction-details-modal hr { border: none; height: 1px; background-color: var(--border-color); margin-bottom: 20px; }
-        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; } /* UPDATED margin-bottom */
+        #transaction-details-modal .details-list { display: flex; flex-direction: column; gap: 15px; text-align: left; margin-bottom: 20px; } /* margin-bottom kam kiya */
         #transaction-details-modal .status-badge { background-color: #e9f7ef; color: var(--accent-green); padding: 4px 12px; border-radius: 15px; font-size: 13px; font-weight: 600; }
         #transaction-details-modal .status-badge.pending { background-color: #fff4e5; color: #f39c12; }
         #transaction-details-modal .status-badge.rejected { background-color: #ffebee; color: #c0392b; }
         
-        /* --- UPDATED STYLES FOR TRANSACTION DETAILS MODAL --- */
         #transaction-details-modal .detail-item {
             align-items: flex-start; 
         }
@@ -251,7 +255,7 @@
             flex-grow: 1;
             word-break: break-all;
         }
-        /* Style for the new Transaction ID container */
+        /* Naya container Transaction ID ke liye */
         .txn-id-container {
             text-align: center;
             margin-top: 20px;
@@ -265,7 +269,7 @@
             color: var(--text-primary);
             font-size: 14px;
             margin-top: 8px;
-            word-break: break-all; /* Fixes vertical text */
+            word-break: break-all; /* Yeh ID ko vertical hone se rokega */
             text-align: center;
             border: 1px solid #eee;
         }
@@ -277,7 +281,7 @@
         #transaction-details-modal .modal-actions {
             display: flex;
             gap: 10px;
-            margin-top: 10px; /* Adjusted margin */
+            margin-top: 10px; /* Margin adjust kiya */
         }
         #transaction-details-modal .action-btn,
         #transaction-details-modal .btn-secondary {
@@ -498,7 +502,7 @@
             </main>
         </div>
         
-        <!-- Network View -->
+        <!-- Network View (Hidden but functional) -->
         <div id="network-view" class="view fullscreen-view">
             <div class="fullscreen-header"><div id="network-nav-btn" class="header-action" title="Back"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div><h1 id="network-title">My Network</h1><div id="network-refresh-btn" class="header-action" title="Refresh"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div></div>
             <div class="network-tabs"><button class="network-tab-btn active" data-tab="downline">My Team</button><button class="network-tab-btn" data-tab="upline">My Sponsor</button></div>
@@ -595,17 +599,17 @@
                     <span class="label">Time</span>
                     <span class="value" id="details-modal-time"></span>
                 </div>
-                <!-- Transaction ID line REMOVED from here -->
+                <!-- Transaction ID line yahan se hata di gayi hai -->
             </div>
             
-            <!-- NEW: Transaction ID Box (as suggested) -->
+            <!-- Naya Transaction ID Box (jaisa aapne suggest kiya) -->
             <div class="txn-id-container">
                 <p class="label" style="font-size: 14px; color: var(--text-secondary);">Transaction ID</p>
-                <div id="details-modal-txn-id-box"></div> <!-- ID will go here -->
+                <div id="details-modal-txn-id-box"></div> <!-- ID yahan dikhegi -->
                 <button id="details-copy-txn-id-btn" class="btn-secondary">Copy ID</button>
             </div>
 
-            <!-- Modal actions (Download button added) -->
+            <!-- Modal actions (Download button ke saath) -->
             <div class="modal-actions">
                 <button id="details-download-receipt-btn" class="btn-secondary">Download</button>
                 <button class="action-btn" data-close-modal style="background-color: var(--text-secondary);">Close</button>
@@ -645,12 +649,12 @@
     
     <!-- 
       =================================================
-      === LINK TO THE NEW JAVASCRIPT FILE ===
+      === JAVASCRIPT FILE (app.js) KO LINK KIYA GAYA ===
       =================================================
     -->
     <script type="module" src="app.js"></script>
 
-    <!-- This inline script is for the Service Worker ONLY -->
+    <!-- Service Worker ke liye inline script -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
