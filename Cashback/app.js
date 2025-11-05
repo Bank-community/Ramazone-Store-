@@ -95,12 +95,7 @@ let currentUserData = null;
 let combinedHistory = []; // Sabhi history items ke liye global store
 let activeListeners = []; // Realtime listeners ko track karne ke liye
 let scannerAnimation = null; // QR scanner animation frame
-
-// === NEW: Transaction arrays for separate listeners ===
-let sentTransactions = [];
-let receivedTransactions = [];
-let otherTransactions = [];
-
+let allTransactions = []; // === THIS IS THE ONLY ARRAY WE NEED ===
 let allNotifications = []; // Bheje gaye notifications
 let activeFilter = 'all';
 let pendingAction = null; // Password verification ke baad run hone wala action
@@ -201,20 +196,15 @@ const hideErrorMessage = (element) => { if (element) { element.style.display = '
 // --- Realtime Data Handling ---
 
 /**
- * === UPDATED: User ke data ke liye realtime listeners attach karein ===
+ * === UPDATED AND FIXED: User ke data ke liye realtime listeners attach karein ===
  * @param {object} user - Firebase auth user object.
  */
 function attachRealtimeListeners(user) {
     detachAllListeners(); // Purane listeners ko hatayein
     const uid = user.uid;
     
-    // Reset local history arrays
-    sentTransactions = [];
-    receivedTransactions = [];
-    otherTransactions = [];
-    
-    // Types jo 'involvedUsers' use karte hain (P2P ko chhodkar)
-    const validOtherTypes = ['payment', 'due_payment', 'credit_given']; 
+    // Valid types jo humein sunne hain
+    const validTypes = ['payment', 'due_payment', 'credit_given', 'p2p_payment', 'p2p_received']; 
 
     const listeners = [
         // User document listener (No change)
@@ -230,34 +220,18 @@ function attachRealtimeListeners(user) {
             }
         }),
 
-        // === NEW QUERY 1: Transactions I SENT (P2P) ===
+        // === THE ONE, SIMPLE, AND CORRECT Transaction Listener ===
         onSnapshot(query(collection(db, "transactions"), 
-                                where("type", "==", "p2p_transfer"),
-                                where("senderId", "==", uid), 
+                                where("type", "in", validTypes), // Valid types filter
+                                where("involvedUsers", "array-contains", uid), // Sirf mere transactions
                                 orderBy("timestamp", "desc")), 
         (snapshot) => {
-            sentTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
-            combineAndRenderHistory();
-        }),
-
-        // === NEW QUERY 2: Transactions I RECEIVED (P2P) ===
-        onSnapshot(query(collection(db, "transactions"), 
-                                where("type", "==", "p2p_transfer"),
-                                where("receiverId", "==", uid), 
-                                orderBy("timestamp", "desc")), 
-        (snapshot) => {
-            receivedTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
-            combineAndRenderHistory();
-        }),
-
-        // === NEW QUERY 3: My Other Transactions (Store, Due, Credit) ===
-        onSnapshot(query(collection(db, "transactions"), 
-                                where("type", "in", validOtherTypes),
-                                where("involvedUsers", "array-contains", uid), // 'involvedUsers' yahan sahi hai
-                                orderBy("timestamp", "desc")), 
-        (snapshot) => {
-            otherTransactions = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
-            combineAndRenderHistory();
+            // 'allTransactions' ko 'combinedHistory' ka naam de diya hai for simplicity
+            combinedHistory = snapshot.docs
+                .map(doc => ({ ...doc.data(), id: doc.id, date: doc.data().timestamp?.toDate() }));
+            
+            // Koi complex combining ki zaroorat nahi, seedha render karein
+            renderUnifiedHistory();
         }),
 
         // Admin Notifications listener (No change)
@@ -278,11 +252,7 @@ function detachAllListeners() {
     activeListeners.forEach(unsub => unsub());
     activeListeners = [];
     initialPopupShown = false;
-    // Reset local history arrays
-    sentTransactions = [];
-    receivedTransactions = [];
-    otherTransactions = [];
-    combinedHistory = [];
+    combinedHistory = []; // History ko clear karein
 }
 
 // --- UI Update and Notification Logic ---
@@ -298,7 +268,6 @@ function updateDashboardUI(dbData, authUser) {
     document.getElementById('wallet-user-name').textContent = authUser.displayName;
     document.getElementById('modal-profile-img').src = profilePicUrl;
     document.getElementById('wallet-balance').textContent = `₹ ${(dbData.wallet || 0).toFixed(2)}`;
-    // 'lifetime-earning' pehle hi HTML se hata diya gaya hai, isliye JS se bhi hata diya
     document.getElementById('credit-limit').textContent = `₹ ${(dbData.totalCreditGiven || 0).toFixed(2)}`;
     document.getElementById('due-amount').textContent = `₹ ${(dbData.dueAmount || 0).toFixed(2)}`;
     document.getElementById('profile-payment-id').textContent = `${dbData.mobile}@RMZ`;
@@ -425,18 +394,12 @@ async function renderNotificationCenter() {
 }
 
 /**
- * === UPDATED: Sabhi transactions ko combine karke render karein ===
+ * === REMOVED: combineAndRenderHistory() function ===
+ * Iski zaroorat nahi hai, listener ab seedha renderUnifiedHistory() ko call karega.
  */
-function combineAndRenderHistory() {
-    // Teeno arrays ko combine karein
-    combinedHistory = [...sentTransactions, ...receivedTransactions, ...otherTransactions];
-    // Date ke hisaab se sort karein
-    combinedHistory.sort((a, b) => (b.date || 0) - (a.date || 0));
-    renderUnifiedHistory();
-}
 
 /**
- * === UPDATED: Transaction history list ko filter ke hisaab se render karein ===
+ * === UPDATED AND SIMPLIFIED: Transaction history list ko render karein ===
  */
 function renderUnifiedHistory() {
     const listEl = document.getElementById('unified-history-list');
@@ -453,39 +416,29 @@ function renderUnifiedHistory() {
         credit_given: "Total Credit Received"
     };
 
-    // === UPDATED: Filter logic ab naye data structure par kaam karega ===
+    // Filter logic ab naye data structure par kaam karega
     const itemsToRender = combinedHistory.filter(item => {
         if (activeFilter === 'all') return true;
-        
-        // 'payment' = Store Payment (type 'payment') OR P2P Sent (type 'p2p_transfer' + sender)
+        // 'payment' = Store Payment (type 'payment') OR P2P Sent (type 'p2p_payment')
         if (activeFilter === 'payment') {
-            return item.type === 'payment' || (item.type === 'p2p_transfer' && item.senderId === currentUser.uid);
+            return item.type === 'payment' || item.type === 'p2p_payment';
         }
         // 'due_payment' = Due Payment
         if (activeFilter === 'due_payment') {
             return item.type === 'due_payment';
         }
-        // 'credit_given' = Admin Credit (type 'credit_given') OR P2P Received (type 'p2p_transfer' + receiver)
+        // 'credit_given' = Admin Credit (type 'credit_given') OR P2P Received (type 'p2p_received')
         if (activeFilter === 'credit_given') {
-            return item.type === 'credit_given' || (item.type === 'p2p_transfer' && item.receiverId === currentUser.uid);
+            return item.type === 'credit_given' || item.type === 'p2p_received';
         }
         return false;
     });
     
-    // === UPDATED: Total amount calculation logic ===
+    // Total amount calculation logic
     let totalAmount = 0;
     itemsToRender.forEach(item => {
-        let displayAmount = 0;
-        if (item.type === 'p2p_transfer') {
-            if (item.senderId === currentUser.uid) {
-                displayAmount = -item.amount; // Maine bheja, toh negative
-            } else {
-                displayAmount = item.amount; // Mujhe mila, toh positive
-            }
-        } else {
-            displayAmount = item.amount || 0; // Baaki types (payment, credit, due) pehle se hi +/- hain
-        }
-        totalAmount += displayAmount; 
+        // Amount record mein pehle se hi +/- set hai (hamaare naye P2P logic ke anusaar)
+        totalAmount += (item.amount || 0); 
     });
 
     summaryLabelEl.textContent = `${filterLabels[activeFilter]}:`;
@@ -504,79 +457,54 @@ function renderUnifiedHistory() {
         return;
     }
 
-    // === UPDATED: List item rendering logic ===
+    // List item rendering logic (ab yeh bahut simple hai)
     itemsToRender.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
         itemDiv.addEventListener('click', () => showTransactionDetails(item));
         
-        let amount = 0;
-        let sign = '+';
-        let typeClass = 'credit';
-        let title = 'Transaction'; // Default title
+        const amount = item.amount || 0;
+        let sign = amount >= 0 ? '+' : '-';
+        let typeClass = amount >= 0 ? 'credit' : 'debit';
         
-        if (item.type === 'p2p_transfer') {
-            if (item.senderId === currentUser.uid) {
-                // Main sender hoon
-                amount = -item.amount;
-                title = `Paid to ${item.receiverName}`;
-            } else {
-                // Main receiver hoon
-                amount = item.amount;
-                title = `Received from ${item.senderName}`;
-            }
-        } else {
-            // Doosre types
-            amount = item.amount || 0;
-            if (item.type === 'payment') title = 'Paid to Ramazone Store';
-            if (item.type === 'credit_given') title = 'Admin Credit';
-            if (item.type === 'due_payment') title = 'Due amount paid';
-        }
+        // Title (description) record mein pehle se hi set hai
+        const title = item.description || 'Transaction'; 
         
-        // Amount ke hisaab se style set karein
-        if (amount < 0) {
-            typeClass = 'debit';
-            sign = '-';
-        }
-
-        const displayAmount = Math.abs(amount).toFixed(2);
         if (item.status === 'rejected') { typeClass = 'rejected'; }
 
-        itemDiv.innerHTML = `<div class="history-details"><div class="history-info"><div class="title">${title}</div><div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div></div></div><div class="history-amount"><div class="amount ${typeClass}">${sign} ₹${displayAmount}</div><span class="status">${item.status || 'Completed'}</span></div>`;
+        itemDiv.innerHTML = `
+            <div class="history-details">
+                <div class="history-info">
+                    <div class="title">${title}</div>
+                    <div class="date">${item.date ? item.date.toLocaleDateString() : 'N/A'}</div>
+                </div>
+            </div>
+            <div class="history-amount">
+                <div class="amount ${typeClass}">${sign} ₹${Math.abs(amount).toFixed(2)}</div>
+                <span class="status">${item.status || 'Completed'}</span>
+            </div>`;
         listEl.appendChild(itemDiv);
     });
 }
 
 
 /**
- * === UPDATED: Transaction Details ka popup dikhayein ===
+ * === UPDATED AND SIMPLIFIED: Transaction Details ka popup dikhayein ===
  * @param {object} item - Click kiya gaya transaction item.
  */
 function showTransactionDetails(item) {
-    let amount = 0;
-    let sign = '+';
-    let typeClass = 'credit';
-    let description = 'Transaction Details';
+    const amount = item.amount || 0;
+    let sign = amount >= 0 ? '+' : '-';
+    let typeClass = amount >= 0 ? 'credit' : 'debit';
     
-    // === UPDATED: Logic to determine amount and description ===
-    if (item.type === 'p2p_transfer') {
-        if (item.senderId === currentUser.uid) {
-            amount = -item.amount;
-            description = `Paid to ${item.receiverName}`;
-        } else {
-            amount = item.amount;
-            description = `Received from ${item.senderName}`;
-        }
-    } else {
-        amount = item.amount || 0;
+    // Description record se seedha aa jayega
+    let description = item.description || 'Transaction Details';
+
+    // (Optional) Purane records ke liye fallback
+    if (!item.description) {
         if (item.type === 'payment') description = 'Paid to Ramazone Store';
         if (item.type === 'credit_given') description = 'Credit received from Ramazone Admin';
         if (item.type === 'due_payment') description = 'Due amount paid to Ramazone';
-    }
-    
-    if (amount < 0) {
-        typeClass = 'debit';
-        sign = '-';
     }
     
     // Amount aur basic details set karein
@@ -837,10 +765,10 @@ async function handleStorePayment() {
             t.set(newTxnRef, { 
                 type: 'payment', 
                 amount: -amount, // User ke liye negative
-                description: 'Paid to Ramazone Store', // Description abhi use nahi ho rahi, par data ke liye achha hai
+                description: 'Paid to Ramazone Store', // Description
                 status: 'completed', 
                 timestamp: serverTimestamp(), 
-                involvedUsers: [currentUserData.uid] // Store payment ke liye yeh theek hai
+                involvedUsers: [currentUserData.uid] // Sirf user ki ID
             });
             
             t.set(doc(collection(db, "rmz_wallet_transactions")), { 
@@ -876,7 +804,7 @@ async function handleStorePayment() {
 // --- END handleStorePayment ---
 
 
-// --- === UPDATED: P2P Payment (Wallet Transfer) Logic === ---
+// --- === UPDATED AND FIXED: P2P Payment (Wallet Transfer) Logic === ---
 
 /**
  * RMZ Pay Modal (Scan/Direct) Logic
@@ -970,7 +898,7 @@ async function searchUserByPaymentID() {
 }
 
 /**
- * === UPDATED: P2P (User-to-User) payment ko handle karein (Single Transaction Logic) ===
+ * === UPDATED AND FIXED: P2P (User-to-User) payment (Two Record Logic) ===
  */
 async function handleP2PPayment() {
     const amountInput = document.getElementById('p2p-payment-amount');
@@ -993,7 +921,10 @@ async function handleP2PPayment() {
     const senderRef = doc(db, 'users', currentUser.uid);
     const receiverRef = doc(db, 'users', p2pReceiverData.uid);
     let paymentSuccess = false;
-    let newTxnRef = doc(collection(db, "transactions")); // ID pehle generate karein
+    
+    // Do alag transaction ID banayein
+    let senderTxnRef = doc(collection(db, "transactions"));
+    let receiverTxnRef = doc(collection(db, "transactions"));
 
     try {
         await runTransaction(db, async (t) => {
@@ -1002,26 +933,31 @@ async function handleP2PPayment() {
                 throw new Error("Insufficient balance.");
             }
             
-            // 1. Sender ka wallet update (debit)
+            // 1. Wallets update karein
             t.update(senderRef, { wallet: increment(-amount) });
-            
-            // 2. Receiver ka wallet update (credit)
             t.update(receiverRef, { wallet: increment(amount) });
             
-            // 3. === NEW: Sirf EK transaction record banayein ===
             const timestamp = serverTimestamp();
-            const transferData = {
-                type: 'p2p_transfer', // Naya universal type
-                amount: amount, // Amount hamesha positive rahega
+            
+            // 2. === Sender ka Record (Negative amount, sirf sender ki ID) ===
+            t.set(senderTxnRef, {
+                type: 'p2p_payment',
+                amount: -amount, // Negative
+                description: `Paid to ${p2pReceiverData.name}`,
                 status: 'completed',
                 timestamp: timestamp,
-                senderId: currentUser.uid,
-                senderName: currentUserData.name,
-                receiverId: p2pReceiverData.uid,
-                receiverName: p2pReceiverData.name
-            };
-            // Usi ID se set karein jo humne pehle generate ki thi
-            t.set(newTxnRef, transferData);
+                involvedUsers: [currentUser.uid] // SIRF SENDER
+            });
+            
+            // 3. === Receiver ka Record (Positive amount, sirf receiver ki ID) ===
+            t.set(receiverTxnRef, {
+                type: 'p2p_received',
+                amount: amount, // Positive
+                description: `Received from ${currentUserData.name}`,
+                status: 'completed',
+                timestamp: timestamp,
+                involvedUsers: [p2pReceiverData.uid] // SIRF RECEIVER
+            });
             
             paymentSuccess = true;
         });
@@ -1033,7 +969,7 @@ async function handleP2PPayment() {
             const now = new Date();
             document.getElementById('success-modal-amount').textContent = `₹ ${amount.toFixed(2)}`;
             document.getElementById('success-modal-receiver').textContent = p2pReceiverData.name;
-            document.getElementById('success-modal-txn-id').textContent = newTxnRef.id;
+            document.getElementById('success-modal-txn-id').textContent = senderTxnRef.id; // Sender ki ID dikhayein
             document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
             
             openModal('payment-success-modal');
@@ -1363,7 +1299,7 @@ function initializeAppLogic() {
         document.querySelector('#filter-bar .active')?.classList.remove('active');
         target.classList.add('active');
         activeFilter = target.dataset.filter;
-        renderUnifiedHistory();
+        renderUnifiedHistory(); // Re-render with the new filter
     });
     
     // Close modal buttons
