@@ -608,6 +608,45 @@
         #install-pwa-btn:hover {
             background-color: #2ecc71;
         }
+        
+        /* ====== (NEW) My QR Code Modal Styles ====== */
+        #my-qr-code-modal .modal-content {
+            text-align: center;
+        }
+        #my-qr-code-card {
+            background-color: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid #eee; 
+            display: inline-block; 
+            margin: 10px 0 20px 0;
+        }
+        #my-qr-code-container {
+             margin: 0 auto; 
+             display: flex; 
+             justify-content: center; 
+             align-items: center;
+             padding: 10px;
+             background: white;
+             border-radius: 8px;
+             width: 220px; /* QR Code size + padding */
+             height: 220px;
+        }
+        #my-qr-code-container canvas, 
+        #my-qr-code-container img {
+            border-radius: 8px;
+        }
+        #my-qr-payment-id {
+            font-weight: 600; 
+            margin-top: 15px; 
+            color: var(--text-primary);
+            font-size: 16px;
+            word-break: break-all;
+        }
+        #download-my-qr-btn {
+            width: 100%;
+            background-color: var(--brand-red);
+        }
 
     </style>
 </head>
@@ -767,23 +806,30 @@
             <!-- 2. Content Area (Swappable) -->
             <div id="payment-content-container">
                 
-                <!-- 2.1. Scan QR View -->
+                <!-- 
+                  =======================================================
+                  === UPDATE: SCAN QR VIEW (Ab P2P bhi isi mein hai) ===
+                  =======================================================
+                -->
                 <div id="scan-qr-view" class="payment-view active">
+                    <!-- 2.1.1: Scanner Section -->
                     <div id="scanner-container">
                         <video id="scanner-video" playsinline></video>
                     </div>
                     <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
                     <button id="upload-qr-btn">
-                        <!-- New SVG Icon -->
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M16 4.00098H8C5.79086 4.00098 4 5.79184 4 8.00098V16.001C4 18.2101 5.79086 20.001 8 20.001H16C18.2091 20.001 20 18.2101 20 16.001V8.00098C20 5.79184 18.2091 4.00098 16 4.00098ZM16 18.001H8C6.89543 18.001 6 17.1055 6 16.001V8.00098C6 6.89641 6.89543 6.00098 8 6.00098H16C17.1046 6.00098 18 6.89641 18 8.00098V16.001C18 17.1055 17.1046 18.001 16 18.001ZM15 11.001C15 12.6579 13.6569 14.001 12 14.001C10.3431 14.001 9 12.6579 9 11.001C9 9.3441 10.3431 8.00098 12 8.00098C13.6569 8.00098 15 9.3441 15 11.001Z" fill="currentColor"></path></svg>
                         <span>Upload QR Image</span>
                     </button>
                     <p id="scanner-status">Scanning for QR code...</p>
-                </div>
 
-                <!-- 2.2. Pay to User (P2P) View -->
-                <!-- (FIXED) Hata diya gaya 'style="display: none;"' -->
-                <div id="p2p-pay-view" class="payment-view">
+                    <hr style="border: none; height: 1px; background-color: #eee; margin: 25px 0;">
+
+                    <!-- 
+                      2.1.2: P2P (Pay to User) Section 
+                      (Yahan move kar diya gaya hai)
+                    -->
+                    
                     <!-- Recent Payments -->
                     <h3 class="recent-payments-title">Recent Payments</h3>
                     <div id="recent-payments-container">
@@ -812,9 +858,17 @@
                         <button id="p2p-pay-submit-btn" class="btn-primary">Pay Now</button>
                     </div>
                 </div>
+                <!-- === END UPDATED SCAN QR VIEW === -->
+                
+
+                <!-- 
+                  2.2. Pay to User (P2P) View 
+                  (REMOVED - Iska content upar 'scan-qr-view' mein chala gaya hai)
+                -->
+                <!-- <div id="p2p-pay-view" class="payment-view"> ... </div> -->
+
 
                 <!-- 2.3. RMZ Store Payment View -->
-                <!-- (FIXED) Hata diya gaya 'style="display: none;"' -->
                 <div id="rmz-store-pay-view" class="payment-view">
                     <p>Paying to: <strong>Ramazone Store</strong></p>
                     <div class="form-group">
@@ -826,22 +880,33 @@
                 </div>
             </div>
 
-            <!-- 3. Bottom Navigation Bar -->
+            <!-- 
+              =====================================
+              === UPDATE: Bottom Navigation Bar ===
+              =====================================
+            -->
             <div id="payment-bottom-nav">
+                <!-- Button 1: Scan QR (Ab isme P2P bhi hai) -->
                 <button id="payment-nav-scan" class="payment-nav-btn active">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M15 3H21V9H19V5H15V3ZM9 3H3V9H5V5H9V3ZM15 21H21V15H19V19H15V21ZM9 21H3V15H5V19H9V21ZM5 11H7V13H5V11ZM7 11H9V13H7V11ZM9 11H11V13H9V11ZM11 11H13V13H11V11ZM13 11H15V13H13V11ZM15 11H17V13H15V11ZM17 11H19V13H17V11Z" fill="currentColor"></path></svg>
-                    <span>Scan QR</span>
+                    <span>Scan & Pay User</span>
                 </button>
+                
+                <!-- Button 2: Pay to User (REMOVED) -->
+                <!-- 
                 <button id="payment-nav-p2p" class="payment-nav-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8ZM8 10C3.58172 10 0 13.5817 0 18V24H16V18C16 13.5817 12.4183 10 8 10ZM17 10C17.5304 10 18.0391 10.2107 18.4142 10.5858C18.7893 10.9609 19 11.4696 19 12V24H24V18C24 13.5817 20.4183 10 16 10H17ZM18 8C20.2091 8 22 6.20914 22 4C22 1.79086 20.2091 0 18 0C15.7909 0 14 1.79086 14 4C14 6.20914 15.7909 8 18 8Z" fill="currentColor"></path></svg>
-                    <span>Pay to User</span>
-                </button>
+                    ...
+                </button> 
+                -->
+                
+                <!-- Button 3: RMZ Payment -->
                 <button id="payment-nav-rmz" class="payment-nav-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M21 4H3C1.89543 4 1 4.89543 1 6V18C1 19.1046 1.89543 20 3 20H21C22.1046 20 23 19.1046 23 18V6C23 4.89543 22.1046 4 21 4ZM3 6H21V8H3V6ZM21 18H3V10H21V18ZM5 12V14H11V12H5Z" fill="currentColor"></path></svg>
                     <span>RMZ Payment</span>
                 </button>
             </div>
         </div>
+        <!-- === END RMZ PAY PAGE === -->
 
     </div>
         
@@ -872,7 +937,11 @@
         </div>
     </div>
     
-    <!-- Profile Modal (Same) -->
+    <!-- 
+      ================================
+      === UPDATE: Profile Modal ===
+      ================================
+    -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">
             <div id="modal-profile-img-container">
@@ -889,10 +958,18 @@
             <!-- === Payment ID with Copy Button (UPDATED) === -->
             <div id="profile-payment-id-container">
                 <p style="font-size: 12px; text-align: center; color: var(--text-secondary);">Your Payment ID</p>
+                <!-- (NEW) Wrapper div to hold both icons -->
                 <div style="display: flex; align-items: center; justify-content: center; gap: 10px; background-color: var(--bg-page); padding: 8px 12px; border-radius: 8px; margin-top: 5px;">
                     <span id="profile-payment-id" style="font-weight:600; font-size: 15px; color: var(--text-primary);"></span>
+                    
+                    <!-- Button 1: Copy ID -->
                     <button id="profile-copy-id-btn" title="Copy ID" style="background:none; border:none; cursor:pointer; padding:0; line-height: 1; color: var(--text-secondary);">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                    
+                    <!-- (NEW) Button 2: Show My QR -->
+                    <button id="profile-show-qr-btn" title="Show My QR Code" style="background:none; border:none; cursor:pointer; padding:0; line-height: 1; color: var(--text-secondary);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15 3H21V9H19V5H15V3ZM9 3H3V9H5V5H9V3ZM15 21H21V15H19V19H15V21ZM9 21H3V15H5V19H9V21ZM3 11H5V13H3V11ZM5 11H7V13H5V11ZM7 11H9V13H7V11ZM9 11H11V13H9V11ZM11 11H13V13H11V11ZM13 11H15V13H13V11ZM15 11H17V13H15V11ZM17 11H19V13H17V11ZM19 11H21V13H19V11ZM11 3H13V5H11V3ZM11 19H13V21H11V19ZM3 19H5V21H3V19ZM3 15H5V17H3V15ZM19 19H21V21H19V19ZM19 15H21V17H19V15ZM19 3H21V5H19V3Z"/></svg>
                     </button>
                 </div>
             </div>
@@ -916,6 +993,8 @@
             </div>
         </div>
     </div>
+    <!-- === END Profile Modal === -->
+    
     
     <!-- Full Profile Picture Modal (Same) -->
     <div id="profile-picture-modal" class="modal-overlay">
@@ -1058,6 +1137,29 @@
         </div>
     </div>
 
+    <!-- ====== (NEW) My QR Code Modal ====== -->
+    <div id="my-qr-code-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn" data-close-modal>&times;</button>
+            <h3>My Payment QR Code</h3>
+            
+            <!-- Card element jise download kiya jayega -->
+            <div id="my-qr-code-card">
+                <div id="my-qr-code-container">
+                    <!-- QR code yahan generate hoga -->
+                </div>
+                <p id="my-qr-payment-id">Your-ID@RMZ</p>
+            </div>
+            <!-- End card element -->
+            
+            <div class="modal-actions" style="margin-top: 0;">
+                <button id="download-my-qr-btn" class="btn-primary">Download QR</button>
+            </div>
+        </div>
+    </div>
+    <!-- ====== END My QR Code Modal ====== -->
+
+
     <!-- Toast and Popup Notifications (Same) -->
     <div id="toast-notification" class="toast-notification"></div>
     <div id="popup-notification">
@@ -1096,5 +1198,4 @@
 
 </body>
 </html>
-
 
