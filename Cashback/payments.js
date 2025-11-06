@@ -47,7 +47,8 @@ function switchPaymentView(viewToShow) {
 }
 
 /**
- * Payment page ko uski default state (Scan QR) par reset karein.
+ * (UPDATED) Payment page ko uski default state (Scan QR) par reset karein.
+ * (FIXED) Duplicate 'loadRecentPayments()' call ko hata diya gaya hai.
  */
 function resetPaymentView() {
     switchPaymentView('scan-qr-view'); // Default view ab 'scan-qr-view' hai
@@ -64,12 +65,13 @@ function resetPaymentView() {
     document.getElementById('rmz-payment-amount').value = '';
     hideErrorMessage(document.getElementById('rmz-payment-error-msg'));
     
-    // Recent payments ko load karein
-    loadRecentPayments();
+    // (FIXED) Yeh call duplicate thi, ise hata diya gaya hai.
+    // loadRecentPayments(); 
 }
 
 /**
- * (NEW & FIXED) Haal hi ke P2P payments load karein
+ * (UPDATED) Haal hi ke P2P payments load karein
+ * (FIXED) 'orderBy' ko wapas jod diya gaya hai taaki sahi 'recent' users milein.
  */
 async function loadRecentPayments() {
     const container = document.getElementById('recent-payments-container');
@@ -81,12 +83,14 @@ async function loadRecentPayments() {
         const recentUsersMap = new Map();
         
         // 1. Transaction history se query karein
-        // (FIX) orderBy("timestamp") hata diya gaya hai to prevent index error
+        // (FIXED) 'orderBy' wapas jod diya gaya hai.
+        // Iske liye Firestore mein index ki zaroorat pad sakti hai.
         const q = query(
             collection(db, "transactions"),
             where("involvedUsers", "array-contains", sender.uid),
             where("type", "==", "p2p_sent"),
-            limit(20) // 4 unique users dhoondhne ke liye 20 tak check karein
+            orderBy("timestamp", "desc"), // Sabse naye transaction pehle
+            limit(20) // 20 tak check karein taaki 4 unique mil sakein
         );
 
         const querySnapshot = await getDocs(q);
@@ -162,7 +166,13 @@ async function loadRecentPayments() {
 
     } catch (error) {
         console.error("Error loading recent payments:", error);
-        container.innerHTML = `<p style="font-size: 13px; color: var(--due-red);">Could not load recents.</p>`;
+        // Agar index error aata hai, toh user ko console mein pata chal jayega
+        if (error.code === 'failed-precondition') {
+             console.error("FIRESTORE INDEX ERROR: Please create a composite index in Firestore for 'transactions' collection: involvedUsers (array-contains), type (==), timestamp (desc).");
+             container.innerHTML = `<p style="font-size: 13px; color: var(--due-red);">Error: Index needed.</p>`;
+        } else {
+            container.innerHTML = `<p style="font-size: 13px; color: var(--due-red);">Could not load recents.</p>`;
+        }
     }
 }
 
@@ -749,4 +759,5 @@ function initializePaymentListeners() {
 
 // DOM load hone par payment listeners ko initialize karein
 document.addEventListener('DOMContentLoaded', initializePaymentListeners);
+
 
