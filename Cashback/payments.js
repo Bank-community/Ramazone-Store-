@@ -324,7 +324,8 @@ function handleQrUpload(event) {
 // --- P2P (Pay to User) Logic ---
 
 /**
- * Payment ID se user ko search karein.
+ * (UPDATED) Payment ID se user ko search karein.
+ * Ab auto-scroll aur auto-focus karega.
  */
 async function handleP2PSearch() {
     const searchInput = document.getElementById('p2p-search-id');
@@ -366,6 +367,18 @@ async function handleP2PSearch() {
             receiverInfoEl.innerHTML = `Paying to: <strong style="color: var(--brand-red);">${p2pReceiver.name}</strong>`;
             receiverInfoEl.style.display = 'block';
             paymentForm.style.display = 'block';
+            
+            // --- (NEW) AUTO-SCROLL & FOCUS LOGIC ---
+            const amountInput = document.getElementById('p2p-payment-amount');
+            
+            // Thoda delay (100ms) de rahe hain taaki elements poori tarah render ho jaayein
+            setTimeout(() => {
+                // Input field tak smoothly scroll karein
+                amountInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Input field par focus karein (isse numeric keypad khul jaayega)
+                amountInput.focus();
+            }, 100); 
+            // --- (NEW) LOGIC END ---
         }
     } catch (error) {
         console.error("Error searching user:", error);
@@ -547,7 +560,7 @@ function handleP2PPayment() {
 /**
  * Asli P2P Payment Transaction (Password verify hone ke baad). (UPDATED)
  * @param {number} amount - Pay karne wali amount.
- * @param {object} receiver - Receiver ka user object (jismein uid aur name ho).
+ ** @param {object} receiver - Receiver ka user object (jismein uid aur name ho).
  */
 async function doP2PPayment(amount, receiver) {
     const sender = getCurrentUserData();
