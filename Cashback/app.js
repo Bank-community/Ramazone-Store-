@@ -1017,9 +1017,12 @@ function initializeAppLogic() {
     document.getElementById('details-pay-again-btn').addEventListener('click', handlePayAgain);
 
     // Quick Actions Listeners
-    document.getElementById('shop-now-btn').addEventListener('click', () => {
-        window.open('https://www.ramazone.in', '_blank');
+    // --- (UPDATE) Shop Now Button ---
+    document.getElementById('shop-now-btn').addEventListener('click', (e) => {
+        e.preventDefault(); // Link ke default behavior ko rokein
+        window.open('https://www.ramazone.in', '_blank'); // Link ko nayi tab mein kholein
     });
+    // --- (END UPDATE) ---
     
     // (UPDATED) Scan button ab naya fullscreen view kholega
     document.getElementById('scan-and-pay-btn').addEventListener('click', () => {
@@ -1064,5 +1067,4 @@ function initializeAppLogic() {
 
 // App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
-
 
