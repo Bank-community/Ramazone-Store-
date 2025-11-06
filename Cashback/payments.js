@@ -72,7 +72,7 @@ function resetPaymentView() {
 }
 
 /**
- * (NEW) Haal hi ke P2P payments load karein
+ * (NEW & FIXED) Haal hi ke P2P payments load karein
  */
 async function loadRecentPayments() {
     const container = document.getElementById('recent-payments-container');
@@ -81,50 +81,79 @@ async function loadRecentPayments() {
     if (!sender) return;
 
     try {
-        const recentUsers = new Map();
-        // Transaction history se query karein
+        const recentUsersMap = new Map();
+        
+        // 1. Transaction history se query karein
+        // (FIX) orderBy("timestamp") hata diya gaya hai to prevent index error
         const q = query(
             collection(db, "transactions"),
             where("involvedUsers", "array-contains", sender.uid),
             where("type", "==", "p2p_sent"),
-            orderBy("timestamp", "desc"),
-            limit(15) // Pچھلے 15 transactions mein se 4 unique users dhoondein
+            limit(20) // 4 unique users dhoondhne ke liye 20 tak check karein
         );
 
         const querySnapshot = await getDocs(q);
 
+        // 2. Pehle 4 unique users (mobile number se) dhoondein
         for (const doc of querySnapshot.docs) {
             const data = doc.data();
             // Check karein ki otherParty data hai aur unique hai
             if (data.otherParty && data.otherParty.mobile && 
-                !recentUsers.has(data.otherParty.mobile) && 
-                recentUsers.size < 4) {
-                recentUsers.set(data.otherParty.mobile, data.otherParty);
+                !recentUsersMap.has(data.otherParty.mobile) && 
+                recentUsersMap.size < 4) {
+                // Mobile ko key aur Name ko value banakar save karein
+                recentUsersMap.set(data.otherParty.mobile, data.otherParty.name); 
             }
         }
 
-        if (recentUsers.size === 0) {
+        if (recentUsersMap.size === 0) {
             container.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary);">Aapne abhi tak koi payment nahi kiya hai.</p>`;
             return;
         }
 
-        // Har unique user ke liye chip banayein
-        recentUsers.forEach((user, mobile) => {
+        // 3. (NEW) Ab un unique users ka profile picture data fetch karein
+        const mobiles = [...recentUsersMap.keys()];
+        // Ek hi query mein sabhi users ko mangayein
+        const usersQuery = query(collection(db, "users"), where("mobile", "in", mobiles));
+        const usersSnapshot = await getDocs(usersQuery);
+
+        const usersDataMap = new Map();
+        // Sabhi mile hue user data ko mobile number ke adhaar par map mein daalein
+        usersSnapshot.forEach(doc => {
+            usersDataMap.set(doc.data().mobile, doc.data()); // mobile -> poora user data
+        });
+
+        // 4. (NEW UI) Har unique user ke liye chip banayein
+        for (const [mobile, defaultName] of recentUsersMap.entries()) {
+            
+            const userData = usersDataMap.get(mobile); // User ka poora data nikalein
+            
+            // Naam aur Profile Pic set karein
+            const name = userData ? userData.name : defaultName; // Agar user mil gaya to uska naam, varna transaction se
+            const profilePic = userData ? userData.profilePictureUrl : null; // Profile pic, ya null
+            const initial = (name || '?').charAt(0).toUpperCase();
+
+            let avatarHtml = '';
+            // (NEW) Check karein ki profile pic hai ya nahi
+            if (profilePic) {
+                // Agar hai, to img tag banayein
+                avatarHtml = `<img src="${profilePic}" alt="${name}">`;
+            } else {
+                // Agar nahi, to naam ka pehla letter dikhayein
+                avatarHtml = `<span>${initial}</span>`;
+            }
+
             const chip = document.createElement('div');
             chip.className = 'recent-user-chip';
-            chip.dataset.mobile = mobile; // Click ke liye mobile save karein
-            
-            const avatarChar = user.name ? user.name.charAt(0).toUpperCase() : '?';
             
             chip.innerHTML = `
                 <div class="recent-user-avatar">
-                    <!-- Abhi ke liye placeholder, future mein profile pic aa sakti hai -->
-                    <span>${avatarChar}</span>
+                    ${avatarHtml} <!-- Yahaan img ya span aayega -->
                 </div>
-                <span class="recent-user-name">${user.name || 'Unknown User'}</span>
+                <span class="recent-user-name">${name || 'Unknown User'}</span>
             `;
             
-            // Click karne par auto-search karein
+            // Click karne par auto-search karein (jaisa aapne kaha)
             chip.addEventListener('click', () => {
                 const paymentId = `${mobile}@RMZ`;
                 document.getElementById('p2p-search-id').value = paymentId;
@@ -132,7 +161,7 @@ async function loadRecentPayments() {
             });
             
             container.appendChild(chip);
-        });
+        }
 
     } catch (error) {
         console.error("Error loading recent payments:", error);
@@ -687,4 +716,5 @@ function initializePaymentListeners() {
 
 // DOM load hone par payment listeners ko initialize karein
 document.addEventListener('DOMContentLoaded', initializePaymentListeners);
+
 
