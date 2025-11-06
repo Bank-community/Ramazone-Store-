@@ -363,11 +363,6 @@
         #due-qr-code canvas, #due-qr-code img { border-radius: 8px; }
         .qr-instructions { font-size: 13px; color: var(--text-secondary); margin-top: 15px; line-height: 1.5; }
         
-        /* === (REMOVED) OLD RMZ Pay Options Style === */
-        /* #rmz-pay-options { ... } */
-        /* .rmz-pay-option-btn { ... } */
-        
-
         /* ========================================
         === NEW RMZ Pay Fullscreen Page Styles ===
         ========================================
@@ -787,18 +782,12 @@
                 </div>
 
                 <!-- 2.2. Pay to User (P2P) View -->
-                <div id="p2p-pay-view" class="payment-view" style="display: none;">
+                <!-- (FIXED) Hata diya gaya 'style="display: none;"' -->
+                <div id="p2p-pay-view" class="payment-view">
                     <!-- Recent Payments -->
                     <h3 class="recent-payments-title">Recent Payments</h3>
                     <div id="recent-payments-container">
-                        <!-- JS will fill this. Example structure:
-                        <div class="recent-user-chip" data-mobile="12345">
-                            <div class="recent-user-avatar">
-                                <img src="user-pic.png" alt="">
-                            </div>
-                            <span class="recent-user-name">User Name</span>
-                        </div>
-                        -->
+                        <!-- JS will fill this. -->
                     </div>
                     
                     <!-- Search Form -->
@@ -811,7 +800,7 @@
                     </div>
                     
                     <div id="p2p-receiver-info">
-                        <!-- JS will fill this, e.g., <p>Paying to: <strong>User Name</strong></p> -->
+                        <!-- JS will fill this -->
                     </div>
                     
                     <div id="p2p-payment-form" style="display: none;">
@@ -825,7 +814,8 @@
                 </div>
 
                 <!-- 2.3. RMZ Store Payment View -->
-                <div id="rmz-store-pay-view" class="payment-view" style="display: none;">
+                <!-- (FIXED) Hata diya gaya 'style="display: none;"' -->
+                <div id="rmz-store-pay-view" class="payment-view">
                     <p>Paying to: <strong>Ramazone Store</strong></p>
                     <div class="form-group">
                         <label for="rmz-payment-amount">Amount (₹)</label>
@@ -1063,7 +1053,7 @@
                 hamare WhatsApp number par bhejkar confirm karein.
             </p>
             <div class="modal-actions">
-                <button id="download-qr-btn" class="btn-secondary">Download QR Card</button>
+                <button id="download-qr-btn" class="btn-secondary">Download QR</button>
             </div>
         </div>
     </div>
@@ -1106,4 +1096,5 @@
 
 </body>
 </html>
+
 
