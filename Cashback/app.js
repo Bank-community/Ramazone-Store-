@@ -1018,7 +1018,7 @@ function initializeAppLogic() {
 
     // Quick Actions Listeners
     document.getElementById('shop-now-btn').addEventListener('click', () => {
-        window.open('https.www.ramazone.in', '_blank');
+        window.open('https://www.ramazone.in', '_blank');
     });
     
     // (UPDATED) Scan button ab naya fullscreen view kholega
