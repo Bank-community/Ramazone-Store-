@@ -1,47 +1,46 @@
 // --- Firebase modules import ---
-import { getFirestore, doc, getDoc, setDoc, runTransaction, increment, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, runTransaction, increment, collection, query, where, getDocs, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 // --- Global variables for payment logic ---
 let db, auth;
-let showToast, openModal, closeModal, showErrorMessage, hideErrorMessage, getCurrentUser, getCurrentUserData;
+let showToast, openModal, closeModal, showErrorMessage, hideErrorMessage, getCurrentUser, getCurrentUserData, toggleView;
 let scannerAnimation = null;
 let pendingAction = null; // Password verification ke baad run hone wala action
 let p2pReceiver = null; // Store receiver details for P2P transfer
 const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Store payment QR ID
 
 /**
- * Payment views ke beech switch karein
+ * Payment views ke beech switch karein (Bottom Navigation ke liye)
  * @param {string} viewToShow - Dikhane wale view ki ID (e.g., 'scan-qr-view')
  */
 function switchPaymentView(viewToShow) {
-    // Sabhi views ko chhupayein
-    document.querySelectorAll('.payment-view').forEach(view => {
-        view.style.display = 'none';
+    // Sabhi content views ko chhupayein
+    document.querySelectorAll('#payment-content-container .payment-view').forEach(view => {
         view.classList.remove('active');
     });
-    // Active button se 'active' class hatayein
-    document.querySelectorAll('.rmz-pay-option-btn').forEach(btn => {
+    // Sabhi nav buttons se 'active' class hatayein
+    document.querySelectorAll('.payment-nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
 
     // Target view ko dikhayein
     const viewElement = document.getElementById(viewToShow);
     if (viewElement) {
-        viewElement.style.display = 'block';
         viewElement.classList.add('active');
     }
 
     // Target button mein 'active' class lagayein
     let activeButton;
     if (viewToShow === 'scan-qr-view') {
-        activeButton = document.getElementById('select-scan-btn');
+        activeButton = document.getElementById('payment-nav-scan');
         startScanner(); // Scan view dikhate hi scanner start karein
     } else if (viewToShow === 'p2p-pay-view') {
-        activeButton = document.getElementById('select-p2p-btn');
+        activeButton = document.getElementById('payment-nav-p2p');
         stopScanner();
+        loadRecentPayments(); // P2P tab kholte hi recents load karein
     } else if (viewToShow === 'rmz-store-pay-view') {
-        activeButton = document.getElementById('select-rmz-store-btn');
+        activeButton = document.getElementById('payment-nav-rmz');
         stopScanner();
     }
     
@@ -51,9 +50,9 @@ function switchPaymentView(viewToShow) {
 }
 
 /**
- * Payment modal ko uski default state (Scan QR) par reset karein.
+ * Payment page ko uski default state (Scan QR) par reset karein.
  */
-function resetPaymentModal() {
+function resetPaymentView() {
     switchPaymentView('scan-qr-view');
     p2pReceiver = null; // P2P receiver ko clear karein
     
@@ -67,7 +66,80 @@ function resetPaymentModal() {
     
     document.getElementById('rmz-payment-amount').value = '';
     hideErrorMessage(document.getElementById('rmz-payment-error-msg'));
+    
+    // Recent payments ko load karein
+    loadRecentPayments();
 }
+
+/**
+ * (NEW) Haal hi ke P2P payments load karein
+ */
+async function loadRecentPayments() {
+    const container = document.getElementById('recent-payments-container');
+    container.innerHTML = ''; // Pehle se clear karein
+    const sender = getCurrentUserData();
+    if (!sender) return;
+
+    try {
+        const recentUsers = new Map();
+        // Transaction history se query karein
+        const q = query(
+            collection(db, "transactions"),
+            where("involvedUsers", "array-contains", sender.uid),
+            where("type", "==", "p2p_sent"),
+            orderBy("timestamp", "desc"),
+            limit(15) // Pچھلے 15 transactions mein se 4 unique users dhoondein
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            // Check karein ki otherParty data hai aur unique hai
+            if (data.otherParty && data.otherParty.mobile && 
+                !recentUsers.has(data.otherParty.mobile) && 
+                recentUsers.size < 4) {
+                recentUsers.set(data.otherParty.mobile, data.otherParty);
+            }
+        }
+
+        if (recentUsers.size === 0) {
+            container.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary);">Aapne abhi tak koi payment nahi kiya hai.</p>`;
+            return;
+        }
+
+        // Har unique user ke liye chip banayein
+        recentUsers.forEach((user, mobile) => {
+            const chip = document.createElement('div');
+            chip.className = 'recent-user-chip';
+            chip.dataset.mobile = mobile; // Click ke liye mobile save karein
+            
+            const avatarChar = user.name ? user.name.charAt(0).toUpperCase() : '?';
+            
+            chip.innerHTML = `
+                <div class="recent-user-avatar">
+                    <!-- Abhi ke liye placeholder, future mein profile pic aa sakti hai -->
+                    <span>${avatarChar}</span>
+                </div>
+                <span class="recent-user-name">${user.name || 'Unknown User'}</span>
+            `;
+            
+            // Click karne par auto-search karein
+            chip.addEventListener('click', () => {
+                const paymentId = `${mobile}@RMZ`;
+                document.getElementById('p2p-search-id').value = paymentId;
+                handleP2PSearch(); // Auto-search trigger karein
+            });
+            
+            container.appendChild(chip);
+        });
+
+    } catch (error) {
+        console.error("Error loading recent payments:", error);
+        container.innerHTML = `<p style="font-size: 13px; color: var(--due-red);">Could not load recents.</p>`;
+    }
+}
+
 
 // --- Scanner/QR Code Functions ---
 
@@ -85,8 +157,9 @@ async function handleSuccessfulScan(data) {
         document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
     } else {
         showToast("Invalid QR code. Only Ramazone Store QR is accepted.");
-        // Invalid QR par scanning jaari rakhein (ya user ko P2P ke liye guide karein)
-        // startScanner(); // Isse loop ban sakta hai, user ko khud rescan karne dein.
+        document.getElementById('scanner-status').textContent = 'Invalid QR. Try again...';
+        // Thodi der baad scanning firse shuru karein
+        setTimeout(startScanner, 1500);
     }
 }
 
@@ -117,7 +190,7 @@ function startScanner() {
                 // QR code detect karein
                 const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
                 
-                if (code && code.data === RAMAZONE_STORE_ID) { 
+                if (code && code.data) { 
                     handleSuccessfulScan(code.data); 
                     return; // Scan milne par loop rok dein
                 }
@@ -142,6 +215,8 @@ function stopScanner() {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
+    const statusEl = document.getElementById('scanner-status');
+    if(statusEl) statusEl.textContent = 'Scanner is idle.';
 }
 
 /**
@@ -305,7 +380,7 @@ function handleRMZStorePayment() {
 async function doRMZStorePayment(amount) {
     const currentUserData = getCurrentUserData();
     document.getElementById('payment-processing-modal').classList.add('active');
-    closeModal('scan-pay-modal');
+    // (UPDATED) Payment view ko band nahi karein, process modal dikhayein
     
     let newTxnRef = doc(collection(db, "transactions")); 
     
@@ -354,6 +429,8 @@ async function doRMZStorePayment(amount) {
             receiverName: 'Ramazone Store',
             txnId: newTxnRef.id
         });
+        // (NEW) Payment ke baad dashboard par lautein
+        toggleView('dashboard-view');
 
     } catch (error) { 
         // --- FAILURE ---
@@ -362,6 +439,9 @@ async function doRMZStorePayment(amount) {
         document.getElementById('payment-failure-modal').querySelector('.modal-content p').textContent = 
             error.message || "Payment failed. Please try again.";
         openModal('payment-failure-modal');
+        // (NEW) Fail hone par bhi dashboard par lautein (ya payment page par rakhein)
+        // User ko payment page par rakhte hain taaki woh dobara try kar sake
+        // toggleView('dashboard-view'); 
     }
 }
 
@@ -399,7 +479,7 @@ function handleP2PPayment() {
 async function doP2PPayment(amount, receiver) {
     const sender = getCurrentUserData();
     document.getElementById('payment-processing-modal').classList.add('active');
-    closeModal('scan-pay-modal');
+    // (UPDATED) Payment view ko band nahi karein
     
     const senderTxnRef = doc(collection(db, "transactions"));
     const receiverTxnRef = doc(collection(db, "transactions"));
@@ -465,6 +545,8 @@ async function doP2PPayment(amount, receiver) {
             receiverName: receiver.name,
             txnId: senderTxnRef.id // Sender ki transaction ID dikhayein
         });
+        // (NEW) Payment ke baad dashboard par lautein
+        toggleView('dashboard-view');
 
     } catch (error) {
         // --- FAILURE ---
@@ -473,6 +555,7 @@ async function doP2PPayment(amount, receiver) {
         document.getElementById('payment-failure-modal').querySelector('.modal-content p').textContent = 
             error.message || "Payment failed. Please try again.";
         openModal('payment-failure-modal');
+        // (NEW) Fail hone par P2P page par hi rahein
     }
 }
 
@@ -547,15 +630,22 @@ function initializePaymentListeners() {
     showToast = App.showToast;
     openModal = App.openModal;
     closeModal = App.closeModal;
+    toggleView = App.toggleView; // (NEW) toggleView function
     showErrorMessage = App.showErrorMessage;
     hideErrorMessage = App.hideErrorMessage;
     getCurrentUser = App.getCurrentUser;
     getCurrentUserData = App.getCurrentUserData;
 
-    // --- Modal Tab Buttons ---
-    document.getElementById('select-scan-btn').addEventListener('click', () => switchPaymentView('scan-qr-view'));
-    document.getElementById('select-p2p-btn').addEventListener('click', () => switchPaymentView('p2p-pay-view'));
-    document.getElementById('select-rmz-store-btn').addEventListener('click', () => switchPaymentView('rmz-store-pay-view'));
+    // --- (NEW) Fullscreen Page Listeners ---
+    document.getElementById('payment-back-btn').addEventListener('click', () => {
+        stopScanner(); // Page chhodte waqt scanner band karein
+        toggleView('dashboard-view'); // Dashboard par wapas jaayein
+    });
+
+    // --- (NEW) Bottom Navigation Buttons ---
+    document.getElementById('payment-nav-scan').addEventListener('click', () => switchPaymentView('scan-qr-view'));
+    document.getElementById('payment-nav-p2p').addEventListener('click', () => switchPaymentView('p2p-pay-view'));
+    document.getElementById('payment-nav-rmz').addEventListener('click', () => switchPaymentView('rmz-store-pay-view'));
 
     // --- Scan View ---
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
@@ -573,11 +663,10 @@ function initializePaymentListeners() {
     
     // --- Custom Event Listeners (app.js se) ---
     
-    // Jab payment modal khule, use reset karein
-    document.addEventListener('paymentModalOpened', resetPaymentModal);
+    // (UPDATED) Jab payment *view* khule, use reset karein
+    document.addEventListener('paymentModalOpened', resetPaymentView); // Event ka naam wahi rakha
     
-    // Jab modal band ho, scanner ko stop karein
-    document.addEventListener('stopScanner', stopScanner);
+    // (REMOVED) 'stopScanner' event listener, kyunki ab 'back' button handle karta hai
     
     // (NEW) "Pay Again" event ko sunein
     document.addEventListener('openPaymentTab', (e) => {
@@ -598,5 +687,4 @@ function initializePaymentListeners() {
 
 // DOM load hone par payment listeners ko initialize karein
 document.addEventListener('DOMContentLoaded', initializePaymentListeners);
-
 
