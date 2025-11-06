@@ -703,6 +703,65 @@ function downloadQRCard() {
 }
 
 /**
+ * (NEW) User ka personal payment QR code generate karein aur modal kholein.
+ */
+function showMyPaymentQR() {
+    if (!currentUserData) {
+        showToast("User data not loaded. Please wait.");
+        return;
+    }
+    // Payment ID (jaise 12345@RMZ) hi QR code ka data hoga
+    const paymentId = `${currentUserData.mobile}@RMZ`;
+    const qrContainer = document.getElementById('my-qr-code-container');
+    qrContainer.innerHTML = ''; // Purana QR hatayein
+    
+    // Naya QR code banayein
+    new QRCode(qrContainer, {
+        text: paymentId,
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+    
+    // Modal mein Payment ID text set karein
+    document.getElementById('my-qr-payment-id').textContent = paymentId;
+    // Naya modal kholein
+    openModal('my-qr-code-modal');
+}
+
+/**
+ * (NEW) User ka personal QR card download karein.
+ */
+function downloadMyQRCard() {
+    const cardElement = document.getElementById('my-qr-code-card');
+    if (!cardElement || !currentUserData) {
+        showToast("Could not find QR card element.");
+        return;
+    }
+    showToast("Downloading your QR code...");
+    
+    // html2canvas ka istemal karke card ka screenshot lein
+    html2canvas(cardElement, { 
+        scale: 3, // Behtar quality ke liye
+        useCORS: true 
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        // File ka naam user ke mobile number ke saath set karein
+        link.download = `Ramazone-My-QR-${currentUserData.mobile}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }).catch(err => {
+        console.error("Error downloading my QR card:", err);
+        showToast("Download failed. Please try again.");
+    });
+}
+
+
+/**
  * Profile picture upload ko handle karein.
  * @param {Event} event - File input change event.
  */
@@ -948,6 +1007,9 @@ function initializeAppLogic() {
     // (UPDATED) Copy Payment ID button (profile modal)
     document.getElementById('profile-copy-id-btn').addEventListener('click', handleCopyPaymentId);
     
+    // (NEW) Show My QR button (profile modal)
+    document.getElementById('profile-show-qr-btn').addEventListener('click', showMyPaymentQR);
+    
     // (NEW) "Pay Again" button (transaction details modal)
     document.getElementById('details-pay-again-btn').addEventListener('click', handlePayAgain);
 
@@ -969,6 +1031,10 @@ function initializeAppLogic() {
     // Wallet & Utility Listeners
     document.getElementById('pay-due-amount-btn').addEventListener('click', generateDueQR);
     document.getElementById('download-qr-btn').addEventListener('click', downloadQRCard);
+    
+    // (NEW) Download My QR button (naye modal mein)
+    document.getElementById('download-my-qr-btn').addEventListener('click', downloadMyQRCard);
+    
     document.getElementById('wallet-share-btn').addEventListener('click', handleShare);
     
     // Payment/QR Listeners (REMOVED - Moved to payments.js)
