@@ -11,7 +11,7 @@ let p2pReceiver = null; // Store receiver details for P2P transfer
 const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Store payment QR ID
 
 /**
- * Payment views ke beech switch karein (Bottom Navigation ke liye)
+ * (UPDATED) Payment views ke beech switch karein (Bottom Navigation ke liye)
  * @param {string} viewToShow - Dikhane wale view ki ID (e.g., 'scan-qr-view')
  */
 function switchPaymentView(viewToShow) {
@@ -35,13 +35,10 @@ function switchPaymentView(viewToShow) {
     if (viewToShow === 'scan-qr-view') {
         activeButton = document.getElementById('payment-nav-scan');
         startScanner(); // Scan view dikhate hi scanner start karein
-    } else if (viewToShow === 'p2p-pay-view') {
-        activeButton = document.getElementById('payment-nav-p2p');
-        stopScanner();
-        loadRecentPayments(); // P2P tab kholte hi recents load karein
+        loadRecentPayments(); // P2P bhi isi view par hai, to recents load karein
     } else if (viewToShow === 'rmz-store-pay-view') {
         activeButton = document.getElementById('payment-nav-rmz');
-        stopScanner();
+        stopScanner(); // RMZ Store view par scanner stop karein
     }
     
     if (activeButton) {
@@ -53,7 +50,7 @@ function switchPaymentView(viewToShow) {
  * Payment page ko uski default state (Scan QR) par reset karein.
  */
 function resetPaymentView() {
-    switchPaymentView('scan-qr-view');
+    switchPaymentView('scan-qr-view'); // Default view ab 'scan-qr-view' hai
     p2pReceiver = null; // P2P receiver ko clear karein
     
     // Sabhi forms aur error messages ko reset karein
@@ -173,20 +170,49 @@ async function loadRecentPayments() {
 // --- Scanner/QR Code Functions ---
 
 /**
- * QR code scan successful hone par handle karein.
+ * (UPDATED) QR code scan successful hone par handle karein.
+ * Ab yeh Store QR aur User QR dono ko pehchanta hai.
  * @param {string} data - QR code se mila data.
  */
 async function handleSuccessfulScan(data) {
-    // Sirf Ramazone Store ka QR hi accept karein
+    const statusEl = document.getElementById('scanner-status');
+    const currentUserData = getCurrentUserData();
+    
+    // Case 1: Ramazone Store ka QR
     if (data === RAMAZONE_STORE_ID) {
         stopScanner();
         showToast("Ramazone Store QR Scanned!");
         // Scan ke baad RMZ Store payment view dikhayein
         switchPaymentView('rmz-store-pay-view');
-        document.getElementById('scanner-status').textContent = 'QR Code Scanned!';
+        statusEl.textContent = 'Ramazone Store QR Scanned!';
+        
+    // Case 2: Kisi User ka Payment ID QR
+    } else if (data.includes('@RMZ')) {
+        
+        // Khud ko payment check
+        const scannedMobile = data.split('@RMZ')[0];
+        if (currentUserData.mobile === scannedMobile) {
+            showToast("You cannot pay yourself.");
+            statusEl.textContent = 'Cannot pay yourself. Try again...';
+            setTimeout(startScanner, 1500); // Scanner firse chalu karein
+            return;
+        }
+        
+        stopScanner();
+        showToast("User QR Scanned!");
+        statusEl.textContent = 'User QR Scanned! Searching...';
+        
+        // View switch karne ki zaroorat nahi, kyunki P2P form isi view par hai.
+        // Seedha search box mein ID daalein
+        document.getElementById('p2p-search-id').value = data;
+        
+        // Auto-search trigger karein
+        await handleP2PSearch();
+
+    // Case 3: Invalid QR
     } else {
-        showToast("Invalid QR code. Only Ramazone Store QR is accepted.");
-        document.getElementById('scanner-status').textContent = 'Invalid QR. Try again...';
+        showToast("Invalid QR code. Only Ramazone QR is accepted.");
+        statusEl.textContent = 'Invalid QR. Try again...';
         // Thodi der baad scanning firse shuru karein
         setTimeout(startScanner, 1500);
     }
@@ -196,7 +222,10 @@ async function handleSuccessfulScan(data) {
  * QR code scanner ko start karein.
  */
 function startScanner() {
-    stopScanner(); // Pehle stop karein
+    // Agar scanner pehle se chal raha hai, to kuch na karein
+    if (scannerAnimation) return; 
+    
+    stopScanner(); // Har ihtiyat ke liye pehle stop karein
     const video = document.getElementById('scanner-video');
     const statusEl = document.getElementById('scanner-status');
     
@@ -224,7 +253,10 @@ function startScanner() {
                     return; // Scan milne par loop rok dein
                 }
             }
-            if (scannerAnimation) scannerAnimation = requestAnimationFrame(tick);
+            // (FIX) Check karein ki scannerAnimation null to nahi hua
+            if (scannerAnimation) {
+                scannerAnimation = requestAnimationFrame(tick);
+            }
         };
         scannerAnimation = requestAnimationFrame(tick);
 
@@ -250,6 +282,7 @@ function stopScanner() {
 
 /**
  * Gallery se QR code image upload ko handle karein.
+ * (UPDATED) Ab yeh user QR ko bhi handle karega
  * @param {Event} event - File input change event.
  */
 function handleQrUpload(event) {
@@ -265,8 +298,9 @@ function handleQrUpload(event) {
             ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
             const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
             
-            if (code && code.data === RAMAZONE_STORE_ID) {
-                handleSuccessfulScan(code.data);
+            if (code && code.data) {
+                // handleSuccessfulScan ko call karein, woh data ko check kar lega
+                handleSuccessfulScan(code.data); 
             } else {
                 showToast("No valid Ramazone QR code found.");
             }
@@ -673,14 +707,12 @@ function initializePaymentListeners() {
 
     // --- (NEW) Bottom Navigation Buttons ---
     document.getElementById('payment-nav-scan').addEventListener('click', () => switchPaymentView('scan-qr-view'));
-    document.getElementById('payment-nav-p2p').addEventListener('click', () => switchPaymentView('p2p-pay-view'));
+    // (REMOVED) P2P button ka listener hata diya gaya hai
     document.getElementById('payment-nav-rmz').addEventListener('click', () => switchPaymentView('rmz-store-pay-view'));
 
-    // --- Scan View ---
+    // --- Scan View (jismein P2P bhi hai) ---
     document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
     document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
-
-    // --- P2P View ---
     document.getElementById('p2p-search-btn').addEventListener('click', handleP2PSearch);
     document.getElementById('p2p-pay-submit-btn').addEventListener('click', handleP2PPayment);
     
@@ -703,7 +735,8 @@ function initializePaymentListeners() {
         if (detail.tab === 'rmz-store') {
             switchPaymentView('rmz-store-pay-view');
         } else if (detail.tab === 'p2p') {
-            switchPaymentView('p2p-pay-view');
+            // P2P ab 'scan-qr-view' ka hissa hai
+            switchPaymentView('scan-qr-view'); 
             if (detail.searchId) {
                 // ID ko search box mein daalein
                 document.getElementById('p2p-search-id').value = detail.searchId;
@@ -716,5 +749,4 @@ function initializePaymentListeners() {
 
 // DOM load hone par payment listeners ko initialize karein
 document.addEventListener('DOMContentLoaded', initializePaymentListeners);
-
 
