@@ -113,6 +113,30 @@ let currentTransactionForPayAgain = null;
 // --- Core Functions (Config, UI Toggles) ---
 
 /**
+ * Screen par ek chhota notification (toast) dikhayein.
+ * @param {string} message - Dikhane wala message.
+ */
+const showToast = (message) => {
+    const toast = document.getElementById('toast-notification');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+};
+
+/**
+ * Alag-alag app views (pages) ke beech switch karein.
+ * @param {string} viewId - Dikhane wale view ki ID.
+ */
+const toggleView = (viewId) => {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const viewElement = document.getElementById(viewId);
+    if(viewElement) {
+        viewElement.classList.add('active');
+    }
+};
+
+
+/**
  * Firebase config fetch karein aur app ko initialize karein.
  */
 async function fetchConfigsAndInit() {
@@ -137,6 +161,7 @@ async function fetchConfigsAndInit() {
             showToast,
             openModal,
             closeModal,
+            toggleView, // <-- (UPDATED) toggleView ko export karein
             showErrorMessage,
             hideErrorMessage,
             getCurrentUser: () => currentUser,
@@ -152,28 +177,6 @@ async function fetchConfigsAndInit() {
     }
 }
 
-/**
- * Screen par ek chhota notification (toast) dikhayein.
- * @param {string} message - Dikhane wala message.
- */
-const showToast = (message) => {
-    const toast = document.getElementById('toast-notification');
-    toast.textContent = message;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-};
-
-/**
- * Alag-alag app views (pages) ke beech switch karein.
- * @param {string} viewId - Dikhane wale view ki ID.
- */
-const toggleView = (viewId) => {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const viewElement = document.getElementById(viewId);
-    if(viewElement) {
-        viewElement.classList.add('active');
-    }
-};
 
 /**
  * Ek modal (popup) kholein.
@@ -189,11 +192,8 @@ const closeModal = (modalId) => {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
     
-    // Agar payment modal band ho raha hai, toh scanner ko bhi stop karein (event payments.js se emit hoga)
-    if (modalId === 'scan-pay-modal') {
-        const stopEvent = new CustomEvent('stopScanner');
-        document.dispatchEvent(stopEvent);
-    }
+    // (REMOVED) Payment modal logic yahan se hata diya gaya hai,
+    // (kyunki ab woh modal nahi hai)
 };
 
 /**
@@ -807,8 +807,9 @@ function handlePayAgain() {
     
     // Pehle raseed modal ko band karein
     closeModal('transaction-details-modal');
-    // Payment modal kholein
-    openModal('scan-pay-modal');
+    
+    // (UPDATED) Naya payment view kholein
+    toggleView('payment-view');
     
     if (item.type === 'payment') {
         // Agar yeh RMZ Store ka payment tha
@@ -819,7 +820,7 @@ function handlePayAgain() {
         
     } else if (item.type === 'p2p_sent') {
         // Agar yeh P2P payment tha
-        // Hamein 'otherParty' data ki zaroorat hogi (jo 'payments.js' save karega)
+        // Hamein 'otherParty' data ki zaroorat hogi
         if (!item.otherParty || !item.otherParty.mobile) {
             showToast("Could not find receiver's ID for this old transaction.");
             // Sirf P2P tab kholein
@@ -952,12 +953,12 @@ function initializeAppLogic() {
 
     // Quick Actions Listeners
     document.getElementById('shop-now-btn').addEventListener('click', () => {
-        window.open('https://www.ramazone.in', '_blank');
+        window.open('https.www.ramazone.in', '_blank');
     });
     
-    // (UPDATED) Scan button sirf modal kholega
+    // (UPDATED) Scan button ab naya fullscreen view kholega
     document.getElementById('scan-and-pay-btn').addEventListener('click', () => {
-        openModal('scan-pay-modal');
+        toggleView('payment-view');
         // Payment modal ke default state ko set karne ke liye event fire karein
         const event = new CustomEvent('paymentModalOpened');
         document.dispatchEvent(event);
@@ -994,5 +995,4 @@ function initializeAppLogic() {
 
 // App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
-
 
