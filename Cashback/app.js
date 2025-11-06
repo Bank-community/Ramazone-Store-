@@ -732,17 +732,20 @@ function showMyPaymentQR() {
 }
 
 /**
- * (NEW) User ka personal QR card download karein.
+ * (NEW & UPDATED) User ka personal QR card download karein.
+ * (FIXED) Ab yeh poore card ke bajaye sirf QR code ko download karega.
  */
 function downloadMyQRCard() {
-    const cardElement = document.getElementById('my-qr-code-card');
+    // (UPDATED) Target ab poora card nahi, balki sirf QR container hai
+    const cardElement = document.getElementById('my-qr-code-container');
+    
     if (!cardElement || !currentUserData) {
-        showToast("Could not find QR card element.");
+        showToast("Could not find QR code element.");
         return;
     }
     showToast("Downloading your QR code...");
     
-    // html2canvas ka istemal karke card ka screenshot lein
+    // html2canvas ka istemal karke sirf QR container ka screenshot lein
     html2canvas(cardElement, { 
         scale: 3, // Behtar quality ke liye
         useCORS: true 
@@ -1061,4 +1064,5 @@ function initializeAppLogic() {
 
 // App ko Dhyan se initialize karein
 document.addEventListener('DOMContentLoaded', fetchConfigsAndInit);
+
 
