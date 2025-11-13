@@ -1,10 +1,11 @@
 // --- GLOBAL STATE ---
 let allProductsCache = [];
 let allCategoriesCache = [];
+let allLocationsCache = []; // Cache for locations
 let database;
 let deferredInstallPrompt = null;
 let festiveCountdownInterval = null; 
-let goToCartNotificationTimer = null; // Naye notification ke liye timer
+let goToCartNotificationTimer = null;
 
 // **INFINITE SCROLL STATE FOR DEALS**
 let dealsOfTheDayProducts = []; 
@@ -100,7 +101,9 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
     try {
+        // Load search bar FIRST so elements exist
         await loadCoreComponents();
+
         const response = await fetch('/api/firebase-config');
         if (!response.ok) throw new Error(`API Key fetch error! Status: ${response.status}`);
         const config = await response.json();
@@ -126,6 +129,7 @@ async function loadCoreComponents() {
             const response = await fetch('sections/search-bar.html');
             if (!response.ok) throw new Error('Search bar section not found');
             searchContainer.innerHTML = await response.text();
+            // Note: Event listeners are now handled via delegation in setupGlobalEventListeners
         }
     } catch (error) {
         console.error("Core component load error:", error);
@@ -144,8 +148,16 @@ function loadAllData() {
             allCategoriesCache = homepageData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
         }
 
+        // Load Locations
+        const locationsData = data.locations || [];
+        allLocationsCache = Array.isArray(locationsData) ? locationsData : Object.values(locationsData);
+
         await loadPageStructure();
         renderAllSections(data);
+
+        // Setup Location System specifically after data load
+        setupLocationSystem();
+
     }, (error) => {
         console.error("Firebase Read Error:", error);
         document.getElementById('main-content-area').innerHTML = `<p class="text-center p-8">Could not load data. Check your connection.</p>`;
@@ -181,6 +193,8 @@ function renderAllSections(data) {
     renderHighlightedProducts();
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
+
+    // These setups must be called
     setupGlobalEventListeners();
     setupSideMenu();
     setupInstallButton();
@@ -188,6 +202,78 @@ function renderAllSections(data) {
     setupScrollAnimations();
     setupHeaderScrollEffect();
     setupHomepageSearch();
+}
+
+// --- LOCATION SYSTEM LOGIC (FIXED WITH DELEGATION) ---
+function setupLocationSystem() {
+    // 1. Set Initial Location Text
+    const savedLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai";
+    const headerLocText = document.getElementById('header-location-text');
+    if (headerLocText) headerLocText.textContent = savedLoc;
+
+    // 2. Render Location List
+    renderLocationList(allLocationsCache);
+
+    // 3. Search Functionality inside Popup
+    const searchInput = document.getElementById('location-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allLocationsCache.filter(loc => {
+                const name = typeof loc === 'string' ? loc : loc.name;
+                return name.toLowerCase().includes(query);
+            });
+            renderLocationList(filtered);
+        });
+    }
+}
+
+function renderLocationList(locations) {
+    const container = document.getElementById('location-list-container');
+    if (!container) return;
+
+    const currentLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai";
+
+    if (locations.length === 0) {
+        container.innerHTML = '<div class="p-4 text-center text-gray-500">No locations found</div>';
+        return;
+    }
+
+    container.innerHTML = locations.map(loc => {
+        const name = typeof loc === 'string' ? loc : loc.name;
+        const isActive = name === currentLoc;
+        return `
+            <div class="location-item ${isActive ? 'active' : ''}" data-name="${name}">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>${name}</span>
+                <i class="fas fa-check location-item-check"></i>
+            </div>
+        `;
+    }).join('');
+}
+
+function openLocationPopup() {
+    const overlay = document.getElementById('location-overlay');
+    const panel = document.getElementById('location-selector-panel');
+    const body = document.body;
+
+    if (overlay && panel) {
+        overlay.classList.add('visible');
+        panel.classList.add('open');
+        body.classList.add('location-open');
+    }
+}
+
+function closeLocationPopup() {
+    const overlay = document.getElementById('location-overlay');
+    const panel = document.getElementById('location-selector-panel');
+    const body = document.body;
+
+    if (overlay && panel) {
+        overlay.classList.remove('visible');
+        panel.classList.remove('open');
+        body.classList.remove('location-open');
+    }
 }
 
 // --- HOMEPAGE LIVE SEARCH LOGIC ---
@@ -446,14 +532,18 @@ function getDealsOfTheDayProducts() {
 }
 
 function setupGlobalEventListeners() {
+    // **EVENT DELEGATION FOR CLICK EVENTS**
+    // This fixes the issue where dynamically loaded elements (like Location Trigger)
+    // are not clickable because they didn't exist when the listener was attached.
+
     document.body.addEventListener('click', function (event) {
+        // 1. Handle Add to Cart Buttons
         const addButton = event.target.closest('.add-btn');
         if (addButton) {
             event.preventDefault();
             const productId = addButton.dataset.id;
             if (productId) {
                 addToCart(productId);
-
                 if (addButton.classList.contains('add-text-btn')) {
                     addButton.classList.add('added');
                     addButton.textContent = 'Added ✓';
@@ -470,6 +560,46 @@ function setupGlobalEventListeners() {
                      }, 1500);
                 }
             }
+            return; // Stop processing
+        }
+
+        // 2. Handle Location Trigger Click
+        const locationTrigger = event.target.closest('#location-trigger');
+        if (locationTrigger) {
+            openLocationPopup();
+            return;
+        }
+
+        // 3. Handle Close Location Popup Button
+        const closeLocBtn = event.target.closest('#close-location-btn');
+        if (closeLocBtn) {
+            closeLocationPopup();
+            return;
+        }
+
+        // 4. Handle Click Outside Location Panel to Close
+        const locOverlay = document.getElementById('location-overlay');
+        if (event.target === locOverlay) {
+            closeLocationPopup();
+            return;
+        }
+
+        // 5. Handle Selecting a Location from List
+        const locItem = event.target.closest('.location-item');
+        if (locItem) {
+            const selectedLoc = locItem.dataset.name;
+            localStorage.setItem('userLocation', selectedLoc);
+
+            // Update header text
+            const headerText = document.getElementById('header-location-text');
+            if (headerText) headerText.textContent = selectedLoc;
+
+            // Re-render list to show checkmark
+            renderLocationList(allLocationsCache);
+
+            // Close popup
+            setTimeout(closeLocationPopup, 200);
+            return;
         }
     });
 }
@@ -589,4 +719,5 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4000) }
+
 
