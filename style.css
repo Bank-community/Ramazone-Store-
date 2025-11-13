@@ -8,7 +8,7 @@
     --text-light: #6B7280;
     --bg-light: #F9FAFB;
     --bg-white: #FFFFFF;
-    --border-color: #613412;
+    --border-color: #E5E7EB; 
     --slider-interval-duration: 5s;
 }
 
@@ -27,7 +27,7 @@ body.menu-open {
     overflow: hidden;
 }
 
-/* --- UPDATED HEADER & SEARCH STYLES FOR SCROLL EFFECT --- */
+/* --- HEADER & SEARCH SCROLL EFFECT (FINAL VERSION) --- */
 #page-header {
     transition: background-color 0.3s, box-shadow 0.3s;
 }
@@ -38,31 +38,14 @@ body.menu-open {
     transform: translateY(0);
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
-/* --- HEADER SEARCH BAR STYLING (FINAL FIX) --- */
-#header-search-container a {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 38px;
-    padding: 0.5rem 1rem;
-    background-color: var(--bg-white);
-    border-radius: 8px; /* BADLA HUA */
-    border: 1px solid var(--border-color);
-    text-decoration: none;
-    color: var(--text-light);
-    font-size: 0.95rem;
-}
 
-/* Aur yeh wala badlav bhi karein */
 #header-search-container {
     opacity: 0;
     transform: translateY(-10px);
     transition: opacity 0.3s ease-in, transform 0.3s ease-in;
     pointer-events: none;
-    padding: 0 0.5rem; /* YEH LINE ADD HUI HAI */
+    padding: 0 0.5rem;
 }
-
-
 
 /* Scrolled state: Logo hidden, search visible */
 .header-scrolled #header-logo-container {
@@ -75,7 +58,41 @@ body.menu-open {
     transform: translateY(0);
     pointer-events: auto; /* Ab click ho sakta hai */
 }
-/* --- END OF HEADER SCROLL STYLES --- */
+
+/* === FINAL FIX FOR HEADER SEARCH BAR === */
+/* Style for the search link in the scrolled header */
+.search-link-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 40px; /* Search bar ko patla kiya gaya */
+    padding: 0 1rem 0 3rem; 
+    border: 1px solid #d1d5db; 
+    border-radius: 9999px; 
+    background-color: #f9fafb; 
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: var(--text-light);
+    font-size: 0.9rem; /* Text size adjust kiya gaya */
+}
+
+.search-link-header:hover {
+    border-color: var(--primary-color);
+    background-color: white;
+}
+
+/* Positioning the icon inside the header's search link */
+.search-link-header .search-icon {
+    position: absolute;
+    left: 1rem;
+    width: 20px;
+    height: 20px;
+    color: #9ca3af;
+    pointer-events: none;
+    z-index: 1;
+}
+/* --- END OF HEADER FIX --- */
 
 
 /* LOADER */
@@ -89,15 +106,6 @@ body.menu-open {
 /* REVEAL ON SCROLL ANIMATION */
 .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
 .reveal.visible { opacity: 1; transform: translateY(0); }
-
-
-/* --- HOMEPAGE SPECIFIC STYLES --- */
-
-/* SEARCH (Below Header) */
-#search-container { background-color: var(--bg-white); padding: 0.5rem 1rem; }
-#search-link { display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
-#search-link:hover { border-color: var(--primary-color); }
-#search-link .search-icon { color: var(--text-dark); margin-right: 0.75rem; }
 
 
 /* SIDE MENU STYLES */
@@ -169,16 +177,14 @@ body.menu-open #side-menu { transform: translateX(0); box-shadow: 0 0 20px rgba(
 
 
 /* --- PRODUCT CARD STYLES (UNIFIED & GLOBAL) --- */
-.product-card { background-color: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); border: 1px solid #E5E7EB; transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; overflow: hidden; text-decoration: none; }
+.product-card { background-color: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); border: 1px solid #E5E7EB; transition: transform 0.3s ease, box-shadow 0.3s ease; display: block; overflow: hidden; text-decoration: none; }
 .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
 .product-media-container, .product-image-container { position: relative; width: 100%; padding-top: 100%; background-color: #f3f4f6; }
 .product-media-container img, .product-image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-.product-details { padding: 0.75rem; text-align: center; }
 .product-name { font-weight: 600; color: var(--text-dark); margin-bottom: 0.25rem; font-size: 0.9rem; }
-.product-price { display: flex; align-items: baseline; gap: 0.5rem; justify-content: center; }
 .display-price { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; }
 .original-price { font-size: 0.85rem; text-decoration: line-through; color: var(--text-light); }
-.product-discount { color: #16a34a; font-size: 0.875rem; font-weight: 600; margin-top: 0.25rem; }
+.product-discount { color: var(--green-color); font-size: 0.875rem; font-weight: 600; }
 .carousel-item { flex: 0 0 45%; scroll-snap-align: start; }
 @media (min-width: 640px) { .carousel-item { flex: 0 0 30%; } }
 @media (min-width: 1024px) { .carousel-item { flex: 0 0 20%; } }
@@ -199,159 +205,103 @@ body.menu-open #side-menu { transform: translateX(0); box-shadow: 0 0 20px rgba(
 .header-cart-link { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: var(--text-dark); }
 #cart-item-count { position: absolute; top: 4px; right: 2px; background-color: #ef4444; color: white; font-size: 11px; font-weight: 600; line-height: 1; min-width: 18px; height: 18px; padding: 3px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--bg-white); transition: transform 0.2s ease-in-out; }
 #cart-item-count:empty { display: none; }
-#add-to-cart-btn, #go-to-cart-btn { background-color: var(--primary-color); transition: background-color 0.3s, transform 0.3s; }
-#add-to-cart-btn:hover, #go-to-cart-btn:hover { transform: scale(1.05); }
 .hidden { display: none !important; }
 
-.add-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8%; border: 1.5px solid var(--border-color); color: var(--primary-color); background-color: white; font-size: 1.2rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.add-btn:hover { background-color: #ffffff; border-color: var(--primary-color); transform: scale(1.1); }
-.add-btn.added { background-color: var(--primary-color); color: white; transform: scale(1.1); border-color: var(--primary-color); }
-.standard-card-add-btn { position: absolute; bottom: 8px; right: 8px; z-index: 10; }
+/* Purana '+' button (fallback ke liye) */
+.add-btn { cursor: pointer; }
+.standard-card-add-btn { 
+    display: flex; align-items: center; justify-content: center; 
+    width: 36px; height: 36px; border-radius: 8%; 
+    border: 1.5px solid var(--border-color); color: var(--primary-color); 
+    background-color: white; font-size: 1.2rem; font-weight: 500; 
+    transition: all 0.2s ease-in-out; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: absolute; bottom: 8px; right: 8px; z-index: 10;
+}
+.standard-card-add-btn:hover { background-color: #ffffff; border-color: var(--primary-color); transform: scale(1.1); }
+.standard-card-add-btn.added { background-color: var(--primary-color); color: white; transform: scale(1.1); border-color: var(--primary-color); }
 
-/* --- HEADER SEARCH BAR STYLING (FINAL FIX) --- */
-#header-search-container a {
+
+/* === YAHAN BADLAV KIYA GAYA HAI: Button aur icon ki height/size kam ki gayi === */
+.product-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    padding: 3px; /* Padding kam ki gayi */
+    margin-top: auto; 
+}
+
+.whatsapp-btn {
     display: flex;
     align-items: center;
-    width: 100%;
-    height: 38px;
-    padding: 0.5rem 1rem;
-    background-color: var(--bg-white);
-    border-radius: 9999px; /* Pill shape */
-    border: 1px solid var(--border-color);
-    text-decoration: none;
-    color: var(--text-light);
-    font-size: 0.95rem;
+    justify-content: center;
+    width: 36px;  /* Height ke barabar kiya gaya */
+    height: 36px; /* Height kam ki gayi */
+    border-radius: 6px;
+    transition: background-color 0.2s;
 }
-#header-search-container a:hover {
-    border-color: var(--primary-color);
+.whatsapp-btn:hover {
+    background-color: #f3f4f6;
 }
-#header-search-container .search-icon {
-    width: 1rem;
-    height: 1rem;
-    color: var(--text-dark);
-    margin-right: 0.5rem;
+.whatsapp-btn img {
+    width: 22px;  /* Icon size chhota kiya gaya */
+    height: 22px; /* Icon size chhota kiya gaya */
+    opacity: 0.9;
 }
+
+.add-text-btn {
+    flex-grow: 1;
+    height: 36px; /* Height kam ki gayi */
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+.add-text-btn:hover {
+    background-color: #4338ca; 
+}
+.add-text-btn:active {
+    transform: scale(0.98);
+}
+.add-text-btn.added {
+    background-color: var(--green-color);
+    cursor: not-allowed;
+}
+/* === BADLAV END === */
 
 
 /* --- GLOBAL SEARCH FUNCTIONALITY STYLES --- */
-/* Search suggestions dropdown */
-#search-suggestions { 
-    position: absolute; 
-    top: calc(100% + 5px); 
-    left: 0; 
-    right: 0; 
-    background: white; 
-    border-radius: 12px; 
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); 
-    z-index: 60; 
-    max-height: 300px; 
-    overflow-y: auto; 
-}
-.suggestion-item { 
-    display: flex; 
-    align-items: center; 
-    padding: 0.75rem; 
-    border-bottom: 1px solid #f3f4f6; 
-    cursor: pointer; 
-    transition: background-color 0.2s; 
-    text-decoration: none; 
-}
-.suggestion-item:hover { 
-    background-color: #f9fafb; 
-}
-.suggestion-item:last-child { 
-    border-bottom: none; 
-}
-.suggestion-item img { 
-    width: 40px; 
-    height: 40px; 
-    object-fit: cover; 
-    border-radius: 8px; 
-    margin-right: 0.75rem; 
-}
-.suggestion-item span { 
-    color: var(--text-dark); 
-}
-#category-suggestions { 
-    background-color: #f9fafb; 
-    padding: 0.75rem; 
-    border-bottom: 1px solid #e5e7eb; 
-}
-.suggestion-tag { 
-    display: inline-block; 
-    background-color: #e5e7eb; 
-    color: #4b5563; 
-    padding: 0.25rem 0.75rem; 
-    border-radius: 9999px; 
-    font-size: 0.8rem; 
-    margin-right: 0.5rem; 
-    margin-bottom: 0.5rem; 
-    cursor: pointer; 
-    transition: all 0.2s; 
-}
-.suggestion-tag:hover { 
-    background-color: #d1d5db; 
-    color: #1f2937; 
-}
+#search-suggestions { position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); z-index: 60; max-height: 300px; overflow-y: auto; }
+.suggestion-item { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background-color 0.2s; text-decoration: none; }
+.suggestion-item:hover { background-color: #f9fafb; }
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-right: 0.75rem; }
+.suggestion-item span { color: var(--text-dark); }
+#category-suggestions { background-color: #f9fafb; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+.suggestion-tag { display: inline-block; background-color: #e5e7eb; color: #4b5563; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; margin-right: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; }
+.suggestion-tag:hover { background-color: #d1d5db; color: #1f2937; }
 
 /* Overlay and background blur when search is active */
-#search-overlay { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    right: 0; 
-    bottom: 0; 
-    background-color: rgba(0, 0, 0, 0.4); 
-    z-index: 35; 
-    opacity: 0; 
-    transition: opacity 0.3s ease; 
-    pointer-events: none; 
-} 
-body.search-active #search-overlay { 
-    opacity: 1; 
-    pointer-events: auto; 
-} 
-body.search-active > .category-filter-container, 
-body.search-active > main { 
-    filter: blur(4px); 
-    pointer-events: none; 
-    user-select: none; 
-} 
-body.search-active header { 
-    filter: none; 
-    pointer-events: auto; 
-    user-select: auto; 
-}
+#search-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.4); z-index: 35; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; } 
+body.search-active #search-overlay { opacity: 1; pointer-events: auto; } 
+body.search-active > .category-filter-container, body.search-active > main { filter: blur(4px); pointer-events: none; user-select: none; } 
+body.search-active header { filter: none; pointer-events: auto; user-select: auto; }
 
 
 /* Styles for Infinite Scroll Loader */
-.deals-loader-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem 0;
-    width: 100%;
+.deals-loader-container { display: flex; justify-content: center; align-items: center; padding: 2rem 0; width: 100%; }
+.deals-loader-container.hidden { display: none; }
+.spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #4F46E5; /* Ramazone Primary Color */ animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- GO TO CART NOTIFICATION (HOMEPAGE) --- */
+#home-go-to-cart-notification.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.deals-loader-container.hidden {
-    display: none;
-}
-
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border-left-color: #4F46E5; /* Ramazone Primary Color */
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
 

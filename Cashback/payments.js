@@ -1,0 +1,776 @@
+// --- Firebase modules import ---
+import { getFirestore, doc, getDoc, setDoc, runTransaction, increment, collection, query, where, getDocs, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+// --- Global variables for payment logic ---
+let db, auth;
+let showToast, openModal, closeModal, showErrorMessage, hideErrorMessage, getCurrentUser, getCurrentUserData, toggleView;
+let scannerAnimation = null;
+let pendingAction = null; // Password verification ke baad run hone wala action
+let p2pReceiver = null; // Store receiver details for P2P transfer
+const RAMAZONE_STORE_ID = '@RamazoneStoreCashback'; // Store payment QR ID
+
+/**
+ * (UPDATED) Payment views ke beech switch karein (Bottom Navigation ke liye)
+ * @param {string} viewToShow - Dikhane wale view ki ID (e.g., 'scan-qr-view')
+ */
+function switchPaymentView(viewToShow) {
+    // Sabhi content views ko chhupayein
+    document.querySelectorAll('#payment-content-container .payment-view').forEach(view => {
+        view.classList.remove('active');
+    });
+    // Sabhi nav buttons se 'active' class hatayein
+    document.querySelectorAll('.payment-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Target view ko dikhayein
+    const viewElement = document.getElementById(viewToShow);
+    if (viewElement) {
+        viewElement.classList.add('active');
+    }
+
+    // Target button mein 'active' class lagayein
+    let activeButton;
+    if (viewToShow === 'scan-qr-view') {
+        activeButton = document.getElementById('payment-nav-scan');
+        startScanner(); // Scan view dikhate hi scanner start karein
+        loadRecentPayments(); // P2P bhi isi view par hai, to recents load karein
+    } else if (viewToShow === 'rmz-store-pay-view') {
+        activeButton = document.getElementById('payment-nav-rmz');
+        stopScanner(); // RMZ Store view par scanner stop karein
+    }
+    
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+}
+
+/**
+ * (UPDATED) Payment page ko uski default state (Scan QR) par reset karein.
+ * (FIXED) Duplicate 'loadRecentPayments()' call ko hata diya gaya hai.
+ */
+function resetPaymentView() {
+    switchPaymentView('scan-qr-view'); // Default view ab 'scan-qr-view' hai
+    p2pReceiver = null; // P2P receiver ko clear karein
+    
+    // Sabhi forms aur error messages ko reset karein
+    document.getElementById('p2p-search-id').value = '';
+    document.getElementById('p2p-receiver-info').style.display = 'none';
+    document.getElementById('p2p-receiver-info').textContent = '';
+    document.getElementById('p2p-payment-form').style.display = 'none';
+    document.getElementById('p2p-payment-amount').value = '';
+    hideErrorMessage(document.getElementById('p2p-payment-error-msg'));
+    
+    document.getElementById('rmz-payment-amount').value = '';
+    hideErrorMessage(document.getElementById('rmz-payment-error-msg'));
+    
+    // (FIXED) Yeh call duplicate thi, ise hata diya gaya hai.
+    // loadRecentPayments(); 
+}
+
+/**
+ * (UPDATED) Haal hi ke P2P payments load karein
+ * (FIXED) 'orderBy' ko wapas jod diya gaya hai taaki sahi 'recent' users milein.
+ */
+async function loadRecentPayments() {
+    const container = document.getElementById('recent-payments-container');
+    container.innerHTML = ''; // Pehle se clear karein
+    const sender = getCurrentUserData();
+    if (!sender) return;
+
+    try {
+        const recentUsersMap = new Map();
+        
+        // 1. Transaction history se query karein
+        // (FIXED) 'orderBy' wapas jod diya gaya hai.
+        // Iske liye Firestore mein index ki zaroorat pad sakti hai.
+        const q = query(
+            collection(db, "transactions"),
+            where("involvedUsers", "array-contains", sender.uid),
+            where("type", "==", "p2p_sent"),
+            orderBy("timestamp", "desc"), // Sabse naye transaction pehle
+            limit(20) // 20 tak check karein taaki 4 unique mil sakein
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        // 2. Pehle 4 unique users (mobile number se) dhoondein
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            // Check karein ki otherParty data hai aur unique hai
+            if (data.otherParty && data.otherParty.mobile && 
+                !recentUsersMap.has(data.otherParty.mobile) && 
+                recentUsersMap.size < 4) {
+                // Mobile ko key aur Name ko value banakar save karein
+                recentUsersMap.set(data.otherParty.mobile, data.otherParty.name); 
+            }
+        }
+
+        if (recentUsersMap.size === 0) {
+            container.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary);">Aapne abhi tak koi payment nahi kiya hai.</p>`;
+            return;
+        }
+
+        // 3. (NEW) Ab un unique users ka profile picture data fetch karein
+        const mobiles = [...recentUsersMap.keys()];
+        // Ek hi query mein sabhi users ko mangayein
+        const usersQuery = query(collection(db, "users"), where("mobile", "in", mobiles));
+        const usersSnapshot = await getDocs(usersQuery);
+
+        const usersDataMap = new Map();
+        // Sabhi mile hue user data ko mobile number ke adhaar par map mein daalein
+        usersSnapshot.forEach(doc => {
+            usersDataMap.set(doc.data().mobile, doc.data()); // mobile -> poora user data
+        });
+
+        // 4. (NEW UI) Har unique user ke liye chip banayein
+        for (const [mobile, defaultName] of recentUsersMap.entries()) {
+            
+            const userData = usersDataMap.get(mobile); // User ka poora data nikalein
+            
+            // Naam aur Profile Pic set karein
+            const name = userData ? userData.name : defaultName; // Agar user mil gaya to uska naam, varna transaction se
+            const profilePic = userData ? userData.profilePictureUrl : null; // Profile pic, ya null
+            const initial = (name || '?').charAt(0).toUpperCase();
+
+            let avatarHtml = '';
+            // (NEW) Check karein ki profile pic hai ya nahi
+            if (profilePic) {
+                // Agar hai, to img tag banayein
+                avatarHtml = `<img src="${profilePic}" alt="${name}">`;
+            } else {
+                // Agar nahi, to naam ka pehla letter dikhayein
+                avatarHtml = `<span>${initial}</span>`;
+            }
+
+            const chip = document.createElement('div');
+            chip.className = 'recent-user-chip';
+            
+            chip.innerHTML = `
+                <div class="recent-user-avatar">
+                    ${avatarHtml} <!-- Yahaan img ya span aayega -->
+                </div>
+                <span class="recent-user-name">${name || 'Unknown User'}</span>
+            `;
+            
+            // Click karne par auto-search karein (jaisa aapne kaha)
+            chip.addEventListener('click', () => {
+                const paymentId = `${mobile}@RMZ`;
+                document.getElementById('p2p-search-id').value = paymentId;
+                handleP2PSearch(); // Auto-search trigger karein
+            });
+            
+            container.appendChild(chip);
+        }
+
+    } catch (error) {
+        console.error("Error loading recent payments:", error);
+        // Agar index error aata hai, toh user ko console mein pata chal jayega
+        if (error.code === 'failed-precondition') {
+             console.error("FIRESTORE INDEX ERROR: Please create a composite index in Firestore for 'transactions' collection: involvedUsers (array-contains), type (==), timestamp (desc).");
+             container.innerHTML = `<p style="font-size: 13px; color: var(--due-red);">Error: Index needed.</p>`;
+        } else {
+            container.innerHTML = `<p style="font-size: 13px; color: var(--due-red);">Could not load recents.</p>`;
+        }
+    }
+}
+
+
+// --- Scanner/QR Code Functions ---
+
+/**
+ * (UPDATED) QR code scan successful hone par handle karein.
+ * Ab yeh Store QR aur User QR dono ko pehchanta hai.
+ * @param {string} data - QR code se mila data.
+ */
+async function handleSuccessfulScan(data) {
+    const statusEl = document.getElementById('scanner-status');
+    const currentUserData = getCurrentUserData();
+    
+    // Case 1: Ramazone Store ka QR
+    if (data === RAMAZONE_STORE_ID) {
+        stopScanner();
+        showToast("Ramazone Store QR Scanned!");
+        // Scan ke baad RMZ Store payment view dikhayein
+        switchPaymentView('rmz-store-pay-view');
+        statusEl.textContent = 'Ramazone Store QR Scanned!';
+        
+    // Case 2: Kisi User ka Payment ID QR
+    } else if (data.includes('@RMZ')) {
+        
+        // Khud ko payment check
+        const scannedMobile = data.split('@RMZ')[0];
+        if (currentUserData.mobile === scannedMobile) {
+            showToast("You cannot pay yourself.");
+            statusEl.textContent = 'Cannot pay yourself. Try again...';
+            setTimeout(startScanner, 1500); // Scanner firse chalu karein
+            return;
+        }
+        
+        stopScanner();
+        showToast("User QR Scanned!");
+        statusEl.textContent = 'User QR Scanned! Searching...';
+        
+        // View switch karne ki zaroorat nahi, kyunki P2P form isi view par hai.
+        // Seedha search box mein ID daalein
+        document.getElementById('p2p-search-id').value = data;
+        
+        // Auto-search trigger karein
+        await handleP2PSearch();
+
+    // Case 3: Invalid QR
+    } else {
+        showToast("Invalid QR code. Only Ramazone QR is accepted.");
+        statusEl.textContent = 'Invalid QR. Try again...';
+        // Thodi der baad scanning firse shuru karein
+        setTimeout(startScanner, 1500);
+    }
+}
+
+/**
+ * QR code scanner ko start karein.
+ */
+function startScanner() {
+    // Agar scanner pehle se chal raha hai, to kuch na karein
+    if (scannerAnimation) return; 
+    
+    stopScanner(); // Har ihtiyat ke liye pehle stop karein
+    const video = document.getElementById('scanner-video');
+    const statusEl = document.getElementById('scanner-status');
+    
+    if (!video || !statusEl) return;
+    
+    statusEl.textContent = 'Starting camera...';
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
+        video.srcObject = stream;
+        video.play();
+        statusEl.textContent = 'Scanning for QR code...';
+        
+        const tick = () => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; 
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // QR code detect karein
+                const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+                
+                if (code && code.data) { 
+                    handleSuccessfulScan(code.data); 
+                    return; // Scan milne par loop rok dein
+                }
+            }
+            // (FIX) Check karein ki scannerAnimation null to nahi hua
+            if (scannerAnimation) {
+                scannerAnimation = requestAnimationFrame(tick);
+            }
+        };
+        scannerAnimation = requestAnimationFrame(tick);
+
+    }).catch(() => {
+        statusEl.textContent = 'Could not access camera.';
+    });
+}
+
+/**
+ * QR code scanner ko stop karein.
+ */
+function stopScanner() {
+    if (scannerAnimation) cancelAnimationFrame(scannerAnimation);
+    scannerAnimation = null;
+    const video = document.getElementById('scanner-video');
+    if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+    const statusEl = document.getElementById('scanner-status');
+    if(statusEl) statusEl.textContent = 'Scanner is idle.';
+}
+
+/**
+ * Gallery se QR code image upload ko handle karein.
+ * (UPDATED) Ab yeh user QR ko bhi handle karega
+ * @param {Event} event - File input change event.
+ */
+function handleQrUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const image = new Image();
+        image.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.width; canvas.height = image.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+            
+            if (code && code.data) {
+                // handleSuccessfulScan ko call karein, woh data ko check kar lega
+                handleSuccessfulScan(code.data); 
+            } else {
+                showToast("No valid Ramazone QR code found.");
+            }
+        };
+        image.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    event.target.value = ''; // Input ko reset karein
+}
+
+// --- P2P (Pay to User) Logic ---
+
+/**
+ * (UPDATED) Payment ID se user ko search karein.
+ * Ab auto-scroll aur auto-focus karega.
+ */
+async function handleP2PSearch() {
+    const searchInput = document.getElementById('p2p-search-id');
+    const searchBtn = document.getElementById('p2p-search-btn');
+    const receiverInfoEl = document.getElementById('p2p-receiver-info');
+    const paymentForm = document.getElementById('p2p-payment-form');
+    const errorMsgEl = document.getElementById('p2p-payment-error-msg');
+    
+    const paymentId = searchInput.value.trim();
+    if (!paymentId.includes('@RMZ')) {
+        showErrorMessage(errorMsgEl, "Invalid Payment ID format.");
+        return;
+    }
+    
+    const mobile = paymentId.split('@RMZ')[0];
+    const currentUserData = getCurrentUserData();
+    if (mobile === currentUserData.mobile) {
+        showErrorMessage(errorMsgEl, "You cannot send money to yourself.");
+        return;
+    }
+
+    searchBtn.disabled = true;
+    searchBtn.textContent = '...';
+    hideErrorMessage(errorMsgEl);
+    receiverInfoEl.style.display = 'none';
+    paymentForm.style.display = 'none';
+    p2pReceiver = null;
+
+    try {
+        const q = query(collection(db, "users"), where("mobile", "==", mobile));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            showErrorMessage(errorMsgEl, "User not found.");
+        } else {
+            const userDoc = querySnapshot.docs[0];
+            p2pReceiver = { uid: userDoc.id, ...userDoc.data() };
+            
+            receiverInfoEl.innerHTML = `Paying to: <strong style="color: var(--brand-red);">${p2pReceiver.name}</strong>`;
+            receiverInfoEl.style.display = 'block';
+            paymentForm.style.display = 'block';
+            
+            // --- (NEW) AUTO-SCROLL & FOCUS LOGIC ---
+            const amountInput = document.getElementById('p2p-payment-amount');
+            
+            // Thoda delay (100ms) de rahe hain taaki elements poori tarah render ho jaayein
+            setTimeout(() => {
+                // Input field tak smoothly scroll karein
+                amountInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Input field par focus karein (isse numeric keypad khul jaayega)
+                amountInput.focus();
+            }, 100); 
+            // --- (NEW) LOGIC END ---
+        }
+    } catch (error) {
+        console.error("Error searching user:", error);
+        showErrorMessage(errorMsgEl, "An error occurred. Please try again.");
+    } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Search';
+    }
+}
+
+// --- Password Verification Logic ---
+
+/**
+ * Koi bhi action karne se pehle password verify karein.
+ * @param {Function} action - Password sahi hone par run hone wala function.
+ */
+function verifyPasswordAndExecute(action) {
+    pendingAction = action; // Payment function ko save karein
+    document.getElementById('verification-password').value = '';
+    hideErrorMessage(document.getElementById('verification-error-msg'));
+    openModal('password-verification-modal');
+}
+
+/**
+ * Password verification modal ke confirm button ko handle karein.
+ */
+async function handleVerificationConfirm() {
+    const password = document.getElementById('verification-password').value;
+    const errorMsg = document.getElementById('verification-error-msg');
+    hideErrorMessage(errorMsg);
+    if (!password) return showErrorMessage(errorMsg, "Password is required.");
+    
+    const confirmBtn = document.getElementById('verification-confirm-btn');
+    confirmBtn.disabled = true; 
+    confirmBtn.textContent = "Verifying...";
+    
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, password);
+    
+    try {
+        await reauthenticateWithCredential(user, credential);
+        closeModal('password-verification-modal');
+        if (pendingAction) {
+            await pendingAction(); // Save kiya gaya payment function run karein
+        }
+    } catch (error) {
+        showErrorMessage(errorMsg, "Incorrect password.");
+    } finally {
+        confirmBtn.disabled = false; 
+        confirmBtn.textContent = "Confirm";
+        document.getElementById('verification-password').value = '';
+        pendingAction = null; // Action ko clear karein
+    }
+}
+
+// --- Payment Execution Logic ---
+
+/**
+ * RMZ Store Payment ko initiate karein (Password verification ke liye).
+ */
+function handleRMZStorePayment() {
+    const amountInput = document.getElementById('rmz-payment-amount');
+    const errorMsg = document.getElementById('rmz-payment-error-msg');
+    const amount = parseFloat(amountInput.value);
+    const currentUserData = getCurrentUserData();
+
+    hideErrorMessage(errorMsg);
+    if (isNaN(amount) || amount < 5) {
+        return showErrorMessage(errorMsg, "Minimum payment is ₹5.");
+    }
+    if (currentUserData.wallet < amount) {
+        return showErrorMessage(errorMsg, "Insufficient balance.");
+    }
+
+    // Password verification ke liye payment function ko pass karein
+    verifyPasswordAndExecute(async () => {
+        await doRMZStorePayment(amount);
+    });
+}
+
+/**
+ * Asli RMZ Store Payment Transaction (Password verify hone ke baad).
+ * @param {number} amount - Pay karne wali amount.
+ */
+async function doRMZStorePayment(amount) {
+    const currentUserData = getCurrentUserData();
+    document.getElementById('payment-processing-modal').classList.add('active');
+    // (UPDATED) Payment view ko band nahi karein, process modal dikhayein
+    
+    let newTxnRef = doc(collection(db, "transactions")); 
+    
+    try {
+        await runTransaction(db, async (t) => {
+            const userRef = doc(db, 'users', currentUserData.uid);
+            const configRef = doc(db, 'app_settings', 'config');
+            
+            // User ka wallet check karein (double-check)
+            const userDoc = await t.get(userRef);
+            if (!userDoc.exists() || userDoc.data().wallet < amount) {
+                throw new Error("Insufficient balance.");
+            }
+
+            // 1. User ka wallet update (debit)
+            t.update(userRef, { wallet: increment(-amount) });
+            
+            // 2. Admin ka wallet update (credit)
+            t.set(configRef, { rmz_wallet_balance: increment(amount) }, { merge: true });
+            
+            // 3. User ke liye transaction record
+            t.set(newTxnRef, { 
+                type: 'payment', 
+                amount: -amount, // User ke liye negative
+                description: 'Paid to Ramazone Store', 
+                status: 'completed', 
+                timestamp: serverTimestamp(), 
+                involvedUsers: [currentUserData.uid] // Sirf sender
+                // Yahan 'otherParty' ki zaroorat nahi, kyunki type 'payment' hai
+            });
+            
+            // 4. Admin ke liye transaction record
+            t.set(doc(collection(db, "rmz_wallet_transactions")), { 
+                amount, // Admin ke liye positive
+                senderId: currentUserData.uid, 
+                senderName: currentUserData.name, 
+                senderMobile: currentUserData.mobile, 
+                timestamp: serverTimestamp() 
+            });
+        });
+        
+        // --- SUCCESS ---
+        document.getElementById('payment-processing-modal').classList.remove('active');
+        showSuccessModal('rmz', {
+            amount: amount,
+            receiverName: 'Ramazone Store',
+            txnId: newTxnRef.id
+        });
+        // (NEW) Payment ke baad dashboard par lautein
+        toggleView('dashboard-view');
+
+    } catch (error) { 
+        // --- FAILURE ---
+        console.error("RMZ Payment transaction failed:", error);
+        document.getElementById('payment-processing-modal').classList.remove('active');
+        document.getElementById('payment-failure-modal').querySelector('.modal-content p').textContent = 
+            error.message || "Payment failed. Please try again.";
+        openModal('payment-failure-modal');
+        // (NEW) Fail hone par bhi dashboard par lautein (ya payment page par rakhein)
+        // User ko payment page par rakhte hain taaki woh dobara try kar sake
+        // toggleView('dashboard-view'); 
+    }
+}
+
+/**
+ * P2P Payment ko initiate karein (Password verification ke liye).
+ */
+function handleP2PPayment() {
+    const amountInput = document.getElementById('p2p-payment-amount');
+    const errorMsg = document.getElementById('p2p-payment-error-msg');
+    const amount = parseFloat(amountInput.value);
+    const currentUserData = getCurrentUserData();
+
+    hideErrorMessage(errorMsg);
+    if (!p2pReceiver) {
+        return showErrorMessage(errorMsg, "Please search and select a user first.");
+    }
+    if (isNaN(amount) || amount < 1) {
+        return showErrorMessage(errorMsg, "Minimum payment is ₹1.");
+    }
+    if (currentUserData.wallet < amount) {
+        return showErrorMessage(errorMsg, "Insufficient balance.");
+    }
+
+    // Password verification ke liye payment function ko pass karein
+    verifyPasswordAndExecute(async () => {
+        await doP2PPayment(amount, p2pReceiver);
+    });
+}
+
+/**
+ * Asli P2P Payment Transaction (Password verify hone ke baad). (UPDATED)
+ * @param {number} amount - Pay karne wali amount.
+ ** @param {object} receiver - Receiver ka user object (jismein uid aur name ho).
+ */
+async function doP2PPayment(amount, receiver) {
+    const sender = getCurrentUserData();
+    document.getElementById('payment-processing-modal').classList.add('active');
+    // (UPDATED) Payment view ko band nahi karein
+    
+    const senderTxnRef = doc(collection(db, "transactions"));
+    const receiverTxnRef = doc(collection(db, "transactions"));
+
+    try {
+        await runTransaction(db, async (t) => {
+            const senderRef = doc(db, 'users', sender.uid);
+            const receiverRef = doc(db, 'users', receiver.uid);
+
+            // Sender ka wallet check karein
+            const senderDoc = await t.get(senderRef);
+            if (!senderDoc.exists() || senderDoc.data().wallet < amount) {
+                throw new Error("Insufficient balance.");
+            }
+            
+            // Receiver ka doc check karein
+            const receiverDoc = await t.get(receiverRef);
+            if (!receiverDoc.exists()) {
+                throw new Error("Receiver account does not exist.");
+            }
+
+            // 1. Sender ka wallet update (debit)
+            t.update(senderRef, { wallet: increment(-amount) });
+            
+            // 2. Receiver ka wallet update (credit)
+            t.update(receiverRef, { wallet: increment(amount) });
+            
+            // 3. Sender ke liye transaction record (Debit)
+            t.set(senderTxnRef, { 
+                type: 'p2p_sent', 
+                amount: -amount, // Negative amount
+                description: `Paid to ${receiver.name}`, 
+                status: 'completed', 
+                timestamp: serverTimestamp(), 
+                involvedUsers: [sender.uid], // Sirf Sender
+                // (NEW) "Pay Again" ke liye receiver ki info save karein
+                otherParty: {
+                    name: receiver.name,
+                    mobile: receiver.mobile 
+                }
+            });
+
+            // 4. Receiver ke liye transaction record (Credit)
+            t.set(receiverTxnRef, { 
+                type: 'p2p_received', 
+                amount: amount, // Positive amount
+                description: `Received from ${sender.name}`, 
+                status: 'completed', 
+                timestamp: serverTimestamp(), 
+                involvedUsers: [receiver.uid], // Sirf Receiver
+                // (NEW) Receiver ki history mein sender ki info
+                otherParty: {
+                    name: sender.name,
+                    mobile: sender.mobile
+                }
+            });
+        });
+        
+        // --- SUCCESS ---
+        document.getElementById('payment-processing-modal').classList.remove('active');
+        showSuccessModal('p2p', {
+            amount: amount,
+            receiverName: receiver.name,
+            txnId: senderTxnRef.id // Sender ki transaction ID dikhayein
+        });
+        // (NEW) Payment ke baad dashboard par lautein
+        toggleView('dashboard-view');
+
+    } catch (error) {
+        // --- FAILURE ---
+        console.error("P2P Payment transaction failed:", error);
+        document.getElementById('payment-processing-modal').classList.remove('active');
+        document.getElementById('payment-failure-modal').querySelector('.modal-content p').textContent = 
+            error.message || "Payment failed. Please try again.";
+        openModal('payment-failure-modal');
+        // (NEW) Fail hone par P2P page par hi rahein
+    }
+}
+
+/**
+ * Payment Success Modal ko data ke saath dikhayein.
+ * @param {string} type - 'rmz' ya 'p2p'
+ * @param {object} details - { amount, receiverName, txnId }
+ */
+function showSuccessModal(type, details) {
+    const now = new Date();
+    document.getElementById('success-modal-amount').textContent = `₹ ${details.amount.toFixed(2)}`;
+    document.getElementById('success-modal-receiver').textContent = details.receiverName;
+    document.getElementById('success-modal-txn-id').textContent = details.txnId;
+    document.getElementById('success-modal-datetime').textContent = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+    
+    // Download button ke liye naya event listener attach karein (cloneNode trick)
+    const oldDownloadBtn = document.getElementById('success-download-receipt-btn');
+    const newDownloadBtn = oldDownloadBtn.cloneNode(true);
+    oldDownloadBtn.parentNode.replaceChild(newDownloadBtn, oldDownloadBtn);
+    
+    newDownloadBtn.addEventListener('click', () => handleSuccessReceiptDownload(details.txnId));
+    
+    openModal('payment-success-modal');
+}
+
+/**
+ * Payment Success Receipt ko download karein.
+ * @param {string} txnId - Transaction ID
+ */
+function handleSuccessReceiptDownload(txnId) {
+    const receiptElement = document.querySelector('#payment-success-modal .modal-content');
+    const downloadBtn = document.getElementById('success-download-receipt-btn');
+    const doneBtn = document.querySelector('#payment-success-modal .action-btn[data-close-modal]');
+    
+    // Buttons ko chhupayein
+    downloadBtn.style.visibility = 'hidden';
+    doneBtn.style.visibility = 'hidden';
+    
+    showToast("Downloading receipt...");
+
+    html2canvas(receiptElement, { scale: 2, useCORS: true }).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `Ramazone-Payment-${txnId}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }).catch(err => {
+        console.error("Error downloading receipt:", err);
+        showToast("Download failed.");
+    }).finally(() => {
+        // Buttons ko wapas dikhayein
+        downloadBtn.style.visibility = 'visible';
+        doneBtn.style.visibility = 'visible';
+    });
+}
+
+
+/**
+ * Payment module ke event listeners ko initialize karein. (UPDATED)
+ */
+function initializePaymentListeners() {
+    // app.js se core functions lein
+    const App = window.RamazoneApp;
+    if (!App) {
+        console.error("RamazoneApp core not found!");
+        return;
+    }
+    
+    db = App.getDb();
+    auth = App.getAuth();
+    showToast = App.showToast;
+    openModal = App.openModal;
+    closeModal = App.closeModal;
+    toggleView = App.toggleView; // (NEW) toggleView function
+    showErrorMessage = App.showErrorMessage;
+    hideErrorMessage = App.hideErrorMessage;
+    getCurrentUser = App.getCurrentUser;
+    getCurrentUserData = App.getCurrentUserData;
+
+    // --- (NEW) Fullscreen Page Listeners ---
+    document.getElementById('payment-back-btn').addEventListener('click', () => {
+        stopScanner(); // Page chhodte waqt scanner band karein
+        toggleView('dashboard-view'); // Dashboard par wapas jaayein
+    });
+
+    // --- (NEW) Bottom Navigation Buttons ---
+    document.getElementById('payment-nav-scan').addEventListener('click', () => switchPaymentView('scan-qr-view'));
+    // (REMOVED) P2P button ka listener hata diya gaya hai
+    document.getElementById('payment-nav-rmz').addEventListener('click', () => switchPaymentView('rmz-store-pay-view'));
+
+    // --- Scan View (jismein P2P bhi hai) ---
+    document.getElementById('upload-qr-btn').addEventListener('click', () => document.getElementById('qr-file-input').click());
+    document.getElementById('qr-file-input').addEventListener('change', handleQrUpload);
+    document.getElementById('p2p-search-btn').addEventListener('click', handleP2PSearch);
+    document.getElementById('p2p-pay-submit-btn').addEventListener('click', handleP2PPayment);
+    
+    // --- RMZ Store View ---
+    document.getElementById('rmz-pay-submit-btn').addEventListener('click', handleRMZStorePayment);
+
+    // --- Password Verification ---
+    document.getElementById('verification-confirm-btn').addEventListener('click', handleVerificationConfirm);
+    
+    // --- Custom Event Listeners (app.js se) ---
+    
+    // (UPDATED) Jab payment *view* khule, use reset karein
+    document.addEventListener('paymentModalOpened', resetPaymentView); // Event ka naam wahi rakha
+    
+    // (REMOVED) 'stopScanner' event listener, kyunki ab 'back' button handle karta hai
+    
+    // (NEW) "Pay Again" event ko sunein
+    document.addEventListener('openPaymentTab', (e) => {
+        const detail = e.detail;
+        if (detail.tab === 'rmz-store') {
+            switchPaymentView('rmz-store-pay-view');
+        } else if (detail.tab === 'p2p') {
+            // P2P ab 'scan-qr-view' ka hissa hai
+            switchPaymentView('scan-qr-view'); 
+            if (detail.searchId) {
+                // ID ko search box mein daalein
+                document.getElementById('p2p-search-id').value = detail.searchId;
+                // Auto-search trigger karein
+                handleP2PSearch();
+            }
+        }
+    });
+}
+
+// DOM load hone par payment listeners ko initialize karein
+document.addEventListener('DOMContentLoaded', initializePaymentListeners);
+
+

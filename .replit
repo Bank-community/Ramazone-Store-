@@ -16,7 +16,11 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+<<<<<<< HEAD
 localPort = 41449
+=======
+localPort = 34301
+>>>>>>> 300dc4c2f9fb10db2126d1d663f216f4cf0ec146
 externalPort = 3000
 
 [agent]

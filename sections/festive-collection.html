@@ -1,4 +1,4 @@
-<!-- FINAL VERSION: This file now contains only the HTML structure and its specific CSS. -->
+<!-- FINAL VERSION: This file now contains the updated HTML structure and its specific CSS. -->
 
 <style>
     /* Scoped styles for the Festive Collection section */
@@ -6,7 +6,7 @@
         display: flex; 
         justify-content: space-between; 
         align-items: center; 
-        padding: 0.5rem 1rem 0 1rem; /* UPDATED: Added top padding */
+        padding: 0.5rem 1rem 0 1rem;
         margin-bottom: 1rem; 
         gap: 1rem; 
     }
@@ -17,7 +17,7 @@
         padding: 0.4rem 0.8rem; 
         border-radius: 8px; 
         font-size: 0.9rem; 
-        font-weight: 700; /* UPDATED: Bolder text */
+        font-weight: 700;
         display: flex; 
         align-items: center; 
         gap: 0.35rem; 
@@ -58,35 +58,51 @@
         color: #16a34a; 
     }
 
-    #festive-collection-container .progress-bar-container { background-color: #e5e7eb; border-radius: 50px; height: 18px; width: 100%; position: relative; overflow: hidden; margin-top: 8px; }
+    /* === YAHAN BADLAV KIYA GAYA HAI: Progress Bar Styles Updated === */
+    #festive-collection-container .progress-bar-container { 
+        background-color: #fdecec; /* Light red background */
+        border-radius: 50px; 
+        height: 14px; /* Height kam ki gayi */
+        width: 100%; 
+        position: relative; 
+        overflow: hidden;
+    }
     #festive-collection-container .progress-bar-inner {
-        background-color: #ef4444;
+        background-color: #ef4444; /* Solid red color */
         height: 100%;
         border-radius: 50px;
         transition: width 0.5s ease-in-out;
     }
-    #festive-collection-container .progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: 600; color: white; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25); }
+    #festive-collection-container .progress-bar-text { 
+        position: absolute; 
+        top: 50%; 
+        left: 50%; 
+        transform: translate(-50%, -50%); 
+        font-size: 0.6rem; /* Font size chhota kiya gaya */
+        font-weight: 600; 
+        color: white; 
+        text-shadow: none; /* Text shadow hataya gaya */
+    }
+    /* === BADLAV END === */
 
-    /* Product cards ke beech mein space add karne ke liye */
     #festive-collection-container .horizontal-scroller {
         gap: 12px;
     }
 
-    /* === YAHAN BADLAV KIYA GAYA HAI: Naye 'View All' Card ke liye Styles === */
     #festive-collection-container .view-all-card {
-        flex: 0 0 calc(50% - 10px); /* Same width as product cards */
-        max-width: 200px;           /* Same max-width */
-        height: auto;               /* Allow height to adjust */
+        flex: 0 0 calc(50% - 10px);
+        max-width: 200px;
+        height: auto;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
-        background-color: #f3f4f6; /* Light grey background */
-        border: 1px dashed #d1d5db; /* Dashed border */
-        border-radius: 8px;         /* Same border-radius */
+        background-color: #f3f4f6;
+        border: 1px dashed #d1d5db;
+        border-radius: 8px;
         text-decoration: none;
-        color: #1f2937;             /* Dark text color */
+        color: #1f2937;
         transition: background-color 0.2s, transform 0.2s;
         padding: 1rem;
     }

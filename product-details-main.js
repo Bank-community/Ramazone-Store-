@@ -428,10 +428,10 @@ function handleQuickAdd(event) {
                 });
             }
             addToCart(productId, 1, defaultVariants, null);
-            quickAddButton.textContent = 'Added'; // Text badla
+            quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
             quickAddButton.classList.add('added');
             setTimeout(() => {
-                quickAddButton.textContent = 'Add'; // Text wapas badla
+                quickAddButton.innerHTML = '+';
                 quickAddButton.classList.remove('added');
             }, 1500);
         }
@@ -444,8 +444,6 @@ function updateVariantButtonDisplay(type, value) { const btn = document.querySel
 function setupVariantModal() { const overlay = document.getElementById("variant-modal-overlay"); document.getElementById("variant-modal-close").addEventListener("click", closeVariantModal); overlay.addEventListener("click", e => { if (e.target === overlay) closeVariantModal(); }); document.getElementById('options-container').addEventListener('click', e => { const btn = e.target.closest('.variant-btn'); if (btn) { openVariantModal(btn.dataset.variantType); } }); }
 function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; let discount = 0; let packOriginalPrice = originalPrice; if (selectedPack) { const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; packOriginalPrice = originalPrice * quantity; } if (packOriginalPrice > displayPrice) { discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); } if (discount > 0) { percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${packOriginalPrice.toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
 
-// === YEH FUNCTION POORI TARAH SE UPDATE KIYA GAYA HAI ===
-// Ab yeh naye 'COMPACT VERTICAL' HTML template ko load karke cards banata hai.
 async function loadHandpickedSimilarProducts(similarIds) {
     const section = document.getElementById("handpicked-similar-section");
     const container = document.getElementById("handpicked-similar-container");
@@ -455,22 +453,19 @@ async function loadHandpickedSimilarProducts(similarIds) {
         return;
     }
 
-    if(!container || !section) return; // Suraksha check
+    if(!container || !section) return;
 
-    container.innerHTML = ""; // Purana content saaf karein
+    container.innerHTML = "";
     let hasContent = false;
 
     try {
-        // Step 1: Naye card ka template ek baar fetch karein
         const response = await fetch('product-details-sections/you-might-like-card.html');
         if (!response.ok) throw new Error('YML card template not found');
         const templateHTML = await response.text();
 
-        // Step 2: Har product ke liye template ko data se bharein
         similarIds.forEach(id => {
             const product = allProductsCache.find(p => p && p.id === id);
             if (product) {
-                // Price ka HTML taiyaar karein
                 const displayPrice = Number(product.displayPrice);
                 const originalPriceNum = Number(product.originalPrice);
 
@@ -479,10 +474,8 @@ async function loadHandpickedSimilarProducts(similarIds) {
                     priceHTML += `<span class="original-price">₹${originalPriceNum.toLocaleString("en-IN")}</span>`;
                 }
 
-                // Rating tag ka HTML taiyaar karein
                 const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
 
-                // === BUG FIX: Ab yeh 'g' flag ke saath replace karega ===
                 const populatedHTML = templateHTML
                     .replace(/\{\{productId\}\}/g, product.id)
                     .replace(/\{\{productName\}\}/g, product.name)
@@ -525,7 +518,55 @@ function getPositionX(event) { return event.type.includes("mouse")?event.pageX:e
 function animation() { setSliderPosition(),isDragging&&requestAnimationFrame(animation)}
 function setSliderPosition() { slider.style.transform=`translateX(${currentTranslate}px)`}
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
-function setupShareButton() { document.getElementById("share-button").addEventListener("click",async()=>{const e=currentProductData.name.replace(/\*/g,"").trim(),t=`*${e}*\nPrice: *₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}*\n\n✨ Discover more at Ramazone! ✨\n${window.location.href}`;navigator.share?await navigator.share({text:t}):navigator.clipboard.writeText(window.location.href).then(()=>showToast("Link Copied!"))})}
+
+// === YAHAN BADLAV KIYA GAYA HAI: Double URL ki problem ko theek kiya gaya hai ===
+function setupShareButton() {
+    document.getElementById("share-button").addEventListener("click", async () => {
+        if (!currentProductData) return;
+
+        const productName = currentProductData.name.replace(/\*/g, "").trim();
+        const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
+        const productUrl = window.location.href;
+
+        // Base message (bina URL ke)
+        const baseMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨`;
+
+        // Poora message (URL ke saath) - sirf copy karne ke liye
+        const clipboardMessage = `${baseMessage}\n${productUrl}`;
+
+        // Web Share API ke liye data object
+        const shareData = {
+            title: productName,
+            text: baseMessage, // Yahan ab URL nahi hai
+            url: productUrl,   // URL ko alag se yahan rakha gaya hai
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else if (navigator.clipboard) {
+                // Agar share API nahi hai to poora message (URL ke saath) copy hoga
+                await navigator.clipboard.writeText(clipboardMessage);
+                showToast("Link and details copied!");
+            } else {
+                // Last fallback: Sirf URL copy karein
+                const textArea = document.createElement('textarea');
+                textArea.value = productUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast("Link Copied!");
+            }
+        } catch (err) {
+            console.error("Error sharing:", err);
+            if (err.name !== 'AbortError') {
+                 showToast("Sharing failed.", "error");
+            }
+        }
+    });
+}
+
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
 function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; viewedIds = viewedIds.filter(e => e !== newId); viewedIds.unshift(newId); viewedIds = viewedIds.slice(0, 10); localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds)); loadRecentlyViewed(viewedIds); }
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}

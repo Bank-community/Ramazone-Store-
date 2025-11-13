@@ -91,7 +91,7 @@
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
-    border-radius: 0;
+    border-radius: 0.5rem; /* Changed from 0 to match other elements */
 }
 .combo-pack-card:hover {
     border-color: #a5b4fc;
@@ -139,16 +139,37 @@
 #price-percentage-discount { font-size: 1.125rem; }
 
 .lowest-price-tag { background-color: #16a34a; color: white; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 0.2rem; display: inline-block; margin-bottom: 0.5rem; }
-.quantity-selector button { width: 44px; height: 44px; font-size: 1.5rem; font-weight: 500; color: var(--primary-color); background-color: #eef2ff; transition: background-color 0.2s; }
+
+/* === YAHAN FIX KIYA GAYA HAI === */
+.quantity-selector {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+.quantity-selector button { 
+    width: 44px; 
+    height: 44px; 
+    font-size: 1.5rem; 
+    font-weight: 500; 
+    color: var(--primary-color); 
+    background-color: #eef2ff; 
+    transition: background-color 0.2s; 
+}
 .quantity-selector button:hover { background-color: #e0e7ff; }
 .quantity-selector button:disabled { color: #9ca3af; background-color: #f3f4f6; cursor: not-allowed; }
-.quantity-selector span { font-size: 1.125rem; font-weight: 600; }
-#go-to-cart-btn { background-color: #166534 !important; }
+.quantity-selector span { 
+    font-size: 1.125rem; 
+    font-weight: 600; 
+    /* The span now inherits flex alignment from the parent */
+}
+/* Redundant !important rule removed. Color is handled by inline style in HTML */
+/* #go-to-cart-btn { background-color: #166534 !important; } */
+/* === END OF FIX === */
+
 .spec-score { background-color: #fefce8; color: #ca8a04; border: 1px solid #facc15; padding: 6px 12px; border-radius: 8px; }
 .spec-tag { background-color: #f0fdf4; color: #16a34a; border: 1px solid #4ade80; padding: 6px 12px; border-radius: 8px; }
 
-/* --- === YAHAN BADA BADLAV KIYA GAYA HAI: Puraane styles ko comment out kiya gaya hai === --- */
-/* Ab card ki styling uski apni HTML file se aayegi */
+
 #handpicked-similar-container { 
     display: flex; 
     gap: 12px; 
@@ -158,13 +179,6 @@
 }
 #handpicked-similar-container::-webkit-scrollbar { display: none; }
 #handpicked-similar-container { -ms-overflow-style: none; scrollbar-width: none; }
-/*
-#handpicked-similar-container > div { flex: 0 0 45%; max-width: 180px; scroll-snap-align: start; }
-#handpicked-similar-container .p-3 { padding: 0.6rem; }
-#handpicked-similar-container h4 { margin-bottom: 0.1rem; }
-#handpicked-similar-container .text-lg { font-size: 1rem; line-height: 1.4rem; }
-#handpicked-similar-container .text-sm { font-size: 0.8rem; } 
-*/
 
 
 .other-products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -199,7 +213,6 @@
 .header-cart-link { position: relative; color: #4B5563; }
 #cart-item-count { position: absolute; top: -1px; right: 1px; background-color: red; color: white; border-radius: 50%; padding: 3px; font-size: 10px; font-weight: bold; min-width: 19px; text-align: center; line-height: 14px; border: 1.5px solid white; }
 
-/* Ab yeh global quick-add-btn hamare naye card par asar nahi karega */
 .quick-add-btn { background-color: white; color: var(--primary-color); border: 1.3px solid #000000; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.2s ease-in-out; }
 .quick-add-btn:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .quick-add-btn.added { background-color: #22c55e; color: white; border-color: #22c55e; }
@@ -217,5 +230,4 @@
 .recently-viewed-item img { border-radius: 0; }
 .header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; text-decoration: none; cursor: pointer; }
 .header-hidden { opacity: 0; pointer-events: none; max-height: 0px; padding-top: 0px !important; padding-bottom: 0px !important; overflow: hidden; }
-
 
