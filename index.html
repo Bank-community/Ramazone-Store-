@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ramazone</title>
-<link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
 
-    
     <meta name="theme-color" content="#4F46E5"/>
     <link rel="apple-touch-icon" href="https://i.ibb.co/WvTg0bc5/20240813-084352.png">
 
@@ -20,6 +19,7 @@
     <div id="search-overlay"></div>
     <div id="home-category-suggestions" class="hidden"></div>
 
+    <!-- HEADER -->
     <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-2 flex items-center justify-between">
@@ -48,30 +48,37 @@
         </div>
     </header>
 
+    <!-- SIDE MENU -->
     <div id="menu-overlay"></div>
     <nav id="side-menu">
         <div class="p-4 border-b border-gray-200"><h2 class="text-xl font-bold">Menu</h2></div>
         <div class="menu-items"><a href="./index.html" class="menu-item active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a><a href="./order.html" class="menu-item" id="menu-cart-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart"><span>Cart</span></a><a href="#" class="menu-item" id="menu-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span></a><a href="#" class="menu-item" id="menu-cashback-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback"><span>Cashback</span></a><div id="menu-follow-item" class="menu-item"><img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span><i class="fas fa-chevron-down text-xs ml-auto"></i></div><div id="follow-submenu" class="submenu"></div></div>
     </nav>
     
+    <!-- SEARCH BAR CONTAINER (Updated content will load here) -->
     <div id="search-bar-container"></div>
 
+    <!-- MAIN SLIDER -->
     <div class="slider-wrapper">
         <div class="slider-container"><div class="slider" id="main-slider"></div></div>
         <div class="slider-dots" id="slider-dots-container"></div>
     </div>
     
+    <!-- DYNAMIC SECTIONS AREA -->
     <main id="main-content-area" class="mb-16 md:mb-0">
-        </main>
+    </main>
 
+    <!-- LOADERS & NOTIFICATIONS -->
     <div id="deals-loader" class="deals-loader-container hidden"><div class="spinner"></div></div>
     <div class="social-media-links" id="social-links-container" style="display: none;"></div>
     <div id="toast-notification"></div>
 
+    <!-- FOOTER -->
     <footer id="desktop-footer">
         <div class="container mx-auto"><div class="footer-grid"><div class="footer-column"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4"><p>Aapki Apni Dukaan.</p></div><div class="footer-column"><h3>Quick Links</h3><a href="#">About Us</a><a href="#">Contact Us</a></div><div class="footer-column"><h3>Help</h3><a href="#">Payments</a><a href="#">Shipping</a><a href="#">FAQ</a></div><div class="footer-column"><h3>Follow Us</h3><div id="desktop-social-links" class="flex gap-4"></div></div></div><div class="footer-bottom">&copy; <span id="copyright-year">2025</span> Ramazone. All Rights Reserved.</div></div>
     </footer>
 
+    <!-- ADD TO CART POPUP -->
     <div id="home-go-to-cart-notification" class="fixed bottom-4 right-4 left-4 md:left-auto md:max-w-md bg-white rounded-lg shadow-2xl p-4 transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out z-50 pointer-events-none flex items-center justify-between">
         <div>
             <p class="font-bold text-gray-800">Successfully added to cart!</p>
@@ -80,8 +87,28 @@
         <a href="order.html" class="text-white font-bold py-2 px-5 rounded-lg text-sm" style="background-color: var(--primary-color);">View Cart</a>
     </div>
 
+    <!-- --- NEW: LOCATION SELECTOR MODAL (FIXED) --- -->
+    <!-- Removed 'hidden' class to allow CSS transitions to work -->
+    <div id="location-overlay"></div>
+    <div id="location-selector-panel">
+        <div class="location-panel-header">
+            <h3>Select Location</h3>
+            <button id="close-location-btn">&times;</button>
+        </div>
+        <div class="location-search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="location-search-input" placeholder="Search area...">
+        </div>
+        <div id="location-list-container">
+            <!-- Locations will be injected here via JS -->
+            <div class="location-loading">Loading locations...</div>
+        </div>
+    </div>
+    <!-- -------------------------------------------- -->
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
+
