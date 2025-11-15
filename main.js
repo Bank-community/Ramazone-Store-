@@ -1,7 +1,7 @@
 // --- GLOBAL STATE ---
 let allProductsCache = [];
-let allCategoriesCache = [];
 let allLocationsCache = []; // Cache for locations
+let filteredProductsCache = []; // <-- NEW: Products filtered by location
 let database;
 let deferredInstallPrompt = null;
 let festiveCountdownInterval = null; 
@@ -57,7 +57,8 @@ function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(ca
 
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
-    const product = allProductsCache.find(p => p && p.id === productId);
+    // <-- MODIFIED: Search in allProductsCache, not filtered cache -->
+    const product = allProductsCache.find(p => p && p.id === productId); 
     if (!product) { showToast('Could not add item to cart.', 'error'); return; }
     let selectedVariants = {};
     if (product.variants && Array.isArray(product.variants)) {
@@ -152,11 +153,18 @@ function loadAllData() {
         const locationsData = data.locations || [];
         allLocationsCache = Array.isArray(locationsData) ? locationsData : Object.values(locationsData);
 
-        await loadPageStructure();
-        renderAllSections(data);
-
-        // Setup Location System specifically after data load
+        // --- LOCATION LOGIC ---
+        // 1. Setup location system (gets saved loc, renders list)
         setupLocationSystem();
+
+        // 2. Filter products based on location FIRST
+        filterProductsByLocation(); 
+
+        // 3. Load page structure
+        await loadPageStructure();
+
+        // 4. Render all sections using filtered data
+        renderAllSections(data);
 
     }, (error) => {
         console.error("Firebase Read Error:", error);
@@ -184,13 +192,13 @@ function renderAllSections(data) {
     renderSlider(homepageData.slider);
     renderSearch(homepageData.search);
     renderNormalCategories(homepageData.normalCategories);
-    renderRecentlyViewed();
+    renderRecentlyViewed(); // Uses filtered cache
     renderVideosSection(homepageData.videos);
-    renderFestiveCollection(homepageData.festiveCollection); 
+    renderFestiveCollection(homepageData.festiveCollection); // Uses filtered cache
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
-    renderJustForYouSection(homepageData.justForYou);
-    renderHighlightedProducts();
+    renderJustForYouSection(homepageData.justForYou); // Uses filtered cache
+    renderHighlightedProducts(); // Uses filtered cache
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
@@ -204,10 +212,52 @@ function renderAllSections(data) {
     setupHomepageSearch();
 }
 
-// --- LOCATION SYSTEM LOGIC (FIXED WITH DELEGATION) ---
+// --- NEW: LOCATION FILTERING FUNCTION ---
+function filterProductsByLocation() {
+    const currentLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai"; // Default
+
+    filteredProductsCache = allProductsCache.filter(product => {
+        // If product has no location array, assume it's available everywhere
+        if (!product.availableLocations || !Array.isArray(product.availableLocations) || product.availableLocations.length === 0) {
+            return true;
+        }
+        // Check if the current location is in the product's availability list
+        return product.availableLocations.includes(currentLoc);
+    });
+
+    console.log(`Filtered products for "${currentLoc}": ${filteredProductsCache.length} items.`);
+}
+
+// --- RERENDER ALL PRODUCT SECTIONS ---
+// NEW: This function will be called when location changes
+function rerenderProductSections() {
+    // Get the full data snapshot stored from the initial load
+    const fullData = window.ramazoneData || { homepage: {} };
+
+    console.log('Location changed. Re-rendering product sections...');
+
+    // Re-render all sections that depend on filteredProductsCache
+    renderRecentlyViewed();
+    renderFestiveCollection(fullData.homepage.festiveCollection);
+    renderJustForYouSection(fullData.homepage.justForYou);
+    renderHighlightedProducts();
+
+    // We also need to update the homepage search suggestions
+    setupHomepageSearch();
+}
+
+
+// --- LOCATION SYSTEM LOGIC (MODIFIED) ---
 function setupLocationSystem() {
     // 1. Set Initial Location Text
     const savedLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai";
+    // Set default if it's the first visit
+    if (!localStorage.getItem('userLocation')) {
+        localStorage.setItem('userLocation', savedLoc);
+    }
+
+    // This element is in search-bar.html, might not exist yet
+    // We will set it inside setupHomepageSearch
     const headerLocText = document.getElementById('header-location-text');
     if (headerLocText) headerLocText.textContent = savedLoc;
 
@@ -276,10 +326,17 @@ function closeLocationPopup() {
     }
 }
 
-// --- HOMEPAGE LIVE SEARCH LOGIC ---
+// --- HOMEPAGE LIVE SEARCH LOGIC (MODIFIED) ---
 function setupHomepageSearch() {
     const searchInput = document.getElementById('home-search-input');
     if (!searchInput) return;
+
+    // --- LOCATION TEXT ---
+    // Set location text here, as search-bar.html is now loaded
+    const savedLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai";
+    const headerLocText = document.getElementById('header-location-text');
+    if (headerLocText) headerLocText.textContent = savedLoc;
+    // --- END LOCATION TEXT ---
 
     const suggestionsContainer = document.getElementById('home-search-suggestions');
     const categorySuggestionsContainer = document.getElementById('home-category-suggestions');
@@ -300,7 +357,8 @@ function setupHomepageSearch() {
             suggestionsContainer.classList.add('hidden');
             return;
         }
-        const suggestions = allProductsCache.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+        // <-- MODIFIED: Search in filteredProductsCache -->
+        const suggestions = filteredProductsCache.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `
                 <a href="./product-details.html?id=${prod.id}" class="suggestion-item">
@@ -349,7 +407,7 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
-// --- RECENTLY VIEWED SECTION LOGIC ---
+// --- RECENTLY VIEWED SECTION LOGIC (MODIFIED) ---
 function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed-section');
     const container = document.getElementById('recently-viewed-container');
@@ -360,7 +418,8 @@ function renderRecentlyViewed() {
         let cardsHTML = '';
         let productsFound = 0;
         viewedIds.forEach(id => {
-            const product = allProductsCache.find(p => p && p.id === id);
+            // <-- MODIFIED: Find in filteredProductsCache -->
+            const product = filteredProductsCache.find(p => p && p.id === id);
             if (product) {
                 const imageUrl = (product.images && product.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
                 cardsHTML += `<a href="./product-details.html?id=${product.id}" class="rv-card"><img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy"><p>${product.name || 'Product Name'}</p></a>`;
@@ -454,6 +513,27 @@ function createFestiveCardHTML(prod, options = {}) {
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
     if (!container || !collectionData || !collectionData.productIds?.length) { if (container) container.style.display = 'none'; return; }
+
+    const metadata = collectionData.productMetadata || {};
+    const limit = collectionData.productsToShow || collectionData.productIds.length;
+
+    let productsHTML = '';
+    let productsFound = 0;
+
+    collectionData.productIds.slice(0, limit).forEach(id => {
+        // <-- MODIFIED: Find in filteredProductsCache -->
+        const product = filteredProductsCache.find(p => p && p.id === id); 
+        if (product) {
+            productsHTML += createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
+            productsFound++;
+        }
+    });
+
+    if(productsFound === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
     container.style.display = 'block';
     container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
     const headline = document.getElementById('festive-headline');
@@ -462,10 +542,8 @@ function renderFestiveCollection(collectionData) {
     if (arrowEl) { arrowEl.href = 'festive-products.html'; }
     if (headline) { const headlineColor = collectionData.headlineColor || 'var(--text-dark)'; headline.innerText = collectionData.title || 'Special Offers'; headline.style.color = headlineColor; if (timerEl) timerEl.style.color = headlineColor; if (arrowEl) arrowEl.style.color = headlineColor; }
     if (collectionData.endTime) { startCountdownTimer(collectionData.endTime, 'festive-countdown-timer'); }
+
     const slider = document.getElementById('festive-product-slider');
-    const metadata = collectionData.productMetadata || {};
-    const limit = collectionData.productsToShow || collectionData.productIds.length;
-    let productsHTML = collectionData.productIds.slice(0, limit).map(id => { const product = allProductsCache.find(p => p && p.id === id); if (!product) return ''; return createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage }); }).join('');
     productsHTML += `<a href="festive-products.html" class="view-all-card"><div class="view-all-circle"><i class="fas fa-arrow-right"></i></div><span>View All</span></a>`;
     slider.innerHTML = productsHTML;
 }
@@ -523,8 +601,11 @@ function createProductCardHTML(prod, cardClass = '') {
 
 
 function getDealsOfTheDayProducts() {
-    if (!allProductsCache || allProductsCache.length === 0) return [];
-    return [...allProductsCache].sort((a, b) => {
+    // <-- MODIFIED: Use filteredProductsCache -->
+    if (!filteredProductsCache || filteredProductsCache.length === 0) return [];
+
+    // Sort the filtered products
+    return [...filteredProductsCache].sort((a, b) => {
         const discountA = (a.originalPrice || 0) - (a.displayPrice || 0);
         const discountB = (b.originalPrice || 0) - (b.displayPrice || 0);
         return (discountB - discountA) || ((b.rating || 0) - (a.rating || 0));
@@ -533,8 +614,10 @@ function getDealsOfTheDayProducts() {
 
 function setupGlobalEventListeners() {
     // **EVENT DELEGATION FOR CLICK EVENTS**
-    // This fixes the issue where dynamically loaded elements (like Location Trigger)
-    // are not clickable because they didn't exist when the listener was attached.
+
+    // Check if listener is already attached to prevent duplicates
+    if (document.body.dataset.listenersAttached) return;
+    document.body.dataset.listenersAttached = 'true';
 
     document.body.addEventListener('click', function (event) {
         // 1. Handle Add to Cart Buttons
@@ -584,10 +667,18 @@ function setupGlobalEventListeners() {
             return;
         }
 
-        // 5. Handle Selecting a Location from List
+        // 5. Handle Selecting a Location from List (--- MODIFIED ---)
         const locItem = event.target.closest('.location-item');
         if (locItem) {
             const selectedLoc = locItem.dataset.name;
+            const currentLoc = localStorage.getItem('userLocation');
+
+            // Only proceed if location actually changed
+            if (selectedLoc === currentLoc) {
+                closeLocationPopup(); // Just close if same loc clicked
+                return;
+            }
+
             localStorage.setItem('userLocation', selectedLoc);
 
             // Update header text
@@ -596,6 +687,11 @@ function setupGlobalEventListeners() {
 
             // Re-render list to show checkmark
             renderLocationList(allLocationsCache);
+
+            // --- NEW: RE-FILTER AND RE-RENDER PRODUCTS ---
+            filterProductsByLocation();
+            rerenderProductSections(); 
+            // ---------------------------------------------
 
             // Close popup
             setTimeout(closeLocationPopup, 200);
@@ -611,18 +707,30 @@ function setupScrollAnimations() {
     document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 }
 
-// --- DEALS OF THE DAY - INFINITE SCROLL LOGIC ---
+// --- DEALS OF THE DAY - INFINITE SCROLL LOGIC (MODIFIED) ---
 function renderHighlightedProducts() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const section = document.getElementById('highlighted-products-section');
     if (!wrapper || !section) { if (section) section.style.display = 'none'; return; }
-    dealsOfTheDayProducts = getDealsOfTheDayProducts();
-    if (dealsOfTheDayProducts.length === 0) { section.style.display = 'none'; return; }
+
+    dealsOfTheDayProducts = getDealsOfTheDayProducts(); // This now gets FILTERED products
+
+    if (dealsOfTheDayProducts.length === 0) {
+        section.style.display = 'block'; // Show section
+        // <-- NEW: Show message if no products -->
+        wrapper.innerHTML = `<p class="text-center text-gray-500 col-span-full py-10">No deals available for this location right now. Please check back later!</p>`; 
+        document.getElementById('deals-loader').style.display = 'none';
+        if (dealsObserver) dealsObserver.disconnect();
+        return;
+    }
+
     section.style.display = 'block';
     wrapper.innerHTML = ''; 
     currentlyDisplayedDeals = 0;
     if (dealsObserver) dealsObserver.disconnect();
+
     loadMoreDeals(); 
+
     const loader = document.getElementById('deals-loader');
     if (loader) {
         dealsObserver = new IntersectionObserver((entries) => {
@@ -636,17 +744,39 @@ function loadMoreDeals() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const loader = document.getElementById('deals-loader');
     if (isLoadingDeals || !wrapper || !loader) return;
-    if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length && currentlyDisplayedDeals > 0) { loader.style.display = 'none'; if (dealsObserver) dealsObserver.disconnect(); return; }
-    const productsToLoad = dealsOfTheDayProducts.slice(currentlyDisplayedDeals, currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage));
-    if (productsToLoad.length === 0) { loader.style.display = 'none'; if (dealsObserver) dealsObserver.disconnect(); return; }
-    isLoadingDeals = true;
+
+    if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length && currentlyDisplayedDeals > 0) { 
+        loader.style.display = 'none'; 
+        if (dealsObserver) dealsObserver.disconnect(); 
+        return; 
+    }
+
+    // <-- MODIFIED: Show loader only if there are more products to load -->
     loader.style.display = 'flex'; 
+
+    const productsToLoad = dealsOfTheDayProducts.slice(currentlyDisplayedDeals, currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage));
+
+    if (productsToLoad.length === 0 && currentlyDisplayedDeals === 0) { 
+        // This case is handled by renderHighlightedProducts, but as a fallback:
+        loader.style.display = 'none'; 
+        if (dealsObserver) dealsObserver.disconnect();
+        wrapper.innerHTML = `<p class="text-center text-gray-500 col-span-full py-10">No deals found for this location.</p>`;
+        return; 
+    }
+
+    isLoadingDeals = true;
+
     setTimeout(() => {
         const productsHTML = productsToLoad.map(p => createProductCardHTML(p, 'grid-item')).join('');
         wrapper.insertAdjacentHTML('beforeend', productsHTML);
         currentlyDisplayedDeals += productsToLoad.length;
         isLoadingDeals = false;
-        if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) { loader.style.display = 'none'; if (dealsObserver) dealsObserver.disconnect(); }
+
+        // Hide loader if no more products
+        if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) { 
+            loader.style.display = 'none'; 
+            if (dealsObserver) dealsObserver.disconnect(); 
+        }
     }, 500);
 }
 
@@ -683,11 +813,20 @@ function renderVideosSection(videoData) {
 function renderJustForYouSection(jfyData) {
     const section = document.getElementById('just-for-you-section');
     if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
+
     const { poster, topDeals } = jfyData;
-    const mainProduct = allProductsCache.find(p => p.id === topDeals?.mainProductId);
-    const subProduct1 = allProductsCache.find(p => p.id === topDeals?.subProductIds?.[0]);
-    const subProduct2 = allProductsCache.find(p => p.id === topDeals?.subProductIds?.[1]);
-    if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { section.style.display = 'none'; return; }
+
+    // <-- MODIFIED: Find in filteredProductsCache -->
+    const mainProduct = filteredProductsCache.find(p => p.id === topDeals?.mainProductId);
+    const subProduct1 = filteredProductsCache.find(p => p.id === topDeals?.subProductIds?.[0]);
+    const subProduct2 = filteredProductsCache.find(p => p.id === topDeals?.subProductIds?.[1]);
+
+    // If any product is not available in this location, hide the whole section
+    if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { 
+        section.style.display = 'none'; 
+        return; 
+    }
+
     const isDesktop = window.innerWidth >= 768;
     let mainProductImage = mainProduct.images?.[0] || 'https://placehold.co/600x600/e2e8f0/64748b?text=Image';
     if (isDesktop && topDeals.mainProductImageUrl) { mainProductImage = topDeals.mainProductImageUrl; }
@@ -701,7 +840,7 @@ function renderJustForYouSection(jfyData) {
 function renderSearch(searchData) { const searchInput = document.getElementById('home-search-input'); if (!searchInput || !searchData?.scrollingTexts?.length) { if(searchInput) searchInput.placeholder = "Search for products..."; return; } const texts = searchData.scrollingTexts; let i = 0; if (window.searchInterval) clearInterval(window.searchInterval); const updatePlaceholder = () => { if (searchInput && document.activeElement !== searchInput) { searchInput.placeholder = `Search for ${texts[i]}...`; i = (i + 1) % texts.length; } }; updatePlaceholder(); window.searchInterval = setInterval(updatePlaceholder, 3000); }
 function renderInfoMarquee(text) { const section = document.getElementById('info-marquee-section'); if (!text) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; section.querySelector('#info-marquee-text').innerHTML = text; }
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data?.front || !data.back) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
-function renderFooter(data) { if (!data) return; document.getElementById('menu-play-link').href = data.playLink || '#'; document.getElementById('menu-cashback-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const submenuContainer = document.getElementById('follow-submenu'); const desktopContainer = document.getElementById('desktop-social-links'); submenuContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', name: 'YouTube' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', name: 'Instagram' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', name: 'Facebook' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', name: 'WhatsApp' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; submenuContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="submenu-item"><img src="${p.icon}" alt="${key}"><span>${p.name}</span></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
+function renderFooter(data) { if (!data) return; document.getElementById('menu-play-link').href = data.playLink || '#'; document.getElementById('menu-cashback-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const submenuContainer = document.getElementById('follow-submenu'); const desktopContainer = document.getElementById('desktop-social-links'); submenuContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https.www.svgrepo.com/show/416500/youtube-circle-logo.svg', name: 'YouTube' }, instagram: { icon: 'https.www.svgrepo.com/show/452229/instagram-1.svg', name: 'Instagram' }, facebook: { icon: 'https.www.svgrepo.com/show/448224/facebook.svg', name: 'Facebook' }, whatsapp: { icon: 'https.www.svgrepo.com/show/452133/whatsapp.svg', name: 'WhatsApp' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; submenuContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="submenu-item"><img src="${p.icon}" alt="${key}"><span>${p.name}</span></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
 function setupSideMenu() { const menuToggleBtn = document.getElementById('menu-toggle-btn'); const sideMenu = document.getElementById('side-menu'); const menuOverlay = document.getElementById('menu-overlay'); const followItem = document.getElementById('menu-follow-item'); const followSubmenu = document.getElementById('follow-submenu'); if (menuToggleBtn && sideMenu && menuOverlay) { menuToggleBtn.addEventListener('click', () => document.body.classList.toggle('menu-open')); menuOverlay.addEventListener('click', () => document.body.classList.remove('menu-open')); } if (followItem && followSubmenu) { followItem.addEventListener('click', (e) => { e.preventDefault(); followItem.classList.toggle('open'); followSubmenu.classList.toggle('open'); }); } }
 
 // --- SLIDER LOGIC ---
@@ -719,5 +858,4 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4000) }
-
 
