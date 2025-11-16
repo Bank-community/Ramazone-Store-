@@ -15,8 +15,10 @@ const dealsPerPage = 10;
 let isLoadingDeals = false; 
 let dealsObserver = null; 
 
-// --- NEW LOCATION STATE ---
-const DEFAULT_LOCATION = "Bihar/Begusarai/Suja"; // <-- NEW: Default location path
+// --- NEW LOCATION STATE (MODIFIED FOR "Choose Location") ---
+const DEFAULT_LOCATION_KEY = "ALL_AREAS"; // Special key for no location
+const CHOOSE_LOCATION_TEXT = "Choose Location";
+const CART_ICON_SVG = "https://www.svgrepo.com/show/533042/cart-plus.svg";
 let currentSelectedState = null;
 let currentSelectedDistrict = null;
 
@@ -63,7 +65,6 @@ function saveCart(cart) { localStorage.setItem('ramazoneCart', JSON.stringify(ca
 
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
-    // <-- MODIFIED: Search in allProductsCache, not filtered cache -->
     const product = allProductsCache.find(p => p && p.id === productId); 
     if (!product) { showToast('Could not add item to cart.', 'error'); return; }
     let selectedVariants = {};
@@ -108,12 +109,7 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
     try {
-        // Load search bar FIRST so elements exist
         await loadCoreComponents();
-
-        // const response = await fetch('/api/firebase-config');
-        // if (!response.ok) throw new Error(`API Key fetch error! Status: ${response.status}`);
-        // const config = await response.json();
 
         // Hardcoded config for simplicity as per original file
         const config = {
@@ -121,7 +117,6 @@ async function initializeApp() {
             authDomain: "re-store-8e5b3.firebaseapp.com",
             databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
         };
-
 
         if (config && config.apiKey) {
             firebase.initializeApp(config);
@@ -144,7 +139,6 @@ async function loadCoreComponents() {
             const response = await fetch('sections/search-bar.html');
             if (!response.ok) throw new Error('Search bar section not found');
             searchContainer.innerHTML = await response.text();
-            // Note: Event listeners are now handled via delegation in setupGlobalEventListeners
         }
     } catch (error) {
         console.error("Core component load error:", error);
@@ -164,25 +158,18 @@ function loadAllData() {
             allCategoriesCache = homepageData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
         }
 
-        // --- LOCATION DATA LOADING (MODIFIED) ---
-        // Load the entire location object, not just values
         allLocationsCache = data.locations || {};
         console.log("Locations data loaded:", allLocationsCache);
 
         // --- LOCATION LOGIC ---
-        // 1. Set up current state/district from localStorage
-        setupLocationSelectionsFromStorage();
-        // 2. Set up event listeners for the new location popup
-        setupLocationSystem(); 
+        setupLocationSelectionsFromStorage(); // 1. Set up current state/district
+        setupLocationSystem(); // 2. Set up event listeners for popup
 
-        // 3. Filter products based on location FIRST
-        filterProductsByLocation(); 
+        filterProductsByLocation(); // 3. Filter products based on location FIRST
 
-        // 4. Load page structure
-        await loadPageStructure();
+        await loadPageStructure(); // 4. Load page structure
 
-        // 5. Render all sections using filtered data
-        renderAllSections(data);
+        renderAllSections(data); // 5. Render all sections using filtered data
 
     }, (error) => {
         console.error("Firebase Read Error:", error);
@@ -210,29 +197,31 @@ function renderAllSections(data) {
     renderSlider(homepageData.slider);
     renderSearch(homepageData.search);
     renderNormalCategories(homepageData.normalCategories);
-    renderRecentlyViewed(); // Uses filtered cache
+    renderRecentlyViewed();
     renderVideosSection(homepageData.videos);
-    renderFestiveCollection(homepageData.festiveCollection); // Uses filtered cache
+    renderFestiveCollection(homepageData.festiveCollection);
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
-    renderJustForYouSection(homepageData.justForYou); // Uses filtered cache
-    renderHighlightedProducts(); // Uses filtered cache
+    renderJustForYouSection(homepageData.justForYou);
+    renderHighlightedProducts();
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
-    // These setups must be called AFTER sections are in DOM
     setupGlobalEventListeners();
     setupSideMenu();
     setupInstallButton();
     updateCartIcon();
     setupScrollAnimations();
     setupHeaderScrollEffect();
-    setupHomepageSearch(); // This now also sets the location text
+    setupHomepageSearch(); 
 }
 
-// --- NEW: LOCATION HELPER FUNCTIONS ---
+// --- NEW: LOCATION HELPER FUNCTIONS (MODIFIED) ---
 function formatLocation(pathString) {
-    if (!pathString || !pathString.includes('/')) return pathString;
+    if (!pathString || pathString === DEFAULT_LOCATION_KEY) {
+        return CHOOSE_LOCATION_TEXT; // "Choose Location"
+    }
+    if (!pathString.includes('/')) return pathString;
     const parts = pathString.split('/');
     if (parts.length === 3) return `${parts[2]}, ${parts[1]}`; // Suja, Begusarai
     if (parts.length === 2) return `${parts[1]}, ${parts[0]}`; // Begusarai, Bihar
@@ -241,70 +230,77 @@ function formatLocation(pathString) {
 
 function setupLocationSelectionsFromStorage() {
     // Get saved location path, or use default
-    const savedLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
-    if (!localStorage.getItem('userLocation')) {
-        localStorage.setItem('userLocation', savedLoc);
+    const savedLoc = localStorage.getItem('userLocation');
+    if (!savedLoc) {
+        // Agar kuch bhi save nahi hai, to default set karo
+        localStorage.setItem('userLocation', DEFAULT_LOCATION_KEY);
+        currentSelectedState = null;
+        currentSelectedDistrict = null;
+        return;
     }
 
-    const parts = savedLoc.split('/');
-    if (parts.length >= 2) {
-        currentSelectedState = parts[0];
-        currentSelectedDistrict = parts[1];
+    if (savedLoc === DEFAULT_LOCATION_KEY) {
+        currentSelectedState = null;
+        currentSelectedDistrict = null;
     } else {
-        // Fallback for bad data
-        const defaultParts = DEFAULT_LOCATION.split('/');
-        currentSelectedState = defaultParts[0];
-        currentSelectedDistrict = defaultParts[1];
+        const parts = savedLoc.split('/');
+        if (parts.length >= 2) {
+            currentSelectedState = parts[0];
+            currentSelectedDistrict = parts[1];
+        } else {
+            // Bad data, reset to default
+            localStorage.setItem('userLocation', DEFAULT_LOCATION_KEY);
+            currentSelectedState = null;
+            currentSelectedDistrict = null;
+        }
     }
 }
 
 // --- NEW: LOCATION FILTERING FUNCTION (MODIFIED) ---
 function filterProductsByLocation() {
-    // Use the path from storage, e.g., "Bihar/Begusarai/Suja"
-    const currentLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
+    const currentLoc = localStorage.getItem('userLocation');
 
-    filteredProductsCache = allProductsCache.filter(product => {
-        // If product has no location array, assume it's available everywhere
-        if (!product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0) {
-            return true;
-        }
-        // Check if the current location path is in the product's availability list
-        // This logic works because admin panel saves ["Bihar/Begusarai/Suja", ...]
-        return product.availableAreas.includes(currentLoc);
-    });
+    if (currentLoc === DEFAULT_LOCATION_KEY) {
+        // --- "Choose Location" LOGIC ---
+        // Sirf "All Area" wale products dikhao
+        filteredProductsCache = allProductsCache.filter(product => {
+            // Jo products "All Area" hain (yaani jinka availableAreas array ya to hai nahi, ya khaali hai)
+            return !product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0;
+        });
+        console.log(`Filtered for "All Areas": ${filteredProductsCache.length} items.`);
 
-    console.log(`Filtered products for "${currentLoc}": ${filteredProductsCache.length} items.`);
+    } else {
+        // --- SPECIFIC LOCATION LOGIC ---
+        // Sirf uss specific area wale products dikhao
+        filteredProductsCache = allProductsCache.filter(product => {
+            // Product ko "All Area" bhi available hona chahiye YA specific location list mein hona chahiye
+            const isAllArea = !product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0;
+            const isAtLocation = product.availableAreas && product.availableAreas.includes(currentLoc);
+            
+            return isAllArea || isAtLocation;
+        });
+        console.log(`Filtered for "${currentLoc}": ${filteredProductsCache.length} items.`);
+    }
 }
 
 // --- RERENDER ALL PRODUCT SECTIONS ---
-// This function is called when location changes
 function rerenderProductSections() {
-    // Get the full data snapshot stored from the initial load
     const fullData = window.ramazoneData || { homepage: {} };
-
     console.log('Location changed. Re-rendering product sections...');
-
-    // Re-render all sections that depend on filteredProductsCache
     renderRecentlyViewed();
     renderFestiveCollection(fullData.homepage.festiveCollection);
     renderJustForYouSection(fullData.homepage.justForYou);
     renderHighlightedProducts(); // This will re-trigger infinite scroll
-
-    // We also need to update the homepage search suggestions
     setupHomepageSearch();
 }
 
 
 // --- LOCATION SYSTEM LOGIC (MODIFIED for 3-Tier) ---
 function setupLocationSystem() {
-    // This function now only sets up the area search listener.
-    // Rendering is handled by renderStateTabs() etc.
-
     const areaSearchInput = document.getElementById('loc-area-search-input');
     if (areaSearchInput) {
         areaSearchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
-            // Re-render *only* the area list with the search query
             if (currentSelectedState && currentSelectedDistrict) {
                 renderAreaList(currentSelectedState, currentSelectedDistrict, query);
             }
@@ -316,22 +312,16 @@ function setupLocationSystem() {
 function renderStateTabs() {
     const container = document.getElementById('loc-state-tabs');
     if (!container) return;
-
-    // Filter states that are marked "isActive" in the admin panel
     const states = Object.keys(allLocationsCache).filter(stateName => allLocationsCache[stateName].isActive);
-
     if (states.length === 0) {
         container.innerHTML = '<p class="loc-tab-placeholder">No active locations available.</p>';
         return;
     }
-
     container.innerHTML = states.map(stateName => `
         <button class="loc-tab-btn ${stateName === currentSelectedState ? 'active' : ''}" data-state="${stateName}">
             ${stateName}
         </button>
     `).join('');
-
-    // If a state is selected, ripple-render its districts
     if (currentSelectedState) {
         renderDistrictTabs(currentSelectedState);
     } else {
@@ -344,31 +334,24 @@ function renderDistrictTabs(stateName) {
     const container = document.getElementById('loc-district-tabs');
     const tier = document.getElementById('loc-district-tier');
     if (!container || !tier) return;
-
     const stateData = allLocationsCache[stateName];
     if (!stateData || !stateData.districts) {
         tier.classList.add('hidden');
         return;
     }
-
-    // Filter districts that are marked "isActive"
     const districts = Object.keys(stateData.districts).filter(distName => stateData.districts[distName].isActive);
-
     if (districts.length === 0) {
         container.innerHTML = '<p class="loc-tab-placeholder">No active districts in this state.</p>';
         tier.classList.remove('hidden');
         document.getElementById('loc-area-tier').classList.add('hidden');
         return;
     }
-
     container.innerHTML = districts.map(distName => `
         <button class="loc-tab-btn ${distName === currentSelectedDistrict ? 'active' : ''}" data-state="${stateName}" data-district="${distName}">
             ${distName}
         </button>
     `).join('');
     tier.classList.remove('hidden');
-
-    // If a district is selected, ripple-render its areas
     if (currentSelectedDistrict) {
         renderAreaList(stateName, currentSelectedDistrict);
     } else {
@@ -380,27 +363,21 @@ function renderAreaList(stateName, districtName, searchQuery = '') {
     const container = document.getElementById('loc-area-list-container');
     const tier = document.getElementById('loc-area-tier');
     if (!container || !tier) return;
-
     const districtData = allLocationsCache[stateName]?.districts[districtName];
-    // Check for areas. Note: Admin saves areas as an array.
     if (!districtData || !Array.isArray(districtData.areas)) {
         tier.classList.add('hidden');
         return;
     }
-
-    const currentLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
+    const currentLoc = localStorage.getItem('userLocation');
     let areas = districtData.areas;
-
     if (searchQuery) {
         areas = areas.filter(areaName => areaName.toLowerCase().includes(searchQuery));
     }
-
     if (areas.length === 0) {
         container.innerHTML = `<p class="p-4 text-center text-gray-500">${searchQuery ? 'No areas found matching search.' : 'No areas added to this district.'}</p>`;
-        tier.classList.remove('hidden'); // Show tier to display message
+        tier.classList.remove('hidden');
         return;
     }
-
     container.innerHTML = areas.map(areaName => {
         const fullPath = `${stateName}/${districtName}/${areaName}`;
         const isActive = fullPath === currentLoc;
@@ -412,18 +389,16 @@ function renderAreaList(stateName, districtName, searchQuery = '') {
             </div>
         `;
     }).join('');
-    tier.classList.remove('hidden'); // Show the area tier
+    tier.classList.remove('hidden');
 }
-// --- END NEW RENDER FUNCTIONS ---
-
 
 function openLocationPopup() {
     const overlay = document.getElementById('location-overlay');
     const panel = document.getElementById('location-selector-panel');
     const body = document.body;
-
     if (overlay && panel) {
-        renderStateTabs(); // <-- NEW: Render states when popup opens
+        setupLocationSelectionsFromStorage(); // Current selection ko load karo
+        renderStateTabs(); // States render karo
         overlay.classList.add('visible');
         panel.classList.add('open');
         body.classList.add('location-open');
@@ -434,27 +409,21 @@ function closeLocationPopup() {
     const overlay = document.getElementById('location-overlay');
     const panel = document.getElementById('location-selector-panel');
     const body = document.body;
-
     if (overlay && panel) {
         overlay.classList.remove('visible');
         panel.classList.remove('open');
         body.classList.remove('location-open');
-        // Reset selections to saved state for next time
-        setupLocationSelectionsFromStorage(); 
     }
 }
 
-// --- HOMEPAGE LIVE SEARCH LOGIC (MODIFIED) ---
+// --- HOMEPAGE LIVE SEARCH LOGIC (MODIFIED FOR KEYWORDS) ---
 function setupHomepageSearch() {
     const searchInput = document.getElementById('home-search-input');
     if (!searchInput) return;
 
-    // --- LOCATION TEXT (MODIFIED) ---
-    // Set location text here, as search-bar.html is now loaded
-    const savedLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
+    const savedLoc = localStorage.getItem('userLocation');
     const headerLocText = document.getElementById('header-location-text');
-    if (headerLocText) headerLocText.textContent = formatLocation(savedLoc); // Use formatter
-    // --- END LOCATION TEXT ---
+    if (headerLocText) headerLocText.textContent = formatLocation(savedLoc); 
 
     const suggestionsContainer = document.getElementById('home-search-suggestions');
     const categorySuggestionsContainer = document.getElementById('home-category-suggestions');
@@ -475,8 +444,22 @@ function setupHomepageSearch() {
             suggestionsContainer.classList.add('hidden');
             return;
         }
-        // <-- MODIFIED: Search in filteredProductsCache -->
-        const suggestions = filteredProductsCache.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+
+        // --- === YAHAN BADLAAV KIYA GAYA HAI (SEARCH LOGIC) === ---
+        const suggestions = filteredProductsCache.filter(p => {
+            const nameMatch = p.name.toLowerCase().includes(query);
+            
+            // Keyword search logic
+            let keywordMatch = false;
+            if (p.product_of_keyword && Array.isArray(p.product_of_keyword)) {
+                // Check if any keyword in the array *starts with* the query
+                keywordMatch = p.product_of_keyword.some(k => k.toLowerCase().startsWith(query));
+            }
+            
+            return nameMatch || keywordMatch;
+        }).slice(0, 5);
+        // --- === BADLAAV END === ---
+
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `
                 <a href="./product-details.html?id=${prod.id}" class="suggestion-item">
@@ -489,20 +472,11 @@ function setupHomepageSearch() {
         }
     });
 
-    const activateSearchMode = () => { 
-        document.body.classList.add('search-active'); 
-    };
-
-    const deactivateSearchMode = () => { 
-        document.body.classList.remove('search-active'); 
-        categorySuggestionsContainer.classList.add('hidden'); 
-        suggestionsContainer.classList.add('hidden'); 
-    };
-
+    const activateSearchMode = () => { document.body.classList.add('search-active'); };
+    const deactivateSearchMode = () => { document.body.classList.remove('search-active'); categorySuggestionsContainer.classList.add('hidden'); suggestionsContainer.classList.add('hidden'); };
     searchInput.addEventListener('focus', activateSearchMode);
     searchOverlay.addEventListener('click', () => searchInput.blur());
     searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
-
     if (headerSearchTrigger) {
         headerSearchTrigger.addEventListener('click', () => {
             searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -525,7 +499,7 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
-// --- RECENTLY VIEWED SECTION LOGIC (MODIFIED) ---
+// --- RECENTLY VIEWED SECTION LOGIC ---
 function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed-section');
     const container = document.getElementById('recently-viewed-container');
@@ -536,7 +510,6 @@ function renderRecentlyViewed() {
         let cardsHTML = '';
         let productsFound = 0;
         viewedIds.forEach(id => {
-            // <-- MODIFIED: Find in filteredProductsCache -->
             const product = filteredProductsCache.find(p => p && p.id === id);
             if (product) {
                 const imageUrl = (product.images && product.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
@@ -568,7 +541,7 @@ function startCountdownTimer(endTimeString, elementId) {
     festiveCountdownInterval = setInterval(update, 1000);
 }
 
-// --- UNIVERSAL HELPER FUNCTIONS ---
+// --- UNIVERSAL HELPER FUNCTIONS (MODIFIED FOR "BUY" BUTTON) ---
 
 function createFestiveCardHTML(prod, options = {}) {
     if (!prod) return '';
@@ -585,10 +558,6 @@ function createFestiveCardHTML(prod, options = {}) {
         originalPriceHTML = `<p class="original-price">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
         if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
     }
-
-    const productPageUrl = `${window.location.origin}/product-details.html?id=${prod.id}`;
-    const whatsappMessage = `Hello! I am interested in this product:\n\n*Name:* ${prod.name}\n*Price:* ₹${Number(prod.displayPrice).toLocaleString("en-IN")}\n*Link:* ${productPageUrl}\n\nPlease provide more details.`;
-    const whatsappLink = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`;
 
     let progressBarHTML = '';
     if (typeof soldPercentage === 'number' && soldPercentage >= 0) {
@@ -618,12 +587,15 @@ function createFestiveCardHTML(prod, options = {}) {
                 </a>
                 ${progressBarHTML}
             </div>
+            <!-- === YAHAN BADLAAV KIYA GAYA HAI === -->
             <div class="product-card-actions">
-                <a href="${whatsappLink}" target="_blank" class="whatsapp-btn">
-                    <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" alt="WhatsApp">
-                </a>
-                <button class="add-text-btn add-btn" data-id="${prod.id}">Add</button>
+                <button class="cart-btn add-btn" data-id="${prod.id}">
+                    <img class="cart-icon-svg" src="${CART_ICON_SVG}" alt="Add to Cart">
+                    <i class="fas fa-check cart-added-icon" style="display: none;"></i>
+                </button>
+                <button class="buy-text-btn" data-id="${prod.id}">Buy</button>
             </div>
+            <!-- === BADLAAV END === -->
         </div>
     </div>`;
 }
@@ -631,27 +603,21 @@ function createFestiveCardHTML(prod, options = {}) {
 function renderFestiveCollection(collectionData) {
     const container = document.getElementById('festive-collection-container');
     if (!container || !collectionData || !collectionData.productIds?.length) { if (container) container.style.display = 'none'; return; }
-
     const metadata = collectionData.productMetadata || {};
     const limit = collectionData.productsToShow || collectionData.productIds.length;
-
     let productsHTML = '';
     let productsFound = 0;
-
     collectionData.productIds.slice(0, limit).forEach(id => {
-        // <-- MODIFIED: Find in filteredProductsCache -->
         const product = filteredProductsCache.find(p => p && p.id === id); 
         if (product) {
             productsHTML += createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
             productsFound++;
         }
     });
-
     if(productsFound === 0) {
         container.style.display = 'none';
         return;
     }
-
     container.style.display = 'block';
     container.style.backgroundColor = collectionData.backgroundColor || 'var(--bg-light)';
     const headline = document.getElementById('festive-headline');
@@ -660,7 +626,6 @@ function renderFestiveCollection(collectionData) {
     if (arrowEl) { arrowEl.href = 'festive-products.html'; }
     if (headline) { const headlineColor = collectionData.headlineColor || 'var(--text-dark)'; headline.innerText = collectionData.title || 'Special Offers'; headline.style.color = headlineColor; if (timerEl) timerEl.style.color = headlineColor; if (arrowEl) arrowEl.style.color = headlineColor; }
     if (collectionData.endTime) { startCountdownTimer(collectionData.endTime, 'festive-countdown-timer'); }
-
     const slider = document.getElementById('festive-product-slider');
     productsHTML += `<a href="festive-products.html" class="view-all-card"><div class="view-all-circle"><i class="fas fa-arrow-right"></i></div><span>View All</span></a>`;
     slider.innerHTML = productsHTML;
@@ -680,10 +645,6 @@ function createProductCardHTML(prod, cardClass = '') {
         originalPriceHTML = `<p class="original-price">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
         if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
     }
-
-    const productPageUrl = `${window.location.origin}/product-details.html?id=${prod.id}`;
-    const whatsappMessage = `Hello! I am interested in this product:\n\n*Name:* ${prod.name}\n*Price:* ₹${Number(prod.displayPrice).toLocaleString("en-IN")}\n*Image:* ${imageUrl}\n*Link:* ${productPageUrl}\n\nPlease provide more details.`;
-    const whatsappLink = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`;
 
     return `
     <div class="product-card ${cardClass} h-full block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
@@ -707,22 +668,22 @@ function createProductCardHTML(prod, cardClass = '') {
                     </div>
                 </a>
             </div>
+            <!-- === YAHAN BADLAAV KIYA GAYA HAI === -->
             <div class="product-card-actions">
-                <a href="${whatsappLink}" target="_blank" class="whatsapp-btn">
-                    <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" alt="WhatsApp">
-                </a>
-                <button class="add-text-btn add-btn" data-id="${prod.id}">Add</button>
+                <button class="cart-btn add-btn" data-id="${prod.id}">
+                    <img class="cart-icon-svg" src="${CART_ICON_SVG}" alt="Add to Cart">
+                    <i class="fas fa-check cart-added-icon" style="display: none;"></i>
+                </button>
+                <button class="buy-text-btn" data-id="${prod.id}">Buy</button>
             </div>
+            <!-- === BADLAAV END === -->
         </div>
     </div>`;
 }
 
 
 function getDealsOfTheDayProducts() {
-    // <-- MODIFIED: Use filteredProductsCache -->
     if (!filteredProductsCache || filteredProductsCache.length === 0) return [];
-
-    // Sort the filtered products
     return [...filteredProductsCache].sort((a, b) => {
         const discountA = (a.originalPrice || 0) - (a.displayPrice || 0);
         const discountB = (b.originalPrice || 0) - (b.displayPrice || 0);
@@ -731,111 +692,112 @@ function getDealsOfTheDayProducts() {
 }
 
 function setupGlobalEventListeners() {
-    // **EVENT DELEGATION FOR CLICK EVENTS**
-
-    // Check if listener is already attached to prevent duplicates
     if (document.body.dataset.listenersAttached) return;
     document.body.dataset.listenersAttached = 'true';
 
     document.body.addEventListener('click', function (event) {
-        // 1. Handle Add to Cart Buttons
+        
+        // --- === YAHAN BADLAAV KIYA GAYA HAI ("Buy" Button Logic) === ---
+        const buyButton = event.target.closest('.buy-text-btn');
+        if (buyButton) {
+            event.preventDefault();
+            const productId = buyButton.dataset.id;
+            if (productId) {
+                // 1. Cart mein add karo
+                addToCart(productId); 
+                // 2. Turant cart page par bhejo
+                window.location.href = 'order.html';
+            }
+            return; // Processing roko
+        }
+        // --- === BADLAAV END === ---
+
+        // --- 1. Handle Add to Cart Buttons (MODIFIED) ---
         const addButton = event.target.closest('.add-btn');
         if (addButton) {
             event.preventDefault();
             const productId = addButton.dataset.id;
             if (productId) {
                 addToCart(productId);
-                if (addButton.classList.contains('add-text-btn')) {
+                
+                if (addButton.classList.contains('cart-btn')) {
+                    const cartIcon = addButton.querySelector('.cart-icon-svg');
+                    const checkIcon = addButton.querySelector('.cart-added-icon');
+                    
                     addButton.classList.add('added');
-                    addButton.textContent = 'Added ✓';
+                    if (cartIcon) cartIcon.style.display = 'none';
+                    if (checkIcon) checkIcon.style.display = 'inline-block'; 
+                    
                     setTimeout(() => {
                         addButton.classList.remove('added');
-                        addButton.textContent = 'Add';
+                        if (cartIcon) cartIcon.style.display = 'inline-block';
+                        if (checkIcon) checkIcon.style.display = 'none';
                     }, 1500);
-                } else { 
-                     addButton.classList.add('added');
-                     addButton.innerHTML = '<i class="fas fa-check"></i>';
-                     setTimeout(() => {
-                         addButton.classList.remove('added');
-                         addButton.innerHTML = '+';
-                     }, 1500);
                 }
             }
             return; // Stop processing
         }
 
-        // --- LOCATION POPUP EVENT HANDLERS (ALL MODIFIED) ---
-
-        // 2. Handle Location Trigger Click
+        // --- 2. LOCATION POPUP EVENT HANDLERS (MODIFIED) ---
         const locationTrigger = event.target.closest('#location-trigger');
         if (locationTrigger) {
             openLocationPopup();
             return;
         }
 
-        // 3. Handle Close Location Popup Button
         const closeLocBtn = event.target.closest('#close-location-btn');
         if (closeLocBtn) {
             closeLocationPopup();
             return;
         }
 
-        // 4. Handle Click Outside Location Panel to Close
         const locOverlay = document.getElementById('location-overlay');
         if (event.target === locOverlay) {
             closeLocationPopup();
             return;
         }
 
-        // 5. Handle State Tab Click
         const stateTab = event.target.closest('.loc-tab-btn[data-state]');
         if (stateTab && !stateTab.dataset.district) {
             currentSelectedState = stateTab.dataset.state;
             currentSelectedDistrict = null; // Reset district
-            document.getElementById('loc-area-search-input').value = ''; // Clear search
-            renderStateTabs(); // This will trigger renderDistrictTabs
+            document.getElementById('loc-area-search-input').value = '';
+            renderStateTabs(); 
             return;
         }
 
-        // 6. Handle District Tab Click
         const districtTab = event.target.closest('.loc-tab-btn[data-district]');
         if (districtTab) {
             currentSelectedDistrict = districtTab.dataset.district;
-            document.getElementById('loc-area-search-input').value = ''; // Clear search
-            renderDistrictTabs(currentSelectedState); // This will trigger renderAreaList
+            document.getElementById('loc-area-search-input').value = '';
+            renderDistrictTabs(currentSelectedState); 
             return;
         }
 
-        // 7. Handle Selecting a final Area from List
         const locItem = event.target.closest('.location-item');
         if (locItem) {
-            const selectedLocPath = locItem.dataset.path; // e.g., "Bihar/Begusarai/Suja"
+            const selectedLocPath = locItem.dataset.path; // "Bihar/Begusarai/Suja"
             const currentLoc = localStorage.getItem('userLocation');
 
             if (selectedLocPath === currentLoc) {
-                closeLocationPopup(); // Just close if same loc clicked
+                closeLocationPopup(); 
                 return;
             }
 
             localStorage.setItem('userLocation', selectedLocPath);
+            setupLocationSelectionsFromStorage(); // Update global state variables
 
-            // Update header text
             const headerText = document.getElementById('header-location-text');
             if (headerText) headerText.textContent = formatLocation(selectedLocPath);
 
-            // Re-render list to show checkmark
-            renderAreaList(currentSelectedState, currentSelectedDistrict);
+            renderAreaList(currentSelectedState, currentSelectedDistrict); 
 
-            // --- RE-FILTER AND RE-RENDER PRODUCTS ---
             filterProductsByLocation();
             rerenderProductSections(); 
-            // ---------------------------------------------
-
+            
             setTimeout(closeLocationPopup, 200);
             return;
         }
-
-        // --- END LOCATION HANDLERS ---
     });
 }
 
@@ -846,17 +808,16 @@ function setupScrollAnimations() {
     document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 }
 
-// --- DEALS OF THE DAY - INFINITE SCROLL LOGIC (MODIFIED) ---
+// --- DEALS OF THE DAY - INFINITE SCROLL LOGIC ---
 function renderHighlightedProducts() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const section = document.getElementById('highlighted-products-section');
     if (!wrapper || !section) { if (section) section.style.display = 'none'; return; }
 
-    dealsOfTheDayProducts = getDealsOfTheDayProducts(); // This now gets FILTERED products
+    dealsOfTheDayProducts = getDealsOfTheDayProducts(); 
 
     if (dealsOfTheDayProducts.length === 0) {
-        section.style.display = 'block'; // Show section
-        // <-- NEW: Show message if no products -->
+        section.style.display = 'block'; 
         wrapper.innerHTML = `<p class="text-center text-gray-500 col-span-full py-10">No deals available for this location right now. Please check back later!</p>`; 
         document.getElementById('deals-loader').style.display = 'none';
         if (dealsObserver) dealsObserver.disconnect();
@@ -867,9 +828,7 @@ function renderHighlightedProducts() {
     wrapper.innerHTML = ''; 
     currentlyDisplayedDeals = 0;
     if (dealsObserver) dealsObserver.disconnect();
-
     loadMoreDeals(); 
-
     const loader = document.getElementById('deals-loader');
     if (loader) {
         dealsObserver = new IntersectionObserver((entries) => {
@@ -883,35 +842,25 @@ function loadMoreDeals() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const loader = document.getElementById('deals-loader');
     if (isLoadingDeals || !wrapper || !loader) return;
-
     if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length && currentlyDisplayedDeals > 0) { 
         loader.style.display = 'none'; 
         if (dealsObserver) dealsObserver.disconnect(); 
         return; 
     }
-
-    // <-- MODIFIED: Show loader only if there are more products to load -->
     loader.style.display = 'flex'; 
-
     const productsToLoad = dealsOfTheDayProducts.slice(currentlyDisplayedDeals, currentlyDisplayedDeals + (currentlyDisplayedDeals === 0 ? 20 : dealsPerPage));
-
     if (productsToLoad.length === 0 && currentlyDisplayedDeals === 0) { 
-        // This case is handled by renderHighlightedProducts, but as a fallback:
         loader.style.display = 'none'; 
         if (dealsObserver) dealsObserver.disconnect();
         wrapper.innerHTML = `<p class="text-center text-gray-500 col-span-full py-10">No deals found for this location.</p>`;
         return; 
     }
-
     isLoadingDeals = true;
-
     setTimeout(() => {
         const productsHTML = productsToLoad.map(p => createProductCardHTML(p, 'grid-item')).join('');
         wrapper.insertAdjacentHTML('beforeend', productsHTML);
         currentlyDisplayedDeals += productsToLoad.length;
         isLoadingDeals = false;
-
-        // Hide loader if no more products
         if (currentlyDisplayedDeals >= dealsOfTheDayProducts.length) { 
             loader.style.display = 'none'; 
             if (dealsObserver) dealsObserver.disconnect(); 
@@ -952,20 +901,14 @@ function renderVideosSection(videoData) {
 function renderJustForYouSection(jfyData) {
     const section = document.getElementById('just-for-you-section');
     if (!section || !jfyData) { if (section) section.style.display = 'none'; return; }
-
     const { poster, topDeals } = jfyData;
-
-    // <-- MODIFIED: Find in filteredProductsCache -->
     const mainProduct = filteredProductsCache.find(p => p.id === topDeals?.mainProductId);
     const subProduct1 = filteredProductsCache.find(p => p.id === topDeals?.subProductIds?.[0]);
     const subProduct2 = filteredProductsCache.find(p => p.id === topDeals?.subProductIds?.[1]);
-
-    // If any product is not available in this location, hide the whole section
     if (!poster || !topDeals || !mainProduct || !subProduct1 || !subProduct2) { 
         section.style.display = 'none'; 
         return; 
     }
-
     const isDesktop = window.innerWidth >= 768;
     let mainProductImage = mainProduct.images?.[0] || 'https://placehold.co/600x600/e2e8f0/64748b?text=Image';
     if (isDesktop && topDeals.mainProductImageUrl) { mainProductImage = topDeals.mainProductImageUrl; }
@@ -997,4 +940,5 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4000) }
+
 
