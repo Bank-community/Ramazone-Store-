@@ -221,37 +221,56 @@ body.menu-open #side-menu { transform: translateX(0); box-shadow: 0 0 20px rgba(
 .standard-card-add-btn.added { background-color: var(--primary-color); color: white; transform: scale(1.1); border-color: var(--primary-color); }
 
 
-/* === YAHAN BADLAV KIYA GAYA HAI: Button aur icon ki height/size kam ki gayi === */
+/* === YAHAN BADLAAV KIYA GAYA HAI: "Cart" aur "Buy" button ke liye naya style === */
 .product-card-actions {
     display: flex;
     gap: 0.5rem;
     border: 1.5px solid var(--border-color);
     border-radius: 8px;
-    padding: 3px; /* Padding kam ki gayi */
+    padding: 3px; 
     margin-top: auto; 
 }
 
-.whatsapp-btn {
+/* Naya "Cart" button (SVG icon ke liye) */
+.cart-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;  /* Height ke barabar kiya gaya */
-    height: 36px; /* Height kam ki gayi */
+    width: 36px;
+    height: 36px;
     border-radius: 6px;
+    background-color: #f3f4f6; /* Light grey background */
+    color: var(--text-dark);
     transition: background-color 0.2s;
+    cursor: pointer; /* Clickable banana */
 }
-.whatsapp-btn:hover {
-    background-color: #f3f4f6;
+.cart-btn:hover {
+    background-color: #e5e7eb; /* Thoda dark hover */
 }
-.whatsapp-btn img {
-    width: 22px;  /* Icon size chhota kiya gaya */
-    height: 22px; /* Icon size chhota kiya gaya */
+.cart-btn img, .cart-btn i { /* SVG icon ya FontAwesome icon ke liye */
+    width: 20px;
+    height: 20px;
     opacity: 0.9;
 }
 
-.add-text-btn {
+/* "Added" state jab cart mein add ho jaaye */
+.cart-btn.added {
+    background-color: var(--green-color);
+    color: white;
+}
+.cart-btn.added img {
+    /* Hum JS mein SVG ko "check" icon se badal denge, ya isko hide kar denge */
+    filter: brightness(0) invert(1); /* SVG ko safed banaye */
+}
+.cart-btn.added .fa-check { /* FontAwesome check icon ke liye */
+    color: white;
+}
+
+
+/* Naya "Buy" button (Pahle "Add" tha) */
+.buy-text-btn {
     flex-grow: 1;
-    height: 36px; /* Height kam ki gayi */
+    height: 36px;
     border: none;
     background-color: var(--primary-color);
     color: white;
@@ -259,16 +278,16 @@ body.menu-open #side-menu { transform: translateX(0); box-shadow: 0 0 20px rgba(
     font-size: 0.9rem;
     border-radius: 6px;
     transition: background-color 0.3s, transform 0.2s;
+    text-decoration: none; /* Kyunki ye link hoga */
+    display: flex; /* Text ko center karne ke liye */
+    align-items: center;
+    justify-content: center;
 }
-.add-text-btn:hover {
+.buy-text-btn:hover {
     background-color: #4338ca; 
 }
-.add-text-btn:active {
+.buy-text-btn:active {
     transform: scale(0.98);
-}
-.add-text-btn.added {
-    background-color: var(--green-color);
-    cursor: not-allowed;
 }
 /* === BADLAV END === */
 
