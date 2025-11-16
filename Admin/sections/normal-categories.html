@@ -18,9 +18,10 @@
 
 <script>
 (function() {
-    if (document.getElementById('category-script-loaded')) {
-        return;
-    }
+    // --- BUG FIX ---
+    // Removed the 'if (document.getElementById('category-script-loaded'))' check.
+    // The script MUST run every time this page is loaded by 'loadPage'
+    // to attach listeners to the new DOM elements.
 
     const container = document.getElementById('category-list-container');
     const addBtn = document.getElementById('add-category-btn');
@@ -28,66 +29,103 @@
 
     function renderCategories() {
         container.innerHTML = '<div class="loader-container text-center py-5"><div class="loader"></div></div>'; // Loading indicator
+        
+        // Use global data from the main listener
         const categories = window.ramazoneData.homepage?.normalCategories || [];
         
-        // Timeout to ensure data is available, then render
-        setTimeout(() => {
-            container.innerHTML = ''; // Clear loader
-            if (categories.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 px-4 border-2 border-dashed rounded-lg">
-                    <i class="fas fa-folder-open text-4xl text-gray-300"></i>
-                    <p class="mt-4 font-semibold text-gray-700">No Categories Found</p>
-                    <p class="text-sm text-gray-500">Click 'Add Category' to get started.</p>
-                </div>`;
-                return;
-            }
+        container.innerHTML = ''; // Clear loader
+        if (categories.length === 0) {
+            container.innerHTML = `<div class="text-center py-8 px-4 border-2 border-dashed rounded-lg">
+                <i class="fas fa-folder-open text-4xl text-gray-300"></i>
+                <p class="mt-4 font-semibold text-gray-700">No Categories Found</p>
+                <p class="text-sm text-gray-500">Click 'Add Category' to get started.</p>
+            </div>`;
+            return;
+        }
 
-            categories.forEach((cat, index) => {
-                if (!cat) return;
-                const itemEl = document.createElement('div');
-                itemEl.className = 'draggable-item';
-                itemEl.dataset.index = index;
-                itemEl.dataset.fullData = JSON.stringify(cat);
-                
-                itemEl.innerHTML = `
-                    <i class="fas fa-grip-vertical handle text-gray-400 cursor-grab"></i>
-                    <img src="${cat.imageUrl || 'https://placehold.co/100x100/e2e8f0/e2e8f0?text=img'}" alt="${cat.name}" class="flex-shrink-0 w-12 h-12 object-cover rounded-md bg-gray-100">
-                    <div class="flex-grow">
-                        <span class="name text-gray-800 font-semibold">${cat.name}</span>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="badge badge-blue"><i class="fas fa-layer-group mr-1"></i>${cat.row || 'top'}</span>
-                            <span class="badge badge-purple"><i class="fas fa-expand-arrows-alt mr-1"></i>${cat.size || 'normal'}</span>
-                        </div>
+        categories.forEach((cat, index) => {
+            if (!cat) return;
+            const itemEl = document.createElement('div');
+            itemEl.className = 'draggable-item';
+            itemEl.dataset.index = index;
+            itemEl.dataset.fullData = JSON.stringify(cat);
+            
+            itemEl.innerHTML = `
+                <i class="fas fa-grip-vertical handle text-gray-400 cursor-grab"></i>
+                <img src="${cat.imageUrl || 'https://placehold.co/100x100/e2e8f0/e2e8f0?text=img'}" alt="${cat.name}" class="flex-shrink-0 w-12 h-12 object-cover rounded-md bg-gray-100">
+                <div class="flex-grow">
+                    <span class="name text-gray-800 font-semibold">${cat.name}</span>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="badge badge-blue"><i class="fas fa-layer-group mr-1"></i>${cat.row || 'top'}</span>
+                        <span class="badge badge-purple"><i class="fas fa-expand-arrows-alt mr-1"></i>${cat.size || 'normal'}</span>
                     </div>
-                    <div class="ml-auto flex items-center gap-2 flex-shrink-0">
-                        <button type="button" class="btn btn-sm edit-category-btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"><i class="fas fa-edit"></i></button>
-                        <button type="button" class="btn btn-sm delete-category-btn bg-red-50 text-red-600 hover:bg-red-100"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                `;
-                container.appendChild(itemEl);
-            });
+                </div>
+                <div class="ml-auto flex items-center gap-2 flex-shrink-0">
+                    <button type="button" class="btn btn-sm manage-subcats-btn bg-blue-50 text-blue-600 hover:bg-blue-100" title="Manage Sub-categories">
+                        <i class="fas fa-sitemap"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm edit-category-btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50" title="Edit Category">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm delete-category-btn bg-red-50 text-red-600 hover:bg-red-100" title="Delete Category">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(itemEl);
+        });
 
+        // Initialize Sortable
+        if (typeof Sortable !== 'undefined') {
             new Sortable(container, {
                 handle: '.handle',
                 animation: 150,
                 onEnd: async (evt) => {
+                    // Update the global cache first
                     const reorderedCategories = Array.from(evt.target.children).map(el => JSON.parse(el.dataset.fullData));
+                    window.ramazoneData.homepage.normalCategories = reorderedCategories;
+                    
+                    // Then save to DB
                     try {
                         await db.ref(`${DB_BASE_PATH}/${dbKey}`).set(reorderedCategories);
                         window.showToast('Success', 'Category order updated!', 'success');
+                        // Re-render to fix indices
+                        renderCategories();
                     } catch (err) {
                         window.showToast('Error', `Could not save order: ${err.message}`, 'error');
                     }
                 }
             });
-        }, 200);
+        } else {
+            console.warn('Sortable.js not loaded. Drag-drop reordering disabled.');
+        }
     }
+    
+    // Expose render function to global scope to be callable
+    // This isn't strictly needed anymore but harmless
+    window.renderCategoriesList = renderCategories;
 
     function openCategoryModal(data = null, index = null) {
         const modal = document.getElementById('universalModal');
         document.getElementById('modalTitle').textContent = index !== null ? 'Edit Category' : 'Add New Category';
         
         document.getElementById('modalBody').innerHTML = `
+            <style>
+                /* Simple radio button styles */
+                .radio-group-wrapper { display: flex; gap: 0.5rem; }
+                .radio-label {
+                    display: inline-flex; align-items: center; padding: 0.5rem 1rem;
+                    border: 1px solid #d1d5db; border-radius: 0.5rem; cursor: pointer;
+                    background-color: #fff; transition: all 0.2s;
+                }
+                .radio-label input { display: none; }
+                .radio-label span { color: #374151; }
+                .radio-label input:checked + span { font-weight: 600; }
+                .radio-label:has(input:checked) {
+                    background-color: #eef2ff; border-color: #4f46e5;
+                    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+                }
+            </style>
             <form id="category-form" class="space-y-5">
                 <input type="hidden" id="category-index" value="${index !== null ? index : ''}">
                 <div>
@@ -182,34 +220,44 @@
             
             const fileInput = form.querySelector('[data-key="imageUrl"]');
             const previewImg = form.querySelector('[data-preview-for="imageUrl"]');
+            const isNewFile = previewImg && previewImg.src.startsWith('data:');
             const existingImage = (previewImg && previewImg.src.startsWith('http')) ? previewImg.src : '';
-            const newImageFile = fileInput.files[0];
             
             let imageUrl = existingImage;
-            if (newImageFile) {
-                imageUrl = await window.uploadToImgBB(newImageFile);
+            if (isNewFile && fileInput.files[0]) {
+                imageUrl = await window.uploadToImgBB(fileInput.files[0]);
                 if (!imageUrl) throw new Error("Image upload failed.");
-            } else if (!existingImage) {
-                 imageUrl = ''; // Handle case where image was removed
+            } else if (!existingImage && !isNewFile) {
+                 imageUrl = '';
             }
 
             const size = form.querySelector('input[name="category-size"]:checked').value;
             const row = form.querySelector('input[name="category-row"]:checked').value;
 
-            const itemData = { name: categoryName, imageUrl, size, row };
+            const itemData = { 
+                name: categoryName, 
+                imageUrl, 
+                size, 
+                row,
+                linkUrl: (index !== '' && window.ramazoneData.homepage.normalCategories[index].linkUrl) 
+                         ? window.ramazoneData.homepage.normalCategories[index].linkUrl 
+                         : `./products.html?category=${encodeURIComponent(categoryName)}`
+            };
             
-            const listRef = db.ref(`${DB_BASE_PATH}/${dbKey}`);
-            const snapshot = await listRef.get();
-            let currentList = snapshot.val() || [];
+            let currentList = window.ramazoneData.homepage?.normalCategories || [];
             
             if (index !== '') {
                 currentList[index] = itemData;
             } else {
                 currentList.push(itemData);
             }
-            await listRef.set(currentList);
+            
+            await db.ref(`${DB_BASE_PATH}/${dbKey}`).set(currentList);
+            window.ramazoneData.homepage.normalCategories = currentList; 
+            
             window.showToast('Success', 'Category saved successfully!', 'success');
             document.getElementById('universalModal').classList.remove('active');
+            renderCategories();
         } catch (err) {
             window.showToast('Error', `Could not save: ${err.message}`, 'error');
         } finally {
@@ -219,20 +267,36 @@
     };
 
     async function deleteCategory(index, name) {
-        if (confirm(`Are you sure you want to delete the category "${name}"? This cannot be undone.`)) {
+        const modal = document.getElementById('universalModal');
+        document.getElementById('modalTitle').textContent = 'Confirm Deletion';
+        document.getElementById('modalBody').innerHTML = `<p>Are you sure you want to delete the category "<strong>${name}</strong>"? This cannot be undone.</p>`;
+        document.getElementById('modalSaveBtn').innerHTML = 'Yes, Delete';
+        document.getElementById('modalSaveBtn').className = 'btn btn-danger';
+        
+        modal.classList.add('active');
+
+        document.getElementById('modalSaveBtn').onclick = async () => {
             try {
                 const listRef = db.ref(`${DB_BASE_PATH}/${dbKey}`);
-                const snapshot = await listRef.get();
-                let currentList = snapshot.val() || [];
+                let currentList = window.ramazoneData.homepage?.normalCategories || [];
                 currentList.splice(index, 1);
+                
                 await listRef.set(currentList.filter(Boolean));
+                window.ramazoneData.homepage.normalCategories = currentList;
+                
                 window.showToast('Success', `"${name}" was deleted.`, 'success');
+                modal.classList.remove('active');
+                renderCategories();
             } catch (err) {
                 window.showToast('Error', `Could not delete: ${err.message}`, 'error');
+            } finally {
+                document.getElementById('modalSaveBtn').innerHTML = 'Save Changes';
+                document.getElementById('modalSaveBtn').className = 'btn btn-primary';
             }
-        }
+        };
     }
 
+    // --- EVENT LISTENERS (Now attached every time) ---
     addBtn.addEventListener('click', () => openCategoryModal());
 
     container.addEventListener('click', e => {
@@ -249,15 +313,20 @@
             const name = JSON.parse(itemEl.dataset.fullData).name;
             deleteCategory(index, name);
         }
+
+        const subcatBtn = e.target.closest('.manage-subcats-btn');
+        if (subcatBtn) {
+            const itemEl = subcatBtn.closest('.draggable-item');
+            const categoryName = JSON.parse(itemEl.dataset.fullData).name;
+            window.openSubCategoryManagerModal(categoryName);
+        }
     });
     
-    // Mark script as loaded to prevent re-execution
-    const scriptMarker = document.createElement('div');
-    scriptMarker.id = 'category-script-loaded';
-    scriptMarker.style.display = 'none';
-    document.body.appendChild(scriptMarker);
+    // --- BUG FIX ---
+    // Removed the code that added the 'category-script-loaded' marker.
+    // const scriptMarker = document.createElement('div'); ...
 
+    // Initial render call
     renderCategories();
 })();
 </script>
-
