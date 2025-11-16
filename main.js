@@ -1,7 +1,8 @@
 // --- GLOBAL STATE ---
 let allProductsCache = [];
-let allLocationsCache = []; // Cache for locations
-let filteredProductsCache = []; // <-- NEW: Products filtered by location
+let allLocationsCache = {}; // <-- MODIFIED: Changed to object for 3-tier structure
+let filteredProductsCache = []; // <-- Products filtered by location
+let allCategoriesCache = []; // <-- Cache for category suggestions
 let database;
 let deferredInstallPrompt = null;
 let festiveCountdownInterval = null; 
@@ -13,6 +14,11 @@ let currentlyDisplayedDeals = 0;
 const dealsPerPage = 10; 
 let isLoadingDeals = false; 
 let dealsObserver = null; 
+
+// --- NEW LOCATION STATE ---
+const DEFAULT_LOCATION = "Bihar/Begusarai/Suja"; // <-- NEW: Default location path
+let currentSelectedState = null;
+let currentSelectedDistrict = null;
 
 
 // --- PWA LOGIC ---
@@ -105,9 +111,17 @@ async function initializeApp() {
         // Load search bar FIRST so elements exist
         await loadCoreComponents();
 
-        const response = await fetch('/api/firebase-config');
-        if (!response.ok) throw new Error(`API Key fetch error! Status: ${response.status}`);
-        const config = await response.json();
+        // const response = await fetch('/api/firebase-config');
+        // if (!response.ok) throw new Error(`API Key fetch error! Status: ${response.status}`);
+        // const config = await response.json();
+
+        // Hardcoded config for simplicity as per original file
+        const config = {
+            apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+            authDomain: "re-store-8e5b3.firebaseapp.com",
+            databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+        };
+
 
         if (config && config.apiKey) {
             firebase.initializeApp(config);
@@ -141,6 +155,7 @@ function loadAllData() {
     const dbRef = database.ref('ramazone');
     dbRef.on('value', async (snapshot) => {
         const data = snapshot.val() || {};
+        window.ramazoneData = data; // <-- Store full data snapshot
         let products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
         allProductsCache = products.filter(p => p && p.isVisible !== false);
 
@@ -149,21 +164,24 @@ function loadAllData() {
             allCategoriesCache = homepageData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
         }
 
-        // Load Locations
-        const locationsData = data.locations || [];
-        allLocationsCache = Array.isArray(locationsData) ? locationsData : Object.values(locationsData);
+        // --- LOCATION DATA LOADING (MODIFIED) ---
+        // Load the entire location object, not just values
+        allLocationsCache = data.locations || {};
+        console.log("Locations data loaded:", allLocationsCache);
 
         // --- LOCATION LOGIC ---
-        // 1. Setup location system (gets saved loc, renders list)
-        setupLocationSystem();
+        // 1. Set up current state/district from localStorage
+        setupLocationSelectionsFromStorage();
+        // 2. Set up event listeners for the new location popup
+        setupLocationSystem(); 
 
-        // 2. Filter products based on location FIRST
+        // 3. Filter products based on location FIRST
         filterProductsByLocation(); 
 
-        // 3. Load page structure
+        // 4. Load page structure
         await loadPageStructure();
 
-        // 4. Render all sections using filtered data
+        // 5. Render all sections using filtered data
         renderAllSections(data);
 
     }, (error) => {
@@ -174,7 +192,7 @@ function loadAllData() {
 
 async function loadPageStructure() {
     const mainArea = document.getElementById('main-content-area');
-    if (mainArea.childElementCount > 0) return;
+    if (mainArea.childElementCount > 0) return; // Only load once
     const sections = ['categories.html', 'recently-viewed.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
     try {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
@@ -202,34 +220,64 @@ function renderAllSections(data) {
     renderFooter(homepageData.footer);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
-    // These setups must be called
+    // These setups must be called AFTER sections are in DOM
     setupGlobalEventListeners();
     setupSideMenu();
     setupInstallButton();
     updateCartIcon();
     setupScrollAnimations();
     setupHeaderScrollEffect();
-    setupHomepageSearch();
+    setupHomepageSearch(); // This now also sets the location text
 }
 
-// --- NEW: LOCATION FILTERING FUNCTION ---
+// --- NEW: LOCATION HELPER FUNCTIONS ---
+function formatLocation(pathString) {
+    if (!pathString || !pathString.includes('/')) return pathString;
+    const parts = pathString.split('/');
+    if (parts.length === 3) return `${parts[2]}, ${parts[1]}`; // Suja, Begusarai
+    if (parts.length === 2) return `${parts[1]}, ${parts[0]}`; // Begusarai, Bihar
+    return pathString;
+}
+
+function setupLocationSelectionsFromStorage() {
+    // Get saved location path, or use default
+    const savedLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
+    if (!localStorage.getItem('userLocation')) {
+        localStorage.setItem('userLocation', savedLoc);
+    }
+
+    const parts = savedLoc.split('/');
+    if (parts.length >= 2) {
+        currentSelectedState = parts[0];
+        currentSelectedDistrict = parts[1];
+    } else {
+        // Fallback for bad data
+        const defaultParts = DEFAULT_LOCATION.split('/');
+        currentSelectedState = defaultParts[0];
+        currentSelectedDistrict = defaultParts[1];
+    }
+}
+
+// --- NEW: LOCATION FILTERING FUNCTION (MODIFIED) ---
 function filterProductsByLocation() {
-    const currentLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai"; // Default
+    // Use the path from storage, e.g., "Bihar/Begusarai/Suja"
+    const currentLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
 
     filteredProductsCache = allProductsCache.filter(product => {
         // If product has no location array, assume it's available everywhere
-        if (!product.availableLocations || !Array.isArray(product.availableLocations) || product.availableLocations.length === 0) {
+        if (!product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0) {
             return true;
         }
-        // Check if the current location is in the product's availability list
-        return product.availableLocations.includes(currentLoc);
+        // Check if the current location path is in the product's availability list
+        // This logic works because admin panel saves ["Bihar/Begusarai/Suja", ...]
+        return product.availableAreas.includes(currentLoc);
     });
 
     console.log(`Filtered products for "${currentLoc}": ${filteredProductsCache.length} items.`);
 }
 
 // --- RERENDER ALL PRODUCT SECTIONS ---
-// NEW: This function will be called when location changes
+// This function is called when location changes
 function rerenderProductSections() {
     // Get the full data snapshot stored from the initial load
     const fullData = window.ramazoneData || { homepage: {} };
@@ -240,67 +288,134 @@ function rerenderProductSections() {
     renderRecentlyViewed();
     renderFestiveCollection(fullData.homepage.festiveCollection);
     renderJustForYouSection(fullData.homepage.justForYou);
-    renderHighlightedProducts();
+    renderHighlightedProducts(); // This will re-trigger infinite scroll
 
     // We also need to update the homepage search suggestions
     setupHomepageSearch();
 }
 
 
-// --- LOCATION SYSTEM LOGIC (MODIFIED) ---
+// --- LOCATION SYSTEM LOGIC (MODIFIED for 3-Tier) ---
 function setupLocationSystem() {
-    // 1. Set Initial Location Text
-    const savedLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai";
-    // Set default if it's the first visit
-    if (!localStorage.getItem('userLocation')) {
-        localStorage.setItem('userLocation', savedLoc);
-    }
+    // This function now only sets up the area search listener.
+    // Rendering is handled by renderStateTabs() etc.
 
-    // This element is in search-bar.html, might not exist yet
-    // We will set it inside setupHomepageSearch
-    const headerLocText = document.getElementById('header-location-text');
-    if (headerLocText) headerLocText.textContent = savedLoc;
-
-    // 2. Render Location List
-    renderLocationList(allLocationsCache);
-
-    // 3. Search Functionality inside Popup
-    const searchInput = document.getElementById('location-search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
+    const areaSearchInput = document.getElementById('loc-area-search-input');
+    if (areaSearchInput) {
+        areaSearchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
-            const filtered = allLocationsCache.filter(loc => {
-                const name = typeof loc === 'string' ? loc : loc.name;
-                return name.toLowerCase().includes(query);
-            });
-            renderLocationList(filtered);
+            // Re-render *only* the area list with the search query
+            if (currentSelectedState && currentSelectedDistrict) {
+                renderAreaList(currentSelectedState, currentSelectedDistrict, query);
+            }
         });
     }
 }
 
-function renderLocationList(locations) {
-    const container = document.getElementById('location-list-container');
+// --- NEW: 3-TIER RENDER FUNCTIONS ---
+function renderStateTabs() {
+    const container = document.getElementById('loc-state-tabs');
     if (!container) return;
 
-    const currentLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai";
+    // Filter states that are marked "isActive" in the admin panel
+    const states = Object.keys(allLocationsCache).filter(stateName => allLocationsCache[stateName].isActive);
 
-    if (locations.length === 0) {
-        container.innerHTML = '<div class="p-4 text-center text-gray-500">No locations found</div>';
+    if (states.length === 0) {
+        container.innerHTML = '<p class="loc-tab-placeholder">No active locations available.</p>';
         return;
     }
 
-    container.innerHTML = locations.map(loc => {
-        const name = typeof loc === 'string' ? loc : loc.name;
-        const isActive = name === currentLoc;
+    container.innerHTML = states.map(stateName => `
+        <button class="loc-tab-btn ${stateName === currentSelectedState ? 'active' : ''}" data-state="${stateName}">
+            ${stateName}
+        </button>
+    `).join('');
+
+    // If a state is selected, ripple-render its districts
+    if (currentSelectedState) {
+        renderDistrictTabs(currentSelectedState);
+    } else {
+        document.getElementById('loc-district-tier').classList.add('hidden');
+        document.getElementById('loc-area-tier').classList.add('hidden');
+    }
+}
+
+function renderDistrictTabs(stateName) {
+    const container = document.getElementById('loc-district-tabs');
+    const tier = document.getElementById('loc-district-tier');
+    if (!container || !tier) return;
+
+    const stateData = allLocationsCache[stateName];
+    if (!stateData || !stateData.districts) {
+        tier.classList.add('hidden');
+        return;
+    }
+
+    // Filter districts that are marked "isActive"
+    const districts = Object.keys(stateData.districts).filter(distName => stateData.districts[distName].isActive);
+
+    if (districts.length === 0) {
+        container.innerHTML = '<p class="loc-tab-placeholder">No active districts in this state.</p>';
+        tier.classList.remove('hidden');
+        document.getElementById('loc-area-tier').classList.add('hidden');
+        return;
+    }
+
+    container.innerHTML = districts.map(distName => `
+        <button class="loc-tab-btn ${distName === currentSelectedDistrict ? 'active' : ''}" data-state="${stateName}" data-district="${distName}">
+            ${distName}
+        </button>
+    `).join('');
+    tier.classList.remove('hidden');
+
+    // If a district is selected, ripple-render its areas
+    if (currentSelectedDistrict) {
+        renderAreaList(stateName, currentSelectedDistrict);
+    } else {
+        document.getElementById('loc-area-tier').classList.add('hidden');
+    }
+}
+
+function renderAreaList(stateName, districtName, searchQuery = '') {
+    const container = document.getElementById('loc-area-list-container');
+    const tier = document.getElementById('loc-area-tier');
+    if (!container || !tier) return;
+
+    const districtData = allLocationsCache[stateName]?.districts[districtName];
+    // Check for areas. Note: Admin saves areas as an array.
+    if (!districtData || !Array.isArray(districtData.areas)) {
+        tier.classList.add('hidden');
+        return;
+    }
+
+    const currentLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
+    let areas = districtData.areas;
+
+    if (searchQuery) {
+        areas = areas.filter(areaName => areaName.toLowerCase().includes(searchQuery));
+    }
+
+    if (areas.length === 0) {
+        container.innerHTML = `<p class="p-4 text-center text-gray-500">${searchQuery ? 'No areas found matching search.' : 'No areas added to this district.'}</p>`;
+        tier.classList.remove('hidden'); // Show tier to display message
+        return;
+    }
+
+    container.innerHTML = areas.map(areaName => {
+        const fullPath = `${stateName}/${districtName}/${areaName}`;
+        const isActive = fullPath === currentLoc;
         return `
-            <div class="location-item ${isActive ? 'active' : ''}" data-name="${name}">
+            <div class="location-item ${isActive ? 'active' : ''}" data-path="${fullPath}">
                 <i class="fas fa-map-marker-alt"></i>
-                <span>${name}</span>
+                <span>${areaName}</span>
                 <i class="fas fa-check location-item-check"></i>
             </div>
         `;
     }).join('');
+    tier.classList.remove('hidden'); // Show the area tier
 }
+// --- END NEW RENDER FUNCTIONS ---
+
 
 function openLocationPopup() {
     const overlay = document.getElementById('location-overlay');
@@ -308,6 +423,7 @@ function openLocationPopup() {
     const body = document.body;
 
     if (overlay && panel) {
+        renderStateTabs(); // <-- NEW: Render states when popup opens
         overlay.classList.add('visible');
         panel.classList.add('open');
         body.classList.add('location-open');
@@ -323,6 +439,8 @@ function closeLocationPopup() {
         overlay.classList.remove('visible');
         panel.classList.remove('open');
         body.classList.remove('location-open');
+        // Reset selections to saved state for next time
+        setupLocationSelectionsFromStorage(); 
     }
 }
 
@@ -331,11 +449,11 @@ function setupHomepageSearch() {
     const searchInput = document.getElementById('home-search-input');
     if (!searchInput) return;
 
-    // --- LOCATION TEXT ---
+    // --- LOCATION TEXT (MODIFIED) ---
     // Set location text here, as search-bar.html is now loaded
-    const savedLoc = localStorage.getItem('userLocation') || "Lalunagar, Begusarai";
+    const savedLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
     const headerLocText = document.getElementById('header-location-text');
-    if (headerLocText) headerLocText.textContent = savedLoc;
+    if (headerLocText) headerLocText.textContent = formatLocation(savedLoc); // Use formatter
     // --- END LOCATION TEXT ---
 
     const suggestionsContainer = document.getElementById('home-search-suggestions');
@@ -646,6 +764,8 @@ function setupGlobalEventListeners() {
             return; // Stop processing
         }
 
+        // --- LOCATION POPUP EVENT HANDLERS (ALL MODIFIED) ---
+
         // 2. Handle Location Trigger Click
         const locationTrigger = event.target.closest('#location-trigger');
         if (locationTrigger) {
@@ -667,36 +787,55 @@ function setupGlobalEventListeners() {
             return;
         }
 
-        // 5. Handle Selecting a Location from List (--- MODIFIED ---)
+        // 5. Handle State Tab Click
+        const stateTab = event.target.closest('.loc-tab-btn[data-state]');
+        if (stateTab && !stateTab.dataset.district) {
+            currentSelectedState = stateTab.dataset.state;
+            currentSelectedDistrict = null; // Reset district
+            document.getElementById('loc-area-search-input').value = ''; // Clear search
+            renderStateTabs(); // This will trigger renderDistrictTabs
+            return;
+        }
+
+        // 6. Handle District Tab Click
+        const districtTab = event.target.closest('.loc-tab-btn[data-district]');
+        if (districtTab) {
+            currentSelectedDistrict = districtTab.dataset.district;
+            document.getElementById('loc-area-search-input').value = ''; // Clear search
+            renderDistrictTabs(currentSelectedState); // This will trigger renderAreaList
+            return;
+        }
+
+        // 7. Handle Selecting a final Area from List
         const locItem = event.target.closest('.location-item');
         if (locItem) {
-            const selectedLoc = locItem.dataset.name;
+            const selectedLocPath = locItem.dataset.path; // e.g., "Bihar/Begusarai/Suja"
             const currentLoc = localStorage.getItem('userLocation');
 
-            // Only proceed if location actually changed
-            if (selectedLoc === currentLoc) {
+            if (selectedLocPath === currentLoc) {
                 closeLocationPopup(); // Just close if same loc clicked
                 return;
             }
 
-            localStorage.setItem('userLocation', selectedLoc);
+            localStorage.setItem('userLocation', selectedLocPath);
 
             // Update header text
             const headerText = document.getElementById('header-location-text');
-            if (headerText) headerText.textContent = selectedLoc;
+            if (headerText) headerText.textContent = formatLocation(selectedLocPath);
 
             // Re-render list to show checkmark
-            renderLocationList(allLocationsCache);
+            renderAreaList(currentSelectedState, currentSelectedDistrict);
 
-            // --- NEW: RE-FILTER AND RE-RENDER PRODUCTS ---
+            // --- RE-FILTER AND RE-RENDER PRODUCTS ---
             filterProductsByLocation();
             rerenderProductSections(); 
             // ---------------------------------------------
 
-            // Close popup
             setTimeout(closeLocationPopup, 200);
             return;
         }
+
+        // --- END LOCATION HANDLERS ---
     });
 }
 
