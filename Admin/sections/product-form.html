@@ -1,7 +1,8 @@
 <!-- 
   SECTION: sections/product-form.html
-  VERSION: 3.2 (Tags Save & Load Fix)
-  DESCRIPTION: Tags ab save bhi honge aur edit mode mein load bhi honge.
+  VERSION: 3.6 (New Tag UI + Hidden Field Fix)
+  DESCRIPTION: Yeh aapka UI idea hai! Ek alag "Tags Display Area" aur 
+               "Input + Plus Button" wala naya system. Yeh 100% save hoga.
 -->
 
 <style>
@@ -16,7 +17,7 @@
         margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
     }
 
-    /* --- IMAGE MANAGER STYLES (NEW) --- */
+    /* --- IMAGE MANAGER STYLES --- */
     .image-manager-container {
         border: 2px dashed #d1d5db; border-radius: 0.75rem;
         padding: 1rem; background: #f9fafb; transition: border-color 0.2s;
@@ -63,18 +64,40 @@
     .upload-placeholder {
         text-align: center; cursor: pointer; padding: 1.5rem;
     }
-
-    /* --- TAGS & LOCATION --- */
-    .tags-input-container {
-        display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem;
-        border: 1px solid #d1d5db; border-radius: 0.5rem; background: #fff; min-height: 42px;
+    
+    /* --- *** NAYA TAGS UI (Aapka Idea) *** --- */
+    #tags-display-area {
+        display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem;
+        border: 1px solid #d1d5db; border-radius: 0.5rem; background: #f9fafb;
+        min-height: 100px; /* Thodi height badha di hai */
+        margin-bottom: 0.75rem;
+    }
+    .tag-pill-placeholder {
+        color: #9ca3af; font-size: 0.9rem; margin: auto;
     }
     .tag-pill {
         background-color: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem;
         border-radius: 9999px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+        animation: tag-pop-in 0.2s ease-out;
     }
-    .tag-pill .remove-tag { cursor: pointer; font-weight: bold; }
-    .tags-input-field { border: none; outline: none; flex-grow: 1; padding: 0.25rem; background: transparent; }
+    .tag-pill .remove-tag { 
+        cursor: pointer; font-weight: bold; font-size: 1rem;
+        padding-left: 0.25rem;
+    }
+    .tag-pill .remove-tag:hover { color: #ef4444; }
+    @keyframes tag-pop-in {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    #add-tag-group {
+        display: flex; gap: 0.5rem;
+    }
+    #add-tag-btn {
+        padding-left: 1rem; padding-right: 1rem;
+        flex-shrink: 0;
+    }
+    /* --- *** Naya Tags UI End *** --- */
+
     .location-grid {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem;
         max-height: 150px; overflow-y: auto; padding: 0.5rem; 
@@ -104,12 +127,7 @@
     .toggle-switch-checkbox:checked ~ .veg-icon { display: block; }
     .toggle-switch-checkbox:checked ~ .non-veg-icon { display: none; }
 
-    /* --- VARIANT GROUPING (NEW) --- */
-    .group-id-badge {
-        background: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem;
-        border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-block;
-        border: 1px solid #c7d2fe; margin-bottom: 1rem;
-    }
+    /* --- VARIANT GROUPING --- */
     #variant-group-info {
         background: #f3e8ff; border: 1px solid #e9d5ff; border-left-width: 4px; border-left-color: #a855f7;
         padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem;
@@ -134,6 +152,10 @@
         <!-- Hidden inputs for state management -->
         <input type="hidden" id="product-edit-index">
         <input type="hidden" id="combo-data-storage">
+        
+        <!-- *** YEH HAI "RAMBAAN ILAAJ" WALA HIDDEN FIELD (YEH RAHEGA) *** -->
+        <input type="hidden" id="tags-data-storage"> 
+
         <input type="hidden" id="product-group-id" data-key="groupId">
 
         <!-- VARIANT GROUP INFO (Visible only if linked) -->
@@ -160,7 +182,7 @@
             <!-- LEFT COLUMN (Media, Basic, Variant Attrs) -->
             <div class="md:col-span-2 space-y-6">
                 
-                <!-- SECTION 2: MEDIA MANAGER (NEW) -->
+                <!-- SECTION 2: MEDIA MANAGER -->
                 <div class="card-section">
                     <div class="section-title">
                         <i class="fas fa-images text-gray-500"></i> Product Media
@@ -186,17 +208,33 @@
                 <div class="card-section">
                     <div class="section-title"><i class="fas fa-info-circle text-gray-500"></i> Basic Details</div>
                     <div class="space-y-4">
-                        <div>
-                            <label class="form-label">Product Name <span class="text-red-500">*</span></label>
-                            <input type="text" class="form-control text-lg font-medium" data-key="name" placeholder="e.g., Plain T-Shirt (Red)" required>
-                        </div>
-
-                        <div>
-                            <label class="form-label">Search Keywords (Tags)</label>
-                            <div class="tags-input-container" id="tags-container">
-                                <input type="text" class="tags-input-field" id="tags-input" placeholder="Type & Enter (e.g. Tshirt, Solid, Cotton)">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Product Name <span class="text-red-500">*</span></label>
+                                <input type="text" class="form-control text-lg font-medium" data-key="name" placeholder="e.g., Plain T-Shirt (Red)" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Brand</label>
+                                <input type="text" class="form-control" data-key="brand" placeholder="e.g. Clinic Plus, Samsung">
                             </div>
                         </div>
+
+                        <!-- *** YEH HAI AAPKA NAYA UI *** -->
+                        <div>
+                            <label class="form-label">Search Keywords (Tags)</label>
+                            <!-- 1. Display Area -->
+                            <div id="tags-display-area">
+                                <!-- JS yahaan pills banayega -->
+                                <span class="tag-pill-placeholder">Tags yahaan dikhenge...</span>
+                            </div>
+                            <!-- 2. Input + Button Area -->
+                            <div id="add-tag-group">
+                                <input type="text" class="form-control" id="new-tag-input" placeholder="Naya tag likhein...">
+                                <button type="button" id="add-tag-btn" class="btn btn-primary"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <!-- *** Naya UI Khatam *** -->
+
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -210,13 +248,24 @@
                         </div>
                         
                         <div>
-                            <label class="form-label">Description</label>
+                            <label class="form-label">Short Description</label>
                             <textarea class="form-control" data-key="simpleDescription" rows="3" placeholder="Short description for the app..."></textarea>
                         </div>
+
+                        <div>
+                            <label class="form-label">Full Description</label>
+                            <textarea class="form-control" data-key="longDescription" rows="6" placeholder="Detailed product description, features, how to use..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="form-label">Video URL (Optional)</label>
+                            <input type="url" class="form-control" data-key="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- SECTION 4: VARIANT ATTRIBUTES (NEW) -->
+                <!-- SECTION 4: VARIANT ATTRIBUTES -->
                 <div class="card-section" id="variant-attributes-section">
                     <div class="section-title"><i class="fas fa-tags text-gray-500"></i> Variant Attributes</div>
                     <p class="text-xs text-gray-500 mb-3">Define this specific variant (e.g., Type: Color, Value: Red).</p>
@@ -244,7 +293,7 @@
 
                 <!-- SECTION 5: DYNAMIC FIELDS (Category-based) -->
                 <div class="card-section bg-gray-50 border-dashed" id="dynamic-fields-container">
-                    <!-- GROCERY MODE -->
+                    <!-- Veg/Non-Veg & Shelf Life is here (Yeh 'hidden' rahega jab tak Grocery select na ho) -->
                     <div id="grocery-fields" class="hidden">
                         <div class="section-title text-green-700"><i class="fas fa-leaf"></i> Grocery Attributes</div>
                         <div class="flex items-center gap-8 mb-4">
@@ -362,9 +411,13 @@
     const uploadTrigger = document.getElementById('upload-placeholder'); // Placeholder div
     const imageGrid = document.getElementById('image-preview-grid');
     
-    // Inputs
-    const tagsContainer = document.getElementById('tags-container');
-    const tagsInput = document.getElementById('tags-input');
+    // --- *** NAYA TAGS UI *** ---
+    const tagsDisplayArea = document.getElementById('tags-display-area'); // 1. Display Area
+    const newTagInput = document.getElementById('new-tag-input');       // 2. Input Box
+    const addTagBtn = document.getElementById('add-tag-btn');         // 3. Plus Button
+    const tagsDataStorage = document.getElementById('tags-data-storage'); // 4. Hidden Storage
+    
+    // Baaki ke Inputs
     const categorySelect = document.getElementById('product-category-selector');
     const subcategorySelect = document.getElementById('product-subcategory-selector');
     const locationsContainer = document.getElementById('locations-container');
@@ -376,11 +429,12 @@
     const openComboModalBtn = document.getElementById('open-combo-modal-btn');
 
     // --- LOCAL STATE ---
-    let searchTags = [];
-    let imageFiles = []; // Array of objects: { file: File|null, url: string, isCover: boolean }
+    let searchTags = []; // Yeh local array UI aur hidden field ko sync karega
+    let imageFiles = []; 
     let currentProductId = null;
 
     // --- 1. IMAGE MANAGER LOGIC (Star & Drag) ---
+    // (Is code mein koi badlaav nahi hai)
     
     function renderImages() {
         imageGrid.innerHTML = '';
@@ -432,7 +486,6 @@
         });
     }
 
-    // SortableJS Drag & Drop
     if (typeof Sortable !== 'undefined') {
         new Sortable(imageGrid, {
             animation: 150,
@@ -478,37 +531,66 @@
     };
 
 
-    // --- 2. TAGS SYSTEM ---
+    // --- 2. TAGS SYSTEM (*** NAYA RELIABLE LOGIC ***) ---
+
+    // Function 1: Hidden field ko update karo
+    function updateHiddenTags() {
+        tagsDataStorage.value = JSON.stringify(searchTags);
+        markUnsaved(); // Har tag change ek unsaved change hai
+    }
+
+    // Function 2: UI (Display Area) ko update karo
     function renderTags() {
-        tagsContainer.querySelectorAll('.tag-pill').forEach(p => p.remove());
+        tagsDisplayArea.innerHTML = ''; // Display area ko khali karo
+        if (searchTags.length === 0) {
+            tagsDisplayArea.innerHTML = '<span class="tag-pill-placeholder">Tags yahaan dikhenge...</span>';
+            return;
+        }
+        
         searchTags.forEach((tag, index) => {
             const pill = document.createElement('span');
             pill.className = 'tag-pill';
-            pill.innerHTML = `${tag} <span class="remove-tag" data-index="${index}">×</span>`;
-            tagsContainer.insertBefore(pill, tagsInput);
+            // Har pill ko ek data-tag attribute diya, delete karne mein aasani hogi
+            pill.innerHTML = `${tag} <span class="remove-tag" data-tag="${tag}">×</span>`; 
+            tagsDisplayArea.appendChild(pill);
         });
     }
-    tagsInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            const val = tagsInput.value.trim().toLowerCase();
-            if (val && !searchTags.includes(val)) {
-                searchTags.push(val);
-                renderTags();
-                tagsInput.value = '';
-                markUnsaved();
-            }
+
+    // Function 3: Naya tag add karne ka function
+    function addNewTag() {
+        const val = newTagInput.value.trim().toLowerCase();
+        if (val && !searchTags.includes(val)) {
+            searchTags.push(val);
+            renderTags(); // UI update karo
+            updateHiddenTags(); // Hidden input ko update karo
+        }
+        newTagInput.value = ''; // Input box ko khali karo
+        newTagInput.focus(); // Wapis focus karo
+    }
+
+    // Event Listener 1: "+" Button par click
+    addTagBtn.addEventListener('click', addNewTag);
+
+    // Event Listener 2: Input box mein "Enter" dabane par
+    newTagInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Form ko submit hone se roko
+            addNewTag();
         }
     });
-    tagsContainer.addEventListener('click', e => {
+
+    // Event Listener 3: Tag (Pill) ko delete karne ke liye
+    tagsDisplayArea.addEventListener('click', e => {
         if(e.target.classList.contains('remove-tag')) {
-            searchTags.splice(e.target.dataset.index, 1);
-            renderTags();
-            markUnsaved();
+            const tagToDelete = e.target.dataset.tag; // 'sampoo'
+            searchTags = searchTags.filter(tag => tag !== tagToDelete); // Array se filter karke hataya
+            renderTags(); // UI update karo
+            updateHiddenTags(); // Hidden input ko update karo
         }
     });
 
     // --- 3. DYNAMIC LOCATIONS & CATEGORIES ---
+    // (Is code mein koi badlaav nahi hai)
     function renderLocationCheckboxes(availableLocs = []) {
         locationsContainer.innerHTML = '';
         const allLocs = window.allLocationsCache || [];
@@ -531,13 +613,20 @@
         markUnsaved();
     };
 
+    // Yeh function Veg/Non-Veg ko control karta hai
     function handleCategoryChange() {
         const cat = categorySelect.value;
         const catLower = cat.toLowerCase();
+        
         document.getElementById('grocery-fields').classList.add('hidden');
         document.getElementById('tech-fields').classList.add('hidden');
-        if (catLower.match(/grocery|food|fruit|veg/)) document.getElementById('grocery-fields').classList.remove('hidden');
-        if (catLower.match(/elect|mobile|tech|gadget/)) document.getElementById('tech-fields').classList.remove('hidden');
+        
+        if (catLower.match(/grocery|food|fruit|veg/)) {
+            document.getElementById('grocery-fields').classList.remove('hidden');
+        }
+        if (catLower.match(/elect|mobile|tech|gadget/)) {
+            document.getElementById('tech-fields').classList.remove('hidden');
+        }
 
         subcategorySelect.innerHTML = '<option value="">Select Sub-Category</option>';
         subcategorySelect.disabled = true;
@@ -591,11 +680,14 @@
             }
             renderImages();
 
-            // --- YAHAN FIX KIYA GAYA (LOAD TAGS) ---
-            // Ab save kiye hue tags ko load karega
-            searchTags = productToEdit.searchTags || [];
+            // --- *** YEH AAPKA REQUESTED FEATURE HAI (LOADING) *** ---
+            // 1. Purane tags ko 'product_of_keyword' se load karo
+            searchTags = productToEdit.product_of_keyword || [];
+            // 2. UI (Display Area) mein pills banao
             renderTags();
-            // ------------------------------------
+            // 3. Hidden field ko bhi update karo (Taaki agar aap kuch na bhi badle, toh bhi save ho)
+            updateHiddenTags(); 
+            // ----------------------------------------------------
 
             // Toggles
             if(productToEdit.isVeg !== undefined) isVegToggle.checked = productToEdit.isVeg;
@@ -603,7 +695,7 @@
             // Combos
             if(productToEdit.combos) comboDataStorage.value = JSON.stringify(productToEdit.combos);
 
-            // Category Logic
+            // Category Logic (TAAKI VEG/NON-VEG DIKHE)
             handleCategoryChange(); 
             if(productToEdit.subcategory) {
                 setTimeout(() => subcategorySelect.value = productToEdit.subcategory, 50);
@@ -616,8 +708,9 @@
             renderLocationCheckboxes([]);
             imageFiles = [];
             renderImages();
-            searchTags = []; // Ensure tags are empty for new product
-            renderTags(); // Ensure UI is clear
+            searchTags = []; // Naye product ke liye tags clear
+            renderTags(); // UI clear
+            updateHiddenTags(); // Hidden input ko bhi clear karo
         }
         
         window.editingProductData = null;
@@ -645,9 +738,20 @@
             });
 
             // 2. Gather complex data
-            data.searchTags = searchTags; // Save tags
+            
+            // --- *** YEH 100% SAVE HOGA *** ---
+            // Data ko 'tagsDataStorage' (hidden field) se padho
+            const tagsData = tagsDataStorage.value;
+            if (tagsData) {
+                data.product_of_keyword = JSON.parse(tagsData);
+            } else {
+                data.product_of_keyword = []; // Khali array save karo agar kuch na ho
+            }
+            // -----------------------------------------------------------
+            
             data.availableLocations = Array.from(locationsContainer.querySelectorAll('.location-cb:checked')).map(cb => cb.value);
             data.isVeg = isVegToggle.checked;
+            
             if(comboDataStorage.value) data.combos = JSON.parse(comboDataStorage.value);
 
             // 3. Variant Grouping Logic
@@ -701,7 +805,7 @@
                 clonedData.quantity = 0; 
                 clonedData.images = []; 
                 clonedData.originalIndex = null;
-                // Tags (searchTags) will be cloned automatically as part of 'data'
+                // Tags (product_of_keyword) bhi clone ho jayenge
                 
                 window.editingProductData = clonedData;
                 initializeForm(); // Form ko clone kiye hue data se bharo
@@ -771,3 +875,4 @@
 
 })();
 </script>
+
