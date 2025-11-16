@@ -1,402 +1,773 @@
-<!-- sections/product-form.html -->
+<!-- 
+  SECTION: sections/product-form.html
+  VERSION: 3.2 (Tags Save & Load Fix)
+  DESCRIPTION: Tags ab save bhi honge aur edit mode mein load bhi honge.
+-->
+
 <style>
-/* Styles for dynamic blocks */
-.variant-type-block, .description-block, .spec-highlight-block {
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    background-color: #ffffff;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    overflow: hidden;
-}
-.variant-type-header, .description-block-header, .spec-highlight-header {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    background-color: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-}
-.variant-type-body, .description-block-body, .spec-highlight-body {
-    padding: 1.25rem;
-    background-color: #ffffff;
-}
-.multi-image-preview-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.75rem;
-}
-.multi-image-preview-item {
-    position: relative;
-    aspect-ratio: 1/1;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    border: 1px solid #e5e7eb;
-    cursor: grab;
-    background-color: #f3f4f6;
-}
-.multi-image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
-.remove-img-btn {
-    position: absolute; top: 0.25rem; right: 0.25rem; width: 1.5rem; height: 1.5rem;
-    background-color: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%;
-    cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center;
-}
-.remove-btn {
-    background: none; border: none; cursor: pointer;
-    font-size: 1.25rem; color: #ef4444;
-}
-.fa-chevron-down { transition: transform 0.3s ease; }
-.rotate-180 { transform: rotate(180deg); }
-.combo-item { display: flex; gap: 0.5rem; align-items: center; }
+    /* --- CARD & LAYOUT --- */
+    .card-section {
+        background: #ffffff; border: 1px solid #e5e7eb;
+        border-radius: 0.75rem; padding: 1.5rem;
+        margin-bottom: 1.5rem; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .section-title {
+        font-size: 1.1rem; font-weight: 600; color: #1f2937;
+        margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* --- IMAGE MANAGER STYLES (NEW) --- */
+    .image-manager-container {
+        border: 2px dashed #d1d5db; border-radius: 0.75rem;
+        padding: 1rem; background: #f9fafb; transition: border-color 0.2s;
+    }
+    .image-manager-container.dragover { border-color: #4f46e5; }
+    #image-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem; margin-top: 1rem;
+    }
+    .image-card {
+        position: relative; aspect-ratio: 1; border-radius: 0.5rem;
+        overflow: hidden; background: #fff; border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); cursor: grab;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+    .image-card:active { cursor: grabbing; }
+    .image-card.is-cover {
+        border: 2px solid #f59e0b; /* Golden border */
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+    }
+    .image-card img { width: 100%; height: 100%; object-fit: cover; }
+    .img-action-btn {
+        position: absolute; width: 28px; height: 28px; border-radius: 50%;
+        border: none; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: transform 0.2s, background-color 0.2s; z-index: 10;
+    }
+    .img-action-btn:hover { transform: scale(1.1); }
+    .delete-img-btn {
+        top: 5px; right: 5px; background: rgba(255, 255, 255, 0.9); color: #ef4444;
+    }
+    .star-img-btn {
+        top: 5px; left: 5px; background: rgba(255, 255, 255, 0.9); color: #d1d5db;
+    }
+    .image-card.is-cover .star-img-btn { color: #f59e0b; background: #fff; }
+    .cover-badge {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(245, 158, 11, 0.9); color: white; font-size: 0.7rem;
+        text-align: center; padding: 2px 0; font-weight: 600; display: none;
+    }
+    .image-card.is-cover .cover-badge { display: block; }
+    .sortable-ghost { opacity: 0.4; border: 2px dashed #4f46e5; background: #f0f0f0; }
+    .upload-placeholder {
+        text-align: center; cursor: pointer; padding: 1.5rem;
+    }
+
+    /* --- TAGS & LOCATION --- */
+    .tags-input-container {
+        display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem;
+        border: 1px solid #d1d5db; border-radius: 0.5rem; background: #fff; min-height: 42px;
+    }
+    .tag-pill {
+        background-color: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem;
+        border-radius: 9999px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .tag-pill .remove-tag { cursor: pointer; font-weight: bold; }
+    .tags-input-field { border: none; outline: none; flex-grow: 1; padding: 0.25rem; background: transparent; }
+    .location-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem;
+        max-height: 150px; overflow-y: auto; padding: 0.5rem; 
+        border: 1px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb;
+    }
+    .location-checkbox-item {
+        display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;
+        padding: 0.25rem; border-radius: 0.25rem; transition: background 0.2s;
+    }
+    .location-checkbox-item:hover { background-color: #e5e7eb; }
+
+    /* --- TOGGLES & BLOCKS --- */
+    .toggle-switch-label { display: flex; align-items: center; cursor: pointer; gap: 0.75rem; }
+    .toggle-switch-checkbox { display: none; }
+    .toggle-switch-slider {
+        position: relative; width: 50px; height: 26px; background-color: #ccc;
+        border-radius: 34px; transition: .4s;
+    }
+    .toggle-switch-slider:before {
+        position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+        background-color: white; transition: .4s; border-radius: 50%;
+    }
+    .toggle-switch-checkbox:checked + .toggle-switch-slider { background-color: #10b981; }
+    .toggle-switch-checkbox:checked + .toggle-switch-slider:before { transform: translateX(24px); }
+    .veg-icon { color: #16a34a; font-weight: bold; display: none; }
+    .non-veg-icon { color: #ef4444; font-weight: bold; display: block; }
+    .toggle-switch-checkbox:checked ~ .veg-icon { display: block; }
+    .toggle-switch-checkbox:checked ~ .non-veg-icon { display: none; }
+
+    /* --- VARIANT GROUPING (NEW) --- */
+    .group-id-badge {
+        background: #e0e7ff; color: #4338ca; padding: 0.25rem 0.75rem;
+        border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-block;
+        border: 1px solid #c7d2fe; margin-bottom: 1rem;
+    }
+    #variant-group-info {
+        background: #f3e8ff; border: 1px solid #e9d5ff; border-left-width: 4px; border-left-color: #a855f7;
+        padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem;
+        display: none; /* JS se show hoga */
+        align-items: center; justify-content: space-between;
+    }
+    #variant-group-info .text-purple-700 { color: #6b21a8; }
 </style>
 
+<!-- PAGE HEADER -->
 <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
     <div>
         <h2 id="product-form-title" class="text-2xl font-bold text-gray-800">Add New Product</h2>
-        <p class="text-sm text-gray-500">Fill in the details below and click save.</p>
+        <p class="text-sm text-gray-500">Manage inventory, variants, and media.</p>
     </div>
-    <button id="back-to-products-btn" class="btn btn-secondary"><i class="fas fa-arrow-left mr-2"></i> Back to Products</button>
+    <button id="back-to-products-btn" class="btn btn-secondary"><i class="fas fa-arrow-left mr-2"></i> Back to List</button>
 </div>
 
-<div class="admin-card">
-    <div class="card-body">
-        <form id="product-form" class="space-y-6">
-            <!-- Yeh hidden field edit kiye ja rahe product ka original index store karega -->
-            <input type="hidden" id="product-edit-index">
-            <input type="hidden" id="combo-data-storage">
+<!-- MAIN FORM -->
+<div class="max-w-5xl mx-auto pb-20">
+    <form id="product-form">
+        <!-- Hidden inputs for state management -->
+        <input type="hidden" id="product-edit-index">
+        <input type="hidden" id="combo-data-storage">
+        <input type="hidden" id="product-group-id" data-key="groupId">
 
-            <div class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                <!-- Basic Details -->
-                <div><label class="form-label">Product Name</label><input type="text" class="form-control" data-key="name" required></div>
-                <div><label class="form-label">Category</label><select class="form-control" data-key="category" id="product-category-selector" required><option value="">Select Category</option></select></div>
-                <div><label class="form-label">Display Price</label><input type="number" class="form-control" data-key="displayPrice" required></div>
-                <div><label class="form-label">Original Price</label><input type="number" class="form-control" data-key="originalPrice" required></div>
-                <div><label class="form-label">Seller Name</label><input type="text" class="form-control" data-key="sellerName" value="Ramazone"></div>
-                <div><label class="form-label">Product Quantity</label><input type="number" class="form-control" data-key="quantity"></div>
+        <!-- VARIANT GROUP INFO (Visible only if linked) -->
+        <div id="variant-group-info">
+            <span class="font-semibold text-purple-700"><i class="fas fa-link mr-2"></i>Linked Variant</span>
+            <p class="text-xs text-purple-700">This product is part of a variant group. Shared data will be cloned.</p>
+        </div>
+
+        <!-- SECTION 1: AVAILABILITY (Hyperlocal) -->
+        <div class="card-section border-l-4 border-l-blue-500">
+            <div class="section-title text-blue-700"><i class="fas fa-map-marker-alt"></i> Location Availability</div>
+            <div class="flex justify-between items-center mb-2">
+                <label class="flex items-center text-sm cursor-pointer select-none">
+                    <input type="checkbox" id="select-all-locations" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300"> Select All
+                </label>
+                <button type="button" id="add-new-location-btn" class="text-xs text-blue-600 font-bold hover:underline">+ Add New Location</button>
+            </div>
+            <div id="locations-container" class="location-grid">
+                <p class="text-xs text-gray-400 p-2">Loading locations...</p>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- LEFT COLUMN (Media, Basic, Variant Attrs) -->
+            <div class="md:col-span-2 space-y-6">
                 
-                <div class="md:col-span-2">
-                    <label class="form-label">Return Policy</label>
-                    <div class="flex items-center gap-4">
-                        <select id="return-policy-type" class="form-control w-1/3">
-                            <option value="days">Returnable</option>
-                            <option value="no_return">No Return</option>
-                            <option value="custom">Custom Policy</option>
-                        </select>
-                        <div id="return-policy-value-container" class="flex-grow">
-                            <input type="number" id="return-policy-days" class="form-control" placeholder="e.g., 7 (in days)">
-                            <input type="text" id="return-policy-custom" class="form-control hidden" placeholder="e.g., 7 Days Replacement">
+                <!-- SECTION 2: MEDIA MANAGER (NEW) -->
+                <div class="card-section">
+                    <div class="section-title">
+                        <i class="fas fa-images text-gray-500"></i> Product Media
+                        <span class="text-xs font-normal text-gray-400 ml-auto">Star (⭐) the cover image</span>
+                    </div>
+                    
+                    <div class="image-manager-container" id="drop-zone">
+                        <input type="file" id="hidden-file-input" class="hidden" accept="image/*" multiple>
+                        
+                        <div id="image-preview-grid">
+                            <!-- JS will render images here -->
+                        </div>
+                        
+                        <div class="upload-placeholder" id="upload-placeholder">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-300"></i>
+                            <p class="text-sm text-gray-500 mt-2">Click to upload or drag & drop images</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Drag images to reorder. The starred image will be the main thumbnail.</p>
+                </div>
+
+                <!-- SECTION 3: BASIC DETAILS -->
+                <div class="card-section">
+                    <div class="section-title"><i class="fas fa-info-circle text-gray-500"></i> Basic Details</div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="form-label">Product Name <span class="text-red-500">*</span></label>
+                            <input type="text" class="form-control text-lg font-medium" data-key="name" placeholder="e.g., Plain T-Shirt (Red)" required>
+                        </div>
+
+                        <div>
+                            <label class="form-label">Search Keywords (Tags)</label>
+                            <div class="tags-input-container" id="tags-container">
+                                <input type="text" class="tags-input-field" id="tags-input" placeholder="Type & Enter (e.g. Tshirt, Solid, Cotton)">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <div class="flex justify-between"><label class="form-label">Category *</label><button type="button" id="create-category-btn" class="text-xs text-primary hover:underline">+ New</button></div>
+                                <select class="form-control" data-key="category" id="product-category-selector" required><option value="">Select</option></select>
+                            </div>
+                            <div>
+                                <div class="flex justify-between"><label class="form-label">Sub-Category</label><button type="button" id="create-subcategory-btn" class="text-xs text-primary hover:underline">+ New</button></div>
+                                <select class="form-control" data-key="subcategory" id="product-subcategory-selector" disabled><option value="">Select Category First</option></select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" data-key="simpleDescription" rows="3" placeholder="Short description for the app..."></textarea>
                         </div>
                     </div>
                 </div>
 
-                <div><label class="form-label">SKU (Auto-Generated)</label><input type="text" class="form-control bg-gray-200" data-key="sku" readonly></div>
-
-                <div class="md:col-span-2 border-t pt-4 mt-2"><h4 class="font-semibold text-lg text-gray-700 mb-2">Offer Badge (Optional)</h4></div>
-                <div><label class="form-label">Offer Text</label><input type="text" class="form-control" data-key="offerText"></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="form-label">Background Color</label><input type="color" class="form-control h-10 p-1" data-key="offerBackgroundColor" value="#0000ff"></div><div><label class="form-label">Text Color</label><input type="color" class="form-control h-10 p-1" data-key="offerTextColor" value="#ffffff"></div></div>
-                <div class="md:col-span-2 border-t pt-4 mt-2"><h4 class="font-semibold text-lg text-gray-700 mb-2">Review & Rating</h4></div>
-                <div><label class="form-label">Star Rating</label><input type="number" step="0.1" min="1" max="5" class="form-control" data-key="rating"></div>
-                <div><label class="form-label">Review Count</label><input type="number" class="form-control" data-key="reviewCount"></div>
-                <div class="md:col-span-2 border-t pt-4 mt-2"><h4 class="font-semibold text-lg text-gray-700 mb-2">Media</h4></div>
-                <div class="md:col-span-2"><label class="form-label">Product YouTube Video (Optional)</label><input type="url" class="form-control" data-key="videoUrl"></div>
-                <div class="md:col-span-2">
-                    <label class="form-label">Product Images</label>
-                    <p class="text-xs text-gray-500 mb-2">Pehli image thumbnail banegi. Images ko drag karke order badal sakte hain.</p>
-                    <input type="file" id="multi-image-upload-input" class="form-control" accept="image/*" multiple>
-                    <div id="multi-image-preview-container" class="multi-image-preview-container mt-2"></div>
-                </div>
-                <div class="md:col-span-2 border-t pt-4 mt-2">
-                    <div class="flex justify-between items-center mb-2"><h4 class="font-semibold text-lg text-gray-700">Select Similar Products</h4><select id="similar-products-filter" class="form-control text-sm w-auto"><option value="all">All Products</option><option value="same_category">Same Category</option></select></div>
-                    <p class="text-xs text-gray-500 mb-2">Customer ko suggest karne ke liye products chunein.</p>
-                    <select id="similar-products-selector" class="form-control" data-key="similarProductIds" multiple style="height: 150px;"></select>
-                </div>
-                <div class="md:col-span-2 border-t pt-4 mt-2">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold text-lg text-gray-700">Combo Offers</h4>
-                        <button type="button" id="open-combo-modal-btn" class="btn btn-secondary"><i class="fas fa-cogs mr-2"></i> Manage Combos</button>
+                <!-- SECTION 4: VARIANT ATTRIBUTES (NEW) -->
+                <div class="card-section" id="variant-attributes-section">
+                    <div class="section-title"><i class="fas fa-tags text-gray-500"></i> Variant Attributes</div>
+                    <p class="text-xs text-gray-500 mb-3">Define this specific variant (e.g., Type: Color, Value: Red).</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">Variant Type</label>
+                            <select class="form-control" data-key="variantType" id="variant-type-select">
+                                <option value="">None</option>
+                                <option value="Size">Size (S, M, L)</option>
+                                <option value="Color">Color (Red, Blue)</option>
+                                <option value="Weight">Weight (1kg, 500g)</option>
+                                <option value="Volume">Volume (1L, 500ml)</option>
+                                <option value="Flavor">Flavor (Masala, Orange)</option>
+                                <option value="Storage">Storage (128GB, 256GB)</option>
+                                <option value="Pack Size">Pack Size (Pack of 3)</option>
+                                <option value="Style">Style (Basmati, Cotton)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Variant Value</label>
+                            <input type="text" class="form-control" data-key="variantValue" placeholder="e.g., M, Red, 1kg, 256GB">
+                        </div>
                     </div>
                 </div>
-                <div class="md:col-span-2 border-t pt-4 mt-2"><div class="flex justify-between items-center mb-2"><h4 class="font-semibold text-lg text-gray-700">Product Variants</h4><button type="button" id="add-variant-type-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus mr-1"></i> Add Variant Type</button></div><div id="variants-container"></div></div>
-                <div class="md:col-span-2 border-t pt-4 mt-2"><h4 class="font-semibold text-lg text-gray-700 mb-2">Advanced Highlights</h4><div id="spec-highlights-container" class="space-y-4 border rounded-lg p-4 bg-gray-50"><div class="grid md:grid-cols-2 gap-4"><div><label class="form-label">Spec Score</label><input type="text" class="form-control" id="spec-score-input"></div><div><label class="form-label">Spec Tag</label><input type="text" class="form-control" id="spec-tag-input"></div></div><div class="border-t pt-4 mt-4"><div class="flex justify-between items-center"><h5 class="font-semibold text-gray-700">Highlight Blocks</h5><button type="button" id="add-spec-block-btn" class="btn btn-sm btn-secondary"><i class="fas fa-plus mr-1"></i> Add Block</button></div><div id="spec-blocks-list" class="mt-2"></div></div></div></div>
-                <div class="md:col-span-2 border-t pt-4 mt-2"><div class="flex justify-between items-center mb-2"><h4 class="font-semibold text-lg text-gray-700">Simple Product Description</h4><button type="button" id="add-desc-block-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus mr-1"></i> Add Block</button></div><div id="description-blocks-container"></div></div>
+
+                <!-- SECTION 5: DYNAMIC FIELDS (Category-based) -->
+                <div class="card-section bg-gray-50 border-dashed" id="dynamic-fields-container">
+                    <!-- GROCERY MODE -->
+                    <div id="grocery-fields" class="hidden">
+                        <div class="section-title text-green-700"><i class="fas fa-leaf"></i> Grocery Attributes</div>
+                        <div class="flex items-center gap-8 mb-4">
+                            <div>
+                                <label class="form-label mb-1">Food Type</label>
+                                <label class="toggle-switch-label">
+                                    <input type="checkbox" class="toggle-switch-checkbox" id="is-veg-toggle">
+                                    <span class="toggle-switch-slider"></span>
+                                    <span class="veg-icon"><i class="fas fa-circle"></i> Veg</span>
+                                    <span class="non-veg-icon"><i class="fas fa-circle"></i> Non-Veg</span>
+                                </label>
+                            </div>
+                            <div class="flex-grow">
+                                <label class="form-label">Shelf Life / Expiry</label>
+                                <input type="text" class="form-control" data-key="shelfLife" placeholder="e.g., Best before 6 months">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- TECH MODE -->
+                    <div id="tech-fields" class="hidden">
+                        <div class="section-title text-blue-700"><i class="fas fa-microchip"></i> Tech Specs</div>
+                        <!-- ... Tech fields ... -->
+                    </div>
+                </div>
+
             </div>
-        </form>
+
+            <!-- RIGHT COLUMN (Pricing, Stock, Meta) -->
+            <div class="space-y-6">
+                <!-- SECTION 6: PRICING & STOCK -->
+                <div class="card-section">
+                    <div class="section-title"><i class="fas fa-tag text-gray-500"></i> Pricing & Stock</div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="form-label">Display Price (₹) *</label><input type="number" class="form-control font-bold" data-key="displayPrice" required></div>
+                            <div><label class="form-label">Original Price (₹)</label><input type="number" class="form-control text-gray-500" data-key="originalPrice"></div>
+                        </div>
+                        <div>
+                            <label class="form-label">Stock Qty *</label>
+                            <input type="number" class="form-control" data-key="quantity" placeholder="e.g. 100" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Low Stock Alert</label>
+                            <input type="number" class="form-control" data-key="lowStockLimit" value="5" placeholder="Notify if below this">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 7: UNITS (UOM) -->
+                <div class="card-section">
+                    <div class="section-title"><i class="fas fa-balance-scale text-gray-500"></i> Unit / Weight</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="form-label">Net Qty</label><input type="number" step="0.01" class="form-control" data-key="netQuantity" placeholder="1, 500"></div>
+                        <div>
+                            <label class="form-label">Unit</label>
+                            <select class="form-control" data-key="unitType">
+                                <option value="Pcs">Pieces</option> <option value="Kg">Kg</option> <option value="g">Gram</option>
+                                <option value="L">Litre</option> <option value="ml">ml</option> <option value="Pack">Pack</option>
+                                <option value="m">Meter</option> <option value="Pair">Pair</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 8: META & ADVANCED -->
+                <div class="card-section">
+                    <div class="section-title"><i class="fas fa-cogs text-gray-500"></i> Advanced</div>
+                    
+                    <button type="button" id="open-combo-modal-btn" class="w-full btn btn-secondary mb-4">
+                        <i class="fas fa-box-open mr-2"></i> Combos / Quantity Packs
+                    </button>
+
+                    <div class="space-y-2">
+                        <label class="form-label">SKU (Auto)</label>
+                        <input type="text" class="form-control bg-gray-100 text-xs" data-key="sku" readonly>
+                        
+                        <label class="form-label mt-2">Offer Badge</label>
+                        <input type="text" class="form-control" data-key="offerText" placeholder="e.g. 50% OFF">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- STICKY FOOTER (SAVE ACTIONS) -->
+<div class="fixed bottom-0 left-0 md:left-64 right-0 bg-white border-t shadow-lg p-4 z-40 flex items-center justify-between">
+    <div class="text-sm text-gray-500 hidden md:block">
+        <span id="unsaved-changes-indicator" class="hidden text-orange-500"><i class="fas fa-circle text-[8px] mr-1"></i> Unsaved Changes</span>
     </div>
-    <div class="card-footer text-right">
-        <button id="save-product-btn" class="btn btn-primary"><i class="fas fa-save mr-2"></i> Save Changes</button>
+    <div class="flex gap-3 ml-auto">
+        <button id="save-create-variant-btn" class="btn bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300">
+            <i class="fas fa-copy mr-2"></i> Save & Create Variant
+        </button>
+        <button id="save-product-btn" class="btn btn-primary px-6 shadow-md">
+            <i class="fas fa-save mr-2"></i> Save Product
+        </button>
     </div>
 </div>
 
 <script>
+// Yeh ek IIFE (Immediately Invoked Function Expression) hai taaki variables global na hon.
 (function() {
-    // --- ELEMENTS ---
+    // --- DOM ELEMENTS ---
     const form = document.getElementById('product-form');
     const saveBtn = document.getElementById('save-product-btn');
+    const saveVariantBtn = document.getElementById('save-create-variant-btn');
     const backBtn = document.getElementById('back-to-products-btn');
     const formTitle = document.getElementById('product-form-title');
-    const imagePreviewContainer = document.getElementById('multi-image-preview-container');
-    const openComboModalBtn = document.getElementById('open-combo-modal-btn');
+    const unsavedIndicator = document.getElementById('unsaved-changes-indicator');
+    
+    // Image Manager
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('hidden-file-input');
+    const uploadTrigger = document.getElementById('upload-placeholder'); // Placeholder div
+    const imageGrid = document.getElementById('image-preview-grid');
+    
+    // Inputs
+    const tagsContainer = document.getElementById('tags-container');
+    const tagsInput = document.getElementById('tags-input');
+    const categorySelect = document.getElementById('product-category-selector');
+    const subcategorySelect = document.getElementById('product-subcategory-selector');
+    const locationsContainer = document.getElementById('locations-container');
+    const selectAllLocBtn = document.getElementById('select-all-locations');
+    const isVegToggle = document.getElementById('is-veg-toggle');
     const comboDataStorage = document.getElementById('combo-data-storage');
-    const returnPolicyType = document.getElementById('return-policy-type');
-    const returnPolicyDays = document.getElementById('return-policy-days');
-    const returnPolicyCustom = document.getElementById('return-policy-custom');
+    const groupIdInput = document.getElementById('product-group-id');
+    const variantGroupInfo = document.getElementById('variant-group-info');
+    const openComboModalBtn = document.getElementById('open-combo-modal-btn');
+
+    // --- LOCAL STATE ---
+    let searchTags = [];
+    let imageFiles = []; // Array of objects: { file: File|null, url: string, isCover: boolean }
     let currentProductId = null;
 
-    // --- ALL HELPER FUNCTIONS FOR DYNAMIC HTML ---
-    const getVariantOptionHtml = (d={},t='')=>`<div class="variant-option-item flex items-center gap-2 relative pl-6"><i class="fas fa-grip-vertical handle-option cursor-move text-gray-300 absolute top-1/2 -translate-y-1/2 left-0"></i><input type="text" class="form-control variant-option-name" placeholder="Option Name" value="${d.name||''}"><input type="color" class="variant-option-value h-10 w-10 p-1" style="display:${t.toLowerCase()==='color'?'block':'none'}" value="${d.value||'#000000'}"><button type="button" class="remove-btn remove-variant-option-btn">×</button></div>`;
-    const getVariantTypeHtml = (d={})=>`<div class="variant-type-block"><div class="variant-type-header"><i class="fas fa-grip-vertical handle cursor-move text-gray-400 mr-3"></i><span class="font-semibold flex-grow truncate">${d.type||'New Variant Type'}</span><i class="fas fa-chevron-down text-gray-500"></i><button type="button" class="remove-btn remove-variant-type-btn ml-3">×</button></div><div class="variant-type-body" style="display:none;"><div class="grid md:grid-cols-2 gap-4"><div><label class="form-label">Type</label><input type="text" class="form-control variant-type-name" value="${d.type||''}"></div><div><label class="form-label">Options</label><div class="variant-options-container space-y-2">${(d.options||[]).map(o=>getVariantOptionHtml(o,d.type)).join('')}</div><button type="button" class="btn btn-sm btn-secondary mt-2 add-variant-option-btn"><i class="fas fa-plus mr-1"></i>Add Option</button></div></div></div></div>`;
-    const getDescriptionBlockHtml = (d={})=>`<div class="description-block"><div class="description-block-header"><i class="fas fa-grip-vertical handle cursor-move text-gray-400 mr-3"></i><span class="font-semibold flex-grow truncate">${d.title||'New Block'}</span><i class="fas fa-chevron-down text-gray-500"></i><button type="button" class="remove-btn remove-desc-block-btn ml-3">×</button></div><div class="description-block-body" style="display:none;"><label class="form-label">Title</label><input type="text" class="form-control desc-title mb-2" value="${d.title||''}"><label class="form-label">Details</label><textarea class="form-control desc-details" rows="3">${d.details||''}</textarea></div></div>`;
-    const getSpecHighlightBlockHtml = (d={})=>`<div class="spec-highlight-block"><div class="spec-highlight-header"><i class="fas fa-grip-vertical handle cursor-move text-gray-400 mr-3"></i><span class="font-semibold flex-grow truncate">${d.title||'New Highlight'}</span><i class="fas fa-chevron-down text-gray-500"></i><button type="button" class="remove-btn remove-spec-block-btn ml-3">×</button></div><div class="spec-highlight-body" style="display:none;"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="md:col-span-2"><label class="form-label">Icon (SVG)</label><textarea class="form-control spec-block-icon" rows="2">${d.icon||''}</textarea></div><div><label class="form-label">Category</label><input type="text" class="form-control spec-block-category" value="${d.category||''}"></div><div class="md:col-span-2"><label class="form-label">Title</label><input type="text" class="form-control spec-block-title" value="${d.title||''}"></div><div class="md:col-span-2"><label class="form-label">Subtitle</label><input type="text" class="form-control spec-block-subtitle" value="${d.subtitle||''}"></div></div></div></div>`;
+    // --- 1. IMAGE MANAGER LOGIC (Star & Drag) ---
     
-    // --- MAIN FUNCTIONS ---
-    function initializeForm() {
-        const productToEdit = window.editingProductData;
-        const catSelector = form.querySelector('#product-category-selector');
-        catSelector.innerHTML = '<option value="">Select Category</option>';
-        (window.allCategoriesCache || []).forEach(c => { catSelector.innerHTML += `<option value="${c}">${c}</option>`; });
-
-        if (productToEdit) {
-            formTitle.textContent = 'Edit Product';
-            currentProductId = productToEdit.id;
-            form.querySelector('#product-edit-index').value = productToEdit.originalIndex;
-            
-            Object.keys(productToEdit).forEach(key => {
-                const input = form.querySelector(`[data-key="${key}"]`);
-                if (input && typeof productToEdit[key] !== 'object') {
-                     input.value = productToEdit[key];
-                }
-            });
-            
-            const policy = productToEdit.returnPolicy;
-            if (policy && policy.type) {
-                returnPolicyType.value = policy.type;
-                if (policy.type === 'days') returnPolicyDays.value = policy.value;
-                if (policy.type === 'custom') returnPolicyCustom.value = policy.value;
-            }
-            handleReturnPolicyChange();
-
-            (productToEdit.images || []).forEach(url => renderImagePreview(url));
-            (productToEdit.variants || []).forEach(d => document.getElementById('variants-container').insertAdjacentHTML('beforeend', getVariantTypeHtml(d)));
-            (productToEdit.description || []).forEach(d => document.getElementById('description-blocks-container').insertAdjacentHTML('beforeend', getDescriptionBlockHtml(d)));
-            if (productToEdit.specHighlights) {
-                form.querySelector('#spec-score-input').value = productToEdit.specHighlights.specScore || '';
-                form.querySelector('#spec-tag-input').value = productToEdit.specHighlights.specTag || '';
-                (productToEdit.specHighlights.blocks || []).forEach(d => document.getElementById('spec-blocks-list').insertAdjacentHTML('beforeend', getSpecHighlightBlockHtml(d)));
-            }
-            if (productToEdit.combos) comboDataStorage.value = JSON.stringify(productToEdit.combos);
-            if (productToEdit.similarProductIds) form.dataset.tempSimilarIds = JSON.stringify(productToEdit.similarProductIds);
-        
+    function renderImages() {
+        imageGrid.innerHTML = '';
+        if (imageFiles.length > 0) {
+            uploadTrigger.classList.add('hidden');
         } else {
-            formTitle.textContent = 'Add New Product';
-            const newSku = `RAMA-${Date.now().toString().slice(-6)}`;
-            form.querySelector('[data-key="sku"]').value = newSku;
+            uploadTrigger.classList.remove('hidden');
         }
-        
-        updateSimilarProductsSelector('all');
-        window.editingProductData = null;
+
+        imageFiles.forEach((imgObj, index) => {
+            const card = document.createElement('div');
+            card.className = `image-card ${imgObj.isCover ? 'is-cover' : ''}`;
+            card.draggable = true;
+            card.dataset.index = index;
+            card.innerHTML = `
+                <img src="${imgObj.url}" loading="lazy" alt="Product Image ${index + 1}">
+                <div class="cover-badge">COVER</div>
+                <button type="button" class="img-action-btn star-img-btn" title="Set as Cover">
+                    <i class="${imgObj.isCover ? 'fas' : 'far'} fa-star"></i>
+                </button>
+                <button type="button" class="img-action-btn delete-img-btn" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            imageGrid.appendChild(card);
+        });
+
+        // Click handlers
+        imageGrid.querySelectorAll('.delete-img-btn').forEach((btn, index) => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                imageFiles.splice(index, 1);
+                if (imageFiles.length > 0 && !imageFiles.some(img => img.isCover)) {
+                    imageFiles[0].isCover = true;
+                }
+                renderImages();
+                markUnsaved();
+            };
+        });
+
+        imageGrid.querySelectorAll('.star-img-btn').forEach((btn, index) => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                imageFiles.forEach(i => i.isCover = false);
+                imageFiles[index].isCover = true;
+                renderImages();
+                markUnsaved();
+            };
+        });
     }
 
-    async function saveProduct() {
-        if (!form.reportValidity()) return window.showToast('Validation Error', 'Please fill all required fields.', 'error');
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
-        try {
-            const itemData = {};
-            form.querySelectorAll('[data-key]').forEach(el => {
-                if (el.type === 'number') itemData[el.dataset.key] = Number(el.value) || null;
-                else itemData[el.dataset.key] = el.value || null;
-            });
-            
-            const index = form.querySelector('#product-edit-index').value;
-
-            if (index && window.allProductsCache[index] && window.allProductsCache[index].vendorId) {
-                itemData.vendorId = window.allProductsCache[index].vendorId;
-            } else {
-                itemData.vendorId = 'admin';
+    // SortableJS Drag & Drop
+    if (typeof Sortable !== 'undefined') {
+        new Sortable(imageGrid, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: (evt) => {
+                const item = imageFiles.splice(evt.oldIndex, 1)[0];
+                imageFiles.splice(evt.newIndex, 0, item);
+                renderImages();
+                markUnsaved();
             }
+        });
+    } else {
+        console.warn("Sortable.js library is missing. Drag & Drop for images will not work.");
+    }
 
-            const policyType = returnPolicyType.value;
-            let policyValue = null;
-            if (policyType === 'days') policyValue = returnPolicyDays.value;
-            else if (policyType === 'custom') policyValue = returnPolicyCustom.value;
-            itemData.returnPolicy = { type: policyType, value: policyValue };
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const isFirst = imageFiles.length === 0;
+                imageFiles.push({
+                    file: file,
+                    url: e.target.result,
+                    isCover: isFirst && !imageFiles.some(img => img.isCover)
+                });
+                renderImages();
+                markUnsaved();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
-            const uploadedImages = await Promise.all(
-                Array.from(imagePreviewContainer.querySelectorAll('img'))
-                .map(img => img._file ? window.uploadToImgBB(img._file) : Promise.resolve(img.src))
-            );
-            itemData.images = uploadedImages.filter(Boolean);
-            
-            itemData.similarProductIds = Array.from(form.querySelector('#similar-products-selector').selectedOptions).map(o=>o.value);
-            itemData.variants = Array.from(form.querySelectorAll('.variant-type-block')).map(b=>({type:b.querySelector('.variant-type-name').value,options:Array.from(b.querySelectorAll('.variant-option-item')).map(o=>({name:o.querySelector('.variant-option-name').value,value:o.querySelector('.variant-option-value').value}))}));
-            itemData.description = Array.from(form.querySelectorAll('.description-block')).map(b=>({title:b.querySelector('.desc-title').value,details:b.querySelector('.desc-details').value}));
-            itemData.specHighlights = {specScore:form.querySelector('#spec-score-input').value,specTag:form.querySelector('#spec-tag-input').value,blocks:Array.from(form.querySelectorAll('.spec-highlight-block')).map(b=>({icon:b.querySelector('.spec-block-icon').value,category:b.querySelector('.spec-block-category').value,title:b.querySelector('.spec-block-title').value,subtitle:b.querySelector('.spec-block-subtitle').value}))};
-            if(comboDataStorage.value) itemData.combos = JSON.parse(comboDataStorage.value);
+    // Image Upload Triggers
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFiles(e.target.files);
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+    dropZone.ondragleave = (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); };
+    dropZone.ondrop = (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    };
 
-            const listRef = db.ref(`${DB_BASE_PATH}/products`);
-            let list = (await listRef.get()).val() || [];
-            
-            if (index) {
-                itemData.id = list[index].id;
-                list[index] = itemData;
-            } else {
-                itemData.id = `prod-${Date.now()}`;
-                list.push(itemData);
+
+    // --- 2. TAGS SYSTEM ---
+    function renderTags() {
+        tagsContainer.querySelectorAll('.tag-pill').forEach(p => p.remove());
+        searchTags.forEach((tag, index) => {
+            const pill = document.createElement('span');
+            pill.className = 'tag-pill';
+            pill.innerHTML = `${tag} <span class="remove-tag" data-index="${index}">×</span>`;
+            tagsContainer.insertBefore(pill, tagsInput);
+        });
+    }
+    tagsInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const val = tagsInput.value.trim().toLowerCase();
+            if (val && !searchTags.includes(val)) {
+                searchTags.push(val);
+                renderTags();
+                tagsInput.value = '';
+                markUnsaved();
             }
-            
-            await listRef.set(list);
-            window.showToast('Success', 'Product saved successfully!', 'success');
-            document.querySelector('.sidebar-link[data-page="sections/products.html"]').click();
+        }
+    });
+    tagsContainer.addEventListener('click', e => {
+        if(e.target.classList.contains('remove-tag')) {
+            searchTags.splice(e.target.dataset.index, 1);
+            renderTags();
+            markUnsaved();
+        }
+    });
+
+    // --- 3. DYNAMIC LOCATIONS & CATEGORIES ---
+    function renderLocationCheckboxes(availableLocs = []) {
+        locationsContainer.innerHTML = '';
+        const allLocs = window.allLocationsCache || [];
+        const locList = Array.isArray(allLocs) ? allLocs : Object.values(allLocs);
         
+        if(locList.length === 0) {
+            locationsContainer.innerHTML = '<p class="text-sm text-gray-400 p-2">No locations. Add new.</p>';
+            return;
+        }
+        locList.forEach(loc => {
+            const name = typeof loc === 'string' ? loc : loc.name;
+            const checked = availableLocs.includes(name) ? 'checked' : '';
+            locationsContainer.insertAdjacentHTML('beforeend', `
+                <label class="location-checkbox-item"><input type="checkbox" class="location-cb" value="${name}" ${checked}> ${name}</label>
+            `);
+        });
+    }
+    selectAllLocBtn.onchange = e => {
+        locationsContainer.querySelectorAll('.location-cb').forEach(cb => cb.checked = e.target.checked);
+        markUnsaved();
+    };
+
+    function handleCategoryChange() {
+        const cat = categorySelect.value;
+        const catLower = cat.toLowerCase();
+        document.getElementById('grocery-fields').classList.add('hidden');
+        document.getElementById('tech-fields').classList.add('hidden');
+        if (catLower.match(/grocery|food|fruit|veg/)) document.getElementById('grocery-fields').classList.remove('hidden');
+        if (catLower.match(/elect|mobile|tech|gadget/)) document.getElementById('tech-fields').classList.remove('hidden');
+
+        subcategorySelect.innerHTML = '<option value="">Select Sub-Category</option>';
+        subcategorySelect.disabled = true;
+        const catKey = cat.replace(/[.#$/\[\]]/g, "_");
+        if (cat && window.allSubCategoriesCache && window.allSubCategoriesCache[catKey]) {
+            const subs = window.allSubCategoriesCache[catKey];
+            (Array.isArray(subs) ? subs : Object.values(subs)).forEach(s => subcategorySelect.add(new Option(s, s)));
+            subcategorySelect.disabled = false;
+        }
+    }
+    categorySelect.onchange = () => { handleCategoryChange(); markUnsaved(); };
+
+    // --- 4. FORM STATE & UNSAVED CHANGES ---
+    function markUnsaved() {
+        unsavedIndicator.classList.remove('hidden');
+    }
+    form.oninput = markUnsaved; 
+
+    // --- 5. INIT & SAVE LOGIC ---
+    function initializeForm() {
+        const productToEdit = window.editingProductData; 
+        
+        categorySelect.innerHTML = '<option value="">Select Category</option>';
+        (window.allCategoriesCache || []).forEach(c => categorySelect.add(new Option(c, c)));
+
+        renderLocationCheckboxes(productToEdit?.availableLocations || []);
+
+        if (productToEdit) {
+            // --- EDIT MODE ---
+            formTitle.innerHTML = `Edit Product <span class="text-base font-normal text-gray-500 ml-2">SKU: ${productToEdit.sku || 'N/A'}</span>`;
+            currentProductId = productToEdit.id;
+            document.getElementById('product-edit-index').value = productToEdit.originalIndex;
+
+            form.querySelectorAll('[data-key]').forEach(input => {
+                const key = input.dataset.key;
+                if (productToEdit[key] !== undefined) {
+                    input.value = productToEdit[key];
+                }
+            });
+
+            if (productToEdit.groupId) {
+                variantGroupInfo.style.display = 'flex';
+            }
+
+            // Media (Images)
+            imageFiles = [];
+            if (productToEdit.images && productToEdit.images.length > 0) {
+                imageFiles = productToEdit.images.map((url, idx) => ({
+                    file: null, url: url, isCover: idx === 0 
+                }));
+            }
+            renderImages();
+
+            // --- YAHAN FIX KIYA GAYA (LOAD TAGS) ---
+            // Ab save kiye hue tags ko load karega
+            searchTags = productToEdit.searchTags || [];
+            renderTags();
+            // ------------------------------------
+
+            // Toggles
+            if(productToEdit.isVeg !== undefined) isVegToggle.checked = productToEdit.isVeg;
+            
+            // Combos
+            if(productToEdit.combos) comboDataStorage.value = JSON.stringify(productToEdit.combos);
+
+            // Category Logic
+            handleCategoryChange(); 
+            if(productToEdit.subcategory) {
+                setTimeout(() => subcategorySelect.value = productToEdit.subcategory, 50);
+            }
+
+        } else {
+            // --- ADD NEW MODE ---
+            formTitle.textContent = 'Add New Product';
+            form.querySelector('[data-key="sku"]').value = `RAMA-${Date.now().toString().slice(-6)}`;
+            renderLocationCheckboxes([]);
+            imageFiles = [];
+            renderImages();
+            searchTags = []; // Ensure tags are empty for new product
+            renderTags(); // Ensure UI is clear
+        }
+        
+        window.editingProductData = null;
+        unsavedIndicator.classList.add('hidden');
+    }
+
+    /**
+     * SAVE PRODUCT LOGIC (Main Function)
+     */
+    async function saveProduct(createVariantMode = false) {
+        if (!form.reportValidity()) {
+            window.showToast('Validation Error', 'Please fill all required fields.', 'error');
+            return;
+        }
+        
+        const btn = createVariantMode ? saveVariantBtn : saveBtn;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
+        try {
+            // 1. Gather all data from [data-key]
+            const data = {};
+            form.querySelectorAll('[data-key]').forEach(el => {
+                data[el.dataset.key] = el.type === 'number' ? (Number(el.value) || 0) : el.value;
+            });
+
+            // 2. Gather complex data
+            data.searchTags = searchTags; // Save tags
+            data.availableLocations = Array.from(locationsContainer.querySelectorAll('.location-cb:checked')).map(cb => cb.value);
+            data.isVeg = isVegToggle.checked;
+            if(comboDataStorage.value) data.combos = JSON.parse(comboDataStorage.value);
+
+            // 3. Variant Grouping Logic
+            const existingGroupId = groupIdInput.value;
+            if (createVariantMode) {
+                data.groupId = existingGroupId || `grp_${Date.now()}`;
+            }
+
+            // 4. Image Upload Logic
+            const sortedImages = [...imageFiles].sort((a, b) => (b.isCover ? 1 : 0) - (a.isCover ? 1 : 0));
+            const uploadedUrls = await Promise.all(sortedImages.map(async (imgObj) => {
+                if (imgObj.file) {
+                    return await window.uploadToImgBB(imgObj.file);
+                }
+                return imgObj.url;
+            }));
+            data.images = uploadedUrls.filter(Boolean); 
+
+            // 5. Save to Firebase
+            const index = document.getElementById('product-edit-index').value;
+            const listRef = db.ref('ramazone/products');
+            let list = (await listRef.get()).val() || [];
+            if (!Array.isArray(list)) list = Object.values(list); 
+
+            if (index && !createVariantMode) {
+                // --- UPDATE EXISTING PRODUCT ---
+                data.id = list[index].id; 
+                list[index] = { ...list[index], ...data }; 
+            } else {
+                // --- ADD NEW PRODUCT (ya NEW VARIANT) ---
+                data.id = `prod-${Date.now()}`;
+                data.createdAt = new Date().toISOString();
+                if (createVariantMode) {
+                    data.sku = `RAMA-${Date.now().toString().slice(-6)}`;
+                }
+                list.push(data);
+            }
+
+            await listRef.set(list);
+            
+            // 6. Post-Save Actions
+            if (createVariantMode) {
+                // --- VARIANT CLONE MODE ---
+                window.showToast('Success', 'Product Saved! Cloning data for new variant...', 'success');
+                
+                const clonedData = { ...data }; 
+                clonedData.name += " (Variant)";
+                clonedData.id = null; 
+                clonedData.sku = null; 
+                clonedData.variantValue = ""; 
+                clonedData.quantity = 0; 
+                clonedData.images = []; 
+                clonedData.originalIndex = null;
+                // Tags (searchTags) will be cloned automatically as part of 'data'
+                
+                window.editingProductData = clonedData;
+                initializeForm(); // Form ko clone kiye hue data se bharo
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.showToast('Ready', 'Edit details for the new variant.', 'info');
+            } else {
+                // --- NORMAL SAVE MODE ---
+                window.showToast('Success', 'Product Saved Successfully!', 'success');
+                document.querySelector('.sidebar-link[data-page="sections/products.html"]').click();
+            }
+
         } catch (err) {
+            console.error(err);
             window.showToast('Error', `Save failed: ${err.message}`, 'error');
         } finally {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+            saveVariantBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Save Product';
+            saveVariantBtn.innerHTML = '<i class="fas fa-copy mr-2"></i> Save & Create Variant';
         }
     }
 
-    function handleReturnPolicyChange() {
-        const selectedType = returnPolicyType.value;
-        returnPolicyDays.classList.toggle('hidden', selectedType !== 'days');
-        returnPolicyCustom.classList.toggle('hidden', selectedType !== 'custom');
-    }
+    // --- 6. EVENT LISTENERS ---
+    saveBtn.onclick = () => saveProduct(false);
+    saveVariantBtn.onclick = () => saveProduct(true);
+    backBtn.onclick = () => document.querySelector('.sidebar-link[data-page="sections/products.html"]').click();
 
-    function renderImagePreview(src, file=null) {
-        const item = document.createElement('div');
-        item.className = 'multi-image-preview-item';
-        const img = document.createElement('img');
-        img.src = src;
-        if (file) img._file = file;
-        item.innerHTML = `<span class="remove-img-btn">×</span>`;
-        item.prepend(img);
-        imagePreviewContainer.appendChild(item);
-    }
-
-    function updateSimilarProductsSelector(filterType) {
-        const selector = form.querySelector('#similar-products-selector');
-        const currentCategory = form.querySelector('#product-category-selector').value;
-        const tempIds = JSON.parse(form.dataset.tempSimilarIds || '[]');
-        selector.innerHTML = '';
-        let list = (filterType === 'same_category' && currentCategory)
-            ? (window.allProductsCache || []).filter(p => p.category === currentCategory)
-            : (window.allProductsCache || []);
-        
-        list.filter(p => p && p.id !== currentProductId).forEach(p => {
-            const opt = new Option(`${p.name} (${p.vendorId || 'N/A'})`, p.id);
-            if (tempIds.includes(p.id)) opt.selected = true;
-            selector.add(opt);
-        });
-    }
+    // Modal/Helper Buttons
+    document.getElementById('create-category-btn').onclick = () => window.openCategoryModal();
+    document.getElementById('create-subcategory-btn').onclick = () => window.openSubCategoryModal(categorySelect.value);
+    document.getElementById('add-new-location-btn').onclick = () => window.openLocationModal();
     
-    // --- ALL EVENT LISTENERS ---
-    backBtn.addEventListener('click', () => document.querySelector('.sidebar-link[data-page="sections/products.html"]').click());
-    saveBtn.addEventListener('click', saveProduct);
-    returnPolicyType.addEventListener('change', handleReturnPolicyChange);
-    new Sortable(imagePreviewContainer, { animation: 150, ghostClass: 'sortable-ghost' });
-    
-    document.getElementById('multi-image-upload-input').addEventListener('change', e => {
-        for (const file of e.target.files) {
-            const reader = new FileReader();
-            reader.onload = ev => renderImagePreview(ev.target.result, file);
-            reader.readAsDataURL(file);
-        }
-    });
-
-    form.addEventListener('click', e => {
-        if(e.target.closest('.remove-img-btn')) e.target.closest('.multi-image-preview-item').remove();
-        if(e.target.closest('#add-variant-type-btn')) document.getElementById('variants-container').insertAdjacentHTML('beforeend',getVariantTypeHtml());
-        if(e.target.closest('.add-variant-option-btn')) e.target.closest('.variant-type-body').querySelector('.variant-options-container').insertAdjacentHTML('beforeend', getVariantOptionHtml());
-        if(e.target.closest('.remove-variant-type-btn')) e.target.closest('.variant-type-block').remove();
-        if(e.target.closest('.remove-variant-option-btn')) e.target.closest('.variant-option-item').remove();
-        if(e.target.closest('#add-desc-block-btn')) document.getElementById('description-blocks-container').insertAdjacentHTML('beforeend', getDescriptionBlockHtml());
-        if(e.target.closest('.remove-desc-block-btn')) e.target.closest('.description-block').remove();
-        if(e.target.closest('#add-spec-block-btn')) document.getElementById('spec-blocks-list').insertAdjacentHTML('beforeend', getSpecHighlightBlockHtml());
-        if(e.target.closest('.remove-spec-block-btn')) e.target.closest('.spec-highlight-block').remove();
-        const header = e.target.closest('.variant-type-header, .description-block-header, .spec-highlight-header');
-        if(header && !e.target.closest('.remove-btn')) {
-            const body = header.nextElementSibling;
-            body.style.display = body.style.display === 'none' ? 'block' : 'none';
-            header.querySelector('.fa-chevron-down').classList.toggle('rotate-180');
-        }
-    });
-
-    // --- === LOGIC FIX STARTS HERE === ---
-    openComboModalBtn.addEventListener('click', () => {
+    openComboModalBtn.onclick = () => {
         const modal = document.getElementById('universalModal');
-        const modalTitle = document.getElementById('modalTitle');
         const modalBody = document.getElementById('modalBody');
         const modalSaveBtn = document.getElementById('modalSaveBtn');
-        const existingData = comboDataStorage.value ? JSON.parse(comboDataStorage.value) : {};
+        document.getElementById('modalTitle').textContent = 'Manage Quantity Packs';
+        
+        const existing = comboDataStorage.value ? JSON.parse(comboDataStorage.value) : { quantityPacks: [] };
+        let packsHtml = (existing.quantityPacks || []).map(p => 
+            `<div class="flex gap-2 mb-2 item"><input class="form-control w-1/2" value="${p.name || ''}" placeholder="Pack Name"><input type="number" class="form-control w-1/3" value="${p.price || ''}" placeholder="Price"><button type="button" class="text-red-500 px-2 remove-pack">×</button></div>`
+        ).join('');
 
-        const getComboHtml = (data={}) => {
-            let packsHtml = (data.quantityPacks||[]).map(p=>`<div class="combo-item"><input type="text" class="form-control" value="${p.name || ''}" placeholder="e.g., 2 Piece Pack"><input type="number" class="form-control" value="${p.price || ''}" placeholder="Price"><button type="button" class="remove-btn remove-quantity-pack-btn">×</button></div>`).join('');
-            const opts = (window.allProductsCache || []).filter(p=> p && p.id !== currentProductId).map(p=>`<option value="${p.id}" ${data.productBundle&&data.productBundle.linkedProductId===p.id?'selected':''}>${p.name}</option>`).join('');
-            return `<div>
-                <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <h5 class="font-semibold">Quantity Packs</h5>
-                        <button type="button" id="add-quantity-pack-btn" class="btn btn-sm btn-secondary"><i class="fas fa-plus mr-1"></i>Add Pack</button>
-                    </div>
-                    <p class="text-xs text-gray-500 mb-2">Max 5 packs.</p>
-                    <div id="quantity-packs-container" class="space-y-2">${packsHtml}</div>
-                </div>
-                <div class="border-t pt-4 mt-4">
-                    <h5 class="font-semibold mb-2">Product Bundle</h5>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="form-label">Select Product</label><select id="bundle-product-selector" class="form-control"><option value="">None</option>${opts}</select></div>
-                        <div><label class="form-label">Bundle Price</label><input type="number" id="bundle-price-input" class="form-control" value="${data.productBundle ? data.productBundle.bundlePrice : ''}"></div>
-                    </div>
-                </div>
-            </div>`;
+        modalBody.innerHTML = `
+            <p class="text-xs text-gray-500 mb-2">Example: '1 Kg Pack', 'Box of 6'.</p>
+            <div id="pack-list">${packsHtml}</div>
+            <button type="button" id="add-pack-ui" class="text-blue-600 text-sm font-bold mt-2">+ Add Pack</button>
+        `;
+        modalBody.onclick = (e) => {
+            if(e.target.id === 'add-pack-ui') document.getElementById('pack-list').insertAdjacentHTML('beforeend', `<div class="flex gap-2 mb-2 item"><input class="form-control w-1/2" placeholder="e.g. 500g"><input type="number" class="form-control w-1/3" placeholder="Price"><button type="button" class="text-red-500 px-2 remove-pack">×</button></div>`);
+            if(e.target.classList.contains('remove-pack')) e.target.closest('.item').remove();
         };
-
-        modalTitle.textContent = 'Manage Combo Offers';
-        modalBody.innerHTML = getComboHtml(existingData);
-        modalSaveBtn.style.display = 'inline-flex';
-        modalSaveBtn.textContent = 'Save Combos';
-        document.getElementById('modalFooter').style.display = 'flex';
-
-
-        const modalClickHandler = (e) => {
-            if (e.target.id === 'add-quantity-pack-btn') {
-                const container = modalBody.querySelector('#quantity-packs-container');
-                if (container.children.length < 5) {
-                    container.insertAdjacentHTML('beforeend', `<div class="combo-item"><input type="text" class="form-control" placeholder="e.g., 2 Piece Pack"><input type="number" class="form-control" placeholder="Price"><button type="button" class="remove-btn remove-quantity-pack-btn">×</button></div>`);
-                } else {
-                    window.showToast('Limit Reached', 'You can only add up to 5 quantity packs.', 'error');
-                }
-            }
-            if (e.target.closest('.remove-quantity-pack-btn')) {
-                e.target.closest('.combo-item').remove();
-            }
-        };
-
-        modalBody.addEventListener('click', modalClickHandler);
-
         modalSaveBtn.onclick = () => {
-            const quantityPacks = Array.from(modalBody.querySelectorAll('#quantity-packs-container .combo-item'))
-                .map(item => ({name: item.querySelector('input[type="text"]').value, price: Number(item.querySelector('input[type="number"]').value)}))
-                .filter(p => p.name && p.price > 0);
-            
-            const linkedProductId = modalBody.querySelector('#bundle-product-selector').value;
-            const bundlePrice = modalBody.querySelector('#bundle-price-input').value;
-            let productBundle = (linkedProductId && bundlePrice) ? {linkedProductId, bundlePrice: Number(bundlePrice)} : null;
-            
-            comboDataStorage.value = JSON.stringify({ quantityPacks, productBundle });
-            window.showToast('Combos Ready', 'Combo data will be saved with the product.', 'info');
-            
+            const packs = Array.from(modalBody.querySelectorAll('.item')).map(row => ({
+                name: row.children[0].value, price: Number(row.children[1].value)
+            })).filter(p => p.name && p.price);
+            comboDataStorage.value = JSON.stringify({ quantityPacks: packs });
+            window.showToast('Saved', 'Combos updated.', 'success');
             document.getElementById('modalCloseBtn').click();
-            modalBody.removeEventListener('click', modalClickHandler);
-            modalSaveBtn.onclick = null; // Purana onclick handler saaf karein
         };
-
         modal.classList.add('active');
-    });
-    // --- === LOGIC FIX ENDS HERE === ---
+    };
 
-    // --- RUN ON LOAD ---
+    // --- 7. RUN ON LOAD ---
     initializeForm();
+
 })();
 </script>
-
