@@ -304,7 +304,7 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
     pointer-events: auto;
 }
 
-/* --- LOCATION SELECTOR MODAL STYLES (ADDED) --- */
+/* --- LOCATION SELECTOR MODAL STYLES (FIXED for 3-Tier) --- */
 #location-overlay {
     position: fixed;
     top: 0;
@@ -312,7 +312,7 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 99; /* Just below side-menu (200) but above header (50) */
+    z-index: 99;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -349,6 +349,7 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0; /* Header ko shrink hone se rokein */
 }
 .location-panel-header h3 {
     font-size: 1.1rem;
@@ -366,19 +367,95 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
     padding: 0 0.5rem;
 }
 
-.location-search-box {
-    padding: 1rem;
+/* NEW: Styles for the 3-Tier Body */
+.location-panel-body {
+    /* This body will contain all tiers and will scroll */
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 0; /* Padding hata di gayi, ab tier headers mein hai */
+    display: flex;
+    flex-direction: column;
+}
+
+.loc-tier-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    padding: 0.75rem 1.25rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+}
+
+.loc-tier-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-right: 0.75rem;
+}
+
+.loc-tab-container {
+    display: flex;
+    flex-wrap: wrap; /* <-- YAHAN BADLAAV KIYA GAYA HAI (overflow-x se wrap) */
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+
+.loc-tab-btn {
+    flex-shrink: 0;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-white);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap; /* Yah bhi add kar diya hai */
+}
+
+.loc-tab-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.loc-tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.loc-tab-placeholder {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    padding: 0 0.25rem; /* Padding adjusted */
+}
+
+/* TIER 3: Area Search & List */
+#loc-area-tier .location-search-box {
+    padding: 1rem 1.25rem; /* Match other paddings */
     border-bottom: 1px solid #f3f4f6;
     position: relative;
 }
-.location-search-box i {
+#loc-area-tier .location-search-box i {
     position: absolute;
     left: 1.75rem;
     top: 50%;
     transform: translateY(-50%);
     color: #9ca3af;
 }
-#location-search-input {
+
+#loc-area-search-input {
     width: 100%;
     padding: 0.75rem 1rem 0.75rem 2.5rem;
     border: 1px solid #d1d5db;
@@ -386,16 +463,18 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
     font-size: 0.95rem;
     outline: none;
 }
-#location-search-input:focus {
+#loc-area-search-input:focus {
     border-color: var(--primary-color);
 }
 
-#location-list-container {
+#loc-area-list-container {
+    /* This container will be the only scrolling part inside its tier */
     overflow-y: auto;
     flex-grow: 1;
-    padding: 0.5rem 0;
+    padding: 0;
 }
 
+/* Re-using .location-item styles for the final area list */
 .location-item {
     padding: 1rem 1.25rem;
     border-bottom: 1px solid #f3f4f6;
@@ -429,3 +508,10 @@ body.search-active header { filter: none; pointer-events: auto; user-select: aut
 .location-item.active .location-item-check {
     display: block;
 }
+
+.location-loading {
+    padding: 1rem 1.25rem;
+    color: var(--text-light);
+}
+
+
