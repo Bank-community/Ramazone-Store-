@@ -95,14 +95,50 @@
             <h3>Select Location</h3>
             <button id="close-location-btn">&times;</button>
         </div>
-        <div class="location-search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="location-search-input" placeholder="Search area...">
+        
+        <!-- NEW 3-TIER BODY (yahaan se badla hai) -->
+        <div class="location-panel-body">
+            
+            <!-- TIER 1: STATES -->
+            <div class="loc-tier-header">
+                <span class="loc-tier-number">1</span> Select State
+            </div>
+            <div id="loc-state-tabs" class="loc-tab-container">
+                <!-- State buttons will be injected by main.js -->
+                <div class="location-loading">Loading states...</div>
+            </div>
+
+            <!-- TIER 2: DISTRICTS -->
+            <div id="loc-district-tier" class="hidden">
+                <div class="loc-tier-header">
+                    <span class="loc-tier-number">2</span> Select District
+                </div>
+                <div id="loc-district-tabs" class="loc-tab-container">
+                    <!-- District buttons will be injected by main.js -->
+                    <p class="loc-tab-placeholder">Please select a state first.</p>
+                </div>
+            </div>
+
+            <!-- TIER 3: AREAS (Search + List) -->
+            <div id="loc-area-tier" class="hidden">
+                <div class="loc-tier-header">
+                    <span class="loc-tier-number">3</span> Select Area
+                </div>
+                <!-- New Search Box for Areas -->
+                <div class="location-search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="loc-area-search-input" placeholder="Search area in selected district...">
+                </div>
+                <!-- New Area List -->
+                <div id="loc-area-list-container">
+                    <!-- Area items will be injected by main.js -->
+                    <p class="loc-tab-placeholder">Please select a district first.</p>
+                </div>
+            </div>
+
         </div>
-        <div id="location-list-container">
-            <!-- Locations will be injected here via JS -->
-            <div class="location-loading">Loading locations...</div>
-        </div>
+        <!-- END NEW 3-TIER BODY (yahaan tak badla hai) -->
+
     </div>
     <!-- -------------------------------------------- -->
 
