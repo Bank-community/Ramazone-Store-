@@ -1,7 +1,7 @@
 // --- GLOBAL STATE ---
 let mediaItems = [], currentMediaIndex = 0, currentProductData = null, currentProductId = null;
 let allProductsCache = [];
-let selectedVariants = {};
+let selectedVariants = {}; // Ab yeh sirf current product ke variant ko store karega
 let selectedPack = null; 
 let appThemeColor = '#4F46E5';
 let database;
@@ -17,15 +17,15 @@ let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, a
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
 
+// variantsMatch ab zaroori nahi hai kyunki har variant ek alag product ID hai
 const variantsMatch = (v1, v2) => {
     const keys1 = Object.keys(v1 || {});
     const keys2 = Object.keys(v2 || {});
-    if (keys1.length !== keys2.length) return false;
-    for (let key of keys1) {
-        if (v1[key] !== v2[key]) return false;
-    }
-    return true;
+    if (keys1.length === 0 && keys2.length === 0) return true;
+    if (keys1.length !== 1 || keys2.length !== 1) return false; 
+    return v1[keys1[0]] === v2[keys2[0]];
 };
+
 
 const packsMatch = (p1, p2) => {
     if (!p1 && !p2) return true;
@@ -35,7 +35,8 @@ const packsMatch = (p1, p2) => {
 
 const getCartItem = (productId, variants, pack) => {
     const cart = getCart();
-    return cart.find(item => !item.isBundle && item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
+    // Har product variant ki ab apni unique ID hai, isliye hum sirf ID aur Pack se match karenge
+    return cart.find(item => !item.isBundle && item.id === productId && packsMatch(item.pack, pack));
 };
 
 function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
@@ -43,7 +44,7 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
     const product = allProductsCache.find(p => p && p.id === productId);
     if (!product) return;
 
-    let existingItemIndex = cart.findIndex(item => !item.isBundle && item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
+    let existingItemIndex = cart.findIndex(item => !item.isBundle && item.id === productId && packsMatch(item.pack, pack));
 
     if (existingItemIndex > -1) {
         cart[existingItemIndex].quantity += quantity;
@@ -95,7 +96,7 @@ function addBundleToCart(productIds, bundlePrice) {
 
 function updateCartItemQuantity(productId, newQuantity, variants, pack) {
     let cart = getCart();
-    const itemIndex = cart.findIndex(item => item.id === productId && variantsMatch(item.variants, variants) && packsMatch(item.pack, pack));
+    const itemIndex = cart.findIndex(item => item.id === productId && packsMatch(item.pack, pack));
     if (itemIndex > -1) {
         if (newQuantity > 0) {
             cart[itemIndex].quantity = newQuantity;
@@ -208,7 +209,8 @@ async function fetchAllData() {
         const data = snapshot.val();
         appThemeColor = data.config?.themeColor || '#4F46E5';
         document.documentElement.style.setProperty('--primary-color', appThemeColor);
-        const allProds = Object.values(data.products || {});
+        // SCRIPT_ERROR_FIX: null products ko filter karna
+        const allProds = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
         allProductsCache = allProds.filter(p => p && p.isVisible !== false);
     }
 }
@@ -230,6 +232,7 @@ function fetchProductData() {
 
 async function loadPageSectionsAndData(data) {
     try {
+        // Yahi 3 files load hongi
         const [mediaHtml, infoHtml, similarHtml] = await Promise.all([
             fetch('product-details-sections/media-gallery.html').then(res => res.text()),
             fetch('product-details-sections/product-main-info.html').then(res => res.text()),
@@ -238,7 +241,10 @@ async function loadPageSectionsAndData(data) {
         document.getElementById('media-gallery-container').innerHTML = mediaHtml;
         document.getElementById('product-main-info-container').innerHTML = infoHtml;
         document.getElementById('similar-products-container-wrapper').innerHTML = similarHtml;
+        
+        // Saare data ko populate karne waala function
         populateDataAndAttachListeners(data);
+        
         document.getElementById('loading-indicator').style.display = 'none';
         document.getElementById('product-content').style.display = 'block';
     } catch (error) {
@@ -252,13 +258,19 @@ function populateDataAndAttachListeners(data) {
     document.querySelector('meta[property="og:title"]').setAttribute("content", data.name);
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
+    
+    // BADLAAV: Veg/Non-Veg function call HATA diya gaya hai
+    
     slider = document.getElementById('media-slider');
     sliderWrapper = document.getElementById('main-media-wrapper');
     mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
+    
+    // BADLAAV: renderMediaGallery ab video icon bhi dikhayega
     renderMediaGallery();
     showMedia(0);
     setupSliderControls();
     setupImageModal();
+    
     if (data.rating && data.reviewCount) {
         document.getElementById("rating-section").style.display = "flex";
         renderStars(data.rating, document.getElementById("product-rating-stars"));
@@ -268,32 +280,69 @@ function populateDataAndAttachListeners(data) {
         document.getElementById("seller-info").textContent = `Seller by: ${data.sellerName}`;
         document.getElementById("seller-info").style.display = "block";
     }
+
+    // Current product ke variant aur pack ko set karna
+    selectedVariants = (data.variantType && data.variantValue) ? { [data.variantType]: data.variantValue } : {};
+    selectedPack = null; // Hamesha single item se start karein
+    
     updatePriceDisplay();
-    renderProductOptions(data); 
-    setupVariantModal();
+    
+    // BADLAAV: Purana renderProductOptions() ab 4 alag functions mein bant gaya hai
+    renderVariantSelectors(data); // Naya Flipkart-style variant logic
+    renderComboPacks(data);       // Naya Combo pack logic (image + single item remove)
+    renderProductBundles(data);   // Product bundle logic
+    renderTechSpecs(data.techSpecs); // Tech specs logic
+    
+    // Purana variant modal ab use nahi hoga, use hata diya gaya hai
+    // setupVariantModal(); 
     setupBundleModal();
     renderAdvancedHighlights(data.specHighlights);
     renderDescription(data);
     setupActionControls();
+    
+    // BADLAAV: Recently Viewed ko waapas laaya gaya
     updateRecentlyViewed(data.id);
-    loadHandpickedSimilarProducts(data.similarProductIds);
+    
+    // BADLAAV: "You Might Also Like" ab sub-category par based hai
+    loadHandpickedSimilarProducts(data.category, data.subcategory, data.id);
+    
     loadCategoryBasedProducts(data.category);
     loadOtherProducts(data.category);
     updateCartIcon();
     updateStickyActionBar();
+    
     document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
-    document.getElementById('options-container').addEventListener('click', handleOptionsClick);
+    
+    // BADLAAV: Click listener ko ab 2 alag-alag container par lagana hoga
+    document.getElementById('media-gallery-container').addEventListener('click', handleOptionsClick);
+    document.getElementById('product-main-info-container').addEventListener('click', handleOptionsClick);
+    
     setupHeaderScrollEffect();
 }
 
-
+// BADLAAV: handleOptionsClick ab Lays-style variants aur naye combo logic ko handle karega
 function handleOptionsClick(event) {
     const bundleCard = event.target.closest('.product-bundle-card');
     const bundleAddBtn = event.target.closest('.final-bundle-plus-btn[data-bundle="true"]');
+    const comboCard = event.target.closest('.combo-pack-card');
+    const imageVariantBtn = event.target.closest('.image-variant-btn');
 
+    // 1. Image Variant (Lays Packet) Click
+    if (imageVariantBtn) {
+        // Yeh ek `<a>` tag hai, to page reload hoga. Kuch extra karne ki zaroorat nahi.
+        return;
+    }
+    
+    // 2. Text Variant (Size, Weight) Click
+    const textVariantBtn = event.target.closest('.variant-option-btn');
+    if (textVariantBtn) {
+        // Yeh bhi ek `<a>` tag hai, page reload hoga.
+        return;
+    }
+
+    // 3. Bundle "Add" Button Click
     if (bundleAddBtn) {
-        event.preventDefault();
-        event.stopPropagation();
+        event.preventDefault(); event.stopPropagation();
         const bundleCardEl = bundleAddBtn.closest('.product-bundle-card');
         const productIds = bundleCardEl.dataset.productIds.split(',');
         const bundlePrice = bundleCardEl.dataset.price;
@@ -301,81 +350,283 @@ function handleOptionsClick(event) {
         return;
     }
 
+    // 4. Bundle Card Click (Modal Kholne ke liye)
     if (bundleCard) {
         event.preventDefault();
         const productIds = bundleCard.dataset.productIds.split(',');
         const bundlePrice = bundleCard.dataset.price;
         openBundleModal(productIds, bundlePrice);
+        return;
+    }
+    
+    // 5. Combo Pack (2 pack, 3 pack) Click
+    if (comboCard) {
+        const container = comboCard.closest('.combo-pack-grid');
+        const isAlreadySelected = comboCard.classList.contains('selected');
+        
+        container.querySelectorAll('.combo-pack-card').forEach(c => c.classList.remove('selected'));
+
+        if (isAlreadySelected) {
+            // Agar selected card par dobara click kiya, to unselect karo
+            selectedPack = null;
+            updatePriceDisplay(); // Default price par waapas
+        } else {
+            // Naya pack select karo
+            comboCard.classList.add('selected');
+            const selectedValue = comboCard.dataset.value;
+            const selectedPrice = comboCard.dataset.price;
+            selectedPack = { name: selectedValue, price: selectedPrice };
+            updatePriceDisplay(selectedPrice); // Naya pack price
+        }
+        updateStickyActionBar();
+        return;
     }
 }
 
-function renderProductOptions(data) {
-    const container = document.getElementById('options-container');
-    if (!container) return;
+// BADLAAV: renderProductOptions() ko 4 naye functions se replace kiya gaya hai
+
+// NAYA FUNCTION 1: Tech Specs
+function renderTechSpecs(techSpecs) {
+    const container = document.getElementById('tech-specs-container');
+    const section = document.getElementById('tech-specs-section');
+    if (!container || !section) return;
+
+    if (!techSpecs || !Array.isArray(techSpecs) || techSpecs.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
     container.innerHTML = '';
-    selectedVariants = {};
-    selectedPack = null;
+    let hasContent = false;
+    techSpecs.forEach(spec => {
+        if (spec.name && spec.value) {
+            const iconSvg = spec.svg || '<i class="fas fa-microchip" style="font-size: 20px;"></i>';
+            container.innerHTML += `
+                <div class="tech-spec-row">
+                    <div class="tech-spec-icon">
+                        ${iconSvg}
+                    </div>
+                    <div class="tech-spec-details">
+                        <div class="tech-spec-name">${spec.name}</div>
+                        <div class="tech-spec-value">${spec.value}</div>
+                    </div>
+                </div>
+            `;
+            hasContent = true;
+        }
+    });
 
-    if (data.variants && Array.isArray(data.variants)) {
-        data.variants.forEach(variant => {
-            if (variant.options && variant.options.length > 0) {
-                selectedVariants[variant.type] = variant.options[0].name;
-                const variantButtonHTML = createVariantButton(variant);
-                container.insertAdjacentHTML('beforeend', variantButtonHTML);
+    if (hasContent) {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
+}
+
+// NAYA FUNCTION 2: Flipkart-style Variants (Dono tarah ke)
+function renderVariantSelectors(data) {
+    const imageContainer = document.getElementById('image-variant-selectors-container'); // media-gallery.html mein
+    const textContainer = document.getElementById('variant-selectors-container'); // product-main-info.html mein
+    
+    if (!imageContainer || !textContainer) return;
+
+    const groupId = data.groupId;
+    if (!groupId) {
+        imageContainer.innerHTML = ''; textContainer.innerHTML = ''; return;
+    }
+
+    const allVariantProducts = allProductsCache.filter(p => p && p.groupId === groupId);
+    if (allVariantProducts.length <= 1) {
+        imageContainer.innerHTML = ''; textContainer.innerHTML = ''; return;
+    }
+
+    const variantTypes = new Map();
+    allVariantProducts.forEach(p => {
+        if (p.variantType && p.variantValue) {
+            if (!variantTypes.has(p.variantType)) {
+                variantTypes.set(p.variantType, []);
             }
-        });
+            variantTypes.get(p.variantType).push({ product: p, value: p.variantValue });
+        }
+    });
+
+    let imageHtml = '';
+    let textHtml = '';
+    
+    for (const [type, options] of variantTypes.entries()) {
+        let currentProductValue = (data.variantType === type) ? data.variantValue : "N/A";
+        if(data.variantType === type) currentProductValue = data.variantValue;
+        
+        // BADLAAV: Logic ko split karna (Lays screenshot ke hisaab se)
+        if (type.toLowerCase() === 'color') {
+            // --- 1. IMAGE/COLOR VARIANTS (Lays Screenshot logic) ---
+            imageHtml += `<div class="variant-group">`;
+            imageHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
+            imageHtml += `<div class="variant-options-grid">`;
+            
+            options.forEach(opt => {
+                const isSelected = (opt.product.id === data.id);
+                const imgUrl = opt.product.images[0] || 'https://placehold.co/60x60';
+                imageHtml += `
+                    <a href="?id=${opt.product.id}" 
+                       class="image-variant-btn ${isSelected ? 'selected' : ''}" 
+                       title="${opt.value}">
+                       <img src="${imgUrl}" alt="${opt.value}">
+                       <span class="variant-name">${opt.value}</span>
+                    </a>
+                `;
+            });
+            imageHtml += `</div></div>`;
+
+        } else {
+            // --- 2. TEXT VARIANTS (Size, Weight, etc.) ---
+            textHtml += `<div class="variant-group">`;
+            textHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
+            textHtml += `<div class="variant-options-grid">`;
+            
+            options.forEach(opt => {
+                const isSelected = (opt.product.id === data.id);
+                textHtml += `
+                    <a href="?id=${opt.product.id}" 
+                       class="variant-option-btn ${isSelected ? 'selected' : ''}"
+                       data-variant-type="${type}" 
+                       data-value="${opt.value}">
+                       ${opt.value}
+                    </a>
+                `;
+            });
+            textHtml += `</div></div>`;
+        }
+    }
+    
+    imageContainer.innerHTML = imageHtml;
+    textContainer.innerHTML = textHtml;
+}
+
+// NAYA FUNCTION 3: Combo Packs
+function renderComboPacks(data) {
+    const container = document.getElementById('combo-pack-container');
+    if (!container) return;
+    
+    const packs = data.combos && data.combos.quantityPacks ? data.combos.quantityPacks.map(p => ({ name: p.name, price: p.price })) : [];
+
+    // --- USER RULE ---
+    // Section ko sirf tab dikhao jab 1 ya zyada extra pack ho
+    if (packs.length === 0) {
+        container.innerHTML = '';
+        return;
     }
 
-    if (data.combos && data.combos.quantityPacks && Array.isArray(data.combos.quantityPacks)) {
-        const packs = data.combos.quantityPacks.map(p => ({ name: p.name, price: p.price }));
-        const singleItemOption = { name: 'Single Item', price: data.displayPrice };
-        const allOptions = [singleItemOption, ...packs];
-        selectedPack = null;
-        const comboHTML = createComboPackGrid(allOptions, data);
-        container.insertAdjacentHTML('beforeend', comboHTML);
-        attachComboPackListeners(container.lastElementChild);
+    const comboHTML = createComboPackGrid(data, packs);
+    container.innerHTML = `
+        <div class="combo-pack-container mt-4">
+            <h3 class="text-md font-bold text-gray-800 mb-2">Available Packs</h3>
+            <div class="combo-pack-grid">${comboHTML}</div>
+        </div>
+    `;
+    // Click listener ab global handleOptionsClick mein hai
+}
+
+// NAYA FUNCTION 4: Product Bundles
+async function renderProductBundles(data) {
+    const container = document.getElementById('bundle-offer-container');
+    if (!container || !data.combos || !data.combos.productBundle || !data.combos.productBundle.linkedProductIds) {
+        return;
     }
+    
+    const bundle = data.combos.productBundle;
+    const linkedProducts = bundle.linkedProductIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
 
-    if (data.combos && data.combos.productBundle && data.combos.productBundle.linkedProductIds) {
-        const bundle = data.combos.productBundle;
-        const linkedProducts = bundle.linkedProductIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
-
-        if (linkedProducts.length === bundle.linkedProductIds.length) {
-            (async () => {
-                try {
-                    const response = await fetch('product-details-sections/product-bundle.html');
-                    if (!response.ok) throw new Error('Bundle template not found');
-                    let templateHTML = await response.text();
-                    const allBundleProducts = [data, ...linkedProducts];
-                    const bundlePrice = Number(bundle.bundlePrice);
-                    const productIds = allBundleProducts.map(p => p.id).join(',');
-                    const imagesHTML = allBundleProducts.map(p => `<img src="${p.images?.[0] || ''}" alt="${p.name}">`).join('');
-                    const namesHTML = allBundleProducts.map(p => p.name).join(' + ');
-                    const originalTotal = allBundleProducts.reduce((sum, p) => sum + Number(p.displayPrice), 0);
-                    let originalPriceHTML = '';
-                    if (originalTotal > bundlePrice) {
-                        originalPriceHTML = `<span class="original-price">₹${originalTotal.toLocaleString('en-IN')}</span>`;
-                    }
-                    templateHTML = templateHTML
-                        .replace('{{productIds}}', productIds)
-                        .replace('{{bundlePrice}}', bundlePrice)
-                        .replace('{{bundleImages}}', imagesHTML)
-                        .replace('{{bundleNames}}', namesHTML)
-                        .replace('{{bundlePriceFormatted}}', bundlePrice.toLocaleString('en-IN'))
-                        .replace('{{originalPriceHTML}}', originalPriceHTML);
-                    container.insertAdjacentHTML('beforeend', templateHTML);
-                } catch (error) {
-                    console.error("Failed to load or process bundle template:", error);
-                }
-            })();
+    if (linkedProducts.length === bundle.linkedProductIds.length) {
+        try {
+            const response = await fetch('product-details-sections/product-bundle.html');
+            if (!response.ok) throw new Error('Bundle template not found');
+            let templateHTML = await response.text();
+            
+            const allBundleProducts = [data, ...linkedProducts];
+            const bundlePrice = Number(bundle.bundlePrice);
+            const productIds = allBundleProducts.map(p => p.id).join(',');
+            const imagesHTML = allBundleProducts.map(p => `<img src="${p.images?.[0] || ''}" alt="${p.name}">`).join('');
+            const namesHTML = allBundleProducts.map(p => p.name).join(' + ');
+            const originalTotal = allBundleProducts.reduce((sum, p) => sum + Number(p.displayPrice), 0);
+            let originalPriceHTML = '';
+            if (originalTotal > bundlePrice) {
+                originalPriceHTML = `<span class="original-price">₹${originalTotal.toLocaleString('en-IN')}</span>`;
+            }
+            
+            templateHTML = templateHTML
+                .replace('{{productIds}}', productIds)
+                .replace('{{bundlePrice}}', bundlePrice)
+                .replace('{{bundleImages}}', imagesHTML)
+                .replace('{{bundleNames}}', namesHTML)
+                .replace('{{bundlePriceFormatted}}', bundlePrice.toLocaleString('en-IN'))
+                .replace('{{originalPriceHTML}}', originalPriceHTML);
+                
+            container.innerHTML = templateHTML;
+        } catch (error) {
+            console.error("Failed to load or process bundle template:", error);
         }
     }
 }
 
 
-function createComboPackGrid(options, productData) { const singleItemOriginalPrice = Number(productData.originalPrice) > Number(productData.displayPrice) ? Number(productData.originalPrice) : Number(productData.displayPrice); let bestValueIndex = -1; let maxSavings = -1; const calculatedOptions = options.map((opt, index) => { const quantity = parseInt(opt.name.split(' ')[0]) || 1; const packMrp = singleItemOriginalPrice * quantity; const packPrice = Number(opt.price); let savings = 0; let discount = 0; if (packMrp > packPrice) { savings = packMrp - packPrice; discount = Math.round((savings / packMrp) * 100); } if (savings > maxSavings) { maxSavings = savings; bestValueIndex = index; } return { ...opt, packMrp, discount, savings }; }); const cardsHTML = calculatedOptions.map((opt, index) => { const isBestValue = index === bestValueIndex && maxSavings > 0; const isSelected = index === 0; return ` <div class="combo-pack-card ${isSelected ? 'selected' : ''}" data-value="${opt.name}" data-price="${opt.price || ''}"> ${isBestValue ? '<div class="best-value-tag">Best Value</div>' : ''} <div class="flex items-center"> <img src="${productData.images[0]}" class="combo-pack-icon" alt="product icon"> <div class="flex-grow"> <p class="font-bold text-gray-800">${opt.name}</p> <p class="text-xl font-extrabold" style="color: var(--primary-color);">₹${Number(opt.price).toLocaleString('en-IN')}</p> </div> </div> ${opt.discount > 0 ? ` <div class="combo-pack-savings"> <span class="line-through text-gray-400">₹${opt.packMrp.toLocaleString('en-IN')}</span> <span class="font-semibold text-green-600">${opt.discount}% OFF</span> <span class="font-bold text-green-700">(Save ₹${opt.savings.toLocaleString('en-IN')})</span> </div> ` : ''} </div> `; }).join(''); return ` <div class="combo-pack-container mt-4"> <h3 class="text-md font-bold text-gray-800 mb-2">Available Combo Packs</h3> <div class="combo-pack-grid">${cardsHTML}</div> </div> `; }
-function attachComboPackListeners(container) { const cards = container.querySelectorAll('.combo-pack-card'); cards.forEach(card => { card.addEventListener('click', (e) => { cards.forEach(c => c.classList.remove('selected')); card.classList.add('selected'); const selectedValue = card.dataset.value; const selectedPrice = card.dataset.price; if (selectedValue === 'Single Item') { selectedPack = null; } else { selectedPack = { name: selectedValue, price: selectedPrice }; } updatePriceDisplay(selectedPrice); updateStickyActionBar(); }); }); }
-function createVariantButton(variant) { const firstOptionName = variant.options[0].name; return ` <button class="variant-btn" data-variant-type="${variant.type}"> <span>${variant.type}: <span class="value">${firstOptionName}</span></span> <i class="fas fa-chevron-down text-xs"></i> </button> `; }
+// BADLAAV: Combo Pack Grid (Image + "Single Item" remove logic)
+function createComboPackGrid(productData, options) {
+    // 'options' ab sirf (2 pack, 3 pack) etc. hain
+    const singleItemOriginalPrice = Number(productData.originalPrice) > Number(productData.displayPrice) ? Number(productData.originalPrice) : Number(productData.displayPrice);
+    let bestValueIndex = -1;
+    let maxSavings = -1;
+
+    const calculatedOptions = options.map((opt, index) => {
+        const quantity = parseInt(opt.name.split(' ')[0]) || 1;
+        const packMrp = singleItemOriginalPrice * quantity;
+        const packPrice = Number(opt.price);
+        let savings = 0;
+        let discount = 0;
+        
+        if (packMrp > packPrice) {
+            savings = packMrp - packPrice;
+            discount = Math.round((savings / packMrp) * 100);
+        }
+        
+        if (savings > maxSavings) {
+            maxSavings = savings;
+            bestValueIndex = index;
+        }
+        return { ...opt, packMrp, discount, savings };
+    });
+
+    const cardImage = productData.images[0] || 'https://placehold.co/60x60';
+
+    const cardsHTML = calculatedOptions.map((opt, index) => {
+        const isBestValue = index === bestValueIndex && maxSavings > 0;
+        
+        return `
+            <div class="combo-pack-card" data-value="${opt.name}" data-price="${opt.price || ''}">
+                ${isBestValue ? '<div class="best-value-tag">Best Value</div>' : ''}
+                
+                <!-- Naya Image -->
+                <img src="${cardImage}" alt="pack">
+                
+                <div class="pack-details">
+                    <p class="pack-name">${opt.name}</p>
+                    <p class="pack-price">₹${Number(opt.price).toLocaleString('en-IN')}</p>
+                    ${opt.discount > 0 ? `
+                        <div class="combo-pack-savings">
+                            <span class="line-through text-gray-400">₹${opt.packMrp.toLocaleString('en-IN')}</span>
+                            <span class="font-semibold text-green-600">${opt.discount}% OFF</span>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    return cardsHTML;
+}
+
+// Purana createVariantButton HATA diya gaya hai
+// Purana attachComboPackListeners HATA diya gaya hai
 
 function openBundleModal(productIds, bundlePrice) {
     const products = productIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
@@ -419,15 +670,8 @@ function handleQuickAdd(event) {
         const productId = quickAddButton.dataset.id;
         const product = allProductsCache.find(p => p && p.id === productId);
         if (product) {
-            let defaultVariants = {};
-            if (product.variants && Array.isArray(product.variants)) {
-                product.variants.forEach(variant => {
-                    if (variant.type && Array.isArray(variant.options) && variant.options.length > 0) {
-                        defaultVariants[variant.type] = variant.options[0].name;
-                    }
-                });
-            }
-            addToCart(productId, 1, defaultVariants, null);
+            let defaultVariants = (product.variantType && product.variantValue) ? { [product.variantType]: product.variantValue } : {};
+            addToCart(productId, 1, defaultVariants, null); // Default pack hamesha null
             quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
             quickAddButton.classList.add('added');
             setTimeout(() => {
@@ -438,23 +682,39 @@ function handleQuickAdd(event) {
     }
 }
 function setupActionControls() { document.getElementById('add-to-cart-btn').addEventListener('click', () => { addToCart(currentProductId, 1, selectedVariants, selectedPack); }); document.getElementById('increase-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }); document.getElementById('decrease-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }); setupShareButton(); }
-function openVariantModal(variantType) { const variant = currentProductData.variants.find(v => v.type === variantType); if (!variant) return; const overlay = document.getElementById("variant-modal-overlay"); const titleEl = document.getElementById("variant-modal-title"); const bodyEl = document.getElementById("variant-modal-body"); titleEl.textContent = `Select ${variant.type}`; bodyEl.innerHTML = ""; variant.options.forEach(option => { const isSelected = selectedVariants[variant.type] === option.name; const optionEl = document.createElement("div"); optionEl.className = `variant-option ${isSelected ? "selected" : ""}`; let contentHTML = (variant.type.toLowerCase() === 'color' && option.value) ? `<div class="color-swatch" style="background-color: ${option.value};"></div> <span class="flex-grow">${option.name}</span>` : `<span>${option.name}</span>`; optionEl.innerHTML = contentHTML; optionEl.addEventListener("click", () => { selectedVariants[variant.type] = option.name; updateVariantButtonDisplay(variant.type, option.name); updateStickyActionBar(); closeVariantModal(); }); bodyEl.appendChild(optionEl); }); overlay.classList.remove("hidden"); setTimeout(() => overlay.classList.add("active"), 10); }
-function closeVariantModal() { const overlay = document.getElementById("variant-modal-overlay"); overlay.classList.remove("active"); setTimeout(() => overlay.classList.add("hidden"), 300); }
-function updateVariantButtonDisplay(type, value) { const btn = document.querySelector(`.variant-btn[data-variant-type="${type}"] .value`); if (btn) btn.textContent = value; }
-function setupVariantModal() { const overlay = document.getElementById("variant-modal-overlay"); document.getElementById("variant-modal-close").addEventListener("click", closeVariantModal); overlay.addEventListener("click", e => { if (e.target === overlay) closeVariantModal(); }); document.getElementById('options-container').addEventListener('click', e => { const btn = e.target.closest('.variant-btn'); if (btn) { openVariantModal(btn.dataset.variantType); } }); }
-function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; let discount = 0; let packOriginalPrice = originalPrice; if (selectedPack) { const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; packOriginalPrice = originalPrice * quantity; } if (packOriginalPrice > displayPrice) { discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); } if (discount > 0) { percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${packOriginalPrice.toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
 
-async function loadHandpickedSimilarProducts(similarIds) {
+// Purana Variant Modal (popup) functions HATA diye gaye hain
+// function openVariantModal(variantType) { ... }
+// function closeVariantModal() { ... }
+// function updateVariantButtonDisplay(type, value) { ... }
+// function setupVariantModal() { ... }
+
+function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; let discount = 0; let packOriginalPrice = originalPrice; if (selectedPack) { const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; packOriginalPrice = originalPrice > displayPrice ? originalPrice * quantity : 0; } if (packOriginalPrice > displayPrice) { discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); } else if (originalPrice > displayPrice && !selectedPack) { discount = Math.round(100 * (originalPrice - displayPrice) / originalPrice); } if (discount > 0) { percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${(selectedPack ? packOriginalPrice : originalPrice).toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
+
+// BADLAAV: "You Might Also Like" ab sub-category par based hai
+async function loadHandpickedSimilarProducts(category, subcategory, currentProductId) {
     const section = document.getElementById("handpicked-similar-section");
     const container = document.getElementById("handpicked-similar-container");
+    if (!container || !section) return;
 
-    if (!similarIds || similarIds.length === 0) {
-        if(section) section.style.display = "none";
+    // Logic: Agar subcategory hai, to use use karo
+    if (!subcategory) {
+        section.style.display = "none";
         return;
     }
 
-    if(!container || !section) return;
+    const similarProducts = allProductsCache.filter(p => 
+        p && 
+        p.category === category && 
+        p.subcategory === subcategory && 
+        p.id !== currentProductId
+    ).slice(0, 10); // 10 products tak seemit
 
+    if (similarProducts.length === 0) {
+        section.style.display = "none";
+        return;
+    }
+    
     container.innerHTML = "";
     let hasContent = false;
 
@@ -463,29 +723,24 @@ async function loadHandpickedSimilarProducts(similarIds) {
         if (!response.ok) throw new Error('YML card template not found');
         const templateHTML = await response.text();
 
-        similarIds.forEach(id => {
-            const product = allProductsCache.find(p => p && p.id === id);
-            if (product) {
-                const displayPrice = Number(product.displayPrice);
-                const originalPriceNum = Number(product.originalPrice);
+        similarProducts.forEach(product => {
+            const displayPrice = Number(product.displayPrice);
+            const originalPriceNum = Number(product.originalPrice);
 
-                let priceHTML = `<span class="display-price">₹${displayPrice.toLocaleString("en-IN")}</span>`;
-                if (originalPriceNum > displayPrice) {
-                    priceHTML += `<span class="original-price">₹${originalPriceNum.toLocaleString("en-IN")}</span>`;
-                }
-
-                const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
-
-                const populatedHTML = templateHTML
-                    .replace(/\{\{productId\}\}/g, product.id)
-                    .replace(/\{\{productName\}\}/g, product.name)
-                    .replace('{{productImage}}', product.images?.[0] || 'https://placehold.co/300x300/f0f0f0/333?text=Ramazone')
-                    .replace('{{ratingTagHTML}}', ratingTagHTML)
-                    .replace('{{productPriceHTML}}', priceHTML);
-
-                container.innerHTML += populatedHTML;
-                hasContent = true;
+            let priceHTML = `<span class="display-price">₹${displayPrice.toLocaleString("en-IN")}</span>`;
+            if (originalPriceNum > displayPrice) {
+                priceHTML += `<span class="original-price">₹${originalPriceNum.toLocaleString("en-IN")}</span>`;
             }
+            const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
+            const populatedHTML = templateHTML
+                .replace(/\{\{productId\}\}/g, product.id)
+                .replace(/\{\{productName\}\}/g, product.name)
+                .replace('{{productImage}}', product.images?.[0] || 'https://placehold.co/300x300/f0f0f0/333?text=Ramazone')
+                .replace('{{ratingTagHTML}}', ratingTagHTML)
+                .replace('{{productPriceHTML}}', priceHTML);
+
+            container.innerHTML += populatedHTML;
+            hasContent = true;
         });
 
         if (hasContent) {
@@ -496,17 +751,98 @@ async function loadHandpickedSimilarProducts(similarIds) {
 
     } catch (error) {
         console.error("Error loading handpicked products:", error);
-        if(section) section.style.display = "none";
+        section.style.display = "none";
     }
 }
 
 
 function createCarouselCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`; return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
-function createRecentlyViewedCard(product) { return ` <a href="?id=${product.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4> </div> </a> `; }
+
+// BADLAAV: Recently Viewed Card ka function (yeh 7:15 waale code mein tha)
+function createRecentlyViewedCard(product) { 
+    return ` <a href="?id=${product.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4> </div> </a> `; 
+}
+
 function createGridCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const showAddButton = displayPriceNum < 500 || product.category === 'grocery'; const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : ""; return `<a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2 sm:p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
-function renderDescription(data) { const descriptionContainer = document.getElementById("product-description"); const descriptionSection = document.getElementById("description-section"); const returnPolicyEl = document.getElementById("return-policy-info"); let hasContent = false; descriptionContainer.innerHTML = ""; returnPolicyEl.style.display = "none"; if (data.description && Array.isArray(data.description) && data.description.length > 0) { let descriptionHtml = '<ul class="space-y-3 list-inside">'; data.description.forEach(block => { if (block.details) { descriptionHtml += `<li class="text-base text-gray-600 leading-relaxed">${block.details}</li>`; hasContent = true; } }); descriptionHtml += '</ul>'; descriptionContainer.innerHTML = descriptionHtml; } if (data.returnPolicy && data.returnPolicy.type) { let policyText = ''; switch (data.returnPolicy.type) { case 'days': policyText = `${data.returnPolicy.value} Days Return Available`; break; case 'no_return': policyText = 'No Return Available'; break; case 'custom': policyText = data.returnPolicy.value; break; } if (policyText) { returnPolicyEl.innerHTML = `<i class="fas fa-undo-alt w-5 text-center"></i> <span>${policyText}</span>`; returnPolicyEl.style.display = "flex"; hasContent = true; } } if (hasContent) { descriptionSection.style.display = "block"; } else { descriptionSection.style.display = "none"; } }
+
+// BADLAAV: renderDescription ab 'longDescription' ko handle karega (jo form mein hai)
+function renderDescription(data) { 
+    const descriptionContainer = document.getElementById("product-description"); 
+    const descriptionSection = document.getElementById("description-section"); 
+    const returnPolicyEl = document.getElementById("return-policy-info"); 
+    let hasContent = false; 
+    descriptionContainer.innerHTML = ""; 
+    if (returnPolicyEl) returnPolicyEl.style.display = "none"; 
+    
+    if (data.longDescription) { 
+        descriptionContainer.innerHTML = `<p class="text-base text-gray-600 leading-relaxed">${data.longDescription.replace(/\n/g, '<br>')}</p>`; 
+        hasContent = true; 
+    } else if (data.description && Array.isArray(data.description) && data.description.length > 0) { 
+        // Purana fallback (agar 'longDescription' nahi hai)
+        let descriptionHtml = '<ul class="space-y-3 list-inside">'; 
+        data.description.forEach(block => { 
+            if (block.details) { 
+                descriptionHtml += `<li class="text-base text-gray-600 leading-relaxed">${block.details}</li>`; 
+                hasContent = true; 
+            } 
+        }); 
+        descriptionHtml += '</ul>'; 
+        descriptionContainer.innerHTML = descriptionHtml; 
+    } 
+    
+    if (data.returnPolicy && data.returnPolicy.type) { 
+        let policyText = ''; 
+        switch (data.returnPolicy.type) { 
+            case 'days': policyText = `${data.returnPolicy.value} Days Return Available`; break; 
+            case 'no_return': policyText = 'No Return Available'; break; 
+            case 'custom': policyText = data.returnPolicy.value; break; 
+        } 
+        if (policyText && returnPolicyEl) { 
+            returnPolicyEl.innerHTML = `<i class="fas fa-undo-alt w-5 text-center"></i> <span>${policyText}</span>`; 
+            returnPolicyEl.style.display = "flex"; 
+            hasContent = true; 
+        } 
+    } 
+    
+    if (hasContent) { 
+        descriptionSection.style.display = "block"; 
+    } else { 
+        descriptionSection.style.display = "none"; 
+    } 
+}
 function renderAdvancedHighlights(specData) { const container = document.getElementById("advanced-highlights-section"); if (!specData || !specData.blocks || specData.blocks.length === 0) { container.style.display = "none"; return; } let html = `<div class="p-4 sm:p-6 lg:p-8 border-t border-b border-gray-200 my-4"><h2 class="text-xl font-bold text-gray-900 mb-4">Highlights</h2>`; if (specData.specScore || specData.specTag) { html += '<div class="flex items-center gap-3 mb-6">'; if (specData.specScore) { html += `<div class="spec-score font-bold">${specData.specScore}</div>`; } if (specData.specTag) { html += `<div class="spec-tag">${specData.specTag}</div>`; } html += '</div>'; } html += '<div class="space-y-6">'; specData.blocks.forEach(block => { const subtitleStyle = "color: #B8860B; font-weight: 500;"; html += `<div class="flex items-start gap-4"><div class="flex-shrink-0 w-8 h-8 text-gray-600 pt-1">${block.icon || ""}</div><div class="flex-grow"><p class="text-sm text-gray-500">${block.category || ""}</p><h4 class="text-md font-semibold text-gray-800 mt-1">${block.title || ""}</h4><p class="text-sm mt-1" style="${subtitleStyle}">${block.subtitle || ""}</p></div></div>`; }); html += '</div></div>'; container.innerHTML = html; container.style.display = "block"; }
-function renderMediaGallery() { const gallery=document.getElementById("thumbnail-gallery");gallery.innerHTML="",slider.innerHTML="",mediaItems.forEach((item,index)=>{const e=document.createElement("div");e.className="media-item","image"===item.type?e.innerHTML=`<img src="${item.src}" alt="Product image ${index+1}" draggable="false">`:getYoutubeEmbedUrl(item.src)&&(e.innerHTML=`<iframe src="${getYoutubeEmbedUrl(item.src)}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`),slider.appendChild(e);const t=document.createElement("div");t.className="aspect-square thumbnail";const l=document.createElement("img");l.src="image"===item.type?item.src:item.thumbnail,t.appendChild(l),"video"===item.type&&((n=document.createElement("div")).className="play-icon",n.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="50%" height="50%"><path d="M8 5v14l11-7z"/></svg>',t.appendChild(n));var n;t.addEventListener("click",()=>showMedia(index)),gallery.appendChild(t)}),mediaItems.length>0&&showMedia(0)}
+
+// BADLAAV: Video 'Play' Icon logic
+function renderMediaGallery() { 
+    const gallery=document.getElementById("thumbnail-gallery");
+    gallery.innerHTML="";
+    slider.innerHTML="";
+    mediaItems.forEach((item,index)=>{
+        const e=document.createElement("div");
+        e.className="media-item";
+        "image"===item.type ? e.innerHTML=`<img src="${item.src}" alt="Product image ${index+1}" draggable="false">` : getYoutubeEmbedUrl(item.src)&&(e.innerHTML=`<iframe src="${getYoutubeEmbedUrl(item.src)}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`);
+        slider.appendChild(e);
+        
+        const t=document.createElement("div");
+        t.className="aspect-square thumbnail";
+        const l=document.createElement("img");
+        l.src="image"===item.type?item.src:item.thumbnail;
+        t.appendChild(l);
+        
+        // Naya logic: Video icon ko jodna
+        if ("video"===item.type) {
+            const n=document.createElement("div");
+            n.className="play-icon";
+            n.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            t.appendChild(n);
+        }
+        
+        t.addEventListener("click",()=>showMedia(index));
+        gallery.appendChild(t)
+    });
+    mediaItems.length>0&&showMedia(0)
+}
+
 function renderStars(rating, container) { container.innerHTML = ""; const fullStars = Math.floor(rating), halfStar = rating % 1 >= .5, emptyStars = 5 - fullStars - (halfStar ? 1 : 0); for (let i = 0; i < fullStars; i++)container.innerHTML += '<i class="fas fa-star"></i>'; halfStar && (container.innerHTML += '<i class="fas fa-star-half-alt"></i>'); for (let i = 0; i < emptyStars; i++)container.innerHTML += '<i class="far fa-star"></i>' }
 function getYoutubeEmbedUrl(url) { if(!url)return null;let videoId=null;try{const urlObj=new URL(url);if("www.youtube.com"===urlObj.hostname||"youtube.com"===urlObj.hostname)videoId=urlObj.searchParams.get("v");else if("youtu.be"===urlObj.hostname)videoId=urlObj.pathname.slice(1);return videoId?`https://www.youtube.com/embed/${videoId}?controls=1&rel=0&modestbranding=1`:null}catch(e){return console.error("Invalid video URL:",url,e),null}}
 function showMedia(index) { if(!(index<0||index>=mediaItems.length))slider.style.transition="transform 0.3s ease-out",currentMediaIndex=index,currentTranslate=index*-sliderWrapper.offsetWidth,prevTranslate=currentTranslate,setSliderPosition(),document.querySelectorAll(".thumbnail").forEach((t,e)=>t.classList.toggle("active",e===index))}
@@ -519,57 +855,29 @@ function animation() { setSliderPosition(),isDragging&&requestAnimationFrame(ani
 function setSliderPosition() { slider.style.transform=`translateX(${currentTranslate}px)`}
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
 
-// === YAHAN BADLAV KIYA GAYA HAI: Double URL ki problem ko theek kiya gaya hai ===
 function setupShareButton() {
     document.getElementById("share-button").addEventListener("click", async () => {
         if (!currentProductData) return;
-
         const productName = currentProductData.name.replace(/\*/g, "").trim();
         const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
         const productUrl = window.location.href;
-
-        // Base message (bina URL ke)
         const baseMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨`;
-
-        // Poora message (URL ke saath) - sirf copy karne ke liye
         const clipboardMessage = `${baseMessage}\n${productUrl}`;
-
-        // Web Share API ke liye data object
-        const shareData = {
-            title: productName,
-            text: baseMessage, // Yahan ab URL nahi hai
-            url: productUrl,   // URL ko alag se yahan rakha gaya hai
-        };
-
+        const shareData = { title: productName, text: baseMessage, url: productUrl, };
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else if (navigator.clipboard) {
-                // Agar share API nahi hai to poora message (URL ke saath) copy hoga
-                await navigator.clipboard.writeText(clipboardMessage);
-                showToast("Link and details copied!");
-            } else {
-                // Last fallback: Sirf URL copy karein
-                const textArea = document.createElement('textarea');
-                textArea.value = productUrl;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showToast("Link Copied!");
-            }
-        } catch (err) {
-            console.error("Error sharing:", err);
-            if (err.name !== 'AbortError') {
-                 showToast("Sharing failed.", "error");
-            }
-        }
+            if (navigator.share) { await navigator.share(shareData); } 
+            else if (navigator.clipboard) { await navigator.clipboard.writeText(clipboardMessage); showToast("Link and details copied!"); } 
+            else { const textArea = document.createElement('textarea'); textArea.value = productUrl; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); showToast("Link Copied!"); }
+        } catch (err) { console.error("Error sharing:", err); if (err.name !== 'AbortError') { showToast("Sharing failed.", "error"); } }
     });
 }
 
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
+
+// BADLAAV: Recently Viewed functions (yeh 7:15 waale code mein tha)
 function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; viewedIds = viewedIds.filter(e => e !== newId); viewedIds.unshift(newId); viewedIds = viewedIds.slice(0, 10); localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds)); loadRecentlyViewed(viewedIds); }
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
+
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
 
