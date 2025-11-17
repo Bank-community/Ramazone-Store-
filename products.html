@@ -2,13 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>All Products - Ramazone</title>
     
-    <!-- === YAHAN BADLAAV KIYA GAYA HAI === -->
-    <script src="https://cdn.tailwindcss.com"></script> <!-- .com Jod diya gaya hai -->
-    <!-- === BADLAAV END === -->
-
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -36,8 +33,7 @@
         .category-scroll-container::-webkit-scrollbar { display: none; }
         .category-btn { background-color: #f3f4f6; color: #4b5563; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
         .category-btn.active { background-color: #4f46e5; color: white; }
-        .subcategory-btn { background-color: #eef2ff; color: #4338ca; font-weight: 500; transition: all 0.2s; white-space: nowrap; border: 1px solid #c7d2fe; }
-        .subcategory-btn.active { background-color: #312e81; color: white; border-color: #312e81; }
+        /* --- SUB-CATEGORY BTN CSS HATA DIYA GAYA --- */
 
         /* --- Search Bar --- */
         .search-input-field { width: 100%; height: 40px; padding: 0 1rem; border: 1px solid #d1d5db; border-radius: 9999px; background-color: #f9fafb; transition: all 0.2s ease; }
@@ -51,16 +47,13 @@
         #category-suggestions { background: white; padding: 0.5rem; border-bottom: 1px solid #e5e7eb; }
         .suggestion-tag { display: inline-block; background-color: #e5e7eb; color: #374151; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 9999px; font-size: 0.875rem; cursor: pointer; }
         
-        /* --- Header Scroll --- */
+        /* --- Header Scroll (STICKY BAR KE LIYE UPDATED) --- */
         #main-header { transition: transform 0.3s ease-in-out; }
         #main-header.header-hidden { transform: translateY(-100%); }
-        .category-filter-container, .subcategory-filter-container, .sort-bar-container { transition: top 0.3s ease-in-out; }
+        .category-filter-container, .sort-bar-container { transition: top 0.3s ease-in-out; } /* Subcategory hata diya */
         body.header-is-hidden .category-filter-container { top: 0; }
-        /* Sticky position ke liye Subcategory aur Sort bar ko adjust karein */
-        body.header-is-hidden .subcategory-filter-container { top: 49px; }
-        body.header-is-hidden .sort-bar-container { top: 49px; } /* Default sort bar position */
-        body.header-is-hidden.subcategory-visible .sort-bar-container { top: 98px; } /* Jab subcategory bhi ho */
-
+        body.header-is-hidden .sort-bar-container { top: 49px; } /* Sirf category bar ke niche */
+        /* --- BADLAAV END --- */
 
         /* --- Product Grid --- */
         #products-grid {
@@ -132,20 +125,17 @@
             flex-direction: column;
         }
 
-        /* === YAHAN BADLAAV KIYA GAYA HAI (Product Name) === */
         .product-name {
             font-weight: 600;
             color: #111827;
             margin-bottom: 0.25rem;
             font-size: 0.9rem;
             line-height: 1.25;
-            /* min-height: 2.25rem; */ /* 2 line ki height hata di */
-            display: block; /* Webkit-box se badla */
-            white-space: nowrap; /* 1 line mein rakhega */
+            display: block; 
+            white-space: nowrap; 
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        /* === BADLAAV END === */
 
         .price-container {
             display: flex;
@@ -171,7 +161,6 @@
             font-weight: 600;
         }
         
-        /* === YAHAN BADLAAV KIYA GAYA HAI: "Cart" aur "Buy" button ke liye naya style === */
         .product-card-actions {
             display: flex;
             gap: 0.5rem; /* 8px */
@@ -181,7 +170,6 @@
             padding: 3px; 
         }
 
-        /* Naya "Cart" button (SVG icon ke liye) */
         .cart-btn {
             display: flex;
             align-items: center;
@@ -189,34 +177,31 @@
             width: 36px;
             height: 36px;
             border-radius: 6px;
-            background-color: #f3f4f6; /* Light grey background */
+            background-color: #f3f4f6;
             color: var(--text-dark);
             transition: background-color 0.2s;
-            cursor: pointer; /* Clickable banana */
-            border: none; /* Border hata diya */
+            cursor: pointer;
+            border: none;
         }
         .cart-btn:hover {
-            background-color: #e5e7eb; /* Thoda dark hover */
+            background-color: #e5e7eb;
         }
-        .cart-btn img, .cart-btn i { /* SVG icon ya FontAwesome icon ke liye */
+        .cart-btn img, .cart-btn i {
             width: 20px;
             height: 20px;
             opacity: 0.9;
         }
-
-        /* "Added" state jab cart mein add ho jaaye */
         .cart-btn.added {
             background-color: var(--green-color);
             color: white;
         }
         .cart-btn.added img {
-            filter: brightness(0) invert(1); /* SVG ko safed banaye */
+            filter: brightness(0) invert(1);
         }
-        .cart-btn.added .cart-added-icon { /* FontAwesome check icon ke liye */
+        .cart-btn.added .cart-added-icon {
             color: white;
         }
 
-        /* Naya "Buy" button (Pahle "Add" tha) */
         .buy-text-btn {
             flex-grow: 1;
             height: 36px;
@@ -227,8 +212,8 @@
             font-size: 0.9rem;
             border-radius: 6px;
             transition: background-color 0.3s, transform 0.2s;
-            text-decoration: none; /* Kyunki ye link hoga */
-            display: flex; /* Text ko center karne ke liye */
+            text-decoration: none;
+            display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
@@ -239,25 +224,29 @@
         .buy-text-btn:active {
             transform: scale(0.98);
         }
-
-        /* .add-btn class ko "added" state ke liye rakha hai (JS use karta hai) */
         .add-btn.added {
              background-color: var(--green-color);
              cursor: not-allowed;
         }
-        /* === BADLAAV END === */
 
-        /* --- === YAHAN NAYA CSS JODA GAYA HAI (SORT BUTTONS & MODAL) === --- */
+        /* --- SORT/FILTER CSS (UPDATED) --- */
         .sort-bar-container {
             position: sticky;
-            top: 117px; /* Subcategory ke niche */
-            z-index: 25; /* Subcategory (30) se niche */
-            background-color: #f9fafb; /* body ka background */
+            top: 68px; /* Category bar ke niche */
+            z-index: 25; 
+            background-color: #f9fafb;
             border-bottom: 1px solid var(--border-color);
             padding: 0.5rem 1rem;
         }
         
-        .sort-button {
+        /* Sort/Filter Button Bar ke liye */
+        .sort-filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sort-button, .filter-button {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -269,9 +258,17 @@
             color: #374151;
             cursor: pointer;
         }
-        .sort-button i {
+        .sort-button i, .filter-button i {
             font-size: 0.875rem;
         }
+        
+        /* Filter button ko disabled state ke liye style */
+        .filter-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #f9fafb;
+        }
+
 
         /* Sort Modal (Popup) */
         .sort-modal-overlay {
@@ -279,7 +276,7 @@
             inset: 0;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 100;
-            display: none; /* JS se control hoga */
+            display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -299,6 +296,9 @@
             padding: 1rem;
             transform: translateY(100%);
             transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            max-height: 70vh; /* Popup height limit */
         }
         .sort-modal-overlay.visible .sort-modal-content {
             transform: translateY(0);
@@ -310,6 +310,7 @@
             align-items: center;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0; /* Header ko shrink hone se rokein */
         }
         .sort-modal-header h3 {
             font-size: 1.125rem;
@@ -321,6 +322,10 @@
             font-size: 1.5rem;
             color: #9ca3af;
             cursor: pointer;
+        }
+        
+        .sort-options-container {
+            overflow-y: auto; /* List ko scrollable banayein */
         }
         
         .sort-option-item {
@@ -337,13 +342,66 @@
         .sort-option-item span {
             font-weight: 500;
         }
-        /* Radio button style */
         .sort-option-item input[type="radio"] {
             width: 1.25rem;
             height: 1.25rem;
             accent-color: var(--primary-color);
         }
-        /* --- === NAYA CSS END === --- */
+
+        /* --- NAYA FILTER MODAL CSS --- */
+        .filter-options-container {
+            overflow-y: auto;
+            max-height: 40vh; /* List ke liye height limit */
+        }
+        .filter-option-item {
+            display: flex;
+            align-items: center;
+            padding: 0.85rem 0.5rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .filter-option-item:last-child {
+            border-bottom: none;
+        }
+        .filter-option-item label {
+            flex-grow: 1;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+        }
+        .filter-option-item input[type="checkbox"] {
+            width: 1.15rem;
+            height: 1.15rem;
+            border-radius: 0.25rem;
+            accent-color: var(--primary-color);
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .filter-modal-footer {
+            display: flex;
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 0.5rem;
+            flex-shrink: 0; /* Footer ko shrink hone se rokein */
+        }
+        .btn-secondary-filter, .btn-primary-filter {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-secondary-filter {
+            background-color: #f3f4f6;
+            border: 1px solid var(--border-color);
+            color: #374151;
+        }
+        .btn-primary-filter {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        /* --- NAYA CSS END --- */
     </style>
 </head>
 <body>
@@ -375,23 +433,26 @@
         </div>
     </div>
 
-    <!-- === YAHAN NAYA HTML JODA GAYA HAI (SORT BAR) === -->
+    <!-- === YAHAN BADLAAV KIYA GAYA HAI (SORT/FILTER BAR) === -->
     <div id="sort-bar-container" class="sort-bar-container">
-        <div class="container mx-auto">
+        <div class="container mx-auto sort-filter-bar">
+            <!-- Sort Button -->
             <button id="open-sort-modal-btn" class="sort-button">
                 <i class="fas fa-sort-amount-down-alt"></i>
                 <span>Sort</span>
             </button>
+            <!-- Naya Filter Button -->
+            <button id="open-filter-modal-btn" class="filter-button" disabled>
+                <i class="fas fa-filter"></i>
+                <span>Filter</span>
+            </button>
         </div>
     </div>
-    <!-- === NAYA HTML END === -->
+    <!-- === BADLAAV END === -->
     
-    <!-- Subcategory Bar -->
+    <!-- Subcategory Bar (Ab Hata Diya Jayega) -->
     <div id="subcategory-filter-container" class="subcategory-filter-container hidden bg-gray-50 py-2 border-b border-gray-200 sticky top-[117px] z-30">
-        <div class="container mx-auto px-2">
-            <div id="subcategory-filter-bar" class="flex items-center gap-2 overflow-x-auto category-scroll-container">
-            </div>
-        </div>
+        <!-- Isko JS se poori tarah disable kar denge -->
     </div>
 
     <main class="container mx-auto p-0 md:p-4">
@@ -406,12 +467,12 @@
     <!-- Toast Notification -->
     <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 text-white px-5 py-3 rounded-lg shadow-lg text-sm z-50 opacity-0 transition-opacity duration-300"></div>
 
-    <!-- === YAHAN NAYA HTML JODA GAYA HAI (SORT MODAL) === -->
+    <!-- Sort Modal (Pahle se hai) -->
     <div id="sort-modal-overlay" class="sort-modal-overlay">
         <div id="sort-modal-content" class="sort-modal-content">
             <div class="sort-modal-header">
                 <h3>Sort By</h3>
-                <button id="sort-modal-close-btn">&times;</button>
+                <button id="sort-modal-close-btn" class="sort-modal-close-btn">&times;</button>
             </div>
             <div class="sort-options-container">
                 <label class="sort-option-item">
@@ -430,6 +491,24 @@
                     <span>Newest First</span>
                     <input type="radio" name="sort-option" value="newest">
                 </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- === YAHAN NAYA HTML JODA GAYA HAI (FILTER MODAL) === -->
+    <div id="filter-modal-overlay" class="sort-modal-overlay"> <!-- Style reuse kiya gaya -->
+        <div id="filter-modal-content" class="sort-modal-content">
+            <div class="sort-modal-header"> <!-- Style reuse kiya gaya -->
+                <h3>Filter by Sub-category</h3>
+                <button id="filter-modal-close-btn" class="sort-modal-close-btn">&times;</button>
+            </div>
+            <div id="filter-options-container" class="filter-options-container">
+                <!-- Sub-categories (checkboxes) yahaan JS se aayengi -->
+                <p class="p-4 text-center text-gray-500" id="filter-loading-msg">Please select a main category first.</p>
+            </div>
+            <div class="filter-modal-footer">
+                <button id="filter-clear-btn" class="btn-secondary-filter">Clear</button>
+                <button id="filter-apply-btn" class="btn-primary-filter">Apply</button>
             </div>
         </div>
     </div>
