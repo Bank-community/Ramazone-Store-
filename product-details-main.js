@@ -241,10 +241,10 @@ async function loadPageSectionsAndData(data) {
         document.getElementById('media-gallery-container').innerHTML = mediaHtml;
         document.getElementById('product-main-info-container').innerHTML = infoHtml;
         document.getElementById('similar-products-container-wrapper').innerHTML = similarHtml;
-        
+
         // Saare data ko populate karne waala function
         populateDataAndAttachListeners(data);
-        
+
         document.getElementById('loading-indicator').style.display = 'none';
         document.getElementById('product-content').style.display = 'block';
     } catch (error) {
@@ -258,19 +258,19 @@ function populateDataAndAttachListeners(data) {
     document.querySelector('meta[property="og:title"]').setAttribute("content", data.name);
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
-    
+
     // BADLAAV: Veg/Non-Veg function call HATA diya gaya hai
-    
+
     slider = document.getElementById('media-slider');
     sliderWrapper = document.getElementById('main-media-wrapper');
     mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
-    
+
     // BADLAAV: renderMediaGallery ab video icon bhi dikhayega
     renderMediaGallery();
     showMedia(0);
     setupSliderControls();
     setupImageModal();
-    
+
     if (data.rating && data.reviewCount) {
         document.getElementById("rating-section").style.display = "flex";
         renderStars(data.rating, document.getElementById("product-rating-stars"));
@@ -284,39 +284,39 @@ function populateDataAndAttachListeners(data) {
     // Current product ke variant aur pack ko set karna
     selectedVariants = (data.variantType && data.variantValue) ? { [data.variantType]: data.variantValue } : {};
     selectedPack = null; // Hamesha single item se start karein
-    
+
     updatePriceDisplay();
-    
+
     // BADLAAV: Purana renderProductOptions() ab 4 alag functions mein bant gaya hai
     renderVariantSelectors(data); // Naya Flipkart-style variant logic
     renderComboPacks(data);       // Naya Combo pack logic (image + single item remove)
     renderProductBundles(data);   // Product bundle logic
     renderTechSpecs(data.techSpecs); // Tech specs logic
-    
+
     // Purana variant modal ab use nahi hoga, use hata diya gaya hai
     // setupVariantModal(); 
     setupBundleModal();
     renderAdvancedHighlights(data.specHighlights);
     renderDescription(data);
     setupActionControls();
-    
+
     // BADLAAV: Recently Viewed ko waapas laaya gaya
     updateRecentlyViewed(data.id);
-    
+
     // BADLAAV: "You Might Also Like" ab sub-category par based hai
     loadHandpickedSimilarProducts(data.category, data.subcategory, data.id);
-    
+
     loadCategoryBasedProducts(data.category);
     loadOtherProducts(data.category);
     updateCartIcon();
     updateStickyActionBar();
-    
+
     document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
-    
+
     // BADLAAV: Click listener ko ab 2 alag-alag container par lagana hoga
     document.getElementById('media-gallery-container').addEventListener('click', handleOptionsClick);
     document.getElementById('product-main-info-container').addEventListener('click', handleOptionsClick);
-    
+
     setupHeaderScrollEffect();
 }
 
@@ -332,7 +332,7 @@ function handleOptionsClick(event) {
         // Yeh ek `<a>` tag hai, to page reload hoga. Kuch extra karne ki zaroorat nahi.
         return;
     }
-    
+
     // 2. Text Variant (Size, Weight) Click
     const textVariantBtn = event.target.closest('.variant-option-btn');
     if (textVariantBtn) {
@@ -358,12 +358,12 @@ function handleOptionsClick(event) {
         openBundleModal(productIds, bundlePrice);
         return;
     }
-    
+
     // 5. Combo Pack (2 pack, 3 pack) Click
     if (comboCard) {
         const container = comboCard.closest('.combo-pack-grid');
         const isAlreadySelected = comboCard.classList.contains('selected');
-        
+
         container.querySelectorAll('.combo-pack-card').forEach(c => c.classList.remove('selected'));
 
         if (isAlreadySelected) {
@@ -427,7 +427,7 @@ function renderTechSpecs(techSpecs) {
 function renderVariantSelectors(data) {
     const imageContainer = document.getElementById('image-variant-selectors-container'); // media-gallery.html mein
     const textContainer = document.getElementById('variant-selectors-container'); // product-main-info.html mein
-    
+
     if (!imageContainer || !textContainer) return;
 
     const groupId = data.groupId;
@@ -452,18 +452,18 @@ function renderVariantSelectors(data) {
 
     let imageHtml = '';
     let textHtml = '';
-    
+
     for (const [type, options] of variantTypes.entries()) {
         let currentProductValue = (data.variantType === type) ? data.variantValue : "N/A";
         if(data.variantType === type) currentProductValue = data.variantValue;
-        
+
         // BADLAAV: Logic ko split karna (Lays screenshot ke hisaab se)
         if (type.toLowerCase() === 'color') {
             // --- 1. IMAGE/COLOR VARIANTS (Lays Screenshot logic) ---
             imageHtml += `<div class="variant-group">`;
             imageHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
             imageHtml += `<div class="variant-options-grid">`;
-            
+
             options.forEach(opt => {
                 const isSelected = (opt.product.id === data.id);
                 const imgUrl = opt.product.images[0] || 'https://placehold.co/60x60';
@@ -483,7 +483,7 @@ function renderVariantSelectors(data) {
             textHtml += `<div class="variant-group">`;
             textHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
             textHtml += `<div class="variant-options-grid">`;
-            
+
             options.forEach(opt => {
                 const isSelected = (opt.product.id === data.id);
                 textHtml += `
@@ -498,7 +498,7 @@ function renderVariantSelectors(data) {
             textHtml += `</div></div>`;
         }
     }
-    
+
     imageContainer.innerHTML = imageHtml;
     textContainer.innerHTML = textHtml;
 }
@@ -507,7 +507,7 @@ function renderVariantSelectors(data) {
 function renderComboPacks(data) {
     const container = document.getElementById('combo-pack-container');
     if (!container) return;
-    
+
     const packs = data.combos && data.combos.quantityPacks ? data.combos.quantityPacks.map(p => ({ name: p.name, price: p.price })) : [];
 
     // --- USER RULE ---
@@ -533,7 +533,7 @@ async function renderProductBundles(data) {
     if (!container || !data.combos || !data.combos.productBundle || !data.combos.productBundle.linkedProductIds) {
         return;
     }
-    
+
     const bundle = data.combos.productBundle;
     const linkedProducts = bundle.linkedProductIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
 
@@ -542,7 +542,7 @@ async function renderProductBundles(data) {
             const response = await fetch('product-details-sections/product-bundle.html');
             if (!response.ok) throw new Error('Bundle template not found');
             let templateHTML = await response.text();
-            
+
             const allBundleProducts = [data, ...linkedProducts];
             const bundlePrice = Number(bundle.bundlePrice);
             const productIds = allBundleProducts.map(p => p.id).join(',');
@@ -553,7 +553,7 @@ async function renderProductBundles(data) {
             if (originalTotal > bundlePrice) {
                 originalPriceHTML = `<span class="original-price">₹${originalTotal.toLocaleString('en-IN')}</span>`;
             }
-            
+
             templateHTML = templateHTML
                 .replace('{{productIds}}', productIds)
                 .replace('{{bundlePrice}}', bundlePrice)
@@ -561,7 +561,7 @@ async function renderProductBundles(data) {
                 .replace('{{bundleNames}}', namesHTML)
                 .replace('{{bundlePriceFormatted}}', bundlePrice.toLocaleString('en-IN'))
                 .replace('{{originalPriceHTML}}', originalPriceHTML);
-                
+
             container.innerHTML = templateHTML;
         } catch (error) {
             console.error("Failed to load or process bundle template:", error);
@@ -583,12 +583,12 @@ function createComboPackGrid(productData, options) {
         const packPrice = Number(opt.price);
         let savings = 0;
         let discount = 0;
-        
+
         if (packMrp > packPrice) {
             savings = packMrp - packPrice;
             discount = Math.round((savings / packMrp) * 100);
         }
-        
+
         if (savings > maxSavings) {
             maxSavings = savings;
             bestValueIndex = index;
@@ -600,14 +600,14 @@ function createComboPackGrid(productData, options) {
 
     const cardsHTML = calculatedOptions.map((opt, index) => {
         const isBestValue = index === bestValueIndex && maxSavings > 0;
-        
+
         return `
             <div class="combo-pack-card" data-value="${opt.name}" data-price="${opt.price || ''}">
                 ${isBestValue ? '<div class="best-value-tag">Best Value</div>' : ''}
-                
+
                 <!-- Naya Image -->
                 <img src="${cardImage}" alt="pack">
-                
+
                 <div class="pack-details">
                     <p class="pack-name">${opt.name}</p>
                     <p class="pack-price">₹${Number(opt.price).toLocaleString('en-IN')}</p>
@@ -621,7 +621,7 @@ function createComboPackGrid(productData, options) {
             </div>
         `;
     }).join('');
-    
+
     return cardsHTML;
 }
 
@@ -714,7 +714,7 @@ async function loadHandpickedSimilarProducts(category, subcategory, currentProdu
         section.style.display = "none";
         return;
     }
-    
+
     container.innerHTML = "";
     let hasContent = false;
 
@@ -773,7 +773,7 @@ function renderDescription(data) {
     let hasContent = false; 
     descriptionContainer.innerHTML = ""; 
     if (returnPolicyEl) returnPolicyEl.style.display = "none"; 
-    
+
     if (data.longDescription) { 
         descriptionContainer.innerHTML = `<p class="text-base text-gray-600 leading-relaxed">${data.longDescription.replace(/\n/g, '<br>')}</p>`; 
         hasContent = true; 
@@ -789,7 +789,7 @@ function renderDescription(data) {
         descriptionHtml += '</ul>'; 
         descriptionContainer.innerHTML = descriptionHtml; 
     } 
-    
+
     if (data.returnPolicy && data.returnPolicy.type) { 
         let policyText = ''; 
         switch (data.returnPolicy.type) { 
@@ -803,7 +803,7 @@ function renderDescription(data) {
             hasContent = true; 
         } 
     } 
-    
+
     if (hasContent) { 
         descriptionSection.style.display = "block"; 
     } else { 
@@ -822,13 +822,13 @@ function renderMediaGallery() {
         e.className="media-item";
         "image"===item.type ? e.innerHTML=`<img src="${item.src}" alt="Product image ${index+1}" draggable="false">` : getYoutubeEmbedUrl(item.src)&&(e.innerHTML=`<iframe src="${getYoutubeEmbedUrl(item.src)}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`);
         slider.appendChild(e);
-        
+
         const t=document.createElement("div");
         t.className="aspect-square thumbnail";
         const l=document.createElement("img");
         l.src="image"===item.type?item.src:item.thumbnail;
         t.appendChild(l);
-        
+
         // Naya logic: Video icon ko jodna
         if ("video"===item.type) {
             const n=document.createElement("div");
@@ -836,7 +836,7 @@ function renderMediaGallery() {
             n.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             t.appendChild(n);
         }
-        
+
         t.addEventListener("click",()=>showMedia(index));
         gallery.appendChild(t)
     });
