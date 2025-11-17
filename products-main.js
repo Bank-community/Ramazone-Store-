@@ -1,10 +1,19 @@
 // --- GLOBAL STATE ---
-let allProducts = [];
+let allProducts = []; // Master list from DB
+let filteredProducts = []; // List filtered by LOCATION
 let allCategories = []; 
 let currentCategory = 'All';
 let currentSubcategory = 'All';
 let database;
 let searchScrollingTexts = [];
+
+// --- === YAHAN NAYA BADLAAV KIYA GAYA HAI === ---
+let currentSortOrder = 'popularity'; // Default sort order
+
+// --- NEW CONSTANTS (Added from main.js) ---
+const DEFAULT_LOCATION_KEY = "ALL_AREAS"; // Special key for no location
+const CHOOSE_LOCATION_TEXT = "Choose Location";
+const CART_ICON_SVG = "https://www.svgrepo.com/show/533042/cart-plus.svg";
 
 // --- CART FUNCTIONS (No Change) ---
 function getCart() { 
@@ -20,6 +29,7 @@ function saveCart(cart) {
 }
 function addToCart(productId, quantityToAdd = 1) {
     const cart = getCart();
+    // Search in the master 'allProducts' list
     const product = allProducts.find(p => p && p.id === productId);
     if (!product) { 
         console.error('Product not found in cache:', productId);
@@ -44,7 +54,6 @@ function addToCart(productId, quantityToAdd = 1) {
         cart.push({ id: productId, quantity: quantityToAdd, variants: selectedVariants });
     }
     saveCart(cart);
-    showToast('Successfully added to cart!', 'success'); 
     updateCartIcon();
 }
 function getTotalCartQuantity() { 
@@ -72,7 +81,7 @@ function showToast(message, type = "info") {
     setTimeout(() => { toast.style.opacity = 0; }, 2500);
 }
 
-// --- INITIALIZATION (No Change) ---
+// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 function loadFirebaseScripts() {
@@ -94,9 +103,12 @@ function loadFirebaseScripts() {
 async function initializeApp() {
     try {
         await loadFirebaseScripts(); 
-        const response = await fetch('/api/firebase-config');
-        if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
-        const firebaseConfig = await response.json();
+        // Hardcoded config for simplicity
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+            authDomain: "re-store-8e5b3.firebaseapp.com",
+            databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+        };
         if (firebaseConfig.apiKey) {
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
@@ -111,38 +123,70 @@ async function initializeApp() {
 }
 
 async function loadPageData() {
-    // (No Change)
     try {
         await fetchAllData(database);
+
+        // 1. Pehle products ko location ke hisab se filter karo
+        filterProductsByLocation(); 
+
         const urlParams = new URLSearchParams(window.location.search);
         const categoryFromUrl = urlParams.get('category') || 'All';
+
         displayCategories(); 
+
         if(categoryFromUrl !== 'All') {
             const catButton = document.querySelector(`.category-btn[data-category="${categoryFromUrl}"]`);
             if(catButton) {
-                catButton.click();
+                catButton.click(); // This will trigger filterAndDisplayProducts
             } else {
                 currentCategory = 'All';
-                filterAndDisplayProducts();
+                filterAndDisplayProducts(); // Display location-filtered "All" products
             }
         } else {
             currentCategory = 'All';
-            filterAndDisplayProducts();
+            filterAndDisplayProducts(); // Display location-filtered "All" products
         }
+
         setupSearch();
         updateCartIcon();
         setupDynamicPlaceholder();
         setupScrollBehavior();
         setupProductCardEventListeners(); 
+
+        // --- === YAHAN NAYA BADLAAV KIYA GAYA HAI === ---
+        setupSortModal(); // Naye Sort Modal ko setup karo
+        // --- BADLAAV END ---
+
         document.getElementById('loading-indicator').style.display = 'none';
+
     } catch (error) {
         console.error("Initialization or data fetch failed:", error);
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Data load nahi ho saka.</p>';
     }
 }
 
+function filterProductsByLocation() {
+    const currentLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION_KEY;
+
+    if (currentLoc === DEFAULT_LOCATION_KEY) {
+        // "Choose Location" (Default) - Sirf "All Area" wale products dikhao
+        filteredProducts = allProducts.filter(product => {
+            return !product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0;
+        });
+        console.log(`Products Page: Filtered for "All Areas": ${filteredProducts.length} items.`);
+
+    } else {
+        // Specific Location (e.g., "Bihar/Begusarai/Suja")
+        filteredProducts = allProducts.filter(product => {
+            const isAllArea = !product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0;
+            const isAtLocation = product.availableAreas && product.availableAreas.includes(currentLoc);
+            return isAllArea || isAtLocation;
+        });
+        console.log(`Products Page: Filtered for "${currentLoc}": ${filteredProducts.length} items.`);
+    }
+}
+
 async function fetchAllData(db) {
-    // (No Change)
     const dbRef = db.ref('ramazone');
     const snapshot = await dbRef.get();
     if (snapshot.exists()) {
@@ -151,14 +195,14 @@ async function fetchAllData(db) {
         if (homepageData.search && homepageData.search.scrollingTexts) {
             searchScrollingTexts = homepageData.search.scrollingTexts;
         }
-        allProducts = (data.products || []).filter(p => p && p.isVisible !== false);
+        allProducts = (data.products || []).filter(p => p && p.isVisible !== false)
+            .map(p => ({ ...p, createdAt: p.createdAt || '2020-01-01T00:00:00.000Z' })); // Ensure createdAt exists for sorting
         allCategories = (homepageData.normalCategories || [])
             .filter(cat => cat && cat.name && cat.size !== 'double');
     }
 }
 
 function setupDynamicPlaceholder() {
-    // (No Change)
     const searchInput = document.getElementById('search-input');
     if (!searchInput || !searchScrollingTexts || searchScrollingTexts.length === 0) {
         searchInput.placeholder = "Search for products...";
@@ -173,9 +217,8 @@ function setupDynamicPlaceholder() {
     setInterval(updatePlaceholder, 3000);
 }
 
-// --- CATEGORY & SUBCATEGORY LOGIC (No Change) ---
+// --- CATEGORY & SUBCATEGORY LOGIC (MODIFIED FOR STICKY) ---
 function displayCategories() {
-    // (No Change)
     const categoryBar = document.getElementById('category-filter-bar');
     categoryBar.innerHTML = '';
     const allBtn = document.createElement('button');
@@ -184,8 +227,11 @@ function displayCategories() {
     allBtn.dataset.category = 'All';
     if (currentCategory === 'All') allBtn.classList.add('active');
     categoryBar.appendChild(allBtn);
+
+    const availableCategories = new Set(filteredProducts.map(p => p.category));
+
     allCategories.forEach(cat => {
-        if (cat && cat.name) {
+        if (cat && cat.name && availableCategories.has(cat.name)) { 
             const catBtn = document.createElement('button');
             catBtn.className = 'category-btn rounded-full px-4 py-2 text-sm';
             catBtn.textContent = cat.name;
@@ -207,12 +253,12 @@ function displayCategories() {
             displaySubcategories(categoryData.subcategories);
         } else {
             document.getElementById('subcategory-filter-container').classList.add('hidden');
+            document.body.classList.remove('subcategory-visible'); // <-- STICKY LOGIC
         }
         filterAndDisplayProducts();
     });
 }
 function displaySubcategories(subcategories) {
-    // (No Change)
     const subcategoryContainer = document.getElementById('subcategory-filter-container');
     const subcategoryBar = document.getElementById('subcategory-filter-bar');
     subcategoryBar.innerHTML = '';
@@ -221,8 +267,11 @@ function displaySubcategories(subcategories) {
     allSubBtn.textContent = 'All';
     allSubBtn.dataset.subcategory = 'All';
     subcategoryBar.appendChild(allSubBtn);
+
+    const availableSubcategories = new Set(filteredProducts.filter(p => p.category === currentCategory).map(p => p.subcategory));
+
     subcategories.forEach(sub => {
-        if (sub && sub.name) {
+        if (sub && sub.name && availableSubcategories.has(sub.name)) {
             const subBtn = document.createElement('button');
             subBtn.className = 'subcategory-btn rounded-full px-3 py-1 text-xs';
             subBtn.textContent = sub.name;
@@ -231,6 +280,7 @@ function displaySubcategories(subcategories) {
         }
     });
     subcategoryContainer.classList.remove('hidden');
+    document.body.classList.add('subcategory-visible'); // <-- STICKY LOGIC
     subcategoryBar.addEventListener('click', (e) => {
         if(e.target.tagName !== 'BUTTON') return;
         currentSubcategory = e.target.dataset.subcategory;
@@ -241,34 +291,62 @@ function displaySubcategories(subcategories) {
     });
 }
 
-// --- FILTER & DISPLAY (No Change) ---
+// --- FILTER & DISPLAY (MODIFIED for SORTING) ---
 function filterAndDisplayProducts() {
-    // (No Change)
     const grid = document.getElementById('products-grid');
     const noProductsMsg = document.getElementById('no-products-message');
     const searchInput = document.getElementById('search-input').value.toLowerCase();
     grid.innerHTML = '';
     noProductsMsg.classList.add('hidden');
-    let filteredProducts = allProducts;
+
+    let productsToDisplay = filteredProducts;
+
     if (currentCategory !== 'All') {
-        filteredProducts = filteredProducts.filter(prod => prod && prod.category === currentCategory);
+        productsToDisplay = productsToDisplay.filter(prod => prod && prod.category === currentCategory);
     }
     if (currentSubcategory !== 'All') {
-        filteredProducts = filteredProducts.filter(prod => prod && prod.subcategory === currentSubcategory);
+        productsToDisplay = productsToDisplay.filter(prod => prod && prod.subcategory === currentSubcategory);
     }
+
     if (searchInput) {
-        filteredProducts = filteredProducts.filter(prod => prod && prod.name && prod.name.toLowerCase().includes(searchInput));
-    }
-    if (filteredProducts.length > 0) {
-        filteredProducts.forEach(prod => {
-            grid.insertAdjacentHTML('beforeend', createProductCardHTML(prod));
+        productsToDisplay = productsToDisplay.filter(prod => {
+            if (!prod) return false;
+            const nameMatch = prod.name && prod.name.toLowerCase().includes(searchInput);
+            let keywordMatch = false;
+            if (prod.product_of_keyword && Array.isArray(prod.product_of_keyword)) {
+                keywordMatch = prod.product_of_keyword.some(k => k.toLowerCase().includes(searchInput));
+            }
+            return nameMatch || keywordMatch;
         });
+    }
+
+    // --- === YAHAN NAYA SORTING LOGIC JODA GAYA HAI === ---
+    switch (currentSortOrder) {
+        case 'popularity':
+            productsToDisplay.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            break;
+        case 'price-asc':
+            productsToDisplay.sort((a, b) => (a.displayPrice || 0) - (b.displayPrice || 0));
+            break;
+        case 'price-desc':
+            productsToDisplay.sort((a, b) => (b.displayPrice || 0) - (a.displayPrice || 0));
+            break;
+        case 'newest':
+            productsToDisplay.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            break;
+        default:
+            productsToDisplay.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }
+    // --- === NAYA SORTING LOGIC END === ---
+
+    if (productsToDisplay.length > 0) {
+        grid.innerHTML = productsToDisplay.map(prod => createProductCardHTML(prod)).join('');
     } else {
         noProductsMsg.classList.remove('hidden');
     }
 }
 
-// --- PRODUCT CARD HTML (No Change) ---
+// --- PRODUCT CARD HTML (MODIFIED for "BUY" BUTTON) ---
 function createProductCardHTML(prod) {
     if (!prod) return '';
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
@@ -282,10 +360,8 @@ function createProductCardHTML(prod) {
         if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
     }
     priceHTML = `<p class="display-price">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
-    const productPageUrl = `${window.location.origin}/product-details.html?id=${prod.id}`;
-    const whatsappMessage = `Hello! I am interested in this product:\n\n*Name:* ${prod.name}\n*Price:* ₹${Number(prod.displayPrice).toLocaleString("en-IN")}\n*Link:* ${productPageUrl}\n\nPlease provide more details.`;
-    const whatsappLink = `https://wa.me/917903698180?text=${encodeURIComponent(whatsappMessage)}`; 
     const titleHTML = `<h2 class="product-name">${prod.name}</h2>`;
+
     return `
     <div class="product-card">
         <div class="product-media-container">
@@ -304,10 +380,11 @@ function createProductCardHTML(prod) {
                 </div>
             </a>
             <div class="product-card-actions">
-                <a href="${whatsappLink}" target="_blank" class="whatsapp-btn">
-                    <img src="https://www.svgrepo.com/show/452133/whatsapp.svg" alt="WhatsApp">
-                </a>
-                <button class="add-text-btn add-btn" data-id="${prod.id}">Add</button>
+                <button class="cart-btn add-btn" data-id="${prod.id}">
+                    <img class="cart-icon-svg" src="${CART_ICON_SVG}" alt="Add to Cart">
+                    <i class="fas fa-check cart-added-icon" style="display: none;"></i>
+                </button>
+                <button class="buy-text-btn" data-id="${prod.id}">Buy</button>
             </div>
         </div>
     </div>`;
@@ -315,7 +392,6 @@ function createProductCardHTML(prod) {
 
 // --- SCROLL BEHAVIOR (No Change) ---
 function setupScrollBehavior() {
-    // (No Change)
     const header = document.getElementById('main-header');
     if (!header) return;
     let lastScrollY = window.scrollY;
@@ -333,19 +409,16 @@ function setupScrollBehavior() {
     }, { passive: true });
 }
 
-/**
- * === SEARCH FUNCTION (UPDATED) ===
- * Ab 'search-form' ke submit event ko handle karta hai.
- */
+// --- SEARCH FUNCTION (MODIFIED for KEYWORD SEARCH) ---
 function setupSearch() {
     const searchInput = document.getElementById('search-input');
-    const searchForm = document.getElementById('search-form'); // NEW: Form ko select karein
+    const searchForm = document.getElementById('search-form'); 
     const suggestionsContainer = document.getElementById('search-suggestions');
     const categorySuggestionsContainer = document.getElementById('category-suggestions');
     const searchOverlay = document.getElementById('search-overlay');
-    
+
     categorySuggestionsContainer.innerHTML = allCategories.map(cat => `<span class="suggestion-tag" data-category="${cat.name}">${cat.name}</span>`).join('');
-    
+
     categorySuggestionsContainer.addEventListener('click', e => {
         if(e.target.classList.contains('suggestion-tag')) {
             const categoryName = e.target.dataset.category;
@@ -355,31 +428,38 @@ function setupSearch() {
         }
     });
 
-    // --- NEW: Submit Event Listener ---
-    // Jab user keyboard par 'Search' / 'Enter' dabata hai
     if (searchForm) {
         searchForm.addEventListener('submit', (event) => {
-            event.preventDefault(); // Page ko reload hone se rokein
-            searchInput.blur();     // Keyboard ko hide karein
+            event.preventDefault(); 
+            filterAndDisplayProducts(); // Submit par final search run karo
+            searchInput.blur();     
         });
     }
-    // --- END OF NEW LISTENER ---
 
-    // Live search (jaise type karein)
     searchInput.addEventListener('input', () => {
         currentCategory = 'All'; currentSubcategory = 'All'; 
         document.querySelectorAll('.category-btn.active, .subcategory-btn.active').forEach(b=>b.classList.remove('active'));
         document.querySelector('.category-btn[data-category="All"]').classList.add('active');
         document.getElementById('subcategory-filter-container').classList.add('hidden');
-        
+        document.body.classList.remove('subcategory-visible'); // STICKY LOGIC
+
         filterAndDisplayProducts(); // Live results dikhayein
-        
+
         const query = searchInput.value.toLowerCase();
         if (query.length < 1) { 
             suggestionsContainer.classList.add('hidden'); 
             return; 
         }
-        const suggestions = allProducts.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+
+        const suggestions = allProducts.filter(p => { // Suggestions master list se aate hain
+            const nameMatch = p.name.toLowerCase().includes(query);
+            let keywordMatch = false;
+            if (p.product_of_keyword && Array.isArray(p.product_of_keyword)) {
+                keywordMatch = p.product_of_keyword.some(k => k.toLowerCase().startsWith(query));
+            }
+            return nameMatch || keywordMatch;
+        }).slice(0, 5);
+
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `<a href="./product-details.html?id=${prod.id}" class="suggestion-item"><img src="${(prod.images && prod.images[0]) || 'https://placehold.co/100x100/e2e8f0/64748b?text=?'}" alt="${prod.name}"><span class="text-sm text-gray-700">${prod.name}</span></a>`).join('');
             suggestionsContainer.classList.remove('hidden');
@@ -387,35 +467,99 @@ function setupSearch() {
             suggestionsContainer.classList.add('hidden'); 
         }
     });
-    
-    // Search UI ko activate/deactivate karna (No Change)
+
     const activateSearchMode = () => { document.body.classList.add('search-active'); categorySuggestionsContainer.classList.remove('hidden'); };
     const deactivateSearchMode = () => { document.body.classList.remove('search-active'); categorySuggestionsContainer.classList.add('hidden'); suggestionsContainer.classList.add('hidden'); };
-    
+
     searchInput.addEventListener('focus', activateSearchMode);
     searchOverlay.addEventListener('click', () => searchInput.blur());
     searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
 }
 
+// --- === YAHAN NAYA FUNCTION JODA GAYA HAI (SORT MODAL) === ---
+function setupSortModal() {
+    const openBtn = document.getElementById('open-sort-modal-btn');
+    const closeBtn = document.getElementById('sort-modal-close-btn');
+    const overlay = document.getElementById('sort-modal-overlay');
+    const options = document.querySelector('.sort-options-container');
 
-// --- PRODUCT CARD EVENT LISTENER (No Change) ---
+    if (!openBtn || !closeBtn || !overlay || !options) {
+        console.error('Sort modal elements not found!');
+        return;
+    }
+
+    const openModal = () => {
+        // Current sort order ko check karo
+        const currentRadio = document.querySelector(`input[name="sort-option"][value="${currentSortOrder}"]`);
+        if (currentRadio) {
+            currentRadio.checked = true;
+        }
+        overlay.classList.add('visible');
+    };
+
+    const closeModal = () => {
+        overlay.classList.remove('visible');
+    };
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) { // Sirf background par click karne se band ho
+            closeModal();
+        }
+    });
+
+    // Jab koi option chuna jaaye
+    options.addEventListener('change', (e) => {
+        if (e.target.name === 'sort-option') {
+            currentSortOrder = e.target.value;
+            console.log('New sort order:', currentSortOrder);
+            filterAndDisplayProducts(); // Naye sort order ke saath products ko re-render karo
+            setTimeout(closeModal, 200); // Thodi der baad modal band karo
+        }
+    });
+}
+// --- === NAYA FUNCTION END === ---
+
+
+// --- PRODUCT CARD EVENT LISTENER (MODIFIED for "BUY" BUTTON) ---
 function setupProductCardEventListeners() {
     const grid = document.getElementById('products-grid');
     if (!grid) return;
 
     grid.addEventListener('click', function(event) {
-        const addButton = event.target.closest('.add-btn');
+
+        const buyButton = event.target.closest('.buy-text-btn');
+        if (buyButton) {
+            event.preventDefault();
+            const productId = buyButton.dataset.id;
+            if (productId) {
+                addToCart(productId);
+                window.location.href = 'order.html'; // Turant redirect karo
+            }
+            return; 
+        }
+
+        const addButton = event.target.closest('.cart-btn.add-btn');
         if (addButton) {
             event.preventDefault(); 
             const productId = addButton.dataset.id;
-            
+
             if (productId && !addButton.classList.contains('added')) {
                 addToCart(productId);
+                showToast('Successfully added to cart!', 'success'); // Sirf cart button par toast dikhao
+
+                const cartIcon = addButton.querySelector('.cart-icon-svg');
+                const checkIcon = addButton.querySelector('.cart-added-icon');
+
                 addButton.classList.add('added');
-                addButton.textContent = 'Added ✓';
+                if (cartIcon) cartIcon.style.display = 'none';
+                if (checkIcon) checkIcon.style.display = 'inline-block';
+
                 setTimeout(() => {
                     addButton.classList.remove('added');
-                    addButton.textContent = 'Add';
+                    if (cartIcon) cartIcon.style.display = 'inline-block';
+                    if (checkIcon) checkIcon.style.display = 'none';
                 }, 1500);
             }
         }
