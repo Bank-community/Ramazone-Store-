@@ -20,11 +20,11 @@
 
 /* --- Scrolling Thumbnail Styles --- */
 #thumbnail-gallery {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 #thumbnail-gallery::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none;
 }
 .thumbnail {
     flex-shrink: 0;
@@ -62,222 +62,51 @@
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
-
 /* --- Rating Stars --- */
 .rating-stars {
     color: #f59e0b;
 }
 
-
 /* === NAYE STYLES (Tech Specs, Variants) START === */
+/* --- Variant Group --- */
+.variant-group { margin-bottom: 1rem; }
+.variant-group-title { font-size: 0.875rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem; }
+.variant-group-title span { font-weight: 700; color: #111827; }
+.variant-options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.variant-option-btn { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; background-color: #ffffff; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 600; color: #374151; transition: all 0.2s ease; min-width: 44px; text-align: center; }
+.variant-option-btn:hover { background-color: #f9fafb; }
+.variant-option-btn.selected { border-color: var(--primary-color); background-color: #eef2ff; color: var(--primary-color); box-shadow: 0 0 0 1px var(--primary-color); }
 
-/* --- Naya Flipkart-style Variant Group (Size, Weight, etc.) --- */
-.variant-group {
-    margin-bottom: 1rem;
-}
-.variant-group-title {
-    font-size: 0.875rem; /* 14px */
-    font-weight: 600;
-    color: #4b5563; /* text-gray-600 */
-    margin-bottom: 0.5rem;
-}
-.variant-group-title span {
-    font-weight: 700;
-    color: #111827; /* text-gray-900 */
-}
-.variant-options-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem; /* 8px */
-}
-.variant-option-btn {
-    padding: 0.5rem 0.75rem; /* 8px 12px */
-    border: 1px solid #d1d5db; /* border-gray-300 */
-    background-color: #ffffff;
-    border-radius: 0.5rem; /* 8px */
-    cursor: pointer;
-    font-size: 0.875rem; /* 14px */
-    font-weight: 600;
-    color: #374151; /* text-gray-700 */
-    transition: all 0.2s ease;
-    min-width: 44px;
-    text-align: center;
-}
-.variant-option-btn:hover {
-    background-color: #f9fafb; /* bg-gray-50 */
-}
-.variant-option-btn.selected {
-    border-color: var(--primary-color);
-    background-color: #eef2ff; /* bg-indigo-50 */
-    color: var(--primary-color);
-    box-shadow: 0 0 0 1px var(--primary-color);
-}
+/* --- Image-based Variants --- */
+#image-variant-selectors-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.image-variant-btn { display: flex; align-items: center; gap: 0.5rem; padding: 4px; border: 2px solid #d1d5db; background-color: #ffffff; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s ease; }
+.image-variant-btn img { width: 40px; height: 40px; object-fit: cover; border-radius: 0.375rem; }
+.image-variant-btn .variant-name { font-size: 0.875rem; font-weight: 600; color: #374151; padding-right: 0.5rem; }
+.image-variant-btn:hover { border-color: #a5b4fc; }
+.image-variant-btn.selected { border-color: var(--primary-color); background-color: #eef2ff; box-shadow: 0 0 0 1px var(--primary-color); }
+.image-variant-btn.selected .variant-name { color: var(--primary-color); }
 
+/* --- Combo Pack --- */
+.combo-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
+.combo-pack-card { border: 2px solid #e5e7eb; background-color: #ffffff; padding: 0.5rem; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.combo-pack-card:hover { border-color: #a5b4fc; transform: translateY(-2px); }
+.combo-pack-card.selected { border-color: var(--primary-color); background-color: #eef2ff; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1); }
+.combo-pack-card img { flex-shrink: 0; width: 32px; height: 32px; object-fit: contain; border-radius: 4px; }
+.combo-pack-card .pack-details { flex-grow: 1; }
+.combo-pack-card .pack-name { font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 0; }
+.combo-pack-card .pack-price { font-size: 1.125rem; font-weight: 800; color: var(--primary-color); line-height: 1.2; }
+.combo-pack-savings { font-size: 0.75rem; margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; align-items: center; line-height: 1.2; }
+.best-value-tag { position: absolute; top: -1px; right: -1px; background-color: #16a34a; color: white; font-size: 10px; font-weight: bold; padding: 2px 20px; transform: translateX(30%) translateY(50%) rotate(45deg); transform-origin: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); width: 100px; text-align: center; }
 
-/* --- Naya Image-based Variants --- */
-#image-variant-selectors-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem; /* 8px */
-}
-.image-variant-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem; /* 8px */
-    padding: 4px;
-    border: 2px solid #d1d5db; /* border-gray-300 */
-    background-color: #ffffff;
-    border-radius: 0.5rem; /* 8px */
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.image-variant-btn img {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 0.375rem; /* 6px */
-}
-.image-variant-btn .variant-name {
-    font-size: 0.875rem; /* 14px */
-    font-weight: 600;
-    color: #374151; /* text-gray-700 */
-    padding-right: 0.5rem;
-}
-.image-variant-btn:hover {
-    border-color: #a5b4fc;
-}
-.image-variant-btn.selected {
-    border-color: var(--primary-color);
-    background-color: #eef2ff;
-    box-shadow: 0 0 0 1px var(--primary-color);
-}
-.image-variant-btn.selected .variant-name {
-    color: var(--primary-color);
-}
-
-
-/* --- Naya Combo Pack (Quantity Packs) with Image --- */
-.combo-pack-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 0.75rem;
-}
-.combo-pack-card {
-    border: 2px solid #e5e7eb;
-    background-color: #ffffff;
-    padding: 0.5rem; /* Padding kam kiya */
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-    border-radius: 0.5rem; 
-    display: flex; /* Flex banaya */
-    align-items: center;
-    gap: 0.5rem; /* 8px */
-}
-.combo-pack-card:hover {
-    border-color: #a5b4fc;
-    transform: translateY(-2px);
-}
-.combo-pack-card.selected {
-    border-color: var(--primary-color);
-    background-color: #eef2ff;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1);
-}
-/* Naya Image Style */
-.combo-pack-card img {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    border-radius: 4px;
-}
-.combo-pack-card .pack-details {
-    flex-grow: 1;
-}
-.combo-pack-card .pack-name {
-    font-weight: 700;
-    color: #1f2937;
-    font-size: 0.9rem; /* 14px */
-    margin-bottom: 0; /* Margin hataya */
-}
-.combo-pack-card .pack-price {
-    font-size: 1.125rem; /* 18px */
-    font-weight: 800;
-    color: var(--primary-color);
-    line-height: 1.2; /* Line height adjust ki */
-}
-.combo-pack-savings {
-    font-size: 0.75rem; /* 12px */
-    margin-top: 0.25rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.5rem;
-    align-items: center;
-    line-height: 1.2;
-}
-.best-value-tag {
-    position: absolute;
-    top: -1px;
-    right: -1px;
-    background-color: #16a34a;
-    color: white;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 2px 20px;
-    transform: translateX(30%) translateY(50%) rotate(45deg);
-    transform-origin: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    width: 100px;
-    text-align: center;
-}
-
-/* --- Naya Tech Specs Section --- */
-#tech-specs-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem; /* 12px */
-}
-.tech-spec-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem; /* 12px */
-    padding: 0.75rem;
-    background-color: #f9fafb; /* bg-gray-50 */
-    border-radius: 0.5rem; /* 8px */
-    border: 1px solid #f3f4f6; /* border-gray-100 */
-}
-.tech-spec-icon {
-    flex-shrink: 0;
-    width: 2.5rem; /* 40px */
-    height: 2.5rem; /* 40px */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #ffffff;
-    border-radius: 0.375rem; /* 6px */
-    border: 1px solid #e5e7eb;
-}
-.tech-spec-icon svg {
-    width: 1.5rem; /* 24px */
-    height: 1.5rem; /* 24px */
-    color: #4b5563; /* text-gray-600 */
-}
-.tech-spec-details {
-    flex-grow: 1;
-}
-.tech-spec-name {
-    font-size: 0.875rem; /* 14px */
-    color: #6b7280; /* text-gray-500 */
-}
-.tech-spec-value {
-    font-size: 1rem; /* 16px */
-    font-weight: 600;
-    color: #1f2937; /* text-gray-800 */
-}
-
-/* === NAYE STYLES (Tech Specs, Variants) END === */
-
+/* --- Tech Specs --- */
+#tech-specs-container { display: flex; flex-direction: column; gap: 0.75rem; }
+.tech-spec-row { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background-color: #f9fafb; border-radius: 0.5rem; border: 1px solid #f3f4f6; }
+.tech-spec-icon { flex-shrink: 0; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; background-color: #ffffff; border-radius: 0.375rem; border: 1px solid #e5e7eb; }
+.tech-spec-icon svg { width: 1.5rem; height: 1.5rem; color: #4b5563; }
+.tech-spec-details { flex-grow: 1; }
+.tech-spec-name { font-size: 0.875rem; color: #6b7280; }
+.tech-spec-value { font-size: 1rem; font-weight: 600; color: #1f2937; }
+/* === NAYE STYLES END === */
 
 /* --- Price Section --- */
 #new-price-section .flex { align-items: baseline; }
@@ -287,90 +116,108 @@
 .lowest-price-tag { background-color: #16a34a; color: white; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 0.2rem; display: inline-block; margin-bottom: 0.5rem; }
 
 /* --- Sticky Action Bar --- */
-.quantity-selector {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-}
-.quantity-selector button { 
-    width: 44px; 
-    height: 44px; 
-    font-size: 1.5rem; 
-    font-weight: 500; 
-    color: var(--primary-color); 
-    background-color: #eef2ff; 
-    transition: background-color 0.2s; 
-}
+.quantity-selector { display: flex; width: 100%; justify-content: center; }
+.quantity-selector button { width: 44px; height: 44px; font-size: 1.5rem; font-weight: 500; color: var(--primary-color); background-color: #eef2ff; transition: background-color 0.2s; }
 .quantity-selector button:hover { background-color: #e0e7ff; }
 .quantity-selector button:disabled { color: #9ca3af; background-color: #f3f4f6; cursor: not-allowed; }
-.quantity-selector span { 
-    font-size: 1.125rem; 
-    font-weight: 600; 
-}
+.quantity-selector span { font-size: 1.125rem; font-weight: 600; }
 
 /* --- Highlights/Specs Tags --- */
 .spec-score { background-color: #fefce8; color: #ca8a04; border: 1px solid #facc15; padding: 6px 12px; border-radius: 8px; }
 .spec-tag { background-color: #f0fdf4; color: #16a34a; border: 1px solid #4ade80; padding: 6px 12px; border-radius: 8px; }
 
-/* --- Similar/Other Products --- */
 
-/* --- FIX: Only target SLIDER containers (Recently Viewed, More in Category, You Might Like) --- */
-/* Removed #other-products-container from here */
+/* --- ============================================================ --- */
+/* ---        FINAL FIXES: SMOOTHNESS & SIZING (UPDATED)          --- */
+/* --- ============================================================ --- */
+
+/* 1. Titles Padding */
+#product-content h2, 
+#product-content h3,
+.section-title {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+/* 2. Slider Containers: REMOVED 'scroll-snap' for SMOOTHNESS */
 #recently-viewed-container,
 #similar-products-container,
 #handpicked-similar-container,
 .carousel-container { 
-    padding-left: 16px !important;
-    padding-right: 16px !important;
     display: flex !important;
     overflow-x: auto !important;
-    scroll-snap-type: x mandatory;
+    /* 'scroll-snap-type' REMOVED for smooth free-scrolling */
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important; /* iOS momentum scroll */
+    
     gap: 10px !important;
     -ms-overflow-style: none;
     scrollbar-width: none;
     width: 100% !important;
     box-sizing: border-box !important;
+    
+    /* Padding for correct edge spacing */
+    padding: 0 16px !important; 
+    padding-bottom: 10px !important;
 }
 
 #recently-viewed-container::-webkit-scrollbar,
 #similar-products-container::-webkit-scrollbar,
-#handpicked-similar-container::-webkit-scrollbar { 
+#handpicked-similar-container::-webkit-scrollbar,
+#other-products-container::-webkit-scrollbar { 
     display: none; 
 }
 
-/* --- FIXED: Card Width (Now showing ~3 items in Sliders) --- */
+/* 3. Card Sizing (Sliders) */
 .carousel-item, 
 .recently-viewed-item { 
     flex: 0 0 30% !important; 
     scroll-snap-align: start; 
     max-width: 30% !important; 
+    
+    background: white;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
 }
 
-/* --- FIX: Other Products (Grid Layout - 2 per row) --- */
-/* Explicitly targeting the container to force Grid */
+/* 4. FIX: Recently Viewed ZERO Radius */
+.recently-viewed-item {
+    border-radius: 0 !important; /* Corners ab square honge */
+}
+.carousel-item {
+    border-radius: 8px; /* Baki sab rounded rahenge */
+}
+
+/* 5. FIX: "Other Products" BIGGER SIZE (Compact Grid) */
 #other-products-container {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
-    padding: 0 16px !important; /* Padding to prevent left-sticking */
+    gap: 8px !important; /* Gap kam kiya taaki cards bade dikhein */
+    padding: 0 8px !important; /* Side padding kam ki */
     width: 100% !important;
     box-sizing: border-box !important;
-    overflow: visible !important; /* No scroll */
+    overflow: visible !important;
 }
 
 .other-products-grid { 
     display: grid; 
     grid-template-columns: repeat(2, 1fr); 
-    gap: 12px; 
+    gap: 8px; 
 }
 
+/* Responsive Adjustments */
 @media (min-width: 640px) { 
     .carousel-item, .recently-viewed-item { flex: 0 0 24% !important; max-width: 24% !important; }
-    .other-products-grid, #other-products-container { grid-template-columns: repeat(3, 1fr) !important; } 
+    .other-products-grid, #other-products-container { 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 12px !important;
+        padding: 0 16px !important;
+    } 
 }
 @media (min-width: 1024px) { 
     .carousel-item, .recently-viewed-item { flex: 0 0 19% !important; max-width: 19% !important; } 
 }
+/* --- ============================================================ --- */
 
 
 /* --- Modals --- */
@@ -384,12 +231,6 @@
 #variant-modal-overlay.active, #bundle-modal-overlay.active { display: flex; }
 #variant-modal-content, #bundle-modal-content { transform: scale(0.95); opacity: 0; transition: all 0.3s; }
 #variant-modal-overlay.active #variant-modal-content, #bundle-modal-overlay.active #bundle-modal-content { transform: scale(1); opacity: 1; }
-
-/* --- Purana Variant Modal CSS --- */
-.variant-option { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
-.variant-option:hover { background-color: #f9fafb; }
-.variant-option.selected { border-color: var(--primary-color); background-color: #eef2ff; font-weight: 600; }
-.color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #d1d5db; }
 
 /* --- Bundle Modal --- */
 .bundle-modal-products { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
@@ -415,16 +256,9 @@
 .card-rating-tag .fa-star { font-size: 10px; }
 
 
-/* --- Recently Viewed Items (Custom Styling) --- */
-.recently-viewed-item { 
-    border: 1px solid #e5e7eb; 
-    overflow: hidden; 
-    background: white;
-    border-radius: 0.5rem; /* Added radius to match other cards */
-}
-.recently-viewed-item img { 
-    border-radius: 0; 
-}
+/* --- Recently Viewed Items (Styling) --- */
+.recently-viewed-item { border: 1px solid #e5e7eb; overflow: hidden; background: white; border-radius: 0.5rem; }
+.recently-viewed-item img { border-radius: 0; }
 
 /* --- Header Search --- */
 .header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; text-decoration: none; cursor: pointer; }
