@@ -209,7 +209,6 @@ async function fetchAllData() {
         const data = snapshot.val();
         appThemeColor = data.config?.themeColor || '#4F46E5';
         document.documentElement.style.setProperty('--primary-color', appThemeColor);
-        // SCRIPT_ERROR_FIX: null products ko filter karna
         const allProds = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
         allProductsCache = allProds.filter(p => p && p.isVisible !== false);
     }
@@ -232,7 +231,6 @@ function fetchProductData() {
 
 async function loadPageSectionsAndData(data) {
     try {
-        // Yahi 3 files load hongi
         const [mediaHtml, infoHtml, similarHtml] = await Promise.all([
             fetch('product-details-sections/media-gallery.html').then(res => res.text()),
             fetch('product-details-sections/product-main-info.html').then(res => res.text()),
@@ -242,7 +240,6 @@ async function loadPageSectionsAndData(data) {
         document.getElementById('product-main-info-container').innerHTML = infoHtml;
         document.getElementById('similar-products-container-wrapper').innerHTML = similarHtml;
 
-        // Saare data ko populate karne waala function
         populateDataAndAttachListeners(data);
 
         document.getElementById('loading-indicator').style.display = 'none';
@@ -259,13 +256,10 @@ function populateDataAndAttachListeners(data) {
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
 
-    // BADLAAV: Veg/Non-Veg function call HATA diya gaya hai
-
     slider = document.getElementById('media-slider');
     sliderWrapper = document.getElementById('main-media-wrapper');
     mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
 
-    // BADLAAV: renderMediaGallery ab video icon bhi dikhayega
     renderMediaGallery();
     showMedia(0);
     setupSliderControls();
@@ -281,66 +275,45 @@ function populateDataAndAttachListeners(data) {
         document.getElementById("seller-info").style.display = "block";
     }
 
-    // Current product ke variant aur pack ko set karna
     selectedVariants = (data.variantType && data.variantValue) ? { [data.variantType]: data.variantValue } : {};
-    selectedPack = null; // Hamesha single item se start karein
+    selectedPack = null; 
 
     updatePriceDisplay();
 
-    // BADLAAV: Purana renderProductOptions() ab 4 alag functions mein bant gaya hai
-    renderVariantSelectors(data); // Naya Flipkart-style variant logic
-    renderComboPacks(data);       // Naya Combo pack logic (image + single item remove)
-    renderProductBundles(data);   // Product bundle logic
-    renderTechSpecs(data.techSpecs); // Tech specs logic
+    renderVariantSelectors(data); 
+    renderComboPacks(data);       
+    renderProductBundles(data);   
+    renderTechSpecs(data.techSpecs); 
 
-    // Purana variant modal ab use nahi hoga, use hata diya gaya hai
-    // setupVariantModal(); 
     setupBundleModal();
     renderAdvancedHighlights(data.specHighlights);
     renderDescription(data);
     setupActionControls();
 
-    // BADLAAV: Recently Viewed ko waapas laaya gaya
     updateRecentlyViewed(data.id);
-
-    // BADLAAV: "You Might Also Like" ab sub-category par based hai
     loadHandpickedSimilarProducts(data.category, data.subcategory, data.id);
-
     loadCategoryBasedProducts(data.category);
     loadOtherProducts(data.category);
     updateCartIcon();
     updateStickyActionBar();
 
     document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
-
-    // BADLAAV: Click listener ko ab 2 alag-alag container par lagana hoga
     document.getElementById('media-gallery-container').addEventListener('click', handleOptionsClick);
     document.getElementById('product-main-info-container').addEventListener('click', handleOptionsClick);
 
     setupHeaderScrollEffect();
 }
 
-// BADLAAV: handleOptionsClick ab Lays-style variants aur naye combo logic ko handle karega
 function handleOptionsClick(event) {
     const bundleCard = event.target.closest('.product-bundle-card');
     const bundleAddBtn = event.target.closest('.final-bundle-plus-btn[data-bundle="true"]');
     const comboCard = event.target.closest('.combo-pack-card');
     const imageVariantBtn = event.target.closest('.image-variant-btn');
 
-    // 1. Image Variant (Lays Packet) Click
-    if (imageVariantBtn) {
-        // Yeh ek `<a>` tag hai, to page reload hoga. Kuch extra karne ki zaroorat nahi.
-        return;
-    }
-
-    // 2. Text Variant (Size, Weight) Click
+    if (imageVariantBtn) return;
     const textVariantBtn = event.target.closest('.variant-option-btn');
-    if (textVariantBtn) {
-        // Yeh bhi ek `<a>` tag hai, page reload hoga.
-        return;
-    }
+    if (textVariantBtn) return;
 
-    // 3. Bundle "Add" Button Click
     if (bundleAddBtn) {
         event.preventDefault(); event.stopPropagation();
         const bundleCardEl = bundleAddBtn.closest('.product-bundle-card');
@@ -350,7 +323,6 @@ function handleOptionsClick(event) {
         return;
     }
 
-    // 4. Bundle Card Click (Modal Kholne ke liye)
     if (bundleCard) {
         event.preventDefault();
         const productIds = bundleCard.dataset.productIds.split(',');
@@ -359,7 +331,6 @@ function handleOptionsClick(event) {
         return;
     }
 
-    // 5. Combo Pack (2 pack, 3 pack) Click
     if (comboCard) {
         const container = comboCard.closest('.combo-pack-grid');
         const isAlreadySelected = comboCard.classList.contains('selected');
@@ -367,25 +338,20 @@ function handleOptionsClick(event) {
         container.querySelectorAll('.combo-pack-card').forEach(c => c.classList.remove('selected'));
 
         if (isAlreadySelected) {
-            // Agar selected card par dobara click kiya, to unselect karo
             selectedPack = null;
-            updatePriceDisplay(); // Default price par waapas
+            updatePriceDisplay(); 
         } else {
-            // Naya pack select karo
             comboCard.classList.add('selected');
             const selectedValue = comboCard.dataset.value;
             const selectedPrice = comboCard.dataset.price;
             selectedPack = { name: selectedValue, price: selectedPrice };
-            updatePriceDisplay(selectedPrice); // Naya pack price
+            updatePriceDisplay(selectedPrice); 
         }
         updateStickyActionBar();
         return;
     }
 }
 
-// BADLAAV: renderProductOptions() ko 4 naye functions se replace kiya gaya hai
-
-// NAYA FUNCTION 1: Tech Specs
 function renderTechSpecs(techSpecs) {
     const container = document.getElementById('tech-specs-container');
     const section = document.getElementById('tech-specs-section');
@@ -423,10 +389,9 @@ function renderTechSpecs(techSpecs) {
     }
 }
 
-// NAYA FUNCTION 2: Flipkart-style Variants (Dono tarah ke)
 function renderVariantSelectors(data) {
-    const imageContainer = document.getElementById('image-variant-selectors-container'); // media-gallery.html mein
-    const textContainer = document.getElementById('variant-selectors-container'); // product-main-info.html mein
+    const imageContainer = document.getElementById('image-variant-selectors-container'); 
+    const textContainer = document.getElementById('variant-selectors-container'); 
 
     if (!imageContainer || !textContainer) return;
 
@@ -457,9 +422,7 @@ function renderVariantSelectors(data) {
         let currentProductValue = (data.variantType === type) ? data.variantValue : "N/A";
         if(data.variantType === type) currentProductValue = data.variantValue;
 
-        // BADLAAV: Logic ko split karna (Lays screenshot ke hisaab se)
         if (type.toLowerCase() === 'color') {
-            // --- 1. IMAGE/COLOR VARIANTS (Lays Screenshot logic) ---
             imageHtml += `<div class="variant-group">`;
             imageHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
             imageHtml += `<div class="variant-options-grid">`;
@@ -479,7 +442,6 @@ function renderVariantSelectors(data) {
             imageHtml += `</div></div>`;
 
         } else {
-            // --- 2. TEXT VARIANTS (Size, Weight, etc.) ---
             textHtml += `<div class="variant-group">`;
             textHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
             textHtml += `<div class="variant-options-grid">`;
@@ -503,15 +465,12 @@ function renderVariantSelectors(data) {
     textContainer.innerHTML = textHtml;
 }
 
-// NAYA FUNCTION 3: Combo Packs
 function renderComboPacks(data) {
     const container = document.getElementById('combo-pack-container');
     if (!container) return;
 
     const packs = data.combos && data.combos.quantityPacks ? data.combos.quantityPacks.map(p => ({ name: p.name, price: p.price })) : [];
 
-    // --- USER RULE ---
-    // Section ko sirf tab dikhao jab 1 ya zyada extra pack ho
     if (packs.length === 0) {
         container.innerHTML = '';
         return;
@@ -524,10 +483,8 @@ function renderComboPacks(data) {
             <div class="combo-pack-grid">${comboHTML}</div>
         </div>
     `;
-    // Click listener ab global handleOptionsClick mein hai
 }
 
-// NAYA FUNCTION 4: Product Bundles
 async function renderProductBundles(data) {
     const container = document.getElementById('bundle-offer-container');
     if (!container || !data.combos || !data.combos.productBundle || !data.combos.productBundle.linkedProductIds) {
@@ -570,9 +527,7 @@ async function renderProductBundles(data) {
 }
 
 
-// BADLAAV: Combo Pack Grid (Image + "Single Item" remove logic)
 function createComboPackGrid(productData, options) {
-    // 'options' ab sirf (2 pack, 3 pack) etc. hain
     const singleItemOriginalPrice = Number(productData.originalPrice) > Number(productData.displayPrice) ? Number(productData.originalPrice) : Number(productData.displayPrice);
     let bestValueIndex = -1;
     let maxSavings = -1;
@@ -604,10 +559,7 @@ function createComboPackGrid(productData, options) {
         return `
             <div class="combo-pack-card" data-value="${opt.name}" data-price="${opt.price || ''}">
                 ${isBestValue ? '<div class="best-value-tag">Best Value</div>' : ''}
-
-                <!-- Naya Image -->
                 <img src="${cardImage}" alt="pack">
-
                 <div class="pack-details">
                     <p class="pack-name">${opt.name}</p>
                     <p class="pack-price">₹${Number(opt.price).toLocaleString('en-IN')}</p>
@@ -624,9 +576,6 @@ function createComboPackGrid(productData, options) {
 
     return cardsHTML;
 }
-
-// Purana createVariantButton HATA diya gaya hai
-// Purana attachComboPackListeners HATA diya gaya hai
 
 function openBundleModal(productIds, bundlePrice) {
     const products = productIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
@@ -671,7 +620,7 @@ function handleQuickAdd(event) {
         const product = allProductsCache.find(p => p && p.id === productId);
         if (product) {
             let defaultVariants = (product.variantType && product.variantValue) ? { [product.variantType]: product.variantValue } : {};
-            addToCart(productId, 1, defaultVariants, null); // Default pack hamesha null
+            addToCart(productId, 1, defaultVariants, null); 
             quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
             quickAddButton.classList.add('added');
             setTimeout(() => {
@@ -683,21 +632,13 @@ function handleQuickAdd(event) {
 }
 function setupActionControls() { document.getElementById('add-to-cart-btn').addEventListener('click', () => { addToCart(currentProductId, 1, selectedVariants, selectedPack); }); document.getElementById('increase-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }); document.getElementById('decrease-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }); setupShareButton(); }
 
-// Purana Variant Modal (popup) functions HATA diye gaye hain
-// function openVariantModal(variantType) { ... }
-// function closeVariantModal() { ... }
-// function updateVariantButtonDisplay(type, value) { ... }
-// function setupVariantModal() { ... }
-
 function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; let discount = 0; let packOriginalPrice = originalPrice; if (selectedPack) { const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; packOriginalPrice = originalPrice > displayPrice ? originalPrice * quantity : 0; } if (packOriginalPrice > displayPrice) { discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); } else if (originalPrice > displayPrice && !selectedPack) { discount = Math.round(100 * (originalPrice - displayPrice) / originalPrice); } if (discount > 0) { percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${(selectedPack ? packOriginalPrice : originalPrice).toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
 
-// BADLAAV: "You Might Also Like" ab sub-category par based hai
 async function loadHandpickedSimilarProducts(category, subcategory, currentProductId) {
     const section = document.getElementById("handpicked-similar-section");
     const container = document.getElementById("handpicked-similar-container");
     if (!container || !section) return;
 
-    // Logic: Agar subcategory hai, to use use karo
     if (!subcategory) {
         section.style.display = "none";
         return;
@@ -708,7 +649,7 @@ async function loadHandpickedSimilarProducts(category, subcategory, currentProdu
         p.category === category && 
         p.subcategory === subcategory && 
         p.id !== currentProductId
-    ).slice(0, 10); // 10 products tak seemit
+    ).slice(0, 10); 
 
     if (similarProducts.length === 0) {
         section.style.display = "none";
@@ -758,14 +699,12 @@ async function loadHandpickedSimilarProducts(category, subcategory, currentProdu
 
 function createCarouselCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`; return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
 
-// BADLAAV: Recently Viewed Card ka function (yeh 7:15 waale code mein tha)
 function createRecentlyViewedCard(product) { 
     return ` <a href="?id=${product.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4> </div> </a> `; 
 }
 
 function createGridCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const showAddButton = displayPriceNum < 500 || product.category === 'grocery'; const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : ""; return `<a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2 sm:p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
 
-// BADLAAV: renderDescription ab 'longDescription' ko handle karega (jo form mein hai)
 function renderDescription(data) { 
     const descriptionContainer = document.getElementById("product-description"); 
     const descriptionSection = document.getElementById("description-section"); 
@@ -778,7 +717,6 @@ function renderDescription(data) {
         descriptionContainer.innerHTML = `<p class="text-base text-gray-600 leading-relaxed">${data.longDescription.replace(/\n/g, '<br>')}</p>`; 
         hasContent = true; 
     } else if (data.description && Array.isArray(data.description) && data.description.length > 0) { 
-        // Purana fallback (agar 'longDescription' nahi hai)
         let descriptionHtml = '<ul class="space-y-3 list-inside">'; 
         data.description.forEach(block => { 
             if (block.details) { 
@@ -812,7 +750,6 @@ function renderDescription(data) {
 }
 function renderAdvancedHighlights(specData) { const container = document.getElementById("advanced-highlights-section"); if (!specData || !specData.blocks || specData.blocks.length === 0) { container.style.display = "none"; return; } let html = `<div class="p-4 sm:p-6 lg:p-8 border-t border-b border-gray-200 my-4"><h2 class="text-xl font-bold text-gray-900 mb-4">Highlights</h2>`; if (specData.specScore || specData.specTag) { html += '<div class="flex items-center gap-3 mb-6">'; if (specData.specScore) { html += `<div class="spec-score font-bold">${specData.specScore}</div>`; } if (specData.specTag) { html += `<div class="spec-tag">${specData.specTag}</div>`; } html += '</div>'; } html += '<div class="space-y-6">'; specData.blocks.forEach(block => { const subtitleStyle = "color: #B8860B; font-weight: 500;"; html += `<div class="flex items-start gap-4"><div class="flex-shrink-0 w-8 h-8 text-gray-600 pt-1">${block.icon || ""}</div><div class="flex-grow"><p class="text-sm text-gray-500">${block.category || ""}</p><h4 class="text-md font-semibold text-gray-800 mt-1">${block.title || ""}</h4><p class="text-sm mt-1" style="${subtitleStyle}">${block.subtitle || ""}</p></div></div>`; }); html += '</div></div>'; container.innerHTML = html; container.style.display = "block"; }
 
-// BADLAAV: Video 'Play' Icon logic
 function renderMediaGallery() { 
     const gallery=document.getElementById("thumbnail-gallery");
     gallery.innerHTML="";
@@ -829,7 +766,6 @@ function renderMediaGallery() {
         l.src="image"===item.type?item.src:item.thumbnail;
         t.appendChild(l);
 
-        // Naya logic: Video icon ko jodna
         if ("video"===item.type) {
             const n=document.createElement("div");
             n.className="play-icon";
@@ -860,25 +796,28 @@ function setupShareButton() {
         if (!currentProductData) return;
         const productName = currentProductData.name.replace(/\*/g, "").trim();
         const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
-        const productUrl = window.location.href;
+        
+        // UPDATE: URL ab 'api/share?id=...' banega
+        // window.location.origin ka matlab hai 'https://www.ramazone.in'
+        const shareUrl = `${window.location.origin}/api/share?id=${currentProductId}`;
+        
         const baseMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨`;
-        const clipboardMessage = `${baseMessage}\n${productUrl}`;
-        const shareData = { title: productName, text: baseMessage, url: productUrl, };
+        const clipboardMessage = `${baseMessage}\n${shareUrl}`;
+        const shareData = { title: productName, text: baseMessage, url: shareUrl, };
+        
         try {
             if (navigator.share) { await navigator.share(shareData); } 
             else if (navigator.clipboard) { await navigator.clipboard.writeText(clipboardMessage); showToast("Link and details copied!"); } 
-            else { const textArea = document.createElement('textarea'); textArea.value = productUrl; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); showToast("Link Copied!"); }
+            else { const textArea = document.createElement('textarea'); textArea.value = shareUrl; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); showToast("Link Copied!"); }
         } catch (err) { console.error("Error sharing:", err); if (err.name !== 'AbortError') { showToast("Sharing failed.", "error"); } }
     });
 }
 
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
 
-// BADLAAV: Recently Viewed functions (yeh 7:15 waale code mein tha)
 function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; viewedIds = viewedIds.filter(e => e !== newId); viewedIds.unshift(newId); viewedIds = viewedIds.slice(0, 10); localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds)); loadRecentlyViewed(viewedIds); }
 function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
 
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
-
 
