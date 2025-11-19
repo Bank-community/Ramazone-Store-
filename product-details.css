@@ -302,3 +302,4 @@
 @media (min-width: 1024px) { 
     .carousel-item, .recently-viewed-item, #handpicked-similar-container > div { flex: 0 0 19% !important; max-width: 19% !important; } 
 }
+
