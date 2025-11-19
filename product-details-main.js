@@ -248,7 +248,7 @@ function populateDataAndAttachListeners(data) {
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
 
-    // --- NEW: Brand & Visit Store Logic ---
+    // --- Brand & Visit Store Logic ---
     if (data.brand) {
         const brandContainer = document.getElementById('brand-info-container');
         const brandText = document.getElementById('brand-name-text');
@@ -320,12 +320,8 @@ function handleOptionsClick(event) {
     const imageVariantBtn = event.target.closest('.image-variant-btn');
     const richVariantCard = event.target.closest('.variant-rich-card');
 
-    // Rich Card Click (New Logic)
     if (richVariantCard) {
         const linkHref = richVariantCard.getAttribute('data-href');
-        // Only prevent default if it's linking to the same page logic
-        // Since we are refreshing page for variants, let normal anchor behavior work if it's an <a> tag
-        // But here we used div with onclick logic essentially.
         if (linkHref) {
             window.location.href = linkHref;
         }
@@ -333,7 +329,6 @@ function handleOptionsClick(event) {
     }
 
     if (imageVariantBtn) {
-        // Let anchor tag handle navigation
         return;
     }
 
@@ -461,7 +456,6 @@ function findBestMatchProduct(groupProducts, currentProduct, targetType, targetV
     return bestMatch;
 }
 
-// --- REWRITTEN RENDER LOGIC FOR RICH CARDS ---
 function renderVariantSelectors(data) {
     const imageContainer = document.getElementById('image-variant-selectors-container'); 
     const textContainer = document.getElementById('variant-selectors-container'); 
@@ -505,10 +499,8 @@ function renderVariantSelectors(data) {
         groupHtml += `<h3 class="variant-group-title">${type}: <span>${currentValue}</span></h3>`;
         
         if (isColor) {
-            // For Color: Use Grid Wrap
             groupHtml += `<div class="image-variant-selectors-container" style="display:flex; flex-wrap:wrap; gap:0.5rem;">`;
         } else {
-            // For Others (Storage/Rich Cards): Use Horizontal Scroll Container
             groupHtml += `<div class="variant-scroll-container">`;
         }
 
@@ -527,7 +519,6 @@ function renderVariantSelectors(data) {
                     </a>
                 `;
             } else {
-                // --- RICH CARD LOGIC ---
                 let cardPrice = "N/A";
                 let cardDiscount = "";
                 let cardOrigPrice = "";
@@ -734,9 +725,80 @@ function handleQuickAdd(event) {
         }
     }
 }
-function setupActionControls() { document.getElementById('add-to-cart-btn').addEventListener('click', () => { addToCart(currentProductId, 1, selectedVariants, selectedPack); }); document.getElementById('increase-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }); document.getElementById('decrease-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }); setupShareButton(); }
+function setupActionControls() { 
+    document.getElementById('add-to-cart-btn').addEventListener('click', () => { addToCart(currentProductId, 1, selectedVariants, selectedPack); }); 
+    document.getElementById('increase-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }); 
+    document.getElementById('decrease-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }); 
+    setupShareButton(); 
+}
 
-function updatePriceDisplay(newPrice) { const finalPriceEl = document.getElementById("price-final"); const originalPriceEl = document.getElementById("price-original"); const percentageDiscountEl = document.getElementById("price-percentage-discount"); const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); const originalPrice = Number(currentProductData.originalPrice); finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; let discount = 0; let packOriginalPrice = originalPrice; if (selectedPack) { const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; packOriginalPrice = originalPrice > displayPrice ? originalPrice * quantity : 0; } if (packOriginalPrice > displayPrice) { discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); } else if (originalPrice > displayPrice && !selectedPack) { discount = Math.round(100 * (originalPrice - displayPrice) / originalPrice); } if (discount > 0) { percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; originalPriceEl.textContent = `₹${(selectedPack ? packOriginalPrice : originalPrice).toLocaleString("en-IN")}`; percentageDiscountEl.style.display = "flex"; originalPriceEl.style.display = "inline"; } else { percentageDiscountEl.style.display = "none"; originalPriceEl.style.display = "none"; } }
+// --- UPDATED: Share Button Logic with stopPropagation() ---
+function setupShareButton() {
+    const shareBtn = document.getElementById("share-button");
+    if (!shareBtn) return;
+
+    shareBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Crucial fix to prevent image click
+
+        if (!currentProductData) return;
+        const productName = currentProductData.name.replace(/\*/g, "").trim();
+        const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
+        
+        const shareUrl = `${window.location.origin}/api/share?id=${currentProductId}`;
+        
+        const baseMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨`;
+        const clipboardMessage = `${baseMessage}\n${shareUrl}`;
+        const shareData = { title: productName, text: baseMessage, url: shareUrl, };
+        
+        try {
+            if (navigator.share) { await navigator.share(shareData); } 
+            else if (navigator.clipboard) { await navigator.clipboard.writeText(clipboardMessage); showToast("Link and details copied!"); } 
+            else { const textArea = document.createElement('textarea'); textArea.value = shareUrl; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); showToast("Link Copied!"); }
+        } catch (err) { console.error("Error sharing:", err); if (err.name !== 'AbortError') { showToast("Sharing failed.", "error"); } }
+    });
+}
+
+// --- UPDATED: Price Display Logic to SHOW Lowest Price Tag ---
+function updatePriceDisplay(newPrice) { 
+    const finalPriceEl = document.getElementById("price-final"); 
+    const originalPriceEl = document.getElementById("price-original"); 
+    const percentageDiscountEl = document.getElementById("price-percentage-discount"); 
+    const lowestPriceTagContainer = document.getElementById("lowest-price-tag-container"); // New Element
+
+    const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); 
+    const originalPrice = Number(currentProductData.originalPrice); 
+    
+    finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; 
+    
+    let discount = 0; 
+    let packOriginalPrice = originalPrice; 
+    if (selectedPack) { 
+        const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; 
+        packOriginalPrice = originalPrice > displayPrice ? originalPrice * quantity : 0; 
+    } 
+    if (packOriginalPrice > displayPrice) { 
+        discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); 
+    } else if (originalPrice > displayPrice && !selectedPack) { 
+        discount = Math.round(100 * (originalPrice - displayPrice) / originalPrice); 
+    } 
+    
+    if (discount > 0) { 
+        percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; 
+        originalPriceEl.textContent = `₹${(selectedPack ? packOriginalPrice : originalPrice).toLocaleString("en-IN")}`; 
+        percentageDiscountEl.style.display = "flex"; 
+        originalPriceEl.style.display = "inline"; 
+        
+        // --- SHOW LOWEST PRICE TAG if Discount Exists ---
+        if(lowestPriceTagContainer) lowestPriceTagContainer.style.display = "block";
+
+    } else { 
+        percentageDiscountEl.style.display = "none"; 
+        originalPriceEl.style.display = "none"; 
+        // Hide if no discount
+        if(lowestPriceTagContainer) lowestPriceTagContainer.style.display = "none";
+    } 
+}
 
 async function loadHandpickedSimilarProducts(category, subcategory, currentProductId) {
     const section = document.getElementById("handpicked-similar-section");
