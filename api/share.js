@@ -1,48 +1,44 @@
-export default async function handler(request, response) {
-    // 1. URL से Product ID निकालें
-    const { id } = request.query;
+export default async function handler(req, res) {
+    // 1. URL se Product ID nikalo (e.g., ?id=123)
+    const { id } = req.query;
 
     if (!id) {
-        return response.status(400).send("Product ID missing");
+        return res.status(400).send("Product ID is missing.");
     }
 
     try {
-        // 2. Firebase से डेटा लाएं (REST API का उपयोग करके, जो बहुत तेज़ है)
-        // नोट: यहाँ हम सीधे Database URL use कर रहे हैं जो env variable में होना चाहिए
-        // या आप इसे hardcode भी कर सकते हैं अगर security rules read के लिए public हैं।
+        // 2. Firebase Database URL (Aapke index.js se liya gaya hai)
+        const dbUrl = "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app";
         
-        // आपके provided code से Database URL:
-        const dbUrl = process.env.FIREBASE_DATABASE_URL || "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app";
-        
-        // Ramazone products fetch करें
-        const fetchRes = await fetch(`${dbUrl}/ramazone/products.json`);
-        const productsData = await fetchRes.json();
+        // 3. Product Data Fetch karo
+        // Hum saare products la rahe hain aur filter kar rahe hain taaki array/object dono handle ho sake
+        const response = await fetch(`${dbUrl}/ramazone/products.json`);
+        const data = await response.json();
 
-        // 3. सही प्रोडक्ट ढूँढें
-        // (Note: अगर आपका डेटा array है या object, यह कोड दोनों को handle करेगा)
+        // 4. Sahi product dhundo
         let product = null;
-        if (Array.isArray(productsData)) {
-            product = productsData.find(p => p && p.id == id);
-        } else if (productsData) {
-            product = Object.values(productsData).find(p => p && p.id == id);
+        if (Array.isArray(data)) {
+            product = data.find(p => p && p.id == id);
+        } else if (data) {
+            product = Object.values(data).find(p => p && p.id == id);
         }
 
+        // Agar product nahi mila, to Home Page par bhej do
         if (!product) {
-            // अगर प्रोडक्ट नहीं मिला तो होमपेज पर भेज दें
-            return response.redirect("/");
+            return res.redirect('/');
         }
 
-        // 4. प्रोडक्ट की डिटेल्स निकालें
+        // 5. Meta Tags ke liye details tayyar karo
         const title = product.name || "Ramazone Product";
-        const description = product.description || `Check out this amazing product on Ramazone. Price: ₹${product.displayPrice}`;
-        // Image: पहली इमेज लें, या डिफ़ॉल्ट इमेज
+        const price = product.displayPrice ? `₹${Number(product.displayPrice).toLocaleString("en-IN")}` : "";
+        const description = `Check out this amazing product on Ramazone! Price: ${price}. Limited stock available.`;
         const image = (product.images && product.images.length > 0) ? product.images[0] : "https://i.ibb.co/WvTg0bc5/20240813-084352.png";
         
-        // 5. असली पेज का लिंक (जहाँ यूजर को भेजना है)
-        // ध्यान दें: आपको अपनी वेबसाइट का डोमेन यहाँ डालना होगा या request host use करना होगा
-        const redirectUrl = `/product-details.html?id=${id}`;
+        // Asli Product Page ka link (Redirect ke liye)
+        // 'https://www.ramazone.in' aapka domain hai
+        const redirectUrl = `https://www.ramazone.in/product-details.html?id=${id}`;
 
-        // 6. HTML तैयार करें (Meta Tags के साथ)
+        // 6. HTML Generate karo (WhatsApp Bot ke liye)
         const html = `
             <!DOCTYPE html>
             <html lang="en">
@@ -50,6 +46,7 @@ export default async function handler(request, response) {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 
+                <!-- Social Media Meta Tags (Ye WhatsApp padhega) -->
                 <title>${title}</title>
                 <meta name="description" content="${description}">
                 
@@ -59,29 +56,37 @@ export default async function handler(request, response) {
                 <meta property="og:image" content="${image}" />
                 <meta property="og:image:width" content="600" />
                 <meta property="og:image:height" content="600" />
-                <meta property="og:url" content="https://ramazone.vercel.app/api/share?id=${id}" />
+                <meta property="og:url" content="https://www.ramazone.in/api/share?id=${id}" />
+                <meta property="og:site_name" content="Ramazone" />
                 
+                <!-- Twitter Cards -->
                 <meta name="twitter:card" content="summary_large_image">
                 <meta name="twitter:title" content="${title}">
                 <meta name="twitter:description" content="${description}">
                 <meta name="twitter:image" content="${image}">
 
+                <!-- 7. Redirect Logic (Insaan ke liye) -->
                 <script>
+                    // Jaise hi page khule, user ko asli product page par bhej do
                     window.location.href = "${redirectUrl}";
                 </script>
             </head>
             <body>
-                <p>Redirecting to product details...</p>
+                <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; flex-direction: column;">
+                    <img src="${image}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; margin-bottom: 20px;">
+                    <p>Redirecting to Ramazone...</p>
+                </div>
             </body>
             </html>
         `;
 
-        // 7. Response भेजें
-        response.setHeader('Content-Type', 'text/html');
-        return response.send(html);
+        // HTML wapas bhejo
+        res.setHeader('Content-Type', 'text/html');
+        res.status(200).send(html);
 
     } catch (error) {
-        console.error("API Error:", error);
-        return response.redirect("/");
+        console.error("Share API Error:", error);
+        res.redirect('/');
     }
 }
+
