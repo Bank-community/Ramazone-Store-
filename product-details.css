@@ -46,7 +46,7 @@
     object-fit: cover;
 }
 
-/* --- BADLAAV: Video 'Play' Icon --- */
+/* --- Video 'Play' Icon --- */
 .play-icon {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -61,7 +61,6 @@
     fill: white;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
-/* --- BADLAAV END --- */
 
 
 /* --- Rating Stars --- */
@@ -72,10 +71,7 @@
 
 /* === NAYE STYLES (Tech Specs, Variants) START === */
 
-/* --- BADLAAV: Veg/Non-Veg Icon CSS HATA diya gaya hai --- */
-
 /* --- Naya Flipkart-style Variant Group (Size, Weight, etc.) --- */
-/* Yeh product-main-info mein dikhega */
 .variant-group {
     margin-bottom: 1rem;
 }
@@ -118,8 +114,7 @@
 }
 
 
-/* --- BADLAAV: Naya Image-based Variants (Lays Screenshot) --- */
-/* Yeh media-gallery mein dikhega */
+/* --- Naya Image-based Variants --- */
 #image-variant-selectors-container {
     display: flex;
     flex-wrap: wrap;
@@ -159,10 +154,9 @@
 .image-variant-btn.selected .variant-name {
     color: var(--primary-color);
 }
-/* --- BADLAAV END --- */
 
 
-/* --- BADLAAV: Naya Combo Pack (Quantity Packs) with Image --- */
+/* --- Naya Combo Pack (Quantity Packs) with Image --- */
 .combo-pack-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -237,7 +231,6 @@
     width: 100px;
     text-align: center;
 }
-/* --- BADLAAV END --- */
 
 /* --- Naya Tech Specs Section --- */
 #tech-specs-container {
@@ -320,17 +313,65 @@
 .spec-tag { background-color: #f0fdf4; color: #16a34a; border: 1px solid #4ade80; padding: 6px 12px; border-radius: 8px; }
 
 /* --- Similar/Other Products --- */
-#handpicked-similar-container { 
-    display: flex; 
-    gap: 12px; 
-    overflow-x: auto; 
-    scroll-snap-type: x mandatory; 
-    padding: 0.25rem 0 1rem 0;
+
+/* --- FIX: Only target SLIDER containers (Recently Viewed, More in Category, You Might Like) --- */
+/* Removed #other-products-container from here */
+#recently-viewed-container,
+#similar-products-container,
+#handpicked-similar-container,
+.carousel-container { 
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    gap: 10px !important;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
-#handpicked-similar-container::-webkit-scrollbar { display: none; }
-#handpicked-similar-container { -ms-overflow-style: none; scrollbar-width: none; }
-.other-products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-@media (min-width: 640px) { .other-products-grid { grid-template-columns: repeat(3, 1fr); } }
+
+#recently-viewed-container::-webkit-scrollbar,
+#similar-products-container::-webkit-scrollbar,
+#handpicked-similar-container::-webkit-scrollbar { 
+    display: none; 
+}
+
+/* --- FIXED: Card Width (Now showing ~3 items in Sliders) --- */
+.carousel-item, 
+.recently-viewed-item { 
+    flex: 0 0 30% !important; 
+    scroll-snap-align: start; 
+    max-width: 30% !important; 
+}
+
+/* --- FIX: Other Products (Grid Layout - 2 per row) --- */
+/* Explicitly targeting the container to force Grid */
+#other-products-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    padding: 0 16px !important; /* Padding to prevent left-sticking */
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: visible !important; /* No scroll */
+}
+
+.other-products-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 12px; 
+}
+
+@media (min-width: 640px) { 
+    .carousel-item, .recently-viewed-item { flex: 0 0 24% !important; max-width: 24% !important; }
+    .other-products-grid, #other-products-container { grid-template-columns: repeat(3, 1fr) !important; } 
+}
+@media (min-width: 1024px) { 
+    .carousel-item, .recently-viewed-item { flex: 0 0 19% !important; max-width: 19% !important; } 
+}
+
 
 /* --- Modals --- */
 #image-modal, #variant-modal-overlay, #bundle-modal-overlay { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
@@ -370,29 +411,22 @@
 .quick-add-btn:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .quick-add-btn.added { background-color: #22c55e; color: white; border-color: #22c55e; }
 .carousel-item .relative .quick-add-btn, .other-products-grid .relative .quick-add-btn { position: absolute; bottom: 8px; right: 8px; width: 38px; height: 38px; border-radius: 4px; font-size: 24px; }
-.carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 0 1rem; }
-.carousel-container::-webkit-scrollbar { display: none; }
-.carousel-container { -ms-overflow-style: none; scrollbar-width: none; }
-.carousel-item { flex: 0 0 45%; scroll-snap-align: start; }
-@media (min-width: 640px) { .carousel-item { flex: 0 0 30%; } }
-@media (min-width: 1024px) { .carousel-item { flex: 0 0 20%; } }
 .card-rating-tag { position: absolute; top: 8px; right: 8px; background-color: #16a34a; color: white; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
 .card-rating-tag .fa-star { font-size: 10px; }
 
-/* --- BADLAAV: Recently Viewed ko WAAPAS JOD diya gaya hai --- */
+
+/* --- Recently Viewed Items (Custom Styling) --- */
 .recently-viewed-item { 
-    flex: 0 0 28%; 
-    scroll-snap-align: start; 
     border: 1px solid #e5e7eb; 
     overflow: hidden; 
+    background: white;
+    border-radius: 0.5rem; /* Added radius to match other cards */
 }
 .recently-viewed-item img { 
     border-radius: 0; 
 }
-/* --- BADLAAV END --- */
 
 /* --- Header Search --- */
 .header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; text-decoration: none; cursor: pointer; }
 .header-hidden { opacity: 0; pointer-events: none; max-height: 0px; padding-top: 0px !important; padding-bottom: 0px !important; overflow: hidden; }
-
 
