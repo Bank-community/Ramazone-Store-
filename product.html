@@ -1,57 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fortune Refined Oil 1 Litre – Ramazone</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mother Dairy Ice Cream – Ramazone</title>
 
-  <!-- IMPORTANT: WhatsApp preview works only after hosting this file publicly -->
-  <meta property="og:title" content="Fortune Refined Oil – 1 Litre | Ramazone Online Store" />
-  <meta property="og:description" content="Premium Fortune Refined Oil (1L). Fresh stock. Fast 24-hour delivery by Ramazone." />
-  <meta property="og:image" content="https://ik.imagekit.io/nsyr92pse/ramazone_uploads/image_search_1761974467722_jxltNCWNny.png?updatedAt=1761974607879" />
-  <meta property="og:url" content="https://your-domain.com/fortune-oil-1l" />
+  <!-- IMPORTANT: WhatsApp/Facebook preview -->
+  <meta property="og:title" content="Mother Dairy Ice Cream – 1 Pack | Ramazone" />
+  <meta property="og:description" content="Premium Mother Dairy Ice Cream. Fresh stock. Fast delivery by Ramazone." />
+  <meta property="og:image" content="https://ik.imagekit.io/nsyr92pse/ramazone_uploads/image_search_1761973908890_HhqxE3fIH.jpg?updatedAt=1761973998106" />
+  <meta property="og:url" content="https://your-domain.com/icecream" />
   <meta property="og:type" content="product" />
 
   <style>
-    body{margin:0;padding:30px;font-family:Arial;background:#f6f7fa;display:flex;justify-content:center}
-    .box{background:#fff;width:420px;padding:20px;border-radius:12px;box-shadow:0 6px 25px rgba(0,0,0,0.1)}
+    body{font-family:Arial;margin:0;padding:30px;background:#f1f3f5;display:flex;justify-content:center}
+    .box{width:420px;background:#fff;padding:20px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.1)}
     img{width:100%;border-radius:10px}
-    h1{font-size:20px;margin:15px 0 6px 0}
-    .price{font-size:22px;color:#0b61ff;font-weight:bold;margin-bottom:12px}
-    button{background:#0b61ff;color:white;padding:12px 16px;font-size:16px;border:0;border-radius:8px;cursor:pointer;width:100%;margin-top:12px}
-    button:hover{opacity:.9}
-    footer{text-align:center;margin-top:15px;font-size:13px;color:#777}
+    h1{font-size:20px;margin:15px 0 5px 0}
+    .price{font-size:22px;color:#005eff;font-weight:bold;margin-bottom:12px}
+    button{background:#005eff;color:white;width:100%;padding:12px;font-size:16px;border-radius:8px;border:0;margin-top:10px;cursor:pointer}
   </style>
 </head>
 
 <body>
+
   <div class="box">
-    <img src="https://ik.imagekit.io/nsyr92pse/ramazone_uploads/image_search_1761974467722_jxltNCWNny.png?updatedAt=1761974607879" alt="Fortune Oil 1L">
+    <img src="https://ik.imagekit.io/nsyr92pse/ramazone_uploads/image_search_1761973908890_HhqxE3fIH.jpg?updatedAt=1761973998106" alt="Mother Dairy Ice Cream">
 
-    <h1>Fortune Refined Oil – 1 Litre</h1>
+    <h1>Mother Dairy Ice Cream – 1 Pack</h1>
+    <div class="price">₹ 120</div>
 
-    <div class="price">₹ 190</div>
+    <p>Fresh Mother Dairy Ice Cream. Quality guaranteed. Delivered within 24 hours by Ramazone.</p>
 
-    <p>
-      Ramazone का Premium Fortune Refined Oil (1L).  
-      Daily fresh stock • Local vendor supply • Fast 24-hour delivery.
-    </p>
-
-    <button id="shareBtn">Share on WhatsApp</button>
+    <button onclick="shareNow()">WhatsApp पर शेयर करें</button>
   </div>
 
-  <footer>Ramazone • Local to Digital • Product Sharing Enabled</footer>
+<script>
+function shareNow() {
+  const url = "https://your-domain.com/icecream";
+  const text =
+    "Mother Dairy Ice Cream – 1 Pack\nPrice: ₹120\nFresh Stock.\n\nLink:\n" + url;
 
-  <script>
-    document.getElementById("shareBtn").addEventListener("click", () => {
-      const pageURL = "https://your-domain.com/fortune-oil-1l"; 
-      const text = encodeURIComponent(
-        "Fortune Refined Oil – 1 Litre\nPremium quality.\nPrice: ₹190\n\nLink:\n" + pageURL
-      );
-
-      window.open("https://wa.me/?text=" + text, "_blank");
-    });
-  </script>
+  window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+}
+</script>
 
 </body>
 </html>
