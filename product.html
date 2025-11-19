@@ -3,123 +3,55 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ramazone — Fortune 1 Litre</title>
+  <title>Fortune Refined Oil 1 Litre – Ramazone</title>
 
-  <!-- IMPORTANT: Replace the IMAGE_URL and PAGE_URL with your real public URLs (ImageKit CDN URL and hosted page URL) -->
-  <!-- Open Graph tags (these must be present in server-served HTML for WhatsApp/Facebook preview) -->
-  <meta property="og:title" content="Fortune 1 Litre — Ramazone" />
-  <meta property="og:description" content="Fortune edible oil 1L — Fresh, local vendor. Fast delivery by Ramazone." />
-  <meta property="og:image" content="https://ik.imagekit.io/your_account/fortune-1l.jpg" />
-  <meta property="og:url" content="https://your-domain.com/product/fortune-1l" />
+  <!-- IMPORTANT: WhatsApp preview works only after hosting this file publicly -->
+  <meta property="og:title" content="Fortune Refined Oil – 1 Litre | Ramazone Online Store" />
+  <meta property="og:description" content="Premium Fortune Refined Oil (1L). Fresh stock. Fast 24-hour delivery by Ramazone." />
+  <meta property="og:image" content="https://ik.imagekit.io/nsyr92pse/ramazone_uploads/image_search_1761974467722_jxltNCWNny.png?updatedAt=1761974607879" />
+  <meta property="og:url" content="https://your-domain.com/fortune-oil-1l" />
   <meta property="og:type" content="product" />
 
-  <!-- Twitter Card (optional) -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Fortune 1 Litre — Ramazone" />
-  <meta name="twitter:description" content="Fortune edible oil 1L — Fresh, local vendor. Fast delivery by Ramazone." />
-  <meta name="twitter:image" content="https://ik.imagekit.io/your_account/fortune-1l.jpg" />
-
   <style>
-    /* Simple, clean styling — sab ek file mein */
-    :root{font-family:Inter,system-ui,Segoe UI,Roboto,"Noto Sans",Arial; color:#111}
-    body{margin:0;padding:32px;background:#f6f7fb;display:flex;align-items:center;justify-content:center;height:100vh}
-    .card{width:920px;max-width:95%;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(12,20,45,0.08);overflow:hidden;display:flex;gap:24px}
-    .left{flex:1;padding:24px;display:flex;flex-direction:column;gap:12px}
-    .imgwrap{width:360px;max-width:45%;background:#fff;display:flex;align-items:center;justify-content:center;padding:16px}
-    .imgwrap img{width:100%;height:auto;border-radius:8px;object-fit:contain}
-    h1{margin:0;font-size:20px}
-    p.desc{margin:0;color:#555}
-    .price{font-weight:700;font-size:22px;color:#1b6bff;margin-top:8px}
-    .actions{margin-top:16px;display:flex;gap:12px;align-items:center}
-    button{padding:10px 14px;border-radius:8px;border:0;background:#1b6bff;color:white;font-weight:600;cursor:pointer}
-    button.secondary{background:#fff;border:1px solid #ddd;color:#111}
-    .note{font-size:13px;color:#666;margin-top:6px}
-    .formrow{display:flex;gap:8px;align-items:center}
-    input[type="text"]{padding:10px;border-radius:8px;border:1px solid #ddd;width:300px}
-    .small{font-size:13px;color:#666}
-    footer{font-size:12px;color:#777;padding:10px 16px;text-align:center}
-    @media(max-width:820px){.card{flex-direction:column}.imgwrap{max-width:100%;width:100%}}
+    body{margin:0;padding:30px;font-family:Arial;background:#f6f7fa;display:flex;justify-content:center}
+    .box{background:#fff;width:420px;padding:20px;border-radius:12px;box-shadow:0 6px 25px rgba(0,0,0,0.1)}
+    img{width:100%;border-radius:10px}
+    h1{font-size:20px;margin:15px 0 6px 0}
+    .price{font-size:22px;color:#0b61ff;font-weight:bold;margin-bottom:12px}
+    button{background:#0b61ff;color:white;padding:12px 16px;font-size:16px;border:0;border-radius:8px;cursor:pointer;width:100%;margin-top:12px}
+    button:hover{opacity:.9}
+    footer{text-align:center;margin-top:15px;font-size:13px;color:#777}
   </style>
 </head>
+
 <body>
-  <div class="card" id="product-card">
-    <div class="imgwrap">
-      <!-- Replace with your ImageKit public image (or local image for demo) -->
-      <img id="productImage" src="https://ik.imagekit.io/your_account/fortune-1l.jpg" alt="Fortune 1 Litre">
-    </div>
+  <div class="box">
+    <img src="https://ik.imagekit.io/nsyr92pse/ramazone_uploads/image_search_1761974467722_jxltNCWNny.png?updatedAt=1761974607879" alt="Fortune Oil 1L">
 
-    <div class="left">
-      <h1 id="productTitle">Fortune 1 Litre</h1>
-      <p class="desc" id="productDesc">Fortune edible oil - 1 Litre. Quality assured. Local vendor supply via Ramazone.</p>
-      <div class="price" id="productPrice">₹ 220</div>
+    <h1>Fortune Refined Oil – 1 Litre</h1>
 
-      <div class="actions">
-        <!-- Share full page link (best for preview) -->
-        <button id="shareLinkBtn">Share product link (WhatsApp)</button>
+    <div class="price">₹ 190</div>
 
-        <!-- Share direct image URL (this will paste image link in message; many clients preview the image URL) -->
-        <button class="secondary" id="shareImageBtn">Share image URL</button>
-      </div>
+    <p>
+      Ramazone का Premium Fortune Refined Oil (1L).  
+      Daily fresh stock • Local vendor supply • Fast 24-hour delivery.
+    </p>
 
-      <div class="note">
-        <div class="formrow" style="margin-top:8px">
-          <label class="small">Hosted page URL (public):</label>
-          <input type="text" id="hostedPage" placeholder="https://your-domain.com/product/fortune-1l" value="https://your-domain.com/product/fortune-1l">
-        </div>
-        <div class="formrow" style="margin-top:8px">
-          <label class="small">Public image URL (CDN):</label>
-          <input type="text" id="publicImage" placeholder="https://ik.imagekit.io/your_account/fortune-1l.jpg" value="https://ik.imagekit.io/your_account/fortune-1l.jpg">
-        </div>
-        <div class="small" style="margin-top:8px">
-          Note: For WhatsApp preview to show image, the Hosted Page URL above must be publicly hosted and its HTML must include the same OG meta tags (present at top of this file).
-        </div>
-      </div>
-    </div>
+    <button id="shareBtn">Share on WhatsApp</button>
   </div>
 
-  <footer>Ramazone • Local to Digital • Shareable Product Previews</footer>
+  <footer>Ramazone • Local to Digital • Product Sharing Enabled</footer>
 
   <script>
-    // Simple JS — sab ek file mein
-    (function(){
-      const shareLinkBtn = document.getElementById('shareLinkBtn');
-      const shareImageBtn = document.getElementById('shareImageBtn');
-      const hostedPage = document.getElementById('hostedPage');
-      const publicImage = document.getElementById('publicImage');
+    document.getElementById("shareBtn").addEventListener("click", () => {
+      const pageURL = "https://your-domain.com/fortune-oil-1l"; 
+      const text = encodeURIComponent(
+        "Fortune Refined Oil – 1 Litre\nPremium quality.\nPrice: ₹190\n\nLink:\n" + pageURL
+      );
 
-      // Update image preview when user edits public image URL
-      publicImage.addEventListener('change', ()=> {
-        const src = publicImage.value.trim();
-        if(src) document.getElementById('productImage').src = src;
-      });
-
-      // WhatsApp share for page link (best for OG preview)
-      shareLinkBtn.addEventListener('click', ()=> {
-        const pageUrl = hostedPage.value.trim();
-        if(!pageUrl){ alert('Kripya Hosted page URL daalein (public).'); return; }
-        // WhatsApp share link with text (mobile/web)
-        const text = encodeURIComponent('Dekhiye: Fortune 1 Litre — Ramazone\n' + pageUrl);
-        const waUrl = 'https://wa.me/?text=' + text;
-        window.open(waUrl, '_blank');
-      });
-
-      // WhatsApp share for direct image URL (many clients will show the image)
-      shareImageBtn.addEventListener('click', ()=> {
-        const imgUrl = publicImage.value.trim();
-        if(!imgUrl){ alert('Kripya Public image URL daalein.'); return; }
-        const text = encodeURIComponent('Product image: ' + imgUrl + '\nFortune 1 Litre — Ramazone');
-        const waUrl = 'https://wa.me/?text=' + text;
-        window.open(waUrl, '_blank');
-      });
-
-      // OPTIONAL: copy direct HTML meta-snippet for admin use
-      window.getOgSnippet = function(title, desc, img, url){
-        return '<meta property="og:title" content="'+title+'"/>\n'
-             + '<meta property="og:description" content="'+desc+'"/>\n'
-             + '<meta property="og:image" content="'+img+'"/>\n'
-             + '<meta property="og:url" content="'+url+'"/>\n';
-      };
-    })();
+      window.open("https://wa.me/?text=" + text, "_blank");
+    });
   </script>
+
 </body>
 </html>
