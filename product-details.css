@@ -1,4 +1,4 @@
-/* --- Product Details Page Specific Styles --- */
+/* product-details.css */
 
 /* --- Media Gallery --- */
 #media-slider {
@@ -64,38 +64,167 @@
 
 /* --- Rating Stars --- */
 .rating-stars {
-    color: #f59e0b;
+    color: #f59e0b; /* Amber color */
 }
 
-/* === NAYE STYLES (Tech Specs, Variants) START === */
-/* --- Variant Group --- */
-.variant-group { margin-bottom: 1rem; }
-.variant-group-title { font-size: 0.875rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem; }
-.variant-group-title span { font-weight: 700; color: #111827; }
-.variant-options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.variant-option-btn { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; background-color: #ffffff; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 600; color: #374151; transition: all 0.2s ease; min-width: 44px; text-align: center; }
-.variant-option-btn:hover { background-color: #f9fafb; }
-.variant-option-btn.selected { border-color: var(--primary-color); background-color: #eef2ff; color: var(--primary-color); box-shadow: 0 0 0 1px var(--primary-color); }
+/* ================================================================= */
+/* === UPDATED: PRICE SECTION STYLES (Balanced & Smaller Fonts) === */
+/* ================================================================= */
+#new-price-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
 
-/* --- Image-based Variants --- */
+#new-price-section .flex {
+    align-items: baseline; /* Prices ko ek line mein align karega */
+}
+
+/* Percentage Discount (Green) - Balanced Size */
+#price-percentage-discount {
+    font-size: 1.125rem !important; /* 18px */
+    font-weight: 700;
+    color: #16a34a; /* Green-600 */
+    margin-right: 6px;
+}
+
+/* Original MRP (Gray Strikethrough) - Smaller */
+#price-original {
+    font-size: 0.875rem !important; /* 14px */
+    color: #6b7280; /* Gray-500 */
+    text-decoration: line-through;
+    margin-right: 6px;
+}
+
+/* Final Price (Black Bold) - Reduced Size from 2rem to 1.5rem */
+#price-final {
+    font-size: 1.5rem !important; /* 24px */
+    font-weight: 800;
+    color: #111827; /* Gray-900 */
+    line-height: 1;
+}
+
+.lowest-price-tag {
+    background-color: #16a34a; 
+    color: white; 
+    font-size: 0.7rem; 
+    font-weight: 600; 
+    padding: 2px 8px; 
+    border-radius: 4px; 
+    display: inline-block; 
+}
+
+
+/* ================================================================= */
+/* === NEW: RICH VARIANT CARDS (Horizontal Scroll) === */
+/* ================================================================= */
+.variant-group { margin-bottom: 1.25rem; }
+
+.variant-group-title { 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    color: #4b5563; 
+    margin-bottom: 0.75rem; 
+}
+.variant-group-title span { 
+    font-weight: 700; 
+    color: #111827; 
+}
+
+/* Container for scrollable cards */
+.variant-scroll-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    -webkit-overflow-scrolling: touch;
+    /* Hide scrollbar but keep functionality */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.variant-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* The Card Design */
+.variant-rich-card {
+    flex: 0 0 auto; /* Prevent shrinking */
+    min-width: 130px;
+    max-width: 150px;
+    border: 1px solid #d1d5db; /* Default Gray Border */
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    background-color: #ffffff;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.variant-rich-card:hover {
+    border-color: #9ca3af;
+}
+
+/* Inner Elements of Card */
+.variant-rich-card .var-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1f2937; /* Dark Gray */
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+
+.variant-rich-card .var-price-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    margin-bottom: 2px;
+}
+
+.variant-rich-card .var-discount {
+    color: #16a34a; /* Green */
+    font-weight: 700;
+}
+
+.variant-rich-card .var-orig-price {
+    text-decoration: line-through;
+    color: #9ca3af; /* Light Gray */
+}
+
+.variant-rich-card .var-final-price {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827; /* Black */
+}
+
+/* --- SELECTED STATE (Blue Theme) --- */
+.variant-rich-card.selected {
+    border-color: var(--primary-color); /* Blue Border */
+    background-color: #eff6ff; /* Very Light Blue Background */
+    box-shadow: 0 0 0 1px var(--primary-color) inset; /* Thicker Blue Border Effect */
+}
+
+/* Image Variants (Simple Squares) */
 #image-variant-selectors-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.image-variant-btn { display: flex; align-items: center; gap: 0.5rem; padding: 4px; border: 2px solid #d1d5db; background-color: #ffffff; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s ease; }
-.image-variant-btn img { width: 40px; height: 40px; object-fit: cover; border-radius: 0.375rem; }
-.image-variant-btn .variant-name { font-size: 0.875rem; font-weight: 600; color: #374151; padding-right: 0.5rem; }
-.image-variant-btn:hover { border-color: #a5b4fc; }
-.image-variant-btn.selected { border-color: var(--primary-color); background-color: #eef2ff; box-shadow: 0 0 0 1px var(--primary-color); }
-.image-variant-btn.selected .variant-name { color: var(--primary-color); }
+.image-variant-btn { display: flex; align-items: center; gap: 0.5rem; padding: 3px; border: 1px solid #d1d5db; background-color: #ffffff; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
+.image-variant-btn img { width: 45px; height: 45px; object-fit: cover; border-radius: 4px; }
+.image-variant-btn:hover { border-color: #9ca3af; }
+.image-variant-btn.selected { border-color: var(--primary-color); box-shadow: 0 0 0 1.5px var(--primary-color); }
 
-/* --- Combo Pack --- */
+
+/* --- Combo Pack Styles --- */
 .combo-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
-.combo-pack-card { border: 2px solid #e5e7eb; background-color: #ffffff; padding: 0.5rem; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.combo-pack-card { border: 1px solid #e5e7eb; background-color: #ffffff; padding: 0.5rem; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
 .combo-pack-card:hover { border-color: #a5b4fc; transform: translateY(-2px); }
 .combo-pack-card.selected { border-color: var(--primary-color); background-color: #eef2ff; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1); }
 .combo-pack-card img { flex-shrink: 0; width: 32px; height: 32px; object-fit: contain; border-radius: 4px; }
 .combo-pack-card .pack-details { flex-grow: 1; }
 .combo-pack-card .pack-name { font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 0; }
 .combo-pack-card .pack-price { font-size: 1.125rem; font-weight: 800; color: var(--primary-color); line-height: 1.2; }
-.combo-pack-savings { font-size: 0.75rem; margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; align-items: center; line-height: 1.2; }
+.combo-pack-card-savings { font-size: 0.75rem; margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; align-items: center; line-height: 1.2; }
 .best-value-tag { position: absolute; top: -1px; right: -1px; background-color: #16a34a; color: white; font-size: 10px; font-weight: bold; padding: 2px 20px; transform: translateX(30%) translateY(50%) rotate(45deg); transform-origin: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); width: 100px; text-align: center; }
 
 /* --- Tech Specs --- */
@@ -106,14 +235,6 @@
 .tech-spec-details { flex-grow: 1; }
 .tech-spec-name { font-size: 0.875rem; color: #6b7280; }
 .tech-spec-value { font-size: 1rem; font-weight: 600; color: #1f2937; }
-/* === NAYE STYLES END === */
-
-/* --- Price Section --- */
-#new-price-section .flex { align-items: baseline; }
-#price-final { font-size: 2rem; font-weight: 800; }
-#price-original { font-size: 1.125rem; margin-left: 0.25rem; }
-#price-percentage-discount { font-size: 1.125rem; }
-.lowest-price-tag { background-color: #16a34a; color: white; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 0.2rem; display: inline-block; margin-bottom: 0.5rem; }
 
 /* --- Sticky Action Bar --- */
 .quantity-selector { display: flex; width: 100%; justify-content: center; }
@@ -126,112 +247,7 @@
 .spec-score { background-color: #fefce8; color: #ca8a04; border: 1px solid #facc15; padding: 6px 12px; border-radius: 8px; }
 .spec-tag { background-color: #f0fdf4; color: #16a34a; border: 1px solid #4ade80; padding: 6px 12px; border-radius: 8px; }
 
-
-/* --- ============================================================ --- */
-/* ---        FINAL FIX: REMOVE PARENT PADDING (DOUBLE PADDING FIX) --- */
-/* --- ============================================================ --- */
-
-/* 1. REMOVE Padding from Parent Sections (Fixes the "Jyada Space" issue) */
-#handpicked-similar-section, 
-#other-products-section, 
-#recently-viewed-section, 
-#similar-products-section {
-    padding: 0 !important; /* Reset parent padding */
-    margin-bottom: 20px !important;
-}
-
-/* 2. Force Padding on TITLES Only (To align with cards) */
-#product-content h2, 
-#product-content h3,
-.section-title {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    margin-top: 16px !important;
-    margin-bottom: 12px !important;
-}
-
-/* 3. Slider Containers: Proper Spacing (Single Padding) */
-#recently-viewed-container,
-#similar-products-container,
-#handpicked-similar-container,
-.carousel-container { 
-    display: flex !important;
-    overflow-x: auto !important;
-    scroll-behavior: smooth !important;
-    -webkit-overflow-scrolling: touch !important;
-    
-    gap: 10px !important;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    
-    padding: 0 16px !important; /* Only this padding will apply now */
-    padding-bottom: 10px !important;
-}
-
-#recently-viewed-container::-webkit-scrollbar,
-#similar-products-container::-webkit-scrollbar,
-#handpicked-similar-container::-webkit-scrollbar,
-#other-products-container::-webkit-scrollbar { 
-    display: none; 
-}
-
-/* 4. Card Sizing */
-.carousel-item, 
-.recently-viewed-item,
-#handpicked-similar-container > div { 
-    flex: 0 0 30% !important; 
-    scroll-snap-align: start; 
-    max-width: 30% !important; 
-    background: white;
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
-}
-
-/* 5. Recently Viewed - Square Corners */
-.recently-viewed-item {
-    border-radius: 0 !important; 
-}
-.carousel-item,
-#handpicked-similar-container > div {
-    border-radius: 8px; 
-}
-
-/* 6. Other Products: FULL WIDTH Fix */
-#other-products-container {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    
-    /* Minimized Gap & Padding for Bigger Cards */
-    gap: 8px !important;
-    padding: 0 8px !important; 
-    
-    width: 100% !important;
-    box-sizing: border-box !important;
-    overflow: visible !important;
-}
-
-/* Responsive */
-@media (min-width: 640px) { 
-    .carousel-item, .recently-viewed-item, #handpicked-similar-container > div { 
-        flex: 0 0 24% !important; max-width: 24% !important; 
-    }
-    .other-products-grid, #other-products-container { 
-        grid-template-columns: repeat(3, 1fr) !important; 
-        gap: 12px !important;
-        padding: 0 16px !important;
-    } 
-}
-@media (min-width: 1024px) { 
-    .carousel-item, .recently-viewed-item, #handpicked-similar-container > div { 
-        flex: 0 0 19% !important; max-width: 19% !important; 
-    } 
-}
-/* --- ============================================================ --- */
-
-
-/* --- Modals --- */
+/* --- Modals (Bundle & Image) --- */
 #image-modal, #variant-modal-overlay, #bundle-modal-overlay { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
 .modal-nav { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); padding: 16px; color: white; font-weight: bold; font-size: 24px; transition: 0.3s ease; user-select: none; background-color: rgba(0,0,0,0.3); }
 .modal-nav.next { right: 0; border-radius: 3px 0 0 3px; }
@@ -243,7 +259,7 @@
 #variant-modal-content, #bundle-modal-content { transform: scale(0.95); opacity: 0; transition: all 0.3s; }
 #variant-modal-overlay.active #variant-modal-content, #bundle-modal-overlay.active #bundle-modal-content { transform: scale(1); opacity: 1; }
 
-/* --- Bundle Modal --- */
+/* --- Bundle Modal specific --- */
 .bundle-modal-products { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
 .bundle-modal-products img { width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .bundle-modal-products .plus-icon { font-size: 1.25rem; color: #6b7280; margin: 0 0.25rem; }
@@ -254,11 +270,11 @@
 .bundle-price-summary .original-price-info { font-size: 1rem; color: #6b7280; margin-top: 0.25rem; }
 .bundle-price-summary .savings-badge { display: inline-block; background-color: #dcfce7; color: #166534; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px; margin-top: 0.75rem; }
 
-/* --- Cart & Header --- */
+/* --- Cart & Header Icons --- */
 .header-cart-link { position: relative; color: #4B5563; }
 #cart-item-count { position: absolute; top: -1px; right: 1px; background-color: red; color: white; border-radius: 50%; padding: 3px; font-size: 10px; font-weight: bold; min-width: 19px; text-align: center; line-height: 14px; border: 1.5px solid white; }
 
-/* --- Quick Add --- */
+/* --- Quick Add & YML Cards --- */
 .quick-add-btn { background-color: white; color: var(--primary-color); border: 1.3px solid #000000; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.2s ease-in-out; }
 .quick-add-btn:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .quick-add-btn.added { background-color: #22c55e; color: white; border-color: #22c55e; }
@@ -270,3 +286,19 @@
 .header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; text-decoration: none; cursor: pointer; }
 .header-hidden { opacity: 0; pointer-events: none; max-height: 0px; padding-top: 0px !important; padding-bottom: 0px !important; overflow: hidden; }
 
+/* --- Double Padding Fixes --- */
+#handpicked-similar-section, #other-products-section, #recently-viewed-section, #similar-products-section { padding: 0 !important; margin-bottom: 20px !important; }
+#product-content h2, #product-content h3, .section-title { padding-left: 16px !important; padding-right: 16px !important; margin-top: 16px !important; margin-bottom: 12px !important; }
+#recently-viewed-container, #similar-products-container, #handpicked-similar-container, .carousel-container { display: flex !important; overflow-x: auto !important; scroll-behavior: smooth !important; -webkit-overflow-scrolling: touch !important; gap: 10px !important; -ms-overflow-style: none; scrollbar-width: none; width: 100% !important; box-sizing: border-box !important; padding: 0 16px !important; padding-bottom: 10px !important; }
+.carousel-item, .recently-viewed-item, #handpicked-similar-container > div { flex: 0 0 30% !important; scroll-snap-align: start; max-width: 30% !important; background: white; border: 1px solid #e5e7eb; overflow: hidden; }
+.recently-viewed-item { border-radius: 0 !important; }
+.carousel-item, #handpicked-similar-container > div { border-radius: 8px; }
+#other-products-container { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; padding: 0 8px !important; width: 100% !important; box-sizing: border-box !important; overflow: visible !important; }
+
+@media (min-width: 640px) { 
+    .carousel-item, .recently-viewed-item, #handpicked-similar-container > div { flex: 0 0 24% !important; max-width: 24% !important; }
+    .other-products-grid, #other-products-container { grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; padding: 0 16px !important; } 
+}
+@media (min-width: 1024px) { 
+    .carousel-item, .recently-viewed-item, #handpicked-similar-container > div { flex: 0 0 19% !important; max-width: 19% !important; } 
+}
