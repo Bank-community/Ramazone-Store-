@@ -1,11 +1,11 @@
 // --- GLOBAL STATE ---
 let mediaItems = [], currentMediaIndex = 0, currentProductData = null, currentProductId = null;
 let allProductsCache = [];
-let selectedVariants = {}; // Ab yeh sirf current product ke variant ko store karega
+let selectedVariants = {}; 
 let selectedPack = null; 
 let appThemeColor = '#4F46E5';
 let database;
-let goToCartNotificationTimer = null; // Notification ke liye timer
+let goToCartNotificationTimer = null; 
 
 // --- DOM ELEMENTS ---
 let slider, sliderWrapper;
@@ -17,16 +17,6 @@ let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, a
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
 
-// variantsMatch ab zaroori nahi hai kyunki har variant ek alag product ID hai
-const variantsMatch = (v1, v2) => {
-    const keys1 = Object.keys(v1 || {});
-    const keys2 = Object.keys(v2 || {});
-    if (keys1.length === 0 && keys2.length === 0) return true;
-    if (keys1.length !== 1 || keys2.length !== 1) return false; 
-    return v1[keys1[0]] === v2[keys2[0]];
-};
-
-
 const packsMatch = (p1, p2) => {
     if (!p1 && !p2) return true;
     if (!p1 || !p2) return false;
@@ -35,7 +25,6 @@ const packsMatch = (p1, p2) => {
 
 const getCartItem = (productId, variants, pack) => {
     const cart = getCart();
-    // Har product variant ki ab apni unique ID hai, isliye hum sirf ID aur Pack se match karenge
     return cart.find(item => !item.isBundle && item.id === productId && packsMatch(item.pack, pack));
 };
 
@@ -186,7 +175,6 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
     try {
-        // --- FIX: API CALL REMOVED, DIRECT CONFIG ADDED ---
         const firebaseConfig = {
             apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
             authDomain: "re-store-8e5b3.firebaseapp.com",
@@ -260,6 +248,18 @@ function populateDataAndAttachListeners(data) {
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
 
+    // --- NEW: Brand & Visit Store Logic ---
+    if (data.brand) {
+        const brandContainer = document.getElementById('brand-info-container');
+        const brandText = document.getElementById('brand-name-text');
+        const visitLink = document.getElementById('visit-store-link');
+        if (brandContainer && brandText) {
+            brandText.textContent = data.brand;
+            visitLink.href = `visit-store.html?brand=${encodeURIComponent(data.brand)}`;
+            brandContainer.classList.remove('hidden');
+        }
+    }
+
     slider = document.getElementById('media-slider');
     sliderWrapper = document.getElementById('main-media-wrapper');
     mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
@@ -278,8 +278,13 @@ function populateDataAndAttachListeners(data) {
         document.getElementById("seller-info").textContent = `Seller by: ${data.sellerName}`;
         document.getElementById("seller-info").style.display = "block";
     }
+    
+    const attrs = getNormalizedAttributes(data);
+    selectedVariants = {};
+    attrs.forEach(attr => {
+        selectedVariants[attr.type] = attr.value;
+    });
 
-    selectedVariants = (data.variantType && data.variantValue) ? { [data.variantType]: data.variantValue } : {};
     selectedPack = null; 
 
     updatePriceDisplay();
@@ -313,10 +318,24 @@ function handleOptionsClick(event) {
     const bundleAddBtn = event.target.closest('.final-bundle-plus-btn[data-bundle="true"]');
     const comboCard = event.target.closest('.combo-pack-card');
     const imageVariantBtn = event.target.closest('.image-variant-btn');
+    const richVariantCard = event.target.closest('.variant-rich-card');
 
-    if (imageVariantBtn) return;
-    const textVariantBtn = event.target.closest('.variant-option-btn');
-    if (textVariantBtn) return;
+    // Rich Card Click (New Logic)
+    if (richVariantCard) {
+        const linkHref = richVariantCard.getAttribute('data-href');
+        // Only prevent default if it's linking to the same page logic
+        // Since we are refreshing page for variants, let normal anchor behavior work if it's an <a> tag
+        // But here we used div with onclick logic essentially.
+        if (linkHref) {
+            window.location.href = linkHref;
+        }
+        return;
+    }
+
+    if (imageVariantBtn) {
+        // Let anchor tag handle navigation
+        return;
+    }
 
     if (bundleAddBtn) {
         event.preventDefault(); event.stopPropagation();
@@ -393,6 +412,56 @@ function renderTechSpecs(techSpecs) {
     }
 }
 
+function getNormalizedAttributes(product) {
+    if (product.variantAttributes && Array.isArray(product.variantAttributes)) {
+        return product.variantAttributes;
+    }
+    if (product.variantType && product.variantValue) {
+        return [{ type: product.variantType, value: product.variantValue }];
+    }
+    return [];
+}
+
+function findBestMatchProduct(groupProducts, currentProduct, targetType, targetValue) {
+    const currentAttrs = getNormalizedAttributes(currentProduct);
+    
+    const candidates = groupProducts.filter(p => {
+        const attrs = getNormalizedAttributes(p);
+        return attrs.some(a => a.type === targetType && a.value === targetValue);
+    });
+
+    if (candidates.length === 0) {
+        const currentHasIt = currentAttrs.some(a => a.type === targetType && a.value === targetValue);
+        if (currentHasIt) return currentProduct;
+        return null;
+    }
+
+    if (candidates.length === 1) return candidates[0];
+
+    let bestMatch = candidates[0];
+    let maxMatches = -1;
+
+    candidates.forEach(cand => {
+        let matches = 0;
+        const candAttrs = getNormalizedAttributes(cand);
+        
+        currentAttrs.forEach(currA => {
+            if (currA.type !== targetType) { 
+                const hasMatch = candAttrs.some(ca => ca.type === currA.type && ca.value === currA.value);
+                if (hasMatch) matches++;
+            }
+        });
+
+        if (matches > maxMatches) {
+            maxMatches = matches;
+            bestMatch = cand;
+        }
+    });
+
+    return bestMatch;
+}
+
+// --- REWRITTEN RENDER LOGIC FOR RICH CARDS ---
 function renderVariantSelectors(data) {
     const imageContainer = document.getElementById('image-variant-selectors-container'); 
     const textContainer = document.getElementById('variant-selectors-container'); 
@@ -400,70 +469,101 @@ function renderVariantSelectors(data) {
     if (!imageContainer || !textContainer) return;
 
     const groupId = data.groupId;
-    if (!groupId) {
-        imageContainer.innerHTML = ''; textContainer.innerHTML = ''; return;
+    
+    let groupProducts = [data];
+    if (groupId) {
+        const siblings = allProductsCache.filter(p => p && p.groupId === groupId && p.id !== data.id);
+        groupProducts = [...groupProducts, ...siblings];
     }
 
-    const allVariantProducts = allProductsCache.filter(p => p && p.groupId === groupId);
-    if (allVariantProducts.length <= 1) {
-        imageContainer.innerHTML = ''; textContainer.innerHTML = ''; return;
-    }
-
-    const variantTypes = new Map();
-    allVariantProducts.forEach(p => {
-        if (p.variantType && p.variantValue) {
-            if (!variantTypes.has(p.variantType)) {
-                variantTypes.set(p.variantType, []);
-            }
-            variantTypes.get(p.variantType).push({ product: p, value: p.variantValue });
-        }
+    const allTypes = new Set();
+    groupProducts.forEach(p => {
+        const attrs = getNormalizedAttributes(p);
+        attrs.forEach(a => allTypes.add(a.type));
     });
 
     let imageHtml = '';
     let textHtml = '';
 
-    for (const [type, options] of variantTypes.entries()) {
-        let currentProductValue = (data.variantType === type) ? data.variantValue : "N/A";
-        if(data.variantType === type) currentProductValue = data.variantValue;
+    const currentAttrs = getNormalizedAttributes(data);
 
-        if (type.toLowerCase() === 'color') {
-            imageHtml += `<div class="variant-group">`;
-            imageHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
-            imageHtml += `<div class="variant-options-grid">`;
+    allTypes.forEach(type => {
+        const currentAttr = currentAttrs.find(a => a.type === type);
+        const currentValue = currentAttr ? currentAttr.value : "";
 
-            options.forEach(opt => {
-                const isSelected = (opt.product.id === data.id);
-                const imgUrl = opt.product.images[0] || 'https://placehold.co/60x60';
-                imageHtml += `
-                    <a href="?id=${opt.product.id}" 
-                       class="image-variant-btn ${isSelected ? 'selected' : ''}" 
-                       title="${opt.value}">
-                       <img src="${imgUrl}" alt="${opt.value}">
-                       <span class="variant-name">${opt.value}</span>
-                    </a>
-                `;
-            });
-            imageHtml += `</div></div>`;
+        const uniqueValues = new Set();
+        groupProducts.forEach(p => {
+            const attrs = getNormalizedAttributes(p);
+            const matchingAttrs = attrs.filter(a => a.type === type);
+            matchingAttrs.forEach(a => uniqueValues.add(a.value));
+        });
 
+        if (uniqueValues.size === 0) return;
+
+        const isColor = type.toLowerCase() === 'color';
+        let groupHtml = `<div class="variant-group">`;
+        groupHtml += `<h3 class="variant-group-title">${type}: <span>${currentValue}</span></h3>`;
+        
+        if (isColor) {
+            // For Color: Use Grid Wrap
+            groupHtml += `<div class="image-variant-selectors-container" style="display:flex; flex-wrap:wrap; gap:0.5rem;">`;
         } else {
-            textHtml += `<div class="variant-group">`;
-            textHtml += `<h3 class="variant-group-title">${type}: <span id="selected-variant-${type}">${currentProductValue}</span></h3>`;
-            textHtml += `<div class="variant-options-grid">`;
+            // For Others (Storage/Rich Cards): Use Horizontal Scroll Container
+            groupHtml += `<div class="variant-scroll-container">`;
+        }
 
-            options.forEach(opt => {
-                const isSelected = (opt.product.id === data.id);
-                textHtml += `
-                    <a href="?id=${opt.product.id}" 
-                       class="variant-option-btn ${isSelected ? 'selected' : ''}"
-                       data-variant-type="${type}" 
-                       data-value="${opt.value}">
-                       ${opt.value}
+        uniqueValues.forEach(val => {
+            const targetProduct = findBestMatchProduct(groupProducts, data, type, val);
+            const targetId = targetProduct ? targetProduct.id : data.id;
+            const isSelected = currentAttrs.some(a => a.type === type && a.value === val);
+            
+            if (isColor) {
+                const imgUrl = targetProduct?.images?.[0] || data.images?.[0] || 'https://placehold.co/60x60';
+                groupHtml += `
+                    <a href="?id=${targetId}" 
+                       class="image-variant-btn ${isSelected ? 'selected' : ''}" 
+                       title="${val}">
+                       <img src="${imgUrl}" alt="${val}">
                     </a>
                 `;
-            });
-            textHtml += `</div></div>`;
-        }
-    }
+            } else {
+                // --- RICH CARD LOGIC ---
+                let cardPrice = "N/A";
+                let cardDiscount = "";
+                let cardOrigPrice = "";
+                
+                if (targetProduct) {
+                    const pFinal = Number(targetProduct.displayPrice);
+                    const pOrig = Number(targetProduct.originalPrice);
+                    cardPrice = `₹${pFinal.toLocaleString("en-IN")}`;
+                    
+                    if (pOrig > pFinal) {
+                        const disc = Math.round(((pOrig - pFinal) / pOrig) * 100);
+                        cardDiscount = `<span class="var-discount">↓${disc}%</span>`;
+                        cardOrigPrice = `<span class="var-orig-price">${pOrig.toLocaleString("en-IN")}</span>`;
+                    }
+                }
+
+                groupHtml += `
+                    <div class="variant-rich-card ${isSelected ? 'selected' : ''}" 
+                         data-href="?id=${targetId}" 
+                         onclick="window.location.href='?id=${targetId}'">
+                        <div class="var-name">${val}</div>
+                        <div class="var-price-row">
+                            ${cardDiscount}
+                            ${cardOrigPrice}
+                        </div>
+                        <div class="var-final-price">${cardPrice}</div>
+                    </div>
+                `;
+            }
+        });
+
+        groupHtml += `</div></div>`;
+
+        if (isColor) imageHtml += groupHtml;
+        else textHtml += groupHtml;
+    });
 
     imageContainer.innerHTML = imageHtml;
     textContainer.innerHTML = textHtml;
@@ -824,5 +924,4 @@ function loadRecentlyViewed(viewedIds) { const container=document.getElementById
 
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
-
 
