@@ -128,27 +128,37 @@
 
 
 /* --- ============================================================ --- */
-/* ---        FINAL FIXES: SMOOTHNESS & SIZING (UPDATED)          --- */
+/* ---        FINAL FIX: REMOVE PARENT PADDING (DOUBLE PADDING FIX) --- */
 /* --- ============================================================ --- */
 
-/* 1. Titles Padding */
+/* 1. REMOVE Padding from Parent Sections (Fixes the "Jyada Space" issue) */
+#handpicked-similar-section, 
+#other-products-section, 
+#recently-viewed-section, 
+#similar-products-section {
+    padding: 0 !important; /* Reset parent padding */
+    margin-bottom: 20px !important;
+}
+
+/* 2. Force Padding on TITLES Only (To align with cards) */
 #product-content h2, 
 #product-content h3,
 .section-title {
     padding-left: 16px !important;
     padding-right: 16px !important;
+    margin-top: 16px !important;
+    margin-bottom: 12px !important;
 }
 
-/* 2. Slider Containers: REMOVED 'scroll-snap' for SMOOTHNESS */
+/* 3. Slider Containers: Proper Spacing (Single Padding) */
 #recently-viewed-container,
 #similar-products-container,
 #handpicked-similar-container,
 .carousel-container { 
     display: flex !important;
     overflow-x: auto !important;
-    /* 'scroll-snap-type' REMOVED for smooth free-scrolling */
     scroll-behavior: smooth !important;
-    -webkit-overflow-scrolling: touch !important; /* iOS momentum scroll */
+    -webkit-overflow-scrolling: touch !important;
     
     gap: 10px !important;
     -ms-overflow-style: none;
@@ -156,8 +166,7 @@
     width: 100% !important;
     box-sizing: border-box !important;
     
-    /* Padding for correct edge spacing */
-    padding: 0 16px !important; 
+    padding: 0 16px !important; /* Only this padding will apply now */
     padding-bottom: 10px !important;
 }
 
@@ -168,46 +177,46 @@
     display: none; 
 }
 
-/* 3. Card Sizing (Sliders) */
+/* 4. Card Sizing */
 .carousel-item, 
-.recently-viewed-item { 
+.recently-viewed-item,
+#handpicked-similar-container > div { 
     flex: 0 0 30% !important; 
     scroll-snap-align: start; 
     max-width: 30% !important; 
-    
     background: white;
     border: 1px solid #e5e7eb;
     overflow: hidden;
 }
 
-/* 4. FIX: Recently Viewed ZERO Radius */
+/* 5. Recently Viewed - Square Corners */
 .recently-viewed-item {
-    border-radius: 0 !important; /* Corners ab square honge */
+    border-radius: 0 !important; 
 }
-.carousel-item {
-    border-radius: 8px; /* Baki sab rounded rahenge */
+.carousel-item,
+#handpicked-similar-container > div {
+    border-radius: 8px; 
 }
 
-/* 5. FIX: "Other Products" BIGGER SIZE (Compact Grid) */
+/* 6. Other Products: FULL WIDTH Fix */
 #other-products-container {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important; /* Gap kam kiya taaki cards bade dikhein */
-    padding: 0 8px !important; /* Side padding kam ki */
+    
+    /* Minimized Gap & Padding for Bigger Cards */
+    gap: 8px !important;
+    padding: 0 8px !important; 
+    
     width: 100% !important;
     box-sizing: border-box !important;
     overflow: visible !important;
 }
 
-.other-products-grid { 
-    display: grid; 
-    grid-template-columns: repeat(2, 1fr); 
-    gap: 8px; 
-}
-
-/* Responsive Adjustments */
+/* Responsive */
 @media (min-width: 640px) { 
-    .carousel-item, .recently-viewed-item { flex: 0 0 24% !important; max-width: 24% !important; }
+    .carousel-item, .recently-viewed-item, #handpicked-similar-container > div { 
+        flex: 0 0 24% !important; max-width: 24% !important; 
+    }
     .other-products-grid, #other-products-container { 
         grid-template-columns: repeat(3, 1fr) !important; 
         gap: 12px !important;
@@ -215,7 +224,9 @@
     } 
 }
 @media (min-width: 1024px) { 
-    .carousel-item, .recently-viewed-item { flex: 0 0 19% !important; max-width: 19% !important; } 
+    .carousel-item, .recently-viewed-item, #handpicked-similar-container > div { 
+        flex: 0 0 19% !important; max-width: 19% !important; 
+    } 
 }
 /* --- ============================================================ --- */
 
@@ -254,11 +265,6 @@
 .carousel-item .relative .quick-add-btn, .other-products-grid .relative .quick-add-btn { position: absolute; bottom: 8px; right: 8px; width: 38px; height: 38px; border-radius: 4px; font-size: 24px; }
 .card-rating-tag { position: absolute; top: 8px; right: 8px; background-color: #16a34a; color: white; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
 .card-rating-tag .fa-star { font-size: 10px; }
-
-
-/* --- Recently Viewed Items (Styling) --- */
-.recently-viewed-item { border: 1px solid #e5e7eb; overflow: hidden; background: white; border-radius: 0.5rem; }
-.recently-viewed-item img { border-radius: 0; }
 
 /* --- Header Search --- */
 .header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; text-decoration: none; cursor: pointer; }
