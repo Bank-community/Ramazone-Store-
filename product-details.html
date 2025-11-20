@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="product-details.css">
 </head>
 <body>
+    <!-- HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div id="default-header-content" class="py-3 flex items-center justify-between transition-all duration-300">
@@ -37,73 +38,104 @@
         </div>
     </header>
 
+    <!-- VARIANT LOADING OVERLAY (New Feature) -->
+    <div id="variant-loading-overlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-white/60 backdrop-blur-[2px] hidden transition-opacity duration-200">
+        <div class="flex flex-col items-center">
+            <div class="loader"></div> <!-- Using style.css loader -->
+            <p class="text-sm text-gray-500 mt-3 font-medium animate-pulse">Updating Selection...</p>
+        </div>
+    </div>
+
+    <!-- INITIAL LOADING INDICATOR -->
     <div id="loading-indicator" class="text-center py-20">
         <p class="text-lg font-semibold">Product load ho raha hai...</p>
     </div>
 
+    <!-- MAIN CONTENT -->
     <main id="product-content" class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-0 sm:mt-2 mb-12 pb-28" style="display: none;">
          <div class="bg-white sm:rounded-2xl sm:shadow-lg overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2">
                 
+                <!-- LEFT COLUMN: MEDIA GALLERY -->
                 <div id="media-gallery-container">
                     <div class="p-0 sm:p-4 lg:p-6 relative">
+                        <!-- Main image viewer -->
                         <div id="main-media-wrapper" class="rounded-none sm:rounded-xl mb-4 cursor-pointer overflow-hidden relative group">
                             <div id="media-slider"></div>
                             
+                            <!-- Share Button Overlay -->
                             <button id="share-button" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md border border-gray-200 z-10 hover:scale-110 transition-transform flex items-center justify-center w-10 h-10">
                                 <img src="https://www.svgrepo.com/show/521832/share-1.svg" alt="Share" class="w-5 h-5 opacity-80">
                             </button>
                         </div>
 
+                        <!-- Wrapper for Scrolling Thumbnails -->
                         <div id="thumbnail-wrapper" class="relative px-4 sm:px-0">
                              <div id="thumbnail-gallery" class="flex items-center gap-2 overflow-x-auto pb-2">
-                                </div>
+                                <!-- Thumbnails JS se yahan aayenge -->
+                             </div>
                         </div>
 
+                        <!-- Color Variants Container -->
                         <div id="image-variant-selectors-container" class="pt-4 px-4 sm:px-0">
-                            </div>
+                            <!-- Color Variants JS se yahan aayenge -->
+                        </div>
                     </div>
                 </div>
 
+                <!-- RIGHT COLUMN: PRODUCT MAIN INFO -->
                 <div id="product-main-info-container">
                     <div class="flex flex-col p-4 sm:p-6 lg:p-8">
     
+                        <!-- 1. Rating & Reviews -->
                         <div id="rating-section" class="flex items-center gap-2 text-sm text-gray-500 mb-2" style="display: none;">
                             <div id="product-rating-stars" class="rating-stars flex text-xs"></div>
                             <span id="product-review-count" class="text-xs text-gray-500 font-medium"></span>
                         </div>
 
+                        <!-- 2. Brand Name & Visit Store Link -->
                         <div id="brand-info-container" class="flex items-center gap-2 mb-1 hidden">
                             <span id="brand-name-text" class="text-sm font-bold text-gray-900"></span>
                             <a href="#" id="visit-store-link" class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline">Visit store</a>
                         </div>
 
+                        <!-- 3. Product Title -->
                         <div class="mb-2">
                             <h1 id="product-title" class="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight"></h1>
                         </div>
 
+                        <!-- 4. Price Section -->
                         <div class="py-1 mb-3">
                             <div id="new-price-section">
                                  <div id="lowest-price-tag-container" style="display: none; margin-bottom: 4px;">
                                     <div class="lowest-price-tag">Lowest Price</div>
                                  </div>
                                 <div class="flex items-center gap-2 flex-wrap">
-                                     <span id="price-percentage-discount" class="text-lg font-bold text-green-600"></span>
+                                     <!-- Percentage -->
+                                    <span id="price-percentage-discount" class="text-lg font-bold text-green-600"></span>
+                                    <!-- Original MRP -->
                                     <span id="price-original" class="text-sm text-gray-500 line-through"></span>
+                                    <!-- Final Price -->
                                     <span id="price-final" class="text-3xl font-bold text-gray-900"></span>
                                 </div>
                                  <p class="text-[10px] text-gray-400 mt-1">+₹49 Secured Packaging Fee</p>
                             </div>
                         </div>
 
+                        <!-- 5. Variants & Options Container -->
                         <div id="options-container" class="space-y-4 mb-4">
+                            <!-- Text/Rich Variants (Storage, RAM etc.) -->
                             <div id="variant-selectors-container"></div>
+                            <!-- Combo Packs -->
                             <div id="combo-pack-container"></div>
+                            <!-- Bundle Offers -->
                             <div id="bundle-offer-container"></div>
                         </div>
 
+                        <!-- 6. Seller Info -->
                         <div id="seller-info" class="text-xs font-medium text-gray-500 mb-2" style="display: none;"></div>
 
+                        <!-- 7. Highlights & Tech Specs -->
                         <div id="advanced-highlights-section" style="display: none;"></div>
 
                         <div id="tech-specs-section" class="pt-4 border-t border-gray-100 mt-4" style="display: none;">
@@ -111,6 +143,7 @@
                             <div id="tech-specs-container" class="space-y-2"></div>
                         </div>
 
+                        <!-- 8. Description -->
                         <div id="description-section" class="pt-4 border-t border-gray-100 mt-4" style="display: none;">
                             <h2 class="text-lg font-bold text-gray-900 mb-3">Product Details</h2>
                             <div id="return-policy-info" class="flex items-center gap-3 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg mb-4" style="display: none;"></div>
@@ -120,7 +153,9 @@
                 </div>
             </div>
             
-            <div id="similar-products-container-wrapper">
+            <!-- BOTTOM SECTION: SIMILAR PRODUCTS -->
+             <div id="similar-products-container-wrapper">
+                <!-- "You Might Also Like" Section -->
                 <div class="border-t border-gray-200">
                   <div id="handpicked-similar-section" class="p-4 sm:p-6 lg:p-8" style="display: none;">
                       <h2 class="text-xl font-bold text-gray-900 mb-4">You Might Also Like</h2>
@@ -128,16 +163,19 @@
                   </div>
                 </div>
 
+                <!-- "Recently Viewed" Section -->
                 <div id="recently-viewed-section" class="max-w-7xl mx-auto mt-12" style="display: none;">
                   <h2 class="text-2xl font-bold text-gray-800 mb-4 px-4 sm:px-0">Recently Viewed</h2>
                   <div id="recently-viewed-container" class="carousel-container pb-4"></div>
                 </div>
 
+                <!-- "More in this Category" Section -->
                 <div id="similar-products-section" class="max-w-7xl mx-auto mt-12" style="display: none;">
                   <h2 class="text-2xl font-bold text-gray-800 mb-4 px-4 sm:px-0">More in this Category</h2>
                   <div id="similar-products-container" class="carousel-container pb-4"></div>
                 </div>
 
+                <!-- "Other Products" Section -->
                 <div id="other-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
                   <h2 class="text-2xl font-bold text-gray-800 mb-4">Other Products</h2>
                   <div id="other-products-container" class="other-products-grid"></div>
@@ -146,6 +184,7 @@
         </div>
     </main>
 
+    <!-- MODALS & ACTIONS -->
     <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
     <div id="toast-notification"></div>
     <div id="variant-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden"><div id="variant-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300"><div class="flex justify-between items-center p-4 border-b"><h3 id="variant-modal-title" class="text-lg font-bold">Select Option</h3><button id="variant-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">×</button></div><div id="variant-modal-body" class="p-4 overflow-y-auto space-y-3"></div></div></div>
