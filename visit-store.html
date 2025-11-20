@@ -15,120 +15,106 @@
         :root {
             --primary-color: #4F46E5;
             --accent-color: #ff4757;
+            --btn-border: #000000;
+            --plus-color: #2563eb;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f8f9fa;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
         }
 
-        /* --- Store Header Styles --- */
+        /* --- ENHANCED HEADER --- */
         .store-header-bg {
-            background: linear-gradient(135deg, #4F46E5 0%, #4338ca 100%);
+            background: linear-gradient(160deg, #4338ca 0%, #3730a3 100%);
             color: white;
-            padding-bottom: 4.5rem;
-            border-radius: 0 0 1.5rem 1.5rem;
-            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);
+            padding-bottom: 5.5rem; /* More space for floating cards */
+            border-radius: 0 0 2.5rem 2.5rem; /* More curve */
+            box-shadow: 0 10px 30px -10px rgba(67, 56, 202, 0.5);
             position: relative;
             overflow: hidden;
         }
         
-        .store-header-bg::before {
+        /* Abstract Shapes for Background */
+        .store-header-bg::before, .store-header-bg::after {
             content: "";
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-            opacity: 0.6;
-            pointer-events: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
         }
+        .store-header-bg::before { width: 200px; height: 200px; top: -50px; left: -50px; }
+        .store-header-bg::after { width: 300px; height: 300px; bottom: -100px; right: -50px; }
 
         .store-brand-logo {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             background-color: white;
-            border-radius: 50%;
+            border-radius: 20px; /* Squircle shape */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            font-weight: 900;
+            font-size: 2.5rem;
             color: var(--primary-color);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            margin-bottom: 1rem;
-            text-transform: uppercase;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            margin-bottom: 0.5rem;
             z-index: 10;
+            transform: rotate(-3deg); /* Playful tilt */
+            border: 4px solid rgba(255,255,255,0.2);
         }
 
-        /* --- IMPROVED Filter Section Styles --- */
+        /* --- FILTER SECTION (Fix Layout Shift) --- */
         .filter-wrapper {
             width: 100%;
-            overflow: hidden;
-            margin-top: 1.5rem;
+            margin-top: 2rem;
             position: relative;
             z-index: 20;
+            height: 50px; /* Fixed height to prevent jump */
         }
 
         .filter-scroll-container {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.8rem;
             overflow-x: auto;
             padding: 0.5rem 1.5rem;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            justify-content: flex-start; 
-            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE */
+            align-items: center;
+            height: 100%; /* Ensure it fits wrapper */
         }
         
         .filter-scroll-container::-webkit-scrollbar { display: none; }
 
-        .filter-wrapper::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 30px;
-            height: 100%;
-            background: linear-gradient(to right, transparent, #4338ca);
-            pointer-events: none;
-            opacity: 0.8;
-        }
-
         .filter-btn {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(5px);
-            color: rgba(255, 255, 255, 0.9);
-            padding: 0.5rem 1.2rem;
-            border-radius: 2rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.95);
+            padding: 0.6rem 1.2rem;
+            border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 600;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             white-space: nowrap;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             flex-shrink: 0;
+            backdrop-filter: blur(4px);
         }
 
         .filter-btn.active {
             background: white;
             color: var(--primary-color);
+            font-weight: 700;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transform: translateY(-2px);
+            transform: scale(1.05);
             border-color: white;
         }
         
-        .filter-btn:active { transform: scale(0.95); }
-
-        /* --- Product Card Styles --- */
+        /* --- PRODUCT GRID --- */
         .product-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            padding: 1rem;
-            margin-top: -3.5rem;
+            gap: 12px;
+            padding: 16px;
+            margin-top: -4rem; /* Overlap header */
             position: relative;
             z-index: 30;
         }
@@ -136,27 +122,24 @@
         @media (min-width: 640px) {
             .product-grid {
                 grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
                 max-width: 1200px;
                 margin-left: auto;
                 margin-right: auto;
             }
         }
-        @media (min-width: 1024px) {
-            .product-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
 
+        /* --- NEW CARD DESIGN --- */
         .product-card {
             background: white;
-            border-radius: 1rem;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border: 1px solid #f0f0f0;
             display: flex;
             flex-direction: column;
             position: relative;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
         }
 
@@ -164,74 +147,79 @@
 
         .card-image-wrapper {
             position: relative;
-            padding-top: 100%;
-            background-color: #fff;
-            overflow: hidden;
+            padding-top: 100%; /* Square */
+            background-color: #ffffff;
         }
 
         .card-image-wrapper img {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%;
-            height: 90%;
+            width: 90%; height: 90%;
             object-fit: contain;
-            transition: transform 0.3s ease;
         }
 
-        .card-cart-btn {
+        /* --- NEW SQUARE ADD BUTTON (Requested Design) --- */
+        .square-add-btn {
             position: absolute;
             bottom: 10px;
             right: 10px;
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             background-color: white;
-            color: var(--primary-color);
-            border-radius: 50%;
+            border: 1.5px solid var(--btn-border); /* Black Border */
+            border-radius: 10px; /* Rounded Square */
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             cursor: pointer;
             z-index: 10;
-            transition: all 0.2s ease;
-            border: 1px solid #f3f4f6;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .card-cart-btn:hover { background-color: var(--primary-color); color: white; }
-        .card-cart-btn:active { transform: scale(0.9) !important; }
+        .square-add-btn i {
+            color: var(--plus-color); /* Blue Plus */
+            font-size: 1.2rem;
+            font-weight: 900; /* Thicker Icon */
+        }
 
-        .rating-badge {
+        .square-add-btn:active {
+            transform: scale(0.9);
+            background-color: #f0f0f0;
+        }
+        
+        .square-add-btn.added {
+            background-color: var(--green-color, #16a34a);
+            border-color: var(--green-color, #16a34a);
+        }
+        .square-add-btn.added i { color: white; }
+
+        /* Rating Badge */
+        .rating-pill {
             position: absolute;
-            top: 0.8rem;
-            left: 0.8rem;
-            background: rgba(255, 255, 255, 0.95);
+            top: 10px; left: 10px;
+            background: #16a34a; /* Green */
+            color: white;
             padding: 2px 8px;
             border-radius: 6px;
             font-size: 0.7rem;
             font-weight: 700;
-            color: #1f2937;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
-            gap: 4px;
-            z-index: 5;
+            gap: 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .rating-badge i { color: #16a34a; font-size: 0.65rem; }
+        .rating-pill i { font-size: 0.6rem; }
 
-        .card-details {
-            padding: 0.8rem;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
+        /* Details Section */
+        .card-details { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; }
 
         .product-name {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #1f2937;
-            margin-bottom: 0.4rem;
+            margin-bottom: 4px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -240,85 +228,52 @@
             height: 2.6em;
         }
 
-        .price-row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: auto;
-            flex-wrap: wrap;
-        }
-
+        .price-block { display: flex; align-items: baseline; gap: 6px; margin-top: auto; }
         .final-price { font-size: 1.1rem; font-weight: 800; color: #111827; }
-        .original-price { font-size: 0.75rem; color: #9ca3af; text-decoration: line-through; }
+        .original-price { font-size: 0.8rem; color: #9ca3af; text-decoration: line-through; }
+        .discount-tag { font-size: 0.7rem; font-weight: 700; color: #16a34a; }
 
-        .discount-text {
-            font-size: 0.7rem;
-            color: #16a34a;
-            font-weight: 700;
-            background: #dcfce7;
-            padding: 1px 4px;
-            border-radius: 3px;
-        }
-
-        /* Header Cart Badge */
-        .cart-icon-wrapper { position: relative; display: inline-block; }
-        .header-cart-badge {
-            position: absolute;
-            top: -8px; right: -8px;
-            background-color: var(--accent-color);
-            color: white;
-            font-size: 0.7rem; font-weight: bold;
-            height: 18px; min-width: 18px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 10px;
-            border: 2px solid #4F46E5;
-            transform: scale(0);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .header-cart-badge.visible { transform: scale(1); }
-
-        /* Animations */
-        .pop-anim { animation: pop 0.3s ease; }
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.4); }
-            100% { transform: scale(1); }
-        }
-
-        /* Loader */
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 3px solid var(--primary-color);
-            width: 30px; height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .header-back-btn {
+        /* Header Buttons */
+        .header-btn {
             background: rgba(255,255,255,0.2);
             width: 40px; height: 40px;
-            border-radius: 50%;
+            border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             backdrop-filter: blur(5px);
             cursor: pointer;
-            transition: background 0.2s;
+            transition: transform 0.2s;
         }
-        .header-back-btn:hover { background: rgba(255,255,255,0.3); }
+        .header-btn:active { transform: scale(0.95); }
 
-        /* Toast Notification */
+        /* Cart Badge */
+        .cart-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #ef4444; color: white;
+            font-size: 0.7rem; font-weight: bold;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #4338ca;
+            transform: scale(0); transition: 0.2s;
+        }
+        .cart-badge.visible { transform: scale(1); }
+
+        /* Toast */
         #toast-notification {
             position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            background-color: #333; color: white;
-            padding: 10px 20px; border-radius: 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(-50%) translateY(20px);
+            background-color: #1f2937; color: white;
+            padding: 12px 24px; border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             z-index: 100; opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none; font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 500; display: flex; align-items: center; gap: 8px;
         }
-        #toast-notification.show { opacity: 1; }
+        #toast-notification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Loader */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 2rem auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     </style>
 </head>
@@ -327,37 +282,33 @@
     <!-- HEADER -->
     <header class="store-header-bg px-4 pt-4">
         <div class="flex justify-between items-center max-w-7xl mx-auto mb-4 relative z-10">
-            <a href="javascript:history.back()" class="header-back-btn text-white">
-                <i class="fas fa-arrow-left text-lg"></i>
+            <a href="javascript:history.back()" class="header-btn text-white">
+                <i class="fas fa-arrow-left"></i>
             </a>
-            <div class="flex items-center gap-5">
-                 <a href="index.html" class="text-white hover:opacity-80 transition"><i class="fas fa-home text-xl"></i></a>
-                 
-                 <!-- Cart Icon with Badge -->
-                 <a href="order.html" class="text-white hover:opacity-80 transition cart-icon-wrapper">
-                    <i class="fas fa-shopping-cart text-xl"></i>
-                    <span id="cart-count-badge" class="header-cart-badge">0</span>
+            <div class="flex items-center gap-3">
+                 <a href="index.html" class="header-btn text-white"><i class="fas fa-home"></i></a>
+                 <a href="order.html" class="header-btn text-white relative">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span id="cart-count-badge" class="cart-badge">0</span>
                  </a>
             </div>
         </div>
         
-        <div class="flex flex-col items-center justify-center relative z-10">
-            <div class="store-brand-logo shadow-lg">
+        <div class="flex flex-col items-center justify-center relative z-10 mt-2">
+            <div class="store-brand-logo">
                 <i class="fas fa-store"></i>
             </div>
-            <h1 id="store-title" class="text-2xl sm:text-3xl font-bold text-white text-center">Loading...</h1>
-            <p id="store-subtitle" class="text-indigo-100 text-sm mt-1">Official Brand Store</p>
+            <h1 id="store-title" class="text-2xl font-bold text-white text-center tracking-tight">Loading Store...</h1>
+            <div class="flex items-center gap-2 mt-1">
+                <span class="bg-white/20 px-2 py-0.5 rounded text-xs text-white">Verified</span>
+                <span class="text-indigo-100 text-xs">• Official Store</span>
+            </div>
         </div>
 
-        <!-- FILTER SECTION -->
+        <!-- DYNAMIC FILTER SECTION -->
         <div class="filter-wrapper">
-            <div class="filter-scroll-container">
-                <button class="filter-btn active" onclick="filterItems('all', this)">All Items</button>
-                <button class="filter-btn" onclick="filterItems('popular', this)">Popular 🔥</button>
-                <button class="filter-btn" onclick="filterItems('new', this)">New Arrivals</button>
-                <button class="filter-btn" onclick="filterItems('discount', this)">Top Deals %</button>
-                <button class="filter-btn" onclick="filterItems('electronics', this)">Electronics</button>
-                <button class="filter-btn" onclick="filterItems('fashion', this)">Fashion</button>
+            <div class="filter-scroll-container" id="filter-container">
+                <!-- Filters will be injected here by JS -->
             </div>
         </div>
     </header>
@@ -366,23 +317,27 @@
     <main>
         <div id="loading-indicator" class="text-center py-10">
             <div class="loader"></div>
-            <p class="text-gray-500 text-sm">Loading products...</p>
+            <p class="text-gray-500 text-sm mt-2">Curating products...</p>
         </div>
 
         <div id="products-container" class="product-grid hidden">
             <!-- Products JS se yahan aayenge -->
         </div>
 
-        <div id="no-products-msg" class="hidden text-center py-20 px-4">
-            <div class="bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <i class="fas fa-box-open text-3xl text-gray-300"></i>
+        <div id="no-products-msg" class="hidden flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mb-4">
+                <i class="fas fa-search text-4xl text-gray-400"></i>
             </div>
-            <h3 class="text-lg font-bold text-gray-700">No Products Found</h3>
-            <p class="text-gray-500 text-sm mt-1">Try selecting a different category.</p>
+            <h3 class="text-lg font-bold text-gray-800">No Products Found</h3>
+            <p class="text-gray-500 text-sm mt-1 max-w-xs">We couldn't find any items matching your selection. Try a different filter.</p>
+            <button onclick="filterItems('all', document.querySelector('.filter-btn'))" class="mt-4 text-indigo-600 font-semibold text-sm">View All Products</button>
         </div>
     </main>
 
-    <div id="toast-notification">Item added to cart</div>
+    <div id="toast-notification">
+        <i class="fas fa-check-circle text-green-400"></i>
+        <span>Added to Cart</span>
+    </div>
 
     <!-- FIREBASE & LOGIC -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -399,39 +354,24 @@
 
         let app, db;
         let allBrandProducts = [];
+        let currentFilter = 'all';
 
-        // --- CART HELPER FUNCTIONS (SYNCED WITH MAIN APP) ---
-        const getCart = () => { 
-            try { return JSON.parse(localStorage.getItem('ramazoneCart')) || []; } 
-            catch (e) { return []; } 
-        };
-        
-        const saveCart = (cart) => { 
-            localStorage.setItem('ramazoneCart', JSON.stringify(cart)); 
-            updateCartBadgeUI();
-        };
-
-        const getTotalCartQuantity = () => { 
-            const cart = getCart(); 
-            return cart.reduce((total, item) => total + item.quantity, 0); 
-        };
+        // --- CART HELPER FUNCTIONS ---
+        const getCart = () => { try { return JSON.parse(localStorage.getItem('ramazoneCart')) || []; } catch (e) { return []; } };
+        const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); updateCartBadgeUI(); };
+        const getTotalCartQuantity = () => { const cart = getCart(); return cart.reduce((total, item) => total + item.quantity, 0); };
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                if (!firebase.apps.length) {
-                    app = firebase.initializeApp(firebaseConfig);
-                } else {
-                    app = firebase.app();
-                }
+                if (!firebase.apps.length) { app = firebase.initializeApp(firebaseConfig); } 
+                else { app = firebase.app(); }
                 db = firebase.database();
                 loadBrandStore();
-                
-                // Initialize Cart Badge from LocalStorage
                 updateCartBadgeUI();
             } catch (error) {
                 console.error("Firebase Init Error:", error);
-                showError("System Error. Please try again.");
+                showError("System Error. Please reload.");
             }
         });
 
@@ -439,37 +379,29 @@
             const urlParams = new URLSearchParams(window.location.search);
             const brandName = urlParams.get('brand');
 
-            if (!brandName) {
-                document.getElementById('store-title').textContent = "Featured Store";
-                document.getElementById('store-subtitle').textContent = "Explore best products";
-            } else {
+            if (brandName) {
                 document.getElementById('store-title').textContent = brandName;
-                document.title = `${brandName} Store - Ramazone`;
+                document.title = `${brandName} Store`;
+            } else {
+                document.getElementById('store-title').textContent = "All Products";
             }
 
             try {
                 const snapshot = await db.ref('ramazone/products').once('value');
                 const data = snapshot.val();
                 
-                if (!data) {
-                    showEmptyState();
-                    return;
-                }
+                if (!data) { showEmptyState(); return; }
 
                 const allProducts = Array.isArray(data) ? data : Object.values(data);
                 
                 if (brandName) {
-                    allBrandProducts = allProducts.filter(p => 
-                        p && 
-                        p.brand && 
-                        p.brand.toLowerCase().trim() === brandName.toLowerCase().trim() &&
-                        p.isVisible !== false
-                    );
+                    allBrandProducts = allProducts.filter(p => p && p.brand && p.brand.toLowerCase().trim() === brandName.toLowerCase().trim() && p.isVisible !== false);
                 } else {
                     allBrandProducts = allProducts.filter(p => p && p.isVisible !== false);
                 }
 
                 if (allBrandProducts.length > 0) {
+                    populateFilters(); // Generate Dynamic Filters
                     renderProducts(allBrandProducts);
                 } else {
                     showEmptyState();
@@ -479,6 +411,43 @@
                 console.error("Data Load Error:", error);
                 showError("Could not load products.");
             }
+        }
+
+        // --- DYNAMIC FILTER GENERATION ---
+        function populateFilters() {
+            const container = document.getElementById('filter-container');
+            container.innerHTML = ''; // Clear existing
+
+            // 1. "All" Button
+            const allBtn = document.createElement('button');
+            allBtn.className = 'filter-btn active';
+            allBtn.textContent = 'All Items';
+            allBtn.onclick = function() { filterItems('all', this); };
+            container.appendChild(allBtn);
+
+            // 2. Extract Unique Subcategories from loaded products
+            const subcategories = [...new Set(allBrandProducts.map(p => p.subcategory).filter(Boolean))];
+            
+            subcategories.forEach(sub => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = sub;
+                btn.onclick = function() { filterItems(sub, this); };
+                container.appendChild(btn);
+            });
+
+            // 3. Sorting Options (Low/High Price)
+            const sortLowBtn = document.createElement('button');
+            sortLowBtn.className = 'filter-btn';
+            sortLowBtn.innerHTML = 'Price: Low <i class="fas fa-arrow-right text-xs"></i> High';
+            sortLowBtn.onclick = function() { filterItems('sort-low-high', this); };
+            container.appendChild(sortLowBtn);
+
+            const sortHighBtn = document.createElement('button');
+            sortHighBtn.className = 'filter-btn';
+            sortHighBtn.innerHTML = 'Price: High <i class="fas fa-arrow-right text-xs"></i> Low';
+            sortHighBtn.onclick = function() { filterItems('sort-high-low', this); };
+            container.appendChild(sortHighBtn);
         }
 
         function renderProducts(products) {
@@ -501,44 +470,30 @@
                 const displayPrice = Number(product.displayPrice);
                 const originalPrice = Number(product.originalPrice);
                 let discount = 0;
-                
                 if (originalPrice > displayPrice) {
                     discount = Math.round(((originalPrice - displayPrice) / originalPrice) * 100);
                 }
 
-                const imageSrc = product.images && product.images.length > 0 
-                    ? product.images[0] 
-                    : 'https://placehold.co/300x300/f3f4f6/9ca3af?text=No+Image';
-
-                // Mock rating logic if missing
-                const ratingVal = product.rating || (Math.random() * (5 - 3.8) + 3.8).toFixed(1); 
-                const ratingHtml = `<div class="rating-badge"><i class="fas fa-star"></i> ${ratingVal}</div>`;
-
-                const discountHtml = discount > 0 
-                    ? `<span class="discount-text">${discount}% OFF</span>` 
-                    : '';
-                
-                const originalPriceHtml = originalPrice > displayPrice
-                    ? `<span class="original-price">₹${originalPrice.toLocaleString('en-IN')}</span>`
-                    : '';
+                const imageSrc = product.images && product.images.length > 0 ? product.images[0] : 'https://placehold.co/300x300/f3f4f6/9ca3af?text=No+Image';
+                const ratingVal = product.rating || 4.5; 
 
                 const html = `
                     <a href="product-details.html?id=${product.id}" class="product-card">
                         <div class="card-image-wrapper">
                             <img src="${imageSrc}" alt="${product.name}" loading="lazy">
-                            ${ratingHtml}
+                            <div class="rating-pill"><i class="fas fa-star"></i> ${ratingVal}</div>
                             
-                            <!-- REAL CART BUTTON -->
-                            <div class="card-cart-btn" onclick="handleAddToCart(event, '${product.id}')">
+                            <!-- SQUARE ADD BUTTON -->
+                            <div class="square-add-btn" onclick="handleAddToCart(event, '${product.id}')">
                                 <i class="fas fa-plus"></i>
                             </div>
                         </div>
                         <div class="card-details">
                             <h3 class="product-name">${product.name}</h3>
-                            <div class="price-row">
+                            <div class="price-block">
                                 <span class="final-price">₹${displayPrice.toLocaleString('en-IN')}</span>
-                                ${originalPriceHtml}
-                                ${discountHtml}
+                                ${originalPrice > displayPrice ? `<span class="original-price">₹${originalPrice}</span>` : ''}
+                                ${discount > 0 ? `<span class="discount-tag">${discount}% OFF</span>` : ''}
                             </div>
                         </div>
                     </a>
@@ -550,92 +505,71 @@
             container.classList.remove('hidden');
         }
 
+        // --- FILTER & SORT LOGIC ---
+        function filterItems(criteria, btnElement) {
+            // UI Update
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            btnElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+            let filtered = [...allBrandProducts];
+
+            if (criteria === 'all') {
+                // Do nothing, show all
+            } else if (criteria === 'sort-low-high') {
+                filtered.sort((a, b) => Number(a.displayPrice) - Number(b.displayPrice));
+            } else if (criteria === 'sort-high-low') {
+                filtered.sort((a, b) => Number(b.displayPrice) - Number(a.displayPrice));
+            } else {
+                // It's a Subcategory filter
+                filtered = filtered.filter(p => p.subcategory === criteria);
+            }
+
+            renderProducts(filtered);
+        }
+
         // --- REAL CART LOGIC ---
         function handleAddToCart(event, productId) {
             event.preventDefault();
             event.stopPropagation();
             
-            // Find Product
-            const product = allBrandProducts.find(p => p.id === productId);
-            if (!product) return;
-
-            // --- Add to LocalStorage Cart ---
             const cart = getCart();
-            
-            // Check if item exists (Simple match, no variant support for quick add)
             const existingItemIndex = cart.findIndex(item => item.id === productId && !item.isBundle);
             
             if (existingItemIndex > -1) {
                 cart[existingItemIndex].quantity += 1;
             } else {
-                // Construct Cart Item similar to main app
-                cart.push({
-                    id: productId,
-                    quantity: 1,
-                    variants: {}, // Default empty for quick add
-                    pack: null
-                });
+                cart.push({ id: productId, quantity: 1, variants: {}, pack: null });
             }
             
             saveCart(cart);
-
-            // UI Feedback
             showToast("Item added to cart");
             
-            // Button Animation
+            // Visual Feedback
             const btn = event.currentTarget;
-            btn.style.transform = "scale(0.8)";
-            setTimeout(() => btn.style.transform = "scale(1)", 150);
-            
-            // Icon change
+            btn.style.transform = "scale(0.9)";
+            btn.classList.add('added');
             const icon = btn.querySelector('i');
             icon.className = "fas fa-check";
-            setTimeout(() => icon.className = "fas fa-plus", 1000);
+            
+            setTimeout(() => { 
+                btn.style.transform = "scale(1)"; 
+                btn.classList.remove('added');
+                icon.className = "fas fa-plus";
+            }, 1000);
         }
 
         function updateCartBadgeUI() {
             const count = getTotalCartQuantity();
             const badge = document.getElementById('cart-count-badge');
             badge.innerText = count;
-            
-            if (count > 0) {
-                badge.classList.add('visible');
-                badge.classList.remove('pop-anim');
-                void badge.offsetWidth; 
-                badge.classList.add('pop-anim');
-            } else {
-                badge.classList.remove('visible');
-            }
-        }
-
-        // --- FILTER LOGIC (Keeping as is) ---
-        function filterItems(type, btnElement) {
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
-            btnElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-
-            let filtered = [];
-            
-            if (type === 'all') {
-                filtered = allBrandProducts;
-            } else if (type === 'popular') {
-                filtered = allBrandProducts.filter(p => (p.rating || 0) >= 4.0 || (Math.random() > 0.5));
-            } else if (type === 'new') {
-                filtered = [...allBrandProducts].reverse(); 
-            } else if (type === 'discount') {
-                filtered = allBrandProducts.filter(p => Number(p.originalPrice) > Number(p.displayPrice));
-            } else {
-                filtered = allBrandProducts.filter(p => 
-                    (p.category && p.category.toLowerCase().includes(type)) || 
-                    (p.name && p.name.toLowerCase().includes(type))
-                );
-            }
-            renderProducts(filtered);
+            if (count > 0) badge.classList.add('visible');
+            else badge.classList.remove('visible');
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast-notification');
-            toast.textContent = msg;
+            toast.querySelector('span').textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
@@ -646,8 +580,7 @@
         }
 
         function showError(msg) {
-            const container = document.getElementById('loading-indicator');
-            container.innerHTML = `<p class="text-red-500 font-semibold">${msg}</p>`;
+            document.getElementById('loading-indicator').innerHTML = `<p class="text-red-500 font-semibold">${msg}</p>`;
         }
     </script>
 </body>
