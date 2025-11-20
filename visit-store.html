@@ -20,14 +20,14 @@
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden; /* Prevent horizontal scroll on body */
+            overflow-x: hidden;
         }
 
         /* --- Store Header Styles --- */
         .store-header-bg {
             background: linear-gradient(135deg, #4F46E5 0%, #4338ca 100%);
             color: white;
-            padding-bottom: 4.5rem; /* Increased space for filters */
+            padding-bottom: 4.5rem;
             border-radius: 0 0 1.5rem 1.5rem;
             box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);
             position: relative;
@@ -67,7 +67,7 @@
         /* --- IMPROVED Filter Section Styles --- */
         .filter-wrapper {
             width: 100%;
-            overflow: hidden; /* Hides scrollbar visually but allows child to scroll */
+            overflow: hidden;
             margin-top: 1.5rem;
             position: relative;
             z-index: 20;
@@ -77,19 +77,15 @@
             display: flex;
             gap: 0.75rem;
             overflow-x: auto;
-            padding: 0.5rem 1.5rem; /* Side padding taaki content chipke nahi */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE 10+ */
-            /* Important: "flex-start" ensures content isn't cut off on left */
+            padding: 0.5rem 1.5rem;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
             justify-content: flex-start; 
-            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+            -webkit-overflow-scrolling: touch;
         }
         
-        .filter-scroll-container::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
-        }
+        .filter-scroll-container::-webkit-scrollbar { display: none; }
 
-        /* Fade effect on sides to indicate scrolling */
         .filter-wrapper::after {
             content: '';
             position: absolute;
@@ -97,7 +93,7 @@
             right: 0;
             width: 30px;
             height: 100%;
-            background: linear-gradient(to right, transparent, #4338ca); /* Matches header bg */
+            background: linear-gradient(to right, transparent, #4338ca);
             pointer-events: none;
             opacity: 0.8;
         }
@@ -113,7 +109,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             white-space: nowrap;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0;
         }
 
         .filter-btn.active {
@@ -124,17 +120,15 @@
             border-color: white;
         }
         
-        .filter-btn:active {
-            transform: scale(0.95);
-        }
+        .filter-btn:active { transform: scale(0.95); }
 
         /* --- Product Card Styles --- */
         .product-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1rem; /* Thoda gap badhaya */
+            gap: 1rem;
             padding: 1rem;
-            margin-top: -3.5rem; /* More overlap */
+            margin-top: -3.5rem;
             position: relative;
             z-index: 30;
         }
@@ -166,13 +160,11 @@
             text-decoration: none;
         }
 
-        .product-card:active {
-            transform: scale(0.98);
-        }
+        .product-card:active { transform: scale(0.98); }
 
         .card-image-wrapper {
             position: relative;
-            padding-top: 100%; /* 1:1 Aspect Ratio */
+            padding-top: 100%;
             background-color: #fff;
             overflow: hidden;
         }
@@ -188,7 +180,6 @@
             transition: transform 0.3s ease;
         }
 
-        /* Professional Floating Cart Button */
         .card-cart-btn {
             position: absolute;
             bottom: 10px;
@@ -208,14 +199,8 @@
             border: 1px solid #f3f4f6;
         }
 
-        .card-cart-btn:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .card-cart-btn:active {
-            transform: scale(0.9) !important;
-        }
+        .card-cart-btn:hover { background-color: var(--primary-color); color: white; }
+        .card-cart-btn:active { transform: scale(0.9) !important; }
 
         .rating-badge {
             position: absolute;
@@ -252,7 +237,7 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             line-height: 1.3;
-            height: 2.6em; /* Fixed height for 2 lines */
+            height: 2.6em;
         }
 
         .price-row {
@@ -263,17 +248,8 @@
             flex-wrap: wrap;
         }
 
-        .final-price {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: #111827;
-        }
-
-        .original-price {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            text-decoration: line-through;
-        }
+        .final-price { font-size: 1.1rem; font-weight: 800; color: #111827; }
+        .original-price { font-size: 0.75rem; color: #9ca3af; text-decoration: line-through; }
 
         .discount-text {
             font-size: 0.7rem;
@@ -285,38 +261,24 @@
         }
 
         /* Header Cart Badge */
-        .cart-icon-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-        
+        .cart-icon-wrapper { position: relative; display: inline-block; }
         .header-cart-badge {
             position: absolute;
-            top: -8px;
-            right: -8px;
+            top: -8px; right: -8px;
             background-color: var(--accent-color);
             color: white;
-            font-size: 0.7rem;
-            font-weight: bold;
-            height: 18px;
-            min-width: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 0.7rem; font-weight: bold;
+            height: 18px; min-width: 18px;
+            display: flex; align-items: center; justify-content: center;
             border-radius: 10px;
-            border: 2px solid #4F46E5; /* Matches header bg */
+            border: 2px solid #4F46E5;
             transform: scale(0);
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
-        .header-cart-badge.visible {
-            transform: scale(1);
-        }
+        .header-cart-badge.visible { transform: scale(1); }
 
         /* Animations */
-        .pop-anim {
-            animation: pop 0.3s ease;
-        }
+        .pop-anim { animation: pop 0.3s ease; }
         @keyframes pop {
             0% { transform: scale(1); }
             50% { transform: scale(1.4); }
@@ -328,8 +290,7 @@
             border: 3px solid #f3f3f3;
             border-radius: 50%;
             border-top: 3px solid var(--primary-color);
-            width: 30px;
-            height: 30px;
+            width: 30px; height: 30px;
             animation: spin 1s linear infinite;
             margin: 2rem auto;
         }
@@ -345,6 +306,19 @@
             transition: background 0.2s;
         }
         .header-back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* Toast Notification */
+        #toast-notification {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            background-color: #333; color: white;
+            padding: 10px 20px; border-radius: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100; opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none; font-size: 0.9rem;
+        }
+        #toast-notification.show { opacity: 1; }
 
     </style>
 </head>
@@ -375,7 +349,7 @@
             <p id="store-subtitle" class="text-indigo-100 text-sm mt-1">Official Brand Store</p>
         </div>
 
-        <!-- IMPROVED FILTER SECTION -->
+        <!-- FILTER SECTION -->
         <div class="filter-wrapper">
             <div class="filter-scroll-container">
                 <button class="filter-btn active" onclick="filterItems('all', this)">All Items</button>
@@ -408,6 +382,8 @@
         </div>
     </main>
 
+    <div id="toast-notification">Item added to cart</div>
+
     <!-- FIREBASE & LOGIC -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -423,16 +399,35 @@
 
         let app, db;
         let allBrandProducts = [];
-        let cartCount = 0; // Local State for Cart Count
+
+        // --- CART HELPER FUNCTIONS (SYNCED WITH MAIN APP) ---
+        const getCart = () => { 
+            try { return JSON.parse(localStorage.getItem('ramazoneCart')) || []; } 
+            catch (e) { return []; } 
+        };
+        
+        const saveCart = (cart) => { 
+            localStorage.setItem('ramazoneCart', JSON.stringify(cart)); 
+            updateCartBadgeUI();
+        };
+
+        const getTotalCartQuantity = () => { 
+            const cart = getCart(); 
+            return cart.reduce((total, item) => total + item.quantity, 0); 
+        };
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                app = firebase.initializeApp(firebaseConfig);
+                if (!firebase.apps.length) {
+                    app = firebase.initializeApp(firebaseConfig);
+                } else {
+                    app = firebase.app();
+                }
                 db = firebase.database();
                 loadBrandStore();
                 
-                // Initialize Cart Badge
+                // Initialize Cart Badge from LocalStorage
                 updateCartBadgeUI();
             } catch (error) {
                 console.error("Firebase Init Error:", error);
@@ -515,7 +510,7 @@
                     ? product.images[0] 
                     : 'https://placehold.co/300x300/f3f4f6/9ca3af?text=No+Image';
 
-                // Mock rating
+                // Mock rating logic if missing
                 const ratingVal = product.rating || (Math.random() * (5 - 3.8) + 3.8).toFixed(1); 
                 const ratingHtml = `<div class="rating-badge"><i class="fas fa-star"></i> ${ratingVal}</div>`;
 
@@ -533,8 +528,8 @@
                             <img src="${imageSrc}" alt="${product.name}" loading="lazy">
                             ${ratingHtml}
                             
-                            <!-- CART BUTTON -->
-                            <div class="card-cart-btn" onclick="addToCart(event, '${product.name}')">
+                            <!-- REAL CART BUTTON -->
+                            <div class="card-cart-btn" onclick="handleAddToCart(event, '${product.id}')">
                                 <i class="fas fa-plus"></i>
                             </div>
                         </div>
@@ -555,12 +550,68 @@
             container.classList.remove('hidden');
         }
 
-        // --- FILTER LOGIC ---
+        // --- REAL CART LOGIC ---
+        function handleAddToCart(event, productId) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Find Product
+            const product = allBrandProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            // --- Add to LocalStorage Cart ---
+            const cart = getCart();
+            
+            // Check if item exists (Simple match, no variant support for quick add)
+            const existingItemIndex = cart.findIndex(item => item.id === productId && !item.isBundle);
+            
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].quantity += 1;
+            } else {
+                // Construct Cart Item similar to main app
+                cart.push({
+                    id: productId,
+                    quantity: 1,
+                    variants: {}, // Default empty for quick add
+                    pack: null
+                });
+            }
+            
+            saveCart(cart);
+
+            // UI Feedback
+            showToast("Item added to cart");
+            
+            // Button Animation
+            const btn = event.currentTarget;
+            btn.style.transform = "scale(0.8)";
+            setTimeout(() => btn.style.transform = "scale(1)", 150);
+            
+            // Icon change
+            const icon = btn.querySelector('i');
+            icon.className = "fas fa-check";
+            setTimeout(() => icon.className = "fas fa-plus", 1000);
+        }
+
+        function updateCartBadgeUI() {
+            const count = getTotalCartQuantity();
+            const badge = document.getElementById('cart-count-badge');
+            badge.innerText = count;
+            
+            if (count > 0) {
+                badge.classList.add('visible');
+                badge.classList.remove('pop-anim');
+                void badge.offsetWidth; 
+                badge.classList.add('pop-anim');
+            } else {
+                badge.classList.remove('visible');
+            }
+        }
+
+        // --- FILTER LOGIC (Keeping as is) ---
         function filterItems(type, btnElement) {
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
-            
-            // Center the active button in the scroll view (smoothly)
             btnElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
             let filtered = [];
@@ -568,62 +619,25 @@
             if (type === 'all') {
                 filtered = allBrandProducts;
             } else if (type === 'popular') {
-                filtered = allBrandProducts.filter(p => (p.rating || 0) >= 4.0 || (Math.random() > 0.5)); // Mock logic
+                filtered = allBrandProducts.filter(p => (p.rating || 0) >= 4.0 || (Math.random() > 0.5));
             } else if (type === 'new') {
                 filtered = [...allBrandProducts].reverse(); 
             } else if (type === 'discount') {
                 filtered = allBrandProducts.filter(p => Number(p.originalPrice) > Number(p.displayPrice));
             } else {
-                // Simple category text match (mock)
                 filtered = allBrandProducts.filter(p => 
                     (p.category && p.category.toLowerCase().includes(type)) || 
                     (p.name && p.name.toLowerCase().includes(type))
                 );
             }
-            
-            // Fallback if filter returns empty in this demo
-            if (filtered.length === 0 && type !== 'all') {
-                // Show user feedback instead of empty screen for demo purposes might be better, 
-                // but here we show empty state as per standard logic.
-            }
-
             renderProducts(filtered);
         }
 
-        // --- CART LOGIC ---
-        function addToCart(event, productName) {
-            // Prevent navigation
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // Increment Count
-            cartCount++;
-            updateCartBadgeUI();
-
-            // Animation on button
-            const btn = event.currentTarget;
-            btn.style.transform = "scale(0.8)";
-            setTimeout(() => btn.style.transform = "scale(1)", 150);
-            
-            // Change icon temporarily
-            const icon = btn.querySelector('i');
-            icon.className = "fas fa-check";
-            setTimeout(() => icon.className = "fas fa-plus", 1000);
-        }
-
-        function updateCartBadgeUI() {
-            const badge = document.getElementById('cart-count-badge');
-            badge.innerText = cartCount;
-            
-            if (cartCount > 0) {
-                badge.classList.add('visible');
-                // Trigger Pop Animation
-                badge.classList.remove('pop-anim');
-                void badge.offsetWidth; // Trigger reflow
-                badge.classList.add('pop-anim');
-            } else {
-                badge.classList.remove('visible');
-            }
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
         function showEmptyState() {
