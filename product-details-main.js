@@ -396,10 +396,13 @@ function renderVariantSelectors(data) {
                     </div>
                 `;
             } else {
-                // Rich Text Card logic
+                // Rich Text Card logic (NOW WITH IMAGE SUPPORT)
                 let cardPrice = "N/A";
                 let cardDiscount = "";
                 let cardOrigPrice = "";
+                
+                // Get Image for Non-Color Variant (NEW)
+                const variantImg = targetProduct?.images?.[0] || data.images?.[0] || 'https://placehold.co/60x60';
                 
                 if (targetProduct) {
                     const pFinal = Number(targetProduct.displayPrice);
@@ -413,15 +416,21 @@ function renderVariantSelectors(data) {
                     }
                 }
 
+                // Updated HTML Structure for Image + Text
                 groupHtml += `
                     <div class="variant-rich-card ${isSelected ? 'selected' : ''}" 
                          onclick="handleVariantChange('${targetId}')">
-                        <div class="var-name">${val}</div>
-                        <div class="var-price-row">
-                            ${cardDiscount}
-                            ${cardOrigPrice}
+                        <div class="variant-card-content">
+                            <img src="${variantImg}" alt="${val}" class="variant-mini-img">
+                            <div class="variant-text-info">
+                                <div class="var-name">${val}</div>
+                                <div class="var-price-row">
+                                    ${cardDiscount}
+                                    ${cardOrigPrice}
+                                </div>
+                                <div class="var-final-price">${cardPrice}</div>
+                            </div>
                         </div>
-                        <div class="var-final-price">${cardPrice}</div>
                     </div>
                 `;
             }
@@ -1095,4 +1104,3 @@ function loadRecentlyViewed(viewedIds) { const container=document.getElementById
 
 function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
 function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
-
