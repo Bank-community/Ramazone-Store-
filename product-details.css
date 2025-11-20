@@ -141,40 +141,73 @@
     display: none;
 }
 
+/* --- NEW: IMAGE ENABLED VARIANT CARD STYLES --- */
 .variant-rich-card {
     flex: 0 0 auto;
     min-width: 130px;
     max-width: 150px;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    padding: 10px;
+    border: 1.5px solid #d1d5db; /* Thicker border */
+    border-radius: 12px;
+    padding: 8px;
     cursor: pointer;
     background-color: #ffffff;
     transition: all 0.2s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
     position: relative;
+    overflow: hidden;
 }
 
 .variant-rich-card:hover {
     border-color: #9ca3af;
 }
 
+.variant-rich-card.selected {
+    border-color: var(--primary-color);
+    background-color: #eff6ff;
+    box-shadow: 0 0 0 1.5px var(--primary-color) inset; /* Inner Glow */
+}
+
+/* Flex Layout for Image + Text */
+.variant-card-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Mini Image inside Variant Box */
+.variant-mini-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.variant-text-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+}
+
 .variant-rich-card .var-name {
     font-size: 0.85rem;
     font-weight: 700;
     color: #1f2937;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px; /* Prevent text overflow */
 }
 
 .variant-rich-card .var-price-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    margin-bottom: 2px;
+    gap: 4px;
+    font-size: 0.65rem;
+    margin-bottom: 0;
 }
 
 .variant-rich-card .var-discount {
@@ -188,16 +221,15 @@
 }
 
 .variant-rich-card .var-final-price {
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 800;
     color: #111827;
+    line-height: 1;
+    margin-top: 2px;
 }
 
-.variant-rich-card.selected {
-    border-color: var(--primary-color);
-    background-color: #eff6ff;
-    box-shadow: 0 0 0 1px var(--primary-color) inset;
-}
+/* --- END NEW STYLES --- */
+
 
 #image-variant-selectors-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .image-variant-btn { display: flex; align-items: center; gap: 0.5rem; padding: 3px; border: 1px solid #d1d5db; background-color: #ffffff; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
@@ -516,4 +548,3 @@
     z-index: auto;
     font-size: 13px;
 }
-
