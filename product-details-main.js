@@ -215,30 +215,20 @@ function fetchProductData() {
     const product = allProductsCache.find(p => p && p.id == currentProductId);
     if (product) {
         currentProductData = product;
-        loadPageSectionsAndData(product);
+        loadProductPage(product);
     } else {
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product not found or is currently unavailable.</p>';
     }
 }
 
-async function loadPageSectionsAndData(data) {
+function loadProductPage(data) {
     try {
-        const [mediaHtml, infoHtml, similarHtml] = await Promise.all([
-            fetch('product-details-sections/media-gallery.html').then(res => res.text()),
-            fetch('product-details-sections/product-main-info.html').then(res => res.text()),
-            fetch('product-details-sections/similar-products.html').then(res => res.text())
-        ]);
-        document.getElementById('media-gallery-container').innerHTML = mediaHtml;
-        document.getElementById('product-main-info-container').innerHTML = infoHtml;
-        document.getElementById('similar-products-container-wrapper').innerHTML = similarHtml;
-
         populateDataAndAttachListeners(data);
-
         document.getElementById('loading-indicator').style.display = 'none';
         document.getElementById('product-content').style.display = 'block';
     } catch (error) {
-        console.error("Error loading page sections:", error);
-        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Could not load sections.</p>';
+        console.error("Error loading page data:", error);
+        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Could not load data.</p>';
     }
 }
 
@@ -248,7 +238,6 @@ function populateDataAndAttachListeners(data) {
     document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
     document.getElementById("product-title").textContent = data.name;
 
-    // --- Brand & Visit Store Logic ---
     if (data.brand) {
         const brandContainer = document.getElementById('brand-info-container');
         const brandText = document.getElementById('brand-name-text');
@@ -580,7 +569,7 @@ function renderComboPacks(data) {
     `;
 }
 
-async function renderProductBundles(data) {
+function renderProductBundles(data) {
     const container = document.getElementById('bundle-offer-container');
     if (!container || !data.combos || !data.combos.productBundle || !data.combos.productBundle.linkedProductIds) {
         return;
@@ -590,34 +579,37 @@ async function renderProductBundles(data) {
     const linkedProducts = bundle.linkedProductIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
 
     if (linkedProducts.length === bundle.linkedProductIds.length) {
-        try {
-            const response = await fetch('product-details-sections/product-bundle.html');
-            if (!response.ok) throw new Error('Bundle template not found');
-            let templateHTML = await response.text();
-
-            const allBundleProducts = [data, ...linkedProducts];
-            const bundlePrice = Number(bundle.bundlePrice);
-            const productIds = allBundleProducts.map(p => p.id).join(',');
-            const imagesHTML = allBundleProducts.map(p => `<img src="${p.images?.[0] || ''}" alt="${p.name}">`).join('');
-            const namesHTML = allBundleProducts.map(p => p.name).join(' + ');
-            const originalTotal = allBundleProducts.reduce((sum, p) => sum + Number(p.displayPrice), 0);
-            let originalPriceHTML = '';
-            if (originalTotal > bundlePrice) {
-                originalPriceHTML = `<span class="original-price">₹${originalTotal.toLocaleString('en-IN')}</span>`;
-            }
-
-            templateHTML = templateHTML
-                .replace('{{productIds}}', productIds)
-                .replace('{{bundlePrice}}', bundlePrice)
-                .replace('{{bundleImages}}', imagesHTML)
-                .replace('{{bundleNames}}', namesHTML)
-                .replace('{{bundlePriceFormatted}}', bundlePrice.toLocaleString('en-IN'))
-                .replace('{{originalPriceHTML}}', originalPriceHTML);
-
-            container.innerHTML = templateHTML;
-        } catch (error) {
-            console.error("Failed to load or process bundle template:", error);
+        
+        const allBundleProducts = [data, ...linkedProducts];
+        const bundlePrice = Number(bundle.bundlePrice);
+        const productIds = allBundleProducts.map(p => p.id).join(',');
+        const imagesHTML = allBundleProducts.map(p => `<img src="${p.images?.[0] || ''}" alt="${p.name}">`).join('');
+        const namesHTML = allBundleProducts.map(p => p.name).join(' + ');
+        const originalTotal = allBundleProducts.reduce((sum, p) => sum + Number(p.displayPrice), 0);
+        
+        let originalPriceHTML = '';
+        if (originalTotal > bundlePrice) {
+            originalPriceHTML = `<span class="original-price">₹${originalTotal.toLocaleString('en-IN')}</span>`;
         }
+
+        // *** IN-LINE TEMPLATE STRING ***
+        const bundleHTML = `
+            <div class="ramazone-simple-bundle-card product-bundle-card" data-product-ids="${productIds}" data-price="${bundlePrice}">
+                <div class="bundle-images">
+                    ${imagesHTML}
+                </div>
+                <div class="bundle-details">
+                    <p class="product-names">${namesHTML}</p>
+                    <div class="price-info">
+                        <span class="final-price">₹${bundlePrice.toLocaleString('en-IN')}</span>
+                        ${originalPriceHTML}
+                    </div>
+                </div>
+                <button class="final-bundle-plus-btn" data-bundle="true" title="Add Bundle to Cart">+</button>
+            </div>
+        `;
+
+        container.innerHTML = bundleHTML;
     }
 }
 
@@ -719,7 +711,7 @@ function handleQuickAdd(event) {
             quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
             quickAddButton.classList.add('added');
             setTimeout(() => {
-                quickAddButton.innerHTML = '+';
+                quickAddButton.innerHTML = '+'; // FIXED: Reset to + instead of Add for square cards
                 quickAddButton.classList.remove('added');
             }, 1500);
         }
@@ -800,7 +792,7 @@ function updatePriceDisplay(newPrice) {
     } 
 }
 
-async function loadHandpickedSimilarProducts(category, subcategory, currentProductId) {
+function loadHandpickedSimilarProducts(category, subcategory, currentProductId) {
     const section = document.getElementById("handpicked-similar-section");
     const container = document.getElementById("handpicked-similar-container");
     if (!container || !section) return;
@@ -825,51 +817,121 @@ async function loadHandpickedSimilarProducts(category, subcategory, currentProdu
     container.innerHTML = "";
     let hasContent = false;
 
-    try {
-        const response = await fetch('product-details-sections/you-might-like-card.html');
-        if (!response.ok) throw new Error('YML card template not found');
-        const templateHTML = await response.text();
+    similarProducts.forEach(product => {
+        const displayPrice = Number(product.displayPrice);
+        const originalPriceNum = Number(product.originalPrice);
 
-        similarProducts.forEach(product => {
-            const displayPrice = Number(product.displayPrice);
-            const originalPriceNum = Number(product.originalPrice);
-
-            let priceHTML = `<span class="display-price">₹${displayPrice.toLocaleString("en-IN")}</span>`;
-            if (originalPriceNum > displayPrice) {
-                priceHTML += `<span class="original-price">₹${originalPriceNum.toLocaleString("en-IN")}</span>`;
-            }
-            const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
-            const populatedHTML = templateHTML
-                .replace(/\{\{productId\}\}/g, product.id)
-                .replace(/\{\{productName\}\}/g, product.name)
-                .replace('{{productImage}}', product.images?.[0] || 'https://placehold.co/300x300/f0f0f0/333?text=Ramazone')
-                .replace('{{ratingTagHTML}}', ratingTagHTML)
-                .replace('{{productPriceHTML}}', priceHTML);
-
-            container.innerHTML += populatedHTML;
-            hasContent = true;
-        });
-
-        if (hasContent) {
-            section.style.display = "block";
+        let priceHTML = `<span class="original-price">₹${displayPrice.toLocaleString("en-IN")}</span>`;
+        if (originalPriceNum > displayPrice) {
+            priceHTML = `<span class="final-price">₹${displayPrice.toLocaleString("en-IN")}</span> <span class="original-price">₹${originalPriceNum.toLocaleString("en-IN")}</span>`;
         } else {
-            section.style.display = "none";
+             priceHTML = `<span class="final-price">₹${displayPrice.toLocaleString("en-IN")}</span>`;
         }
 
-    } catch (error) {
-        console.error("Error loading handpicked products:", error);
+        const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
+        const productImage = product.images?.[0] || 'https://placehold.co/300x300/f0f0f0/333?text=Ramazone';
+        
+        const cardHTML = `
+            <div class="ramazone-final-yml-wrapper">
+                <div class="ramazone-final-yml-card">
+                    <a href="?id=${product.id}" class="card-link-area">
+                        <div class="image-container">
+                            <img src="${productImage}" alt="${product.name}">
+                            ${ratingTagHTML}
+                        </div>
+                        <div class="details-container">
+                            <h4 class="product-name">${product.name}</h4>
+                            <div class="price-container">
+                                ${priceHTML}
+                            </div>
+                        </div>
+                    </a>
+                    <div class="button-container">
+                        <button class="yml-add-button quick-add-btn" data-id="${product.id}">Add</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML += cardHTML;
+        hasContent = true;
+    });
+
+    if (hasContent) {
+        section.style.display = "block";
+    } else {
         section.style.display = "none";
     }
 }
 
-
-function createCarouselCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`; return `<a href="?id=${product.id}" class="carousel-item block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
+function createCarouselCard(product) { 
+    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; 
+    const originalPriceNum = Number(product.originalPrice); 
+    const displayPriceNum = Number(product.displayPrice); 
+    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; 
+    
+    // --- BUTTON AB <a> KE BAHAR HAI ---
+    const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`; 
+    
+    // --- WRAPPER AB DIV HAI ---
+    return `
+    <div class="carousel-item block bg-white rounded-lg shadow overflow-hidden relative">
+        <div class="relative">
+            <a href="?id=${product.id}" class="block">
+                <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">
+                ${ratingTag}
+            </a>
+            ${addButton}
+        </div>
+        <div class="p-2">
+            <a href="?id=${product.id}" class="block">
+                <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>
+                    ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}
+                </div>
+                ${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}
+            </a>
+        </div>
+    </div>`; 
+}
 
 function createRecentlyViewedCard(product) { 
     return ` <a href="?id=${product.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4> </div> </a> `; 
 }
 
-function createGridCard(product) { const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; const originalPriceNum = Number(product.originalPrice); const displayPriceNum = Number(product.displayPrice); const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; const showAddButton = displayPriceNum < 500 || product.category === 'grocery'; const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : ""; return `<a href="?id=${product.id}" class="block bg-white rounded-lg shadow overflow-hidden"><div class="relative"><img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">${ratingTag}${addButton}</div><div class="p-2 sm:p-3"><h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4><div class="flex items-baseline gap-2"><p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}</div>${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}</div></a>`; }
+function createGridCard(product) { 
+    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; 
+    const originalPriceNum = Number(product.originalPrice); 
+    const displayPriceNum = Number(product.displayPrice); 
+    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; 
+    const showAddButton = displayPriceNum < 500 || product.category === 'grocery'; 
+    
+    // --- BUTTON AB <a> KE BAHAR HAI ---
+    const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : ""; 
+    
+    // --- WRAPPER AB DIV HAI ---
+    return `
+    <div class="block bg-white rounded-lg shadow overflow-hidden relative">
+        <div class="relative">
+            <a href="?id=${product.id}" class="block">
+                <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">
+                ${ratingTag}
+            </a>
+            ${addButton}
+        </div>
+        <div class="p-2 sm:p-3">
+            <a href="?id=${product.id}" class="block">
+                <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>
+                    ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}
+                </div>
+                ${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}
+            </a>
+        </div>
+    </div>`; 
+}
 
 function renderDescription(data) { 
     const descriptionContainer = document.getElementById("product-description"); 
