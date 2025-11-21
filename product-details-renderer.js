@@ -6,7 +6,7 @@ let slider, sliderWrapper;
 let mediaItems = [], currentMediaIndex = 0;
 let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, animationID;
 
-// --- 1. MEDIA GALLERY RENDERER (3:4 RATIO) ---
+// --- 1. MEDIA GALLERY RENDERER (Infinite Slide & Video Overlay) ---
 function renderMediaGallery(data) { 
     slider = document.getElementById('media-slider');
     sliderWrapper = document.getElementById('main-media-wrapper');
@@ -24,13 +24,20 @@ function renderMediaGallery(data) {
         // A. Main Slider Item
         const e = document.createElement("div");
         e.className = "media-item"; // CSS handles 3:4 aspect ratio
+        
         if (item.type === "image") {
             e.innerHTML = `<img src="${item.src}" alt="Product image ${index+1}" draggable="false">`;
         } else {
+            // VIDEO OVERLAY (Solution for stuck slider)
             const embedUrl = getYoutubeEmbedUrl(item.src);
-            if (embedUrl) {
-                e.innerHTML = `<iframe src="${embedUrl}" class="w-full h-full object-contain" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-            }
+            e.innerHTML = `
+                <div class="video-wrapper" onclick="playVideoInPlace(this, '${embedUrl}')">
+                    <img src="${item.thumbnail}" class="video-thumb" draggable="false" style="width:100%; height:100%; object-fit:contain; opacity: 0.8;">
+                    <div class="video-play-btn-large">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </div>
+            `;
         }
         slider.appendChild(e);
 
@@ -41,7 +48,7 @@ function renderMediaGallery(data) {
         l.src = item.type === "image" ? item.src : item.thumbnail;
         t.appendChild(l);
 
-        // Video Icon
+        // Video Icon (Small)
         if (item.type === "video") {
             const n = document.createElement("div");
             n.className = "play-icon-overlay"; 
@@ -57,6 +64,13 @@ function renderMediaGallery(data) {
     
     setupSliderControls();
     setupImageModal();
+}
+
+// Helper: Replace Thumbnail with Iframe
+window.playVideoInPlace = function(wrapper, embedUrl) {
+    if (!embedUrl) return;
+    wrapper.innerHTML = `<iframe src="${embedUrl}?autoplay=1" class="w-full h-full object-contain" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    wrapper.onclick = null; // Remove click handler
 }
 
 // --- 2. VARIANT RENDERER ---
@@ -192,7 +206,7 @@ function findBestMatchProduct(groupProducts, currentProduct, targetType, targetV
     return bestMatch;
 }
 
-// --- 3. PRICE DISPLAY UPDATER (CLEANED - BADGE REMOVED) ---
+// --- 3. PRICE DISPLAY UPDATER ---
 function updatePriceDisplay(currentData, selectedPack, priceElementIds) { 
     const finalPriceEl = document.getElementById(priceElementIds.final); 
     const originalPriceEl = document.getElementById(priceElementIds.original); 
@@ -256,12 +270,54 @@ function updatePriceDisplay(currentData, selectedPack, priceElementIds) {
 function renderStars(rating, container) { container.innerHTML = ""; const fullStars = Math.floor(rating), halfStar = rating % 1 >= .5, emptyStars = 5 - fullStars - (halfStar ? 1 : 0); for (let i = 0; i < fullStars; i++)container.innerHTML += '<i class="fas fa-star"></i>'; halfStar && (container.innerHTML += '<i class="fas fa-star-half-alt"></i>'); for (let i = 0; i < emptyStars; i++)container.innerHTML += '<i class="far fa-star"></i>' }
 function getYoutubeEmbedUrl(url) { if(!url)return null;let videoId=null;try{const urlObj=new URL(url);if("www.youtube.com"===urlObj.hostname||"youtube.com"===urlObj.hostname)videoId=urlObj.searchParams.get("v");else if("youtu.be"===urlObj.hostname)videoId=urlObj.pathname.slice(1);return videoId?`https://www.youtube.com/embed/${videoId}?controls=1&rel=0&modestbranding=1`:null}catch(e){return console.error("Invalid video URL:",url,e),null}}
 
-// Slider Logic
-function showMedia(index) { if(!(index<0||index>=mediaItems.length))slider.style.transition="transform 0.3s ease-out",currentMediaIndex=index,currentTranslate=index*-sliderWrapper.offsetWidth,prevTranslate=currentTranslate,setSliderPosition(),document.querySelectorAll(".thumbnail").forEach((t,e)=>t.classList.toggle("active",e===index))}
+// Slider Logic (UPDATED: Infinite Wrapping)
+function showMedia(index) { 
+    // No bounds check here, handled in logic
+    slider.style.transition = "transform 0.3s ease-out";
+    currentMediaIndex = index;
+    currentTranslate = index * -sliderWrapper.offsetWidth;
+    prevTranslate = currentTranslate;
+    setSliderPosition();
+    document.querySelectorAll(".thumbnail").forEach((t,e)=>t.classList.toggle("active",e===index));
+}
+
 function setupSliderControls() { if(!sliderWrapper) return; sliderWrapper.addEventListener("touchstart",touchStart,{passive:!0}),sliderWrapper.addEventListener("touchend",touchEnd),sliderWrapper.addEventListener("touchmove",touchMove,{passive:!0}),sliderWrapper.addEventListener("mousedown",touchStart),sliderWrapper.addEventListener("mouseup",touchEnd),sliderWrapper.addEventListener("mouseleave",touchEnd),sliderWrapper.addEventListener("mousemove",touchMove)}
-function touchStart(event) { startPos=getPositionX(event),isDragging=!0,animationID=requestAnimationFrame(animation),slider.style.transition="none"}
-function touchMove(event) { if(isDragging){const e=getPositionX(event);currentTranslate=prevTranslate+e-startPos}}
-function touchEnd(event) { if(isDragging){isDragging=!1,cancelAnimationFrame(animationID);const e=currentTranslate-prevTranslate;e<-50&&currentMediaIndex<mediaItems.length-1&&currentMediaIndex++,e>50&&currentMediaIndex>0&&currentMediaIndex--,showMedia(currentMediaIndex)}}
+
+function touchStart(event) { 
+    startPos = getPositionX(event);
+    isDragging = true;
+    animationID = requestAnimationFrame(animation);
+    slider.style.transition = "none";
+}
+
+function touchMove(event) { 
+    if(isDragging){
+        const currentPosition = getPositionX(event);
+        currentTranslate = prevTranslate + currentPosition - startPos;
+    }
+}
+
+function touchEnd(event) { 
+    if(isDragging){
+        isDragging = false;
+        cancelAnimationFrame(animationID);
+        const movedBy = currentTranslate - prevTranslate;
+        
+        // Logic for Infinite Loop
+        if(movedBy < -50) { // Swipe Left (Next)
+            currentMediaIndex++;
+            if (currentMediaIndex >= mediaItems.length) currentMediaIndex = 0; // Loop Back to Start
+        }
+        
+        if(movedBy > 50) { // Swipe Right (Prev)
+            currentMediaIndex--;
+            if (currentMediaIndex < 0) currentMediaIndex = mediaItems.length - 1; // Loop to End
+        }
+        
+        showMedia(currentMediaIndex);
+    }
+}
+
 function getPositionX(event) { return event.type.includes("mouse")?event.pageX:event.touches[0].clientX}
 function animation() { setSliderPosition(),isDragging&&requestAnimationFrame(animation)}
 function setSliderPosition() { slider.style.transform=`translateX(${currentTranslate}px)`}
@@ -362,4 +418,5 @@ window.renderProductBundles = renderProductBundles;
 window.renderDescription = renderDescription;
 window.renderAdvancedHighlights = renderAdvancedHighlights;
 window.showToast = showToast;
+
 
