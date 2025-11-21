@@ -6,7 +6,7 @@ let slider, sliderWrapper;
 let mediaItems = [], currentMediaIndex = 0;
 let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, animationID;
 
-// --- 1. MEDIA GALLERY RENDERER (WITH VIDEO ICON FIX) ---
+// --- 1. MEDIA GALLERY RENDERER (3:4 RATIO) ---
 function renderMediaGallery(data) { 
     slider = document.getElementById('media-slider');
     sliderWrapper = document.getElementById('main-media-wrapper');
@@ -23,13 +23,13 @@ function renderMediaGallery(data) {
     mediaItems.forEach((item, index) => {
         // A. Main Slider Item
         const e = document.createElement("div");
-        e.className = "media-item";
+        e.className = "media-item"; // CSS handles 3:4 aspect ratio
         if (item.type === "image") {
             e.innerHTML = `<img src="${item.src}" alt="Product image ${index+1}" draggable="false">`;
         } else {
             const embedUrl = getYoutubeEmbedUrl(item.src);
             if (embedUrl) {
-                e.innerHTML = `<iframe src="${embedUrl}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+                e.innerHTML = `<iframe src="${embedUrl}" class="w-full h-full object-contain" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
             }
         }
         slider.appendChild(e);
@@ -41,11 +41,10 @@ function renderMediaGallery(data) {
         l.src = item.type === "image" ? item.src : item.thumbnail;
         t.appendChild(l);
 
-        // --- VIDEO ICON FIX (NANO UPDATE) ---
+        // Video Icon
         if (item.type === "video") {
             const n = document.createElement("div");
-            n.className = "play-icon-overlay"; // New CSS Class
-            // Use the specific SVG URL provided by user
+            n.className = "play-icon-overlay"; 
             n.innerHTML = '<img src="https://www.svgrepo.com/show/523617/play-circle.svg" alt="Play Video">';
             t.appendChild(n);
         }
@@ -56,7 +55,6 @@ function renderMediaGallery(data) {
 
     if (mediaItems.length > 0) showMedia(0);
     
-    // Re-attach slider controls since elements were recreated
     setupSliderControls();
     setupImageModal();
 }
@@ -194,13 +192,19 @@ function findBestMatchProduct(groupProducts, currentProduct, targetType, targetV
     return bestMatch;
 }
 
-// --- 3. PRICE DISPLAY UPDATER ---
+// --- 3. PRICE DISPLAY UPDATER (CLEANED - BADGE REMOVED) ---
 function updatePriceDisplay(currentData, selectedPack, priceElementIds) { 
     const finalPriceEl = document.getElementById(priceElementIds.final); 
     const originalPriceEl = document.getElementById(priceElementIds.original); 
     const percentageDiscountEl = document.getElementById(priceElementIds.discount); 
     const lowestPriceTagContainer = document.getElementById("lowest-price-tag-container"); 
     const dynamicBadge = document.getElementById("dynamic-deal-badge");
+    
+    // Badge removed as it is now in the title
+    const quantityUnitEl = document.getElementById("quantity-unit-text");
+    if (quantityUnitEl) {
+         quantityUnitEl.style.display = "none";
+    }
 
     const displayPrice = selectedPack ? Number(selectedPack.price) : Number(currentData.displayPrice); 
     const originalPrice = Number(currentData.originalPrice); 
@@ -221,7 +225,7 @@ function updatePriceDisplay(currentData, selectedPack, priceElementIds) {
     } 
     
     if (discount > 0) { 
-        percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1 text-lg"></i>${discount}%`; 
+        percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-0.5 text-sm"></i>${discount}%`; 
         originalPriceEl.textContent = `₹${(selectedPack ? packOriginalPrice : originalPrice).toLocaleString("en-IN")}`; 
         
         percentageDiscountEl.style.display = "flex"; 
@@ -248,7 +252,7 @@ function updatePriceDisplay(currentData, selectedPack, priceElementIds) {
     } 
 }
 
-// --- 4. UI HELPER FUNCTIONS (Sliders, Stars, etc.) ---
+// --- 4. UI HELPER FUNCTIONS ---
 function renderStars(rating, container) { container.innerHTML = ""; const fullStars = Math.floor(rating), halfStar = rating % 1 >= .5, emptyStars = 5 - fullStars - (halfStar ? 1 : 0); for (let i = 0; i < fullStars; i++)container.innerHTML += '<i class="fas fa-star"></i>'; halfStar && (container.innerHTML += '<i class="fas fa-star-half-alt"></i>'); for (let i = 0; i < emptyStars; i++)container.innerHTML += '<i class="far fa-star"></i>' }
 function getYoutubeEmbedUrl(url) { if(!url)return null;let videoId=null;try{const urlObj=new URL(url);if("www.youtube.com"===urlObj.hostname||"youtube.com"===urlObj.hostname)videoId=urlObj.searchParams.get("v");else if("youtu.be"===urlObj.hostname)videoId=urlObj.pathname.slice(1);return videoId?`https://www.youtube.com/embed/${videoId}?controls=1&rel=0&modestbranding=1`:null}catch(e){return console.error("Invalid video URL:",url,e),null}}
 
@@ -265,7 +269,7 @@ function setSliderPosition() { slider.style.transform=`translateX(${currentTrans
 // Modal Logic
 function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
 
-// Tech Specs, Combo, etc.
+// Tech Specs (NANO)
 function renderTechSpecs(techSpecs) {
     const container = document.getElementById('tech-specs-container');
     const section = document.getElementById('tech-specs-section');
@@ -275,7 +279,7 @@ function renderTechSpecs(techSpecs) {
     let hasContent = false;
     techSpecs.forEach(spec => {
         if (spec.name && spec.value) {
-            const iconSvg = spec.svg || '<i class="fas fa-microchip" style="font-size: 20px;"></i>';
+            const iconSvg = spec.svg || '<i class="fas fa-microchip"></i>'; 
             container.innerHTML += `<div class="tech-spec-row"><div class="tech-spec-icon">${iconSvg}</div><div class="tech-spec-details"><div class="tech-spec-name">${spec.name}</div><div class="tech-spec-value">${spec.value}</div></div></div>`;
             hasContent = true;
         }
@@ -289,7 +293,6 @@ function renderComboPacks(data) {
     const packs = data.combos && data.combos.quantityPacks ? data.combos.quantityPacks.map(p => ({ name: p.name, price: p.price })) : [];
     if (packs.length === 0) { container.innerHTML = ''; return; }
     
-    // Helper for grid creation (embedded here since it's UI only)
     const createComboPackGrid = (productData, options) => {
         const singleItemOriginalPrice = Number(productData.originalPrice) > Number(productData.displayPrice) ? Number(productData.originalPrice) : Number(productData.displayPrice);
         let bestValueIndex = -1, maxSavings = -1;
@@ -310,7 +313,7 @@ function renderComboPacks(data) {
     };
 
     const comboHTML = createComboPackGrid(data, packs);
-    container.innerHTML = `<div class="combo-pack-container mt-4"><h3 class="text-md font-bold text-gray-800 mb-2">Available Packs</h3><div class="combo-pack-grid">${comboHTML}</div></div>`;
+    container.innerHTML = `<div class="combo-pack-container mt-2"><h3 class="text-sm font-bold text-gray-800 mb-1">Available Packs</h3><div class="combo-pack-grid">${comboHTML}</div></div>`;
 }
 
 function renderProductBundles(data, allProductsCache) {
@@ -339,12 +342,12 @@ function renderDescription(data) {
     let hasContent = false; 
     descriptionContainer.innerHTML = ""; 
     if (returnPolicyEl) returnPolicyEl.style.display = "none"; 
-    if (data.longDescription) { descriptionContainer.innerHTML = `<p class="text-base text-gray-600 leading-relaxed">${data.longDescription.replace(/\n/g, '<br>')}</p>`; hasContent = true; } else if (data.description && Array.isArray(data.description) && data.description.length > 0) { let descriptionHtml = '<ul class="space-y-3 list-inside">'; data.description.forEach(block => { if (block.details) { descriptionHtml += `<li class="text-base text-gray-600 leading-relaxed">${block.details}</li>`; hasContent = true; } }); descriptionHtml += '</ul>'; descriptionContainer.innerHTML = descriptionHtml; } 
-    if (data.returnPolicy && data.returnPolicy.type) { let policyText = ''; switch (data.returnPolicy.type) { case 'days': policyText = `${data.returnPolicy.value} Days Return Available`; break; case 'no_return': policyText = 'No Return Available'; break; case 'custom': policyText = data.returnPolicy.value; break; } if (policyText && returnPolicyEl) { returnPolicyEl.innerHTML = `<i class="fas fa-undo-alt w-5 text-center"></i> <span>${policyText}</span>`; returnPolicyEl.style.display = "flex"; hasContent = true; } } 
+    if (data.longDescription) { descriptionContainer.innerHTML = `<p class="text-xs text-gray-600 leading-relaxed">${data.longDescription.replace(/\n/g, '<br>')}</p>`; hasContent = true; } else if (data.description && Array.isArray(data.description) && data.description.length > 0) { let descriptionHtml = '<ul class="space-y-2 list-inside">'; data.description.forEach(block => { if (block.details) { descriptionHtml += `<li class="text-xs text-gray-600 leading-relaxed">${block.details}</li>`; hasContent = true; } }); descriptionHtml += '</ul>'; descriptionContainer.innerHTML = descriptionHtml; } 
+    if (data.returnPolicy && data.returnPolicy.type) { let policyText = ''; switch (data.returnPolicy.type) { case 'days': policyText = `${data.returnPolicy.value} Days Return Available`; break; case 'no_return': policyText = 'No Return Available'; break; case 'custom': policyText = data.returnPolicy.value; break; } if (policyText && returnPolicyEl) { returnPolicyEl.innerHTML = `<i class="fas fa-undo-alt w-4 text-center"></i> <span>${policyText}</span>`; returnPolicyEl.style.display = "flex"; hasContent = true; } } 
     descriptionSection.style.display = hasContent ? "block" : "none"; 
 }
 
-function renderAdvancedHighlights(specData) { const container = document.getElementById("advanced-highlights-section"); if (!specData || !specData.blocks || specData.blocks.length === 0) { container.style.display = "none"; return; } let html = `<div class="p-4 sm:p-6 lg:p-8 border-t border-b border-gray-200 my-4"><h2 class="text-xl font-bold text-gray-900 mb-4">Highlights</h2>`; if (specData.specScore || specData.specTag) { html += '<div class="flex items-center gap-3 mb-6">'; if (specData.specScore) { html += `<div class="spec-score font-bold">${specData.specScore}</div>`; } if (specData.specTag) { html += `<div class="spec-tag">${specData.specTag}</div>`; } html += '</div>'; } html += '<div class="space-y-6">'; specData.blocks.forEach(block => { const subtitleStyle = "color: #B8860B; font-weight: 500;"; html += `<div class="flex items-start gap-4"><div class="flex-shrink-0 w-8 h-8 text-gray-600 pt-1">${block.icon || ""}</div><div class="flex-grow"><p class="text-sm text-gray-500">${block.category || ""}</p><h4 class="text-md font-semibold text-gray-800 mt-1">${block.title || ""}</h4><p class="text-sm mt-1" style="${subtitleStyle}">${block.subtitle || ""}</p></div></div>`; }); html += '</div></div>'; container.innerHTML = html; container.style.display = "block"; }
+function renderAdvancedHighlights(specData) { const container = document.getElementById("advanced-highlights-section"); if (!specData || !specData.blocks || specData.blocks.length === 0) { container.style.display = "none"; return; } let html = `<div class="p-3 sm:p-4 lg:p-6 border-t border-b border-gray-200 my-2"><h2 class="text-sm font-bold text-gray-900 mb-3">Highlights</h2>`; if (specData.specScore || specData.specTag) { html += '<div class="flex items-center gap-2 mb-3">'; if (specData.specScore) { html += `<div class="spec-score font-bold">${specData.specScore}</div>`; } if (specData.specTag) { html += `<div class="spec-tag">${specData.specTag}</div>`; } html += '</div>'; } html += '<div class="space-y-3">'; specData.blocks.forEach(block => { const subtitleStyle = "color: #B8860B; font-weight: 500;"; html += `<div class="flex items-start gap-3"><div class="flex-shrink-0 w-6 h-6 text-gray-600 pt-0.5">${block.icon || ""}</div><div class="flex-grow"><p class="text-xs text-gray-500">${block.category || ""}</p><h4 class="text-sm font-semibold text-gray-800 mt-0.5">${block.title || ""}</h4><p class="text-xs mt-0.5" style="${subtitleStyle}">${block.subtitle || ""}</p></div></div>`; }); html += '</div></div>'; container.innerHTML = html; container.style.display = "block"; }
 
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
 
@@ -359,3 +362,4 @@ window.renderProductBundles = renderProductBundles;
 window.renderDescription = renderDescription;
 window.renderAdvancedHighlights = renderAdvancedHighlights;
 window.showToast = showToast;
+
