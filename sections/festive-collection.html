@@ -27,6 +27,14 @@
     #festive-collection-container .view-all-arrow:hover { background-color: rgba(0, 0, 0, 0.15); }
     #festive-collection-container .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
     
+    /* === NEW: Force 3:4 Image Ratio for Festive Section === */
+    #festive-collection-container .product-card img {
+        aspect-ratio: 3 / 4 !important;
+        object-fit: contain !important;
+        background-color: #ffffff;
+        padding: 4px;
+    }
+
     #festive-collection-container .offer-tag-top-left {
         position: absolute;
         top: 0;
@@ -143,4 +151,3 @@
     </div>
     <div class="horizontal-scroller product-slider" id="festive-product-slider"></div>
 </section>
-
