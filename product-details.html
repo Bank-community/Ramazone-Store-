@@ -232,9 +232,13 @@
         <a href="order.html" class="bg-white text-gray-800 font-bold text-sm py-2 px-4 rounded-md">Go to Cart</a>
     </div>
 
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="product-details-main.js"></script>
+    
+    <!-- PRODUCT LOGIC (SPLIT) -->
+    <script src="product-details-renderer.js"></script> <!-- UI & HTML Generator -->
+    <script src="product-details-main.js"></script>     <!-- Core Logic -->
 </body>
 </html>
 
