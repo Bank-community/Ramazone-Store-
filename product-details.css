@@ -1,5 +1,7 @@
 /* product-details.css */
 
+/* ... (Previous CSS remains same) ... */
+
 /* --- Media Gallery (3:4 Ratio & Contain) --- */
 #media-slider {
     display: flex;
@@ -706,24 +708,98 @@
     margin-right: 0.5rem;
 }
 
-/* --- Best Seller Badge --- */
+/* --- Best Seller Badge (UPDATED: ORANGE) --- */
 .best-seller-badge {
     position: absolute;
     top: 0;
     left: 0;
-    /* OLD: background: linear-gradient(45deg, #FFD700, #FFA500); */
-    
-    /* NEW: Bright Orange Background */
-    background: #F5691E; /* Flipkart jaisa Orange */
-    
-    /* Optional: Agar Gradient chahiye to ye use karein: */
-    /* background: linear-gradient(to right, #ff9f00, #ff6f00); */
-
+    background: #F5691E; /* User Requested Orange */
     color: #fff;
-    font-size: 0.7rem; /* Thoda bada font */
+    font-size: 0.7rem;
     font-weight: 700;
     padding: 4px 8px;
     border-bottom-right-radius: 8px;
     z-index: 10;
     box-shadow: 1px 1px 4px rgba(0,0,0,0.2);
 }
+
+/* ============================================================ */
+/* === NEW: STICKY FOOTER PREMIUM DESIGN (COMPACT & SINGLE COLOR) === */
+/* ============================================================ */
+#sticky-action-bar {
+    /* Reduced Compact Padding */
+    padding: 6px 12px !important; 
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08) !important;
+    border-top: 1px solid #f3f4f6;
+}
+
+.sticky-bar-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    max-width: 600px; /* Limit width on desktop */
+    margin: 0 auto;
+}
+
+/* 1. Cart Icon Button (Square-ish) */
+.btn-icon-square {
+    flex-shrink: 0;
+    width: 42px;  /* Reduced size */
+    height: 42px; /* Reduced size */
+    border: 1px solid #e5e7eb;
+    border-radius: 10px; /* Slightly less rounded */
+    background-color: #ffffff;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+}
+.btn-icon-square:active {
+    background-color: #f3f4f6;
+    transform: scale(0.95);
+}
+
+/* 2. Buy Now Button (Main Action - Single Solid Yellow) */
+.btn-buy-premium {
+    flex-grow: 1;
+    height: 42px; /* Reduced height */
+    background: #FFC107; /* Single Solid Yellow Color (matches typical "Buy Now" yellow) */
+    color: #000; /* Dark text for contrast */
+    border: none;
+    border-radius: 10px; /* Slightly less rounded */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: none; /* Flat look as per request */
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none; /* For <a> tags */
+}
+.btn-buy-premium:active {
+    transform: scale(0.98);
+    background-color: #FFB300; /* Slightly darker on click */
+}
+
+.btn-buy-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    margin-bottom: 1px;
+}
+.btn-buy-subtitle {
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+/* Hide oldQuantity Selector for now to match screenshot cleaner look */
+#quantity-selector-wrapper {
+    display: none !important; 
+}
+
