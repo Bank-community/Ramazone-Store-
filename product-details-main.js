@@ -1,20 +1,16 @@
+// product-details-main.js
+// Handles Data Fetching, Cart Logic, and State Management
+
 // --- GLOBAL STATE ---
-let mediaItems = [], currentMediaIndex = 0, currentProductData = null, currentProductId = null;
+let currentProductData = null, currentProductId = null;
 let allProductsCache = [];
-let currentProductGroup = []; // Stores all variants of the current product
+let currentProductGroup = []; // Stores all variants
 let selectedVariants = {}; 
 let selectedPack = null; 
-let appThemeColor = '#4F46E5';
 let database;
 let goToCartNotificationTimer = null; 
 
-// --- DOM ELEMENTS ---
-let slider, sliderWrapper;
-
-// --- SLIDER STATE ---
-let isDragging = false, startPos = 0, currentTranslate = 0, prevTranslate = 0, animationID;
-
-// --- CART FUNCTIONS (Unchanged) ---
+// --- CART FUNCTIONS ---
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
 
@@ -43,7 +39,7 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
     }
     saveCart(cart);
     if(showToastMsg) {
-        showToast(`${product.name} ${pack ? `(${pack.name})` : ''} added to cart!`, 'success');
+        window.showToast(`${product.name} ${pack ? `(${pack.name})` : ''} added to cart!`, 'success');
         showGoToCartNotification();
     }
     updateCartIcon();
@@ -56,7 +52,7 @@ function addBundleToCart(productIds, bundlePrice) {
     const cart = getCart();
     const bundleProducts = productIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
     if (bundleProducts.length !== productIds.length) {
-        showToast('One of the bundle products is unavailable.', 'error');
+        window.showToast('One of the bundle products is unavailable.', 'error');
         return;
     }
     const bundleId = `BUNDLE_${productIds.sort().join('_')}`;
@@ -64,22 +60,17 @@ function addBundleToCart(productIds, bundlePrice) {
     if (existingBundleIndex > -1) {
         cart[existingBundleIndex].quantity += 1;
     } else {
-        const bundleObject = {
+        cart.push({
             isBundle: true,
             bundleId: bundleId,
             bundleName: bundleProducts.map(p => p.name).join(' + '),
             quantity: 1,
             bundlePrice: Number(bundlePrice),
-            items: bundleProducts.map(p => ({
-                id: p.id,
-                name: p.name,
-                image: p.images?.[0] || ''
-            }))
-        };
-        cart.push(bundleObject);
+            items: bundleProducts.map(p => ({ id: p.id, name: p.name, image: p.images?.[0] || '' }))
+        });
     }
     saveCart(cart);
-    showToast('Bundle added to cart!', 'success');
+    window.showToast('Bundle added to cart!', 'success');
     showGoToCartNotification();
     updateCartIcon();
 }
@@ -88,11 +79,8 @@ function updateCartItemQuantity(productId, newQuantity, variants, pack) {
     let cart = getCart();
     const itemIndex = cart.findIndex(item => item.id === productId && packsMatch(item.pack, pack));
     if (itemIndex > -1) {
-        if (newQuantity > 0) {
-            cart[itemIndex].quantity = newQuantity;
-        } else {
-            cart.splice(itemIndex, 1);
-        }
+        if (newQuantity > 0) cart[itemIndex].quantity = newQuantity;
+        else cart.splice(itemIndex, 1);
         saveCart(cart);
         updateCartIcon();
         updateStickyActionBar();
@@ -104,9 +92,7 @@ const getTotalCartQuantity = () => { const cart = getCart(); return cart.reduce(
 function updateCartIcon() {
     const totalQuantity = getTotalCartQuantity();
     const cartCountElement = document.getElementById('cart-item-count');
-    if (cartCountElement) {
-        cartCountElement.textContent = totalQuantity > 0 ? totalQuantity : '';
-    }
+    if (cartCountElement) cartCountElement.textContent = totalQuantity > 0 ? totalQuantity : '';
 }
 
 function showGoToCartNotification() {
@@ -172,6 +158,7 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
+// --- FIREBASE & INIT ---
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
@@ -187,11 +174,9 @@ async function initializeApp() {
             database = firebase.database();
             await fetchAllData();
             fetchProductData();
-        } else {
-            throw new Error("Firebase config invalid.");
-        }
+        } else { throw new Error("Firebase config invalid."); }
     } catch (error) {
-        console.error("Initialization Failed:", error);
+        console.error("Init Failed:", error);
         document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Could not initialize.</p>';
     }
 }
@@ -200,7 +185,7 @@ async function fetchAllData() {
     const snapshot = await database.ref('ramazone').get();
     if (snapshot.exists()) {
         const data = snapshot.val();
-        appThemeColor = data.config?.themeColor || '#4F46E5';
+        const appThemeColor = data.config?.themeColor || '#4F46E5';
         document.documentElement.style.setProperty('--primary-color', appThemeColor);
         const allProds = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
         allProductsCache = allProds.filter(p => p && p.isVisible !== false);
@@ -209,898 +194,271 @@ async function fetchAllData() {
 
 function fetchProductData() {
     currentProductId = new URLSearchParams(window.location.search).get('id')?.trim();
-    if (!currentProductId) {
-        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product ID not found.</p>';
-        return;
-    }
+    if (!currentProductId) { document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product ID not found.</p>'; return; }
     
-    // Identify current product and its group
     const product = allProductsCache.find(p => p && p.id == currentProductId);
     if (product) {
         currentProductData = product;
-        
-        // Grouping Logic
-        if (product.groupId) {
-            currentProductGroup = allProductsCache.filter(p => p.groupId === product.groupId);
-        } else {
-            currentProductGroup = [product]; // Single product is a group of 1
-        }
-
+        currentProductGroup = product.groupId ? allProductsCache.filter(p => p.groupId === product.groupId) : [product];
         loadProductPage(product);
     } else {
-        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product not found or is currently unavailable.</p>';
+        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500 font-bold">Product not found.</p>';
     }
 }
 
 function loadProductPage(data) {
     try {
         populateDataAndAttachListeners(data);
-
-        // Hide loader and show content
         document.getElementById('loading-indicator').style.display = 'none';
         document.getElementById('product-content').style.display = 'block';
     } catch (error) {
-        console.error("Error loading page data:", error);
-        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Could not load data.</p>';
+        console.error("Error loading page:", error);
     }
 }
 
-// --- HELPER: Get Attributes from Product (New or Old Structure) ---
-function getProductAttributes(product) {
-    if (product.attributes && Array.isArray(product.attributes)) {
-        return product.attributes; // New System
-    } else if (product.variantType && product.variantValue) {
-        return [{ type: product.variantType, value: product.variantValue }]; // Old System
-    }
-    return [];
-}
-
-// --- CORE POPULATION FUNCTION ---
+// --- ORCHESTRATION: Connecting Data to UI ---
 function populateDataAndAttachListeners(data) {
-    // Update Global Reference
     currentProductData = data;
     currentProductId = data.id;
 
-    document.title = `${data.name || "Product"} - Ramazone`;
-    document.querySelector('meta[property="og:title"]').setAttribute("content", data.name);
-    document.querySelector('meta[property="og:image"]').setAttribute("content", data.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png");
+    // Basic Info (Simple Text Updates)
+    document.title = `${data.name} - Ramazone`;
     document.getElementById("product-title").textContent = data.name;
-
-    // --- Brand & Visit Store Logic ---
+    
+    // Brand Info
     if (data.brand) {
-        const brandContainer = document.getElementById('brand-info-container');
-        const brandText = document.getElementById('brand-name-text');
-        const visitLink = document.getElementById('visit-store-link');
-        if (brandContainer && brandText) {
-            brandText.textContent = data.brand;
-            visitLink.href = `visit-store.html?brand=${encodeURIComponent(data.brand)}`;
-            brandContainer.classList.remove('hidden');
-        }
+        document.getElementById('brand-name-text').textContent = data.brand;
+        document.getElementById('visit-store-link').href = `visit-store.html?brand=${encodeURIComponent(data.brand)}`;
+        document.getElementById('brand-info-container').classList.remove('hidden');
     }
 
-    slider = document.getElementById('media-slider');
-    sliderWrapper = document.getElementById('main-media-wrapper');
-    mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
-
-    renderMediaGallery();
-    showMedia(0);
-    setupSliderControls();
-    setupImageModal();
-
-    if (data.rating && data.reviewCount) {
+    // CALLING UI RENDERERS (From renderer.js)
+    window.renderMediaGallery(data); // Handles Images & Video Icon
+    
+    if (data.rating) {
         document.getElementById("rating-section").style.display = "flex";
-        renderStars(data.rating, document.getElementById("product-rating-stars"));
-        document.getElementById("product-review-count").textContent = `(${data.reviewCount} reviews)`;
+        window.renderStars(data.rating, document.getElementById("product-rating-stars"));
+        document.getElementById("product-review-count").textContent = `(${data.reviewCount || 0} reviews)`;
     }
+    
     if (data.sellerName) {
-        document.getElementById("seller-info").textContent = `Seller by: ${data.sellerName}`;
-        document.getElementById("seller-info").style.display = "block";
+        const sellerEl = document.getElementById("seller-info");
+        sellerEl.textContent = `Seller by: ${data.sellerName}`;
+        sellerEl.style.display = "block";
     }
-    
-    // --- VARIANT SELECTION LOGIC ---
-    const currentAttrs = getProductAttributes(data);
+
+    // Variants
     selectedVariants = {};
-    currentAttrs.forEach(attr => {
-        selectedVariants[attr.type] = attr.value;
-    });
+    const getAttrs = (p) => (p.attributes || (p.variantType ? [{type: p.variantType, value: p.variantValue}] : []));
+    getAttrs(data).forEach(a => selectedVariants[a.type] = a.value);
+    selectedPack = null;
 
-    selectedPack = null; 
+    // Update Price & Variants UI
+    window.updatePriceDisplay(data, selectedPack, { final: "price-final", original: "price-original", discount: "price-percentage-discount" });
+    window.renderVariantSelectors(data, currentProductGroup);
+    window.renderComboPacks(data);
+    window.renderProductBundles(data, allProductsCache);
+    window.renderTechSpecs(data.techSpecs);
+    window.renderAdvancedHighlights(data.specHighlights);
+    window.renderDescription(data);
 
-    updatePriceDisplay();
-
-    // Render Dynamic Attribute Selectors
-    renderVariantSelectors(data); 
+    setupActionControls();
+    updateStickyActionBar();
     
-    renderComboPacks(data);       
-    renderProductBundles(data);   
-    renderTechSpecs(data.techSpecs); 
-
-    setupBundleModal();
-    renderAdvancedHighlights(data.specHighlights);
-    renderDescription(data);
-    setupActionControls(); // Re-attach listeners for Add/Buy buttons
-
-    updateRecentlyViewed(data.id);
+    // Load Similar (Existing logic, can be moved to renderer if needed but okay here for now)
     loadHandpickedSimilarProducts(data.category, data.subcategory, data.id);
     loadCategoryBasedProducts(data.category);
     loadOtherProducts(data.category);
+    updateRecentlyViewed(data.id);
     updateCartIcon();
-    updateStickyActionBar();
-
-    document.getElementById('similar-products-container-wrapper').addEventListener('click', handleQuickAdd);
-    document.getElementById('media-gallery-container').addEventListener('click', handleOptionsClick);
-    document.getElementById('product-main-info-container').addEventListener('click', handleOptionsClick);
 
     setupHeaderScrollEffect();
 }
 
-// --- NEW: DYNAMIC VARIANT RENDERER ---
-function renderVariantSelectors(data) {
-    const imageContainer = document.getElementById('image-variant-selectors-container'); 
-    const textContainer = document.getElementById('variant-selectors-container'); 
-
-    if (!imageContainer || !textContainer) return;
-
-    // 1. Collect all unique Attribute Types available in this group
-    const allTypes = new Set();
-    currentProductGroup.forEach(p => {
-        getProductAttributes(p).forEach(a => allTypes.add(a.type));
-    });
-
-    let imageHtml = '';
-    let textHtml = '';
-
-    const currentAttrs = getProductAttributes(data);
-
-    // 2. Iterate over each Type (e.g., Color, Storage)
-    allTypes.forEach(type => {
-        const currentAttr = currentAttrs.find(a => a.type === type);
-        const currentValue = currentAttr ? currentAttr.value : "";
-
-        // Collect all unique values for this Type
-        const uniqueValues = new Set();
-        currentProductGroup.forEach(p => {
-            const attrs = getProductAttributes(p);
-            const matchingAttr = attrs.find(a => a.type === type);
-            if(matchingAttr) uniqueValues.add(matchingAttr.value);
-        });
-
-        if (uniqueValues.size === 0) return;
-
-        const isColor = type.toLowerCase() === 'color';
-        let groupHtml = `<div class="variant-group">`;
-        groupHtml += `<h3 class="variant-group-title">${type}: <span>${currentValue}</span></h3>`;
-        
-        if (isColor) {
-            groupHtml += `<div class="image-variant-selectors-container" style="display:flex; flex-wrap:wrap; gap:0.5rem;">`;
-        } else {
-            groupHtml += `<div class="variant-scroll-container">`;
-        }
-
-        // 3. Render Buttons for each Value
-        uniqueValues.forEach(val => {
-            // Find product that matches this specific attribute value
-            // AND attempts to keep other current attributes same if possible (Smart Selection)
-            const targetProduct = findBestMatchProduct(currentProductGroup, data, type, val);
-            const targetId = targetProduct ? targetProduct.id : data.id; // Fallback
-            
-            const isSelected = currentAttrs.some(a => a.type === type && a.value === val);
-            
-            if (isColor) {
-                const imgUrl = targetProduct?.images?.[0] || data.images?.[0] || 'https://placehold.co/60x60';
-                groupHtml += `
-                    <div class="image-variant-btn ${isSelected ? 'selected' : ''}" 
-                       onclick="handleVariantChange('${targetId}')"
-                       title="${val}">
-                       <img src="${imgUrl}" alt="${val}">
-                    </div>
-                `;
-            } else {
-                // Rich Text Card logic (NOW WITH IMAGE SUPPORT)
-                let cardPrice = "N/A";
-                let cardDiscount = "";
-                let cardOrigPrice = "";
-                
-                // Get Image for Non-Color Variant (NEW)
-                const variantImg = targetProduct?.images?.[0] || data.images?.[0] || 'https://placehold.co/60x60';
-                
-                if (targetProduct) {
-                    const pFinal = Number(targetProduct.displayPrice);
-                    const pOrig = Number(targetProduct.originalPrice);
-                    cardPrice = `₹${pFinal.toLocaleString("en-IN")}`;
-                    
-                    if (pOrig > pFinal) {
-                        const disc = Math.round(((pOrig - pFinal) / pOrig) * 100);
-                        cardDiscount = `<span class="var-discount">↓${disc}%</span>`;
-                        cardOrigPrice = `<span class="var-orig-price">${pOrig.toLocaleString("en-IN")}</span>`;
-                    }
-                }
-
-                // Updated HTML Structure for Image + Text
-                groupHtml += `
-                    <div class="variant-rich-card ${isSelected ? 'selected' : ''}" 
-                         onclick="handleVariantChange('${targetId}')">
-                        <div class="variant-card-content">
-                            <img src="${variantImg}" alt="${val}" class="variant-mini-img">
-                            <div class="variant-text-info">
-                                <div class="var-name">${val}</div>
-                                <div class="var-price-row">
-                                    ${cardDiscount}
-                                    ${cardOrigPrice}
-                                </div>
-                                <div class="var-final-price">${cardPrice}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-
-        groupHtml += `</div></div>`;
-
-        if (isColor) imageHtml += groupHtml;
-        else textHtml += groupHtml;
-    });
-
-    imageContainer.innerHTML = imageHtml;
-    textContainer.innerHTML = textHtml;
-}
-
-function findBestMatchProduct(groupProducts, currentProduct, targetType, targetValue) {
-    const currentAttrs = getProductAttributes(currentProduct);
+// --- EVENT LISTENERS ---
+function setupActionControls() { 
+    document.getElementById('add-to-cart-btn').onclick = () => addToCart(currentProductId, 1, selectedVariants, selectedPack); 
+    document.getElementById('increase-quantity').onclick = () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }; 
+    document.getElementById('decrease-quantity').onclick = () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }; 
     
-    // Step 1: Filter candidates having the target Type & Value
-    const candidates = groupProducts.filter(p => {
-        const attrs = getProductAttributes(p);
-        return attrs.some(a => a.type === targetType && a.value === targetValue);
-    });
-
-    if (candidates.length === 0) return null; // Should not happen logically
-    if (candidates.length === 1) return candidates[0];
-
-    // Step 2: Smart Matching - Find candidate that shares MOST other attributes with current product
-    let bestMatch = candidates[0];
-    let maxMatches = -1;
-
-    candidates.forEach(cand => {
-        let matches = 0;
-        const candAttrs = getProductAttributes(cand);
-        
-        currentAttrs.forEach(currA => {
-            if (currA.type !== targetType) { 
-                const hasMatch = candAttrs.some(ca => ca.type === currA.type && ca.value === currA.value);
-                if (hasMatch) matches++;
-            }
-        });
-
-        if (matches > maxMatches) {
-            maxMatches = matches;
-            bestMatch = cand;
-        }
-    });
-
-    return bestMatch;
-}
-
-// --- NEW: SPA TRANSITION HANDLER ---
-window.handleVariantChange = (newProductId) => {
-    if (newProductId === currentProductId) return;
-
-    // 1. Show Loading Overlay
-    const overlay = document.getElementById('variant-loading-overlay');
-    if (overlay) {
-        overlay.classList.remove('hidden');
-        // Optional: Add opacity transition if CSS supports
-    }
-
-    // 2. Find New Data
-    const newProductData = currentProductGroup.find(p => p.id === newProductId);
+    // Setup Share Button with improved handling
+    setupShareButton(); 
     
-    if (newProductData) {
-        // 3. Artificial Delay for Visual Effect (like Screenshot)
-        setTimeout(() => {
-            // 4. Update URL without reload
-            const newUrl = `${window.location.pathname}?id=${newProductId}`;
-            window.history.pushState({ path: newUrl }, '', newUrl);
-
-            // 5. Update Content
-            populateDataAndAttachListeners(newProductData);
-
-            // 6. Scroll to top smoothly if needed (Optional, keeping position usually better for variants)
-            // window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // 7. Hide Overlay
-            if (overlay) overlay.classList.add('hidden');
-
-        }, 400); // 400ms delay
-    } else {
-        if (overlay) overlay.classList.add('hidden');
-        showToast('Product variant not found.', 'error');
-    }
-};
-
-// Handle Browser Back Button in SPA Mode
-window.addEventListener('popstate', () => {
-    fetchProductData(); // Re-fetch based on URL ID
-});
-
+    // Delegate clicks for dynamic elements
+    document.getElementById('options-container').onclick = handleOptionsClick;
+    document.getElementById('similar-products-container-wrapper').onclick = handleQuickAdd;
+}
 
 function handleOptionsClick(event) {
-    const bundleCard = event.target.closest('.product-bundle-card');
-    const bundleAddBtn = event.target.closest('.final-bundle-plus-btn[data-bundle="true"]');
+    const bundleAddBtn = event.target.closest('.final-bundle-plus-btn');
     const comboCard = event.target.closest('.combo-pack-card');
-    
-    // NOTE: Variant clicks are now handled by onclick="handleVariantChange" in HTML generation
 
     if (bundleAddBtn) {
-        event.preventDefault(); event.stopPropagation();
-        const bundleCardEl = bundleAddBtn.closest('.product-bundle-card');
-        const productIds = bundleCardEl.dataset.productIds.split(',');
-        const bundlePrice = bundleCardEl.dataset.price;
-        addBundleToCart(productIds, bundlePrice);
-        return;
-    }
-
-    if (bundleCard) {
-        event.preventDefault();
-        const productIds = bundleCard.dataset.productIds.split(',');
-        const bundlePrice = bundleCard.dataset.price;
-        openBundleModal(productIds, bundlePrice);
+        const card = bundleAddBtn.closest('.product-bundle-card');
+        addBundleToCart(card.dataset.productIds.split(','), card.dataset.price);
         return;
     }
 
     if (comboCard) {
         const container = comboCard.closest('.combo-pack-grid');
-        const isAlreadySelected = comboCard.classList.contains('selected');
-
+        const isSelected = comboCard.classList.contains('selected');
         container.querySelectorAll('.combo-pack-card').forEach(c => c.classList.remove('selected'));
-
-        if (isAlreadySelected) {
+        
+        if (isSelected) {
             selectedPack = null;
-            updatePriceDisplay(); 
         } else {
             comboCard.classList.add('selected');
-            const selectedValue = comboCard.dataset.value;
-            const selectedPrice = comboCard.dataset.price;
-            selectedPack = { name: selectedValue, price: selectedPrice };
-            updatePriceDisplay(selectedPrice); 
+            selectedPack = { name: comboCard.dataset.value, price: comboCard.dataset.price };
         }
+        window.updatePriceDisplay(currentProductData, selectedPack, { final: "price-final", original: "price-original", discount: "price-percentage-discount" });
         updateStickyActionBar();
-        return;
     }
 }
 
-function renderTechSpecs(techSpecs) {
-    const container = document.getElementById('tech-specs-container');
-    const section = document.getElementById('tech-specs-section');
-    if (!container || !section) return;
+// SPA Variant Switch
+window.handleVariantChange = (newProductId) => {
+    if (newProductId === currentProductId) return;
+    const overlay = document.getElementById('variant-loading-overlay');
+    if (overlay) overlay.classList.remove('hidden');
 
-    if (!techSpecs || !Array.isArray(techSpecs) || techSpecs.length === 0) {
-        section.style.display = 'none';
-        return;
-    }
-
-    container.innerHTML = '';
-    let hasContent = false;
-    techSpecs.forEach(spec => {
-        if (spec.name && spec.value) {
-            const iconSvg = spec.svg || '<i class="fas fa-microchip" style="font-size: 20px;"></i>';
-            container.innerHTML += `
-                <div class="tech-spec-row">
-                    <div class="tech-spec-icon">
-                        ${iconSvg}
-                    </div>
-                    <div class="tech-spec-details">
-                        <div class="tech-spec-name">${spec.name}</div>
-                        <div class="tech-spec-value">${spec.value}</div>
-                    </div>
-                </div>
-            `;
-            hasContent = true;
-        }
-    });
-
-    if (hasContent) {
-        section.style.display = 'block';
+    const newProductData = currentProductGroup.find(p => p.id === newProductId);
+    if (newProductData) {
+        setTimeout(() => {
+            const newUrl = `${window.location.pathname}?id=${newProductId}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+            populateDataAndAttachListeners(newProductData);
+            if (overlay) overlay.classList.add('hidden');
+        }, 400);
     } else {
-        section.style.display = 'none';
+        if (overlay) overlay.classList.add('hidden');
+        window.showToast('Variant not found', 'error');
     }
-}
+};
 
-function renderComboPacks(data) {
-    const container = document.getElementById('combo-pack-container');
-    if (!container) return;
+window.addEventListener('popstate', fetchProductData);
 
-    const packs = data.combos && data.combos.quantityPacks ? data.combos.quantityPacks.map(p => ({ name: p.name, price: p.price })) : [];
-
-    if (packs.length === 0) {
-        container.innerHTML = '';
-        return;
-    }
-
-    const comboHTML = createComboPackGrid(data, packs);
-    container.innerHTML = `
-        <div class="combo-pack-container mt-4">
-            <h3 class="text-md font-bold text-gray-800 mb-2">Available Packs</h3>
-            <div class="combo-pack-grid">${comboHTML}</div>
-        </div>
-    `;
-}
-
-function renderProductBundles(data) {
-    const container = document.getElementById('bundle-offer-container');
-    if (!container || !data.combos || !data.combos.productBundle || !data.combos.productBundle.linkedProductIds) {
-        return;
-    }
-
-    const bundle = data.combos.productBundle;
-    const linkedProducts = bundle.linkedProductIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
-
-    if (linkedProducts.length === bundle.linkedProductIds.length) {
-        
-        const allBundleProducts = [data, ...linkedProducts];
-        const bundlePrice = Number(bundle.bundlePrice);
-        const productIds = allBundleProducts.map(p => p.id).join(',');
-        const imagesHTML = allBundleProducts.map(p => `<img src="${p.images?.[0] || ''}" alt="${p.name}">`).join('');
-        const namesHTML = allBundleProducts.map(p => p.name).join(' + ');
-        const originalTotal = allBundleProducts.reduce((sum, p) => sum + Number(p.displayPrice), 0);
-        
-        let originalPriceHTML = '';
-        if (originalTotal > bundlePrice) {
-            originalPriceHTML = `<span class="original-price">₹${originalTotal.toLocaleString('en-IN')}</span>`;
-        }
-
-        // *** IN-LINE TEMPLATE STRING ***
-        const bundleHTML = `
-            <div class="ramazone-simple-bundle-card product-bundle-card" data-product-ids="${productIds}" data-price="${bundlePrice}">
-                <div class="bundle-images">
-                    ${imagesHTML}
-                </div>
-                <div class="bundle-details">
-                    <p class="product-names">${namesHTML}</p>
-                    <div class="price-info">
-                        <span class="final-price">₹${bundlePrice.toLocaleString('en-IN')}</span>
-                        ${originalPriceHTML}
-                    </div>
-                </div>
-                <button class="final-bundle-plus-btn" data-bundle="true" title="Add Bundle to Cart">+</button>
-            </div>
-        `;
-
-        container.innerHTML = bundleHTML;
-    }
-}
-
-
-function createComboPackGrid(productData, options) {
-    const singleItemOriginalPrice = Number(productData.originalPrice) > Number(productData.displayPrice) ? Number(productData.originalPrice) : Number(productData.displayPrice);
-    let bestValueIndex = -1;
-    let maxSavings = -1;
-
-    const calculatedOptions = options.map((opt, index) => {
-        const quantity = parseInt(opt.name.split(' ')[0]) || 1;
-        const packMrp = singleItemOriginalPrice * quantity;
-        const packPrice = Number(opt.price);
-        let savings = 0;
-        let discount = 0;
-
-        if (packMrp > packPrice) {
-            savings = packMrp - packPrice;
-            discount = Math.round((savings / packMrp) * 100);
-        }
-
-        if (savings > maxSavings) {
-            maxSavings = savings;
-            bestValueIndex = index;
-        }
-        return { ...opt, packMrp, discount, savings };
-    });
-
-    const cardImage = productData.images[0] || 'https://placehold.co/60x60';
-
-    const cardsHTML = calculatedOptions.map((opt, index) => {
-        const isBestValue = index === bestValueIndex && maxSavings > 0;
-
-        return `
-            <div class="combo-pack-card" data-value="${opt.name}" data-price="${opt.price || ''}">
-                ${isBestValue ? '<div class="best-value-tag">Best Value</div>' : ''}
-                <img src="${cardImage}" alt="pack">
-                <div class="pack-details">
-                    <p class="pack-name">${opt.name}</p>
-                    <p class="pack-price">₹${Number(opt.price).toLocaleString('en-IN')}</p>
-                    ${opt.discount > 0 ? `
-                        <div class="combo-pack-savings">
-                            <span class="line-through text-gray-400">₹${opt.packMrp.toLocaleString('en-IN')}</span>
-                            <span class="font-semibold text-green-600">${opt.discount}% OFF</span>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    return cardsHTML;
-}
-
-function openBundleModal(productIds, bundlePrice) {
-    const products = productIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
-    if (products.length !== productIds.length) return;
-    const originalTotal = products.reduce((sum, p) => sum + Number(p.displayPrice), 0);
-    const savings = originalTotal - bundlePrice;
-    const discountPercent = Math.round((savings / originalTotal) * 100);
-    const modalBody = document.getElementById('bundle-modal-body');
-    const imagesHTML = products.map(p => `<img src="${p.images[0]}" alt="${p.name}">`).join('<span class="plus-icon">+</span>');
-    const namesHTML = products.map(p => p.name).join(' + ');
-    modalBody.innerHTML = `
-        <div class="bundle-modal-products">${imagesHTML}</div>
-        <div class="bundle-modal-details">
-            <p class="product-names">${namesHTML}</p>
-            <div class="bundle-price-summary">
-                <p class="text-sm text-gray-500">Bundle Price</p>
-                <p class="final-price">₹${Number(bundlePrice).toLocaleString('en-IN')}</p>
-                <p class="original-price-info">Original Total: <span class="line-through">₹${originalTotal.toLocaleString('en-IN')}</span></p>
-                <div class="savings-badge">You save ₹${savings.toLocaleString('en-IN')} (${discountPercent}%) ✨</div>
-            </div>
-        </div>
-    `;
-    const modalFooter = document.getElementById('bundle-modal-footer');
-    modalFooter.innerHTML = `<button id="add-bundle-to-cart-btn" class="w-full text-white font-bold py-3 px-4 rounded-xl text-lg" style="background-color: var(--primary-color);">Add Bundle to Cart</button>`;
-    document.getElementById('add-bundle-to-cart-btn').onclick = () => {
-        addBundleToCart(productIds, bundlePrice);
-        closeBundleModal();
-    };
-    const overlay = document.getElementById('bundle-modal-overlay');
-    overlay.classList.remove('hidden');
-    setTimeout(() => overlay.classList.add('active'), 10);
-}
-
-function closeBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
-function setupBundleModal() { const overlay = document.getElementById('bundle-modal-overlay'); document.getElementById('bundle-modal-close').addEventListener('click', closeBundleModal); overlay.addEventListener('click', e => { if (e.target === overlay) closeBundleModal(); }); }
-
-function handleQuickAdd(event) {
-    const quickAddButton = event.target.closest('.quick-add-btn');
-    if (quickAddButton && !quickAddButton.dataset.bundle) {
-        event.preventDefault();
-        const productId = quickAddButton.dataset.id;
-        const product = allProductsCache.find(p => p && p.id === productId);
-        if (product) {
-            let defaultVariants = (product.variantType && product.variantValue) ? { [product.variantType]: product.variantValue } : {};
-            addToCart(productId, 1, defaultVariants, null); 
-            quickAddButton.innerHTML = '<i class="fas fa-check"></i>';
-            quickAddButton.classList.add('added');
-            setTimeout(() => {
-                quickAddButton.innerHTML = '+'; // FIXED: Reset to + instead of Add for square cards
-                quickAddButton.classList.remove('added');
-            }, 1500);
-        }
-    }
-}
-function setupActionControls() { 
-    document.getElementById('add-to-cart-btn').addEventListener('click', () => { addToCart(currentProductId, 1, selectedVariants, selectedPack); }); 
-    document.getElementById('increase-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }); 
-    document.getElementById('decrease-quantity').addEventListener('click', () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }); 
-    setupShareButton(); 
-}
-
-// --- UPDATED: Share Button Logic with stopPropagation() ---
+// --- FIXED: SHARE BUTTON LOGIC ---
 function setupShareButton() {
     const shareBtn = document.getElementById("share-button");
-    if (!shareBtn) return;
+    if(!shareBtn) return;
+    
+    // 1. Clone button to clear all old listeners (clean slate)
+    const newBtn = shareBtn.cloneNode(true);
+    shareBtn.parentNode.replaceChild(newBtn, shareBtn);
+    
+    // 2. Prevent Slider Conflict: Stop propagation for ALL interaction events
+    ['touchstart', 'touchend', 'mousedown', 'mouseup', 'click'].forEach(evt => {
+        newBtn.addEventListener(evt, (e) => {
+            e.stopPropagation(); // This shields the button from the Slider
+        }, { passive: false });
+    });
 
-    shareBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        e.stopPropagation(); // Crucial fix to prevent image click
-
+    // 3. Add Click Logic
+    newBtn.addEventListener("click", async (e) => {
+        e.preventDefault(); 
+        
         if (!currentProductData) return;
-        const productName = currentProductData.name.replace(/\*/g, "").trim();
-        const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
-        
-        const shareUrl = `${window.location.origin}/api/share?id=${currentProductId}`;
-        
-        const baseMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨`;
-        const clipboardMessage = `${baseMessage}\n${shareUrl}`;
-        const shareData = { title: productName, text: baseMessage, url: shareUrl, };
+        const shareUrl = `${window.location.origin}/product-details.html?id=${currentProductId}`;
+        const shareData = { 
+            title: currentProductData.name, 
+            text: `Check out ${currentProductData.name} on Ramazone!`, 
+            url: shareUrl 
+        };
         
         try {
-            if (navigator.share) { await navigator.share(shareData); } 
-            else if (navigator.clipboard) { await navigator.clipboard.writeText(clipboardMessage); showToast("Link and details copied!"); } 
-            else { const textArea = document.createElement('textarea'); textArea.value = shareUrl; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); showToast("Link Copied!"); }
-        } catch (err) { console.error("Error sharing:", err); if (err.name !== 'AbortError') { showToast("Sharing failed.", "error"); } }
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback for desktop / unsupported browsers
+                await navigator.clipboard.writeText(shareUrl);
+                window.showToast("Link copied to clipboard!", "success");
+            }
+        } catch (err) { 
+            console.error("Share failed:", err);
+            // Fallback if share dialog is closed or fails
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                window.showToast("Link copied to clipboard!", "success");
+            } catch (clipboardErr) {
+                window.showToast("Could not share.", "error");
+            }
+        }
     });
 }
 
-// --- UPDATED: Price Display Logic to SHOW Lowest Price Tag ---
-function updatePriceDisplay(newPrice) { 
-    const finalPriceEl = document.getElementById("price-final"); 
-    const originalPriceEl = document.getElementById("price-original"); 
-    const percentageDiscountEl = document.getElementById("price-percentage-discount"); 
-    const lowestPriceTagContainer = document.getElementById("lowest-price-tag-container"); // New Element
-
-    const displayPrice = newPrice ? Number(newPrice) : (selectedPack ? Number(selectedPack.price) : Number(currentProductData.displayPrice)); 
-    const originalPrice = Number(currentProductData.originalPrice); 
-    
-    finalPriceEl.textContent = `₹${displayPrice.toLocaleString("en-IN")}`; 
-    
-    let discount = 0; 
-    let packOriginalPrice = originalPrice; 
-    if (selectedPack) { 
-        const quantity = parseInt(selectedPack.name.split(' ')[0]) || 1; 
-        packOriginalPrice = originalPrice > displayPrice ? originalPrice * quantity : 0; 
-    } 
-    if (packOriginalPrice > displayPrice) { 
-        discount = Math.round(100 * (packOriginalPrice - displayPrice) / packOriginalPrice); 
-    } else if (originalPrice > displayPrice && !selectedPack) { 
-        discount = Math.round(100 * (originalPrice - displayPrice) / originalPrice); 
-    } 
-    
-    if (discount > 0) { 
-        percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-1"></i>${discount}%`; 
-        originalPriceEl.textContent = `₹${(selectedPack ? packOriginalPrice : originalPrice).toLocaleString("en-IN")}`; 
-        percentageDiscountEl.style.display = "flex"; 
-        originalPriceEl.style.display = "inline"; 
-        
-        if(lowestPriceTagContainer) lowestPriceTagContainer.style.display = "block";
-
-    } else { 
-        percentageDiscountEl.style.display = "none"; 
-        originalPriceEl.style.display = "none"; 
-        if(lowestPriceTagContainer) lowestPriceTagContainer.style.display = "none";
-    } 
+function handleQuickAdd(event) {
+    const btn = event.target.closest('.quick-add-btn');
+    if (btn) {
+        event.preventDefault();
+        const pid = btn.dataset.id;
+        addToCart(pid, 1, {}, null);
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('added');
+        setTimeout(() => { btn.innerHTML = '+'; btn.classList.remove('added'); }, 1500);
+    }
 }
 
-function loadHandpickedSimilarProducts(category, subcategory, currentProductId) {
-    const section = document.getElementById("handpicked-similar-section");
-    const container = document.getElementById("handpicked-similar-container");
-    if (!container || !section) return;
+// --- HELPERS FOR SIMILAR PRODUCTS ---
+function updateRecentlyViewed(newId) { 
+    let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; 
+    viewedIds = viewedIds.filter(e => e !== newId); 
+    viewedIds.unshift(newId); 
+    localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds.slice(0, 10))); 
+    loadRecentlyViewed(viewedIds); 
+}
 
-    if (!subcategory) {
-        section.style.display = "none";
-        return;
+function createCardHTML(product, type) {
+    const price = Number(product.displayPrice).toLocaleString("en-IN");
+    const discount = Number(product.originalPrice) > Number(product.displayPrice) ? Math.round(((Number(product.originalPrice) - Number(product.displayPrice)) / Number(product.originalPrice)) * 100) : 0;
+    const btn = `<button class="quick-add-btn" data-id="${product.id}">+</button>`;
+    
+    if (type === 'grid') {
+        return `<div class="block bg-white rounded-lg shadow overflow-hidden relative"><div class="relative"><a href="?id=${product.id}" class="block"><img src="${product.images?.[0]}" class="w-full h-auto aspect-square object-cover"></a>${btn}</div><div class="p-2"><h4 class="text-sm font-semibold truncate">${product.name}</h4><div class="flex items-baseline gap-2"><p class="font-bold">₹${price}</p>${discount > 0 ? `<p class="text-xs text-green-600">${discount}% OFF</p>` : ''}</div></div></div>`;
     }
+    return `<div class="carousel-item block bg-white rounded-lg shadow overflow-hidden relative"><div class="relative"><a href="?id=${product.id}" class="block"><img src="${product.images?.[0]}" class="w-full aspect-square object-cover"></a>${btn}</div><div class="p-2"><h4 class="text-sm font-semibold truncate">${product.name}</h4><div class="flex items-baseline gap-2"><p class="font-bold">₹${price}</p></div></div></div>`;
+}
 
-    const similarProducts = allProductsCache.filter(p => 
-        p && 
-        p.category === category && 
-        p.subcategory === subcategory && 
-        p.id !== currentProductId
-    ).slice(0, 10); 
-
-    if (similarProducts.length === 0) {
-        section.style.display = "none";
-        return;
-    }
-
+function loadRecentlyViewed(viewedIds) { 
+    const container = document.getElementById("recently-viewed-container");
+    if(!container) return;
     container.innerHTML = "";
-    let hasContent = false;
-
-    similarProducts.forEach(product => {
-        const displayPrice = Number(product.displayPrice);
-        const originalPriceNum = Number(product.originalPrice);
-
-        let priceHTML = `<span class="original-price">₹${displayPrice.toLocaleString("en-IN")}</span>`;
-        if (originalPriceNum > displayPrice) {
-            priceHTML = `<span class="final-price">₹${displayPrice.toLocaleString("en-IN")}</span> <span class="original-price">₹${originalPriceNum.toLocaleString("en-IN")}</span>`;
-        } else {
-             priceHTML = `<span class="final-price">₹${displayPrice.toLocaleString("en-IN")}</span>`;
-        }
-
-        const ratingTagHTML = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : "";
-        const productImage = product.images?.[0] || 'https://placehold.co/300x300/f0f0f0/333?text=Ramazone';
-        
-        const cardHTML = `
-            <div class="ramazone-final-yml-wrapper">
-                <div class="ramazone-final-yml-card">
-                    <a href="?id=${product.id}" class="card-link-area">
-                        <div class="image-container">
-                            <img src="${productImage}" alt="${product.name}">
-                            ${ratingTagHTML}
-                        </div>
-                        <div class="details-container">
-                            <h4 class="product-name">${product.name}</h4>
-                            <div class="price-container">
-                                ${priceHTML}
-                            </div>
-                        </div>
-                    </a>
-                    <div class="button-container">
-                        <button class="yml-add-button quick-add-btn" data-id="${product.id}">Add</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        container.innerHTML += cardHTML;
-        hasContent = true;
+    let count = 0;
+    viewedIds.forEach(id => {
+        if(id == currentProductId) return;
+        const p = allProductsCache.find(x => x.id == id);
+        if(p) { container.innerHTML += ` <a href="?id=${p.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${p.images?.[0]}" class="w-full object-cover aspect-square"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium truncate">${p.name}</h4> </div> </a> `; count++; }
     });
-
-    if (hasContent) {
-        section.style.display = "block";
-    } else {
-        section.style.display = "none";
-    }
+    document.getElementById("recently-viewed-section").style.display = count > 0 ? "block" : "none";
 }
 
-function createCarouselCard(product) { 
-    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; 
-    const originalPriceNum = Number(product.originalPrice); 
-    const displayPriceNum = Number(product.displayPrice); 
-    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; 
-    
-    // --- BUTTON AB <a> KE BAHAR HAI ---
-    const addButton = `<button class="quick-add-btn" data-id="${product.id}">+</button>`; 
-    
-    // --- WRAPPER AB DIV HAI ---
-    return `
-    <div class="carousel-item block bg-white rounded-lg shadow overflow-hidden relative">
-        <div class="relative">
-            <a href="?id=${product.id}" class="block">
-                <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full object-cover aspect-square" alt="${product.name}">
-                ${ratingTag}
-            </a>
-            ${addButton}
-        </div>
-        <div class="p-2">
-            <a href="?id=${product.id}" class="block">
-                <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
-                <div class="flex items-baseline gap-2">
-                    <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>
-                    ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}
-                </div>
-                ${discount > 0 ? `<p class="text-xs font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}
-            </a>
-        </div>
-    </div>`; 
-}
-
-function createRecentlyViewedCard(product) { 
-    return ` <a href="?id=${product.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${product.images?.[0] || 'https://placehold.co/400x400/f0f0f0/333?text=Ramazone'}" class="w-full object-cover aspect-square" alt="${product.name}"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium text-gray-700 truncate">${product.name}</h4> </div> </a> `; 
-}
-
-function createGridCard(product) { 
-    const ratingTag = product.rating ? `<div class="card-rating-tag">${product.rating} <i class="fas fa-star"></i></div>` : ""; 
-    const originalPriceNum = Number(product.originalPrice); 
-    const displayPriceNum = Number(product.displayPrice); 
-    const discount = originalPriceNum > displayPriceNum ? Math.round(100 * ((originalPriceNum - displayPriceNum) / originalPriceNum)) : 0; 
-    const showAddButton = displayPriceNum < 500 || product.category === 'grocery'; 
-    
-    // --- BUTTON AB <a> KE BAHAR HAI ---
-    const addButton = showAddButton ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : ""; 
-    
-    // --- WRAPPER AB DIV HAI ---
-    return `
-    <div class="block bg-white rounded-lg shadow overflow-hidden relative">
-        <div class="relative">
-            <a href="?id=${product.id}" class="block">
-                <img src="${product.images?.[0] || "https://i.ibb.co/My6h0gdd/20250706-230221.png"}" class="w-full h-auto object-cover aspect-square" alt="${product.name}">
-                ${ratingTag}
-            </a>
-            ${addButton}
-        </div>
-        <div class="p-2 sm:p-3">
-            <a href="?id=${product.id}" class="block">
-                <h4 class="text-sm font-semibold truncate text-gray-800 mb-1">${product.name}</h4>
-                <div class="flex items-baseline gap-2">
-                    <p class="text-base font-bold" style="color: var(--primary-color)">₹${displayPriceNum.toLocaleString("en-IN")}</p>
-                    ${originalPriceNum > displayPriceNum ? `<p class="text-xs text-gray-400 line-through">₹${originalPriceNum.toLocaleString("en-IN")}</p>` : ""}
-                </div>
-                ${discount > 0 ? `<p class="text-sm font-semibold text-green-600 mt-1">${discount}% OFF</p>` : ""}
-            </a>
-        </div>
-    </div>`; 
-}
-
-function renderDescription(data) { 
-    const descriptionContainer = document.getElementById("product-description"); 
-    const descriptionSection = document.getElementById("description-section"); 
-    const returnPolicyEl = document.getElementById("return-policy-info"); 
-    let hasContent = false; 
-    descriptionContainer.innerHTML = ""; 
-    if (returnPolicyEl) returnPolicyEl.style.display = "none"; 
-
-    if (data.longDescription) { 
-        descriptionContainer.innerHTML = `<p class="text-base text-gray-600 leading-relaxed">${data.longDescription.replace(/\n/g, '<br>')}</p>`; 
-        hasContent = true; 
-    } else if (data.description && Array.isArray(data.description) && data.description.length > 0) { 
-        let descriptionHtml = '<ul class="space-y-3 list-inside">'; 
-        data.description.forEach(block => { 
-            if (block.details) { 
-                descriptionHtml += `<li class="text-base text-gray-600 leading-relaxed">${block.details}</li>`; 
-                hasContent = true; 
-            } 
-        }); 
-        descriptionHtml += '</ul>'; 
-        descriptionContainer.innerHTML = descriptionHtml; 
-    } 
-
-    if (data.returnPolicy && data.returnPolicy.type) { 
-        let policyText = ''; 
-        switch (data.returnPolicy.type) { 
-            case 'days': policyText = `${data.returnPolicy.value} Days Return Available`; break; 
-            case 'no_return': policyText = 'No Return Available'; break; 
-            case 'custom': policyText = data.returnPolicy.value; break; 
-        } 
-        if (policyText && returnPolicyEl) { 
-            returnPolicyEl.innerHTML = `<i class="fas fa-undo-alt w-5 text-center"></i> <span>${policyText}</span>`; 
-            returnPolicyEl.style.display = "flex"; 
-            hasContent = true; 
-        } 
-    } 
-
-    if (hasContent) { 
-        descriptionSection.style.display = "block"; 
-    } else { 
-        descriptionSection.style.display = "none"; 
-    } 
-}
-function renderAdvancedHighlights(specData) { const container = document.getElementById("advanced-highlights-section"); if (!specData || !specData.blocks || specData.blocks.length === 0) { container.style.display = "none"; return; } let html = `<div class="p-4 sm:p-6 lg:p-8 border-t border-b border-gray-200 my-4"><h2 class="text-xl font-bold text-gray-900 mb-4">Highlights</h2>`; if (specData.specScore || specData.specTag) { html += '<div class="flex items-center gap-3 mb-6">'; if (specData.specScore) { html += `<div class="spec-score font-bold">${specData.specScore}</div>`; } if (specData.specTag) { html += `<div class="spec-tag">${specData.specTag}</div>`; } html += '</div>'; } html += '<div class="space-y-6">'; specData.blocks.forEach(block => { const subtitleStyle = "color: #B8860B; font-weight: 500;"; html += `<div class="flex items-start gap-4"><div class="flex-shrink-0 w-8 h-8 text-gray-600 pt-1">${block.icon || ""}</div><div class="flex-grow"><p class="text-sm text-gray-500">${block.category || ""}</p><h4 class="text-md font-semibold text-gray-800 mt-1">${block.title || ""}</h4><p class="text-sm mt-1" style="${subtitleStyle}">${block.subtitle || ""}</p></div></div>`; }); html += '</div></div>'; container.innerHTML = html; container.style.display = "block"; }
-
-function renderMediaGallery() { 
-    const gallery=document.getElementById("thumbnail-gallery");
-    gallery.innerHTML="";
-    slider.innerHTML="";
-    mediaItems.forEach((item,index)=>{
-        const e=document.createElement("div");
-        e.className="media-item";
-        "image"===item.type ? e.innerHTML=`<img src="${item.src}" alt="Product image ${index+1}" draggable="false">` : getYoutubeEmbedUrl(item.src)&&(e.innerHTML=`<iframe src="${getYoutubeEmbedUrl(item.src)}" class="w-full h-auto object-cover aspect-square" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`);
-        slider.appendChild(e);
-
-        const t=document.createElement("div");
-        t.className="aspect-square thumbnail";
-        const l=document.createElement("img");
-        l.src="image"===item.type?item.src:item.thumbnail;
-        t.appendChild(l);
-
-        if ("video"===item.type) {
-            const n=document.createElement("div");
-            n.className="play-icon";
-            n.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-            t.appendChild(n);
-        }
-
-        t.addEventListener("click",()=>showMedia(index));
-        gallery.appendChild(t)
+function loadHandpickedSimilarProducts(cat, subcat, pid) {
+    const container = document.getElementById("handpicked-similar-container");
+    if(!container) return;
+    container.innerHTML = "";
+    const sims = allProductsCache.filter(p => p.category === cat && p.subcategory === subcat && p.id !== pid).slice(0, 10);
+    if(sims.length === 0) { document.getElementById("handpicked-similar-section").style.display="none"; return; }
+    sims.forEach(p => {
+        const price = Number(p.displayPrice).toLocaleString("en-IN");
+        container.innerHTML += `<div class="ramazone-final-yml-wrapper"><div class="ramazone-final-yml-card"><a href="?id=${p.id}" class="card-link-area"><div class="image-container"><img src="${p.images[0]}"></div><div class="details-container"><h4 class="product-name">${p.name}</h4><div class="price-container"><span class="final-price">₹${price}</span></div></div></a><div class="button-container"><button class="yml-add-button quick-add-btn" data-id="${p.id}">Add</button></div></div></div>`;
     });
-    mediaItems.length>0&&showMedia(0)
+    document.getElementById("handpicked-similar-section").style.display = "block";
 }
 
-function renderStars(rating, container) { container.innerHTML = ""; const fullStars = Math.floor(rating), halfStar = rating % 1 >= .5, emptyStars = 5 - fullStars - (halfStar ? 1 : 0); for (let i = 0; i < fullStars; i++)container.innerHTML += '<i class="fas fa-star"></i>'; halfStar && (container.innerHTML += '<i class="fas fa-star-half-alt"></i>'); for (let i = 0; i < emptyStars; i++)container.innerHTML += '<i class="far fa-star"></i>' }
-function getYoutubeEmbedUrl(url) { if(!url)return null;let videoId=null;try{const urlObj=new URL(url);if("www.youtube.com"===urlObj.hostname||"youtube.com"===urlObj.hostname)videoId=urlObj.searchParams.get("v");else if("youtu.be"===urlObj.hostname)videoId=urlObj.pathname.slice(1);return videoId?`https://www.youtube.com/embed/${videoId}?controls=1&rel=0&modestbranding=1`:null}catch(e){return console.error("Invalid video URL:",url,e),null}}
-function showMedia(index) { if(!(index<0||index>=mediaItems.length))slider.style.transition="transform 0.3s ease-out",currentMediaIndex=index,currentTranslate=index*-sliderWrapper.offsetWidth,prevTranslate=currentTranslate,setSliderPosition(),document.querySelectorAll(".thumbnail").forEach((t,e)=>t.classList.toggle("active",e===index))}
-function setupSliderControls() { sliderWrapper.addEventListener("touchstart",touchStart,{passive:!0}),sliderWrapper.addEventListener("touchend",touchEnd),sliderWrapper.addEventListener("touchmove",touchMove,{passive:!0}),sliderWrapper.addEventListener("mousedown",touchStart),sliderWrapper.addEventListener("mouseup",touchEnd),sliderWrapper.addEventListener("mouseleave",touchEnd),sliderWrapper.addEventListener("mousemove",touchMove)}
-function touchStart(event) { startPos=getPositionX(event),isDragging=!0,animationID=requestAnimationFrame(animation),slider.style.transition="none"}
-function touchMove(event) { if(isDragging){const e=getPositionX(event);currentTranslate=prevTranslate+e-startPos}}
-function touchEnd(event) { if(isDragging){isDragging=!1,cancelAnimationFrame(animationID);const e=currentTranslate-prevTranslate;e<-50&&currentMediaIndex<mediaItems.length-1&&currentMediaIndex++,e>50&&currentMediaIndex>0&&currentMediaIndex--,showMedia(currentMediaIndex)}}
-function getPositionX(event) { return event.type.includes("mouse")?event.pageX:event.touches[0].clientX}
-function animation() { setSliderPosition(),isDragging&&requestAnimationFrame(animation)}
-function setSliderPosition() { slider.style.transform=`translateX(${currentTranslate}px)`}
-function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
-
-function setupShareButton() {
-    document.getElementById("share-button").addEventListener("click", async () => {
-        if (!currentProductData) return;
-        const productName = currentProductData.name.replace(/\*/g, "").trim();
-        const productPrice = `₹${Number(currentProductData.displayPrice).toLocaleString("en-IN")}`;
-        
-        // UPDATE: URL ab 'api/share?id=...' banega
-        // window.location.origin ka matlab hai 'https://www.ramazone.in'
-        const shareUrl = `${window.location.origin}/api/share?id=${currentProductId}`;
-        
-        const baseMessage = `*${productName}*\nPrice: *${productPrice}*\n\n✨ Discover more at Ramazone! ✨`;
-        const clipboardMessage = `${baseMessage}\n${shareUrl}`;
-        const shareData = { title: productName, text: baseMessage, url: shareUrl, };
-        
-        try {
-            if (navigator.share) { await navigator.share(shareData); } 
-            else if (navigator.clipboard) { await navigator.clipboard.writeText(clipboardMessage); showToast("Link and details copied!"); } 
-            else { const textArea = document.createElement('textarea'); textArea.value = shareUrl; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); showToast("Link Copied!"); }
-        } catch (err) { console.error("Error sharing:", err); if (err.name !== 'AbortError') { showToast("Sharing failed.", "error"); } }
-    });
+function loadCategoryBasedProducts(cat) {
+    const container = document.getElementById("similar-products-container");
+    if(!container) return;
+    container.innerHTML = "";
+    let count = 0;
+    allProductsCache.forEach(p => { if(p.category === cat && p.id != currentProductId) { container.innerHTML += createCardHTML(p, 'carousel'); count++; } });
+    document.getElementById("similar-products-section").style.display = count > 0 ? "block" : "none";
 }
 
-function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
+function loadOtherProducts(cat) {
+    const container = document.getElementById("other-products-container");
+    if(!container) return;
+    container.innerHTML = "";
+    const others = allProductsCache.filter(p => p.category !== cat && p.id != currentProductId).slice(0, 20);
+    others.forEach(p => container.innerHTML += createCardHTML(p, 'grid'));
+    document.getElementById("other-products-section").style.display = others.length > 0 ? "block" : "none";
+}
 
-function updateRecentlyViewed(newId) { let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; viewedIds = viewedIds.filter(e => e !== newId); viewedIds.unshift(newId); viewedIds = viewedIds.slice(0, 10); localStorage.setItem("ramazoneRecentlyViewed", JSON.stringify(viewedIds)); loadRecentlyViewed(viewedIds); }
-function loadRecentlyViewed(viewedIds) { const container=document.getElementById("recently-viewed-container"),section=document.getElementById("recently-viewed-section");if(container&&section&&(container.innerHTML="",viewedIds&&viewedIds.length>1)){let t=0;viewedIds.filter(e=>e!=currentProductId).forEach(e=>{const n=allProductsCache.find(t=>t.id==e); if (n) { container.innerHTML += createRecentlyViewedCard(n); t++; } }),t>0?section.style.display="block":section.style.display="none"}else section.style.display="none"}
-
-function loadCategoryBasedProducts(category) { const section=document.getElementById("similar-products-section"),container=document.getElementById("similar-products-container");if(!category||!allProductsCache)return void(section.style.display="none");container.innerHTML="";let cardCount=0;allProductsCache.forEach(product=>{product&&product.category===category&&product.id!=currentProductId&&(container.innerHTML+=createCarouselCard(product),cardCount++)}),cardCount>0?section.style.display="block":section.style.display="none"}
-function loadOtherProducts(currentCategory) { const otherProducts = allProductsCache.filter(p => p.category !== currentCategory && p.id != currentProductId).map(p => { const discount = Number(p.originalPrice) > Number(p.displayPrice) ? 100 * ((Number(p.originalPrice) - Number(p.displayPrice)) / Number(p.originalPrice)) : 0, rating = p.rating || 0, score = 5 * rating + .5 * discount; return { ...p, score: score } }).sort((a, b) => b.score - a.score).slice(0, 20), container = document.getElementById("other-products-container"); if (!container) return; container.innerHTML = "", otherProducts.length > 0 && (otherProducts.forEach(product => { container.innerHTML += createGridCard(product) }), document.getElementById("other-products-section").style.display = "block") }
