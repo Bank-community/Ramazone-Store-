@@ -48,9 +48,8 @@ function addToCart(productId, quantity, variants, pack, showToastMsg = true) {
         showGoToCartNotification();
     }
     updateCartIcon();
-    if (productId === currentProductId) {
-        updateStickyActionBar();
-    }
+    
+    // We no longer need updateStickyActionBar for quantity selector as it is removed
 }
 
 function addBundleToCart(productIds, bundlePrice) {
@@ -88,7 +87,7 @@ function updateCartItemQuantity(productId, newQuantity, variants, pack) {
         else cart.splice(itemIndex, 1);
         saveCart(cart);
         updateCartIcon();
-        updateStickyActionBar();
+        // updateStickyActionBar(); // Removed quantity selector
     }
 }
 
@@ -115,30 +114,39 @@ function showGoToCartNotification() {
     }, 3000);
 }
 
+// --- UPDATED STICKY ACTION BAR LOGIC ---
 function updateStickyActionBar() {
-    if (!currentProductId) return;
-    const cartItem = getCartItem(currentProductId, selectedVariants, selectedPack);
-    const qtyWrapper = document.getElementById('quantity-selector-wrapper');
-    const qtyDisplay = document.getElementById('quantity-display');
-    const decreaseBtn = document.getElementById('decrease-quantity');
+    if (!currentProductId || !currentProductData) return;
+    
     const addToCartBtn = document.getElementById('add-to-cart-btn');
-    const goToCartBtn = document.getElementById('go-to-cart-btn');
-    const mainActionContainer = document.getElementById('main-action-container');
-    if (cartItem) {
-        qtyDisplay.textContent = cartItem.quantity;
-        decreaseBtn.disabled = cartItem.quantity <= 1;
-        qtyWrapper.classList.remove('hidden');
-        mainActionContainer.classList.remove('col-start-1', 'col-span-2');
-        mainActionContainer.classList.add('col-start-2');
-        addToCartBtn.classList.add('hidden');
-        goToCartBtn.classList.remove('hidden');
-    } else {
-        qtyWrapper.classList.add('hidden');
-        mainActionContainer.classList.add('col-start-1', 'col-span-2');
-        mainActionContainer.classList.remove('col-start-2');
-        addToCartBtn.classList.remove('hidden');
-        goToCartBtn.classList.add('hidden');
+    const buyNowBtn = document.getElementById('buy-now-btn');
+    const stickyPriceText = document.getElementById('sticky-price-text');
+
+    // Update Price in Buy Button
+    const currentPrice = selectedPack ? selectedPack.price : currentProductData.displayPrice;
+    if (stickyPriceText) {
+        stickyPriceText.textContent = `at ₹${Number(currentPrice).toLocaleString('en-IN')}`;
     }
+
+    // Setup Click Listeners (Remove old ones to avoid duplicates if any)
+    // We use onclick property for simplicity here to avoid multiple listeners on re-render
+    
+    // 1. Add to Cart Logic
+    addToCartBtn.onclick = (e) => {
+        e.preventDefault();
+        // Animation Feedback
+        addToCartBtn.innerHTML = '<i class="fas fa-check text-green-600"></i>';
+        setTimeout(() => addToCartBtn.innerHTML = '<i class="fas fa-cart-plus"></i>', 1500);
+        
+        addToCart(currentProductId, 1, selectedVariants, selectedPack);
+    };
+
+    // 2. Buy Now Logic (Add + Redirect)
+    buyNowBtn.onclick = (e) => {
+        e.preventDefault();
+        addToCart(currentProductId, 1, selectedVariants, selectedPack, false); // false = no toast
+        window.location.href = 'order.html';
+    };
 }
 
 function setupHeaderScrollEffect() {
@@ -277,12 +285,11 @@ function populateDataAndAttachListeners(data) {
     setupActionControls();
     updateStickyActionBar();
     
-    // Load Similar Sections
+    // Load Similar
     loadHandpickedSimilarProducts(data.category, data.subcategory, data.id);
-    // NOTE: 'loadCategoryBasedProducts' is REMOVED as it is merged into the grid below
+    // loadCategoryBasedProducts(data.category); // REMOVED - Merged
     
-    // --- INIT MERGED INFINITE SCROLL GRID ---
-    // Load Same Category Products here (Previously 'Other Products')
+    // --- INFINITE SCROLL INIT ---
     initMergedCategoryGrid(data.category); 
     setupInfiniteScroll(); // Listen for scroll
     
@@ -294,9 +301,8 @@ function populateDataAndAttachListeners(data) {
 
 // --- EVENT LISTENERS ---
 function setupActionControls() { 
-    document.getElementById('add-to-cart-btn').onclick = () => addToCart(currentProductId, 1, selectedVariants, selectedPack); 
-    document.getElementById('increase-quantity').onclick = () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }; 
-    document.getElementById('decrease-quantity').onclick = () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }; 
+    // Removed old ID listeners as they are now handled in updateStickyActionBar for the new footer
+    // document.getElementById('add-to-cart-btn').onclick = ... 
     
     setupShareButton(); 
     
@@ -418,8 +424,8 @@ function createCardHTML(product, type, showFloatingBtn = true) {
     const price = Number(product.displayPrice).toLocaleString("en-IN");
     const discount = Number(product.originalPrice) > Number(product.displayPrice) ? Math.round(((Number(product.originalPrice) - Number(product.displayPrice)) / Number(product.originalPrice)) * 100) : 0;
     
-    // Best Seller Badge logic (Simulated: if Rating > 4.8)
-    const isBestSeller = (product.rating && product.rating >= 4.8);
+    // Best Seller Badge logic (Simulated: if Rating > 4.5)
+    const isBestSeller = (product.rating && product.rating >= 4.5);
     const badgeHTML = isBestSeller ? '<div class="best-seller-badge">Best Seller</div>' : '';
 
     const btnHTML = showFloatingBtn ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : '';
@@ -539,3 +545,4 @@ function setupInfiniteScroll() {
         }
     }, { passive: true });
 }
+
