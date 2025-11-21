@@ -74,54 +74,52 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-}
-
-#new-price-section .flex {
-    align-items: baseline; 
+    width: 100%;
 }
 
 #price-percentage-discount {
-    font-size: 1.125rem !important; 
-    font-weight: 700;
-    color: #16a34a; 
-    margin-right: 6px;
+    /* Green arrow and text */
+    color: #047857; /* green-700 */
 }
 
 #price-original {
-    font-size: 0.875rem !important; 
     color: #6b7280; 
     text-decoration: line-through;
-    margin-right: 6px;
 }
 
 #price-final {
-    font-size: 1.5rem !important; 
-    font-weight: 800;
     color: #111827; 
     line-height: 1;
 }
 
+/* The "Lowest Price" / "Super Deals" Badge */
 .lowest-price-tag {
-    background-color: #16a34a; 
+    background-color: #16a34a; /* Green-600 */
     color: white; 
     font-size: 0.7rem; 
-    font-weight: 600; 
-    padding: 2px 8px; 
+    font-weight: 700; 
+    text-transform: uppercase;
+    padding: 4px 8px; 
     border-radius: 4px; 
     display: inline-block; 
+    letter-spacing: 0.5px;
+    line-height: 1;
 }
 
 
 /* ================================================================= */
 /* === RICH VARIANT CARDS (Horizontal Scroll) === */
 /* ================================================================= */
-.variant-group { margin-bottom: 1.25rem; }
+.variant-group { margin-bottom: 1rem; }
 
+/* Adjusted for Left Alignment */
 .variant-group-title { 
     font-size: 0.9rem; 
     font-weight: 600; 
     color: #4b5563; 
-    margin-bottom: 0.75rem; 
+    margin-bottom: 0.5rem; 
+    /* ADJUSTED: Moved further left (-5px) to align with boxes as requested */
+    margin-left: -5px; 
 }
 .variant-group-title span { 
     font-weight: 700; 
@@ -136,17 +134,18 @@
     -webkit-overflow-scrolling: touch;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    padding-left: 1px; /* Tiny padding to prevent border cut-off */
 }
 .variant-scroll-container::-webkit-scrollbar {
     display: none;
 }
 
-/* --- NEW: IMAGE ENABLED VARIANT CARD STYLES --- */
+/* --- IMAGE ENABLED VARIANT CARD STYLES --- */
 .variant-rich-card {
     flex: 0 0 auto;
     min-width: 130px;
     max-width: 150px;
-    border: 1.5px solid #d1d5db; /* Thicker border */
+    border: 1.5px solid #d1d5db; 
     border-radius: 12px;
     padding: 8px;
     cursor: pointer;
@@ -163,7 +162,7 @@
 .variant-rich-card.selected {
     border-color: var(--primary-color);
     background-color: #eff6ff;
-    box-shadow: 0 0 0 1.5px var(--primary-color) inset; /* Inner Glow */
+    box-shadow: 0 0 0 1.5px var(--primary-color) inset; 
 }
 
 /* Flex Layout for Image + Text */
@@ -199,7 +198,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 80px; /* Prevent text overflow */
+    max-width: 80px; 
 }
 
 .variant-rich-card .var-price-row {
@@ -228,14 +227,44 @@
     margin-top: 2px;
 }
 
-/* --- END NEW STYLES --- */
+/* --- Color Variant Buttons --- */
+#image-variant-selectors-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 0.5rem; 
+    /* ADJUSTED: Added margin-left to push Color Images away from the left edge */
+    margin-left: 3px;
+}
 
+/* Container specifically for the buttons to ensure they don't stick to edge */
+.image-variant-selectors-container {
+    margin-left: 3px;
+}
 
-#image-variant-selectors-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.image-variant-btn { display: flex; align-items: center; gap: 0.5rem; padding: 3px; border: 1px solid #d1d5db; background-color: #ffffff; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
-.image-variant-btn img { width: 45px; height: 45px; object-fit: cover; border-radius: 4px; }
-.image-variant-btn:hover { border-color: #9ca3af; }
-.image-variant-btn.selected { border-color: var(--primary-color); box-shadow: 0 0 0 1.5px var(--primary-color); }
+.image-variant-btn { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem; 
+    padding: 3px; 
+    border: 1.5px solid #e5e7eb; /* Slightly thicker border for visibility */
+    background-color: #ffffff; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+}
+.image-variant-btn img { 
+    width: 45px; 
+    height: 45px; 
+    object-fit: cover; 
+    border-radius: 6px; 
+}
+.image-variant-btn:hover { 
+    border-color: #9ca3af; 
+}
+.image-variant-btn.selected { 
+    border-color: var(--primary-color); 
+    background-color: #eff6ff;
+}
 
 
 /* --- Combo Pack Styles --- */
@@ -548,3 +577,5 @@
     z-index: auto;
     font-size: 13px;
 }
+
+
