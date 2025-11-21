@@ -337,28 +337,25 @@ window.handleVariantChange = (newProductId) => {
 
 window.addEventListener('popstate', fetchProductData);
 
-// --- FIXED: SHARE BUTTON LOGIC ---
+// --- FIXED: SHARE BUTTON LOGIC (NOW USES API LINK) ---
 function setupShareButton() {
     const shareBtn = document.getElementById("share-button");
     if(!shareBtn) return;
     
-    // 1. Clone button to clear all old listeners (clean slate)
     const newBtn = shareBtn.cloneNode(true);
     shareBtn.parentNode.replaceChild(newBtn, shareBtn);
     
-    // 2. Prevent Slider Conflict: Stop propagation for ALL interaction events
     ['touchstart', 'touchend', 'mousedown', 'mouseup', 'click'].forEach(evt => {
-        newBtn.addEventListener(evt, (e) => {
-            e.stopPropagation(); // This shields the button from the Slider
-        }, { passive: false });
+        newBtn.addEventListener(evt, (e) => { e.stopPropagation(); }, { passive: false });
     });
 
-    // 3. Add Click Logic
     newBtn.addEventListener("click", async (e) => {
         e.preventDefault(); 
-        
         if (!currentProductData) return;
-        const shareUrl = `${window.location.origin}/product-details.html?id=${currentProductId}`;
+
+        // *** CRITICAL FIX: Share API URL instead of direct HTML page ***
+        const shareUrl = `${window.location.origin}/api/share?id=${currentProductId}`;
+        
         const shareData = { 
             title: currentProductData.name, 
             text: `Check out ${currentProductData.name} on Ramazone!`, 
@@ -369,13 +366,11 @@ function setupShareButton() {
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                // Fallback for desktop / unsupported browsers
                 await navigator.clipboard.writeText(shareUrl);
                 window.showToast("Link copied to clipboard!", "success");
             }
         } catch (err) { 
             console.error("Share failed:", err);
-            // Fallback if share dialog is closed or fails
             try {
                 await navigator.clipboard.writeText(shareUrl);
                 window.showToast("Link copied to clipboard!", "success");
@@ -461,4 +456,5 @@ function loadOtherProducts(cat) {
     others.forEach(p => container.innerHTML += createCardHTML(p, 'grid'));
     document.getElementById("other-products-section").style.display = others.length > 0 ? "block" : "none";
 }
+
 
