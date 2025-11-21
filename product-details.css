@@ -15,6 +15,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative; /* For positioning play button */
 }
 .media-item img, .media-item iframe {
     width: 100%;
@@ -22,6 +23,41 @@
     object-fit: contain; 
     user-select: none;
     -webkit-user-drag: none;
+}
+
+/* --- NEW: Video Placeholder Styles --- */
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-play-btn-large {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background-color: rgba(255, 0, 0, 0.9); /* YouTube Red */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+    z-index: 10;
+}
+
+.video-wrapper:hover .video-play-btn-large {
+    transform: scale(1.1);
+}
+
+.video-play-btn-large i {
+    color: white;
+    font-size: 24px;
+    margin-left: 4px; /* Optical center adjustment */
 }
 
 /* --- Scrolling Thumbnail Styles --- */
@@ -55,7 +91,7 @@
     padding: 2px;
 }
 
-/* --- Video 'Play' Icon --- */
+/* --- Video 'Play' Icon (Small on Thumbnail) --- */
 .play-icon-overlay {
     position: absolute;
     top: 50%; 
@@ -357,13 +393,6 @@
     color: #1f2937; 
     line-height: 1.2;
 }
-
-/* --- Sticky Action Bar --- */
-.quantity-selector { display: flex; width: 100%; justify-content: center; height: 40px; }
-.quantity-selector button { width: 40px; height: 100%; font-size: 1.25rem; font-weight: 500; color: var(--primary-color); background-color: #eef2ff; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
-.quantity-selector button:hover { background-color: #e0e7ff; }
-.quantity-selector button:disabled { color: #9ca3af; background-color: #f3f4f6; cursor: not-allowed; }
-.quantity-selector span { font-size: 1rem; font-weight: 600; padding: 0 12px; display: flex; align-items: center; }
 
 /* --- Highlights/Specs Tags --- */
 .spec-score { background-color: #fefce8; color: #ca8a04; border: 1px solid #facc15; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
@@ -802,4 +831,5 @@
 #quantity-selector-wrapper {
     display: none !important; 
 }
+
 
