@@ -52,7 +52,7 @@
     </div>
 
     <!-- MAIN CONTENT -->
-    <main id="product-content" class="max-w-7xl mx-auto sm:px-4 lg:px-6 mt-0 sm:mt-2 mb-6 pb-20" style="display: none;">
+    <main id="product-content" class="max-w-7xl mx-auto sm:px-4 lg:px-6 mt-0 sm:mt-2 mb-6 pb-24" style="display: none;">
          <div class="bg-white sm:rounded-xl sm:shadow-md overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-4">
                 
@@ -169,25 +169,21 @@
     <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
     <div id="toast-notification"></div>
 
-    <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md shadow-[0_-2px_10px_rgba(0,0,0,0.05)] p-2 z-40 border-t border-gray-200">
-        <div class="max-w-7xl mx-auto px-2">
-            <div class="grid grid-cols-2 gap-2">
-                <div id="quantity-selector-wrapper" class="hidden flex items-center justify-center">
-                    <div class="quantity-selector inline-flex items-center justify-center bg-white rounded-lg border border-gray-200">
-                        <button id="decrease-quantity" class="rounded-l-lg w-10 h-10 flex items-center justify-center">-</button>
-                        <span id="quantity-display" class="text-center px-4 py-2 text-sm border-l border-r border-gray-100 h-10 flex items-center">1</span>
-                        <button id="increase-quantity" class="rounded-r-lg w-10 h-10 flex items-center justify-center">+</button>
-                    </div>
-                </div>
-                <div id="main-action-container" class="col-start-1 col-span-2">
-                    <button id="add-to-cart-btn" class="w-full flex items-center justify-center text-white font-bold py-2.5 px-4 rounded-lg text-base shadow-md" style="background-color: var(--primary-color);">
-                        <i class="fas fa-shopping-cart mr-2 text-sm"></i> Add to Cart
-                    </button>
-                    <a id="go-to-cart-btn" href="order.html" class="hidden w-full flex items-center justify-center text-white font-bold py-2.5 px-4 rounded-lg text-base shadow-md" style="background-color: var(--primary-color);">
-                        <i class="fas fa-arrow-right mr-2 text-sm"></i> Go to Cart
-                    </a>
-                </div>
-            </div>
+    <!-- NEW: STICKY ACTION BAR PREMIUM -->
+    <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white z-50">
+        <div class="sticky-bar-container">
+            
+            <!-- Left: Cart Icon Button -->
+            <button id="add-to-cart-btn" class="btn-icon-square">
+                <i class="fas fa-cart-plus"></i>
+            </button>
+
+            <!-- Right: Buy Now Button (Large) -->
+            <a id="buy-now-btn" href="#" class="btn-buy-premium">
+                <span class="btn-buy-title">Buy Now</span>
+                <span id="sticky-price-text" class="btn-buy-subtitle">at ₹...</span>
+            </a>
+
         </div>
     </div>
 
