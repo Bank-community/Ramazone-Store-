@@ -8,7 +8,7 @@
     <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
@@ -38,10 +38,10 @@
         </div>
     </header>
 
-    <!-- VARIANT LOADING OVERLAY (New Feature) -->
+    <!-- VARIANT LOADING OVERLAY -->
     <div id="variant-loading-overlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-white/60 backdrop-blur-[2px] hidden transition-opacity duration-200">
         <div class="flex flex-col items-center">
-            <div class="loader"></div> <!-- Using style.css loader -->
+            <div class="loader"></div>
             <p class="text-sm text-gray-500 mt-3 font-medium animate-pulse">Updating Selection...</p>
         </div>
     </div>
@@ -76,7 +76,7 @@
                              </div>
                         </div>
 
-                        <!-- Color Variants Container -->
+                        <!-- Color Variants Container (Moved here for better mobile UX) -->
                         <div id="image-variant-selectors-container" class="pt-4 px-4 sm:px-0">
                             <!-- Color Variants JS se yahan aayenge -->
                         </div>
@@ -93,7 +93,7 @@
                             <span id="product-review-count" class="text-xs text-gray-500 font-medium"></span>
                         </div>
 
-                        <!-- 2. Brand Name & Visit Store Link -->
+                        <!-- 2. Brand Name -->
                         <div id="brand-info-container" class="flex items-center gap-2 mb-1 hidden">
                             <span id="brand-name-text" class="text-sm font-bold text-gray-900"></span>
                             <a href="#" id="visit-store-link" class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline">Visit store</a>
@@ -104,21 +104,25 @@
                             <h1 id="product-title" class="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight"></h1>
                         </div>
 
-                        <!-- 4. Price Section -->
-                        <div class="py-1 mb-3">
-                            <div id="new-price-section">
+                        <!-- 4. Price Section (REDESIGNED & COMPACT) -->
+                        <!-- Reduced margin-bottom from mb-5 to mb-1 to close gap -->
+                        <div class="py-1 mb-1"> 
+                            <div id="new-price-section" class="flex flex-col items-start">
+                                 <!-- Deal Badge -->
                                  <div id="lowest-price-tag-container" style="display: none; margin-bottom: 4px;">
-                                    <div class="lowest-price-tag">Lowest Price</div>
+                                    <div id="dynamic-deal-badge" class="lowest-price-tag">Lowest Price</div>
                                  </div>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                     <!-- Percentage -->
-                                    <span id="price-percentage-discount" class="text-lg font-bold text-green-600"></span>
-                                    <!-- Original MRP -->
-                                    <span id="price-original" class="text-sm text-gray-500 line-through"></span>
-                                    <!-- Final Price -->
-                                    <span id="price-final" class="text-3xl font-bold text-gray-900"></span>
+                                 
+                                 <!-- Price Row -->
+                                <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                    <span id="price-percentage-discount" class="text-xl font-bold text-green-600 flex items-center"></span>
+                                    <span id="price-original" class="text-lg text-gray-400 line-through decoration-gray-400 font-medium"></span>
+                                    <span id="price-final" class="text-3xl font-extrabold text-gray-900 tracking-tight"></span>
                                 </div>
-                                 <p class="text-[10px] text-gray-400 mt-1">+₹49 Secured Packaging Fee</p>
+                                 <p class="text-[11px] text-gray-500 mt-1 font-medium flex items-center gap-1">
+                                    <span>+ ₹49 Secured Packaging Fee</span>
+                                    <i class="fas fa-chevron-right text-[9px]"></i>
+                                 </p>
                             </div>
                         </div>
 
@@ -155,7 +159,6 @@
             
             <!-- BOTTOM SECTION: SIMILAR PRODUCTS -->
              <div id="similar-products-container-wrapper">
-                <!-- "You Might Also Like" Section -->
                 <div class="border-t border-gray-200">
                   <div id="handpicked-similar-section" class="p-4 sm:p-6 lg:p-8" style="display: none;">
                       <h2 class="text-xl font-bold text-gray-900 mb-4">You Might Also Like</h2>
@@ -163,19 +166,16 @@
                   </div>
                 </div>
 
-                <!-- "Recently Viewed" Section -->
                 <div id="recently-viewed-section" class="max-w-7xl mx-auto mt-12" style="display: none;">
                   <h2 class="text-2xl font-bold text-gray-800 mb-4 px-4 sm:px-0">Recently Viewed</h2>
                   <div id="recently-viewed-container" class="carousel-container pb-4"></div>
                 </div>
 
-                <!-- "More in this Category" Section -->
                 <div id="similar-products-section" class="max-w-7xl mx-auto mt-12" style="display: none;">
                   <h2 class="text-2xl font-bold text-gray-800 mb-4 px-4 sm:px-0">More in this Category</h2>
                   <div id="similar-products-container" class="carousel-container pb-4"></div>
                 </div>
 
-                <!-- "Other Products" Section -->
                 <div id="other-products-section" class="max-w-7xl mx-auto px-4 sm:px-0 mt-12" style="display: none;">
                   <h2 class="text-2xl font-bold text-gray-800 mb-4">Other Products</h2>
                   <div id="other-products-container" class="other-products-grid"></div>
@@ -187,7 +187,6 @@
     <!-- MODALS & ACTIONS -->
     <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
     <div id="toast-notification"></div>
-    <div id="variant-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden"><div id="variant-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300"><div class="flex justify-between items-center p-4 border-b"><h3 id="variant-modal-title" class="text-lg font-bold">Select Option</h3><button id="variant-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">×</button></div><div id="variant-modal-body" class="p-4 overflow-y-auto space-y-3"></div></div></div>
 
     <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-3 z-40 border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-4">
@@ -238,3 +237,4 @@
     <script src="product-details-main.js"></script>
 </body>
 </html>
+
