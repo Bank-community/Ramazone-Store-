@@ -46,20 +46,28 @@
     object-fit: cover;
 }
 
-/* --- Video 'Play' Icon --- */
-.play-icon {
+/* --- Video 'Play' Icon (UPDATED FOR SVG IMAGE) --- */
+.play-icon-overlay {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.3);
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%);
+    width: 30px; 
+    height: 30px;
+    background-color: rgba(255, 255, 255, 0.8); /* Slight white bg for contrast */
+    border-radius: 50%;
     display: flex; 
     align-items: center; 
     justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    pointer-events: none; /* Click should go to thumbnail */
 }
-.play-icon svg {
-    width: 40%;
-    height: 40%;
-    fill: white;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+
+.play-icon-overlay img {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 /* --- Rating Stars --- */
@@ -78,7 +86,6 @@
 }
 
 #price-percentage-discount {
-    /* Green arrow and text */
     color: #047857; /* green-700 */
 }
 
@@ -118,7 +125,6 @@
     font-weight: 600; 
     color: #4b5563; 
     margin-bottom: 0.5rem; 
-    /* ADJUSTED: Moved further left (-5px) to align with boxes as requested */
     margin-left: -5px; 
 }
 .variant-group-title span { 
@@ -134,7 +140,7 @@
     -webkit-overflow-scrolling: touch;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    padding-left: 1px; /* Tiny padding to prevent border cut-off */
+    padding-left: 1px; 
 }
 .variant-scroll-container::-webkit-scrollbar {
     display: none;
@@ -232,11 +238,9 @@
     display: flex; 
     flex-wrap: wrap; 
     gap: 0.5rem; 
-    /* ADJUSTED: Added margin-left to push Color Images away from the left edge */
     margin-left: 3px;
 }
 
-/* Container specifically for the buttons to ensure they don't stick to edge */
 .image-variant-selectors-container {
     margin-left: 3px;
 }
@@ -246,7 +250,7 @@
     align-items: center; 
     gap: 0.5rem; 
     padding: 3px; 
-    border: 1.5px solid #e5e7eb; /* Slightly thicker border for visibility */
+    border: 1.5px solid #e5e7eb; 
     background-color: #ffffff; 
     border-radius: 8px; 
     cursor: pointer; 
@@ -577,5 +581,4 @@
     z-index: auto;
     font-size: 13px;
 }
-
 
