@@ -36,34 +36,37 @@
         text-decoration: none;
         color: var(--text-dark);
         border: 1px solid #e5e7eb;
-        border-radius: 0px;
+        border-radius: 0px; /* Thoda rounded corners better dikhega */
         overflow: hidden;
         background-color: var(--bg-white);
         text-align: center;
         transition: box-shadow 0.2s ease-in-out;
-        transform: translateY(-8px);
+        transform: translateY(0); /* Default transform hata diya taaki layout stable rahe */
     }
 
     .rv-card:hover {
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateY(-4px); /* Hover par thoda uthega */
     }
 
-    /* Product Image */
+    /* Product Image Wrapper - 3:4 Ratio Layout */
     .rv-card img {
         width: 100%;
-        aspect-ratio: 1 / 1;
-        object-fit: cover;
-        background-color: #f9fafb;
+        aspect-ratio: 3 / 4; /* YAHAN CHANGE KIYA HAI: 1/1 se 3/4 */
+        object-fit: contain; /* Image puri dikhegi, kate gi nahi */
+        background-color: #ffffff; /* White background taaki product saaf dikhe */
+        display: block;
+        padding: 4px; /* Thoda padding taaki product border se chipke nahi */
     }
 
     /* Product Name */
     .rv-card p {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 500;
-        padding: 0.75rem 0.5rem;
+        padding: 0.15rem 0.5rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin: 0;
     }
 </style>
-
