@@ -418,8 +418,8 @@ function createCardHTML(product, type, showFloatingBtn = true) {
     const price = Number(product.displayPrice).toLocaleString("en-IN");
     const discount = Number(product.originalPrice) > Number(product.displayPrice) ? Math.round(((Number(product.originalPrice) - Number(product.displayPrice)) / Number(product.originalPrice)) * 100) : 0;
     
-    // Best Seller Badge logic (Simulated: if Rating > 4.6)
-    const isBestSeller = (product.rating && product.rating >= 4.6);
+    // Best Seller Badge logic (Simulated: if Rating > 4.8)
+    const isBestSeller = (product.rating && product.rating >= 4.8);
     const badgeHTML = isBestSeller ? '<div class="best-seller-badge">Best Seller</div>' : '';
 
     const btnHTML = showFloatingBtn ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : '';
