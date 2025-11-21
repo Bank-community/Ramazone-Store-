@@ -10,6 +10,11 @@ let selectedPack = null;
 let database;
 let goToCartNotificationTimer = null; 
 
+// --- GLOBAL VARIABLES FOR INFINITE SCROLL ---
+let allSameCategoryProducts = []; // Changed from "other" to "same category"
+let displayedProductCount = 0;
+let isLoadingMore = false; // Lock for infinite scroll
+
 // --- CART FUNCTIONS ---
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
@@ -223,8 +228,15 @@ function populateDataAndAttachListeners(data) {
 
     // Basic Info (Simple Text Updates)
     document.title = `${data.name} - Ramazone`;
-    document.getElementById("product-title").textContent = data.name;
     
+    // --- UPDATE: APPEND UNIT TO TITLE ---
+    let displayTitle = data.name;
+    if (data.netQuantity && data.unitType) {
+        displayTitle += ` ${data.netQuantity} ${data.unitType}`;
+    }
+    document.getElementById("product-title").textContent = displayTitle;
+    // -----------------------------------
+
     // Brand Info
     if (data.brand) {
         document.getElementById('brand-name-text').textContent = data.brand;
@@ -265,10 +277,15 @@ function populateDataAndAttachListeners(data) {
     setupActionControls();
     updateStickyActionBar();
     
-    // Load Similar (Existing logic, can be moved to renderer if needed but okay here for now)
+    // Load Similar Sections
     loadHandpickedSimilarProducts(data.category, data.subcategory, data.id);
-    loadCategoryBasedProducts(data.category);
-    loadOtherProducts(data.category);
+    // NOTE: 'loadCategoryBasedProducts' is REMOVED as it is merged into the grid below
+    
+    // --- INIT MERGED INFINITE SCROLL GRID ---
+    // Load Same Category Products here (Previously 'Other Products')
+    initMergedCategoryGrid(data.category); 
+    setupInfiniteScroll(); // Listen for scroll
+    
     updateRecentlyViewed(data.id);
     updateCartIcon();
 
@@ -281,10 +298,8 @@ function setupActionControls() {
     document.getElementById('increase-quantity').onclick = () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity + 1, selectedVariants, selectedPack); }; 
     document.getElementById('decrease-quantity').onclick = () => { const item = getCartItem(currentProductId, selectedVariants, selectedPack); if (item) updateCartItemQuantity(currentProductId, item.quantity - 1, selectedVariants, selectedPack); }; 
     
-    // Setup Share Button with improved handling
     setupShareButton(); 
     
-    // Delegate clicks for dynamic elements
     document.getElementById('options-container').onclick = handleOptionsClick;
     document.getElementById('similar-products-container-wrapper').onclick = handleQuickAdd;
 }
@@ -315,7 +330,6 @@ function handleOptionsClick(event) {
     }
 }
 
-// SPA Variant Switch
 window.handleVariantChange = (newProductId) => {
     if (newProductId === currentProductId) return;
     const overlay = document.getElementById('variant-loading-overlay');
@@ -337,7 +351,6 @@ window.handleVariantChange = (newProductId) => {
 
 window.addEventListener('popstate', fetchProductData);
 
-// --- FIXED: SHARE BUTTON LOGIC (NOW USES API LINK) ---
 function setupShareButton() {
     const shareBtn = document.getElementById("share-button");
     if(!shareBtn) return;
@@ -353,7 +366,6 @@ function setupShareButton() {
         e.preventDefault(); 
         if (!currentProductData) return;
 
-        // *** CRITICAL FIX: Share API URL instead of direct HTML page ***
         const shareUrl = `${window.location.origin}/api/share?id=${currentProductId}`;
         
         const shareData = { 
@@ -393,7 +405,6 @@ function handleQuickAdd(event) {
     }
 }
 
-// --- HELPERS FOR SIMILAR PRODUCTS ---
 function updateRecentlyViewed(newId) { 
     let viewedIds = JSON.parse(localStorage.getItem("ramazoneRecentlyViewed")) || []; 
     viewedIds = viewedIds.filter(e => e !== newId); 
@@ -402,15 +413,26 @@ function updateRecentlyViewed(newId) {
     loadRecentlyViewed(viewedIds); 
 }
 
-function createCardHTML(product, type) {
+// --- UPDATED CARD CREATION FUNCTION (Includes Best Seller Badge) ---
+function createCardHTML(product, type, showFloatingBtn = true) {
     const price = Number(product.displayPrice).toLocaleString("en-IN");
     const discount = Number(product.originalPrice) > Number(product.displayPrice) ? Math.round(((Number(product.originalPrice) - Number(product.displayPrice)) / Number(product.originalPrice)) * 100) : 0;
-    const btn = `<button class="quick-add-btn" data-id="${product.id}">+</button>`;
+    
+    // Best Seller Badge logic (Simulated: if Rating > 4.6)
+    const isBestSeller = (product.rating && product.rating >= 4.6);
+    const badgeHTML = isBestSeller ? '<div class="best-seller-badge">Best Seller</div>' : '';
+
+    const btnHTML = showFloatingBtn ? `<button class="quick-add-btn" data-id="${product.id}">+</button>` : '';
     
     if (type === 'grid') {
-        return `<div class="block bg-white rounded-lg shadow overflow-hidden relative"><div class="relative"><a href="?id=${product.id}" class="block"><img src="${product.images?.[0]}" class="w-full h-auto aspect-square object-cover"></a>${btn}</div><div class="p-2"><h4 class="text-sm font-semibold truncate">${product.name}</h4><div class="flex items-baseline gap-2"><p class="font-bold">₹${price}</p>${discount > 0 ? `<p class="text-xs text-green-600">${discount}% OFF</p>` : ''}</div></div></div>`;
+        return `<div class="block bg-white rounded-lg shadow overflow-hidden relative transform transition hover:scale-[1.02]">
+            ${badgeHTML}
+            <div class="portrait-img-container"><a href="?id=${product.id}" class="block"><img src="${product.images?.[0]}"></a>${btnHTML}</div><div class="p-2"><h4 class="text-sm font-semibold truncate">${product.name}</h4><div class="flex items-baseline gap-2"><p class="font-bold">₹${price}</p>${discount > 0 ? `<p class="text-xs text-green-600">${discount}% OFF</p>` : ''}</div></div></div>`;
     }
-    return `<div class="carousel-item block bg-white rounded-lg shadow overflow-hidden relative"><div class="relative"><a href="?id=${product.id}" class="block"><img src="${product.images?.[0]}" class="w-full aspect-square object-cover"></a>${btn}</div><div class="p-2"><h4 class="text-sm font-semibold truncate">${product.name}</h4><div class="flex items-baseline gap-2"><p class="font-bold">₹${price}</p></div></div></div>`;
+    // For carousel/list type
+    return `<div class="carousel-item block bg-white rounded-lg shadow overflow-hidden relative">
+            ${badgeHTML}
+            <div class="portrait-img-container"><a href="?id=${product.id}" class="block"><img src="${product.images?.[0]}"></a>${btnHTML}</div><div class="p-2"><h4 class="text-sm font-semibold truncate">${product.name}</h4><div class="flex items-baseline gap-2"><p class="font-bold">₹${price}</p></div></div></div>`;
 }
 
 function loadRecentlyViewed(viewedIds) { 
@@ -421,40 +443,99 @@ function loadRecentlyViewed(viewedIds) {
     viewedIds.forEach(id => {
         if(id == currentProductId) return;
         const p = allProductsCache.find(x => x.id == id);
-        if(p) { container.innerHTML += ` <a href="?id=${p.id}" class="recently-viewed-item block bg-white"> <div class="relative"> <img src="${p.images?.[0]}" class="w-full object-cover aspect-square"> </div> <div class="p-2 text-center"> <h4 class="text-sm font-medium truncate">${p.name}</h4> </div> </a> `; count++; }
+        if(p) { container.innerHTML += createCardHTML(p, 'carousel', true); count++; }
     });
     document.getElementById("recently-viewed-section").style.display = count > 0 ? "block" : "none";
 }
 
+// --- UPDATED YML: Reduced to 6 Items ---
 function loadHandpickedSimilarProducts(cat, subcat, pid) {
     const container = document.getElementById("handpicked-similar-container");
     if(!container) return;
     container.innerHTML = "";
-    const sims = allProductsCache.filter(p => p.category === cat && p.subcategory === subcat && p.id !== pid).slice(0, 10);
+    
+    // SLICE to 6
+    const sims = allProductsCache.filter(p => p.category === cat && p.subcategory === subcat && p.id !== pid).slice(0, 6);
+    
     if(sims.length === 0) { document.getElementById("handpicked-similar-section").style.display="none"; return; }
     sims.forEach(p => {
         const price = Number(p.displayPrice).toLocaleString("en-IN");
-        container.innerHTML += `<div class="ramazone-final-yml-wrapper"><div class="ramazone-final-yml-card"><a href="?id=${p.id}" class="card-link-area"><div class="image-container"><img src="${p.images[0]}"></div><div class="details-container"><h4 class="product-name">${p.name}</h4><div class="price-container"><span class="final-price">₹${price}</span></div></div></a><div class="button-container"><button class="yml-add-button quick-add-btn" data-id="${p.id}">Add</button></div></div></div>`;
+        container.innerHTML += `
+        <div class="ramazone-final-yml-wrapper">
+            <div class="ramazone-final-yml-card">
+                <a href="?id=${p.id}" class="card-link-area">
+                    <div class="image-container"><img src="${p.images[0]}"></div>
+                    <div class="details-container">
+                        <h4 class="product-name">${p.name}</h4>
+                        <div class="price-container"><span class="price-highlight">₹${price}</span></div>
+                    </div>
+                </a>
+                <div class="button-container">
+                    <button class="yml-add-button quick-add-btn" data-id="${p.id}">Add</button>
+                </div>
+            </div>
+        </div>`;
     });
     document.getElementById("handpicked-similar-section").style.display = "block";
 }
 
-function loadCategoryBasedProducts(cat) {
-    const container = document.getElementById("similar-products-container");
-    if(!container) return;
-    container.innerHTML = "";
-    let count = 0;
-    allProductsCache.forEach(p => { if(p.category === cat && p.id != currentProductId) { container.innerHTML += createCardHTML(p, 'carousel'); count++; } });
-    document.getElementById("similar-products-section").style.display = count > 0 ? "block" : "none";
-}
-
-function loadOtherProducts(cat) {
+// --- NEW: MERGED INFINITE SCROLL GRID (Same Category Products) ---
+function initMergedCategoryGrid(cat) {
     const container = document.getElementById("other-products-container");
+    const loader = document.getElementById("infinite-scroll-loader");
     if(!container) return;
-    container.innerHTML = "";
-    const others = allProductsCache.filter(p => p.category !== cat && p.id != currentProductId).slice(0, 20);
-    others.forEach(p => container.innerHTML += createCardHTML(p, 'grid'));
-    document.getElementById("other-products-section").style.display = others.length > 0 ? "block" : "none";
+    
+    container.innerHTML = ""; // Clear existing
+    
+    // FILTER: SAME CATEGORY (Merged Logic)
+    allSameCategoryProducts = allProductsCache.filter(p => p.category === cat && p.id != currentProductId);
+    displayedProductCount = 0;
+
+    // Initial Load: 8 items
+    loadNextBatch(8); 
+    
+    document.getElementById("other-products-section").style.display = allSameCategoryProducts.length > 0 ? "block" : "none";
 }
 
+function loadNextBatch(count) {
+    const container = document.getElementById("other-products-container");
+    const loader = document.getElementById("infinite-scroll-loader");
+    const nextBatch = allSameCategoryProducts.slice(displayedProductCount, displayedProductCount + count);
+    
+    if (nextBatch.length === 0) {
+        if(loader) loader.style.display = 'none';
+        return;
+    }
 
+    // Append new items
+    nextBatch.forEach(p => {
+        const showBtn = Number(p.displayPrice) < 50;
+        container.insertAdjacentHTML('beforeend', createCardHTML(p, 'grid', showBtn));
+    });
+
+    displayedProductCount += nextBatch.length;
+    isLoadingMore = false; // Reset lock
+    if(loader) loader.style.display = 'none'; // Hide loader after load
+}
+
+function setupInfiniteScroll() {
+    const section = document.getElementById("other-products-section");
+    const loader = document.getElementById("infinite-scroll-loader");
+    if(!section) return;
+
+    window.addEventListener('scroll', () => {
+        if (isLoadingMore || displayedProductCount >= allSameCategoryProducts.length) return;
+
+        // Check if we are near the bottom
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        if (scrollTop + clientHeight >= scrollHeight - 400) {
+            isLoadingMore = true;
+            if(loader) loader.style.display = 'block'; // Show Loader
+            
+            // Simulate Network Delay (1 second) for Smooth Effect
+            setTimeout(() => {
+                loadNextBatch(6);
+            }, 1000);
+        }
+    }, { passive: true });
+}
