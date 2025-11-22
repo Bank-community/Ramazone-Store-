@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramazone Delivery - Fast, Safe & Verified</title>
+    
+    <!-- Google Fonts: Poppins for Modern Look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Icon Library (Phosphor Icons) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#E63946',   /* Red */
+                        secondary: '#111827', /* Almost Black */
+                        accent: '#FFD700',    /* Gold */
+                        light: '#F1FAEE',     /* Soft White */
+                        graybg: '#F9FAFB'     /* Very light gray */
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'card': '0 4px 20px rgba(0,0,0,0.05)',
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E63946;
+            border-radius: 4px;
+        }
+        
+        /* Hide scrollbar for horizontal scrolling areas but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Timeline Connector Line */
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #E5E7EB;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .timeline-line {
+                left: 24px;
+            }
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800 bg-white antialiased overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo (Now Linkable) -->
+                <a href="https://www.ramazone.in/index.html" class="flex-shrink-0 flex items-center cursor-pointer transition-transform hover:scale-105">
+                    <img src="https://ik.imagekit.io/nsyr92pse/20250706_230221.png" alt="Ramazone Logo" class="h-12 md:h-14 w-auto object-contain">
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#process" class="text-gray-600 hover:text-primary font-medium transition">How it Works</a>
+                    <a href="#features" class="text-gray-600 hover:text-primary font-medium transition">Why Us</a>
+                    <a href="#reviews" class="text-gray-600 hover:text-primary font-medium transition">Reviews</a>
+                    <button onclick="openTrackModal()" class="border-2 border-primary text-primary hover:bg-primary hover:text-white px-5 py-2 rounded-full font-semibold transition-all duration-300 flex items-center gap-2">
+                        <i class="ph ph-map-pin text-xl"></i> Track Order
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button onclick="openTrackModal()" class="text-primary mr-4">
+                        <i class="ph ph-map-pin text-2xl"></i>
+                    </button>
+                    <button id="mobile-menu-btn" class="text-gray-800 focus:outline-none">
+                        <i class="ph ph-list text-3xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 pt-2 pb-6 space-y-2">
+                <a href="#process" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">How it Works</a>
+                <a href="#features" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">Why Us</a>
+                <a href="#reviews" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">Reviews</a>
+                <a href="#faq" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md">FAQ</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-16 md:pt-40 md:pb-24 px-4 overflow-hidden bg-gradient-to-b from-white to-red-50/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center">
+                <!-- Text Content -->
+                <div class="w-full md:w-1/2 text-center md:text-left z-10" data-aos="fade-right" data-aos-duration="1000">
+                    <!-- Live Status - Updated to Green -->
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-6 border border-green-200 shadow-sm">
+                        <span class="relative flex h-3 w-3">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        Live in your city
+                    </div>
+                    
+                    <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-4 text-secondary">
+                        Fast, Safe & Verified <br>
+                        Delivery <span class="text-primary">— In 24 Hours</span> 🚚
+                    </h1>
+                    <p class="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
+                        Local store ka <span class="font-bold text-gray-800">भरोसा</span> + Online खरीदारी की <span class="font-bold text-gray-800">सुविधा</span>, सिर्फ Ramazone के साथ।
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                        <!-- Order Now Button with Link -->
+                        <a href="https://www.ramazone.in/index.html" class="bg-primary text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-red-500/30 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
+                            Order Now <i class="ph-bold ph-arrow-right"></i>
+                        </a>
+                        
+                        <a href="#process" class="bg-white text-gray-800 border border-gray-200 px-8 py-4 rounded-full font-bold text-lg shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-play-circle text-primary"></i> How it Works
+                        </a>
+                    </div>
+                    
+                    <!-- Trust Badges Mini -->
+                    <div class="mt-10 flex items-center justify-center md:justify-start gap-6 text-sm text-gray-500 font-medium">
+                        <div class="flex items-center gap-1">
+                            <i class="ph-fill ph-shield-check text-green-500 text-lg"></i> 100% Secure
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i class="ph-fill ph-clock text-accent text-lg"></i> 24hr Delivery
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Image -->
+                <div class="w-full md:w-1/2 mt-12 md:mt-0 relative flex justify-center" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="200">
+                    <!-- Background Blob -->
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-red-100 rounded-full blur-3xl -z-10 opacity-60"></div>
+                    
+                    <img src="https://ik.imagekit.io/nsyr92pse/IMG-20251122-WA0001_BdU0aaXew.jpg?updatedAt=1763774218665" 
+                         alt="Ramazone Delivery Partner" 
+                         class="w-[85%] md:w-full max-w-lg object-contain drop-shadow-2xl animate-float rounded-2xl transform rotate-1">
+                    
+                    <!-- Floating Badge -->
+                    <div class="absolute top-10 right-4 md:right-10 bg-white p-3 rounded-xl shadow-soft animate-bounce duration-[3000ms]">
+                        <div class="flex items-center gap-2">
+                            <div class="bg-green-100 p-2 rounded-full">
+                                <i class="ph-fill ph-check-circle text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Status</p>
+                                <p class="font-bold text-sm">Verified Order</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Timeline Section -->
+    <section id="process" class="py-20 bg-graybg">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <span class="text-primary font-bold tracking-wider uppercase text-sm">Process</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 text-secondary">How Our Delivery Works</h2>
+                <p class="text-gray-500 mt-3">Simple 4-step process to ensure your trust</p>
+            </div>
+
+            <div class="relative">
+                <div class="hidden md:block absolute top-12 left-0 w-full h-1 bg-gray-200 -z-0"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+                    
+                    <!-- Step 1 -->
+                    <div class="relative flex flex-col items-center text-center group" data-aos="fade-up" data-aos-delay="100">
+                        <div class="w-24 h-24 bg-white rounded-full shadow-card flex items-center justify-center mb-6 border-4 border-white group-hover:border-primary transition-colors duration-300 z-10 relative">
+                            <i class="ph-duotone ph-shopping-cart text-4xl text-primary"></i>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-secondary text-white rounded-full flex items-center justify-center font-bold border-2 border-white">1</div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Order Placed</h3>
+                        <p class="text-sm text-gray-500 px-4">Customer selects and confirms item from local inventory.</p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="relative flex flex-col items-center text-center group" data-aos="fade-up" data-aos-delay="200">
+                        <div class="w-24 h-24 bg-white rounded-full shadow-card flex items-center justify-center mb-6 border-4 border-white group-hover:border-primary transition-colors duration-300 z-10 relative">
+                            <i class="ph-duotone ph-clipboard-text text-4xl text-primary"></i>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-secondary text-white rounded-full flex items-center justify-center font-bold border-2 border-white">2</div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Product Verified</h3>
+                        <p class="text-sm text-gray-500 px-4">Vendor checks, packs and confirms availability personally.</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="relative flex flex-col items-center text-center group" data-aos="fade-up" data-aos-delay="300">
+                        <div class="w-24 h-24 bg-white rounded-full shadow-card flex items-center justify-center mb-6 border-4 border-white group-hover:border-primary transition-colors duration-300 z-10 relative">
+                            <i class="ph-duotone ph-moped text-4xl text-primary"></i>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-secondary text-white rounded-full flex items-center justify-center font-bold border-2 border-white">3</div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Dispatch Assigned</h3>
+                        <p class="text-sm text-gray-500 px-4">Our trusted delivery partner picks up your verified order.</p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="relative flex flex-col items-center text-center group" data-aos="fade-up" data-aos-delay="400">
+                        <div class="w-24 h-24 bg-white rounded-full shadow-card flex items-center justify-center mb-6 border-4 border-white group-hover:border-green-500 transition-colors duration-300 z-10 relative">
+                            <i class="ph-duotone ph-package text-4xl text-green-500"></i>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold border-2 border-white">4</div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-green-600">Delivered Safely</h3>
+                        <p class="text-sm text-gray-500 px-4">Unboxing in front of customer to ensure total trust.</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- USP Grid (Why Ramazone) -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <span class="text-primary font-bold tracking-wider uppercase text-sm">Features</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 text-secondary">Why Choose Ramazone?</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <!-- Card 1 -->
+                <div class="p-8 rounded-2xl border border-gray-100 shadow-card hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-white group" data-aos="fade-up">
+                    <div class="w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <i class="ph-fill ph-storefront text-3xl text-primary group-hover:text-white transition-colors"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Local Vendor Network</h3>
+                    <p class="text-gray-500">We connect you with trusted shops in your own city, ensuring authenticity.</p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="p-8 rounded-2xl border border-gray-100 shadow-card hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-white group" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <i class="ph-fill ph-box-arrow-up text-3xl text-primary group-hover:text-white transition-colors"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Unboxing at Doorstep</h3>
+                    <p class="text-gray-500">Open your package before you accept it. Total peace of mind guaranteed.</p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="p-8 rounded-2xl border border-gray-100 shadow-card hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-white group" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <i class="ph-fill ph-shield-check text-3xl text-primary group-hover:text-white transition-colors"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Verified Payments</h3>
+                    <p class="text-gray-500">Secure transactions. Pay online or via verified Cash on Delivery methods.</p>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="p-8 rounded-2xl border border-gray-100 shadow-card hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-white group" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <i class="ph-fill ph-smiley text-3xl text-primary group-hover:text-white transition-colors"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">No Missing Items</h3>
+                    <p class="text-gray-500">Every item is double-checked by the vendor and delivery partner.</p>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="p-8 rounded-2xl border border-gray-100 shadow-card hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-white group md:col-span-2 lg:col-span-1 lg:col-start-2" data-aos="fade-up" data-aos-delay="400">
+                    <div class="w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <i class="ph-fill ph-clock-countdown text-3xl text-primary group-hover:text-white transition-colors"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Only 24-Hour Delivery</h3>
+                    <p class="text-gray-500">Get your essentials fast. No long waiting periods. Delivered within 24 hours.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews Section (Begusarai Updates) -->
+    <section id="reviews" class="py-20 bg-graybg overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12 px-2">
+                <div data-aos="fade-right">
+                    <span class="text-primary font-bold tracking-wider uppercase text-sm">Testimonials</span>
+                    <h2 class="text-3xl md:text-4xl font-bold mt-2 text-secondary">Happy Customers</h2>
+                </div>
+                <div class="flex gap-2 mt-4 md:mt-0" data-aos="fade-left">
+                    <button onclick="scrollReviews('left')" class="p-3 rounded-full bg-white border border-gray-200 hover:bg-primary hover:text-white transition shadow-sm"><i class="ph-bold ph-arrow-left"></i></button>
+                    <button onclick="scrollReviews('right')" class="p-3 rounded-full bg-white border border-gray-200 hover:bg-primary hover:text-white transition shadow-sm"><i class="ph-bold ph-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Scrollable Container -->
+            <div id="reviews-container" class="flex gap-6 overflow-x-auto no-scrollbar pb-10 px-2 snap-x snap-mandatory">
+                
+                <!-- Review 1: Mithilesh -->
+                <div class="min-w-[300px] md:min-w-[350px] bg-white p-6 rounded-2xl shadow-soft snap-center flex flex-col">
+                    <div class="flex text-accent mb-4">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="text-gray-600 mb-6 italic">"The unboxing feature is a game changer! I checked my phone before the delivery guy left. 100% satisfied."</p>
+                    <div class="mt-auto flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center font-bold text-primary">MK</div>
+                        <div>
+                            <h4 class="font-bold text-sm">Mithilesh Kumar</h4>
+                            <p class="text-xs text-gray-500">Khatopur, Begusarai</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2: Sneha (Girl) -->
+                <div class="min-w-[300px] md:min-w-[350px] bg-white p-6 rounded-2xl shadow-soft snap-center flex flex-col">
+                    <div class="flex text-accent mb-4">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="text-gray-600 mb-6 italic">"Ordered cosmetics in the morning, got them by evening. Super fast service Ramazone!"</p>
+                    <div class="mt-auto flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center font-bold text-primary">SK</div>
+                        <div>
+                            <h4 class="font-bold text-sm">Sneha Kumari</h4>
+                            <p class="text-xs text-gray-500">Bishanpur, Begusarai</p>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- Review 3: Abhishek -->
+                 <div class="min-w-[300px] md:min-w-[350px] bg-white p-6 rounded-2xl shadow-soft snap-center flex flex-col">
+                    <div class="flex text-accent mb-4">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i>
+                    </div>
+                    <p class="text-gray-600 mb-6 italic">"Safe payment and local store products. Feels good to support local vendors via an app."</p>
+                    <div class="mt-auto flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center font-bold text-primary">AB</div>
+                        <div>
+                            <h4 class="font-bold text-sm">Abhishek</h4>
+                            <p class="text-xs text-gray-500">Lalu Nagar, Begusarai</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 4: Rohit -->
+                <div class="min-w-[300px] md:min-w-[350px] bg-white p-6 rounded-2xl shadow-soft snap-center flex flex-col">
+                    <div class="flex text-accent mb-4">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="text-gray-600 mb-6 italic">"Delivery charges are very reasonable compared to others. The tracking is accurate."</p>
+                    <div class="mt-auto flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center font-bold text-primary">RK</div>
+                        <div>
+                            <h4 class="font-bold text-sm">Rohit Kumar</h4>
+                            <p class="text-xs text-gray-500">Ayodhya Bari, Begusarai</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 5: Rahul -->
+                <div class="min-w-[300px] md:min-w-[350px] bg-white p-6 rounded-2xl shadow-soft snap-center flex flex-col">
+                    <div class="flex text-accent mb-4">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="text-gray-600 mb-6 italic">"Best delivery service in Suja. The delivery boy was very polite."</p>
+                    <div class="mt-auto flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center font-bold text-primary">RS</div>
+                        <div>
+                            <h4 class="font-bold text-sm">Rahul Singh</h4>
+                            <p class="text-xs text-gray-500">Suja, Begusarai</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Review 6: Priya (Girl) -->
+                 <div class="min-w-[300px] md:min-w-[350px] bg-white p-6 rounded-2xl shadow-soft snap-center flex flex-col">
+                    <div class="flex text-accent mb-4">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="text-gray-600 mb-6 italic">"Very trustworthy service. I recommend Ramazone to everyone in Begusarai."</p>
+                    <div class="mt-auto flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center font-bold text-primary">PR</div>
+                        <div>
+                            <h4 class="font-bold text-sm">Priya Rani</h4>
+                            <p class="text-xs text-gray-500">Begusarai Main Market</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 bg-white">
+        <div class="max-w-3xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-secondary">Frequently Asked Questions</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-primary transition-colors cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-lg">How fast is the delivery?</h3>
+                        <i class="ph-bold ph-caret-down transition-transform"></i>
+                    </div>
+                    <div class="hidden mt-3 text-gray-600 text-sm leading-relaxed">
+                        We guarantee delivery within 24 hours of order confirmation. For many local items, it can be even faster!
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-primary transition-colors cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-lg">What is the return policy?</h3>
+                        <i class="ph-bold ph-caret-down transition-transform"></i>
+                    </div>
+                    <div class="hidden mt-3 text-gray-600 text-sm leading-relaxed">
+                        Return policy varies by vendor, but since we offer "Unboxing at Doorstep", you can reject damaged or incorrect items instantly before accepting.
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-primary transition-colors cursor-pointer" onclick="toggleFaq(this)">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-lg">What are the delivery charges?</h3>
+                        <i class="ph-bold ph-caret-down transition-transform"></i>
+                    </div>
+                    <div class="hidden mt-3 text-gray-600 text-sm leading-relaxed">
+                        Delivery is free within 3 KM range. For orders above ₹120, charge is ₹20. Below ₹120, it is 15% of order value.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-4">
+        <div class="max-w-5xl mx-auto bg-secondary rounded-3xl p-10 md:p-16 text-center relative overflow-hidden" data-aos="zoom-in">
+            <!-- Decorative circles -->
+            <div class="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="absolute bottom-0 right-0 w-64 h-64 bg-primary opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
+            
+            <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 relative z-10">Experience Fast & Trusted Delivery</h2>
+            <p class="text-gray-300 text-lg mb-10 max-w-2xl mx-auto relative z-10">Join thousands of happy customers enjoying the convenience of Ramazone.</p>
+            <!-- Bottom CTA Button with Link -->
+            <a href="https://www.ramazone.in/index.html" class="inline-block bg-primary text-white px-10 py-4 rounded-full font-bold text-xl shadow-lg hover:bg-red-600 transform hover:scale-105 transition-all relative z-10">
+                Order Now
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white pt-16 pb-8 border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="md:col-span-1">
+                    <img src="https://ik.imagekit.io/nsyr92pse/20250706_230221.png" alt="Logo" class="h-12 mb-4 object-contain">
+                    <p class="text-gray-500 text-sm">Bridging the gap between local stores and digital convenience.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-4 text-secondary">Company</h4>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li><a href="#" class="hover:text-primary">About Us</a></li>
+                        <li><a href="#" class="hover:text-primary">Careers</a></li>
+                        <li><a href="#" class="hover:text-primary">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold mb-4 text-secondary">Support</h4>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li><a href="#" class="hover:text-primary">Help Center</a></li>
+                        <li><a href="#" class="hover:text-primary">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-primary">Privacy Policy</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold mb-4 text-secondary">Trust Badges</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <span class="px-3 py-1 bg-green-50 text-green-700 text-xs rounded-full border border-green-100 flex items-center gap-1"><i class="ph-fill ph-lock"></i> Secure Payment</span>
+                        <span class="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-100 flex items-center gap-1"><i class="ph-fill ph-storefront"></i> Trusted Local</span>
+                        <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs rounded-full border border-purple-100 flex items-center gap-1"><i class="ph-fill ph-seal-check"></i> Verified Partner</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-xs text-gray-400 text-center md:text-left">
+                    &copy; 2025 Ramazone Delivery System. All rights reserved.
+                </p>
+                <p class="text-xs text-gray-400 text-center md:text-right max-w-md">
+                    Delivery only within 3 KM. Charges: ₹120+ = ₹20, below ₹120 = 15%. Return policy varies by vendor.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Track Order Modal (Simulation) -->
+    <div id="trackModal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeTrackModal()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-8 w-[90%] max-w-md shadow-2xl animate-bounce-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-secondary">Track Order</h3>
+                <button onclick="closeTrackModal()" class="text-gray-400 hover:text-secondary"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+            <input type="text" placeholder="Enter Order ID (e.g., RZ-1024)" class="w-full p-4 border border-gray-200 rounded-xl mb-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-red-100">
+            <button class="w-full bg-secondary text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition">
+                Track Status
+            </button>
+            <p class="text-xs text-gray-400 mt-4 text-center">Enter the ID received via SMS/Email.</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize Animations
+        AOS.init({
+            once: true,
+            offset: 100,
+            duration: 800,
+            easing: 'ease-out-cubic',
+        });
+
+        // Mobile Menu Toggle
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+
+        // FAQ Toggle
+        function toggleFaq(element) {
+            const answer = element.querySelector('div:last-child');
+            const icon = element.querySelector('.ph-caret-down');
+            
+            if (answer.classList.contains('hidden')) {
+                answer.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+                element.classList.add('border-primary', 'bg-red-50/30');
+            } else {
+                answer.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+                element.classList.remove('border-primary', 'bg-red-50/30');
+            }
+        }
+
+        // Review Scrolling
+        function scrollReviews(direction) {
+            const container = document.getElementById('reviews-container');
+            const scrollAmount = 320;
+            if (direction === 'left') {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        // Modal Logic
+        function openTrackModal() {
+            document.getElementById('trackModal').classList.remove('hidden');
+        }
+        function closeTrackModal() {
+            document.getElementById('trackModal').classList.add('hidden');
+        }
+
+        // Navbar Scroll Effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('shadow-md', 'py-0');
+            } else {
+                nav.classList.remove('shadow-md');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
