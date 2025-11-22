@@ -106,7 +106,6 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 async function initializeApp() {
     try {
         await loadCoreComponents();
-        // Initialize Firebase
         const config = {
             apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
             authDomain: "re-store-8e5b3.firebaseapp.com",
@@ -154,8 +153,9 @@ function loadAllData() {
 
         allLocationsCache = data.locations || {};
         
-        // Setup Sequence
         setupLocationSelectionsFromStorage(); 
+        checkAndShowLocationWelcomePopup();
+        
         setupLocationSystem(); 
         filterProductsByLocation(); 
         await loadPageStructure(); 
@@ -170,8 +170,9 @@ function loadAllData() {
 async function loadPageStructure() {
     const mainArea = document.getElementById('main-content-area');
     if (mainArea.childElementCount > 0) return; 
-    // === CHANGE IS HERE: Added 'single-banner-section.html' after 'just-for-you.html' ===
+    
     const sections = [
+        'location-popup.html', 
         'categories.html', 
         'recently-viewed.html', 
         'videos.html', 
@@ -186,57 +187,68 @@ async function loadPageStructure() {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
         const htmls = await Promise.all(responses.map(res => res.text()));
         mainArea.innerHTML = htmls.join('');
+        checkAndShowLocationWelcomePopup();
     } catch (error) {
         console.error("Page Structure Load Error:", error);
         mainArea.innerHTML = `<p class="text-center p-8">Error loading page content.</p>`;
     }
 }
 
-// --- RENDER DISPATCHER ---
-// Calls functions from render-utils.js
+// --- NEW: LOCATION POPUP LOGIC ---
+function checkAndShowLocationWelcomePopup() {
+    const popup = document.getElementById('location-welcome-popup');
+    const btn = document.getElementById('popup-select-loc-btn');
+    const backdrop = document.getElementById('loc-popup-backdrop');
+    const card = document.getElementById('loc-popup-card');
+    
+    if (!popup) return; 
+
+    const currentLoc = localStorage.getItem('userLocation');
+    
+    if (!currentLoc || currentLoc === DEFAULT_LOCATION_KEY) {
+        popup.classList.remove('hidden');
+        document.body.classList.add('location-mode-active'); 
+        setTimeout(() => {
+            if(backdrop) backdrop.classList.remove('opacity-0');
+            if(card) {
+                card.classList.remove('scale-90', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }
+        }, 100);
+
+        if(btn) {
+            btn.onclick = () => {
+                popup.classList.add('hidden');
+                document.body.classList.remove('location-mode-active');
+                openLocationPopup();
+            };
+        }
+    } else {
+        popup.classList.add('hidden');
+        document.body.classList.remove('location-mode-active');
+    }
+}
+
 function renderAllSections(data) {
     const homepageData = data.homepage || {};
-    
-    // Slider
     renderSlider(homepageData.slider);
     if (homepageData.slider && homepageData.slider.length > 0) {
         initializeSlider(homepageData.slider.length);
     }
-
-    // Single Banner (Function is in render-utils.js)
     renderSingleBanner(homepageData.singleBanner);
-
-    // Search
     renderSearch(homepageData.search); 
-
-    // Categories
     renderNormalCategories(homepageData.normalCategories);
-
-    // Recently Viewed
     renderRecentlyViewed(); 
-
-    // Videos
     renderVideosSection(homepageData.videos);
-
-    // Festive
     renderFestiveCollection(homepageData.festiveCollection); 
-
-    // Marquee & FlipCard
     renderInfoMarquee(homepageData.infoMarquee);
     renderFlipCardSection(homepageData.flipCard);
-
-    // Just For You
     const posterCount = renderJustForYouSection(homepageData.justForYou, allProductsCache);
     if (posterCount > 0) initializeJfySlider(posterCount);
-
-    // Deals of the Day
     renderHighlightedProducts(); 
-
-    // Footer
     renderFooter(homepageData.footer);
     const yr = document.getElementById('copyright-year');
     if(yr) yr.textContent = new Date().getFullYear();
-
     setupGlobalEventListeners();
     setupSideMenu();
     setupInstallButton();
@@ -246,7 +258,6 @@ function renderAllSections(data) {
     setupHomepageSearch(); 
 }
 
-// --- HELPER FUNCTIONS ---
 function formatLocation(pathString) {
     if (!pathString || pathString === DEFAULT_LOCATION_KEY) return CHOOSE_LOCATION_TEXT;
     if (!pathString.includes('/')) return pathString;
@@ -302,14 +313,12 @@ function rerenderProductSections() {
     setupHomepageSearch();
 }
 
-// --- LOCATION SYSTEM LOGIC ---
 function setupLocationSystem() {
     const areaSearchInput = document.getElementById('loc-area-search-input');
     if (areaSearchInput) {
         areaSearchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
             if (currentSelectedState && currentSelectedDistrict) {
-                // Calling renderAreaList from render-utils.js
                 renderAreaList(currentSelectedState, currentSelectedDistrict, query, allLocationsCache, localStorage.getItem('userLocation'));
             }
         });
@@ -322,8 +331,16 @@ function openLocationPopup() {
     const body = document.body;
     if (overlay && panel) {
         setupLocationSelectionsFromStorage(); 
-        // Calling renderStateTabs from render-utils.js
         renderStateTabs(allLocationsCache, currentSelectedState); 
+        
+        // Pre-load next tiers if state/district already selected
+        if (currentSelectedState) {
+             renderDistrictTabs(currentSelectedState, allLocationsCache, currentSelectedDistrict);
+        }
+        if (currentSelectedState && currentSelectedDistrict) {
+             renderAreaList(currentSelectedState, currentSelectedDistrict, '', allLocationsCache, localStorage.getItem('userLocation'));
+        }
+
         overlay.classList.add('visible');
         panel.classList.add('open');
         body.classList.add('location-open');
@@ -341,7 +358,6 @@ function closeLocationPopup() {
     }
 }
 
-// --- SEARCH LOGIC ---
 function setupHomepageSearch() {
     const searchInput = document.getElementById('home-search-input');
     if (!searchInput) return;
@@ -421,7 +437,6 @@ function renderSearch(searchData) {
     window.searchInterval = setInterval(updatePlaceholder, 3000); 
 }
 
-// --- HEADER SCROLL ---
 function setupHeaderScrollEffect() {
     const header = document.getElementById('page-header');
     if (!header) return;
@@ -434,7 +449,6 @@ function setupHeaderScrollEffect() {
     }, { passive: true });
 }
 
-// --- RECENTLY VIEWED ---
 function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed-section');
     const container = document.getElementById('recently-viewed-container');
@@ -456,7 +470,10 @@ function renderRecentlyViewed() {
     } catch (error) { section.style.display = 'none'; }
 }
 
-// --- FESTIVE COLLECTION LOGIC ---
+// --- FESTIVE LOGIC ---
+// (Functions startCountdownTimer, renderFestiveCollection, getDealsOfTheDayProducts, renderHighlightedProducts, loadMoreDeals remain same as previous but are necessary for full file)
+// I will include them to ensure file is complete.
+
 function startCountdownTimer(endTimeString, elementId) {
     if (festiveCountdownInterval) clearInterval(festiveCountdownInterval);
     const el = document.getElementById(elementId);
@@ -486,7 +503,6 @@ function renderFestiveCollection(collectionData) {
     collectionData.productIds.slice(0, limit).forEach(id => {
         const product = filteredProductsCache.find(p => p && p.id === id); 
         if (product) {
-            // Using render-utils function
             productsHTML += createFestiveCardHTML(product, { soldPercentage: metadata[id]?.soldPercentage });
             productsFound++;
         }
@@ -505,7 +521,6 @@ function renderFestiveCollection(collectionData) {
     slider.innerHTML = productsHTML;
 }
 
-// --- DEALS OF THE DAY (INFINITE SCROLL) ---
 function getDealsOfTheDayProducts() {
     if (!filteredProductsCache || filteredProductsCache.length === 0) return [];
     return [...filteredProductsCache].sort((a, b) => {
@@ -519,9 +534,7 @@ function renderHighlightedProducts() {
     const wrapper = document.getElementById('highlighted-products-wrapper');
     const section = document.getElementById('highlighted-products-section');
     if (!wrapper || !section) { if (section) section.style.display = 'none'; return; }
-
     dealsOfTheDayProducts = getDealsOfTheDayProducts(); 
-
     if (dealsOfTheDayProducts.length === 0) {
         section.style.display = 'block'; 
         wrapper.innerHTML = `<p class="text-center text-gray-500 col-span-full py-10">No deals available right now.</p>`; 
@@ -529,7 +542,6 @@ function renderHighlightedProducts() {
         if (dealsObserver) dealsObserver.disconnect();
         return;
     }
-
     section.style.display = 'block';
     wrapper.innerHTML = ''; 
     currentlyDisplayedDeals = 0;
@@ -562,7 +574,6 @@ function loadMoreDeals() {
     }
     isLoadingDeals = true;
     setTimeout(() => {
-        // Calling createProductCardHTML from render-utils.js
         const productsHTML = productsToLoad.map(p => createProductCardHTML(p)).join('');
         wrapper.insertAdjacentHTML('beforeend', productsHTML);
         currentlyDisplayedDeals += productsToLoad.length;
@@ -580,57 +591,27 @@ function setupGlobalEventListeners() {
     document.body.dataset.listenersAttached = 'true';
 
     document.body.addEventListener('click', function (event) {
-        // Buy Button
         const buyButton = event.target.closest('.buy-text-btn');
-        if (buyButton) {
-            event.preventDefault();
-            const productId = buyButton.dataset.id;
-            if (productId) {
-                addToCart(productId); 
-                window.location.href = 'order.html';
-            }
-            return; 
-        }
-        // Add to Cart Button
+        if (buyButton) { event.preventDefault(); const productId = buyButton.dataset.id; if (productId) { addToCart(productId); window.location.href = 'order.html'; } return; }
         const addButton = event.target.closest('.add-btn');
-        if (addButton) {
-            event.preventDefault();
-            const productId = addButton.dataset.id;
-            if (productId) {
-                addToCart(productId);
-                if (addButton.classList.contains('cart-btn')) {
-                    const cartIcon = addButton.querySelector('.cart-icon-svg');
-                    const checkIcon = addButton.querySelector('.cart-added-icon');
-                    addButton.classList.add('added');
-                    if (cartIcon) cartIcon.style.display = 'none';
-                    if (checkIcon) checkIcon.style.display = 'inline-block'; 
-                    setTimeout(() => {
-                        addButton.classList.remove('added');
-                        if (cartIcon) cartIcon.style.display = 'inline-block';
-                        if (checkIcon) checkIcon.style.display = 'none';
-                    }, 1500);
-                }
-            }
-            return; 
-        }
+        if (addButton) { event.preventDefault(); const productId = addButton.dataset.id; if (productId) { addToCart(productId); if (addButton.classList.contains('cart-btn')) { const cartIcon = addButton.querySelector('.cart-icon-svg'); const checkIcon = addButton.querySelector('.cart-added-icon'); addButton.classList.add('added'); if (cartIcon) cartIcon.style.display = 'none'; if (checkIcon) checkIcon.style.display = 'inline-block'; setTimeout(() => { addButton.classList.remove('added'); if (cartIcon) cartIcon.style.display = 'inline-block'; if (checkIcon) checkIcon.style.display = 'none'; }, 1500); } } return; }
 
-        // Location Logic
         const locationTrigger = event.target.closest('#location-trigger');
         if (locationTrigger) { openLocationPopup(); return; }
-
         const closeLocBtn = event.target.closest('#close-location-btn');
         if (closeLocBtn) { closeLocationPopup(); return; }
-
         const locOverlay = document.getElementById('location-overlay');
         if (event.target === locOverlay) { closeLocationPopup(); return; }
 
+        // === UPDATED LOGIC HERE ===
         const stateTab = event.target.closest('.loc-tab-btn[data-state]');
         if (stateTab && !stateTab.dataset.district) {
             currentSelectedState = stateTab.dataset.state;
             currentSelectedDistrict = null; 
             document.getElementById('loc-area-search-input').value = '';
-            // Call util function
             renderStateTabs(allLocationsCache, currentSelectedState); 
+            // Call district render logic
+            renderDistrictTabs(currentSelectedState, allLocationsCache, null);
             return;
         }
 
@@ -638,8 +619,9 @@ function setupGlobalEventListeners() {
         if (districtTab) {
             currentSelectedDistrict = districtTab.dataset.district;
             document.getElementById('loc-area-search-input').value = '';
-            // Call util function
             renderDistrictTabs(currentSelectedState, allLocationsCache, currentSelectedDistrict); 
+            // Call area render logic
+            renderAreaList(currentSelectedState, currentSelectedDistrict, '', allLocationsCache, localStorage.getItem('userLocation'));
             return;
         }
 
@@ -647,16 +629,11 @@ function setupGlobalEventListeners() {
         if (locItem) {
             const selectedLocPath = locItem.dataset.path; 
             const currentLoc = localStorage.getItem('userLocation');
-
-            if (selectedLocPath === currentLoc) {
-                closeLocationPopup(); 
-                return;
-            }
+            if (selectedLocPath === currentLoc) { closeLocationPopup(); return; }
             localStorage.setItem('userLocation', selectedLocPath);
             setupLocationSelectionsFromStorage(); 
             const headerText = document.getElementById('header-location-text');
             if (headerText) headerText.textContent = formatLocation(selectedLocPath);
-
             renderAreaList(currentSelectedState, currentSelectedDistrict, '', allLocationsCache, selectedLocPath); 
             filterProductsByLocation();
             rerenderProductSections(); 
@@ -667,23 +644,13 @@ function setupGlobalEventListeners() {
 }
 
 function setupSideMenu() { const menuToggleBtn = document.getElementById('menu-toggle-btn'); const sideMenu = document.getElementById('side-menu'); const menuOverlay = document.getElementById('menu-overlay'); const followItem = document.getElementById('menu-follow-item'); const followSubmenu = document.getElementById('follow-submenu'); if (menuToggleBtn && sideMenu && menuOverlay) { menuToggleBtn.addEventListener('click', () => document.body.classList.toggle('menu-open')); menuOverlay.addEventListener('click', () => document.body.classList.remove('menu-open')); } if (followItem && followSubmenu) { followItem.addEventListener('click', (e) => { e.preventDefault(); followItem.classList.toggle('open'); followSubmenu.classList.toggle('open'); }); } }
-
-function setupScrollAnimations() {
-    const obs = new IntersectionObserver((entries) => {
-        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-}
-
-// --- SLIDER BEHAVIOR (LOGIC) ---
-// Init functions remain in main.js as they handle intervals and events
+function setupScrollAnimations() { const obs = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }); }, { threshold: 0.1 }); document.querySelectorAll('.reveal').forEach(el => obs.observe(el)); }
 let currentSlide = 1, totalSlides = 0, sliderInterval, isTransitioning = false;
 function initializeSlider(count) { const slider = document.getElementById("main-slider"); const dots = document.getElementById("slider-dots-container"); totalSlides = count; if (totalSlides <= 1) { if (dots) dots.style.display = "none"; return; } slider.appendChild(slider.children[0].cloneNode(true)); slider.insertBefore(slider.children[totalSlides - 1].cloneNode(true), slider.children[0]); slider.style.transform = `translateX(-${100 * currentSlide}%)`; dots.innerHTML = Array.from({ length: totalSlides }, (_, i) => `<div class="dot" data-slide="${i + 1}"><div class="timer"></div></div>`).join(''); dots.addEventListener("click", e => { const dot = e.target.closest(".dot"); if (dot) goToSlide(parseInt(dot.dataset.slide)); }); let startPos = 0; const swipeThreshold = 50; const getPositionX = e => e.type.includes("mouse") ? e.pageX : e.touches[0].clientX; const swipeStart = e => { startPos = getPositionX(e); clearInterval(sliderInterval); }; const swipeEnd = e => { const endPos = e.type.includes("touch") ? e.changedTouches[0].clientX : e.pageX; if (Math.abs(endPos - startPos) > swipeThreshold) { moveSlide(endPos < startPos ? 1 : -1); } resetSliderInterval(); }; slider.addEventListener("mousedown", swipeStart); slider.addEventListener("touchstart", swipeStart, { passive: true }); slider.addEventListener("mouseup", swipeEnd); slider.addEventListener("touchend", swipeEnd); slider.addEventListener("transitionend", () => { isTransitioning = false; if (currentSlide === 0 || currentSlide === totalSlides + 1) { slider.classList.remove("transitioning"); currentSlide = (currentSlide === 0) ? totalSlides : 1; slider.style.transform = `translateX(-${100 * currentSlide}%)`; } }); updateDots(); resetSliderInterval(); }
 function moveSlide(dir) { if (isTransitioning) return; isTransitioning = true; const slider = document.getElementById("main-slider"); slider.classList.add("transitioning"); currentSlide += dir; slider.style.transform = `translateX(-${100 * currentSlide}%)`; updateDots(); }
 function goToSlide(num) { if (isTransitioning || currentSlide === num) return; moveSlide(num - currentSlide); resetSliderInterval(); }
 function updateDots() { const dots = document.querySelectorAll(".slider-dots .dot"); dots.forEach(d => { d.classList.remove("active"); const timer = d.querySelector(".timer"); if (timer) { timer.style.transition = "none"; timer.style.width = "0%"; } }); let activeDotIndex = (currentSlide - 1 + totalSlides) % totalSlides; const activeDot = dots[activeDotIndex]; if (activeDot) { activeDot.classList.add("active"); const timer = activeDot.querySelector(".timer"); if (timer) { void timer.offsetWidth; timer.style.transition = "width 5000ms linear"; timer.style.width = "100%"; } } }
 function resetSliderInterval() { clearInterval(sliderInterval); sliderInterval = setInterval(() => moveSlide(1), 5000); }
-
 let jfyCurrentSlide = 1, jfyTotalSlides = 0, jfySliderInterval, jfyIsTransitioning = false;
 function initializeJfySlider(count) { const slider = document.querySelector(".jfy-poster-slider"), dots = document.querySelector(".jfy-slider-dots"); if (!slider) return; if ((jfyTotalSlides = count) <= 1) return void (dots && (dots.style.display = "none")); slider.appendChild(slider.children[0].cloneNode(!0)), slider.insertBefore(slider.children[jfyTotalSlides - 1].cloneNode(!0), slider.children[0]), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, slider.addEventListener("transitionend", () => { jfyIsTransitioning = !1, 0 === jfyCurrentSlide && (slider.classList.remove("transitioning"), jfyCurrentSlide = jfyTotalSlides, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`), jfyCurrentSlide === jfyTotalSlides + 1 && (slider.classList.remove("transitioning"), jfyCurrentSlide = 1, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`) }), dots.innerHTML = ""; for (let i = 0; i < jfyTotalSlides; i++)dots.innerHTML += '<div class=\"dot\" data-slide=\"'.concat(i + 1, '\"></div>'); dots.addEventListener("click", e => { e.target.closest(".dot") && goToJfySlide(e.target.closest(".dot").dataset.slide) }), updateJfyDots(), resetJfySliderInterval() }
 function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide += dir, slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
