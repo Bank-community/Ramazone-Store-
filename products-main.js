@@ -2,15 +2,15 @@
 let allProducts = []; // Master list from DB
 let filteredProducts = []; // List filtered by LOCATION
 let allCategories = []; 
-let allSubCategoriesCache = {}; // <-- YAHAN NAYA BADLAAV KIYA GAYA HAI
+let allSubCategoriesCache = {}; 
 let currentCategory = 'All';
-let currentSelectedSubcategories = []; // <-- YAHAN NAYA BADLAAV KIYA GAYA HAI (पुराना currentSubcategory हटा दिया)
+let currentSelectedSubcategories = []; 
 let database;
 let searchScrollingTexts = [];
 let currentSortOrder = 'popularity'; 
 
-// --- NEW CONSTANTS (Added from main.js) ---
-const DEFAULT_LOCATION_KEY = "ALL_AREAS"; // Special key for no location
+// --- NEW CONSTANTS ---
+const DEFAULT_LOCATION_KEY = "ALL_AREAS"; 
 const CHOOSE_LOCATION_TEXT = "Choose Location";
 const CART_ICON_SVG = "https://www.svgrepo.com/show/533042/cart-plus.svg";
 
@@ -122,12 +122,9 @@ async function initializeApp() {
 async function loadPageData() {
     try {
         await fetchAllData(database);
-        
         filterProductsByLocation(); 
-
         const urlParams = new URLSearchParams(window.location.search);
         const categoryFromUrl = urlParams.get('category') || 'All';
-        
         displayCategories(); 
         
         if(categoryFromUrl !== 'All') {
@@ -149,7 +146,7 @@ async function loadPageData() {
         setupScrollBehavior();
         setupProductCardEventListeners(); 
         setupSortModal(); 
-        setupFilterModal(); // <-- YAHAN NAYA BADLAAV KIYA GAYA HAI
+        setupFilterModal(); 
         
         document.getElementById('loading-indicator').style.display = 'none';
 
@@ -161,19 +158,16 @@ async function loadPageData() {
 
 function filterProductsByLocation() {
     const currentLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION_KEY;
-
     if (currentLoc === DEFAULT_LOCATION_KEY) {
         filteredProducts = allProducts.filter(product => {
             return !product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0;
         });
-        console.log(`Products Page: Filtered for "All Areas": ${filteredProducts.length} items.`);
     } else {
         filteredProducts = allProducts.filter(product => {
             const isAllArea = !product.availableAreas || !Array.isArray(product.availableAreas) || product.availableAreas.length === 0;
             const isAtLocation = product.availableAreas && product.availableAreas.includes(currentLoc);
             return isAllArea || isAtLocation;
         });
-        console.log(`Products Page: Filtered for "${currentLoc}": ${filteredProducts.length} items.`);
     }
 }
 
@@ -190,11 +184,7 @@ async function fetchAllData(db) {
             .map(p => ({ ...p, createdAt: p.createdAt || '2020-01-01T00:00:00.000Z' })); 
         allCategories = (homepageData.normalCategories || [])
             .filter(cat => cat && cat.name && cat.size !== 'double');
-        
-        // --- YAHAN NAYA BADLAAV KIYA GAYA HAI ---
-        // subCategories data ko load karo
         allSubCategoriesCache = data.subCategories || {};
-        // --- BADLAAV END ---
     }
 }
 
@@ -213,10 +203,9 @@ function setupDynamicPlaceholder() {
     setInterval(updatePlaceholder, 3000);
 }
 
-// --- CATEGORY & SUBCATEGORY LOGIC (MODIFIED FOR FILTER BUTTON) ---
 function displayCategories() {
     const categoryBar = document.getElementById('category-filter-bar');
-    const filterBtn = document.getElementById('open-filter-modal-btn'); // Filter button ko select karo
+    const filterBtn = document.getElementById('open-filter-modal-btn'); 
     categoryBar.innerHTML = '';
     
     const allBtn = document.createElement('button');
@@ -243,32 +232,22 @@ function displayCategories() {
         if (e.target.tagName !== 'BUTTON') return;
         const selectedCategoryName = e.target.dataset.category;
         currentCategory = selectedCategoryName;
-        currentSelectedSubcategories = []; // <-- YAHAN NAYA BADLAAV KIYA GAYA HAI (Subcategory filter reset karo)
+        currentSelectedSubcategories = []; 
         document.getElementById('search-input').value = ''; 
         categoryBar.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
 
-        // --- YAHAN NAYA BADLAAV KIYA GAYA HAI (FILTER BUTTON ENABLE/DISABLE) ---
-        // Category key ko sanitize karo (jaisa admin panel mein hai)
         const catKey = currentCategory.replace(/[.#$/\[\]]/g, "_");
-        
         if (currentCategory !== 'All' && allSubCategoriesCache[catKey] && allSubCategoriesCache[catKey].length > 0) {
             filterBtn.disabled = false;
         } else {
             filterBtn.disabled = true;
         }
-        // --- BADLAAV END ---
-
-        // Purana subcategory bar logic HATA DIYA GAYA
         document.getElementById('subcategory-filter-container').classList.add('hidden');
-        
         filterAndDisplayProducts();
     });
 }
-// --- displaySubcategories() function ko poori tarah HATA DIYA GAYA ---
 
-
-// --- FILTER & DISPLAY (MODIFIED for SUB-CATEGORY FILTER) ---
 function filterAndDisplayProducts() {
     const grid = document.getElementById('products-grid');
     const noProductsMsg = document.getElementById('no-products-message');
@@ -282,13 +261,11 @@ function filterAndDisplayProducts() {
         productsToDisplay = productsToDisplay.filter(prod => prod && prod.category === currentCategory);
     }
     
-    // --- YAHAN NAYA BADLAAV KIYA GAYA HAI (SUB-CATEGORY FILTER) ---
     if (currentSelectedSubcategories.length > 0) {
         productsToDisplay = productsToDisplay.filter(prod => 
             prod && currentSelectedSubcategories.includes(prod.subcategory)
         );
     }
-    // --- BADLAAV END ---
     
     if (searchInput) {
         productsToDisplay = productsToDisplay.filter(prod => {
@@ -303,20 +280,11 @@ function filterAndDisplayProducts() {
     }
 
     switch (currentSortOrder) {
-        case 'popularity':
-            productsToDisplay.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-            break;
-        case 'price-asc':
-            productsToDisplay.sort((a, b) => (a.displayPrice || 0) - (b.displayPrice || 0));
-            break;
-        case 'price-desc':
-            productsToDisplay.sort((a, b) => (b.displayPrice || 0) - (a.displayPrice || 0));
-            break;
-        case 'newest':
-            productsToDisplay.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            break;
-        default:
-            productsToDisplay.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        case 'popularity': productsToDisplay.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
+        case 'price-asc': productsToDisplay.sort((a, b) => (a.displayPrice || 0) - (b.displayPrice || 0)); break;
+        case 'price-desc': productsToDisplay.sort((a, b) => (b.displayPrice || 0) - (a.displayPrice || 0)); break;
+        case 'newest': productsToDisplay.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
+        default: productsToDisplay.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     }
 
     if (productsToDisplay.length > 0) {
@@ -326,20 +294,23 @@ function filterAndDisplayProducts() {
     }
 }
 
-// --- PRODUCT CARD HTML (No Change) ---
+// --- PRODUCT CARD HTML (UPDATED FOR SINGLE LINE PRICE) ---
 function createProductCardHTML(prod) {
     if (!prod) return '';
     const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
     const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
-    let priceHTML = '';
+    
+    // Price Logic
+    let priceHTML = `<p class="display-price">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
     let originalPriceHTML = '';
     let discountHTML = '';
+    
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
         originalPriceHTML = `<p class="original-price">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
         if (discount > 0) discountHTML = `<p class="product-discount">${discount}% OFF</p>`;
     }
-    priceHTML = `<p class="display-price">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
+
     const titleHTML = `<h2 class="product-name">${prod.name}</h2>`;
 
     return `
@@ -353,6 +324,7 @@ function createProductCardHTML(prod) {
         <div class="product-card-info">
             <a href="./product-details.html?id=${prod.id}">
                 ${titleHTML}
+                <!-- UPDATED PRICE CONTAINER: Single line layout -->
                 <div class="price-container">
                     ${priceHTML}
                     ${originalPriceHTML}
@@ -370,7 +342,7 @@ function createProductCardHTML(prod) {
     </div>`;
 }
 
-// --- SCROLL BEHAVIOR (MODIFIED FOR STICKY BAR) ---
+// --- SCROLL BEHAVIOR (No Change) ---
 function setupScrollBehavior() {
     const header = document.getElementById('main-header');
     if (!header) return;
@@ -389,7 +361,7 @@ function setupScrollBehavior() {
     }, { passive: true });
 }
 
-// --- SEARCH FUNCTION (MODIFIED FOR FILTER) ---
+// --- SEARCH FUNCTION (No Change) ---
 function setupSearch() {
     const searchInput = document.getElementById('search-input');
     const searchForm = document.getElementById('search-form'); 
@@ -418,19 +390,17 @@ function setupSearch() {
 
     searchInput.addEventListener('input', () => {
         currentCategory = 'All'; 
-        currentSelectedSubcategories = []; // <-- YAHAN NAYA BADLAAV KIYA GAYA HAI
-        document.getElementById('open-filter-modal-btn').disabled = true; // <-- YAHAN NAYA BADLAAV KIYA GAYA HAI
+        currentSelectedSubcategories = []; 
+        document.getElementById('open-filter-modal-btn').disabled = true; 
         document.querySelectorAll('.category-btn.active').forEach(b=>b.classList.remove('active'));
         document.querySelector('.category-btn[data-category="All"]').classList.add('active');
-        
-        filterAndDisplayProducts(); // Live results dikhayein
+        filterAndDisplayProducts(); 
         
         const query = searchInput.value.toLowerCase();
         if (query.length < 1) { 
             suggestionsContainer.classList.add('hidden'); 
             return; 
         }
-        
         const suggestions = allProducts.filter(p => { 
             const nameMatch = p.name.toLowerCase().includes(query);
             let keywordMatch = false;
@@ -439,7 +409,6 @@ function setupSearch() {
             }
             return nameMatch || keywordMatch;
         }).slice(0, 5);
-        
         if (suggestions.length > 0) {
             suggestionsContainer.innerHTML = suggestions.map(prod => `<a href="./product-details.html?id=${prod.id}" class="suggestion-item"><img src="${(prod.images && prod.images[0]) || 'https://placehold.co/100x100/e2e8f0/64748b?text=?'}" alt="${prod.name}"><span class="text-sm text-gray-700">${prod.name}</span></a>`).join('');
             suggestionsContainer.classList.remove('hidden');
@@ -447,15 +416,12 @@ function setupSearch() {
             suggestionsContainer.classList.add('hidden'); 
         }
     });
-    
     const activateSearchMode = () => { document.body.classList.add('search-active'); categorySuggestionsContainer.classList.remove('hidden'); };
     const deactivateSearchMode = () => { document.body.classList.remove('search-active'); categorySuggestionsContainer.classList.add('hidden'); suggestionsContainer.classList.add('hidden'); };
-    
     searchInput.addEventListener('focus', activateSearchMode);
     searchOverlay.addEventListener('click', () => searchInput.blur());
     searchInput.addEventListener('blur', () => { setTimeout(deactivateSearchMode, 150); });
 }
-
 
 // --- SORT MODAL (No Change) ---
 function setupSortModal() {
@@ -468,7 +434,6 @@ function setupSortModal() {
         console.error('Sort modal elements not found!');
         return;
     }
-
     const openModal = () => {
         const currentRadio = document.querySelector(`input[name="sort-option"][value="${currentSortOrder}"]`);
         if (currentRadio) {
@@ -476,11 +441,9 @@ function setupSortModal() {
         }
         overlay.classList.add('visible');
     };
-
     const closeModal = () => {
         overlay.classList.remove('visible');
     };
-
     openBtn.addEventListener('click', openModal);
     closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', (e) => {
@@ -488,7 +451,6 @@ function setupSortModal() {
             closeModal();
         }
     });
-
     options.addEventListener('change', (e) => {
         if (e.target.name === 'sort-option') {
             currentSortOrder = e.target.value;
@@ -498,7 +460,7 @@ function setupSortModal() {
     });
 }
 
-// --- === YAHAN NAYA FUNCTION JODA GAYA HAI (FILTER MODAL) === ---
+// --- FILTER MODAL (No Change) ---
 function setupFilterModal() {
     const openBtn = document.getElementById('open-filter-modal-btn');
     const closeBtn = document.getElementById('filter-modal-close-btn');
@@ -516,12 +478,9 @@ function setupFilterModal() {
         populateFilterModal();
         overlay.classList.add('visible');
     };
-
     const closeModal = () => {
         overlay.classList.remove('visible');
     };
-    
-    // Naya function: Popup ko sub-categories se bharo
     const populateFilterModal = () => {
         const catKey = currentCategory.replace(/[.#$/\[\]]/g, "_");
         const subs = allSubCategoriesCache[catKey] || [];
@@ -541,25 +500,20 @@ function setupFilterModal() {
             `;
         }).join('');
     };
-    
-    // "Clear" button par click
     clearBtn.addEventListener('click', () => {
-        currentSelectedSubcategories = []; // Selection reset karo
-        filterAndDisplayProducts(); // Products ko re-filter karo
+        currentSelectedSubcategories = []; 
+        filterAndDisplayProducts(); 
         closeModal();
     });
-    
-    // "Apply" button par click
     applyBtn.addEventListener('click', () => {
         const selected = [];
         container.querySelectorAll('input[name="sub-category"]:checked').forEach(checkbox => {
             selected.push(checkbox.value);
         });
-        currentSelectedSubcategories = selected; // Naya selection save karo
-        filterAndDisplayProducts(); // Products ko re-filter karo
+        currentSelectedSubcategories = selected; 
+        filterAndDisplayProducts(); 
         closeModal();
     });
-
     openBtn.addEventListener('click', openModal);
     closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', (e) => {
@@ -568,7 +522,6 @@ function setupFilterModal() {
         }
     });
 }
-// --- === NAYA FUNCTION END === ---
 
 // --- PRODUCT CARD EVENT LISTENER (No Change) ---
 function setupProductCardEventListeners() {
@@ -576,7 +529,6 @@ function setupProductCardEventListeners() {
     if (!grid) return;
 
     grid.addEventListener('click', function(event) {
-        
         const buyButton = event.target.closest('.buy-text-btn');
         if (buyButton) {
             event.preventDefault();
@@ -592,7 +544,6 @@ function setupProductCardEventListeners() {
         if (addButton) {
             event.preventDefault(); 
             const productId = addButton.dataset.id;
-            
             if (productId && !addButton.classList.contains('added')) {
                 addToCart(productId);
                 showToast('Successfully added to cart!', 'success'); 
@@ -613,5 +564,3 @@ function setupProductCardEventListeners() {
         }
     });
 }
-
-
