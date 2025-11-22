@@ -64,8 +64,8 @@ function createProductCardHTML(prod, extraClass = '') {
 }
 
 /**
- * 2. FESTIVE CARD HTML
- * Yah festive collection ke liye hai (Progress bar support ke sath).
+ * 2. FESTIVE CARD HTML (Updated)
+ * Price, MRP aur Discount ek hi line mein dikhenge.
  */
 function createFestiveCardHTML(prod, options = {}) {
     if (!prod) return '';
@@ -82,6 +82,7 @@ function createFestiveCardHTML(prod, options = {}) {
     if (prod.originalPrice && Number(prod.originalPrice) > Number(prod.displayPrice)) {
         const discount = Math.round(((prod.originalPrice - prod.displayPrice) / prod.originalPrice) * 100);
         originalPriceHTML = `<p class="original-price">₹${Number(prod.originalPrice).toLocaleString("en-IN")}</p>`;
+        // Discount ko arrow style mein add kiya
         if (discount > 0) discountHTML = `<p class="product-discount"><span>↓</span> ${discount}%</p>`;
     }
 
@@ -107,6 +108,7 @@ function createFestiveCardHTML(prod, options = {}) {
         <div class="product-card-info">
             <a href="./product-details.html?id=${prod.id}" class="block">
                 <h2 class="product-name">${prod.name || 'Product Name'}</h2>
+                <!-- Price Container: Flexbox ensure karega ki ye ek line mein rahein -->
                 <div class="price-container">
                     ${priceHTML}
                     ${originalPriceHTML}
@@ -189,7 +191,49 @@ function renderJustForYouSection(jfyData, allProductsCache) {
 }
 
 /**
- * 7. MISC RENDERERS
+ * 7. SINGLE BANNER RENDERER (NEW)
+ */
+function renderSingleBanner(bannerData) {
+    const section = document.getElementById('single-banner-section');
+    if (!section) return;
+
+    // Check validity
+    if (!bannerData || bannerData.isActive === false || !bannerData.imageUrl) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    const linkEl = document.getElementById('single-banner-link');
+    const imgEl = document.getElementById('single-banner-img');
+    const titleOverlay = document.getElementById('single-banner-title-overlay');
+    const titleEl = document.getElementById('single-banner-title');
+
+    // Set Image
+    imgEl.src = bannerData.imageUrl;
+    
+    // Set Link
+    let targetLink = '#';
+    if (bannerData.linkType === 'product' && bannerData.linkValue) {
+        targetLink = `./product-details.html?id=${bannerData.linkValue}`;
+    } else if (bannerData.linkType === 'custom' && bannerData.linkValue) {
+        targetLink = bannerData.linkValue;
+    }
+    linkEl.href = targetLink;
+
+    // Set Title (Optional)
+    if (bannerData.title) {
+        titleEl.textContent = bannerData.title;
+        titleOverlay.classList.remove('hidden');
+    } else {
+        titleOverlay.classList.add('hidden');
+    }
+
+    // Show Section
+    section.classList.remove('hidden');
+}
+
+/**
+ * 8. MISC RENDERERS
  */
 function renderInfoMarquee(text) { const section = document.getElementById('info-marquee-section'); if (!text) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; section.querySelector('#info-marquee-text').innerHTML = text; }
 
@@ -198,7 +242,7 @@ function renderFlipCardSection(data) { const section = document.getElementById('
 function renderFooter(data) { if (!data) return; document.getElementById('menu-play-link').href = data.playLink || '#'; document.getElementById('menu-cashback-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const submenuContainer = document.getElementById('follow-submenu'); const desktopContainer = document.getElementById('desktop-social-links'); submenuContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', name: 'YouTube' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', name: 'Instagram' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', name: 'Facebook' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', name: 'WhatsApp' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; submenuContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="submenu-item"><img src="${p.icon}" alt="${key}"><span>${p.name}</span></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
 
 /**
- * 8. LOCATION RENDERERS
+ * 9. LOCATION RENDERERS
  */
 function renderStateTabs(allLocationsCache, currentSelectedState) {
     const container = document.getElementById('loc-state-tabs');
@@ -259,3 +303,4 @@ function renderAreaList(stateName, districtName, searchQuery = '', allLocationsC
         `;
     }).join('');
 }
+
