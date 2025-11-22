@@ -44,10 +44,9 @@
                 <div class="w-auto flex justify-end items-center gap-2">
                     <button id="install-app-btn" class="p-2 hidden"><img src="https://www.svgrepo.com/show/308714/mobile-download-phone-smartphone.svg" alt="Install App" class="h-6 w-6"></button>
                     
-                    <!-- Cart Link with Updated Badge Styling -->
+                    <!-- Cart Link -->
                     <a href="order.html" id="header-cart-link" class="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
                         <i class="fas fa-shopping-cart text-2xl"></i>
-                        <!-- Added Tailwind classes for Red Badge -->
                         <span id="cart-item-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white empty:hidden"></span>
                     </a>
 
@@ -78,6 +77,8 @@
         </div>
         <div class="slider-dots" id="slider-dots-container"></div>
     </div>
+
+    <!-- NOTE: Single Banner section removed from here. It will now be loaded dynamically inside main-content-area -->
 
     <!-- DYNAMIC SECTIONS AREA -->
     <main id="main-content-area" class="mb-16 md:mb-0">
@@ -154,7 +155,7 @@
                 </div>
                 <div class="location-search-box">
                     <i class="fas fa-search"></i>
-                    <input type=\"text\" id=\"loc-area-search-input\" placeholder=\"Search area in selected district...\">
+                    <input type="text" id="loc-area-search-input" placeholder="Search area in selected district...">
                 </div>
                 <div id="loc-area-list-container">
                     <p class="loc-tab-placeholder">Please select a district first.</p>
@@ -166,11 +167,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
-    <!-- NAYI FILE: Render Utils -->
+    <!-- Render Utils -->
     <script src="render-utils.js"></script>
     <!-- MAIN LOGIC -->
     <script src="main.js"></script>
 </body>
 
 </html>
-
