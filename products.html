@@ -6,12 +6,11 @@
     <title>All Products - Ramazone</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         /* === Styles === */
-        
         :root {
             --primary-color: #4F46E5;
             --secondary-color: #F59E0B;
@@ -21,7 +20,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f9fafb; 
+            background-color: #f3f4f6;
         }
 
         /* --- Loader --- */
@@ -31,20 +30,20 @@
         /* --- Category Filters --- */
         .category-scroll-container { -ms-overflow-style: none; scrollbar-width: none; }
         .category-scroll-container::-webkit-scrollbar { display: none; }
-        .category-btn { background-color: #f3f4f6; color: #4b5563; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
-        .category-btn.active { background-color: #4f46e5; color: white; }
+        .category-btn { background-color: #ffffff; color: #4b5563; font-weight: 500; transition: all 0.2s; white-space: nowrap; border: 1px solid #e5e7eb; }
+        .category-btn.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
         
         /* --- Search Bar --- */
-        .search-input-field { width: 100%; height: 40px; padding: 0 1rem; border: 1px solid #d1d5db; border-radius: 9999px; background-color: #f9fafb; transition: all 0.2s ease; }
+        .search-input-field { width: 100%; height: 40px; padding: 0 1rem; border: 1px solid #d1d5db; border-radius: 9999px; background-color: #fff; transition: all 0.2s ease; }
         .search-input-field:focus { outline: none; border-color: #4f46e5; background-color: white; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2); }
-        #search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 0.5rem; overflow: hidden; z-index: 60; }
+        #search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); margin-top: 0.5rem; overflow: hidden; z-index: 60; }
         .suggestion-item { display: flex; align-items: center; padding: 0.5rem; gap: 0.75rem; transition: background-color 0.15s; }
         .suggestion-item:hover { background-color: #f3f4f6; }
         .suggestion-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 0.25rem; }
         #search-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 45; }
         body.search-active #search-overlay { display: block; }
         #category-suggestions { background: white; padding: 0.5rem; border-bottom: 1px solid #e5e7eb; }
-        .suggestion-tag { display: inline-block; background-color: #e5e7eb; color: #374151; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 9999px; font-size: 0.875rem; cursor: pointer; }
+        .suggestion-tag { display: inline-block; background-color: #f3f4f6; color: #374151; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 9999px; font-size: 0.875rem; cursor: pointer; border: 1px solid #e5e7eb; }
         
         /* --- Header Scroll --- */
         #main-header { transition: transform 0.3s ease-in-out; }
@@ -53,41 +52,42 @@
         body.header-is-hidden .category-filter-container { top: 0; }
         body.header-is-hidden .sort-bar-container { top: 49px; } 
 
-        /* --- Product Grid (TIGHTER GAP FOR BIGGER CARDS) --- */
+        /* --- Product Grid --- */
         #products-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 6px; /* Reduced gap from 0.75rem to 8px */
-            padding: 8px; /* Reduced padding from 0.75rem to 8px */
+            gap: 6px;
+            padding: 6px;
             background-color: transparent; 
         }
         @media (min-width: 768px) { #products-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1rem; } }
         @media (min-width: 1024px) { #products-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (min-width: 1280px) { #products-grid { grid-template-columns: repeat(5, 1fr); } }
         
-        /* --- Product Card Style --- */
+        /* --- Compact Product Card --- */
         .product-card {
             background-color: white;
-            border-radius: 5px; /* Slightly sharper corners */
+            border-radius: 8px;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s ease;
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
         .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.07);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        /* 3:4 RATIO IMAGE */
+        /* 3:4 Ratio Image Container */
         .product-media-container {
             position: relative;
             width: 100%;
             aspect-ratio: 3 / 4; 
-            background-color: #ffffff; 
+            background-color: #ffffff;
             overflow: hidden;
+            border-bottom: 1px solid #f3f4f6;
         }
         .product-media-container img {
             position: absolute;
@@ -96,16 +96,16 @@
             width: 100%;
             height: 100%;
             object-fit: contain; 
-            padding: 6px; 
+            padding: 8px;
         }
 
-        /* Rating Tag */
         .card-rating-tag {
             position: absolute;
-            top: 6px; 
+            bottom: 6px; 
             left: 6px; 
-            background-color: var(--green-color);
-            color: white;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            color: #111;
             font-size: 10px; 
             font-weight: 700;
             padding: 2px 6px;
@@ -114,158 +114,125 @@
             align-items: center;
             gap: 3px;
             z-index: 5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
         }
         .card-rating-tag .fa-star {
+            color: #16a34a;
             font-size: 9px; 
         }
 
-        /* --- COMPACT CARD INFO --- */
+        /* --- INFO SECTION (Gap Fixes) --- */
         .product-card-info {
-            padding: 8px; /* Reduced padding for smaller height */
+            /* Top padding reduced to 4px */
+            padding: 4px 8px 4px 8px; 
             flex-grow: 1;
             display: flex;
             flex-direction: column;
         }
 
         .product-name {
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 2px; /* Reduced margin */
-            font-size: 0.8rem; /* Slightly smaller text */
-            line-height: 1;
-            display: block; 
-            white-space: nowrap; 
+            font-weight: 500;
+            color: #374151;
+            /* === FIX: Height auto kar diya taaki extra space na le === */
+            height: auto; 
+            margin-bottom: 0px; 
+            margin-top: 2px;
+            font-size: 0.8rem;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* --- NEW COMPACT PRICE LINE --- */
         .price-container {
             display: flex;
-            align-items: baseline; /* Align text baselines */
-            gap: 6px; /* Gap between price items */
-            margin-top: 0;
-            margin-bottom: 7px; 
-            flex-wrap: wrap; /* Allow wrap if text is too long */
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 6px; 
+            margin-top: 2px; /* Minimal gap */
+            margin-bottom: 6px;
         }
         .display-price {
-            font-weight: 600; /* Bolder price */
-            color: #111827;
-            font-size: 1rem; /* Standard readable size */
+            font-weight: 700;
+            color: #000000;
+            font-size: 1rem;
         }
         .original-price {
-            font-size: 0.8rem; /* Smaller original price */
+            font-size: 0.75rem;
             text-decoration: line-through;
-            color: #9CA3AF;
+            color: #9ca3af;
         }
         .product-discount {
             color: var(--green-color);
-            font-size: 0.65rem;
-            font-weight: 400;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 1px;
         }
-        
-        /* Actions */
+
         .product-card-actions {
             display: flex;
             gap: 6px; 
             margin-top: auto; 
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 3px; 
+            margin-bottom: 4px;
         }
 
         .cart-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px; /* Smaller button */
+            width: 32px; 
             height: 32px;
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: #f3f4f6;
-            color: var(--text-dark);
+            border: 1px solid #e5e7eb;
+            color: #374151;
             transition: background-color 0.2s;
             cursor: pointer;
-            border: none;
         }
-        .cart-btn:hover {
-            background-color: #e5e7eb;
-        }
-        .cart-btn img, .cart-btn i {
-            width: 18px;
-            height: 18px;
-            opacity: 0.9;
-        }
-        .cart-btn.added {
-            background-color: var(--green-color);
-            color: white;
-        }
-        .cart-btn.added img {
-            filter: brightness(0) invert(1);
-        }
-        .cart-btn.added .cart-added-icon {
-            color: white;
-        }
+        .cart-btn:active { background-color: #e5e7eb; }
+        .cart-btn img, .cart-btn i { width: 16px; height: 16px; opacity: 0.8; }
+        .cart-btn.added { background-color: var(--green-color); border-color: var(--green-color); color: white; }
+        .cart-btn.added img { filter: brightness(0) invert(1); }
 
         .buy-text-btn {
             flex-grow: 1;
-            height: 32px; /* Smaller height */
+            height: 32px; 
             border: none;
             background-color: var(--primary-color);
             color: white;
             font-weight: 600;
             font-size: 0.85rem;
-            border-radius: 4px;
-            transition: background-color 0.3s, transform 0.2s;
+            border-radius: 6px;
+            transition: opacity 0.2s;
             text-decoration: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
         }
-        .buy-text-btn:hover {
-            background-color: #4338ca; 
-        }
-        .buy-text-btn:active {
-            transform: scale(0.98);
-        }
-        .add-btn.added {
-             background-color: var(--green-color);
-             cursor: not-allowed;
-        }
-
-        /* --- SORT/FILTER CSS (No changes needed here) --- */
-        .sort-bar-container {
-            position: sticky;
-            top: 68px; 
-            z-index: 25; 
-            background-color: #f9fafb;
-            border-bottom: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
-        }
+        .buy-text-btn:active { opacity: 0.9; }
+        
+        /* Sort/Filter CSS */
+        .sort-bar-container { position: sticky; top: 68px; z-index: 25; background-color: #fff; border-bottom: 1px solid var(--border-color); padding: 0.5rem 1rem; }
         .sort-filter-bar { display: flex; justify-content: space-between; align-items: center; }
-        .sort-button, .filter-button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color); background-color: white; font-weight: 500; color: #374151; cursor: pointer; }
-        .sort-button i, .filter-button i { font-size: 0.875rem; }
+        .sort-button, .filter-button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color); background-color: white; font-weight: 500; font-size: 0.9rem; color: #374151; cursor: pointer; }
         .filter-button:disabled { opacity: 0.5; cursor: not-allowed; background-color: #f9fafb; }
         .sort-modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 100; display: none; opacity: 0; transition: opacity 0.3s ease; }
         .sort-modal-overlay.visible { display: block; opacity: 1; }
         .sort-modal-content { position: fixed; bottom: 0; left: 0; right: 0; background-color: white; border-top-left-radius: 1rem; border-top-right-radius: 1rem; padding: 1rem; transform: translateY(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; max-height: 70vh; }
         .sort-modal-overlay.visible .sort-modal-content { transform: translateY(0); }
         .sort-modal-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-        .sort-modal-header h3 { font-size: 1.125rem; font-weight: 600; }
         .sort-modal-close-btn { background: none; border: none; font-size: 1.5rem; color: #9ca3af; cursor: pointer; }
-        .sort-options-container { overflow-y: auto; }
-        .sort-option-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0.5rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
-        .sort-option-item:last-child { border-bottom: none; }
-        .sort-option-item span { font-weight: 500; }
-        .sort-option-item input[type="radio"] { width: 1.25rem; height: 1.25rem; accent-color: var(--primary-color); }
-        .filter-options-container { overflow-y: auto; max-height: 40vh; }
-        .filter-option-item { display: flex; align-items: center; padding: 0.85rem 0.5rem; border-bottom: 1px solid #f3f4f6; }
-        .filter-option-item:last-child { border-bottom: none; }
-        .filter-option-item label { flex-grow: 1; font-weight: 500; color: #374151; cursor: pointer; }
-        .filter-option-item input[type="checkbox"] { width: 1.15rem; height: 1.15rem; border-radius: 0.25rem; accent-color: var(--primary-color); margin-left: auto; flex-shrink: 0; }
+        .sort-options-container, .filter-options-container { overflow-y: auto; }
+        .sort-option-item, .filter-option-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0.5rem; border-bottom: 1px solid #f3f4f6; }
         .filter-modal-footer { display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 0.5rem; flex-shrink: 0; }
-        .btn-secondary-filter, .btn-primary-filter { flex-grow: 1; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; border: none; cursor: pointer; }
-        .btn-secondary-filter { background-color: #f3f4f6; border: 1px solid var(--border-color); color: #374151; }
+        .btn-secondary-filter, .btn-primary-filter { flex-grow: 1; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; border: none; }
+        .btn-secondary-filter { background-color: #f3f4f6; color: #374151; }
         .btn-primary-filter { background-color: var(--primary-color); color: white; }
     </style>
 </head>
@@ -276,20 +243,17 @@
         <div class="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <a href="./index.html" class="text-gray-600 hover:text-gray-900 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg></a>
             <a href="./index.html" class="flex-shrink-0"><img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" alt="Ramazone Logo" class="h-8 w-8 object-contain"></a>
-            
             <div class="flex-1 relative">
                 <form id="search-form" class="search-wrapper" action="javascript:void(0);" role="search">
-                    <input type="text" id="search-input" class="search-input-field" placeholder="Search for products..." autocomplete="off" autocapitalize="none">
+                    <input type="text" id="search-input" class="search-input-field" placeholder="Search for products..." autocomplete="off">
                 </form>
                 <div id="search-suggestions" class="hidden"></div>
             </div>
-            
             <a href="order.html" id="header-cart-link" class="relative flex-shrink-0 p-2"><i class="fas fa-shopping-cart text-xl text-gray-700"></i><span id="cart-item-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"></span></a>
         </div>
         <div id="category-suggestions" class="hidden"></div>
     </header>
 
-    <!-- Main Category Bar -->
     <div id="category-filter-container" class="category-filter-container bg-white py-2 border-b border-gray-200 sticky top-[68px] z-40">
         <div class="container mx-auto px-2"> 
             <div id="category-filter-bar" class="flex items-center gap-2 overflow-x-auto category-scroll-container">
@@ -300,38 +264,25 @@
 
     <div id="sort-bar-container" class="sort-bar-container">
         <div class="container mx-auto sort-filter-bar">
-            <button id="open-sort-modal-btn" class="sort-button">
-                <i class="fas fa-sort-amount-down-alt"></i>
-                <span>Sort</span>
-            </button>
-            <button id="open-filter-modal-btn" class="filter-button" disabled>
-                <i class="fas fa-filter"></i>
-                <span>Filter</span>
-            </button>
+            <button id="open-sort-modal-btn" class="sort-button"><i class="fas fa-sort-amount-down-alt"></i><span>Sort</span></button>
+            <button id="open-filter-modal-btn" class="filter-button" disabled><i class="fas fa-filter"></i><span>Filter</span></button>
         </div>
     </div>
     
-    <div id="subcategory-filter-container" class="subcategory-filter-container hidden bg-gray-50 py-2 border-b border-gray-200 sticky top-[117px] z-30">
-    </div>
+    <div id="subcategory-filter-container" class="subcategory-filter-container hidden"></div>
 
     <main class="container mx-auto p-0 md:p-4">
-        <!-- Grid -->
         <div id="products-grid" class="bg-transparent"></div>
-        
-        <!-- Loaders -->
         <div id="loading-indicator" class="text-center py-20"><div class="loader"></div><p class="text-lg font-semibold mt-4 text-gray-600">Loading Products...</p></div>
-        <div id="no-products-message" class="hidden text-center py-20"><div class="mx-auto h-16 w-16 flex items-center justify-center bg-gray-200 rounded-full"><i class="fas fa-box-open fa-2x text-gray-500"></i></div><p class="mt-4 text-xl font-semibold text-gray-700">No Products Found</p><p class="text-gray-500">Aapke search ya filter ke liye koi product nahi mila.</p></div>
+        <div id="no-products-message" class="hidden text-center py-20"><p class="mt-4 text-xl font-semibold text-gray-700">No Products Found</p></div>
     </main>
     
     <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 text-white px-5 py-3 rounded-lg shadow-lg text-sm z-50 opacity-0 transition-opacity duration-300"></div>
 
-    <!-- Sort Modal -->
+    <!-- Modals -->
     <div id="sort-modal-overlay" class="sort-modal-overlay">
         <div id="sort-modal-content" class="sort-modal-content">
-            <div class="sort-modal-header">
-                <h3>Sort By</h3>
-                <button id="sort-modal-close-btn" class="sort-modal-close-btn">&times;</button>
-            </div>
+            <div class="sort-modal-header"><h3>Sort By</h3><button id="sort-modal-close-btn" class="sort-modal-close-btn">&times;</button></div>
             <div class="sort-options-container">
                 <label class="sort-option-item"><span>Popularity</span><input type="radio" name="sort-option" value="popularity" checked></label>
                 <label class="sort-option-item"><span>Price -- Low to High</span><input type="radio" name="sort-option" value="price-asc"></label>
@@ -341,23 +292,16 @@
         </div>
     </div>
 
-    <!-- Filter Modal -->
     <div id="filter-modal-overlay" class="sort-modal-overlay"> 
         <div id="filter-modal-content" class="sort-modal-content">
-            <div class="sort-modal-header">
-                <h3>Filter by Sub-category</h3>
-                <button id="filter-modal-close-btn" class="sort-modal-close-btn">&times;</button>
-            </div>
-            <div id="filter-options-container" class="filter-options-container">
-                <p class="p-4 text-center text-gray-500" id="filter-loading-msg">Please select a main category first.</p>
-            </div>
-            <div class="filter-modal-footer">
-                <button id="filter-clear-btn" class="btn-secondary-filter">Clear</button>
-                <button id="filter-apply-btn" class="btn-primary-filter">Apply</button>
-            </div>
+            <div class="sort-modal-header"><h3>Filter by Sub-category</h3><button id="filter-modal-close-btn" class="sort-modal-close-btn">&times;</button></div>
+            <div id="filter-options-container" class="filter-options-container"><p class="p-4 text-center text-gray-500" id="filter-loading-msg">Please select a main category first.</p></div>
+            <div class="filter-modal-footer"><button id="filter-clear-btn" class="btn-secondary-filter">Clear</button><button id="filter-apply-btn" class="btn-primary-filter">Apply</button></div>
         </div>
     </div>
 
     <script src="products-main.js"></script>
 </body>
 </html>
+
+
