@@ -170,7 +170,18 @@ function loadAllData() {
 async function loadPageStructure() {
     const mainArea = document.getElementById('main-content-area');
     if (mainArea.childElementCount > 0) return; 
-    const sections = ['categories.html', 'recently-viewed.html', 'videos.html', 'festive-collection.html', 'info-marquee.html', 'flip-card.html', 'just-for-you.html', 'deals-of-the-day.html'];
+    // === CHANGE IS HERE: Added 'single-banner-section.html' after 'just-for-you.html' ===
+    const sections = [
+        'categories.html', 
+        'recently-viewed.html', 
+        'videos.html', 
+        'festive-collection.html', 
+        'info-marquee.html', 
+        'flip-card.html', 
+        'just-for-you.html', 
+        'single-banner-section.html', 
+        'deals-of-the-day.html'
+    ];
     try {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
         const htmls = await Promise.all(responses.map(res => res.text()));
@@ -192,20 +203,23 @@ function renderAllSections(data) {
         initializeSlider(homepageData.slider.length);
     }
 
+    // Single Banner (Function is in render-utils.js)
+    renderSingleBanner(homepageData.singleBanner);
+
     // Search
-    renderSearch(homepageData.search); // Kept local as it has interval logic
+    renderSearch(homepageData.search); 
 
     // Categories
     renderNormalCategories(homepageData.normalCategories);
 
     // Recently Viewed
-    renderRecentlyViewed(); // Kept local
+    renderRecentlyViewed(); 
 
     // Videos
     renderVideosSection(homepageData.videos);
 
     // Festive
-    renderFestiveCollection(homepageData.festiveCollection); // Logic in main, HTML in utils
+    renderFestiveCollection(homepageData.festiveCollection); 
 
     // Marquee & FlipCard
     renderInfoMarquee(homepageData.infoMarquee);
@@ -216,7 +230,7 @@ function renderAllSections(data) {
     if (posterCount > 0) initializeJfySlider(posterCount);
 
     // Deals of the Day
-    renderHighlightedProducts(); // Logic in main, HTML in utils
+    renderHighlightedProducts(); 
 
     // Footer
     renderFooter(homepageData.footer);
@@ -283,7 +297,6 @@ function rerenderProductSections() {
     const fullData = window.ramazoneData || { homepage: {} };
     renderRecentlyViewed();
     renderFestiveCollection(fullData.homepage.festiveCollection);
-    // Just for you re-render might need re-fetching products if logic depends on it
     renderJustForYouSection(fullData.homepage.justForYou, allProductsCache);
     renderHighlightedProducts(); 
     setupHomepageSearch();
@@ -677,3 +690,4 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4000) }
+
