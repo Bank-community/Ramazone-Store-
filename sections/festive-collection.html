@@ -1,4 +1,4 @@
-<!-- FINAL VERSION: This file now contains the updated HTML structure and its specific CSS. -->
+<!-- FINAL VERSION: Updated to FORCE single line price with smaller fonts -->
 
 <style>
     /* Scoped styles for the Festive Collection section */
@@ -27,7 +27,7 @@
     #festive-collection-container .view-all-arrow:hover { background-color: rgba(0, 0, 0, 0.15); }
     #festive-collection-container .product-card { flex: 0 0 calc(50% - 10px); max-width: 200px; }
     
-    /* === NEW: Force 3:4 Image Ratio for Festive Section === */
+    /* Force 3:4 Image Ratio */
     #festive-collection-container .product-card img {
         aspect-ratio: 3 / 4 !important;
         object-fit: contain !important;
@@ -35,110 +35,78 @@
         padding: 4px;
     }
 
+    /* Tags Positioning */
     #festive-collection-container .offer-tag-top-left {
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: var(--primary-color);
-        color: white;
-        padding: 3px 10px 5px 10px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border-radius: 0 0 8px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        z-index: 5;
+        position: absolute; top: 0; left: 0;
+        background-color: var(--primary-color); color: white;
+        padding: 3px 10px 5px 10px; font-size: 0.75rem; font-weight: 600;
+        border-radius: 0 0 8px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 5;
     }
     #festive-collection-container .rating-tag-bottom-left {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        background-color: #fff;
-        backdrop-filter: blur(5px);
-        font-size: 12px;
-        font-weight: 600;
-        padding: 3px 8px;
-        z-index: 5;
-        color: #000;
-        border-radius: 5px;
-        border: 1px solid rgba(0, 0,0, 0.5);
+        position: absolute; bottom: 8px; left: 8px;
+        background-color: #fff; backdrop-filter: blur(5px);
+        font-size: 12px; font-weight: 600; padding: 3px 8px;
+        z-index: 5; color: #000; border-radius: 5px; border: 1px solid rgba(0, 0,0, 0.5);
     }
-    #festive-collection-container .rating-tag-bottom-left .fa-star {
-        color: #16a34a; 
+    #festive-collection-container .rating-tag-bottom-left .fa-star { color: #16a34a; }
+
+    /* === ZABARDASTI ONE LINE CSS START === */
+    /* Hum global style ko override kar rahe hain */
+    #festive-collection-container .price-container {
+        flex-wrap: nowrap !important; /* Wrap hona mana hai */
+        column-gap: 4px !important; /* Thoda gap kam kiya */
+        align-items: baseline !important;
+        overflow: hidden; /* Agar content bahar jaye to chhupa do */
+        margin-bottom: 4px !important; /* Margin set kiya */
     }
 
-    /* === YAHAN BADLAV KIYA GAYA HAI: Progress Bar Styles Updated === */
+    /* Price ka font thoda chhota kiya */
+    #festive-collection-container .display-price {
+        font-size: 0.95rem !important; 
+    }
+
+    /* MRP ka font aur chhota kiya */
+    #festive-collection-container .original-price {
+        font-size: 0.75rem !important;
+    }
+
+    /* Discount text sabse zaroori: Chhota aur No-Wrap */
+    #festive-collection-container .product-discount {
+        font-size: 0.7rem !important; /* Text size chhota */
+        white-space: nowrap !important; /* Line break nahi lega */
+        overflow: visible;
+    }
+    /* === ZABARDASTI ONE LINE CSS END === */
+
+
+    /* Progress Bar Styles */
     #festive-collection-container .progress-bar-container { 
-        background-color: #fdecec; /* Light red background */
-        border-radius: 50px; 
-        height: 14px; /* Height kam ki gayi */
-        width: 100%; 
-        position: relative; 
-        overflow: hidden;
+        background-color: #fdecec; border-radius: 50px; 
+        height: 14px; width: 100%; position: relative; overflow: hidden;
     }
     #festive-collection-container .progress-bar-inner {
-        background-color: #ef4444; /* Solid red color */
-        height: 100%;
-        border-radius: 50px;
-        transition: width 0.5s ease-in-out;
+        background-color: #ef4444; height: 100%; border-radius: 50px; transition: width 0.5s ease-in-out;
     }
     #festive-collection-container .progress-bar-text { 
-        position: absolute; 
-        top: 50%; 
-        left: 50%; 
-        transform: translate(-50%, -50%); 
-        font-size: 0.6rem; /* Font size chhota kiya gaya */
-        font-weight: 600; 
-        color: white; 
-        text-shadow: none; /* Text shadow hataya gaya */
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+        font-size: 0.6rem; font-weight: 600; color: white; text-shadow: none;
     }
-    /* === BADLAV END === */
 
-    #festive-collection-container .horizontal-scroller {
-        gap: 12px;
-    }
+    #festive-collection-container .horizontal-scroller { gap: 12px; }
 
     #festive-collection-container .view-all-card {
-        flex: 0 0 calc(50% - 10px);
-        max-width: 200px;
-        height: auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        background-color: #f3f4f6;
-        border: 1px dashed #d1d5db;
-        border-radius: 8px;
-        text-decoration: none;
-        color: #1f2937;
-        transition: background-color 0.2s, transform 0.2s;
-        padding: 1rem;
+        flex: 0 0 calc(50% - 10px); max-width: 200px; height: auto;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; background-color: #f3f4f6; border: 1px dashed #d1d5db;
+        border-radius: 8px; text-decoration: none; color: #1f2937; transition: background-color 0.2s, transform 0.2s; padding: 1rem;
     }
-
-    #festive-collection-container .view-all-card:hover {
-        background-color: #e5e7eb;
-        transform: translateY(-2px);
-    }
-
+    #festive-collection-container .view-all-card:hover { background-color: #e5e7eb; transform: translateY(-2px); }
     #festive-collection-container .view-all-card .arrow-circle {
-        width: 50px;
-        height: 50px;
-        background-color: var(--primary-color);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.25rem;
-        margin-bottom: 0.75rem;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        width: 50px; height: 50px; background-color: var(--primary-color);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 1.25rem; margin-bottom: 0.75rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-
-    #festive-collection-container .view-all-card .view-all-text {
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    
+    #festive-collection-container .view-all-card .view-all-text { font-weight: 600; font-size: 0.9rem; }
 </style>
 
 <section class="festive-collection reveal" id="festive-collection-container">
