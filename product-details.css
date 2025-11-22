@@ -424,7 +424,28 @@
 
 /* --- Cart & Header Icons --- */
 .header-cart-link { position: relative; color: #4B5563; }
-#cart-item-count { position: absolute; top: -1px; right: 1px; background-color: red; color: white; border-radius: 50%; padding: 3px; font-size: 10px; font-weight: bold; min-width: 19px; text-align: center; line-height: 14px; border: 1.5px solid white; }
+
+/* UPDATED: Cart Count - Fixed position and styling to prevent cutoff */
+#cart-item-count { 
+    position: absolute; 
+    top: -6px; /* Moved slightly up */
+    right: -6px; /* Moved slightly right */
+    background-color: #ef4444; /* red-500 */
+    color: white; 
+    border-radius: 9999px; /* Pill shape */
+    padding: 0 4px; /* Horizontal padding for 2 digits */
+    font-size: 10px; 
+    font-weight: 700; 
+    min-width: 18px; /* Ensure minimum width */
+    height: 18px;    /* Fixed height for circle look on single digit */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white; /* Border to separate from icon */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    z-index: 10;
+    line-height: normal;
+}
 
 /* --- Header Search --- */
 .header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; text-decoration: none; cursor: pointer; font-size: 0.9rem; }
@@ -831,5 +852,4 @@
 #quantity-selector-wrapper {
     display: none !important; 
 }
-
 
