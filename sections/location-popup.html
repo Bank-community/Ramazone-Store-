@@ -1,0 +1,36 @@
+<!-- LOCATION WELCOME POPUP -->
+<!-- Yeh by default 'hidden' rahega, JS ise activate karega -->
+<div id="location-welcome-popup" class="fixed inset-0 z-[60] flex items-center justify-center hidden">
+    
+    <!-- 1. Blurred Backdrop -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity duration-700 opacity-0" id="loc-popup-backdrop"></div>
+
+    <!-- 2. The Smart Card -->
+    <div class="relative bg-white w-[85%] max-w-sm rounded-3xl shadow-2xl p-6 text-center transform scale-90 opacity-0 transition-all duration-500" id="loc-popup-card">
+        
+        <!-- Attractive Graphic (Delivery Scooter) -->
+        <div class="mb-6 flex justify-center relative">
+            <div class="absolute inset-0 bg-indigo-100 rounded-full transform scale-110 opacity-50 animate-pulse"></div>
+            <img src="https://cdn-icons-png.flaticon.com/512/4947/4947179.png" alt="Fast Delivery" class="w-28 h-28 object-contain relative z-10 drop-shadow-lg">
+        </div>
+
+        <!-- Headline -->
+        <h2 class="text-2xl font-extrabold text-gray-800 mb-2 leading-tight">
+            Wait! <span class="text-indigo-600">Location?</span>
+        </h2>
+
+        <!-- Subtext -->
+        <p class="text-gray-500 text-sm mb-6 px-2 leading-relaxed">
+            Apne area ke <b>Best Offers</b> aur <b>Free Delivery</b> unlock karne ke liye apni location select karein.
+        </p>
+
+        <!-- Main Action Button -->
+        <button id="popup-select-loc-btn" class="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
+            <i class="fas fa-map-marker-alt animate-bounce"></i>
+            <span>Select Location Now</span>
+        </button>
+
+        <!-- No 'Close' button initially to force focus, simple text below -->
+        <p class="mt-4 text-[10px] text-gray-300 uppercase tracking-widest">Ramazone Delivery</p>
+    </div>
+</div>
