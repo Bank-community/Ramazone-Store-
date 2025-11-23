@@ -1,0 +1,109 @@
+<style>
+    /* SLIDER STYLES (Moved from Global CSS) */
+    .slider-wrapper { 
+        width: calc(100% - 24px); 
+        margin: 12px auto; 
+        aspect-ratio: 16 / 9; 
+        max-height: 400px;
+        background: #ffffff; 
+        border-radius: 12px; 
+        overflow: hidden;
+        position: relative; /* Essential for absolute positioning of dots */
+        padding: 0; 
+    }
+
+    .slider-container { 
+        position: relative; 
+        width: 100%; 
+        height: 95%;
+        overflow: hidden; 
+        border-radius: 12px; 
+        user-select: none; 
+    }
+
+    .slider { 
+        display: flex; 
+        height: 90%; 
+        cursor: grab; 
+    }
+
+    .slider.grabbing { 
+        cursor: grabbing; 
+    }
+
+    .slider.transitioning { 
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+
+    .slide { 
+        width: 100%; 
+        height: 100%; 
+        flex-shrink: 0; 
+        position: relative; 
+    }
+
+    .slide video, 
+    .slide picture, 
+    .slide img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        z-index: 1; 
+        border-radius: 12px; 
+        pointer-events: none; 
+    }
+
+    /* DOTS & TIMER - FIXED POSITIONING */
+    .slider-dots { 
+        display: flex; 
+        justify-content: center; 
+        gap: 8px; 
+        z-index: 10; 
+        
+        /* FIX: Position dots absolute to overlay on slider */
+        position: absolute;
+        bottom: 10px; /* Distance from bottom */
+        left: 0;
+        right: 0;
+        width: 100%;
+        padding-top: 0;
+    }
+
+    .slider-dots .dot { 
+        width: 12px; 
+        height: 4px; 
+        background: #EAEAEA ; /* Lighter bg for better visibility on images */
+        border-radius: 50px; 
+        cursor: pointer; 
+        transition: all 0.4s ease; 
+        overflow: hidden; 
+        box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Shadow for contrast */
+    }
+
+    .slider-dots .dot.active { 
+        background: white; 
+        width: 32px; 
+    }
+
+    .slider-dots .dot .timer { 
+        width: 0%; 
+        height: 100%; 
+        background: black; /* Timer color */
+        border-radius: 50px; 
+    }
+
+    .slider-dots .dot.active .timer { 
+        width: 100%; 
+        transition: width 3000ms linear; /* Keeps the 3s timer */
+    }
+</style>
+
+<div class="slider-wrapper">
+    <div class="slider-container">
+        <div class="slider" id="main-slider"></div>
+    </div>
+    <div class="slider-dots" id="slider-dots-container"></div>
+</div>
