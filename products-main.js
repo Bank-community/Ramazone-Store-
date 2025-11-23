@@ -1,6 +1,5 @@
 // products-main.js
-// VERSION: CART FIX + SUPERSONIC
-// Fixes: Empty Red Dot, NaN Cart Count, Cache Logic
+// VERSION: SUPERSONIC V2 (Inline SVG + Instant Cache)
 
 // --- GLOBAL VARIABLES ---
 let allProductsCache = []; 
@@ -15,25 +14,54 @@ let database;
 let isLoadingMore = false;
 
 // Config
-const BATCH_SIZE_INITIAL = 10;
-const BATCH_SIZE_NEXT = 6;
-const CACHE_KEY_PRODUCTS = "ramazone_all_products_cache"; 
-const CACHE_KEY_CONFIG = "ramazone_config_cache";
+const BATCH_SIZE_INITIAL = 12; // Increased slightly for better first view
+const BATCH_SIZE_NEXT = 8;
+const CACHE_KEY_DATA = "RAMAZONE_DATA_V2"; // Unifying cache with Main.js
 const DEFAULT_LOCATION_KEY = "ALL_AREAS"; 
 
-// Inline SVG
-const CART_ICON_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: auto;"><path d="M21 5L19 12H7.37671M20 16H8L6 3H3M16 5.5H13.5M13.5 5.5H11M13.5 5.5V8M13.5 5.5V3M9 20C9 20.5523 8.55228 21 8 21C7.44772 21 7 20.5523 7 20C7 19.4477 7.44772 19 8 19C8.55228 19 9 19.4477 9 20ZM20 20C20 20.5523 19.5523 21 19 21C18.4477 21 18 20.5523 18 20C18 19.4477 18.4477 19 19 19C19.5523 19 20 19.4477 20 20Z" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+// --- 1. INLINE SVG (Zero Network Request) ---
+const CART_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;display:block;margin:auto;"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M21 5L19 12H7.37671M20 16H8L6 3H3M16 5.5H13.5M13.5 5.5H11M13.5 5.5V8M13.5 5.5V3M9 20C9 20.5523 8.55228 21 8 21C7.44772 21 7 20.5523 7 20C7 19.4477 7.44772 19 8 19C8.55228 19 9 19.4477 9 20ZM20 20C20 20.5523 19.5523 21 19 21C18.4477 21 18 20.5523 18 20C18 19.4477 18.4477 19 19 19C19.5523 19 20 19.4477 20 20Z" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>`;
 
-// --- 1. INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', initializeApp);
+// --- 2. INITIALIZATION (Supersonic) ---
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Instant Paint form Cache
+    loadFromCache();
+    
+    // 2. Initialize Firebase & Fetch Fresh
+    initializeApp();
+});
+
+function loadFromCache() {
+    try {
+        // Try getting data from the main unified cache first
+        const cachedData = localStorage.getItem(CACHE_KEY_DATA);
+        if (cachedData) {
+            console.log("🚀 Supersonic: Products Loaded from Cache");
+            const data = JSON.parse(cachedData);
+            processData(data);
+        } else {
+            // Fallback to old specific cache if main cache is empty
+            const oldCache = localStorage.getItem("ramazone_all_products_cache");
+            if (oldCache) {
+                const parsed = JSON.parse(oldCache);
+                if (parsed.products) {
+                    allProductsCache = parsed.products;
+                    checkUrlParams();
+                }
+            }
+            toggleMainLoader(true); // Show loader only if NO cache
+        }
+    } catch (e) { console.error("Cache Error", e); toggleMainLoader(true); }
+}
 
 async function initializeApp() {
     try {
-        // Ensure cart icon is correct on load
         updateCartIcon();
-        toggleMainLoader(true);
-
-        await loadFirebaseScripts(); 
+        
+        // Check if Firebase is already initialized
+        if (!window.firebase) {
+            await loadFirebaseScripts();
+        }
         
         const firebaseConfig = { 
             apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw", 
@@ -42,30 +70,17 @@ async function initializeApp() {
         };
         
         if (firebaseConfig.apiKey) { 
-            firebase.initializeApp(firebaseConfig); 
-            database = firebase.database(); 
-            
-            // Cache First Strategy
-            const hasCache = loadFromCache();
-
-            if (!hasCache) {
-                // Only show loading if NO cache available
-                document.getElementById('loading-indicator').style.display = 'block';
-            }
-
-            // Fetch fresh data in background
-            fetchFreshData(!hasCache);
-            
-        } else { throw new Error("Config missing"); }
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            fetchFreshData(); // Network Call
+        }
     } catch (error) { 
         console.error(error); 
-        document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">App Error.</p>'; 
     }
 }
 
 function loadFirebaseScripts() {
     return new Promise((resolve, reject) => {
-        if(window.firebase) { resolve(); return; }
         const appScript = document.createElement('script');
         appScript.src = 'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js';
         appScript.onload = () => {
@@ -79,90 +94,40 @@ function loadFirebaseScripts() {
     });
 }
 
-// --- 2. DATA FETCHING ---
-function loadFromCache() {
-    let pLoaded = false;
-    
-    // Products Cache
-    const rawP = localStorage.getItem(CACHE_KEY_PRODUCTS);
-    if (rawP) {
-        try {
-            const parsed = JSON.parse(rawP);
-            const products = parsed.products || parsed; 
-            if (Array.isArray(products) && products.length > 0) {
-                allProductsCache = products;
-                pLoaded = true;
-            }
-        } catch(e) { console.warn("Cache P Error"); }
-    }
-
-    // Config Cache
-    const rawC = localStorage.getItem(CACHE_KEY_CONFIG);
-    if (rawC) {
-        try {
-            const config = JSON.parse(rawC);
-            if (config.categories) {
-                allCategories = config.categories;
-                allSubCategoriesCache = config.subCategories || {};
-                displayCategoryTabs();
-            }
-        } catch(e) { console.warn("Cache C Error"); }
-    }
-
-    if (pLoaded) {
-        console.log("🚀 Instant Load");
-        checkUrlParams(); 
-        return true;
-    }
-    return false;
+// --- 3. DATA PROCESSING ---
+function fetchFreshData() {
+    const dbRef = database.ref('ramazone');
+    dbRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Update Unified Cache
+            localStorage.setItem(CACHE_KEY_DATA, JSON.stringify(data));
+            processData(data);
+        }
+    });
 }
 
-async function fetchFreshData(showLoaderUI = false) {
-    try {
-        const p1 = database.ref('ramazone/products').get();
-        const p2 = database.ref('ramazone/homepage/normalCategories').get();
-        const p3 = database.ref('ramazone/subCategories').get();
+function processData(data) {
+    // 1. Products
+    let rawProducts = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
+    allProductsCache = rawProducts.filter(p => p && p.isVisible !== false).map(p => ({
+        ...p,
+        id: String(p.id),
+        displayPrice: Number(p.displayPrice || 0),
+        originalPrice: Number(p.originalPrice || 0),
+        createdAt: p.createdAt || '2020-01-01'
+    }));
 
-        const [prodSnap, catSnap, subSnap] = await Promise.all([p1, p2, p3]);
-
-        if (prodSnap.exists()) {
-            const dataMap = prodSnap.val();
-            const freshProducts = Object.values(dataMap).filter(p => p && p.isVisible !== false).map(p => ({
-                ...p,
-                id: String(p.id),
-                displayPrice: Number(p.displayPrice || 0),
-                originalPrice: Number(p.originalPrice || 0),
-                createdAt: p.createdAt || '2020-01-01'
-            }));
-            
-            allProductsCache = freshProducts;
-            
-            localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify({
-                timestamp: Date.now(),
-                products: freshProducts
-            }));
-        }
-
-        if (catSnap.exists()) {
-            allCategories = catSnap.val().filter(cat => cat && cat.name && cat.size !== 'double');
-            allSubCategoriesCache = subSnap.exists() ? subSnap.val() : {};
-            
-            localStorage.setItem(CACHE_KEY_CONFIG, JSON.stringify({
-                categories: allCategories,
-                subCategories: allSubCategoriesCache
-            }));
-            
-            displayCategoryTabs();
-        }
-
-        checkUrlParams(); 
-        
-        if(showLoaderUI) toggleMainLoader(false);
-
-    } catch (error) { 
-        console.error(error); 
-        if(showLoaderUI) document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Check Internet.</p>';
+    // 2. Categories & Subcategories
+    const homepageData = data.homepage || {};
+    if (homepageData.normalCategories) {
+        allCategories = homepageData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
     }
+    allSubCategoriesCache = data.subCategories || {};
+
+    // 3. Render UI
+    displayCategoryTabs();
+    checkUrlParams();
 }
 
 function checkUrlParams() {
@@ -171,6 +136,7 @@ function checkUrlParams() {
     
     if(categoryFromUrl && categoryFromUrl !== 'All') {
         currentCategory = categoryFromUrl;
+        // Update Active Tab UI
         setTimeout(() => {
             const tabs = document.querySelectorAll('.category-btn');
             let found = false;
@@ -181,6 +147,7 @@ function checkUrlParams() {
                 } else btn.classList.remove('active');
             });
             if(!found) {
+                // If category not in list (e.g. directly typed), select 'All' visually or handle specifically
                 const allBtn = document.querySelector('.category-btn[data-category="All"]');
                 if(allBtn) allBtn.classList.add('active');
             }
@@ -191,12 +158,12 @@ function checkUrlParams() {
     setupUIListeners();
 }
 
-// --- 3. FILTERING ---
+// --- 4. FILTERING LOGIC ---
 function applyFilters() {
     const currentLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION_KEY;
     let temp = [];
 
-    // Location
+    // Location Filter
     if (currentLoc === DEFAULT_LOCATION_KEY) {
         temp = allProductsCache.filter(p => !p.availableAreas || !Array.isArray(p.availableAreas) || p.availableAreas.length === 0);
     } else {
@@ -207,18 +174,18 @@ function applyFilters() {
         });
     }
 
-    // Category
+    // Category Filter
     if (currentCategory !== 'All') {
         const target = currentCategory.toLowerCase().trim();
         temp = temp.filter(p => (p.category || "").toLowerCase().trim() === target);
     }
 
-    // Subcategory
+    // Subcategory Filter
     if (currentSelectedSubcategories.length > 0) {
         temp = temp.filter(p => currentSelectedSubcategories.includes(p.subcategory));
     }
 
-    // Search
+    // Search Filter
     const searchInput = document.getElementById('search-input');
     if (searchInput && searchInput.value) {
         const q = searchInput.value.toLowerCase();
@@ -228,7 +195,7 @@ function applyFilters() {
         );
     }
 
-    // Sort
+    // Sorting
     switch (currentSortOrder) {
         case 'popularity': temp.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
         case 'price-asc': temp.sort((a, b) => a.displayPrice - b.displayPrice); break;
@@ -238,7 +205,7 @@ function applyFilters() {
 
     filteredProductsCache = temp;
     
-    // Render
+    // Reset Grid
     const grid = document.getElementById('products-grid');
     grid.innerHTML = '';
     document.getElementById('no-products-message').classList.add('hidden');
@@ -250,7 +217,7 @@ function applyFilters() {
         if(allProductsCache.length > 0) {
             document.getElementById('no-products-message').classList.remove('hidden');
         } else {
-            toggleMainLoader(true); // Still loading initial data
+            toggleMainLoader(true); // Maybe still loading initial data
         }
     } else {
         loadNextBatch(BATCH_SIZE_INITIAL);
@@ -258,7 +225,7 @@ function applyFilters() {
     }
 }
 
-// --- 4. BATCH RENDERING ---
+// --- 5. BATCH RENDERING (INFINITE SCROLL) ---
 function loadNextBatch(count) {
     const grid = document.getElementById('products-grid');
     const loader = document.getElementById('loading-indicator');
@@ -270,6 +237,7 @@ function loadNextBatch(count) {
         return;
     }
 
+    // Generate HTML string (Performance optimized)
     const html = nextBatch.map(prod => createProductCardHTML(prod)).join('');
     grid.insertAdjacentHTML('beforeend', html);
 
@@ -284,17 +252,19 @@ function loadNextBatch(count) {
 }
 
 function setupInfiniteScrollObserver() {
+    // Remove old listener if exists (simple way: overwrite onscroll)
     window.onscroll = () => {
         if (isLoadingMore || displayedCount >= filteredProductsCache.length) return;
         const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        // Trigger when 400px from bottom
         if (scrollTop + clientHeight >= scrollHeight - 400) {
             isLoadingMore = true;
-            setTimeout(() => { loadNextBatch(BATCH_SIZE_NEXT); }, 300);
+            setTimeout(() => { loadNextBatch(BATCH_SIZE_NEXT); }, 200); // Small throttle
         }
     };
 }
 
-// --- 5. UI COMPONENTS ---
+// --- 6. UI COMPONENTS & HTML GENERATORS ---
 function toggleMainLoader(show) {
     const loader = document.getElementById('loading-indicator');
     if (loader) loader.style.display = show ? 'block' : 'none';
@@ -304,6 +274,12 @@ function displayCategoryTabs() {
     const bar = document.getElementById('category-filter-bar');
     if(!bar) return;
     
+    // Check if already rendered to avoid flicker
+    if (bar.innerHTML.includes('category-btn') && allCategories.length > 0) {
+        // Only update active state
+        return;
+    }
+
     let html = `<button class="category-btn rounded-full px-4 py-2 text-sm ${currentCategory === 'All' ? 'active' : ''}" data-category="All">All</button>`;
     const activeCats = new Set(allProductsCache.map(p => (p.category||"").trim()));
     
@@ -330,8 +306,8 @@ function displayCategoryTabs() {
 }
 
 function createProductCardHTML(prod) {
-    const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-    const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
+    const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image';
+    const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star" style="font-size:8px;"></i></div>` : '';
     
     let priceHTML = `<p class="display-price">₹${prod.displayPrice.toLocaleString("en-IN")}</p>`;
     let originalPriceHTML = '', discountHTML = '';
@@ -366,50 +342,35 @@ function createProductCardHTML(prod) {
     </div>`;
 }
 
-// --- 6. CART FUNCTIONS (FIXED) ---
+// --- 7. CART FUNCTIONS (Standardized) ---
 function getCart() { 
-    try { 
-        const cart = localStorage.getItem('ramazoneCart'); 
-        return cart ? JSON.parse(cart) : []; 
-    } catch { return []; } 
+    try { return JSON.parse(localStorage.getItem('ramazoneCart')) || []; } catch { return []; } 
 }
 
 function saveCart(cart) { 
     localStorage.setItem('ramazoneCart', JSON.stringify(cart)); 
-    updateCartIcon(); // Update immediately after save
+    updateCartIcon();
 }
 
-// FIXED: Robust quantity calculation (Handles NaN)
 function getTotalCartQuantity() { 
     const cart = getCart(); 
-    return cart.reduce((total, item) => {
-        const qty = parseInt(item.quantity) || 0; // Safety check
-        return total + qty;
-    }, 0); 
+    return cart.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0); 
 }
 
-// FIXED: Robust visibility toggle
 function updateCartIcon() { 
     const total = getTotalCartQuantity(); 
     const el = document.getElementById('cart-item-count'); 
     if (el) { 
         el.textContent = total > 0 ? total : ''; 
-        
-        // Explicitly manage visibility class
-        if (total > 0) {
-            el.classList.remove('hidden');
-            el.style.display = 'flex'; // Force flex if class fails
-        } else {
-            el.classList.add('hidden');
-            el.style.display = 'none';
-        }
+        el.style.display = total > 0 ? 'flex' : 'none';
+        if(total > 0) el.classList.remove('hidden');
+        else el.classList.add('hidden');
     } 
 }
 
 function addToCart(productId, qty = 1) {
     const cart = getCart();
     let product = allProductsCache.find(p => p.id == productId);
-    // Minimal fallback
     if (!product) product = { id: productId, variants: [] };
 
     let selectedVariants = {};
@@ -427,11 +388,10 @@ function addToCart(productId, qty = 1) {
     }
     
     saveCart(cart);
-    // Trigger icon update again just to be sure
     updateCartIcon();
 }
 
-// --- 7. LISTENERS ---
+// --- 8. EVENT LISTENERS ---
 function setupUIListeners() {
     updateCartIcon();
     setupScrollBehavior();
@@ -445,7 +405,6 @@ function setupProductCardEventListeners() {
     const grid = document.getElementById('products-grid'); 
     if (!grid) return;
     
-    // Clean existing listeners (optional if overwriting innerHTML)
     grid.onclick = function(event) {
         const buyButton = event.target.closest('.buy-text-btn');
         if (buyButton) { 
@@ -478,6 +437,7 @@ function setupProductCardEventListeners() {
 
 function showToast(msg, type="info") {
     const t = document.getElementById("toast-notification");
+    if(!t) return;
     t.textContent = msg;
     t.style.backgroundColor = type === "error" ? "#ef4444" : "#333";
     t.style.opacity = 1;
@@ -564,4 +524,3 @@ function setupFilterModal() {
         applyFilters(); overlay.classList.remove('visible');
     };
 }
-
