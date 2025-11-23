@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Product Details - Ramazone</title>
-    <meta property="og:title" content="Ramazone">
-    <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
-
+    
+    <link rel="preconnect" href="https://i.ibb.co">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,7 +16,8 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="product-details.css">
 </head>
-<body>
+<body class="bg-gray-50 pb-24">
+
     <!-- HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,27 +31,12 @@
                     <span id="cart-item-count"></span>
                 </a>
             </div>
-
-            <div id="search-header-content" class="py-1 hidden transition-all duration-300">
-                <a href="./products.html?focus=true" class="header-search-bar">
-                    <i class="fas fa-search text-gray-500"></i>
-                    <span class="text-gray-600 ml-3 text-sm">Search for Products...</span>
-                </a>
-            </div>
         </div>
     </header>
 
-    <!-- VARIANT LOADING OVERLAY -->
-    <div id="variant-loading-overlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-white/60 backdrop-blur-[2px] hidden transition-opacity duration-200">
-        <div class="flex flex-col items-center">
-            <div class="loader"></div>
-            <p class="text-xs text-gray-500 mt-2 font-medium animate-pulse">Updating...</p>
-        </div>
-    </div>
-
-    <!-- INITIAL LOADING INDICATOR -->
+    <!-- INITIAL LOADING -->
     <div id="loading-indicator" class="text-center py-20">
-        <p class="text-sm font-semibold text-gray-500">Loading...</p>
+        <div class="loader inline-block"></div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -56,48 +44,36 @@
          <div class="bg-white sm:rounded-xl sm:shadow-md overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-4">
                 
-                <!-- LEFT COLUMN: MEDIA GALLERY -->
+                <!-- LEFT: MEDIA -->
                 <div id="media-gallery-container">
                     <div class="p-0 sm:p-2 lg:p-3 relative">
-                        <!-- Main image viewer -->
                         <div id="main-media-wrapper" class="rounded-none sm:rounded-lg mb-2 cursor-pointer overflow-hidden relative group bg-white">
                             <div id="media-slider"></div>
-                            
-                            <!-- UPDATED SHARE BUTTON: Increased size (w-11 h-11) and icon size (w-5 h-5), adjusted padding -->
                             <button id="share-button" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md border border-gray-200 z-10 hover:scale-110 transition-transform flex items-center justify-center w-11 h-11 active:scale-95">
                                 <img src="https://www.svgrepo.com/show/521832/share-1.svg" alt="Share" class="w-5 h-5 opacity-80">
                             </button>
-                            
                         </div>
-
-                        <!-- Wrapper for Scrolling Thumbnails -->
                         <div id="thumbnail-wrapper" class="relative px-3 sm:px-0">
                              <div id="thumbnail-gallery" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
                         </div>
-
-                        <!-- Color Variants Container -->
                         <div id="image-variant-selectors-container" class="pt-2 px-3 sm:px-0"></div>
                     </div>
                 </div>
 
-                <!-- RIGHT COLUMN: PRODUCT MAIN INFO -->
+                <!-- RIGHT: INFO -->
                 <div id="product-main-info-container">
                     <div class="flex flex-col p-3 sm:p-4 lg:p-6">
-                        <!-- Rating -->
                         <div id="rating-section" class="flex items-center gap-1.5 text-xs text-gray-500 mb-1" style="display: none;">
                             <div id="product-rating-stars" class="rating-stars flex text-[10px]"></div>
                             <span id="product-review-count" class="text-[10px] text-gray-400 font-medium"></span>
                         </div>
-                        <!-- Brand -->
                         <div id="brand-info-container" class="flex items-center gap-2 mb-0.5 hidden">
                             <span id="brand-name-text" class="text-xs font-bold text-gray-800"></span>
                             <a href="#" id="visit-store-link" class="text-[10px] font-semibold text-blue-600 hover:underline">Visit store</a>
                         </div>
-                        <!-- Title -->
                         <div class="mb-1">
                             <h1 id="product-title" class="text-lg sm:text-xl font-bold text-gray-900 leading-tight"></h1>
                         </div>
-                        <!-- Price -->
                         <div class="py-0.5 mb-2"> 
                             <div id="new-price-section" class="flex flex-col items-start">
                                  <div id="lowest-price-tag-container" style="display: none; margin-bottom: 2px;">
@@ -110,17 +86,14 @@
                                 </div>
                                  <p class="text-[10px] text-gray-500 mt-0.5 font-medium flex items-center gap-1">
                                     <span>+ ₹49 Secured Packaging Fee</span>
-                                    <i class="fas fa-chevron-right text-[8px]"></i>
                                  </p>
                             </div>
                         </div>
-                        <!-- Variants & Packs -->
                         <div id="options-container" class="space-y-2 mb-3">
                             <div id="variant-selectors-container"></div>
                             <div id="combo-pack-container"></div>
                             <div id="bundle-offer-container"></div>
                         </div>
-                        <!-- Details -->
                         <div id="seller-info" class="text-[10px] font-medium text-gray-400 mb-2" style="display: none;"></div>
                         <div id="advanced-highlights-section" style="display: none;"></div>
                         <div id="tech-specs-section" class="pt-2 border-t border-gray-100 mt-2" style="display: none;">
@@ -144,21 +117,13 @@
                       <div id="handpicked-similar-container"></div>
                   </div>
                 </div>
-
-                <!-- RECENTLY VIEWED -->
                 <div id="recently-viewed-section" class="max-w-7xl mx-auto mt-4" style="display: none;">
                   <h2 class="text-lg font-bold text-gray-800 mb-3 px-3 sm:px-0">Recently Viewed</h2>
                   <div id="recently-viewed-container" class="carousel-container pb-2"></div>
                 </div>
-
-                <!-- MERGED GRID SECTION (Previously Other Products) -->
                 <div id="other-products-section" class="max-w-7xl mx-auto px-3 sm:px-0 mt-6" style="display: none;">
                   <h2 id="grid-section-title" class="text-lg font-bold text-gray-800 mb-3">More in this Category</h2>
-                  <div id="other-products-container" class="other-products-grid">
-                      <!-- Grid Items Here -->
-                  </div>
-                  
-                  <!-- INFINITE SCROLL LOADER -->
+                  <div id="other-products-container" class="other-products-grid"></div>
                   <div id="infinite-scroll-loader">
                       <div class="spinner"></div>
                       <span>Loading more products...</span>
@@ -168,57 +133,37 @@
         </div>
     </main>
 
-    <!-- MODALS & ACTIONS -->
-    <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
-    <div id="toast-notification"></div>
-
-    <!-- NEW: STICKY ACTION BAR PREMIUM -->
-    <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white z-50">
-        <div class="sticky-bar-container">
+    <!-- STICKY FOOTER (SPLIT LAYOUT) -->
+    <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
+        <div class="sticky-bar-container flex gap-3 p-3 max-w-md mx-auto items-center">
             
-            <!-- Left: Cart Icon Button -->
-            <button id="add-to-cart-btn" class="btn-icon-square">
-                <i class="fas fa-cart-plus"></i>
+            <!-- 1. Left: Cart Button (Square) -->
+            <button id="add-to-cart-btn" class="btn-icon-square flex-shrink-0 w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center bg-white text-gray-700">
+                <i class="fas fa-shopping-cart text-xl"></i>
             </button>
 
-            <!-- Right: Buy Now Button (Large) -->
-            <a id="buy-now-btn" href="#" class="btn-buy-premium">
-                <span class="btn-buy-title">Buy Now</span>
-                <span id="sticky-price-text" class="btn-buy-subtitle">at ₹...</span>
-            </a>
+            <!-- 2. Right: Buy Now Button (Wide Yellow) -->
+            <button id="buy-now-btn" class="btn-buy-premium flex-grow h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-lg flex flex-col items-center justify-center leading-tight shadow-sm active:scale-[0.98] transition-transform">
+                <span class="text-sm font-extrabold">Buy Now</span>
+                <span id="sticky-price-text" class="text-[10px] font-medium">at ₹...</span>
+            </button>
 
         </div>
     </div>
 
-    <div id="bundle-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
-        <div id="bundle-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
-            <div class="flex justify-between items-center p-3 border-b">
-                <h3 class="text-base font-bold">Bundle Offer</h3>
-                <button id="bundle-modal-close" class="text-gray-500 hover:text-gray-800 text-xl">×</button>
-            </div>
-            <div id="bundle-modal-body" class="p-4 overflow-y-auto"></div>
-            <div id="bundle-modal-footer" class="p-3 bg-gray-50 border-t"></div>
-        </div>
-    </div>
-
+    <!-- NOTIFICATIONS & MODALS -->
     <div id="go-to-cart-notification" class="fixed bottom-20 left-1/2 -translate-x-1/2 w-[90%] max-w-xs bg-gray-800 text-white rounded-lg shadow-xl p-3 z-[60] flex items-center justify-between transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none">
-        <div class="flex items-center">
-            <i class="fas fa-check-circle text-green-400 mr-2"></i>
-            <div>
-                <p class="font-bold text-xs">Added to Cart</p>
-                <p id="notification-cart-summary" class="text-[10px] text-gray-300">1 item in cart</p>
-            </div>
-        </div>
+        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i><div><p class="font-bold text-xs">Added to Cart</p><p id="notification-cart-summary" class="text-[10px] text-gray-300">1 item in cart</p></div></div>
         <a href="order.html" class="bg-white text-gray-800 font-bold text-xs py-1.5 px-3 rounded-md">Cart</a>
     </div>
+    <div id="toast-notification"></div>
+    <div id="image-modal"><span class="close">×</span><img id="modal-image-content"></div>
 
-    <!-- FIREBASE -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
-    <!-- PRODUCT LOGIC (SPLIT) -->
-    <script src="product-details-renderer.js"></script> <!-- UI & HTML Generator -->
-    <script src="product-details-main.js"></script>     <!-- Core Logic -->
+    <!-- SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
+    <script src="product-details-renderer.js" defer></script>
+    <script src="product-details-main.js" defer></script>
 </body>
 </html>
 
