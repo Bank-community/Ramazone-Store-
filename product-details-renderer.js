@@ -21,34 +21,28 @@ function renderMediaGallery(data) {
     mediaItems = (data.images?.map(src => ({ type: "image", src })) || []).concat(data.videoUrl ? [{ type: "video", src: data.videoUrl, thumbnail: data.images?.[0] }] : []);
 
     mediaItems.forEach((item, index) => {
-        // A. Main Slider Item
         const e = document.createElement("div");
         e.className = "media-item"; // CSS handles 3:4 aspect ratio
         
         if (item.type === "image") {
             e.innerHTML = `<img src="${item.src}" alt="Product image ${index+1}" draggable="false">`;
         } else {
-            // VIDEO OVERLAY (Solution for stuck slider)
             const embedUrl = getYoutubeEmbedUrl(item.src);
             e.innerHTML = `
                 <div class="video-wrapper" onclick="playVideoInPlace(this, '${embedUrl}')">
                     <img src="${item.thumbnail}" class="video-thumb" draggable="false" style="width:100%; height:100%; object-fit:contain; opacity: 0.8;">
-                    <div class="video-play-btn-large">
-                        <i class="fas fa-play"></i>
-                    </div>
+                    <div class="video-play-btn-large"><i class="fas fa-play"></i></div>
                 </div>
             `;
         }
         slider.appendChild(e);
 
-        // B. Thumbnail Item
         const t = document.createElement("div");
         t.className = "aspect-square thumbnail";
         const l = document.createElement("img");
         l.src = item.type === "image" ? item.src : item.thumbnail;
         t.appendChild(l);
 
-        // Video Icon (Small)
         if (item.type === "video") {
             const n = document.createElement("div");
             n.className = "play-icon-overlay"; 
@@ -66,11 +60,10 @@ function renderMediaGallery(data) {
     setupImageModal();
 }
 
-// Helper: Replace Thumbnail with Iframe
 window.playVideoInPlace = function(wrapper, embedUrl) {
     if (!embedUrl) return;
     wrapper.innerHTML = `<iframe src="${embedUrl}?autoplay=1" class="w-full h-full object-contain" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-    wrapper.onclick = null; // Remove click handler
+    wrapper.onclick = null; 
 }
 
 // --- 2. VARIANT RENDERER ---
@@ -198,10 +191,7 @@ function findBestMatchProduct(groupProducts, currentProduct, targetType, targetV
                 if (hasMatch) matches++;
             }
         });
-        if (matches > maxMatches) {
-            maxMatches = matches;
-            bestMatch = cand;
-        }
+        if (matches > maxMatches) { maxMatches = matches; bestMatch = cand; }
     });
     return bestMatch;
 }
@@ -214,12 +204,6 @@ function updatePriceDisplay(currentData, selectedPack, priceElementIds) {
     const lowestPriceTagContainer = document.getElementById("lowest-price-tag-container"); 
     const dynamicBadge = document.getElementById("dynamic-deal-badge");
     
-    // Badge removed as it is now in the title
-    const quantityUnitEl = document.getElementById("quantity-unit-text");
-    if (quantityUnitEl) {
-         quantityUnitEl.style.display = "none";
-    }
-
     const displayPrice = selectedPack ? Number(selectedPack.price) : Number(currentData.displayPrice); 
     const originalPrice = Number(currentData.originalPrice); 
     
@@ -241,7 +225,6 @@ function updatePriceDisplay(currentData, selectedPack, priceElementIds) {
     if (discount > 0) { 
         percentageDiscountEl.innerHTML = `<i class="fas fa-arrow-down mr-0.5 text-sm"></i>${discount}%`; 
         originalPriceEl.textContent = `₹${(selectedPack ? packOriginalPrice : originalPrice).toLocaleString("en-IN")}`; 
-        
         percentageDiscountEl.style.display = "flex"; 
         originalPriceEl.style.display = "inline"; 
         
@@ -258,7 +241,6 @@ function updatePriceDisplay(currentData, selectedPack, priceElementIds) {
         } else {
             lowestPriceTagContainer.style.display = "none";
         }
-
     } else { 
         percentageDiscountEl.style.display = "none"; 
         originalPriceEl.style.display = "none"; 
@@ -270,9 +252,7 @@ function updatePriceDisplay(currentData, selectedPack, priceElementIds) {
 function renderStars(rating, container) { container.innerHTML = ""; const fullStars = Math.floor(rating), halfStar = rating % 1 >= .5, emptyStars = 5 - fullStars - (halfStar ? 1 : 0); for (let i = 0; i < fullStars; i++)container.innerHTML += '<i class="fas fa-star"></i>'; halfStar && (container.innerHTML += '<i class="fas fa-star-half-alt"></i>'); for (let i = 0; i < emptyStars; i++)container.innerHTML += '<i class="far fa-star"></i>' }
 function getYoutubeEmbedUrl(url) { if(!url)return null;let videoId=null;try{const urlObj=new URL(url);if("www.youtube.com"===urlObj.hostname||"youtube.com"===urlObj.hostname)videoId=urlObj.searchParams.get("v");else if("youtu.be"===urlObj.hostname)videoId=urlObj.pathname.slice(1);return videoId?`https://www.youtube.com/embed/${videoId}?controls=1&rel=0&modestbranding=1`:null}catch(e){return console.error("Invalid video URL:",url,e),null}}
 
-// Slider Logic (UPDATED: Infinite Wrapping)
 function showMedia(index) { 
-    // No bounds check here, handled in logic
     slider.style.transition = "transform 0.3s ease-out";
     currentMediaIndex = index;
     currentTranslate = index * -sliderWrapper.offsetWidth;
@@ -302,18 +282,14 @@ function touchEnd(event) {
         isDragging = false;
         cancelAnimationFrame(animationID);
         const movedBy = currentTranslate - prevTranslate;
-        
-        // Logic for Infinite Loop
-        if(movedBy < -50) { // Swipe Left (Next)
+        if(movedBy < -50) { 
             currentMediaIndex++;
-            if (currentMediaIndex >= mediaItems.length) currentMediaIndex = 0; // Loop Back to Start
+            if (currentMediaIndex >= mediaItems.length) currentMediaIndex = 0; 
         }
-        
-        if(movedBy > 50) { // Swipe Right (Prev)
+        if(movedBy > 50) { 
             currentMediaIndex--;
-            if (currentMediaIndex < 0) currentMediaIndex = mediaItems.length - 1; // Loop to End
+            if (currentMediaIndex < 0) currentMediaIndex = mediaItems.length - 1; 
         }
-        
         showMedia(currentMediaIndex);
     }
 }
@@ -322,10 +298,8 @@ function getPositionX(event) { return event.type.includes("mouse")?event.pageX:e
 function animation() { setSliderPosition(),isDragging&&requestAnimationFrame(animation)}
 function setSliderPosition() { slider.style.transform=`translateX(${currentTranslate}px)`}
 
-// Modal Logic
-function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close"),prevBtn=document.querySelector("#image-modal .prev"),nextBtn=document.querySelector("#image-modal .next");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none";const showModalImage=direction=>{let e=mediaItems.map((e,t)=>({...e,originalIndex:t})).filter(e=>"image"===e.type);if(0!==e.length){const t=e.findIndex(e=>e.originalIndex===currentMediaIndex);let n=(t+direction+e.length)%e.length;const r=e[n];modalImg.src=r.src,showMedia(r.originalIndex)}};prevBtn.onclick=e=>{e.stopPropagation(),showModalImage(-1)},nextBtn.onclick=e=>{e.stopPropagation(),showModalImage(1)}}
+function setupImageModal() { const modal=document.getElementById("image-modal"),modalImg=document.getElementById("modal-image-content"),closeBtn=document.querySelector("#image-modal .close");sliderWrapper.onclick=e=>{if(isDragging||currentTranslate-prevTranslate!=0)return;"image"===mediaItems[currentMediaIndex].type&&(modal.style.display="flex",modalImg.src=mediaItems[currentMediaIndex].src)},closeBtn.onclick=()=>modal.style.display="none"}
 
-// Tech Specs (NANO)
 function renderTechSpecs(techSpecs) {
     const container = document.getElementById('tech-specs-container');
     const section = document.getElementById('tech-specs-section');
@@ -407,7 +381,7 @@ function renderAdvancedHighlights(specData) { const container = document.getElem
 
 function showToast(message, type = "info") { const toast=document.getElementById("toast-notification");toast.textContent=message,toast.style.backgroundColor="error"===type?"#ef4444":"#333",toast.classList.add("show"),setTimeout(()=>toast.classList.remove("show"),2500)}
 
-// --- Export functions to Global Scope for Main JS ---
+// Export functions
 window.renderMediaGallery = renderMediaGallery;
 window.renderVariantSelectors = renderVariantSelectors;
 window.updatePriceDisplay = updatePriceDisplay;
@@ -418,5 +392,4 @@ window.renderProductBundles = renderProductBundles;
 window.renderDescription = renderDescription;
 window.renderAdvancedHighlights = renderAdvancedHighlights;
 window.showToast = showToast;
-
 
