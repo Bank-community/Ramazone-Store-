@@ -35,7 +35,7 @@ function getProductImage(item) {
 const copyToClipboard = (text) => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text)
-            .then(() => showToast("Order ID Copied!", "success"))
+            .then(() => showToast("Code Copied!", "success"))
             .catch(() => fallbackCopy(text));
     } else {
         fallbackCopy(text);
@@ -52,7 +52,7 @@ const fallbackCopy = (text) => {
     textArea.select();
     try {
         document.execCommand('copy');
-        showToast("Order ID Copied!", "success");
+        showToast("Code Copied!", "success");
     } catch (err) {
         showToast("Unable to copy", "error");
     }
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updatePricing();
         document.getElementById('price-summary-box').classList.remove('hidden');
         document.getElementById('btn-to-address').classList.remove('hidden');
-        document.getElementById('add-more-products-btn').classList.remove('hidden'); // Show Add More Btn
+        document.getElementById('add-more-products-btn').classList.remove('hidden'); 
         renderSavedAddresses();
     } else {
         document.getElementById('empty-cart-message').classList.remove('hidden');
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('loading-indicator').classList.add('hidden');
 
     setupEvents();
-    monitorHelpRequestStatus(); // Start monitoring active help request
+    monitorHelpRequestStatus(); 
 });
 
 async function fetchConfig() {
@@ -218,6 +218,43 @@ function updatePricing() {
         btn.disabled = false; btn.style.opacity = 1;
         notice.classList.add('hidden');
     }
+}
+
+// --- COUPONS POPUP LOGIC ---
+function openCouponsPopup() {
+    document.getElementById('coupons-popup-overlay').classList.add('active');
+    const container = document.getElementById('coupons-list-container');
+    
+    if (validCoupons.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-gray-500"><i class="fas fa-ticket-alt text-4xl mb-2 text-gray-300"></i><p>No coupons available right now.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = validCoupons.map(c => `
+        <div class="coupon-card">
+            <div>
+                <div class="coupon-code">${c.code}</div>
+                <div class="coupon-desc">${c.description || 'Save ' + c.discount}</div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="copyToClipboard('${c.code}')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-copy"></i></button>
+                <button onclick="applyCouponFromList('${c.code}')" class="bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded hover:bg-indigo-100">APPLY</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function closeCouponsPopup(e) {
+    if (e === true || e.target.classList.contains('popup-overlay')) {
+        document.getElementById('coupons-popup-overlay').classList.remove('active');
+    }
+}
+
+function applyCouponFromList(code) {
+    closeCouponsPopup(true);
+    document.getElementById('coupon-input').value = code;
+    scrollToCoupons(); // Navigate to step 3
+    document.getElementById('apply-coupon-btn').click(); // Trigger existing logic
 }
 
 // --- TRACK ORDER ---
@@ -470,7 +507,7 @@ async function downloadInvoiceAsImage(order) {
     }
 }
 
-// --- HELP CENTER LOGIC (UPDATED) ---
+// --- HELP CENTER LOGIC (WITH DAILY LIMIT) ---
 function openHelpPopup() { 
     document.getElementById('help-popup-overlay').classList.add('active'); 
     monitorHelpRequestStatus(); // Check status on open
@@ -482,6 +519,22 @@ function closeHelpPopup(e) {
 
 async function handleHelpSubmit(e) {
     e.preventDefault();
+    
+    // 1. CHECK DAILY LIMIT
+    const today = new Date().toDateString();
+    let dailyStats = JSON.parse(localStorage.getItem('ramazone_help_limit') || '{}');
+    
+    // Reset if new day
+    if (dailyStats.date !== today) {
+        dailyStats = { date: today, count: 0 };
+    }
+
+    if (dailyStats.count >= 3) {
+        showToast('Daily limit reached (3/3). Please try tomorrow.', 'error');
+        return;
+    }
+
+    // 2. PROCEED SUBMISSION
     const name = document.getElementById('help-name').value;
     const mobile = document.getElementById('help-mobile').value;
     const reason = document.getElementById('help-reason').value;
@@ -496,9 +549,14 @@ async function handleHelpSubmit(e) {
     try {
         await database.ref(`ramazone/help_requests/${requestId}`).set(requestData);
         localStorage.setItem('ramazoneActiveHelpRequest', requestId); // Save to track
+        
+        // Update Count
+        dailyStats.count++;
+        localStorage.setItem('ramazone_help_limit', JSON.stringify(dailyStats));
+
         showToast('Request Submitted! We will contact you.', 'success');
         document.getElementById('help-form').reset();
-        monitorHelpRequestStatus(); // Start monitoring immediately
+        monitorHelpRequestStatus(); 
     } catch (err) {
         console.error(err);
         showToast('Failed to submit. Try again.', 'error');
@@ -520,19 +578,18 @@ function monitorHelpRequestStatus() {
         return;
     }
 
-    // Listen to changes in Firebase
     if (helpRequestListener) database.ref(`ramazone/help_requests/${activeId}`).off('value', helpRequestListener);
 
     helpRequestListener = database.ref(`ramazone/help_requests/${activeId}`).on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) {
-            localStorage.removeItem('ramazoneActiveHelpRequest'); // Deleted by admin?
+            localStorage.removeItem('ramazoneActiveHelpRequest'); 
             monitorHelpRequestStatus();
             return;
         }
 
         statusContainer.classList.remove('hidden');
-        form.classList.add('hidden'); // Hide form if request is active
+        form.classList.add('hidden'); 
         preview.innerText = `Issue: ${data.reason}`;
 
         if (data.status === 'Pending') {
@@ -546,10 +603,11 @@ function monitorHelpRequestStatus() {
             iconDiv.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
             statusContainer.className = "mb-6 p-4 bg-green-50 rounded-xl border border-green-100";
             
-            // Optional: Allow new request after some time or provide a "New Request" button
+            // Allow new request after 10 seconds of being read
             setTimeout(() => {
-                 // Logic to reset if needed, for now we keep showing "Read" state
-            }, 5000);
+                 localStorage.removeItem('ramazoneActiveHelpRequest');
+                 // Optional: auto-refresh UI or let user open popup again
+            }, 10000);
         }
     });
 }
