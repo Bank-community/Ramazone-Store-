@@ -3,17 +3,46 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ramazone</title>
     <link rel="manifest" href="/manifest.json">
 
     <meta name="theme-color" content="#4F46E5" />
     <link rel="apple-touch-icon" href="https://i.ibb.co/WvTg0bc5/20240813-084352.png">
 
+    <!-- SUPERSONIC PRECONNECT -->
+    <link rel="preconnect" href="https://i.ibb.co">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://www.svgrepo.com">
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="style.css">
+
+    <!-- Critical CSS (Updated for Bigger Slider) -->
+    <style>
+        body { opacity: 1; transition: opacity 0.3s ease; }
+        #page-header { min-height: 60px; }
+        
+        /* FIX: Slider ko bada aur responsive banaya */
+        .slider-wrapper { 
+            width: calc(100% - 24px); 
+            margin: 12px auto; 
+            aspect-ratio: 16 / 9; /* Standard Banner Ratio */
+            background: #f3f4f6; 
+            border-radius: 12px; 
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Hide scrollbars initially */
+        ::-webkit-scrollbar { display: none; }
+    </style>
 </head>
 
 <body class="bg-white">
@@ -22,15 +51,17 @@
     <div id="home-category-suggestions" class="hidden"></div>
 
     <!-- HEADER -->
-    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+    <header id="page-header" class="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-2 flex items-center justify-between">
                 <div class="w-10">
-                    <button id="menu-toggle-btn" class="p-2 -ml-2"><img src="https://www.svgrepo.com/show/532195/menu.svg" alt="Menu" class="h-6 w-6"></button>
+                    <button id="menu-toggle-btn" class="p-2 -ml-2" aria-label="Menu">
+                        <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
                 </div>
                 <div id="header-center-area" class="flex-grow text-center relative">
                     <div id="header-logo-container">
-                        <a href="./index.html"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="inline-block" style="max-height: 40px;"></a>
+                        <a href="./index.html"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="inline-block" style="max-height: 36px; width: auto;" width="120" height="36"></a>
                     </div>
                     <div id="header-search-container" class="absolute inset-0">
                         <div class="search-link-header" id="header-search-trigger">
@@ -44,12 +75,12 @@
                 <div class="w-auto flex justify-end items-center gap-2">
                     <button id="install-app-btn" class="p-2 hidden"><img src="https://www.svgrepo.com/show/308714/mobile-download-phone-smartphone.svg" alt="Install App" class="h-6 w-6"></button>
 
-                    <!-- Cart Link -->
-                    <a href="order.html" id="header-cart-link" class="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                        <i class="fas fa-shopping-cart text-2xl"></i>
-                        <span id="cart-item-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white empty:hidden"></span>
+                    <!-- Cart Link (FIXED: Added Badge Back) -->
+                    <a href="order.html" id="header-cart-link" class="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors" aria-label="Cart">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6"><path d="M21 5L19 12H7.37671M20 16H8L6 3H3M16 5.5H13.5M13.5 5.5H11M13.5 5.5V8M13.5 5.5V3M9 20C9 20.5523 8.55228 21 8 21C7.44772 21 7 20.5523 7 20C7 19.4477 7.44772 19 8 19C8.55228 19 9 19.4477 9 20ZM20 20C20 20.5523 19.5523 21 19 21C18.4477 21 18 20.5523 18 20C18 19.4477 18.4477 19 19 19C19.5523 19 20 19.4477 20 20Z" stroke="#374151" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        <!-- The Count Badge -->
+                        <span id="cart-item-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center border-2 border-white hidden"></span>
                     </a>
-
                 </div>
             </div>
         </div>
@@ -58,11 +89,15 @@
     <!-- SIDE MENU -->
     <div id="menu-overlay"></div>
     <nav id="side-menu">
-        <div class="p-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold">Menu</h2>
+        <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-white">
+            <h2 class="text-xl font-bold text-indigo-900">Menu</h2>
         </div>
-        <div class="menu-items"><a href="./index.html" class="menu-item active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a><a href="./order.html" class="menu-item" id="menu-cart-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart"><span>Cart</span></a><a href="#" class="menu-item" id="menu-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span></a><a href="#" class="menu-item" id="menu-cashback-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback"><span>Cashback</span></a>
-            <div id="menu-follow-item" class="menu-item"><img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span><i class="fas fa-chevron-down text-xs ml-auto"></i></div>
+        <div class="menu-items">
+            <a href="./index.html" class="menu-item active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home" loading="lazy"><span>Home</span></a>
+            <a href="./order.html" class="menu-item" id="menu-cart-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart" loading="lazy"><span>Cart</span></a>
+            <a href="#" class="menu-item" id="menu-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play" loading="lazy"><span>Play</span></a>
+            <a href="#" class="menu-item" id="menu-cashback-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback" loading="lazy"><span>Cashback</span></a>
+            <div id="menu-follow-item" class="menu-item"><img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow" loading="lazy"><span>Follow</span><i class="fas fa-chevron-down text-xs ml-auto"></i></div>
             <div id="follow-submenu" class="submenu"></div>
         </div>
     </nav>
@@ -78,10 +113,9 @@
         <div class="slider-dots" id="slider-dots-container"></div>
     </div>
 
-    <!-- NOTE: Single Banner section removed from here. It will now be loaded dynamically inside main-content-area -->
-
     <!-- DYNAMIC SECTIONS AREA -->
-    <main id="main-content-area" class="mb-16 md:mb-0">
+    <main id="main-content-area" class="mb-16 md:mb-0 min-h-[500px]">
+        <!-- Content loads here -->
     </main>
 
     <!-- LOADERS & NOTIFICATIONS -->
@@ -95,7 +129,7 @@
     <footer id="desktop-footer">
         <div class="container mx-auto">
             <div class="footer-grid">
-                <div class="footer-column"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4">
+                <div class="footer-column"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4" loading="lazy">
                     <p>Aapki Apni Dukaan.</p>
                 </div>
                 <div class="footer-column">
@@ -116,10 +150,10 @@
     <!-- ADD TO CART POPUP -->
     <div id="home-go-to-cart-notification" class="fixed bottom-4 right-4 left-4 md:left-auto md:max-w-md bg-white rounded-lg shadow-2xl p-4 transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out z-50 pointer-events-none flex items-center justify-between">
         <div>
-            <p class="font-bold text-gray-800">Successfully added to cart!</p>
-            <p id="home-notification-summary" class="text-sm text-gray-600"></p>
+            <p class="font-bold text-gray-800 text-sm">Added to cart!</p>
+            <p id="home-notification-summary" class="text-xs text-gray-600"></p>
         </div>
-        <a href="order.html" class="text-white font-bold py-2 px-5 rounded-lg text-sm" style="background-color: var(--primary-color);">View Cart</a>
+        <a href="order.html" class="text-white font-bold py-2 px-4 rounded-lg text-xs" style="background-color: var(--primary-color);">View Cart</a>
     </div>
 
     <!-- LOCATION SELECTOR MODAL -->
@@ -131,46 +165,26 @@
         </div>
         <div class="location-panel-body">
             <!-- TIER 1: STATES -->
-            <div class="loc-tier-header">
-                <span class="loc-tier-number">1</span> Select State
-            </div>
-            <div id="loc-state-tabs" class="loc-tab-container">
-                <div class="location-loading">Loading states...</div>
-            </div>
-
+            <div class="loc-tier-header"><span class="loc-tier-number">1</span> Select State</div>
+            <div id="loc-state-tabs" class="loc-tab-container"><div class="location-loading">Loading...</div></div>
             <!-- TIER 2: DISTRICTS -->
             <div id="loc-district-tier" class="hidden">
-                <div class="loc-tier-header">
-                    <span class="loc-tier-number">2</span> Select District
-                </div>
-                <div id="loc-district-tabs" class="loc-tab-container">
-                    <p class="loc-tab-placeholder">Please select a state first.</p>
-                </div>
+                <div class="loc-tier-header"><span class="loc-tier-number">2</span> Select District</div>
+                <div id="loc-district-tabs" class="loc-tab-container"></div>
             </div>
-
             <!-- TIER 3: AREAS -->
             <div id="loc-area-tier" class="hidden">
-                <div class="loc-tier-header">
-                    <span class="loc-tier-number">3</span> Select Area
-                </div>
-                <div class="location-search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="loc-area-search-input" placeholder="Search area in selected district...">
-                </div>
-                <div id="loc-area-list-container">
-                    <p class="loc-tab-placeholder">Please select a district first.</p>
-                </div>
+                <div class="loc-tier-header"><span class="loc-tier-number">3</span> Select Area</div>
+                <div class="location-search-box"><i class="fas fa-search"></i><input type="text" id="loc-area-search-input" placeholder="Search area..."></div>
+                <div id="loc-area-list-container"></div>
             </div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-    <!-- Render Utils -->
-    <script src="render-utils.js"></script>
-    <!-- MAIN LOGIC -->
-    <script src="main.js"></script>
+    <!-- SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
+    <script src="render-utils.js" defer></script>
+    <script src="main.js" defer></script>
 </body>
-
 </html>
