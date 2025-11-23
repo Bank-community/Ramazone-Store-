@@ -3,6 +3,7 @@ let allProductsCache = [], validCoupons = [], orderItems = [];
 let appliedCoupon = null, database, currentStep = 1;
 let ramazoneConfig = { deliveryCharge: 15, freeDeliveryThreshold: 500, minOrderForDelivery: 0 };
 let editingAddressIndex = null;
+let helpRequestListener = null;
 
 const firebaseConfig = {
     apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
@@ -22,12 +23,12 @@ const showToast = (msg, type = "info") => {
     setTimeout(() => { t.style.opacity = 0; t.style.visibility = 'hidden'; }, 3000); 
 };
 
-// --- SMART IMAGE FINDER (Fixes Broken Images) ---
+// --- SMART IMAGE FINDER ---
 function getProductImage(item) {
-    if (item.image) return item.image; // Agar singular image hai
-    if (item.images && item.images.length > 0) return item.images[0]; // Agar array hai
-    if (item.imageUrl) return item.imageUrl; // Agar imageUrl key hai
-    return 'https://placehold.co/150?text=No+Image'; // Fallback
+    if (item.image) return item.image; 
+    if (item.images && item.images.length > 0) return item.images[0]; 
+    if (item.imageUrl) return item.imageUrl; 
+    return 'https://placehold.co/150?text=No+Image'; 
 }
 
 // --- ROBUST COPY FUNCTION ---
@@ -67,12 +68,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const cart = getCart();
     if (cart.length > 0) {
-        // Process cart AFTER fetching config/products to ensure we have details
         orderItems = processCart(cart);
         renderOrderItems();
         updatePricing();
         document.getElementById('price-summary-box').classList.remove('hidden');
         document.getElementById('btn-to-address').classList.remove('hidden');
+        document.getElementById('add-more-products-btn').classList.remove('hidden'); // Show Add More Btn
         renderSavedAddresses();
     } else {
         document.getElementById('empty-cart-message').classList.remove('hidden');
@@ -80,13 +81,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('loading-indicator').classList.add('hidden');
 
     setupEvents();
+    monitorHelpRequestStatus(); // Start monitoring active help request
 });
 
 async function fetchConfig() {
     const s = await database.ref('ramazone').get();
     const d = s.val() || {};
     ramazoneConfig = { ...ramazoneConfig, ...(d.config || {}) };
-    // Ensure products is an array
     let products = d.products || {};
     if (!Array.isArray(products)) {
         allProductsCache = Object.values(products);
@@ -104,12 +105,11 @@ async function fetchConfig() {
 function processCart(cart) {
     return cart.map((item, idx) => {
         const prod = allProductsCache.find(p => p.id === item.id);
-        // Merge cart item with product details
         return prod ? { ...prod, ...item, cartIndex: idx } : null;
     }).filter(Boolean);
 }
 
-// --- RENDER CART ITEMS (UPDATED) ---
+// --- RENDER CART ITEMS ---
 function renderOrderItems() {
     const container = document.getElementById('order-items-container');
     container.innerHTML = orderItems.map(item => {
@@ -117,13 +117,12 @@ function renderOrderItems() {
         const price = isPack ? item.pack.price : item.displayPrice;
         const originalPrice = item.originalPrice || (price * 1.2); 
         const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
-        const imgUrl = getProductImage(item); // Using Smart Image Finder
+        const imgUrl = getProductImage(item); 
         
         const variants = [];
         if(item.variants) Object.entries(item.variants).forEach(([k,v]) => variants.push(`${k}: ${v}`));
         if(isPack) variants.push(item.pack.name);
         
-        // Added <a href> tags to make image and title clickable
         return `
         <div class="order-item-card">
             <button class="delete-item-btn" onclick="handleCartAction('delete', ${item.cartIndex})">
@@ -171,7 +170,6 @@ function handleCartAction(action, idx) {
     }
     saveCart(cart);
     
-    // Re-process cart to get updated data
     if (cart.length > 0) {
         orderItems = processCart(cart);
         renderOrderItems(); 
@@ -280,7 +278,7 @@ async function searchOrders() {
                 </div>
                 <div class="flex gap-2 overflow-x-auto mb-2">
                     ${(o.items || []).map(i => {
-                        const img = getProductImage(i); // Use Helper Here
+                        const img = getProductImage(i); 
                         return `<img src="${img}" class="w-10 h-10 rounded border object-contain bg-white">`
                     }).join('')}
                 </div>
@@ -304,7 +302,7 @@ async function searchOrders() {
 
 document.getElementById('popup-search-btn').addEventListener('click', searchOrders);
 
-// --- ORDER DETAILS (WITH TRACKER LINE) ---
+// --- ORDER DETAILS ---
 function openOrderDetails(order) {
     const modal = document.getElementById('order-details-overlay');
     const trackCont = document.getElementById('details-tracker-container');
@@ -317,7 +315,7 @@ function openOrderDetails(order) {
     renderDeliveryTracker(status, trackCont);
 
     listCont.innerHTML = (order.items || []).map(i => {
-        const img = getProductImage(i); // Use Helper
+        const img = getProductImage(i); 
         return `
         <div class="flex gap-3 border-b pb-2 last:border-0">
             <img src="${img}" class="w-14 h-14 object-contain rounded border bg-white">
@@ -358,9 +356,7 @@ function renderDeliveryTracker(status, container) {
     
     container.innerHTML = `
     <div class="relative">
-        <!-- Grey Background Line -->
         <div class="absolute top-[12px] left-[12%] right-[12%] h-[3px] bg-gray-200 z-0 rounded"></div>
-        <!-- Green Progress Line -->
         <div class="absolute top-[12px] left-[12%] h-[3px] bg-green-500 z-0 rounded transition-all duration-500" style="width:${idx >= 0 ? (idx/3)*76 : 0}%"></div>
         
         <div class="flex justify-between relative z-10">
@@ -377,11 +373,10 @@ function renderDeliveryTracker(status, container) {
     `;
 }
 
-// --- PROFESSIONAL INVOICE GENERATOR ---
+// --- INVOICE GENERATOR ---
 async function downloadInvoiceAsImage(order) {
     const btn = document.getElementById('details-invoice-btn');
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-    
     const captureArea = document.getElementById('invoice-capture-area');
     const s = order.priceSummary;
     
@@ -405,7 +400,6 @@ async function downloadInvoiceAsImage(order) {
     captureArea.innerHTML = `
         <div style="font-family:'Segoe UI', sans-serif; color:#333; background:white; padding:40px; width:794px; box-sizing:border-box; position:relative;">
             <div style="height:8px; background:#DC2626; position:absolute; top:0; left:0; width:100%;"></div>
-            
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:20px; margin-bottom:40px;">
                 <div>
                     <h1 style="color:#DC2626; margin:0; font-size:36px; font-weight:bold; letter-spacing:1px;">INVOICE</h1>
@@ -419,14 +413,12 @@ async function downloadInvoiceAsImage(order) {
                     <p style="margin:2px 0 0; font-size:12px; color:#555;">+91 7903698180</p>
                 </div>
             </div>
-
             <div style="background:#F9FAFB; padding:15px; border-left:4px solid #DC2626; margin-bottom:30px;">
                 <p style="margin:0; font-size:12px; text-transform:uppercase; color:#888; font-weight:bold;">Bill To:</p>
                 <h3 style="margin:5px 0 2px; font-size:16px;">${order.customerDetails.name}</h3>
                 <p style="margin:0; font-size:14px;">${order.customerDetails.mobile}</p>
                 <p style="margin:0; font-size:14px;">${order.customerDetails.address}</p>
             </div>
-
             <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:30px;">
                 <thead>
                     <tr style="background:#DC2626; color:white;">
@@ -439,29 +431,14 @@ async function downloadInvoiceAsImage(order) {
                 </thead>
                 <tbody>${itemsHTML}</tbody>
             </table>
-
             <div style="display:flex; justify-content:flex-end;">
                 <div style="width:250px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px;">
-                        <span>Subtotal:</span>
-                        <span>₹${s.subtotal}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px;">
-                        <span>Delivery:</span>
-                        <span>${s.deliveryFee ? '₹'+s.deliveryFee : 'Free'}</span>
-                    </div>
-                    ${s.coupon ? `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px; color:green;">
-                        <span>Discount:</span>
-                        <span>-₹${s.coupon.discount}</span>
-                    </div>` : ''}
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:2px solid #eee; padding-top:10px; font-size:18px; font-weight:bold; color:#DC2626;">
-                        <span>Total:</span>
-                        <span>₹${s.grandTotal}</span>
-                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px;"><span>Subtotal:</span><span>₹${s.subtotal}</span></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px;"><span>Delivery:</span><span>${s.deliveryFee ? '₹'+s.deliveryFee : 'Free'}</span></div>
+                    ${s.coupon ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px; color:green;"><span>Discount:</span><span>-₹${s.coupon.discount}</span></div>` : ''}
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:2px solid #eee; padding-top:10px; font-size:18px; font-weight:bold; color:#DC2626;"><span>Total:</span><span>₹${s.grandTotal}</span></div>
                 </div>
             </div>
-
             <div style="position:absolute; bottom:30px; left:40px; width:calc(100% - 80px); text-align:center; border-top:1px solid #eee; padding-top:20px;">
                 <p style="margin:0; color:#888; font-size:12px;">Thank you for your business!</p>
                 <p style="margin:2px 0 0; color:#DC2626; font-weight:bold; font-size:12px;">www.ramazon.in</p>
@@ -478,14 +455,7 @@ async function downloadInvoiceAsImage(order) {
     try {
         await Promise.all(promises);
         await new Promise(r => setTimeout(r, 300));
-
-        const canvas = await html2canvas(captureArea, { 
-            scale: 2, 
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff'
-        });
-        
+        const canvas = await html2canvas(captureArea, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
         const link = document.createElement('a');
         link.download = `Invoice_${order.orderId}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -495,65 +465,106 @@ async function downloadInvoiceAsImage(order) {
         console.error(e);
         showToast('Error generating invoice', 'error');
     } finally {
-        btn.disabled = false; 
-        btn.innerHTML = '<i class="fas fa-file-image mr-2"></i> Download Invoice as Image';
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-image mr-2"></i> Download Invoice as Image';
         captureArea.innerHTML = '';
     }
 }
 
-// --- HELP CENTER & UTILS ---
-function openHelpPopup() { document.getElementById('help-popup-overlay').classList.add('active'); }
-function closeHelpPopup(e) { if(e === true || e.target.classList.contains('popup-overlay')) document.getElementById('help-popup-overlay').classList.remove('active'); }
-function handleHelpSubmit(e) { e.preventDefault(); showToast('Request Submitted!', 'success'); document.getElementById('help-form').reset(); closeHelpPopup(true); }
-function scrollToCoupons() {
-    navigateToStep(3);
-    setTimeout(() => {
-        document.getElementById('coupon-input').focus();
-        document.getElementById('coupon-section-wrapper').classList.add('ring-2', 'ring-indigo-500');
-        setTimeout(() => document.getElementById('coupon-section-wrapper').classList.remove('ring-2', 'ring-indigo-500'), 1000);
-    }, 300);
+// --- HELP CENTER LOGIC (UPDATED) ---
+function openHelpPopup() { 
+    document.getElementById('help-popup-overlay').classList.add('active'); 
+    monitorHelpRequestStatus(); // Check status on open
 }
-function navigateToStep(step) {
-    document.querySelectorAll('.step-content').forEach(d => d.classList.remove('active'));
-    document.getElementById(step === 1 ? 'step-cart' : step === 2 ? 'step-address' : 'step-payment').classList.add('active');
-    document.querySelectorAll('.step').forEach((el, i) => {
-        el.classList.remove('active', 'completed');
-        if(i < step - 1) el.classList.add('completed');
-        if(i === step - 1) el.classList.add('active');
+function closeHelpPopup(e) { 
+    if(e === true || e.target.classList.contains('popup-overlay')) 
+        document.getElementById('help-popup-overlay').classList.remove('active'); 
+}
+
+async function handleHelpSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('help-name').value;
+    const mobile = document.getElementById('help-mobile').value;
+    const reason = document.getElementById('help-reason').value;
+    const requestId = 'HLP' + Date.now();
+
+    const requestData = {
+        requestId, name, mobile, reason, 
+        status: 'Pending', // Initial status
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    try {
+        await database.ref(`ramazone/help_requests/${requestId}`).set(requestData);
+        localStorage.setItem('ramazoneActiveHelpRequest', requestId); // Save to track
+        showToast('Request Submitted! We will contact you.', 'success');
+        document.getElementById('help-form').reset();
+        monitorHelpRequestStatus(); // Start monitoring immediately
+    } catch (err) {
+        console.error(err);
+        showToast('Failed to submit. Try again.', 'error');
+    }
+}
+
+// --- LIVE STATUS MONITORING ---
+function monitorHelpRequestStatus() {
+    const activeId = localStorage.getItem('ramazoneActiveHelpRequest');
+    const statusContainer = document.getElementById('help-active-request-container');
+    const form = document.getElementById('help-form');
+    const statusText = document.getElementById('help-status-text');
+    const iconDiv = document.getElementById('help-status-icon');
+    const preview = document.getElementById('help-request-preview');
+
+    if (!activeId) {
+        statusContainer.classList.add('hidden');
+        form.classList.remove('hidden');
+        return;
+    }
+
+    // Listen to changes in Firebase
+    if (helpRequestListener) database.ref(`ramazone/help_requests/${activeId}`).off('value', helpRequestListener);
+
+    helpRequestListener = database.ref(`ramazone/help_requests/${activeId}`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            localStorage.removeItem('ramazoneActiveHelpRequest'); // Deleted by admin?
+            monitorHelpRequestStatus();
+            return;
+        }
+
+        statusContainer.classList.remove('hidden');
+        form.classList.add('hidden'); // Hide form if request is active
+        preview.innerText = `Issue: ${data.reason}`;
+
+        if (data.status === 'Pending') {
+            statusText.innerText = "Pending";
+            statusText.className = "text-yellow-600 font-bold";
+            iconDiv.innerHTML = '<i class="fas fa-clock text-yellow-500"></i>';
+            statusContainer.className = "mb-6 p-4 bg-yellow-50 rounded-xl border border-yellow-100";
+        } else if (data.status === 'Read' || data.status === 'Solved') {
+            statusText.innerText = "Successfully Read";
+            statusText.className = "text-green-600 font-bold";
+            iconDiv.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
+            statusContainer.className = "mb-6 p-4 bg-green-50 rounded-xl border border-green-100";
+            
+            // Optional: Allow new request after some time or provide a "New Request" button
+            setTimeout(() => {
+                 // Logic to reset if needed, for now we keep showing "Read" state
+            }, 5000);
+        }
     });
-    document.getElementById('stepper-progress').style.width = `${((step-1)/2)*100}%`;
-    currentStep = step;
-    window.scrollTo(0,0);
 }
-function renderSavedAddresses() {
-    const arr = getSavedAddresses();
-    const cont = document.getElementById('saved-address-container');
-    if(arr.length === 0) { cont.innerHTML = '<p class="text-xs text-center bg-gray-50 p-2 rounded">No saved addresses.</p>'; return; }
-    cont.innerHTML = arr.map((a, i) => `
-        <div class="border p-3 rounded-lg flex justify-between items-start bg-white ${a.isPrime?'border-indigo-500 ring-1 ring-indigo-500':''}" onclick="useAddress(${i})">
-            <div><p class="font-bold text-sm">${a.name} ${a.isPrime?'<span class="text-[10px] bg-indigo-600 text-white px-1 rounded">DEFAULT</span>':''}</p><p class="text-xs text-gray-600">${a.mobile}</p><p class="text-xs text-gray-500 line-clamp-1">${a.address}</p></div>
-            <button onclick="event.stopPropagation(); deleteAddress(${i})" class="text-red-400"><i class="fas fa-trash-alt"></i></button>
-        </div>
-    `).join('');
-}
+
+// --- UTILS ---
+function scrollToCoupons() { navigateToStep(3); setTimeout(() => { document.getElementById('coupon-input').focus(); document.getElementById('coupon-section-wrapper').classList.add('ring-2', 'ring-indigo-500'); setTimeout(() => document.getElementById('coupon-section-wrapper').classList.remove('ring-2', 'ring-indigo-500'), 1000); }, 300); }
+function navigateToStep(step) { document.querySelectorAll('.step-content').forEach(d => d.classList.remove('active')); document.getElementById(step === 1 ? 'step-cart' : step === 2 ? 'step-address' : 'step-payment').classList.add('active'); document.querySelectorAll('.step').forEach((el, i) => { el.classList.remove('active', 'completed'); if(i < step - 1) el.classList.add('completed'); if(i === step - 1) el.classList.add('active'); }); document.getElementById('stepper-progress').style.width = `${((step-1)/2)*100}%`; currentStep = step; window.scrollTo(0,0); }
+function renderSavedAddresses() { const arr = getSavedAddresses(); const cont = document.getElementById('saved-address-container'); if(arr.length === 0) { cont.innerHTML = '<p class="text-xs text-center bg-gray-50 p-2 rounded">No saved addresses.</p>'; return; } cont.innerHTML = arr.map((a, i) => `<div class="border p-3 rounded-lg flex justify-between items-start bg-white ${a.isPrime?'border-indigo-500 ring-1 ring-indigo-500':''}" onclick="useAddress(${i})"><div><p class="font-bold text-sm">${a.name} ${a.isPrime?'<span class="text-[10px] bg-indigo-600 text-white px-1 rounded">DEFAULT</span>':''}</p><p class="text-xs text-gray-600">${a.mobile}</p><p class="text-xs text-gray-500 line-clamp-1">${a.address}</p></div><button onclick="event.stopPropagation(); deleteAddress(${i})" class="text-red-400"><i class="fas fa-trash-alt"></i></button></div>`).join(''); }
 function useAddress(i) { const a = getSavedAddresses()[i]; document.getElementById('customer-name').value = a.name; document.getElementById('customer-mobile').value = a.mobile; document.getElementById('customer-address').value = a.address; editingAddressIndex = i; }
 function deleteAddress(i) { const arr = getSavedAddresses(); arr.splice(i, 1); saveAddresses(arr); renderSavedAddresses(); }
-document.getElementById('save-address-btn').addEventListener('click', () => {
-    const n = document.getElementById('customer-name').value, m = document.getElementById('customer-mobile').value, a = document.getElementById('customer-address').value;
-    if(!n || !m || !a) return showToast('Fill all details', 'error');
-    const arr = getSavedAddresses();
-    const newAddr = { name: n, mobile: m, address: a, isPrime: arr.length === 0 };
-    if(editingAddressIndex !== null) arr[editingAddressIndex] = { ...newAddr, isPrime: arr[editingAddressIndex].isPrime }; else arr.push(newAddr);
-    saveAddresses(arr); renderSavedAddresses(); editingAddressIndex = null; document.getElementById('customer-details-form').reset(); showToast('Address Saved', 'success');
-});
+document.getElementById('save-address-btn').addEventListener('click', () => { const n = document.getElementById('customer-name').value, m = document.getElementById('customer-mobile').value, a = document.getElementById('customer-address').value; if(!n || !m || !a) return showToast('Fill all details', 'error'); const arr = getSavedAddresses(); const newAddr = { name: n, mobile: m, address: a, isPrime: arr.length === 0 }; if(editingAddressIndex !== null) arr[editingAddressIndex] = { ...newAddr, isPrime: arr[editingAddressIndex].isPrime }; else arr.push(newAddr); saveAddresses(arr); renderSavedAddresses(); editingAddressIndex = null; document.getElementById('customer-details-form').reset(); showToast('Address Saved', 'success'); });
 function setupEvents() {
     document.getElementById('btn-to-address').addEventListener('click', () => navigateToStep(2));
     document.getElementById('btn-to-payment').addEventListener('click', () => { if(document.getElementById('customer-details-form').checkValidity()) navigateToStep(3); else showToast('Please fill address', 'error'); });
-    document.getElementById('apply-coupon-btn').addEventListener('click', () => {
-        const v = document.getElementById('coupon-input').value.trim().toLowerCase();
-        const c = validCoupons.find(x => x.code.toLowerCase() === v);
-        if(c) { appliedCoupon = c; document.getElementById('coupon-section').classList.add('hidden'); document.getElementById('applied-coupon-div').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('flex'); document.getElementById('applied-coupon-code').innerText = c.code; updatePricing(); showToast('Coupon Applied!', 'success'); } else showToast('Invalid Coupon', 'error');
-    });
+    document.getElementById('apply-coupon-btn').addEventListener('click', () => { const v = document.getElementById('coupon-input').value.trim().toLowerCase(); const c = validCoupons.find(x => x.code.toLowerCase() === v); if(c) { appliedCoupon = c; document.getElementById('coupon-section').classList.add('hidden'); document.getElementById('applied-coupon-div').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('flex'); document.getElementById('applied-coupon-code').innerText = c.code; updatePricing(); showToast('Coupon Applied!', 'success'); } else showToast('Invalid Coupon', 'error'); });
     document.getElementById('remove-coupon-btn').addEventListener('click', () => { appliedCoupon = null; document.getElementById('coupon-section').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('hidden'); document.getElementById('applied-coupon-div').classList.remove('flex'); document.getElementById('coupon-input').value = ''; updatePricing(); });
     document.getElementById('place-order-btn').addEventListener('click', async (e) => {
         const btn = e.target; btn.disabled = true; btn.innerText = 'Processing...';
@@ -563,24 +574,8 @@ function setupEvents() {
         const delOpt = document.querySelector('input[name="delivery"]:checked').value;
         const delFee = (delOpt === 'Ramazone' && sub < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0;
         const total = sub - (appliedCoupon?.discount||0) + delFee;
-        
-        // SAVE ORDER with Explicit Image
-        const order = { 
-            orderId, 
-            customerDetails: cust, 
-            items: orderItems.map(i => ({...i, image: getProductImage(i)})), // Save singular image for robustness
-            priceSummary: { subtotal: sub, deliveryFee: delFee, coupon: appliedCoupon, grandTotal: total }, 
-            status: 'Confirmed', 
-            createdAt: firebase.database.ServerValue.TIMESTAMP 
-        };
-        
-        try {
-            await database.ref(`ramazone/orders/confirmed/${orderId}`).set(order);
-            saveCart([]); localStorage.setItem('ramazoneRecentOrderId', orderId);
-            document.getElementById('order-success-popup').classList.remove('hidden');
-            setTimeout(() => document.getElementById('order-success-popup').classList.remove('opacity-0'), 10);
-            document.getElementById('success-popup-btn').onclick = () => { document.getElementById('order-success-popup').classList.add('hidden'); document.getElementById('popup-search-input').value = orderId; openOrderPopup(); };
-        } catch(err) { console.error(err); showToast('Order Failed', 'error'); btn.disabled = false; btn.innerText = 'Place Order'; }
+        const order = { orderId, customerDetails: cust, items: orderItems.map(i => ({...i, image: getProductImage(i)})), priceSummary: { subtotal: sub, deliveryFee: delFee, coupon: appliedCoupon, grandTotal: total }, status: 'Confirmed', createdAt: firebase.database.ServerValue.TIMESTAMP };
+        try { await database.ref(`ramazone/orders/confirmed/${orderId}`).set(order); saveCart([]); localStorage.setItem('ramazoneRecentOrderId', orderId); document.getElementById('order-success-popup').classList.remove('hidden'); setTimeout(() => document.getElementById('order-success-popup').classList.remove('opacity-0'), 10); document.getElementById('success-popup-btn').onclick = () => { document.getElementById('order-success-popup').classList.add('hidden'); document.getElementById('popup-search-input').value = orderId; openOrderPopup(); }; } catch(err) { console.error(err); showToast('Order Failed', 'error'); btn.disabled = false; btn.innerText = 'Place Order'; }
     });
     document.querySelectorAll('input[name="delivery"]').forEach(el => el.addEventListener('change', updatePricing));
 }
