@@ -1,14 +1,14 @@
-// --- RENDER UTILITIES ---
-// Is file mein HTML generate karne wale saare functions hain.
+// --- RENDER UTILITIES (SUPERSONIC V3) ---
+// Removed Video and Marquee renderers. Optimized Cart Icon.
 
-const CART_ICON_SVG = "https://www.svgrepo.com/show/533042/cart-plus.svg";
-
-// ... (Product Card functions waisa hi rahenge, niche Location functions update kiye gaye hain) ...
+// 1. INLINE SVG (Zero Network Request)
+const CART_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M21 5L19 12H7.37671M20 16H8L6 3H3M16 5.5H13.5M13.5 5.5H11M13.5 5.5V8M13.5 5.5V3M9 20C9 20.5523 8.55228 21 8 21C7.44772 21 7 20.5523 7 20C7 19.4477 7.44772 19 8 19C8.55228 19 9 19.4477 9 20ZM20 20C20 20.5523 19.5523 21 19 21C18.4477 21 18 20.5523 18 20C18 19.4477 18.4477 19 19 19C19.5523 19 20 19.4477 20 20Z" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>`;
 
 function createProductCardHTML(prod, extraClass = '') {
     if (!prod) return '';
-    const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=Image';
-    const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star"></i></div>` : '';
+    const imageUrl = (prod.images && prod.images[0]) || 'https://placehold.co/400x400/e2e8f0/64748b?text=No+Image';
+    
+    const ratingTag = prod.rating ? `<div class="card-rating-tag">${prod.rating} <i class="fas fa-star text-[8px]"></i></div>` : '';
     const offerTag = prod.offerText ? `<div class="product-offer-tag" style="background-color:${prod.offerBackgroundColor||'var(--primary-color)'}; color:${prod.offerTextColor||'white'}">${prod.offerText}</div>` : '';
 
     let priceHTML = `<p class="display-price">₹${Number(prod.displayPrice).toLocaleString("en-IN")}</p>`;
@@ -27,7 +27,7 @@ function createProductCardHTML(prod, extraClass = '') {
     <div class="product-card ${extraClass}">
         <div class="product-media-container">
             <a href="./product-details.html?id=${prod.id}" class="block absolute inset-0">
-                <img src="${imageUrl}" alt="${prod.name || 'Product'}" loading="lazy">
+                <img src="${imageUrl}" alt="${prod.name || 'Product'}" loading="lazy" decoding="async">
             </a>
             ${ratingTag}
             ${offerTag}
@@ -43,7 +43,7 @@ function createProductCardHTML(prod, extraClass = '') {
             </a>
             <div class="product-card-actions">
                 <button class="cart-btn add-btn" data-id="${prod.id}">
-                    <img class="cart-icon-svg" src="${CART_ICON_SVG}" alt="Add to Cart">
+                    ${CART_ICON_SVG}
                     <i class="fas fa-check cart-added-icon" style="display: none;"></i>
                 </button>
                 <button class="buy-text-btn" data-id="${prod.id}">Buy</button>
@@ -82,7 +82,7 @@ function createFestiveCardHTML(prod, options = {}) {
     <div class="product-card carousel-item h-full block">
         <div class="product-media-container">
             <a href="./product-details.html?id=${prod.id}" class="block absolute inset-0">
-                <img src="${imageUrl}" alt="${prod.name || 'Product'}" loading="lazy">
+                <img src="${imageUrl}" alt="${prod.name || 'Product'}" loading="lazy" decoding="async">
             </a>
             ${ratingTag}
             ${offerTag}
@@ -99,7 +99,7 @@ function createFestiveCardHTML(prod, options = {}) {
             ${progressBarHTML}
             <div class="product-card-actions">
                 <button class="cart-btn add-btn" data-id="${prod.id}">
-                    <img class="cart-icon-svg" src="${CART_ICON_SVG}" alt="Add to Cart">
+                    ${CART_ICON_SVG}
                     <i class="fas fa-check cart-added-icon" style="display: none;"></i>
                 </button>
                 <button class="buy-text-btn" data-id="${prod.id}">Buy</button>
@@ -113,7 +113,7 @@ function renderSlider(sliderData) {
     const section = document.querySelector('.slider-wrapper');
     if (!slider || !Array.isArray(sliderData) || sliderData.length === 0) { if (section) section.style.display = 'none'; return; }
     section.style.display = 'block';
-    slider.innerHTML = sliderData.map(slide => `<a href="${slide.linkUrl || '#'}" class="slide" target="_blank" draggable="false">${slide.videoUrl ? `<video src="${slide.videoUrl}" autoplay muted loop playsinline draggable="false"></video>` : `<picture><source media="(min-width: 768px)" srcset="${slide.imageUrlDesktop || slide.imageUrlMobile || ''}"><img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner" draggable="false"></picture>`}</a>`).join('');
+    slider.innerHTML = sliderData.map(slide => `<a href="${slide.linkUrl || '#'}" class="slide" target="_blank" draggable="false">${slide.videoUrl ? `<video src="${slide.videoUrl}" autoplay muted loop playsinline draggable="false"></video>` : `<picture><source media="(min-width: 768px)" srcset="${slide.imageUrlDesktop || slide.imageUrlMobile || ''}"><img src="${slide.imageUrlMobile || slide.imageUrlDesktop || ''}" alt="Promotional banner" draggable="false" loading="eager" decoding="async"></picture>`}</a>`).join('');
 }
 
 function renderNormalCategories(categories) {
@@ -123,17 +123,9 @@ function renderNormalCategories(categories) {
     section.innerHTML = `<div class="category-master-scroller"><div class="category-rows-container"><div id="top-category-row" class="category-row"></div><div id="bottom-category-row" class="category-row"></div></div></div>`;
     const topWrapper = document.getElementById('top-category-row');
     const bottomWrapper = document.getElementById('bottom-category-row');
-    const renderCategoryHTML = cat => `<a href="${(cat.size === 'double' && cat.linkUrl) ? cat.linkUrl : `./products.html?category=${encodeURIComponent(cat.name)}`}" target="${(cat.size === 'double' && cat.linkUrl) ? '_blank' : ''}" class="category-card ${cat.size === 'double' ? 'category-card--double' : ''}"><div class="img-wrapper"><img src="${cat.imageUrl}" alt="${cat.name}" loading="lazy"></div><p class="category-name">${cat.name}</p></a>`;
+    const renderCategoryHTML = cat => `<a href="${(cat.size === 'double' && cat.linkUrl) ? cat.linkUrl : `./products.html?category=${encodeURIComponent(cat.name)}`}" target="${(cat.size === 'double' && cat.linkUrl) ? '_blank' : ''}" class="category-card ${cat.size === 'double' ? 'category-card--double' : ''}"><div class="img-wrapper"><img src="${cat.imageUrl}" alt="${cat.name}" loading="lazy" decoding="async"></div><p class="category-name">${cat.name}</p></a>`;
     topWrapper.innerHTML = categories.filter(c => c && c.row === 'top').map(renderCategoryHTML).join('');
     bottomWrapper.innerHTML = categories.filter(c => c && c.row !== 'top').map(renderCategoryHTML).join('');
-}
-
-function renderVideosSection(videoData) {
-    const section = document.getElementById('video-section');
-    const slider = document.getElementById('video-slider');
-    if (!section || !Array.isArray(videoData) || videoData.length === 0) { if (section) section.style.display = 'none'; return; }
-    section.style.display = 'block';
-    slider.innerHTML = videoData.map(video => `<a href="${video.youtubeUrl || '#'}" target="_blank" class="video-card"><img src="${video.imageUrl || 'https://placehold.co/600x400/black/white?text=Video'}" alt="${video.title}" loading="lazy"><i class="fas fa-play-circle play-icon"></i><div class="video-card-overlay"><h3 class="video-card-title">${video.title}</h3><p class="video-card-desc">${video.description || ''}</p></div></a>`).join('');
 }
 
 function renderJustForYouSection(jfyData, allProductsCache) {
@@ -149,7 +141,7 @@ function renderJustForYouSection(jfyData, allProductsCache) {
     if (isDesktop && topDeals.mainProductImageUrl) { mainProductImage = topDeals.mainProductImageUrl; }
     const getDiscount = p => p && p.originalPrice > p.displayPrice ? `<p class="discount">${Math.round(((p.originalPrice - p.displayPrice) / p.originalPrice) * 100)}% OFF</p>` : '';
     const jfyContent = document.getElementById('jfy-content');
-    if (jfyContent) { jfyContent.innerHTML = `<div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};"><h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2><div class="jfy-grid"><a href="${poster.linkUrl || '#'}" class="jfy-poster-card"><div class="jfy-poster-slider-container"><div class="jfy-poster-slider">${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image"></div>`).join('')}</div><div class="jfy-slider-dots"></div></div></a><div class="jfy-deals-card"><div class="relative jfy-main-product"><a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProductImage}" alt="${mainProduct.name}"></a></div><div class="jfy-sub-products"><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct1.id}"><div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}"></div><div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div></a></div><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct2.id}"><div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}"></div><div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div></a></div></div></div></div></div>`; }
+    if (jfyContent) { jfyContent.innerHTML = `<div class="jfy-main-container" style="background-color: ${jfyData.backgroundColor || 'var(--bg-light)'};"><h2 class="jfy-main-title" style="color: ${jfyData.titleColor || 'var(--text-dark)'};">${jfyData.title || 'Just for You'}</h2><div class="jfy-grid"><a href="${poster.linkUrl || '#'}" class="jfy-poster-card"><div class="jfy-poster-slider-container"><div class="jfy-poster-slider">${poster.images.map(img => `<div class="jfy-poster-slide"><img src="${img}" alt="Poster Image" loading="lazy"></div>`).join('')}</div><div class="jfy-slider-dots"></div></div></a><div class="jfy-deals-card"><div class="relative jfy-main-product"><a href="./product-details.html?id=${mainProduct.id}"><img src="${mainProductImage}" alt="${mainProduct.name}" loading="lazy"></a></div><div class="jfy-sub-products"><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct1.id}"><div class="img-wrapper"><img src="${subProduct1.images?.[0] || ''}" alt="${subProduct1.name}" loading="lazy"></div><div class="details"><p class="name">${subProduct1.name}</p>${getDiscount(subProduct1)}</div></a></div><div class="relative jfy-sub-product-item"><a href="./product-details.html?id=${subProduct2.id}"><div class="img-wrapper"><img src="${subProduct2.images?.[0] || ''}" alt="${subProduct2.name}" loading="lazy"></div><div class="details"><p class="name">${subProduct2.name}</p>${getDiscount(subProduct2)}</div></a></div></div></div></div></div>`; }
     section.style.display = 'block';
     return poster.images?.length || 0; 
 }
@@ -171,96 +163,43 @@ function renderSingleBanner(bannerData) {
     section.classList.remove('hidden');
 }
 
-function renderInfoMarquee(text) { const section = document.getElementById('info-marquee-section'); if (!text) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; section.querySelector('#info-marquee-text').innerHTML = text; }
 function renderFlipCardSection(data) { const section = document.getElementById('flipcard-section'); const content = document.getElementById('flip-card-inner-content'); if (!data?.front || !data.back) { if (section) section.style.display = 'none'; return; } section.style.display = 'block'; content.innerHTML = `<a href="${data.front.linkUrl||'#'}" target="_blank" class="flip-card-front"><img src="${data.front.imageUrl}" loading="lazy"></a><a href="${data.back.linkUrl||'#'}" target="_blank" class="flip-card-back"><img src="${data.back.imageUrl}" loading="lazy"></a>`; content.classList.add('flipping');}
 function renderFooter(data) { if (!data) return; document.getElementById('menu-play-link').href = data.playLink || '#'; document.getElementById('menu-cashback-link').href = data.profileLink || '#'; const links = data.followLinks; if (links) { const submenuContainer = document.getElementById('follow-submenu'); const desktopContainer = document.getElementById('desktop-social-links'); submenuContainer.innerHTML = ''; desktopContainer.innerHTML = ''; const platforms = { youtube: { icon: 'https://www.svgrepo.com/show/416500/youtube-circle-logo.svg', name: 'YouTube' }, instagram: { icon: 'https://www.svgrepo.com/show/452229/instagram-1.svg', name: 'Instagram' }, facebook: { icon: 'https://www.svgrepo.com/show/448224/facebook.svg', name: 'Facebook' }, whatsapp: { icon: 'https://www.svgrepo.com/show/452133/whatsapp.svg', name: 'WhatsApp' } }; Object.keys(platforms).forEach(key => { if (links[key]) { const p = platforms[key]; submenuContainer.innerHTML += `<a href="${links[key]}" target="_blank" class="submenu-item"><img src="${p.icon}" alt="${key}"><span>${p.name}</span></a>`; desktopContainer.innerHTML += `<a href="${links[key]}" target="_blank"><img src="${p.icon}" class="w-7 h-7" alt="${key}"></a>`; } }); } }
-
-// --- UPDATED LOCATION RENDERERS (Visibility Fix) ---
 
 function renderStateTabs(allLocationsCache, currentSelectedState) {
     const container = document.getElementById('loc-state-tabs');
     if (!container) return;
-    
-    // Reset next tiers
     const tier2 = document.getElementById('loc-district-tier');
     const tier3 = document.getElementById('loc-area-tier');
     if (tier2) tier2.classList.add('hidden');
     if (tier3) tier3.classList.add('hidden');
-
     const states = Object.keys(allLocationsCache).filter(stateName => allLocationsCache[stateName].isActive);
-    if (states.length === 0) {
-        container.innerHTML = '<p class="loc-tab-placeholder">No active locations available.</p>';
-        return;
-    }
-    container.innerHTML = states.map(stateName => `
-        <button class="loc-tab-btn ${stateName === currentSelectedState ? 'active' : ''}" data-state="${stateName}">
-            ${stateName}
-        </button>
-    `).join('');
+    if (states.length === 0) { container.innerHTML = '<p class="loc-tab-placeholder">No active locations available.</p>'; return; }
+    container.innerHTML = states.map(stateName => `<button class="loc-tab-btn ${stateName === currentSelectedState ? 'active' : ''}" data-state="${stateName}">${stateName}</button>`).join('');
 }
-
 function renderDistrictTabs(stateName, allLocationsCache, currentSelectedDistrict) {
     const container = document.getElementById('loc-district-tabs');
     const tier2 = document.getElementById('loc-district-tier');
     const tier3 = document.getElementById('loc-area-tier');
-    
     if (!container || !tier2) return;
-    
-    // Show Tier 2, Hide Tier 3
     tier2.classList.remove('hidden');
     if (tier3) tier3.classList.add('hidden');
-
     const stateData = allLocationsCache[stateName];
-    if (!stateData || !stateData.districts) {
-        container.innerHTML = '<p class="loc-tab-placeholder">No districts available.</p>';
-        return;
-    }
-    
+    if (!stateData || !stateData.districts) { container.innerHTML = '<p class="loc-tab-placeholder">No districts available.</p>'; return; }
     const districts = Object.keys(stateData.districts).filter(distName => stateData.districts[distName].isActive);
-    if (districts.length === 0) {
-        container.innerHTML = '<p class="loc-tab-placeholder">No active districts in this state.</p>';
-        return;
-    }
-    container.innerHTML = districts.map(distName => `
-        <button class="loc-tab-btn ${distName === currentSelectedDistrict ? 'active' : ''}" data-state="${stateName}" data-district="${distName}">
-            ${distName}
-        </button>
-    `).join('');
+    if (districts.length === 0) { container.innerHTML = '<p class="loc-tab-placeholder">No active districts in this state.</p>'; return; }
+    container.innerHTML = districts.map(distName => `<button class="loc-tab-btn ${distName === currentSelectedDistrict ? 'active' : ''}" data-state="${stateName}" data-district="${distName}">${distName}</button>`).join('');
 }
-
 function renderAreaList(stateName, districtName, searchQuery = '', allLocationsCache, currentLoc) {
     const container = document.getElementById('loc-area-list-container');
     const tier3 = document.getElementById('loc-area-tier');
-    
     if (!container || !tier3) return;
-    
-    // Show Tier 3
     tier3.classList.remove('hidden');
-
     const districtData = allLocationsCache[stateName]?.districts[districtName];
-    if (!districtData || !Array.isArray(districtData.areas)) {
-        container.innerHTML = '<p class="p-4 text-center text-gray-500">No areas found.</p>';
-        return;
-    }
-
+    if (!districtData || !Array.isArray(districtData.areas)) { container.innerHTML = '<p class="p-4 text-center text-gray-500">No areas found.</p>'; return; }
     let areas = districtData.areas;
-    if (searchQuery) {
-        areas = areas.filter(areaName => areaName.toLowerCase().includes(searchQuery));
-    }
-    if (areas.length === 0) {
-        container.innerHTML = `<p class="p-4 text-center text-gray-500">${searchQuery ? 'No areas found.' : 'No areas added.'}</p>`;
-        return;
-    }
-    container.innerHTML = areas.map(areaName => {
-        const fullPath = `${stateName}/${districtName}/${areaName}`;
-        const isActive = fullPath === currentLoc;
-        return `
-            <div class="location-item ${isActive ? 'active' : ''}" data-path="${fullPath}">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>${areaName}</span>
-                <i class="fas fa-check location-item-check"></i>
-            </div>
-        `;
-    }).join('');
+    if (searchQuery) { areas = areas.filter(areaName => areaName.toLowerCase().includes(searchQuery)); }
+    if (areas.length === 0) { container.innerHTML = `<p class="p-4 text-center text-gray-500">${searchQuery ? 'No areas found.' : 'No areas added.'}</p>`; return; }
+    container.innerHTML = areas.map(areaName => { const fullPath = `${stateName}/${districtName}/${areaName}`; const isActive = fullPath === currentLoc; return `<div class="location-item ${isActive ? 'active' : ''}" data-path="${fullPath}"><i class="fas fa-map-marker-alt"></i><span>${areaName}</span><i class="fas fa-check location-item-check"></i></div>`; }).join('');
 }
 
