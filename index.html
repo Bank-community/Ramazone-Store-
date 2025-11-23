@@ -24,21 +24,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="style.css">
 
-    <!-- Critical CSS (Updated for Bigger Slider) -->
+    <!-- Critical CSS (Cleaned up: Slider CSS moved to module) -->
     <style>
         body { opacity: 1; transition: opacity 0.3s ease; }
         #page-header { min-height: 60px; }
-        
-        /* FIX: Slider ko bada aur responsive banaya */
-        .slider-wrapper { 
-            width: calc(100% - 24px); 
-            margin: 12px auto; 
-            aspect-ratio: 16 / 9; /* Standard Banner Ratio */
-            background: #f3f4f6; 
-            border-radius: 12px; 
-            overflow: hidden;
-            position: relative;
-        }
         
         /* Hide scrollbars initially */
         ::-webkit-scrollbar { display: none; }
@@ -105,13 +94,8 @@
     <!-- SEARCH BAR CONTAINER -->
     <div id="search-bar-container"></div>
 
-    <!-- MAIN SLIDER -->
-    <div class="slider-wrapper">
-        <div class="slider-container">
-            <div class="slider" id="main-slider"></div>
-        </div>
-        <div class="slider-dots" id="slider-dots-container"></div>
-    </div>
+    <!-- MAIN SLIDER (MOVED TO sections/slider.html) -->
+    <!-- The dynamic loader will inject the slider here -->
 
     <!-- DYNAMIC SECTIONS AREA -->
     <main id="main-content-area" class="mb-16 md:mb-0 min-h-[500px]">
