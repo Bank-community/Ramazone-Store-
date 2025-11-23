@@ -42,15 +42,14 @@
         .quantity-selector-order button { width: 30px; height: 100%; display: flex; align-items: center; justify-content: center; border: none; background: #f9fafb; font-weight: bold; color: #374151; cursor: pointer; transition: background 0.2s; }
         .quantity-selector-order span { font-size: 0.9rem; font-weight: 600; width: 32px; text-align: center; border-left: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6; }
 
-        /* New Button Styles */
-        .add-more-products-btn {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            width: 100%; padding: 12px; margin: 15px 0;
-            background-color: #eef2ff; border: 1px dashed #4f46e5; border-radius: 10px;
-            color: #4f46e5; font-weight: 600; cursor: pointer; transition: all 0.2s;
-        }
-        .add-more-products-btn:active { background-color: #e0e7ff; transform: scale(0.98); }
+        /* Coupons Card */
+        .coupon-card { border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; transition: all 0.2s; }
+        .coupon-card:hover { border-color: #4f46e5; background: #eef2ff; }
+        .coupon-code { font-family: monospace; font-weight: 700; color: #334155; font-size: 1.1rem; letter-spacing: 1px; }
+        .coupon-desc { font-size: 0.75rem; color: #64748b; }
 
+        .add-more-products-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; margin: 15px 0; background-color: #eef2ff; border: 1px dashed #4f46e5; border-radius: 10px; color: #4f46e5; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .add-more-products-btn:active { background-color: #e0e7ff; transform: scale(0.98); }
         .copy-btn-icon { width: 20px; height: 20px; cursor: pointer; margin-left: 8px; vertical-align: middle; padding: 2px; border-radius: 4px; transition: all 0.2s; }
         .copy-btn-icon:hover { background-color: #e0e7ff; }
 
@@ -103,10 +102,13 @@
                     <svg viewBox="0 0 48 48" class="action-icon" xmlns="http://www.w3.org/2000/svg" fill="#ef4444"><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g><path class="c" d="m43,17.0766c0-5.6539-4.5835-10.2373-10.2374-10.2373-3.7223,0-6.9708,1.9932-8.7626,4.964-1.7919-2.9708-5.0403-4.964-8.7626-4.964-5.6539,0-10.2373,4.5834-10.2373,10.2373,0,1.2925.2496,2.524.6866,3.6627,3.3851,9.7368,18.3134,20.4215,18.3134,20.4215,0,0,14.9282-10.6847,18.3134-20.4215.437-1.1386.6867-2.3702.6867-3.6627Z"></path></g></svg>
                     <span class="action-label">My<br>Wishlist</span>
                 </div>
-                <div class="action-btn" onclick="scrollToCoupons()">
+                
+                <!-- UPDATED COUPON BUTTON -->
+                <div class="action-btn" onclick="openCouponsPopup()">
                     <img src="https://www.svgrepo.com/show/533049/gift.svg" class="action-icon" alt="Coupons">
                     <span class="action-label">Best<br>Coupons</span>
                 </div>
+                
                 <div class="action-btn" onclick="openHelpPopup()">
                     <img src="https://www.svgrepo.com/show/535434/headphones.svg" class="action-icon" alt="Help">
                     <span class="action-label">Help<br>Center</span>
@@ -125,7 +127,7 @@
                 <a href="index.html" class="btn btn-primary text-white no-underline inline-flex w-auto px-8">Start Shopping</a>
             </div>
 
-            <!-- ADD MORE PRODUCTS BUTTON (UPDATED LINK) -->
+            <!-- ADD MORE PRODUCTS BUTTON -->
             <button id="add-more-products-btn" class="add-more-products-btn hidden" onclick="window.location.href='products.html'">
                 <i class="fas fa-plus-circle"></i> Add More Products
             </button>
@@ -227,6 +229,22 @@
         </div>
     </div>
 
+    <!-- NEW: COUPONS POPUP -->
+    <div id="coupons-popup-overlay" class="popup-overlay" onclick="closeCouponsPopup(event)">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-gift text-primary mr-2"></i>Available Coupons</h3>
+                    <p class="text-xs text-gray-500">Tap on a coupon to apply it</p>
+                </div>
+                <button onclick="closeCouponsPopup(true)" class="text-gray-500 text-2xl">&times;</button>
+            </div>
+            <div id="coupons-list-container" class="space-y-3 pb-4">
+                <!-- Coupons will be injected here -->
+            </div>
+        </div>
+    </div>
+
     <!-- FULL DETAILS POPUP -->
     <div id="order-details-overlay" class="popup-overlay" onclick="closeOrderDetails(event)">
         <div class="popup-content" style="max-height: 90vh;">
@@ -251,7 +269,7 @@
         </div>
     </div>
 
-    <!-- HELP POPUP (LIVE STATUS) -->
+    <!-- HELP POPUP -->
     <div id="help-popup-overlay" class="popup-overlay" onclick="closeHelpPopup(event)">
         <div class="popup-content">
             <div class="flex justify-between items-center mb-6">
@@ -259,7 +277,6 @@
                 <button onclick="closeHelpPopup(true)" class="text-gray-500 text-2xl">&times;</button>
             </div>
             
-            <!-- Live Status Container (Initially Hidden) -->
             <div id="help-active-request-container" class="hidden mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <div class="flex items-start gap-3">
                     <div id="help-status-icon" class="text-2xl"></div>
@@ -297,5 +314,3 @@
     <script src="order-main.js"></script>
 </body>
 </html>
-
-
