@@ -1,7 +1,7 @@
 // product-details-main.js
-// VERSION: SUPERSONIC V2 + SHARE FIX + NEW PILL FOOTER
+// VERSION: SUPERSONIC V2 + SHARE FIX + PILL FOOTER + DUAL HEADER
 
-// ... (Previous Global Variables and Init functions remain same) ...
+// ... (Global Variables & Init functions remain same) ...
 let currentProductData = null, currentProductId = null;
 let allProductsCache = [];
 let currentProductGroup = []; 
@@ -171,10 +171,20 @@ function addBundleToCart(productIds, bundlePrice) {
     window.showToast('Bundle added!', 'success'); showGoToCartNotification(); updateCartIcon();
 }
 
+// --- UPDATED: UPDATE BOTH CART ICONS ---
 function updateCartIcon() {
     const totalQuantity = getCart().reduce((total, item) => total + item.quantity, 0);
-    const el = document.getElementById('cart-item-count');
-    if (el) el.textContent = totalQuantity > 0 ? totalQuantity : '';
+    
+    // Target both main header and scroll header badges
+    const mainBadge = document.getElementById('cart-item-count');
+    const scrollBadge = document.getElementById('scroll-cart-count'); 
+    
+    [mainBadge, scrollBadge].forEach(el => {
+        if(el) {
+            el.textContent = totalQuantity > 0 ? totalQuantity : '';
+            el.style.display = totalQuantity > 0 ? 'flex' : 'none';
+        }
+    });
 }
 
 function showGoToCartNotification() {
@@ -213,7 +223,6 @@ function handleOptionsClick(event) {
     }
 }
 
-// --- UPDATED: STICKY BAR LOGIC FOR PILL BUTTONS ---
 function updateStickyActionBar() {
     if (!currentProductId || !currentProductData) return;
     const addToCartBtn = document.getElementById('add-to-cart-btn');
@@ -225,13 +234,11 @@ function updateStickyActionBar() {
     // Remove any existing listeners before adding new ones
     const newCartBtn = addToCartBtn.cloneNode(true);
     addToCartBtn.parentNode.replaceChild(newCartBtn, addToCartBtn);
-    
     const newBuyBtn = buyNowBtn.cloneNode(true);
     buyNowBtn.parentNode.replaceChild(newBuyBtn, buyNowBtn);
 
     newCartBtn.onclick = (e) => {
         e.preventDefault();
-        // Animation Feedback (Update Text & Icon)
         newCartBtn.innerHTML = '<i class="fas fa-check text-green-600"></i><span>Added</span>';
         setTimeout(() => newCartBtn.innerHTML = '<i class="fas fa-cart-plus"></i><span>Add to Cart</span>', 1500);
         addToCart(currentProductId, 1, selectedVariants, selectedPack);
