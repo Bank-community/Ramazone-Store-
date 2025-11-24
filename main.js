@@ -139,19 +139,36 @@ async function loadCoreComponents() {
 }
 
 function loadAllData() {
-    const dbRef = database.ref('ramazone');
-    dbRef.on('value', async (snapshot) => {
-        const data = snapshot.val() || {};
+    // --- OPTIMIZATION: Fetch Specific Nodes in Parallel instead of Root ---
+    const homepageRef = database.ref('ramazone/homepage');
+    const productsRef = database.ref('ramazone/products');
+    const locationsRef = database.ref('ramazone/locations');
+
+    Promise.all([
+        homepageRef.once('value'),
+        productsRef.once('value'),
+        locationsRef.once('value')
+    ]).then(async ([homeSnap, prodSnap, locSnap]) => {
+        const homeData = homeSnap.val() || {};
+        const productsData = prodSnap.val() || {};
+        const locData = locSnap.val() || {};
+
+        // Combine data for global usage
+        const data = {
+            homepage: homeData,
+            products: productsData,
+            locations: locData
+        };
         window.ramazoneData = data; 
+
         let products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
         allProductsCache = products.filter(p => p && p.isVisible !== false);
 
-        const homepageData = data.homepage || {};
-        if (homepageData.normalCategories) {
-            allCategoriesCache = homepageData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
+        if (homeData.normalCategories) {
+            allCategoriesCache = homeData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
         }
 
-        allLocationsCache = data.locations || {};
+        allLocationsCache = locData;
         
         setupLocationSelectionsFromStorage(); 
         checkAndShowLocationWelcomePopup();
@@ -161,9 +178,35 @@ function loadAllData() {
         await loadPageStructure(); 
         renderAllSections(data); 
 
-    }, (error) => {
+        // Set up listeners for updates after initial load (Background Sync)
+        setupRealtimeListeners();
+
+    }).catch((error) => {
         console.error("Firebase Read Error:", error);
         document.getElementById('main-content-area').innerHTML = `<p class="text-center p-8">Could not load data. Check your connection.</p>`;
+    });
+}
+
+// Function to keep data updated without blocking initial load
+function setupRealtimeListeners() {
+    database.ref('ramazone/homepage').on('value', (snap) => {
+        const homeData = snap.val() || {};
+        if(window.ramazoneData) window.ramazoneData.homepage = homeData;
+        // Re-render specific sections if needed, or just update cache
+        // For now, we update cache to ensure navigation works
+        if (homeData.normalCategories) {
+            allCategoriesCache = homeData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
+        }
+    });
+
+    database.ref('ramazone/products').on('child_changed', (snap) => {
+        // Optimally update single product in cache
+        const updatedProd = snap.val();
+        if(updatedProd) {
+            const idx = allProductsCache.findIndex(p => p.id === updatedProd.id);
+            if(idx > -1) allProductsCache[idx] = updatedProd;
+            else allProductsCache.push(updatedProd);
+        }
     });
 }
 
@@ -646,3 +689,4 @@ function moveJfySlide(dir) { if (jfyIsTransitioning) return; const slider = docu
 function goToJfySlide(num) { if (jfyIsTransitioning || jfyCurrentSlide == num) return; const slider = document.querySelector(".jfy-poster-slider"); slider && (jfyIsTransitioning = !0, slider.classList.add("transitioning"), jfyCurrentSlide = parseInt(num), slider.style.transform = `translateX(-${100 * jfyCurrentSlide}%)`, updateJfyDots(), resetJfySliderInterval()) }
 function updateJfyDots() { const dots = document.querySelectorAll(".jfy-slider-dots .dot"); dots.forEach(d => d.classList.remove("active")); let activeDotIndex = jfyCurrentSlide - 1; 0 === jfyCurrentSlide && (activeDotIndex = jfyTotalSlides - 1), jfyCurrentSlide === jfyTotalSlides + 1 && (activeDotIndex = 0); const activeDot = dots[activeDotIndex]; activeDot && activeDot.classList.add("active") }
 function resetJfySliderInterval() { clearInterval(jfySliderInterval), jfySliderInterval = setInterval(() => moveJfySlide(1), 4000) }
+
