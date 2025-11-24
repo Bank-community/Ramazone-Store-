@@ -9,7 +9,7 @@
     --bg-light: #F9FAFB;
     --bg-white: #FFFFFF;
     --border-color: #E5E7EB; 
-    /* Slider interval variable removed as it is now hardcoded in slider.html for self-containment */
+    --slider-interval-duration: 5s;
 }
 
 html { 
@@ -140,7 +140,19 @@ body.menu-open #side-menu { transform: translateX(0); box-shadow: 0 0 20px rgba(
 @media (min-width: 768px) { .section-title { font-size: 1.6rem; } }
 @media (min-width: 1024px) { .section-container { padding: 2rem 0; } }
 
-/* SLIDER styles removed from here and moved to sections/slider.html */
+/* SLIDER */
+.slider-wrapper { padding: 0 1rem; margin-top: 0.5rem; }
+.slider-container { position: relative; width: 100%; overflow: hidden; aspect-ratio: 16 / 8.5; max-height: 400px; border-radius: 12px; user-select: none; }
+.slider { display: flex; height: 100%; cursor: grab; }
+.slider.grabbing { cursor: grabbing; }
+.slider.transitioning { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
+.slide video, .slide picture, .slide img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; pointer-events: none; }
+.slider-dots { display: flex; justify-content: center; gap: 8px; z-index: 10; padding-top: 0.5rem; }
+.slider-dots .dot { width: 8px; height: 4px; background: rgba(0, 0, 0, 0.15); border-radius: 50px; cursor: pointer; transition: all 0.4s ease; overflow: hidden; }
+.slider-dots .dot.active { background: rgba(0, 0, 0, 0.3); width: 32px; }
+.slider-dots .dot .timer { width: 0%; height: 100%; background: var(--text-dark); border-radius: 50px; }
+.slider-dots .dot.active .timer { width: 100%; transition: width var(--slider-interval-duration) linear; }
 
 
 /* VIDEO CARD */
