@@ -18,22 +18,43 @@
     <!-- HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- DEFAULT HEADER (Logo + Cart) -->
             <div id="default-header-content" class="py-2 flex items-center justify-between transition-all duration-300">
                 <a href="javascript:history.back()" class="text-gray-600 hover:text-gray-900 p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </a>
                 <a href="./index.html"><img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 30px; border-radius: 0;"></a>
-                <a href="order.html" id="header-cart-link" class="header-cart-link">
+                <a href="order.html" class="header-cart-link relative">
                     <i class="fas fa-shopping-cart text-xl"></i>
-                    <span id="cart-item-count"></span>
+                    <!-- Main Cart Badge -->
+                    <span id="cart-item-count" class="cart-badge"></span>
                 </a>
             </div>
 
+            <!-- NEW: SCROLL HEADER (Back + Search + Cart) -->
             <div id="search-header-content" class="py-1 hidden transition-all duration-300">
-                <a href="./products.html?focus=true" class="header-search-bar">
-                    <i class="fas fa-search text-gray-500"></i>
-                    <span class="text-gray-600 ml-3 text-sm">Search for Products...</span>
-                </a>
+                <div class="flex items-center justify-between gap-2 w-full">
+                    
+                    <!-- 1. Left: Back Button -->
+                    <a href="javascript:history.back()" class="p-2 text-gray-600 hover:text-gray-900 flex-shrink-0">
+                        <i class="fas fa-chevron-left text-lg"></i>
+                    </a>
+
+                    <!-- 2. Center: Compact Search Bar -->
+                    <a href="./products.html?focus=true" class="header-search-bar flex-grow">
+                        <i class="fas fa-search text-gray-500 text-sm"></i>
+                        <span class="text-gray-500 ml-2 text-xs sm:text-sm truncate">Search...</span>
+                    </a>
+
+                    <!-- 3. Right: Cart Icon -->
+                    <a href="order.html" class="p-2 text-gray-600 hover:text-gray-900 flex-shrink-0 relative">
+                        <i class="fas fa-shopping-cart text-lg"></i>
+                        <!-- Scroll Header Cart Badge -->
+                        <span id="scroll-cart-count" class="cart-badge"></span>
+                    </a>
+
+                </div>
             </div>
         </div>
     </header>
@@ -63,7 +84,7 @@
                         <div id="main-media-wrapper" class="rounded-none sm:rounded-lg mb-2 cursor-pointer overflow-hidden relative group bg-white">
                             <div id="media-slider"></div>
                             
-                            <!-- UPDATED SHARE BUTTON -->
+                            <!-- SHARE BUTTON -->
                             <button id="share-button" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md border border-gray-200 z-10 hover:scale-110 transition-transform flex items-center justify-center w-11 h-11 active:scale-95">
                                 <img src="https://www.svgrepo.com/show/521832/share-1.svg" alt="Share" class="w-5 h-5 opacity-80">
                             </button>
@@ -172,22 +193,19 @@
     <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
     <div id="toast-notification"></div>
 
-    <!-- NEW: STICKY ACTION BAR PREMIUM (PILL SHAPE) -->
+    <!-- STICKY ACTION BAR (PILL SHAPE EQUAL) -->
     <div id="sticky-action-bar" class="fixed bottom-0 left-0 w-full bg-white z-50">
         <div class="sticky-bar-container">
-            
-            <!-- Left: Add to Cart (Pill Shape, White) -->
+            <!-- Add to Cart -->
             <div id="add-to-cart-btn" class="btn-cart-pill">
                 <i class="fas fa-cart-plus"></i>
                 <span>Add to Cart</span>
             </div>
-
-            <!-- Right: Buy Now (Pill Shape, Yellow) -->
+            <!-- Buy Now -->
             <a id="buy-now-btn" href="#" class="btn-buy-pill">
                 <span class="btn-buy-title">Buy Now</span>
                 <span id="sticky-price-text" class="btn-buy-subtitle">at ₹...</span>
             </a>
-
         </div>
     </div>
 
