@@ -773,16 +773,20 @@
     box-shadow: 1px 1px 4px rgba(0,0,0,0.2);
 }
 
+/* product-details.css */
+
+/* ... (Previous CSS remains same up to #sticky-action-bar) ... */
+
 /* ============================================================ */
-/* === NEW: STICKY FOOTER PREMIUM DESIGN (COMPACT & SINGLE COLOR) === */
+/* === NEW: STICKY FOOTER PREMIUM DESIGN (PILL SHAPE) === */
 /* ============================================================ */
 #sticky-action-bar {
-    /* Reduced Compact Padding */
-    padding: 6px 12px !important; 
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.08) !important;
-    border-top: 1px solid #f3f4f6;
+    /* Reduced Compact Padding, No Border/Shadow as per image */
+    padding: 8px 12px !important;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    box-shadow: none !important; 
+    border-top: 1px solid #f3f4f6; /* Subtle top border */
 }
 
 .sticky-bar-container {
@@ -793,62 +797,67 @@
     margin: 0 auto;
 }
 
-/* 1. Cart Icon Button (Square-ish) */
-.btn-icon-square {
-    flex-shrink: 0;
-    width: 42px;  /* Reduced size */
-    height: 42px; /* Reduced size */
-    border: 1px solid #e5e7eb;
-    border-radius: 10px; /* Slightly less rounded */
+/* 1. Add to Cart Button (Equal Size) */
+.btn-cart-pill {
+    flex: 1; /* Ye important hai: Ab ye barabar fail jayega */
+    height: 48px; /* Height thodi badha di hai better look ke liye */
+    border: 1.5px solid #e5e7eb; /* Thoda mota border */
+    border-radius: 9999px;
     background-color: #ffffff;
     color: #374151;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    gap: 8px;
+    font-size: 1rem; /* Text size thoda badha diya */
+    font-weight: 700;
     transition: all 0.2s ease;
-}
-.btn-icon-square:active {
-    background-color: #f3f4f6;
-    transform: scale(0.95);
+    cursor: pointer;
+    width: auto; /* Fixed width hata diya */
 }
 
-/* 2. Buy Now Button (Main Action - Single Solid Yellow) */
-.btn-buy-premium {
-    flex-grow: 1;
-    height: 42px; /* Reduced height */
-    background: #FFC107; /* Single Solid Yellow Color (matches typical "Buy Now" yellow) */
-    color: #000; /* Dark text for contrast */
+.btn-cart-pill:active {
+    background-color: #f3f4f6;
+    transform: scale(0.98);
+}
+
+.btn-cart-pill i {
+    font-size: 1.2rem;
+}
+
+/* 2. Buy Now Button (Equal Size) */
+.btn-buy-pill {
+    flex: 1; /* Ye bhi barabar fail jayega */
+    height: 48px; /* Same height as Cart button */
+    background: #FFC107;
+    color: #000;
     border: none;
-    border-radius: 10px; /* Slightly less rounded */
+    border-radius: 9999px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    box-shadow: none; /* Flat look as per request */
+    box-shadow: none;
     transition: all 0.2s ease;
     cursor: pointer;
-    text-decoration: none; /* For <a> tags */
+    text-decoration: none;
 }
-.btn-buy-premium:active {
+
+.btn-buy-pill:active {
     transform: scale(0.98);
-    background-color: #FFB300; /* Slightly darker on click */
+    background-color: #FFB300;
 }
 
 .btn-buy-title {
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 800;
     letter-spacing: 0.3px;
-    margin-bottom: 1px;
-}
-.btn-buy-subtitle {
-    font-size: 0.7rem;
-    font-weight: 600;
-    opacity: 0.85;
+    margin-bottom: 2px;
 }
 
-/* Hide oldQuantity Selector for now to match screenshot cleaner look */
-#quantity-selector-wrapper {
-    display: none !important; 
+.btn-buy-subtitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.9;
 }
