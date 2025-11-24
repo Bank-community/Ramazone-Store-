@@ -118,7 +118,7 @@
 
 /* --- Rating Stars --- */
 .rating-stars {
-    color: #f59e0b;
+    color: #018B04;
 }
 
 /* ================================================================= */
@@ -128,11 +128,11 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    width: 100%;
+    width: 110%;
 }
 
 #price-percentage-discount {
-    color: #047857; 
+    color: #018B04; 
 }
 
 #price-original {
@@ -447,9 +447,53 @@
     line-height: normal;
 }
 
-/* --- Header Search --- */
-.header-search-bar { display: flex; align-items: center; width: 100%; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; text-decoration: none; cursor: pointer; font-size: 0.9rem; }
-.header-hidden { opacity: 0; pointer-events: none; max-height: 0px; padding-top: 0px !important; padding-bottom: 0px !important; overflow: hidden; }
+/* --- Header Search (UPDATED FOR SCROLL) --- */
+.header-search-bar { 
+    display: flex; 
+    align-items: center; 
+    width: auto; /* Auto width taaki flex grow kare */
+    background-color: #f3f4f6; 
+    border: 1px solid #e5e7eb; 
+    border-radius: 9999px; /* Rounded Pill shape */
+    padding: 6px 12px; 
+    text-decoration: none; 
+    cursor: pointer; 
+    font-size: 0.9rem;
+    height: 36px;
+    flex-grow: 1; /* Bachi hui jagah lega (Center mein adjust hoga) */
+}
+
+/* Header Hide Animation Class */
+.header-hidden { 
+    opacity: 0; 
+    pointer-events: none; 
+    max-height: 0px; 
+    padding-top: 0px !important; 
+    padding-bottom: 0px !important; 
+    overflow: hidden; 
+}
+
+/* Cart Badge Styling (Dono headers ke liye Red Dot) */
+.cart-badge {
+    position: absolute; 
+    top: -4px; 
+    right: -4px; 
+    background-color: #ef4444; /* Red Color */
+    color: white; 
+    border-radius: 9999px; 
+    padding: 0 4px; 
+    font-size: 10px; 
+    font-weight: 700; 
+    min-width: 16px; 
+    height: 16px;    
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid white; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    z-index: 10;
+    line-height: normal;
+}
 
 /* --- Double Padding Fixes & TIGHT Spacing --- */
 #handpicked-similar-section, #other-products-section, #recently-viewed-section, #similar-products-section { padding: 0 !important; margin-bottom: 16px !important; }
