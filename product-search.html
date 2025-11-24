@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Search - Ramazone</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+   <style>
+    body { font-family: 'Inter', sans-serif; background-color: #fff; }
+    
+    /* --- Search Header --- */
+    .search-header {
+        position: sticky; top: 0; z-index: 50;
+        background: white; border-bottom: 1px solid #f0f0f0;
+        padding: 8px 12px; display: flex; align-items: center; gap: 12px;
+    }
+    .search-input-wrapper {
+        flex-grow: 1; position: relative;
+    }
+    .search-input {
+        width: 100%; height: 40px; background: transparent; border: none; outline: none;
+        font-size: 1rem; color: #1f2937; padding: 0; /* Font size thoda chhota kiya */
+    }
+    .search-input::placeholder { color: #9ca3af; font-size: 0.95rem; }
+    
+    /* --- Recent History List --- */
+    .history-item {
+        display: flex; align-items: center; padding: 10px 16px; /* Padding reduced */
+        border-bottom: 1px solid #f9fafb; cursor: pointer;
+    }
+    .history-icon { color: #9ca3af; font-size: 1rem; margin-right: 14px; }
+    .history-text { flex-grow: 1; font-size: 0.95rem; color: #374151; }
+    .history-arrow { color: #d1d5db; transform: rotate(-45deg); font-size: 1rem; }
+
+    /* --- UX UPDATE: COMPACT CATEGORY CHIPS --- */
+    .section-title {
+        padding: 16px 16px 8px; font-size: 0.85rem; font-weight: 700; color: #6b7280;
+    }
+    .chips-container {
+        padding: 0 16px 16px; display: flex; flex-wrap: wrap; gap: 6px; /* Gap kam kiya */
+    }
+    .cat-chip {
+        padding: 6px 12px; /* Padding reduced for compact look */
+        background: #f9fafb; /* Light subtle background */
+        border: 1px solid #e5e7eb;
+        border-radius: 8px; /* Slightly squarish rounded */
+        font-size: 0.8rem; /* Text size chhota kiya */
+        font-weight: 500;
+        color: #4b5563;
+        cursor: pointer; transition: all 0.1s;
+        white-space: nowrap; /* Text ek line mein rahega */
+    }
+    .cat-chip:active { 
+        background: #e5e7eb; border-color: #d1d5db; transform: scale(0.96); 
+    }
+
+    /* --- Trending/Suggested Products Header --- */
+    .trending-header {
+        padding: 10px 16px; background: #f9fafb; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0;
+        font-size: 0.8rem; font-weight: 700; color: #6b7280; 
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    /* --- PRODUCT CARDS --- */
+    /* List View */
+    .prod-card-list {
+        display: flex; background: white; padding: 10px 16px;
+        border-bottom: 1px solid #f0f0f0; gap: 12px; align-items: flex-start;
+    }
+    .list-img-box {
+        width: 60px; height: 60px; /* Thoda compact image */
+        flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .list-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .list-info-box { flex-grow: 1; }
+    .list-title { font-size: 0.9rem; font-weight: 500; color: #1f2937; margin-bottom: 2px; line-height: 1.3; }
+    .list-price { font-weight: 700; font-size: 0.95rem; color: #111; }
+    .list-old-price { text-decoration: line-through; color: #9ca3af; font-size: 0.75rem; margin-left: 6px; }
+    
+    /* Grid View */
+    .grid-container {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: #e5e7eb;
+    }
+    .prod-card-grid {
+        background: white; padding: 10px; display: flex; flex-direction: column;
+    }
+    .grid-img-box {
+        width: 100%; aspect-ratio: 1; margin-bottom: 8px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .grid-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .grid-title { font-size: 0.85rem; color: #374151; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.6em; line-height: 1.3em;}
+    .grid-price { font-size: 0.95rem; font-weight: 700; color: #111; margin-top: 4px; }
+
+    /* Loader */
+    .spinner { width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #4F46E5; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+</head>
+<body>
+
+    <!-- 1. SEARCH HEADER -->
+    <div class="search-header">
+        <a href="javascript:history.back()" class="text-gray-500 p-2 -ml-2"><i class="fas fa-arrow-left text-xl"></i></a>
+        <div class="search-input-wrapper">
+            <input type="text" id="main-search-input" class="search-input" placeholder="Search for Products..." autocomplete="off" autofocus>
+        </div>
+        <i class="fas fa-microphone text-gray-500 text-xl p-2"></i>
+    </div>
+
+    <!-- 2. DEFAULT VIEW (History + Categories) -->
+    <div id="default-search-view">
+        <!-- Recent Searches -->
+        <div id="recent-searches-container"></div>
+
+        <!-- Discover More -->
+        <div id="discover-more-section">
+            <div class="section-title">Discover More</div>
+            <div id="category-suggestions" class="chips-container"></div>
+        </div>
+        
+        <!-- Initial Trending Products -->
+        <div class="trending-header">Trending Products</div>
+        <div id="trending-products-container"></div>
+    </div>
+
+    <!-- 3. SEARCH RESULTS AREA (Hidden Initially) -->
+    <div id="search-results-wrapper" class="hidden">
+        <div id="search-results-container" class="pb-10"></div>
+        <div id="search-loader" class="hidden"><div class="spinner"></div></div>
+        <div id="no-results-msg" class="hidden text-center mt-10 text-gray-500">
+            <p>No results found.</p>
+        </div>
+    </div>
+
+    <script src="product-search.js"></script>
+</body>
+</html>
