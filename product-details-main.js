@@ -1,10 +1,10 @@
 // product-details-main.js
-// VERSION: SUPERSONIC V2 + SHARE FIX
+// VERSION: SUPERSONIC V2 + SHARE FIX + NEW PILL FOOTER
 
-// ... (Previous Global Variables remain same) ...
+// ... (Previous Global Variables and Init functions remain same) ...
 let currentProductData = null, currentProductId = null;
 let allProductsCache = [];
-let currentProductGroup = [];
+let currentProductGroup = []; 
 let selectedVariants = {}; 
 let selectedPack = null; 
 let database;
@@ -14,8 +14,6 @@ let displayedProductCount = 0;
 let isLoadingMore = false; 
 
 const CACHE_KEY_DATA = "RAMAZONE_DATA_V2"; 
-
-// ... (Init functions remain same: loadFromCache, initializeApp, etc.) ...
 
 document.addEventListener('DOMContentLoaded', () => {
     const loadedFromCache = loadFromCache();
@@ -144,7 +142,7 @@ function populateDataAndAttachListeners(data) {
     setupHeaderScrollEffect();
 }
 
-// ... (Cart Functions remain same) ...
+// --- CART FUNCTIONS (Standard) ---
 const getCart = () => { try { const cart = localStorage.getItem('ramazoneCart'); return cart ? JSON.parse(cart) : []; } catch (e) { return []; } };
 const saveCart = (cart) => { localStorage.setItem('ramazoneCart', JSON.stringify(cart)); };
 const packsMatch = (p1, p2) => { if (!p1 && !p2) return true; if (!p1 || !p2) return false; return p1.name === p2.name; };
@@ -215,6 +213,7 @@ function handleOptionsClick(event) {
     }
 }
 
+// --- UPDATED: STICKY BAR LOGIC FOR PILL BUTTONS ---
 function updateStickyActionBar() {
     if (!currentProductId || !currentProductData) return;
     const addToCartBtn = document.getElementById('add-to-cart-btn');
@@ -222,8 +221,27 @@ function updateStickyActionBar() {
     const stickyPriceText = document.getElementById('sticky-price-text');
     const currentPrice = selectedPack ? selectedPack.price : currentProductData.displayPrice;
     if (stickyPriceText) stickyPriceText.textContent = `at ₹${Number(currentPrice).toLocaleString('en-IN')}`;
-    addToCartBtn.onclick = (e) => { e.preventDefault(); addToCartBtn.innerHTML = '<i class="fas fa-check text-green-600"></i>'; setTimeout(() => addToCartBtn.innerHTML = '<i class="fas fa-cart-plus"></i>', 1500); addToCart(currentProductId, 1, selectedVariants, selectedPack); };
-    buyNowBtn.onclick = (e) => { e.preventDefault(); addToCart(currentProductId, 1, selectedVariants, selectedPack, false); window.location.href = 'order.html'; };
+    
+    // Remove any existing listeners before adding new ones
+    const newCartBtn = addToCartBtn.cloneNode(true);
+    addToCartBtn.parentNode.replaceChild(newCartBtn, addToCartBtn);
+    
+    const newBuyBtn = buyNowBtn.cloneNode(true);
+    buyNowBtn.parentNode.replaceChild(newBuyBtn, buyNowBtn);
+
+    newCartBtn.onclick = (e) => {
+        e.preventDefault();
+        // Animation Feedback (Update Text & Icon)
+        newCartBtn.innerHTML = '<i class="fas fa-check text-green-600"></i><span>Added</span>';
+        setTimeout(() => newCartBtn.innerHTML = '<i class="fas fa-cart-plus"></i><span>Add to Cart</span>', 1500);
+        addToCart(currentProductId, 1, selectedVariants, selectedPack);
+    };
+
+    newBuyBtn.onclick = (e) => {
+        e.preventDefault();
+        addToCart(currentProductId, 1, selectedVariants, selectedPack, false); 
+        window.location.href = 'order.html';
+    };
 }
 
 // --- FIXED SHARE LOGIC (Using API Link) ---
@@ -240,30 +258,12 @@ function setupShareButton() {
     newBtn.addEventListener("click", async (e) => {
         e.preventDefault(); 
         if (!currentProductData) return;
-        
-        // IMPORTANT: Generating the API URL for sharing
-        // This ensures WhatsApp sees the meta tags from the server
         const baseUrl = window.location.origin;
         const apiShareUrl = `${baseUrl}/api/share?id=${currentProductId}`;
-        
-        const shareData = { 
-            title: currentProductData.name, 
-            text: `Check out ${currentProductData.name} on Ramazone!`, 
-            url: apiShareUrl 
-        };
-        
-        // 1. Try Native Share
+        const shareData = { title: currentProductData.name, text: `Check out ${currentProductData.name} on Ramazone!`, url: apiShareUrl };
         try { if (navigator.share) { await navigator.share(shareData); return; } } catch (err) {}
-        
-        // 2. Try Clipboard (Copy API Link)
-        try { 
-            await navigator.clipboard.writeText(apiShareUrl); 
-            window.showToast("Link copied! Share it on WhatsApp.", "success"); 
-        } 
-        catch (err) { 
-            try { unsecuredCopyToClipboard(apiShareUrl); } 
-            catch(fErr) { window.showToast("Share failed.", "error"); }
-        }
+        try { await navigator.clipboard.writeText(apiShareUrl); window.showToast("Link copied! Share it on WhatsApp.", "success"); } 
+        catch (err) { try { unsecuredCopyToClipboard(apiShareUrl); } catch(fErr) { window.showToast("Share failed.", "error"); } }
     });
 }
 
@@ -375,5 +375,4 @@ function setupInfiniteScroll() {
     if(!section) return;
     window.addEventListener('scroll', () => { if (isLoadingMore || displayedProductCount >= allSameCategoryProducts.length) return; const { scrollTop, scrollHeight, clientHeight } = document.documentElement; if (scrollTop + clientHeight >= scrollHeight - 400) { isLoadingMore = true; if(loader) loader.style.display = 'block'; setTimeout(() => { loadNextBatch(6); }, 1000); } }, { passive: true });
 }
-
 
