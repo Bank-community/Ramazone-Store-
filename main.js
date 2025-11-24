@@ -8,6 +8,11 @@ let deferredInstallPrompt = null;
 let festiveCountdownInterval = null; 
 let goToCartNotificationTimer = null;
 
+// Loading State
+let isPageStructureLoaded = false;
+let firebaseDataParts = { homepage: null, products: null, locations: null };
+let firebaseLoadStatus = { homepage: false, products: false, locations: false };
+
 // **INFINITE SCROLL STATE FOR DEALS**
 let dealsOfTheDayProducts = []; 
 let currentlyDisplayedDeals = 0; 
@@ -115,13 +120,22 @@ async function initializeApp() {
         if (config && config.apiKey) {
             firebase.initializeApp(config);
             database = firebase.database();
+            
+            // Start loading both HTML structure and Data in parallel
+            loadPageStructure(); 
             loadAllData();
         } else {
-            throw new Error("Invalid or missing Firebase config received from API.");
+            throw new Error("Invalid or missing Firebase config.");
         }
     } catch (error) {
         console.error("Initialization Error:", error);
-        document.getElementById('main-content-area').innerHTML = `<div class="text-center p-8"><p class="font-bold text-red-600">Application Failed to Start</p><p class="text-gray-600 mt-2">Could not connect to the database. Please check your internet connection or contact support.</p><p class="text-xs text-gray-400 mt-4">${error.message}</p></div>`;
+        // Show a retry button instead of just text
+        document.getElementById('main-content-area').innerHTML = `
+            <div class="text-center p-8">
+                <p class="font-bold text-red-600">Connection Error</p>
+                <p class="text-gray-600 mt-2 mb-4">Could not connect to the database.</p>
+                <button onclick="location.reload()" class="bg-indigo-600 text-white px-4 py-2 rounded">Retry</button>
+            </div>`;
     }
 }
 
@@ -130,112 +144,97 @@ async function loadCoreComponents() {
         const searchContainer = document.getElementById('search-bar-container');
         if (searchContainer) {
             const response = await fetch('sections/search-bar.html');
-            if (!response.ok) throw new Error('Search bar section not found');
-            searchContainer.innerHTML = await response.text();
+            if (response.ok) {
+                searchContainer.innerHTML = await response.text();
+                // Re-attach search listeners if data is already loaded, otherwise setupHomepageSearch will handle it
+                if(window.ramazoneData) setupHomepageSearch(); 
+            }
         }
-    } catch (error) {
-        console.error("Core component load error:", error);
-    }
+    } catch (error) { console.error("Core component load error:", error); }
 }
 
 function loadAllData() {
-    // --- OPTIMIZATION: Fetch Specific Nodes in Parallel instead of Root ---
-    const homepageRef = database.ref('ramazone/homepage');
-    const productsRef = database.ref('ramazone/products');
-    const locationsRef = database.ref('ramazone/locations');
-
-    Promise.all([
-        homepageRef.once('value'),
-        productsRef.once('value'),
-        locationsRef.once('value')
-    ]).then(async ([homeSnap, prodSnap, locSnap]) => {
-        const homeData = homeSnap.val() || {};
-        const productsData = prodSnap.val() || {};
-        const locData = locSnap.val() || {};
-
-        // Combine data for global usage
-        const data = {
-            homepage: homeData,
-            products: productsData,
-            locations: locData
-        };
-        window.ramazoneData = data; 
-
-        let products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
-        allProductsCache = products.filter(p => p && p.isVisible !== false);
-
-        if (homeData.normalCategories) {
-            allCategoriesCache = homeData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
-        }
-
-        allLocationsCache = locData;
-        
-        setupLocationSelectionsFromStorage(); 
-        checkAndShowLocationWelcomePopup();
-        
-        setupLocationSystem(); 
-        filterProductsByLocation(); 
-        await loadPageStructure(); 
-        renderAllSections(data); 
-
-        // Set up listeners for updates after initial load (Background Sync)
-        setupRealtimeListeners();
-
-    }).catch((error) => {
-        console.error("Firebase Read Error:", error);
-        document.getElementById('main-content-area').innerHTML = `<p class="text-center p-8">Could not load data. Check your connection.</p>`;
-    });
-}
-
-// Function to keep data updated without blocking initial load
-function setupRealtimeListeners() {
+    // We use .on() for robustness but on specific paths for speed
+    
+    // 1. Homepage Data
     database.ref('ramazone/homepage').on('value', (snap) => {
-        const homeData = snap.val() || {};
-        if(window.ramazoneData) window.ramazoneData.homepage = homeData;
-        // Re-render specific sections if needed, or just update cache
-        // For now, we update cache to ensure navigation works
-        if (homeData.normalCategories) {
-            allCategoriesCache = homeData.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
-        }
+        firebaseDataParts.homepage = snap.val() || {};
+        firebaseLoadStatus.homepage = true;
+        checkAndRenderApp();
     });
 
-    database.ref('ramazone/products').on('child_changed', (snap) => {
-        // Optimally update single product in cache
-        const updatedProd = snap.val();
-        if(updatedProd) {
-            const idx = allProductsCache.findIndex(p => p.id === updatedProd.id);
-            if(idx > -1) allProductsCache[idx] = updatedProd;
-            else allProductsCache.push(updatedProd);
-        }
+    // 2. Products Data
+    database.ref('ramazone/products').on('value', (snap) => {
+        firebaseDataParts.products = snap.val() || {};
+        firebaseLoadStatus.products = true;
+        checkAndRenderApp();
+    });
+
+    // 3. Locations Data
+    database.ref('ramazone/locations').on('value', (snap) => {
+        firebaseDataParts.locations = snap.val() || {};
+        firebaseLoadStatus.locations = true;
+        checkAndRenderApp();
     });
 }
 
 async function loadPageStructure() {
+    if (isPageStructureLoaded) return;
     const mainArea = document.getElementById('main-content-area');
-    if (mainArea.childElementCount > 0) return; 
     
     const sections = [
-        'location-popup.html', 
-        'categories.html', 
-        'recently-viewed.html', 
-        'videos.html', 
-        'festive-collection.html', 
-        'info-marquee.html', 
-        'flip-card.html', 
-        'just-for-you.html', 
-        'single-banner-section.html', 
+        'location-popup.html', 'categories.html', 'recently-viewed.html', 
+        'videos.html', 'festive-collection.html', 'info-marquee.html', 
+        'flip-card.html', 'just-for-you.html', 'single-banner-section.html', 
         'deals-of-the-day.html'
     ];
     try {
         const responses = await Promise.all(sections.map(s => fetch(`sections/${s}`)));
         const htmls = await Promise.all(responses.map(res => res.text()));
         mainArea.innerHTML = htmls.join('');
-        checkAndShowLocationWelcomePopup();
+        
+        isPageStructureLoaded = true;
+        checkAndRenderApp();
     } catch (error) {
         console.error("Page Structure Load Error:", error);
-        mainArea.innerHTML = `<p class="text-center p-8">Error loading page content.</p>`;
     }
 }
+
+function checkAndRenderApp() {
+    // Only render when Structure + All Data parts are ready
+    if (isPageStructureLoaded && 
+        firebaseLoadStatus.homepage && 
+        firebaseLoadStatus.products && 
+        firebaseLoadStatus.locations) {
+        
+        // Reconstruct Global Object
+        window.ramazoneData = {
+            homepage: firebaseDataParts.homepage,
+            products: firebaseDataParts.products,
+            locations: firebaseDataParts.locations
+        };
+
+        // Process Data
+        let products = Array.isArray(firebaseDataParts.products) ? firebaseDataParts.products : Object.values(firebaseDataParts.products || {});
+        allProductsCache = products.filter(p => p && p.isVisible !== false);
+
+        if (firebaseDataParts.homepage.normalCategories) {
+            allCategoriesCache = firebaseDataParts.homepage.normalCategories.filter(cat => cat && cat.name && cat.size !== 'double');
+        }
+
+        allLocationsCache = firebaseDataParts.locations || {};
+
+        // Run Setup Functions
+        setupLocationSelectionsFromStorage(); 
+        checkAndShowLocationWelcomePopup();
+        setupLocationSystem(); 
+        filterProductsByLocation(); 
+        
+        // Finally Render UI
+        renderAllSections(window.ramazoneData);
+    }
+}
+
 
 // --- NEW: LOCATION POPUP LOGIC ---
 function checkAndShowLocationWelcomePopup() {
