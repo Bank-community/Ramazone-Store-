@@ -31,6 +31,10 @@ function getProductImage(item) {
     return 'https://placehold.co/150?text=No+Image'; 
 }
 
+// --- WISHLIST HELPERS ---
+const getWishlist = () => { try { return JSON.parse(localStorage.getItem('ramazoneWishlist')) || []; } catch { return []; } };
+const saveWishlist = (list) => localStorage.setItem('ramazoneWishlist', JSON.stringify(list));
+
 // --- ROBUST COPY FUNCTION ---
 const copyToClipboard = (text) => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -255,6 +259,97 @@ function applyCouponFromList(code) {
     document.getElementById('coupon-input').value = code;
     scrollToCoupons(); // Navigate to step 3
     document.getElementById('apply-coupon-btn').click(); // Trigger existing logic
+}
+
+// --- WISHLIST POPUP LOGIC (NEW) ---
+function openWishlistPopup() {
+    document.getElementById('wishlist-popup-overlay').classList.add('active');
+    renderWishlistItems();
+}
+
+function closeWishlistPopup(e) {
+    if (e === true || e.target.classList.contains('popup-overlay')) {
+        document.getElementById('wishlist-popup-overlay').classList.remove('active');
+    }
+}
+
+function renderWishlistItems() {
+    const container = document.getElementById('wishlist-list-container');
+    const wishlistIds = getWishlist();
+
+    if (wishlistIds.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-10">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-heart-broken text-2xl text-gray-400"></i>
+                </div>
+                <p class="text-gray-500 font-medium">Your wishlist is empty</p>
+                <button onclick="location.href='products.html'" class="mt-4 text-indigo-600 font-bold text-sm">Start Shopping</button>
+            </div>`;
+        return;
+    }
+
+    // Match IDs with Products from Cache
+    const wishlistProducts = wishlistIds.map(id => allProductsCache.find(p => p.id === id)).filter(Boolean);
+
+    if (wishlistProducts.length === 0 && wishlistIds.length > 0) {
+        // IDs exist but products not found (maybe deleted)
+        container.innerHTML = '<p class="text-center text-gray-500 py-4">Products unavailable.</p>';
+        return;
+    }
+
+    container.innerHTML = wishlistProducts.map(item => {
+        const img = getProductImage(item);
+        const price = Number(item.displayPrice).toLocaleString('en-IN');
+        return `
+        <div class="flex gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100 items-center">
+            <a href="product-details.html?id=${item.id}" class="w-16 h-16 flex-shrink-0 bg-white border rounded p-1">
+                <img src="${img}" class="w-full h-full object-contain">
+            </a>
+            <div class="flex-grow min-w-0">
+                <p class="font-semibold text-gray-800 text-sm truncate">${item.name}</p>
+                <p class="font-bold text-gray-900 mt-1">₹${price}</p>
+            </div>
+            <div class="flex flex-col gap-2">
+                <button onclick="moveToCartFromWishlist('${item.id}')" class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded shadow-sm hover:bg-indigo-700">
+                    Add to Cart
+                </button>
+                <button onclick="removeFromWishlist('${item.id}')" class="text-red-500 text-xs font-bold hover:text-red-700">
+                    Remove
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function removeFromWishlist(id) {
+    let list = getWishlist();
+    list = list.filter(itemId => itemId !== id);
+    saveWishlist(list);
+    renderWishlistItems();
+    showToast('Removed from Wishlist');
+}
+
+function moveToCartFromWishlist(id) {
+    // 1. Add to Cart
+    let cart = getCart();
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+        existing.quantity += 1;
+        showToast('Quantity updated in Cart', 'success');
+    } else {
+        cart.push({ id: id, quantity: 1, variants: {} });
+        showToast('Added to Cart', 'success');
+    }
+    saveCart(cart);
+
+    // 2. Remove from Wishlist
+    removeFromWishlist(id);
+
+    // 3. Refresh UI if Cart is visible
+    if(orderItems.length > 0 || cart.length === 1) {
+        setTimeout(() => location.reload(), 500); // Reload to show new cart state
+    }
 }
 
 // --- TRACK ORDER ---
@@ -637,4 +732,3 @@ function setupEvents() {
     });
     document.querySelectorAll('input[name="delivery"]').forEach(el => el.addEventListener('change', updatePricing));
 }
-
