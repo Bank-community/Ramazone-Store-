@@ -1,4 +1,4 @@
-// product-search.js - Group ID Logic & Star Ratings
+// product-search.js - Header Cart, Compact Layout
 
 let allProducts = [];
 let displayedCount = 0;
@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadData();
     renderSearchHistory();
+    updateHeaderCart(); // Check cart on load
 
     input.addEventListener('input', (e) => {
         const val = e.target.value;
@@ -153,33 +154,27 @@ function createResultCard(p) {
     const oldPrice = p.originalPrice > p.displayPrice ? `₹${Number(p.originalPrice).toLocaleString()}` : '';
     const discount = p.originalPrice > p.displayPrice ? Math.round(((p.originalPrice - p.displayPrice)/p.originalPrice)*100) + '% off' : '';
     
-    // 1. Star Rating (New Style)
     const ratingHtml = getStarRatingHTML(p.rating);
 
-    // 2. Variant Logic (Group ID Check)
-    // Find how many products share this group ID
     let variantCount = 0;
     if (p.groupId) {
         variantCount = allProducts.filter(prod => prod.groupId === p.groupId).length;
     }
 
     let variantTag = '';
-    // If more than 1 item in group, show tag
     if (variantCount > 1) {
         variantTag = `<div class="variant-tag" onclick="event.stopPropagation(); openVariantModal('${p.id}', '${p.groupId}')">
             ${variantCount} Variants
         </div>`;
     } else if (p.variants && p.variants.length > 1) {
-        // Fallback for legacy array structure
         variantTag = `<div class="variant-tag" onclick="event.stopPropagation(); openVariantModal('${p.id}', null)">
             ${p.variants.length} Variants
         </div>`;
     }
 
-    // 3. Grocery Check
     const isGrocery = isGroceryCategory(p.category || "");
     const addToCartBtn = isGrocery 
-        ? `<button class="add-cart-btn" onclick="event.stopPropagation(); addToCartSimple('${p.id}')">Add to Cart</button>`
+        ? `<button class="add-cart-btn" onclick="event.stopPropagation(); addToCartSimple('${p.id}', ${p.displayPrice})">Add to Cart</button>`
         : '';
 
     return `
@@ -209,10 +204,13 @@ function isGroceryCategory(cat) {
     return groceryKeywords.some(k => cat.toLowerCase().includes(k));
 }
 
-function addToCartSimple(productId) {
+// --- CART LOGIC WITH HEADER BUTTON ---
+
+function addToCartSimple(productId, price) {
     try {
         let cart = JSON.parse(localStorage.getItem('ramazoneCart')) || [];
         const existing = cart.find(item => item.id === productId);
+        
         if (existing) {
             existing.quantity += 1;
         } else {
@@ -220,6 +218,9 @@ function addToCartSimple(productId) {
         }
         localStorage.setItem('ramazoneCart', JSON.stringify(cart));
         
+        // Update Header Button
+        updateHeaderCart();
+
         const btn = event.target;
         const originalText = btn.innerText;
         btn.innerText = "Added";
@@ -233,7 +234,39 @@ function addToCartSimple(productId) {
     } catch(e) { console.error(e); }
 }
 
-// --- UPDATED VARIANT POPUP LOGIC ---
+function updateHeaderCart() {
+    const cartBtn = document.getElementById('header-cart-btn');
+    const countEl = document.getElementById('h-cart-count');
+    const priceEl = document.getElementById('h-cart-price');
+    
+    let cart = JSON.parse(localStorage.getItem('ramazoneCart')) || [];
+    
+    if (cart.length === 0) {
+        cartBtn.style.display = 'none';
+        return;
+    }
+
+    let totalItems = 0;
+    let totalPrice = 0;
+
+    cart.forEach(item => {
+        totalItems += item.quantity;
+        const product = allProducts.find(p => p.id === item.id);
+        if (product) {
+            totalPrice += (Number(product.displayPrice) * item.quantity);
+        }
+    });
+
+    if (totalItems > 0) {
+        countEl.textContent = `${totalItems} Items`;
+        priceEl.textContent = `₹${totalPrice.toLocaleString()}`;
+        cartBtn.style.display = 'flex'; // Show in Header
+    } else {
+        cartBtn.style.display = 'none';
+    }
+}
+
+// --- VARIANT POPUP LOGIC ---
 
 function openVariantModal(currentProductId, groupId) {
     const overlay = document.getElementById('variant-overlay');
@@ -242,17 +275,14 @@ function openVariantModal(currentProductId, groupId) {
     
     let variants = [];
 
-    // Strategy 1: Search by Group ID (New & Preferred)
     if (groupId) {
         variants = allProducts.filter(p => p.groupId === groupId);
     } 
-    // Strategy 2: Search by Legacy Array (Fallback)
     else {
         const product = allProducts.find(p => p.id === currentProductId);
         if (product && product.variants) {
-             // Mocking legacy variants to look like full products for display
              variants = product.variants.map((v, idx) => ({
-                 id: currentProductId, // Note: Legacy variants might not have unique IDs
+                 id: currentProductId,
                  name: product.name,
                  displayPrice: v.price || product.displayPrice,
                  images: product.images,
@@ -264,14 +294,9 @@ function openVariantModal(currentProductId, groupId) {
 
     if (variants.length === 0) return;
 
-    // Generate List HTML
     let variantsHtml = variants.map(v => {
         const isSelected = v.id === currentProductId;
-        // Display Logic: Use variantValue (e.g., "White", "1kg") if available, else Name
-        const displayTitle = (v.variantValue && v.variantType) 
-            ? `${v.variantValue}` 
-            : v.name;
-        
+        const displayTitle = (v.variantValue && v.variantType) ? `${v.variantValue}` : v.name;
         const displayType = v.variantType || 'Variant';
 
         return `
