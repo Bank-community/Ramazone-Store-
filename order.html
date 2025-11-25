@@ -98,12 +98,13 @@
                     <img src="https://www.svgrepo.com/show/354161/parcel-icon.svg" class="action-icon" alt="Orders">
                     <span class="action-label">Track<br>Order</span>
                 </div>
-                <div class="action-btn">
+                
+                <!-- UPDATED WISHLIST BUTTON -->
+                <div class="action-btn" onclick="openWishlistPopup()">
                     <svg viewBox="0 0 48 48" class="action-icon" xmlns="http://www.w3.org/2000/svg" fill="#ef4444"><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g><path class="c" d="m43,17.0766c0-5.6539-4.5835-10.2373-10.2374-10.2373-3.7223,0-6.9708,1.9932-8.7626,4.964-1.7919-2.9708-5.0403-4.964-8.7626-4.964-5.6539,0-10.2373,4.5834-10.2373,10.2373,0,1.2925.2496,2.524.6866,3.6627,3.3851,9.7368,18.3134,20.4215,18.3134,20.4215,0,0,14.9282-10.6847,18.3134-20.4215.437-1.1386.6867-2.3702.6867-3.6627Z"></path></g></svg>
                     <span class="action-label">My<br>Wishlist</span>
                 </div>
                 
-                <!-- UPDATED COUPON BUTTON -->
                 <div class="action-btn" onclick="openCouponsPopup()">
                     <img src="https://www.svgrepo.com/show/533049/gift.svg" class="action-icon" alt="Coupons">
                     <span class="action-label">Best<br>Coupons</span>
@@ -211,6 +212,22 @@
         </div>
     </main>
 
+    <!-- NEW: WISHLIST POPUP -->
+    <div id="wishlist-popup-overlay" class="popup-overlay" onclick="closeWishlistPopup(event)">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-heart text-red-500 mr-2"></i>My Wishlist</h3>
+                    <p class="text-xs text-gray-500">Items you saved for later</p>
+                </div>
+                <button onclick="closeWishlistPopup(true)" class="text-gray-500 text-2xl">&times;</button>
+            </div>
+            <div id="wishlist-list-container" class="space-y-3 pb-4 overflow-y-auto" style="max-height: 60vh;">
+                <!-- Wishlist items will be injected here -->
+            </div>
+        </div>
+    </div>
+
     <!-- TRACK ORDER POPUP -->
     <div id="order-popup-overlay" class="popup-overlay" onclick="closeOrderPopup(event)">
         <div class="popup-content">
@@ -229,7 +246,7 @@
         </div>
     </div>
 
-    <!-- NEW: COUPONS POPUP -->
+    <!-- COUPONS POPUP -->
     <div id="coupons-popup-overlay" class="popup-overlay" onclick="closeCouponsPopup(event)">
         <div class="popup-content">
             <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -239,9 +256,7 @@
                 </div>
                 <button onclick="closeCouponsPopup(true)" class="text-gray-500 text-2xl">&times;</button>
             </div>
-            <div id="coupons-list-container" class="space-y-3 pb-4">
-                <!-- Coupons will be injected here -->
-            </div>
+            <div id="coupons-list-container" class="space-y-3 pb-4"></div>
         </div>
     </div>
 
