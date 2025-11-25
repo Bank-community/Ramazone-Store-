@@ -1,5 +1,4 @@
-// product-search.js
-// Handles Search, History, Suggestions, and Smart Layouts
+// product-search.js - Group ID Logic & Star Ratings
 
 let allProducts = [];
 let displayedCount = 0;
@@ -11,28 +10,24 @@ const DEFAULT_LOCATION = "ALL_AREAS";
 
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('main-search-input');
-    const clearBtn = document.getElementById('clear-search-btn'); // Get Clear Button
+    const clearBtn = document.getElementById('clear-search-btn'); 
     
-    // Auto Focus
     setTimeout(() => { input.focus(); }, 100); 
 
     loadData();
     renderSearchHistory();
 
-    // Input Event (Show/Hide Clear Button)
     input.addEventListener('input', (e) => {
         const val = e.target.value;
-        // Toggle Clear Button
         clearBtn.style.display = val.length > 0 ? 'block' : 'none';
         handleSearch(val);
     });
     
-    // Clear Button Click Event
     clearBtn.addEventListener('click', () => {
-        input.value = ''; // Clear text
-        clearBtn.style.display = 'none'; // Hide button
-        handleSearch(''); // Reset search logic (Show default view)
-        input.focus(); // Keep keyboard open
+        input.value = ''; 
+        clearBtn.style.display = 'none'; 
+        handleSearch(''); 
+        input.focus(); 
     });
     
     input.addEventListener('keypress', (e) => {
@@ -52,7 +47,6 @@ function loadData() {
             const data = JSON.parse(cached);
             let rawProducts = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
             
-            // Strict Filtering
             allProducts = rawProducts.filter(p => {
                 if (p.isVisible === false) return false;
                 if (p.availableAreas && Array.isArray(p.availableAreas) && p.availableAreas.length > 0) {
@@ -61,69 +55,34 @@ function loadData() {
                 return true;
             });
             
-            renderCategoryChips(data.homepage?.normalCategories || []);
             renderTrendingProducts();
         }
     } catch (e) { console.error("Data Load Error", e); }
 }
 
-// ... (Rest of the functions: History, Categories, Trending, Search Logic remain same) ...
-
-function renderSearchHistory() {
-    const container = document.getElementById('recent-searches-container');
-    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    if (history.length === 0) { container.style.display = 'none'; return; }
-    container.style.display = 'block';
-    let html = '';
-    history.slice(0, 3).forEach(term => { 
-        html += `<div class="history-item" onclick="executeSearch('${term}')"><i class="fas fa-history history-icon"></i><span class="history-text">${term}</span><i class="fas fa-arrow-left history-arrow" style="transform: rotate(45deg);"></i></div>`;
-    });
-    container.innerHTML = html;
-}
-
-function addToHistory(term) {
-    if(!term || term.trim() === '') return;
-    let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
-    history.unshift(term);
-    if (history.length > 5) history.pop();
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-}
-
-function renderCategoryChips(categories) {
-    const container = document.getElementById('category-suggestions');
-    if (!categories) return;
-    const uniqueCats = new Set();
-    categories.forEach(c => uniqueCats.add(c.name));
-    allProducts.forEach(p => { if(p.category) uniqueCats.add(p.category); });
-    let html = '';
-    uniqueCats.forEach(cat => { html += `<span class="cat-chip" onclick="executeSearch('${cat}')">${cat}</span>`; });
-    container.innerHTML = html;
-}
-
 function renderTrendingProducts() {
     const container = document.getElementById('trending-products-container');
-    if(allProducts.length === 0) { container.innerHTML = '<p class="p-4 text-xs text-gray-400">No products available.</p>'; return; }
-    const trending = allProducts.sort(() => 0.5 - Math.random()).slice(0, 6);
-    let html = "";
-    trending.forEach(p => { html += createListCard(p); });
-    container.innerHTML = html;
+    const section = document.getElementById('trending-section');
+    if (!container || allProducts.length === 0) return;
+
+    section.classList.remove('hidden');
+    const trending = [...allProducts].sort(() => 0.5 - Math.random()).slice(0, 8);
+    
+    container.innerHTML = trending.map(p => `
+        <div onclick="location.href='product-details.html?id=${p.id}'" class="min-w-[120px] bg-white border border-gray-100 rounded p-2 flex flex-col items-center">
+            <img src="${p.images?.[0] || 'placeholder.jpg'}" class="w-20 h-20 object-contain mb-2">
+            <p class="text-xs text-center text-gray-700 font-medium line-clamp-2">${p.name}</p>
+        </div>
+    `).join('');
 }
 
-window.executeSearch = (term) => {
-    const input = document.getElementById('main-search-input');
-    const clearBtn = document.getElementById('clear-search-btn');
-    input.value = term;
-    clearBtn.style.display = 'block'; // Show clear button on click search
-    addToHistory(term);
-    handleSearch(term);
-}
-
+// --- CORE SEARCH LOGIC ---
 function handleSearch(query) {
     const defaultView = document.getElementById('default-search-view');
     const resultsWrapper = document.getElementById('search-results-wrapper');
     const container = document.getElementById('search-results-container');
     const noRes = document.getElementById('no-results-msg');
+    const termDisplay = document.getElementById('search-term-display');
 
     query = query.trim().toLowerCase();
 
@@ -136,11 +95,17 @@ function handleSearch(query) {
 
     defaultView.style.display = 'none';
     resultsWrapper.classList.remove('hidden');
+    termDisplay.textContent = query;
 
     currentResults = allProducts.filter(p => {
-        return (p.name && p.name.toLowerCase().includes(query)) ||
-               (p.category && p.category.toLowerCase().includes(query)) ||
-               (p.tags && p.tags.some(t => t.toLowerCase().includes(query)));
+        const name = p.name ? p.name.toLowerCase() : "";
+        const cat = p.category ? p.category.toLowerCase() : "";
+        
+        if (name.includes(query)) return true;
+        if (cat.includes(query)) return true;
+        if (p.tags && p.tags.some(t => t.toLowerCase().includes(query))) return true;
+        if (p.product_of_keyword && p.product_of_keyword.some(k => k.toLowerCase().includes(query))) return true;
+        return false;
     });
 
     displayedCount = 0;
@@ -150,44 +115,223 @@ function handleSearch(query) {
         noRes.classList.remove('hidden');
     } else {
         noRes.classList.add('hidden');
-        const primaryCat = currentResults[0].category || "";
-        const isGrocery = isGroceryCategory(primaryCat);
-        if (!isGrocery) container.className = "grid-container pb-10";
-        else container.className = "pb-10";
-        loadMore(isGrocery);
+        loadMore(); 
     }
 }
 
-function isGroceryCategory(cat) {
-    const groceryKeywords = ['grocery', 'kirana', 'food', 'dal', 'rice', 'oil', 'masala', 'kitchen', 'daily', 'dry fruit', 'snacks'];
-    return groceryKeywords.some(k => cat.toLowerCase().includes(k));
-}
-
-function loadMore(forceLayoutType) {
-    if (displayedCount >= currentResults.length) return;
+function loadMore() {
     const container = document.getElementById('search-results-container');
     const batch = currentResults.slice(displayedCount, displayedCount + BATCH_SIZE);
-    const isGrocery = (forceLayoutType !== undefined) ? forceLayoutType : isGroceryCategory(currentResults[0]?.category || "");
+    
     let html = "";
     batch.forEach(p => {
-        if (isGrocery) html += createListCard(p);
-        else html += createGridCard(p);
+        html += createResultCard(p);
     });
     container.insertAdjacentHTML('beforeend', html);
     displayedCount += batch.length;
 }
 
-function createListCard(p) {
-    const price = `₹${Number(p.displayPrice).toLocaleString()}`;
-    const oldPrice = p.originalPrice > p.displayPrice ? `₹${Number(p.originalPrice).toLocaleString()}` : '';
-    const discount = p.originalPrice > p.displayPrice ? Math.round(((p.originalPrice - p.displayPrice)/p.originalPrice)*100) + '% OFF' : '';
-    return `<div class="prod-card-list" onclick="location.href='product-details.html?id=${p.id}'"><div class="list-img-box"><img src="${p.images?.[0] || 'placeholder.jpg'}" alt="${p.name}"></div><div class="list-info-box"><h3 class="list-title">${p.name}</h3><div class="flex items-center gap-2 mt-1"><span class="list-price">${price}</span><span class="list-old-price">${oldPrice}</span><span class="text-xs text-green-600 font-bold">${discount}</span></div></div></div>`;
+// --- HELPER: Generate Star Rating HTML ---
+function getStarRatingHTML(rating) {
+    if (!rating) return '';
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        if (rating >= i) {
+            stars += '<i class="fas fa-star star-filled"></i>';
+        } else if (rating >= i - 0.5) {
+             stars += '<i class="fas fa-star-half-alt star-filled"></i>';
+        } else {
+             stars += '<i class="fas fa-star star-empty"></i>';
+        }
+    }
+    return `<div class="star-rating-row">${stars}</div>`;
 }
 
-function createGridCard(p) {
+// --- FLIPKART STYLE CARD RENDERER ---
+function createResultCard(p) {
     const price = `₹${Number(p.displayPrice).toLocaleString()}`;
     const oldPrice = p.originalPrice > p.displayPrice ? `₹${Number(p.originalPrice).toLocaleString()}` : '';
-    const rating = p.rating ? `<div class="bg-green-600 text-white text-[10px] px-1.5 rounded inline-flex items-center gap-1">${p.rating} <i class="fas fa-star text-[8px]"></i></div>` : '';
-    return `<div class="prod-card-grid" onclick="location.href='product-details.html?id=${p.id}'"><div class="grid-img-box"><img src="${p.images?.[0] || 'placeholder.jpg'}" alt="${p.name}"></div><div class="flex flex-col"><h3 class="grid-title">${p.name}</h3><div class="mt-1">${rating}</div><div class="grid-price">${price} <span class="text-xs text-gray-400 font-normal line-through ml-1">${oldPrice}</span></div></div></div>`;
+    const discount = p.originalPrice > p.displayPrice ? Math.round(((p.originalPrice - p.displayPrice)/p.originalPrice)*100) + '% off' : '';
+    
+    // 1. Star Rating (New Style)
+    const ratingHtml = getStarRatingHTML(p.rating);
+
+    // 2. Variant Logic (Group ID Check)
+    // Find how many products share this group ID
+    let variantCount = 0;
+    if (p.groupId) {
+        variantCount = allProducts.filter(prod => prod.groupId === p.groupId).length;
+    }
+
+    let variantTag = '';
+    // If more than 1 item in group, show tag
+    if (variantCount > 1) {
+        variantTag = `<div class="variant-tag" onclick="event.stopPropagation(); openVariantModal('${p.id}', '${p.groupId}')">
+            ${variantCount} Variants
+        </div>`;
+    } else if (p.variants && p.variants.length > 1) {
+        // Fallback for legacy array structure
+        variantTag = `<div class="variant-tag" onclick="event.stopPropagation(); openVariantModal('${p.id}', null)">
+            ${p.variants.length} Variants
+        </div>`;
+    }
+
+    // 3. Grocery Check
+    const isGrocery = isGroceryCategory(p.category || "");
+    const addToCartBtn = isGrocery 
+        ? `<button class="add-cart-btn" onclick="event.stopPropagation(); addToCartSimple('${p.id}')">Add to Cart</button>`
+        : '';
+
+    return `
+    <div class="prod-card" onclick="location.href='product-details.html?id=${p.id}'">
+        <div class="img-container">
+            <i class="far fa-heart wishlist-icon"></i>
+            <img src="${p.images?.[0] || 'placeholder.jpg'}" alt="${p.name}" loading="lazy">
+            ${variantTag}
+        </div>
+        <div class="info-container">
+            <h3 class="prod-name">${p.name}</h3>
+            ${ratingHtml}
+            <div class="price-row">
+                <span class="current-price">${price}</span>
+                <span class="mrp-price">${oldPrice}</span>
+                <span class="discount-off">${discount}</span>
+            </div>
+            ${addToCartBtn}
+        </div>
+    </div>`;
+}
+
+// --- HELPER FUNCTIONS ---
+
+function isGroceryCategory(cat) {
+    const groceryKeywords = ['grocery', 'kirana', 'food', 'dal', 'rice', 'oil', 'masala', 'kitchen', 'daily', 'dry fruit', 'snacks', 'staples', 'vegetable'];
+    return groceryKeywords.some(k => cat.toLowerCase().includes(k));
+}
+
+function addToCartSimple(productId) {
+    try {
+        let cart = JSON.parse(localStorage.getItem('ramazoneCart')) || [];
+        const existing = cart.find(item => item.id === productId);
+        if (existing) {
+            existing.quantity += 1;
+        } else {
+            cart.push({ id: productId, quantity: 1, variants: {} });
+        }
+        localStorage.setItem('ramazoneCart', JSON.stringify(cart));
+        
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "Added";
+        btn.style.backgroundColor = "#2874f0";
+        btn.style.color = "white";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.backgroundColor = "white";
+            btn.style.color = "#2874f0";
+        }, 1500);
+    } catch(e) { console.error(e); }
+}
+
+// --- UPDATED VARIANT POPUP LOGIC ---
+
+function openVariantModal(currentProductId, groupId) {
+    const overlay = document.getElementById('variant-overlay');
+    const sheet = document.getElementById('variant-sheet');
+    const list = document.getElementById('variant-list-container');
+    
+    let variants = [];
+
+    // Strategy 1: Search by Group ID (New & Preferred)
+    if (groupId) {
+        variants = allProducts.filter(p => p.groupId === groupId);
+    } 
+    // Strategy 2: Search by Legacy Array (Fallback)
+    else {
+        const product = allProducts.find(p => p.id === currentProductId);
+        if (product && product.variants) {
+             // Mocking legacy variants to look like full products for display
+             variants = product.variants.map((v, idx) => ({
+                 id: currentProductId, // Note: Legacy variants might not have unique IDs
+                 name: product.name,
+                 displayPrice: v.price || product.displayPrice,
+                 images: product.images,
+                 variantValue: v.name || v.options?.[0]?.name || `Option ${idx+1}`,
+                 variantType: "Option"
+             }));
+        }
+    }
+
+    if (variants.length === 0) return;
+
+    // Generate List HTML
+    let variantsHtml = variants.map(v => {
+        const isSelected = v.id === currentProductId;
+        // Display Logic: Use variantValue (e.g., "White", "1kg") if available, else Name
+        const displayTitle = (v.variantValue && v.variantType) 
+            ? `${v.variantValue}` 
+            : v.name;
+        
+        const displayType = v.variantType || 'Variant';
+
+        return `
+        <div class="variant-item ${isSelected ? 'selected' : ''}" onclick="location.href='product-details.html?id=${v.id}'">
+            <img src="${v.images?.[0] || 'placeholder.jpg'}" class="v-img">
+            <div class="v-info">
+                <div class="flex items-center">
+                    <p class="v-name">${displayTitle}</p>
+                    ${v.variantValue ? `<span class="v-attr">${displayType}</span>` : ''}
+                </div>
+                <div>
+                    <span class="v-price">₹${Number(v.displayPrice).toLocaleString()}</span>
+                </div>
+            </div>
+            ${isSelected ? '<i class="fas fa-check-circle text-green-600"></i>' : '<i class="fas fa-chevron-right text-gray-400"></i>'}
+        </div>`;
+    }).join('');
+
+    list.innerHTML = variantsHtml;
+    overlay.classList.add('active');
+    sheet.classList.add('active');
+}
+
+function closeVariantModal() {
+    document.getElementById('variant-overlay').classList.remove('active');
+    document.getElementById('variant-sheet').classList.remove('active');
+}
+
+// History Functions
+function renderSearchHistory() {
+    const container = document.getElementById('recent-searches-container');
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    if (history.length === 0) { container.innerHTML = ''; return; }
+    
+    let html = `<div class="p-3 border-b border-gray-100 flex justify-between items-center"><span class="text-sm font-bold text-gray-600">Recent Searches</span><button onclick="localStorage.removeItem('${HISTORY_KEY}'); renderSearchHistory()" class="text-xs text-blue-600 font-bold">CLEAR</button></div>`;
+    
+    history.slice(0, 5).forEach(term => { 
+        html += `
+        <div class="flex items-center p-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50" onclick="executeSearch('${term}')">
+            <i class="fas fa-clock text-gray-400 mr-3"></i>
+            <span class="flex-grow text-sm text-gray-700">${term}</span>
+            <i class="fas fa-arrow-left -rotate-45 text-gray-300"></i>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function addToHistory(term) {
+    if(!term || term.trim() === '') return;
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
+    history.unshift(term);
+    if (history.length > 8) history.pop();
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+window.executeSearch = (term) => {
+    document.getElementById('main-search-input').value = term;
+    document.getElementById('clear-search-btn').style.display = 'block';
+    addToHistory(term);
+    handleSearch(term);
 }
 
