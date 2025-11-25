@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -8,40 +9,29 @@
     <meta property="og:image" content="https://i.ibb.co/My6h0gdd/20250706-230221.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="product-details.css">
 </head>
+
 <body>
+    <!-- HEADER -->
     <!-- HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            <!-- DEFAULT HEADER (Logo + Cart) -->
-            <div id="default-header-content" class="py-2 flex items-center justify-between transition-all duration-300">
-                <a href="javascript:history.back()" class="text-gray-600 hover:text-gray-900 p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                </a>
-                <a href="./index.html"><img src="https://i.ibb.co/My6h0gdd/20250706-230221.png" alt="Ramazone Logo" style="max-height: 30px; border-radius: 0;"></a>
-                <a href="order.html" class="header-cart-link relative">
-                    <i class="fas fa-shopping-cart text-xl"></i>
-                    <!-- Main Cart Badge -->
-                    <span id="cart-item-count" class="cart-badge"></span>
-                </a>
-            </div>
-
-            <!-- NEW: SCROLL HEADER (Back + Search + Cart) -->
-            <div id="search-header-content" class="py-1 hidden transition-all duration-300">
+            <!-- PERMANENT SEARCH HEADER (Back + Search + Cart) -->
+            <div id="search-header-content" class="py-2 transition-all duration-300">
                 <div class="flex items-center justify-between gap-2 w-full">
-                    
+
                     <!-- 1. Left: Back Button -->
                     <a href="javascript:history.back()" class="p-2 text-gray-600 hover:text-gray-900 flex-shrink-0">
                         <i class="fas fa-chevron-left text-lg"></i>
                     </a>
 
-                    <!-- 2. Center: Compact Search Bar (UPDATED LINK) -->
+                    <!-- 2. Center: Compact Search Bar -->
                     <a href="./product-search.html" class="header-search-bar flex-grow">
                         <i class="fas fa-search text-gray-500 text-sm"></i>
                         <span class="text-gray-500 ml-2 text-xs sm:text-sm truncate">Search for products...</span>
@@ -50,8 +40,7 @@
                     <!-- 3. Right: Cart Icon -->
                     <a href="order.html" class="p-2 text-gray-600 hover:text-gray-900 flex-shrink-0 relative">
                         <i class="fas fa-shopping-cart text-lg"></i>
-                        <!-- Scroll Header Cart Badge -->
-                        <span id="scroll-cart-count" class="cart-badge"></span>
+                        <span id="cart-item-count" class="cart-badge"></span>
                     </a>
 
                 </div>
@@ -60,7 +49,8 @@
     </header>
 
     <!-- VARIANT LOADING OVERLAY -->
-    <div id="variant-loading-overlay" class="fixed inset-0 z-[60] flex items-center justify-center bg-white/60 backdrop-blur-[2px] hidden transition-opacity duration-200">
+    <div id="variant-loading-overlay"
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-white/60 backdrop-blur-[2px] hidden transition-opacity duration-200">
         <div class="flex flex-col items-center">
             <div class="loader"></div>
             <p class="text-xs text-gray-500 mt-2 font-medium animate-pulse">Updating...</p>
@@ -74,26 +64,29 @@
 
     <!-- MAIN CONTENT -->
     <main id="product-content" class="max-w-7xl mx-auto sm:px-4 lg:px-6 mt-0 sm:mt-2 mb-6 pb-24" style="display: none;">
-         <div class="bg-white sm:rounded-xl sm:shadow-md overflow-hidden">
+        <div class="bg-white sm:rounded-xl sm:shadow-md overflow-hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-4">
-                
+
                 <!-- LEFT COLUMN: MEDIA GALLERY -->
                 <div id="media-gallery-container">
                     <div class="p-0 sm:p-2 lg:p-3 relative">
                         <!-- Main image viewer -->
-                        <div id="main-media-wrapper" class="rounded-none sm:rounded-lg mb-2 cursor-pointer overflow-hidden relative group bg-white">
+                        <div id="main-media-wrapper"
+                            class="rounded-none sm:rounded-lg mb-2 cursor-pointer overflow-hidden relative group bg-white">
                             <div id="media-slider"></div>
-                            
+
                             <!-- SHARE BUTTON -->
-                            <button id="share-button" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md border border-gray-200 z-10 hover:scale-110 transition-transform flex items-center justify-center w-11 h-11 active:scale-95">
-                                <img src="https://www.svgrepo.com/show/521832/share-1.svg" alt="Share" class="w-5 h-5 opacity-80">
+                            <button id="share-button"
+                                class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md border border-gray-200 z-10 hover:scale-110 transition-transform flex items-center justify-center w-11 h-11 active:scale-95">
+                                <img src="https://www.svgrepo.com/show/521832/share-1.svg" alt="Share"
+                                    class="w-5 h-5 opacity-80">
                             </button>
-                            
+
                         </div>
 
                         <!-- Wrapper for Scrolling Thumbnails -->
                         <div id="thumbnail-wrapper" class="relative px-3 sm:px-0">
-                             <div id="thumbnail-gallery" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
+                            <div id="thumbnail-gallery" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
                         </div>
 
                         <!-- Color Variants Container -->
@@ -105,34 +98,40 @@
                 <div id="product-main-info-container">
                     <div class="flex flex-col p-3 sm:p-4 lg:p-6">
                         <!-- Rating -->
-                        <div id="rating-section" class="flex items-center gap-1.5 text-xs text-gray-500 mb-1" style="display: none;">
+                        <div id="rating-section" class="flex items-center gap-1.5 text-xs text-gray-500 mb-1"
+                            style="display: none;">
                             <div id="product-rating-stars" class="rating-stars flex text-[10px]"></div>
                             <span id="product-review-count" class="text-[10px] text-gray-400 font-medium"></span>
                         </div>
                         <!-- Brand -->
                         <div id="brand-info-container" class="flex items-center gap-2 mb-0.5 hidden">
                             <span id="brand-name-text" class="text-xs font-bold text-gray-800"></span>
-                            <a href="#" id="visit-store-link" class="text-[10px] font-semibold text-blue-600 hover:underline">Visit store</a>
+                            <a href="#" id="visit-store-link"
+                                class="text-[10px] font-semibold text-blue-600 hover:underline">Visit store</a>
                         </div>
                         <!-- Title -->
                         <div class="mb-1">
-                            <h1 id="product-title" class="text-lg sm:text-xl font-bold text-gray-900 leading-tight"></h1>
+                            <h1 id="product-title" class="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
+                            </h1>
                         </div>
                         <!-- Price -->
-                        <div class="py-0.5 mb-2"> 
+                        <div class="py-0.5 mb-2">
                             <div id="new-price-section" class="flex flex-col items-start">
-                                 <div id="lowest-price-tag-container" style="display: none; margin-bottom: 2px;">
+                                <div id="lowest-price-tag-container" style="display: none; margin-bottom: 2px;">
                                     <div id="dynamic-deal-badge" class="lowest-price-tag">Lowest Price</div>
-                                 </div>
-                                <div class="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
-                                    <span id="price-percentage-discount" class="text-sm font-bold text-green-700 flex items-center"></span>
-                                    <span id="price-original" class="text-xs text-gray-400 line-through decoration-gray-400 font-medium"></span>
-                                    <span id="price-final" class="text-2xl font-extrabold text-gray-900 tracking-tight"></span>
                                 </div>
-                                 <p class="text-[10px] text-gray-500 mt-0.5 font-medium flex items-center gap-1">
+                                <div class="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
+                                    <span id="price-percentage-discount"
+                                        class="text-sm font-bold text-green-700 flex items-center"></span>
+                                    <span id="price-original"
+                                        class="text-xs text-gray-400 line-through decoration-gray-400 font-medium"></span>
+                                    <span id="price-final"
+                                        class="text-2xl font-extrabold text-gray-900 tracking-tight"></span>
+                                </div>
+                                <p class="text-[10px] text-gray-500 mt-0.5 font-medium flex items-center gap-1">
                                     <span>+ ₹49 Secured Packaging Fee</span>
                                     <i class="fas fa-chevron-right text-[8px]"></i>
-                                 </p>
+                                </p>
                             </div>
                         </div>
                         <!-- Variants & Packs -->
@@ -142,7 +141,8 @@
                             <div id="bundle-offer-container"></div>
                         </div>
                         <!-- Details -->
-                        <div id="seller-info" class="text-[10px] font-medium text-gray-400 mb-2" style="display: none;"></div>
+                        <div id="seller-info" class="text-[10px] font-medium text-gray-400 mb-2" style="display: none;">
+                        </div>
                         <div id="advanced-highlights-section" style="display: none;"></div>
                         <div id="tech-specs-section" class="pt-2 border-t border-gray-100 mt-2" style="display: none;">
                             <h2 class="text-sm font-bold text-gray-900 mb-2">Technical Details</h2>
@@ -150,47 +150,50 @@
                         </div>
                         <div id="description-section" class="pt-2 border-t border-gray-100 mt-2" style="display: none;">
                             <h2 class="text-sm font-bold text-gray-900 mb-2">Product Details</h2>
-                            <div id="return-policy-info" class="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 p-2 rounded-md mb-2" style="display: none;"></div>
+                            <div id="return-policy-info"
+                                class="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 p-2 rounded-md mb-2"
+                                style="display: none;"></div>
                             <div id="product-description" class="space-y-2 text-xs text-gray-600 leading-relaxed"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- BOTTOM SECTIONS -->
-             <div id="similar-products-container-wrapper">
+            <div id="similar-products-container-wrapper">
                 <div class="border-t border-gray-200">
-                  <div id="handpicked-similar-section" class="p-3 sm:p-4 lg:p-6" style="display: none;">
-                      <h2 class="text-base font-bold text-gray-900 mb-3">You Might Also Like</h2>
-                      <div id="handpicked-similar-container"></div>
-                  </div>
+                    <div id="handpicked-similar-section" class="p-3 sm:p-4 lg:p-6" style="display: none;">
+                        <h2 class="text-base font-bold text-gray-900 mb-3">You Might Also Like</h2>
+                        <div id="handpicked-similar-container"></div>
+                    </div>
                 </div>
 
                 <!-- RECENTLY VIEWED -->
                 <div id="recently-viewed-section" class="max-w-7xl mx-auto mt-4" style="display: none;">
-                  <h2 class="text-lg font-bold text-gray-800 mb-3 px-3 sm:px-0">Recently Viewed</h2>
-                  <div id="recently-viewed-container" class="carousel-container pb-2"></div>
+                    <h2 class="text-lg font-bold text-gray-800 mb-3 px-3 sm:px-0">Recently Viewed</h2>
+                    <div id="recently-viewed-container" class="carousel-container pb-2"></div>
                 </div>
 
                 <!-- MERGED GRID SECTION -->
                 <div id="other-products-section" class="max-w-7xl mx-auto px-3 sm:px-0 mt-6" style="display: none;">
-                  <h2 id="grid-section-title" class="text-lg font-bold text-gray-800 mb-3">More in this Category</h2>
-                  <div id="other-products-container" class="other-products-grid">
-                      <!-- Grid Items Here -->
-                  </div>
-                  
-                  <!-- INFINITE SCROLL LOADER -->
-                  <div id="infinite-scroll-loader">
-                      <div class="spinner"></div>
-                      <span>Loading more products...</span>
-                  </div>
+                    <h2 id="grid-section-title" class="text-lg font-bold text-gray-800 mb-3">More in this Category</h2>
+                    <div id="other-products-container" class="other-products-grid">
+                        <!-- Grid Items Here -->
+                    </div>
+
+                    <!-- INFINITE SCROLL LOADER -->
+                    <div id="infinite-scroll-loader">
+                        <div class="spinner"></div>
+                        <span>Loading more products...</span>
+                    </div>
                 </div>
-             </div>
+            </div>
         </div>
     </main>
 
     <!-- MODALS & ACTIONS -->
-    <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a class="modal-nav next">❯</a></div>
+    <div id="image-modal"><span class="close">×</span><a class="modal-nav prev">❮</a><img id="modal-image-content"><a
+            class="modal-nav next">❯</a></div>
     <div id="toast-notification"></div>
 
     <!-- STICKY ACTION BAR (PILL SHAPE EQUAL) -->
@@ -209,8 +212,10 @@
         </div>
     </div>
 
-    <div id="bundle-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
-        <div id="bundle-modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+    <div id="bundle-modal-overlay"
+        class="fixed inset-0 bg-black bg-opacity-60 z-[1001] flex justify-center items-center p-4 hidden">
+        <div id="bundle-modal-content"
+            class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
             <div class="flex justify-between items-center p-3 border-b">
                 <h3 class="text-base font-bold">Bundle Offer</h3>
                 <button id="bundle-modal-close" class="text-gray-500 hover:text-gray-800 text-xl">×</button>
@@ -220,7 +225,8 @@
         </div>
     </div>
 
-    <div id="go-to-cart-notification" class="fixed bottom-20 left-1/2 -translate-x-1/2 w-[90%] max-w-xs bg-gray-800 text-white rounded-lg shadow-xl p-3 z-[60] flex items-center justify-between transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none">
+    <div id="go-to-cart-notification"
+        class="fixed bottom-20 left-1/2 -translate-x-1/2 w-[90%] max-w-xs bg-gray-800 text-white rounded-lg shadow-xl p-3 z-[60] flex items-center justify-between transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none">
         <div class="flex items-center">
             <i class="fas fa-check-circle text-green-400 mr-2"></i>
             <div>
@@ -234,10 +240,10 @@
     <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
+
     <!-- PRODUCT LOGIC -->
     <script src="product-details-renderer.js"></script>
     <script src="product-details-main.js"></script>
 </body>
-</html>
 
+</html>
