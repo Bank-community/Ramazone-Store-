@@ -165,6 +165,22 @@
         .spinner { width: 30px; height: 30px; border: 3px solid #e0e0e0; border-top-color: #2874f0; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 30px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* --- Full Screen Loader (FIXED) --- */
+        #initial-loader {
+            position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 40;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        
+        /* THIS IS THE FIX: When 'hidden' class is added, force hide it */
+        #initial-loader.hidden {
+            display: none !important;
+        }
+        
+        #initial-loader p { margin-top: 10px; color: #666; font-size: 0.9rem; }
+
     </style>
 </head>
 <body>
@@ -192,12 +208,28 @@
         </div>
     </div>
 
+    <!-- Initial Data Loader (Only visible when fetching from Firebase first time) -->
+    <div id="initial-loader" class="hidden">
+        <div class="spinner"></div>
+        <p>Syncing products...</p>
+    </div>
+
     <!-- Default View -->
     <div id="default-search-view">
         <div id="recent-searches-container" class="bg-white mt-2"></div>
+        
+        <!-- Trending Section -->
         <div id="trending-section" class="bg-white mt-2 p-4 hidden">
             <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase">Trending Now</h3>
             <div id="trending-products-container" class="flex overflow-x-auto gap-3 pb-2" style="scrollbar-width:none;"></div>
+        </div>
+
+        <!-- NEW: Discover More (Chips) Section -->
+        <div id="discover-more-section" class="bg-white mt-2 p-4 hidden">
+            <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase">Discover More</h3>
+            <div id="category-chips-container" class="flex flex-wrap gap-2">
+                <!-- Chips will be injected here -->
+            </div>
         </div>
     </div>
 
@@ -227,7 +259,10 @@
         <div id="variant-list-container" class="variant-list"></div>
     </div>
 
+    <!-- FIREBASE SDKs (Added for fallback fetching) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script src="product-search.js"></script>
 </body>
 </html>
-
