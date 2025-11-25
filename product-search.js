@@ -1,10 +1,10 @@
-// product-search.js - Header Cart, Compact Layout
+// product-search.js - Header Cart, Compact Layout, Firebase Fallback, Limit History to 3
 
 let allProducts = [];
 let displayedCount = 0;
 let currentResults = [];
 let BATCH_SIZE = 10;
-const CACHE_KEY = "RAMAZONE_DATA_V2";
+const CACHE_KEY = "RAMAZONE_DATA_V2"; // Use same key as main app
 const HISTORY_KEY = "RAMAZONE_SEARCH_HISTORY";
 const DEFAULT_LOCATION = "ALL_AREAS"; 
 
@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setTimeout(() => { input.focus(); }, 100); 
 
-    loadData();
+    // Initialize logic
+    initFirebaseAndLoad();
+
     renderSearchHistory();
     updateHeaderCart(); // Check cart on load
 
@@ -39,26 +41,92 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function loadData() {
+// --- FIREBASE & DATA LOADING LOGIC ---
+
+async function initFirebaseAndLoad() {
+    // 1. Check Local Cache First
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+        console.log("Loading from Cache...");
+        parseAndLoadData(cached);
+    } else {
+        // 2. Fallback: Fetch from Firebase directly
+        console.log("Cache miss. Fetching from Firebase...");
+        fetchFromFirebase();
+    }
+}
+
+function fetchFromFirebase() {
+    // Show Full Screen Loader
+    const loader = document.getElementById('initial-loader');
+    if(loader) loader.classList.remove('hidden');
+
+    const config = {
+        apiKey: "AIzaSyCXrwTUdy5B5mxEMsmAOX_3ZVKxiWht7Vw",
+        authDomain: "re-store-8e5b3.firebaseapp.com",
+        databaseURL: "https://re-store-8e5b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(config);
+    }
+    const database = firebase.database();
+
+    // Fetch Products
+    database.ref('ramazone/products').once('value')
+        .then((snapshot) => {
+            const products = snapshot.val() || {};
+            
+            const dataToSave = {
+                products: products,
+                timestamp: new Date().getTime()
+            };
+
+            // Update Global Variable
+            localStorage.setItem(CACHE_KEY, JSON.stringify(dataToSave));
+            
+            parseAndLoadData(JSON.stringify(dataToSave));
+            
+            if(loader) loader.classList.add('hidden');
+        })
+        .catch((error) => {
+            console.error("Firebase Fetch Error:", error);
+            if(loader) {
+                loader.innerHTML = '<p class="text-red-500">Failed to load data. Please refresh.</p>';
+            }
+        });
+}
+
+function parseAndLoadData(jsonString) {
     try {
-        const cached = localStorage.getItem(CACHE_KEY);
+        const data = JSON.parse(jsonString);
+        let rawProducts = [];
+
+        // Handle different data structures (array vs object)
+        if (data.products) {
+            rawProducts = Array.isArray(data.products) ? data.products : Object.values(data.products);
+        } else if (Array.isArray(data)) {
+            // Fallback if raw array was saved
+            rawProducts = data;
+        }
+
         const userLoc = localStorage.getItem('userLocation') || DEFAULT_LOCATION;
 
-        if (cached) {
-            const data = JSON.parse(cached);
-            let rawProducts = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
-            
-            allProducts = rawProducts.filter(p => {
-                if (p.isVisible === false) return false;
-                if (p.availableAreas && Array.isArray(p.availableAreas) && p.availableAreas.length > 0) {
-                    if (!p.availableAreas.includes(userLoc)) return false;
-                }
-                return true;
-            });
-            
-            renderTrendingProducts();
-        }
-    } catch (e) { console.error("Data Load Error", e); }
+        allProducts = rawProducts.filter(p => {
+            if (!p) return false;
+            if (p.isVisible === false) return false;
+            // Location Filter
+            if (p.availableAreas && Array.isArray(p.availableAreas) && p.availableAreas.length > 0) {
+                if (!p.availableAreas.includes(userLoc)) return false;
+            }
+            return true;
+        });
+
+        console.log(`Loaded ${allProducts.length} products.`);
+        renderTrendingProducts();
+        renderCategoryChips(); // New Function
+        
+    } catch (e) { console.error("Data Parse Error", e); }
 }
 
 function renderTrendingProducts() {
@@ -67,15 +135,49 @@ function renderTrendingProducts() {
     if (!container || allProducts.length === 0) return;
 
     section.classList.remove('hidden');
+    // Randomize and take 8
     const trending = [...allProducts].sort(() => 0.5 - Math.random()).slice(0, 8);
     
     container.innerHTML = trending.map(p => `
-        <div onclick="location.href='product-details.html?id=${p.id}'" class="min-w-[120px] bg-white border border-gray-100 rounded p-2 flex flex-col items-center">
+        <div onclick="location.href='product-details.html?id=${p.id}'" class="min-w-[120px] bg-white border border-gray-100 rounded p-2 flex flex-col items-center cursor-pointer">
             <img src="${p.images?.[0] || 'placeholder.jpg'}" class="w-20 h-20 object-contain mb-2">
             <p class="text-xs text-center text-gray-700 font-medium line-clamp-2">${p.name}</p>
         </div>
     `).join('');
 }
+
+// --- RENDER CATEGORY CHIPS ---
+function renderCategoryChips() {
+    const container = document.getElementById('category-chips-container');
+    const section = document.getElementById('discover-more-section');
+    
+    if (!container || allProducts.length === 0) return;
+
+    // Extract Unique Categories
+    const categories = new Set();
+    allProducts.forEach(p => {
+        if (p.category) categories.add(p.category);
+    });
+
+    if (categories.size === 0) return;
+
+    section.classList.remove('hidden');
+    
+    const colors = ['bg-blue-50 text-blue-700', 'bg-green-50 text-green-700', 'bg-purple-50 text-purple-700', 'bg-orange-50 text-orange-700', 'bg-pink-50 text-pink-700'];
+    
+    let html = '';
+    let i = 0;
+    categories.forEach(cat => {
+        const colorClass = colors[i % colors.length];
+        html += `<div onclick="executeSearch('${cat}')" class="px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer border border-transparent hover:border-gray-200 transition-colors ${colorClass}">
+            ${cat}
+        </div>`;
+        i++;
+    });
+
+    container.innerHTML = html;
+}
+
 
 // --- CORE SEARCH LOGIC ---
 function handleSearch(query) {
@@ -325,7 +427,7 @@ function closeVariantModal() {
     document.getElementById('variant-sheet').classList.remove('active');
 }
 
-// History Functions
+// History Functions (UPDATED LIMITS HERE)
 function renderSearchHistory() {
     const container = document.getElementById('recent-searches-container');
     const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
@@ -333,7 +435,8 @@ function renderSearchHistory() {
     
     let html = `<div class="p-3 border-b border-gray-100 flex justify-between items-center"><span class="text-sm font-bold text-gray-600">Recent Searches</span><button onclick="localStorage.removeItem('${HISTORY_KEY}'); renderSearchHistory()" class="text-xs text-blue-600 font-bold">CLEAR</button></div>`;
     
-    history.slice(0, 5).forEach(term => { 
+    // LIMIT CHANGED TO 3
+    history.slice(0, 3).forEach(term => { 
         html += `
         <div class="flex items-center p-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50" onclick="executeSearch('${term}')">
             <i class="fas fa-clock text-gray-400 mr-3"></i>
@@ -349,7 +452,8 @@ function addToHistory(term) {
     let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
     history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
     history.unshift(term);
-    if (history.length > 8) history.pop();
+    // LIMIT CHANGED TO 3
+    if (history.length > 3) history.pop();
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
