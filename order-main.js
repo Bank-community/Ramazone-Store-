@@ -541,12 +541,14 @@ async function downloadInvoiceAsImage(order) {
         const img = getProductImage(item);
         const price = item.displayPrice || item.price;
         const total = price * item.quantity;
+        
+        // UPDATED: IMAGE SIZE 30px x 40px (3:4 Ratio)
         return `
         <tr style="border-bottom: 1px solid #d1d5db; font-size: 14px;">
             <td style="padding: 10px; border-right: 1px solid #d1d5db; text-align: center; color: #374151;">${idx + 1}</td>
             <td style="padding: 10px; border-right: 1px solid #d1d5db; color: #374151;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="${img}" style="width: 40px; height: 40px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; background:white;" crossorigin="anonymous">
+                    <img src="${img}" style="width: 30px; height: 40px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; background:white;" crossorigin="anonymous">
                     <span>${item.name}</span>
                 </div>
             </td>
@@ -672,10 +674,7 @@ async function downloadInvoiceAsImage(order) {
                     <p style="margin: 0; color: #6B7280; font-size: 12px;">Thank you for your order!</p>
                     <p style="margin: 4px 0 0; color: #D32F2F; font-weight: 600; font-size: 12px;">www.ramazon.in</p>
                 </div>
-                <div style="text-align: center;">
-                    <h3 style="margin: 0 0 5px; font-size: 16px; font-weight: 700; color: #111827; text-decoration: underline;">Ramazone</h3>
-                    <p style="margin: 0; font-size: 12px; font-weight: 600; color: #374151;">Authorized Signatory</p>
-                </div>
+               
             </div>
 
         </div>
@@ -875,10 +874,10 @@ function setupEvents() {
                 document.getElementById('success-savings-text').innerText = '';
             }
 
-            // 4. SHOW BUTTON AFTER 3 SECONDS
+            // 4. SHOW BUTTON AFTER 2 SECONDS
             setTimeout(() => {
                 document.getElementById('success-view-btn').classList.add('visible');
-            }, 3000);
+            }, 2000);
 
             // 5. HANDLE VIEW ORDER CLICK
             document.getElementById('success-view-btn').onclick = () => {
@@ -896,4 +895,3 @@ function setupEvents() {
     
     document.querySelectorAll('input[name="delivery"]').forEach(el => el.addEventListener('change', updatePricing));
 }
-
