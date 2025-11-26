@@ -23,6 +23,23 @@ const showToast = (msg, type = "info") => {
     setTimeout(() => { t.style.opacity = 0; t.style.visibility = 'hidden'; }, 3000); 
 };
 
+// --- NUMBER TO WORDS (INDIAN SYSTEM) ---
+function numberToWords(num) {
+    const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    if ((num = num.toString()).length > 9) return 'Overflow';
+    const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+    if (!n) return; 
+    let str = '';
+    str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+    str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+    str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+    str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+    str += (n[5] != 0) ? ((str != '') ? 'And ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+    return str + 'Rupees Only';
+}
+
 // --- SMART IMAGE FINDER ---
 function getProductImage(item) {
     if (item.image) return item.image; 
@@ -505,79 +522,166 @@ function renderDeliveryTracker(status, container) {
     `;
 }
 
-// --- INVOICE GENERATOR ---
+// --- INVOICE GENERATOR (UPDATED A4) ---
 async function downloadInvoiceAsImage(order) {
     const btn = document.getElementById('details-invoice-btn');
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
     const captureArea = document.getElementById('invoice-capture-area');
     const s = order.priceSummary;
+
+    // Calculate Total Quantity
+    let totalQty = 0;
+    order.items.forEach(item => totalQty += item.quantity);
+
+    // Amount in Words
+    const totalInWords = numberToWords(Math.round(s.grandTotal));
     
+    // Generate Table Rows
     const itemsHTML = order.items.map((item, idx) => {
         const img = getProductImage(item);
+        const price = item.displayPrice || item.price;
+        const total = price * item.quantity;
         return `
-        <tr style="border-bottom:1px solid #eee;">
-            <td style="padding:10px;">${idx + 1}</td>
-            <td style="padding:10px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <img src="${img}" style="width:30px;height:30px;object-fit:contain;border:1px solid #eee;border-radius:4px;" crossorigin="anonymous">
+        <tr style="border-bottom: 1px solid #d1d5db; font-size: 14px;">
+            <td style="padding: 10px; border-right: 1px solid #d1d5db; text-align: center; color: #374151;">${idx + 1}</td>
+            <td style="padding: 10px; border-right: 1px solid #d1d5db; color: #374151;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="${img}" style="width: 40px; height: 40px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; background:white;" crossorigin="anonymous">
                     <span>${item.name}</span>
                 </div>
             </td>
-            <td style="padding:10px;text-align:center">${item.quantity}</td>
-            <td style="padding:10px;text-align:right">₹${item.displayPrice}</td>
-            <td style="padding:10px;text-align:right;font-weight:bold;">₹${item.displayPrice * item.quantity}</td>
+            <td style="padding: 10px; border-right: 1px solid #d1d5db; text-align: center; color: #374151;">${item.quantity}</td>
+            <td style="padding: 10px; border-right: 1px solid #d1d5db; text-align: right; color: #374151;">₹${Number(price).toFixed(2)}</td>
+            <td style="padding: 10px; text-align: right; font-weight: 500; color: #111827;">₹${Number(total).toLocaleString('en-IN')}</td>
         </tr>`;
     }).join('');
 
+    // Fill Empty Rows
+    let emptyRows = '';
+    const minRows = 8;
+    if(order.items.length < minRows) {
+        for(let i = 0; i < (minRows - order.items.length); i++) {
+            emptyRows += `
+            <tr style="border-bottom: 1px solid #d1d5db; height: 50px;">
+                <td style="border-right: 1px solid #d1d5db;"></td>
+                <td style="border-right: 1px solid #d1d5db;"></td>
+                <td style="border-right: 1px solid #d1d5db;"></td>
+                <td style="border-right: 1px solid #d1d5db;"></td>
+                <td></td>
+            </tr>`;
+        }
+    }
+
+    const currentDate = new Date(order.createdAt).toLocaleDateString();
+
     captureArea.innerHTML = `
-        <div style="font-family:'Segoe UI', sans-serif; color:#333; background:white; padding:40px; width:794px; box-sizing:border-box; position:relative;">
-            <div style="height:8px; background:#DC2626; position:absolute; top:0; left:0; width:100%;"></div>
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:20px; margin-bottom:40px;">
+        <div style="width: 794px; min-height: 1123px; background: white; padding: 40px; font-family: 'Segoe UI', sans-serif; box-sizing: border-box; position: relative; color: #333;">
+            
+            <!-- HEADER -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 30px; align-items: flex-start;">
                 <div>
-                    <h1 style="color:#DC2626; margin:0; font-size:36px; font-weight:bold; letter-spacing:1px;">INVOICE</h1>
-                    <p style="margin:5px 0 0; color:#666;">Invoice No: <strong>${order.orderId}</strong></p>
-                    <p style="margin:2px 0 0; color:#666;">Date: ${new Date(order.createdAt).toLocaleDateString()}</p>
+                    <h1 style="margin: 0; color: #D32F2F; font-size: 38px; font-weight: 800; letter-spacing: 1px;">INVOICE</h1>
+                    <div style="margin-top: 5px; font-size: 14px; color: #555;">
+                        <p style="margin: 2px 0;">Invoice No: <strong>${order.orderId}</strong></p>
+                        <p style="margin: 2px 0;">Invoice Date: ${currentDate}</p>
+                    </div>
                 </div>
-                <div style="text-align:right;">
-                    <img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" style="height:60px; margin-bottom:10px;" crossorigin="anonymous">
-                    <h3 style="margin:0; font-size:18px;">Ramazone Online Store</h3>
-                    <p style="margin:2px 0 0; font-size:12px; color:#555;">Lalunagar, Begusarai, Bihar - 851129</p>
-                    <p style="margin:2px 0 0; font-size:12px; color:#555;">+91 7903698180</p>
+                <div style="text-align: right;">
+                    <img src="https://i.ibb.co/2RySQ5K/20240813-084352.png" style="height: 60px; display: block; margin-left: auto; margin-bottom: 5px;" crossorigin="anonymous">
+                    <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #111827;">Ramazone Online Store</h2>
+                    <p style="margin: 2px 0; font-size: 13px; color: #666;">Proprietor: Prince Rama</p>
                 </div>
             </div>
-            <div style="background:#F9FAFB; padding:15px; border-left:4px solid #DC2626; margin-bottom:30px;">
-                <p style="margin:0; font-size:12px; text-transform:uppercase; color:#888; font-weight:bold;">Bill To:</p>
-                <h3 style="margin:5px 0 2px; font-size:16px;">${order.customerDetails.name}</h3>
-                <p style="margin:0; font-size:14px;">${order.customerDetails.mobile}</p>
-                <p style="margin:0; font-size:14px;">${order.customerDetails.address}</p>
+
+            <!-- RED SEPARATOR -->
+            <div style="height: 4px; background: #D32F2F; margin-bottom: 30px;"></div>
+
+            <!-- ADDRESS SECTION -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                <div style="width: 48%;">
+                    <h4 style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase;">Store Details:</h4>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4B5563;">
+                        Lalunagar, Begusarai, Bihar - 851129<br>
+                        WhatsApp: 7903698180<br>
+                        ramazone007@gmail.com
+                    </p>
+                </div>
+                <div style="width: 48%; text-align: right;">
+                    <h4 style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase;">Bill To:</h4>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #111827; font-weight: 600;">${order.customerDetails.name}</p>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4B5563;">${order.customerDetails.address}</p>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4B5563;">${order.customerDetails.mobile}</p>
+                </div>
             </div>
-            <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:30px;">
+
+            <!-- TABLE -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #d1d5db;">
                 <thead>
-                    <tr style="background:#DC2626; color:white;">
-                        <th style="padding:12px 10px; text-align:left; border-radius:4px 0 0 4px;">#</th>
-                        <th style="padding:12px 10px; text-align:left;">Product</th>
-                        <th style="padding:12px 10px; text-align:center;">Qty</th>
-                        <th style="padding:12px 10px; text-align:right;">Rate</th>
-                        <th style="padding:12px 10px; text-align:right; border-radius:0 4px 4px 0;">Amount</th>
+                    <tr style="background-color: #D32F2F; color: white;">
+                        <th style="padding: 12px; text-align: center; font-size: 14px; width: 50px; border-right: 1px solid #ef4444;">#</th>
+                        <th style="padding: 12px; text-align: left; font-size: 14px; border-right: 1px solid #ef4444;">Product</th>
+                        <th style="padding: 12px; text-align: center; font-size: 14px; width: 60px; border-right: 1px solid #ef4444;">Qty</th>
+                        <th style="padding: 12px; text-align: right; font-size: 14px; width: 100px; border-right: 1px solid #ef4444;">Rate</th>
+                        <th style="padding: 12px; text-align: right; font-size: 14px; width: 120px;">Amount (₹)</th>
                     </tr>
                 </thead>
-                <tbody>${itemsHTML}</tbody>
+                <tbody>
+                    ${itemsHTML}
+                    ${emptyRows}
+                </tbody>
             </table>
-            <div style="display:flex; justify-content:flex-end;">
-                <div style="width:250px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px;"><span>Subtotal:</span><span>₹${s.subtotal}</span></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px;"><span>Delivery:</span><span>${s.deliveryFee ? '₹'+s.deliveryFee : 'Free'}</span></div>
-                    ${s.coupon ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px; color:green;"><span>Discount:</span><span>-₹${s.coupon.discount}</span></div>` : ''}
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:2px solid #eee; padding-top:10px; font-size:18px; font-weight:bold; color:#DC2626;"><span>Total:</span><span>₹${s.grandTotal}</span></div>
+
+            <!-- FOOTER CALCULATION -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 10px;">
+                <!-- Left: Words & Quantity -->
+                <div style="width: 55%;">
+                    <div style="margin-bottom: 15px;">
+                        <p style="margin: 0 0 4px; font-size: 13px; font-weight: 700; color: #374151;">Total Amounts (In Words):</p>
+                        <p style="margin: 0; font-size: 13px; color: #4B5563; line-height: 1.4;">${totalInWords}</p>
+                    </div>
+                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111827;">Total Quantity: ${totalQty}</p>
+                </div>
+
+                <!-- Right: Totals -->
+                <div style="width: 40%;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #374151;">
+                        <span>Sub Total:</span>
+                        <span>₹${Number(s.subtotal).toLocaleString('en-IN')}</span>
+                    </div>
+                    ${s.coupon ? `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #16a34a;">
+                        <span>Discount:</span>
+                        <span>-₹${s.coupon.discount}</span>
+                    </div>` : ''}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px; color: #374151;">
+                        <span>Delivery Fee:</span>
+                        <span>${s.deliveryFee ? '₹' + s.deliveryFee : 'Free'}</span>
+                    </div>
+                    
+                    <!-- TOTAL PAYABLE BLOCK -->
+                    <div style="background: #D32F2F; color: white; padding: 10px; display: flex; justify-content: space-between; font-weight: 700; font-size: 16px;">
+                        <span>Total Payable:</span>
+                        <span>₹${Number(s.grandTotal).toLocaleString('en-IN')}</span>
+                    </div>
                 </div>
             </div>
-            <div style="position:absolute; bottom:30px; left:40px; width:calc(100% - 80px); text-align:center; border-top:1px solid #eee; padding-top:20px;">
-                <p style="margin:0; color:#888; font-size:12px;">Thank you for your business!</p>
-                <p style="margin:2px 0 0; color:#DC2626; font-weight:bold; font-size:12px;">www.ramazon.in</p>
+
+            <!-- FOOTER SIGNATORY -->
+            <div style="position: absolute; bottom: 40px; left: 40px; right: 40px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #eee; padding-top: 20px;">
+                <div>
+                    <p style="margin: 0; color: #6B7280; font-size: 12px;">Thank you for your order!</p>
+                    <p style="margin: 4px 0 0; color: #D32F2F; font-weight: 600; font-size: 12px;">www.ramazon.in</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3 style="margin: 0 0 5px; font-size: 16px; font-weight: 700; color: #111827; text-decoration: underline;">Ramazone</h3>
+                    <p style="margin: 0; font-size: 12px; font-weight: 600; color: #374151;">Authorized Signatory</p>
+                </div>
             </div>
+
         </div>
     `;
 
+    // Wait for images
     const images = captureArea.getElementsByTagName('img');
     const promises = Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
@@ -586,8 +690,17 @@ async function downloadInvoiceAsImage(order) {
 
     try {
         await Promise.all(promises);
-        await new Promise(r => setTimeout(r, 300));
-        const canvas = await html2canvas(captureArea, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
+        await new Promise(r => setTimeout(r, 500)); // Extra buffer for font rendering
+        
+        // Scale 2 for better quality on A4
+        const canvas = await html2canvas(captureArea, { 
+            scale: 2, 
+            useCORS: true, 
+            allowTaint: true, 
+            backgroundColor: '#ffffff',
+            windowWidth: 1200 // Ensure layout doesn't break
+        });
+        
         const link = document.createElement('a');
         link.download = `Invoice_${order.orderId}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -732,3 +845,4 @@ function setupEvents() {
     });
     document.querySelectorAll('input[name="delivery"]').forEach(el => el.addEventListener('change', updatePricing));
 }
+
