@@ -68,6 +68,64 @@
 
         #toast-notification { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 200; left: 50%; bottom: 80px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; }
         #invoice-capture-area { position: fixed; top: 0; left: -9999px; width: 794px; background: white; z-index: -1; }
+
+        /* --- SUCCESS ANIMATION CSS --- */
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes fadeInUpBtn {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .success-checkmark {
+            width: 120px;
+            height: 120px;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+            animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .success-checkmark::before, .success-checkmark::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #dcfce7;
+            z-index: -1;
+            animation: pulseRing 2s infinite;
+        }
+        .success-checkmark::after {
+            animation-delay: 0.5s;
+        }
+        .checkmark-icon {
+            font-size: 60px;
+            color: #22c55e;
+        }
+        .success-star {
+            position: absolute;
+            color: #86efac;
+            font-size: 20px;
+            animation: scaleIn 0.8s ease forwards;
+        }
+        #success-view-btn {
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+        #success-view-btn.visible {
+            opacity: 1;
+            animation: fadeInUpBtn 0.5s ease forwards;
+        }
     </style>
 </head>
 <body>
@@ -99,7 +157,6 @@
                     <span class="action-label">Track<br>Order</span>
                 </div>
                 
-                <!-- UPDATED WISHLIST BUTTON -->
                 <div class="action-btn" onclick="openWishlistPopup()">
                     <svg viewBox="0 0 48 48" class="action-icon" xmlns="http://www.w3.org/2000/svg" fill="#ef4444"><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g><path class="c" d="m43,17.0766c0-5.6539-4.5835-10.2373-10.2374-10.2373-3.7223,0-6.9708,1.9932-8.7626,4.964-1.7919-2.9708-5.0403-4.964-8.7626-4.964-5.6539,0-10.2373,4.5834-10.2373,10.2373,0,1.2925.2496,2.524.6866,3.6627,3.3851,9.7368,18.3134,20.4215,18.3134,20.4215,0,0,14.9282-10.6847,18.3134-20.4215.437-1.1386.6867-2.3702.6867-3.6627Z"></path></g></svg>
                     <span class="action-label">My<br>Wishlist</span>
@@ -128,7 +185,6 @@
                 <a href="index.html" class="btn btn-primary text-white no-underline inline-flex w-auto px-8">Start Shopping</a>
             </div>
 
-            <!-- ADD MORE PRODUCTS BUTTON -->
             <button id="add-more-products-btn" class="add-more-products-btn hidden" onclick="window.location.href='products.html'">
                 <i class="fas fa-plus-circle"></i> Add More Products
             </button>
@@ -222,9 +278,7 @@
                 </div>
                 <button onclick="closeWishlistPopup(true)" class="text-gray-500 text-2xl">&times;</button>
             </div>
-            <div id="wishlist-list-container" class="space-y-3 pb-4 overflow-y-auto" style="max-height: 60vh;">
-                <!-- Wishlist items will be injected here -->
-            </div>
+            <div id="wishlist-list-container" class="space-y-3 pb-4 overflow-y-auto" style="max-height: 60vh;"></div>
         </div>
     </div>
 
@@ -311,18 +365,29 @@
         </div>
     </div>
 
-    <!-- SUCCESS POPUP -->
-    <div id="order-success-popup" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 hidden backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-[90%] text-center transform scale-90 transition-transform duration-300" id="order-success-content">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-check text-4xl text-green-600"></i></div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Order Confirmed!</h2>
-            <p class="text-gray-600 mb-6 text-sm">Thank you for shopping with Ramazone.</p>
-            <button id="success-popup-btn" class="btn btn-primary">View Order</button>
+    <!-- UPDATED: FULL SCREEN SUCCESS POPUP -->
+    <div id="order-success-popup" class="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-white hidden">
+        <div class="text-center">
+            <div class="success-checkmark">
+                <i class="fas fa-check checkmark-icon"></i>
+                <i class="fas fa-star success-star" style="top: -10px; right: 10px;"></i>
+                <i class="fas fa-star success-star" style="bottom: 10px; left: -15px; font-size: 15px; animation-delay: 0.2s;"></i>
+                <i class="fas fa-star success-star" style="top: 40px; right: -25px; font-size: 12px; animation-delay: 0.4s;"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 mt-6">Order Placed</h2>
+            <p id="success-savings-text" class="text-green-600 font-bold text-lg mb-8"></p>
         </div>
+        
+        <button id="success-view-btn" class="fixed bottom-10 left-4 right-4 bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition-colors">
+            View Order
+        </button>
     </div>
 
     <div id="invoice-capture-area"></div>
     <div id="toast-notification"></div>
+    
+    <!-- Audio Element -->
+    <audio id="order-success-sound" src="Videoplayback.webm" preload="auto"></audio>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
