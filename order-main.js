@@ -875,10 +875,10 @@ function setupEvents() {
                 document.getElementById('success-savings-text').innerText = '';
             }
 
-            // 4. SHOW BUTTON AFTER 2 SECONDS
+            // 4. SHOW BUTTON AFTER 3 SECONDS
             setTimeout(() => {
                 document.getElementById('success-view-btn').classList.add('visible');
-            }, 2000);
+            }, 3000);
 
             // 5. HANDLE VIEW ORDER CLICK
             document.getElementById('success-view-btn').onclick = () => {
