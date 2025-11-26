@@ -832,17 +832,68 @@ function setupEvents() {
     document.getElementById('btn-to-payment').addEventListener('click', () => { if(document.getElementById('customer-details-form').checkValidity()) navigateToStep(3); else showToast('Please fill address', 'error'); });
     document.getElementById('apply-coupon-btn').addEventListener('click', () => { const v = document.getElementById('coupon-input').value.trim().toLowerCase(); const c = validCoupons.find(x => x.code.toLowerCase() === v); if(c) { appliedCoupon = c; document.getElementById('coupon-section').classList.add('hidden'); document.getElementById('applied-coupon-div').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('flex'); document.getElementById('applied-coupon-code').innerText = c.code; updatePricing(); showToast('Coupon Applied!', 'success'); } else showToast('Invalid Coupon', 'error'); });
     document.getElementById('remove-coupon-btn').addEventListener('click', () => { appliedCoupon = null; document.getElementById('coupon-section').classList.remove('hidden'); document.getElementById('applied-coupon-div').classList.add('hidden'); document.getElementById('applied-coupon-div').classList.remove('flex'); document.getElementById('coupon-input').value = ''; updatePricing(); });
+    
+    // --- UPDATED PLACE ORDER LOGIC ---
     document.getElementById('place-order-btn').addEventListener('click', async (e) => {
         const btn = e.target; btn.disabled = true; btn.innerText = 'Processing...';
         const cust = { name: document.getElementById('customer-name').value, mobile: document.getElementById('customer-mobile').value, address: document.getElementById('customer-address').value };
         const orderId = 'RMZ' + Math.random().toString(36).substr(2, 7).toUpperCase();
-        let sub = 0; orderItems.forEach(i => sub += (i.pack?i.pack.price:i.displayPrice)*i.quantity);
+        
+        let sub = 0; 
+        let totalMRP = 0; // Calculate Total Savings
+        
+        orderItems.forEach(i => {
+            const price = i.pack ? i.pack.price : i.displayPrice;
+            sub += price * i.quantity;
+            const original = i.originalPrice || (price * 1.2);
+            totalMRP += original * i.quantity;
+        });
+
         const delOpt = document.querySelector('input[name="delivery"]:checked').value;
         const delFee = (delOpt === 'Ramazone' && sub < ramazoneConfig.freeDeliveryThreshold) ? ramazoneConfig.deliveryCharge : 0;
         const total = sub - (appliedCoupon?.discount||0) + delFee;
+        const savings = Math.round(totalMRP - total);
+
         const order = { orderId, customerDetails: cust, items: orderItems.map(i => ({...i, image: getProductImage(i)})), priceSummary: { subtotal: sub, deliveryFee: delFee, coupon: appliedCoupon, grandTotal: total }, status: 'Confirmed', createdAt: firebase.database.ServerValue.TIMESTAMP };
-        try { await database.ref(`ramazone/orders/confirmed/${orderId}`).set(order); saveCart([]); localStorage.setItem('ramazoneRecentOrderId', orderId); document.getElementById('order-success-popup').classList.remove('hidden'); setTimeout(() => document.getElementById('order-success-popup').classList.remove('opacity-0'), 10); document.getElementById('success-popup-btn').onclick = () => { document.getElementById('order-success-popup').classList.add('hidden'); document.getElementById('popup-search-input').value = orderId; openOrderPopup(); }; } catch(err) { console.error(err); showToast('Order Failed', 'error'); btn.disabled = false; btn.innerText = 'Place Order'; }
+        try { 
+            await database.ref(`ramazone/orders/confirmed/${orderId}`).set(order); 
+            saveCart([]); 
+            localStorage.setItem('ramazoneRecentOrderId', orderId); 
+            
+            // 1. PLAY SOUND
+            const audio = document.getElementById('order-success-sound');
+            if(audio) audio.play().catch(e => console.log('Audio error:', e));
+
+            // 2. SHOW FULL SCREEN POPUP
+            const popup = document.getElementById('order-success-popup');
+            popup.classList.remove('hidden');
+            
+            // 3. SET SAVINGS TEXT
+            if(savings > 0) {
+                document.getElementById('success-savings-text').innerText = `You saved ₹${savings}`;
+            } else {
+                document.getElementById('success-savings-text').innerText = '';
+            }
+
+            // 4. SHOW BUTTON AFTER 2 SECONDS
+            setTimeout(() => {
+                document.getElementById('success-view-btn').classList.add('visible');
+            }, 2000);
+
+            // 5. HANDLE VIEW ORDER CLICK
+            document.getElementById('success-view-btn').onclick = () => {
+                popup.classList.add('hidden');
+                document.getElementById('popup-search-input').value = orderId;
+                openOrderPopup();
+            };
+
+        } catch(err) { 
+            console.error(err); 
+            showToast('Order Failed', 'error'); 
+            btn.disabled = false; btn.innerText = 'Place Order'; 
+        }
     });
+    
     document.querySelectorAll('input[name="delivery"]').forEach(el => el.addEventListener('change', updatePricing));
 }
 
