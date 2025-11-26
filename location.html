@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Location Sender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #e5ddd5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .chat-bg {
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            opacity: 0.1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .btn-whatsapp {
+            background-color: #25D366;
+            transition: all 0.3s ease;
+        }
+        .btn-whatsapp:hover {
+            background-color: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #25D366;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen relative overflow-hidden">
+
+    <!-- Background Pattern -->
+    <div class="chat-bg"></div>
+
+    <!-- Main Card -->
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 text-center border-t-4 border-[#25D366]">
+        
+        <!-- Icon -->
+        <div class="mb-6">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <i class="fab fa-whatsapp text-4xl text-[#25D366]"></i>
+            </div>
+        </div>
+
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Connect via WhatsApp</h1>
+        <p class="text-gray-500 mb-6">Click the button below to send your location and add request.</p>
+
+        <!-- Display Number -->
+        <div class="bg-gray-100 p-3 rounded-lg mb-6 inline-block w-full">
+            <span class="text-gray-500 text-sm block mb-1">Send to:</span>
+            <span class="text-xl font-mono font-bold text-gray-800">+91 79036 98180</span>
+        </div>
+
+        <!-- Action Button -->
+        <button onclick="getLocationAndSend()" id="sendBtn" class="btn-whatsapp w-full text-white font-bold py-4 px-6 rounded-full flex items-center justify-center gap-3 text-lg shadow-lg">
+            <span>Send Location & /Add</span>
+            <i class="fas fa-paper-plane"></i>
+            <div class="loader" id="loadingSpinner"></div>
+        </button>
+
+        <!-- Status Message -->
+        <p id="statusMsg" class="mt-4 text-sm text-gray-500 min-h-[20px]"></p>
+
+        <div class="mt-8 text-xs text-gray-400">
+            Secure connection using WhatsApp API
+        </div>
+    </div>
+
+    <script>
+        function getLocationAndSend() {
+            const phoneNumber = "917903698180"; // Country code + Number
+            const statusMsg = document.getElementById('statusMsg');
+            const spinner = document.getElementById('loadingSpinner');
+            const btn = document.getElementById('sendBtn');
+
+            // UI Update: Show loading
+            statusMsg.textContent = "Fetching your GPS location...";
+            statusMsg.className = "mt-4 text-sm text-blue-600 font-semibold";
+            spinner.style.display = "block";
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+
+            // Function to handle redirection
+            const openWhatsApp = (lat, long) => {
+                let message = "/Add";
+                
+                if (lat && long) {
+                    // Create Google Maps Link
+                    const mapsLink = `https://www.google.com/maps?q=${lat},${long}`;
+                    message += `\n\n📍 My Location: ${mapsLink}`;
+                } else {
+                    message += "\n(Location access denied)";
+                }
+
+                // Encode URL components
+                const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                
+                // Open WhatsApp
+                window.open(url, '_blank');
+
+                // Reset UI
+                statusMsg.textContent = "Opening WhatsApp...";
+                statusMsg.className = "mt-4 text-sm text-green-600 font-semibold";
+                spinner.style.display = "none";
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+            };
+
+            // Check if Geolocation is supported
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    // Success callback
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const long = position.coords.longitude;
+                        openWhatsApp(lat, long);
+                    },
+                    // Error callback
+                    (error) => {
+                        let errorStr = "";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorStr = "User denied location request.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorStr = "Location information unavailable.";
+                                break;
+                            case error.TIMEOUT:
+                                errorStr = "The request timed out.";
+                                break;
+                            default:
+                                errorStr = "An unknown error occurred.";
+                        }
+                        console.log(errorStr);
+                        // Still open WhatsApp but without location
+                        alert("Location access was denied or failed. Sending message without location.");
+                        openWhatsApp(null, null);
+                    },
+                    // Options for high accuracy
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                // Fallback for browsers without Geolocation support
+                alert("Geolocation is not supported by this browser.");
+                openWhatsApp(null, null);
+            }
+        }
+    </script>
+</body>
+</html>
+
