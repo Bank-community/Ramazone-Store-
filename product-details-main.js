@@ -1,5 +1,5 @@
 // product-details-main.js
-// VERSION: SUPERSONIC V2 + SHARE FIX + PILL FOOTER + DUAL HEADER
+// VERSION: SUPERSONIC V2 + SHARE FIX + PILL FOOTER + DUAL HEADER + WISHLIST
 
 // ... (Global Variables & Init functions remain same) ...
 let currentProductData = null, currentProductId = null;
@@ -204,6 +204,7 @@ function showGoToCartNotification() {
 
 function setupActionControls() { 
     setupShareButton(); 
+    setupWishlistButton(); // <--- NEW WISHLIST SETUP
     document.getElementById('options-container').onclick = handleOptionsClick;
     document.getElementById('similar-products-container-wrapper').onclick = handleQuickAdd;
 }
@@ -272,6 +273,49 @@ function setupShareButton() {
         try { await navigator.clipboard.writeText(apiShareUrl); window.showToast("Link copied! Share it on WhatsApp.", "success"); } 
         catch (err) { try { unsecuredCopyToClipboard(apiShareUrl); } catch(fErr) { window.showToast("Share failed.", "error"); } }
     });
+}
+
+// --- NEW: WISHLIST BUTTON LOGIC ---
+function setupWishlistButton() {
+    const btn = document.getElementById('wishlist-btn');
+    if (!btn || !currentProductId) return;
+
+    // Helper to get wishlist
+    const getLocalWishlist = () => { 
+        try { return JSON.parse(localStorage.getItem('ramazoneWishlist')) || []; } catch { return []; } 
+    };
+    
+    // Check initial state
+    let wishlist = getLocalWishlist();
+    if (wishlist.includes(currentProductId)) {
+        btn.classList.add('active');
+    } else {
+        btn.classList.remove('active');
+    }
+
+    // Click Handler
+    btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        wishlist = getLocalWishlist();
+        const index = wishlist.indexOf(currentProductId);
+        
+        if (index > -1) {
+            // Remove
+            wishlist.splice(index, 1);
+            btn.classList.remove('active');
+            window.showToast("Removed from Wishlist", "info");
+        } else {
+            // Add
+            wishlist.push(currentProductId);
+            btn.classList.add('active');
+            window.showToast("Added to Wishlist", "success");
+        }
+        
+        // Save to LocalStorage (Same key used by Order Page)
+        localStorage.setItem('ramazoneWishlist', JSON.stringify(wishlist));
+    };
 }
 
 function unsecuredCopyToClipboard(text) { const t = document.createElement("textarea"); t.value = text; t.style.position="fixed"; t.style.left="-9999px"; document.body.appendChild(t); t.focus(); t.select(); try { document.execCommand('copy'); window.showToast("Link copied! Share it on WhatsApp.", "success"); } catch(e){} document.body.removeChild(t); }
@@ -382,4 +426,3 @@ function setupInfiniteScroll() {
     if(!section) return;
     window.addEventListener('scroll', () => { if (isLoadingMore || displayedProductCount >= allSameCategoryProducts.length) return; const { scrollTop, scrollHeight, clientHeight } = document.documentElement; if (scrollTop + clientHeight >= scrollHeight - 400) { isLoadingMore = true; if(loader) loader.style.display = 'block'; setTimeout(() => { loadNextBatch(6); }, 1000); } }, { passive: true });
 }
-
