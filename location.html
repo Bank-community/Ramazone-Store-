@@ -3,170 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Location Sender</title>
+    <title>Smart Location Sender</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #e5ddd5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        .chat-bg {
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            opacity: 0.1;
+        .header-bg {
+            background-color: #00a884;
+            height: 150px;
+            width: 100%;
             position: absolute;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
+            z-index: 0;
         }
-        .btn-whatsapp {
-            background-color: #25D366;
-            transition: all 0.3s ease;
+        .card {
+            backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
         }
-        .btn-whatsapp:hover {
-            background-color: #128C7E;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .street-view-container {
+            height: 200px;
+            background-color: #f0f2f5;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .loader {
             border: 3px solid #f3f3f3;
+            border-top: 3px solid #00a884;
             border-radius: 50%;
-            border-top: 3px solid #25D366;
-            width: 20px;
-            height: 20px;
-            -webkit-animation: spin 1s linear infinite; /* Safari */
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
-            display: none;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 168, 132, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); }
+        }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen relative overflow-hidden">
+<body class="flex items-center justify-center min-h-screen relative px-4">
 
-    <!-- Background Pattern -->
-    <div class="chat-bg"></div>
+    <div class="header-bg shadow-md"></div>
 
-    <!-- Main Card -->
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 text-center border-t-4 border-[#25D366]">
+    <div class="card bg-white w-full max-w-sm rounded-xl shadow-2xl relative z-10 overflow-hidden">
         
-        <!-- Icon -->
-        <div class="mb-6">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <i class="fab fa-whatsapp text-4xl text-[#25D366]"></i>
+        <!-- API Image Area -->
+        <div id="imageArea" class="street-view-container border-b border-gray-200">
+            <div class="text-center text-gray-400">
+                <i class="fas fa-map-marked-alt text-5xl mb-2 text-gray-300"></i>
+                <p class="text-sm">Location Preview</p>
             </div>
         </div>
 
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">Connect via WhatsApp</h1>
-        <p class="text-gray-500 mb-6">Click the button below to send your location and add request.</p>
+        <!-- Content -->
+        <div class="p-6 text-center">
+            <div class="flex justify-center -mt-16 mb-4 relative z-20">
+                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg p-1">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" class="w-full h-full">
+                </div>
+            </div>
 
-        <!-- Display Number -->
-        <div class="bg-gray-100 p-3 rounded-lg mb-6 inline-block w-full">
-            <span class="text-gray-500 text-sm block mb-1">Send to:</span>
-            <span class="text-xl font-mono font-bold text-gray-800">+91 79036 98180</span>
+            <h2 class="text-xl font-bold text-gray-800 mb-1">Send Live Location</h2>
+            <p id="statusText" class="text-sm text-gray-500 mb-6">Using RapidAPI Street View</p>
+
+            <button onclick="startProcess()" id="mainBtn" class="bg-[#00a884] hover:bg-[#008f6f] text-white font-bold py-4 px-6 rounded-lg w-full shadow-lg transition-all flex items-center justify-center gap-3">
+                <i class="fas fa-location-arrow"></i>
+                <span>Locate & Send</span>
+            </button>
+            
+            <div id="loadingState" class="hidden">
+                <div class="flex items-center justify-center gap-2 text-[#00a884] font-semibold">
+                    <div class="loader"></div>
+                    <span id="loadingText">Locating...</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Action Button -->
-        <button onclick="getLocationAndSend()" id="sendBtn" class="btn-whatsapp w-full text-white font-bold py-4 px-6 rounded-full flex items-center justify-center gap-3 text-lg shadow-lg">
-            <span>Send Location & /Add</span>
-            <i class="fas fa-paper-plane"></i>
-            <div class="loader" id="loadingSpinner"></div>
-        </button>
-
-        <!-- Status Message -->
-        <p id="statusMsg" class="mt-4 text-sm text-gray-500 min-h-[20px]"></p>
-
-        <div class="mt-8 text-xs text-gray-400">
-            Secure connection using WhatsApp API
+        <!-- Footer Info -->
+        <div class="bg-gray-50 p-3 text-center border-t text-xs text-gray-400 flex justify-between px-6">
+            <span>API: Active</span>
+            <span class="font-mono">/Add</span>
         </div>
     </div>
 
     <script>
-        function getLocationAndSend() {
-            const phoneNumber = "917903698180"; // Country code + Number
-            const statusMsg = document.getElementById('statusMsg');
-            const spinner = document.getElementById('loadingSpinner');
-            const btn = document.getElementById('sendBtn');
+        // API Configuration from user
+        const RAPID_API_KEY = 'ad218a5778msh32825bf1114a698p1b32f4jsnd4d2dc3f6db2';
+        const RAPID_API_HOST = 'google-map-places.p.rapidapi.com';
 
-            // UI Update: Show loading
-            statusMsg.textContent = "Fetching your GPS location...";
-            statusMsg.className = "mt-4 text-sm text-blue-600 font-semibold";
-            spinner.style.display = "block";
-            btn.disabled = true;
-            btn.classList.add('opacity-75');
-
-            // Function to handle redirection
-            const openWhatsApp = (lat, long) => {
-                let message = "/Add";
-                
-                if (lat && long) {
-                    // Create Google Maps Link
-                    const mapsLink = `https://www.google.com/maps?q=${lat},${long}`;
-                    message += `\n\n📍 My Location: ${mapsLink}`;
-                } else {
-                    message += "\n(Location access denied)";
-                }
-
-                // Encode URL components
-                const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                
-                // Open WhatsApp
-                window.open(url, '_blank');
-
-                // Reset UI
-                statusMsg.textContent = "Opening WhatsApp...";
-                statusMsg.className = "mt-4 text-sm text-green-600 font-semibold";
-                spinner.style.display = "none";
-                btn.disabled = false;
-                btn.classList.remove('opacity-75');
-            };
-
-            // Check if Geolocation is supported
+        function startProcess() {
+            const btn = document.getElementById('mainBtn');
+            const loader = document.getElementById('loadingState');
+            const statusText = document.getElementById('statusText');
+            
+            // UI Update
+            btn.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    // Success callback
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const long = position.coords.longitude;
-                        openWhatsApp(lat, long);
-                    },
-                    // Error callback
-                    (error) => {
-                        let errorStr = "";
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                errorStr = "User denied location request.";
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                errorStr = "Location information unavailable.";
-                                break;
-                            case error.TIMEOUT:
-                                errorStr = "The request timed out.";
-                                break;
-                            default:
-                                errorStr = "An unknown error occurred.";
-                        }
-                        console.log(errorStr);
-                        // Still open WhatsApp but without location
-                        alert("Location access was denied or failed. Sending message without location.");
-                        openWhatsApp(null, null);
-                    },
-                    // Options for high accuracy
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    }
-                );
+                navigator.geolocation.getCurrentPosition(successLocation, errorLocation, {
+                    enableHighAccuracy: true
+                });
             } else {
-                // Fallback for browsers without Geolocation support
-                alert("Geolocation is not supported by this browser.");
-                openWhatsApp(null, null);
+                alert("Geolocation not supported");
+                resetUI();
             }
+        }
+
+        async function successLocation(position) {
+            const lat = position.coords.latitude;
+            const long = position.coords.longitude;
+            
+            document.getElementById('loadingText').textContent = "Fetching Street View...";
+            
+            // 1. Fetch Image from RapidAPI
+            try {
+                // Using the specific endpoint provided by user logic
+                const response = await fetch(`https://google-map-places.p.rapidapi.com/maps/api/streetview?size=600x400&location=${lat},${long}&return_error_code=true`, {
+                    method: 'GET',
+                    headers: {
+                        'x-rapidapi-host': RAPID_API_HOST,
+                        'x-rapidapi-key': RAPID_API_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    const imageBlob = await response.blob();
+                    const imageUrl = URL.createObjectURL(imageBlob);
+                    
+                    // Display the image
+                    const imgContainer = document.getElementById('imageArea');
+                    imgContainer.innerHTML = `<img src="${imageUrl}" class="w-full h-full object-cover animate-fade-in">`;
+                    document.getElementById('statusText').textContent = "Location Verified!";
+                    document.getElementById('statusText').classList.add('text-green-600', 'font-bold');
+                }
+            } catch (error) {
+                console.log("API Error (Visual only):", error);
+                // Continue even if image fails
+            }
+
+            // 2. Wait 1.5 seconds for user to see the image, then redirect
+            document.getElementById('loadingText').textContent = "Opening WhatsApp...";
+            
+            setTimeout(() => {
+                redirectToWhatsApp(lat, long);
+            }, 1500);
+        }
+
+        function errorLocation() {
+            alert("Location access denied. Opening WhatsApp without location.");
+            redirectToWhatsApp(null, null);
+        }
+
+        function redirectToWhatsApp(lat, long) {
+            const phoneNumber = "917903698180";
+            let message = "/Add";
+            
+            if (lat && long) {
+                const mapsLink = `https://www.google.com/maps?q=${lat},${long}`;
+                message += `\n\n📍 User Location:\n${mapsLink}`;
+            }
+
+            const encodedMessage = encodeURIComponent(message);
+            const isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1;
+
+            if (isAndroid) {
+                // Try to force WhatsApp Business
+                const businessIntent = `intent://send?phone=${phoneNumber}&text=${encodedMessage}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
+                window.location.href = businessIntent;
+                
+                // Fallback
+                setTimeout(() => {
+                    window.location.href = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+                }, 2000);
+            } else {
+                window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+            }
+            
+            // Reset UI after action
+            setTimeout(resetUI, 3000);
+        }
+
+        function resetUI() {
+            document.getElementById('mainBtn').classList.remove('hidden');
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('loadingText').textContent = "Locating...";
         }
     </script>
 </body>
