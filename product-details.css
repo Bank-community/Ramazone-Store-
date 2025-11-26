@@ -905,3 +905,17 @@
     font-weight: 600;
     opacity: 0.9;
 }
+
+/* --- Wishlist Button Styles --- */
+#wishlist-btn {
+    border-radius: 12px; /* Creates the rounded square (squircle) shape */
+}
+
+/* Toggle Logic: Default Hidden/Shown */
+#wishlist-btn.active .wishlist-icon-default {
+    display: none;
+}
+#wishlist-btn.active .wishlist-icon-active {
+    display: block;
+}
+
