@@ -282,12 +282,15 @@
         </div>
     </div>
 
-    <!-- TRACK ORDER POPUP -->
+    <!-- TRACK ORDER POPUP WITH HOME BUTTON -->
     <div id="order-popup-overlay" class="popup-overlay" onclick="closeOrderPopup(event)">
         <div class="popup-content">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-800">Track Order</h3>
-                <button onclick="closeOrderPopup(true)" class="text-gray-500 text-2xl">&times;</button>
+                <!-- HOME BUTTON REPLACEMENT -->
+                <a href="index.html" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-home"></i>
+                </a>
             </div>
             <div class="space-y-4">
                 <div>
@@ -365,7 +368,7 @@
         </div>
     </div>
 
-    <!-- UPDATED: FULL SCREEN SUCCESS POPUP -->
+    <!-- FULL SCREEN SUCCESS POPUP -->
     <div id="order-success-popup" class="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-white hidden">
         <div class="text-center">
             <div class="success-checkmark">
@@ -394,3 +397,4 @@
     <script src="order-main.js"></script>
 </body>
 </html>
+
