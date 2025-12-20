@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rama Compressor - Fast & Secure</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        brand: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: { 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f1f5f9;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* Drag Overlay Active State */
+        .drag-active {
+            position: relative;
+        }
+        .drag-active::after {
+            content: 'Drop Files Here';
+            position: fixed;
+            inset: 0;
+            background: rgba(37, 99, 235, 0.9);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+
+        /* --- Compact Slider Styling --- */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #2563eb;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            margin-top: -7px; 
+            position: relative;
+            z-index: 10;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e8f0; 
+            border-radius: 2px;
+            background-image: linear-gradient(#2563eb, #2563eb);
+            background-size: var(--range-progress, 30%) 100%;
+            background-repeat: no-repeat;
+        }
+
+        .custom-scroll::-webkit-scrollbar { height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        
+        /* Shake Animation for Delete Mode */
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .shake-mode {
+            animation: shake 0.3s infinite linear;
+        }
+        .delete-overlay::after {
+            content: '\f2ed'; /* FontAwesome Trash */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            inset: 0;
+            background: rgba(239, 68, 68, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Global File Input (Hidden) -->
+    <input type="file" id="fileInput" class="hidden" multiple accept="image/jpeg, image/png, image/webp">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 h-16 flex-none sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-brand-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-compress"></i>
+                </div>
+                <h1 class="font-brand font-bold text-xl text-slate-800 tracking-tight">Rama Compressor</h1>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="resetApp()" id="resetBtn" class="hidden text-red-500 hover:text-red-700 hover:bg-red-50 text-sm font-medium px-3 py-2 rounded-lg transition items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">Start Over</span>
+                </button>
+                
+                <button onclick="document.getElementById('fileInput').click()" class="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition shadow-md flex items-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Add Images</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow flex flex-col lg:flex-row relative min-h-[calc(100vh-4rem)]">
+
+        <!-- Initial Upload Overlay -->
+        <div id="uploadOverlay" class="absolute inset-0 z-40 bg-slate-50 flex flex-col items-center justify-center p-4 transition-all duration-300">
+            <div class="bg-white p-8 sm:p-12 rounded-2xl shadow-xl border-2 border-dashed border-slate-300 hover:border-brand-500 hover:bg-brand-50/10 cursor-pointer transition group text-center max-w-lg w-full" onclick="document.getElementById('fileInput').click()">
+                <div class="w-20 h-20 bg-blue-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition duration-300">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-brand font-bold text-slate-800 mb-2">Upload Images</h2>
+                <p class="text-slate-500 mb-6">Select multiple JPG, PNG or WEBP files.<br>Drag & drop supported.</p>
+                <button class="bg-brand-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg shadow-brand-500/20 hover:bg-brand-700 transition">
+                    Select Files
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Area: Preview & Queue (Order 1 on Mobile) -->
+        <div class="order-1 lg:order-2 flex-grow flex flex-col bg-slate-100 relative min-h-[50vh] lg:min-h-auto">
+            
+            <!-- Preview Area -->
+            <div class="flex-grow flex items-center justify-center p-4 sm:p-8 bg-slate-100/50 min-h-[300px]" id="previewContainer">
+                
+                <!-- Image Wrapper -->
+                <div class="relative shadow-2xl rounded-lg bg-white border border-slate-200 group transition-all w-full max-w-4xl" style="display: flex; align-items: center; justify-content: center; min-height: 300px;">
+                    
+                    <!-- Main Image -->
+                    <img id="previewImg" src="" class="block object-contain" style="display:none; max-height: 60vh; max-width: 100%; width: auto; height: auto;">
+                    
+                    <!-- Loader -->
+                    <div id="loader" class="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center hidden z-20 rounded-lg">
+                        <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-brand-600 mb-3"></div>
+                        <span class="text-xs font-bold text-slate-600 tracking-wide animate-pulse">OPTIMIZING...</span>
+                    </div>
+
+                    <!-- Badge -->
+                    <div id="previewBadge" class="hidden absolute top-3 left-3 bg-black/70 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">
+                        PREVIEW
+                    </div>
+
+                    <!-- Cut/Remove Button on Image (Direct) -->
+                    <button onclick="removeCurrentImage()" id="removeImgBtn" class="hidden absolute top-3 right-3 bg-red-500 text-white w-8 h-8 rounded-full shadow-lg items-center justify-center hover:bg-red-600 transition z-30" title="Remove Image">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="text-center text-slate-400 hidden">
+                    <i class="fa-regular fa-image text-4xl mb-2 opacity-50"></i>
+                    <p class="text-sm">No image selected</p>
+                </div>
+            </div>
+
+            <!-- Queue Bar -->
+            <div class="h-auto bg-white border-t border-slate-200 flex flex-col flex-none z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                
+                <!-- Queue Header with Delete Toggle -->
+                <div class="px-4 py-2 flex justify-between items-center bg-slate-50 border-b border-slate-100 h-10">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Queue</span>
+                        <span id="queueCount" class="bg-slate-200 px-1.5 py-0.5 rounded text-[10px] text-slate-600 font-bold">0</span>
+                    </div>
+
+                    <!-- New Delete Mode Toggle -->
+                    <button id="toggleDeleteBtn" onclick="toggleDeleteMode()" class="text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border border-transparent hover:bg-red-50 hover:border-red-100" title="Enable delete mode">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span id="deleteBtnText">Remove Item</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center px-4 gap-3 overflow-x-auto custom-scroll py-3 min-h-[80px]" id="queueBar">
+                    <!-- Dynamic Queue Items -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar (Controls) (Order 2 on Mobile) -->
+        <aside class="order-2 lg:order-1 w-full lg:w-80 bg-white border-r border-slate-200 flex flex-col z-30 shadow-lg flex-none h-auto">
+            
+            <!-- Compact Control Header -->
+            <div class="p-4 border-b border-slate-100 bg-white z-10">
+                
+                <!-- Ultra Compact Slider Layout -->
+                <div class="flex items-center gap-3">
+                    <label class="text-xs font-bold text-slate-600 uppercase whitespace-nowrap w-12">Quality</label>
+                    
+                    <div class="flex-grow relative h-5 flex items-center">
+                        <input type="range" id="qualitySlider" min="0" max="100" value="25" style="--range-progress: 25%" class="align-middle">
+                    </div>
+                    
+                    <span id="qualityDisplay" class="text-sm font-bold text-brand-600 font-brand w-10 text-right">30%</span>
+                </div>
+                
+                <div class="flex justify-between text-[9px] text-slate-400 font-medium uppercase mt-1 px-1">
+                    <span>Small</span>
+                    <span>HD</span>
+                </div>
+
+            </div>
+
+            <!-- Controls Body -->
+            <div class="p-4">
+                
+                <!-- Compact Stats Card -->
+                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 transition-opacity duration-200 relative group" id="statsCard" style="opacity: 0.5">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-2">Result</h4>
+                    
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-slate-500">Original</span>
+                        <span id="origSize" class="text-xs font-medium text-slate-700">--</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-slate-500">Compressed</span>
+                        <span id="compSize" class="text-sm font-bold text-emerald-600">--</span>
+                    </div>
+
+                    <div class="w-full bg-slate-200 rounded-full h-1 mt-1">
+                        <div id="savingBar" class="bg-emerald-500 h-1 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="text-right mt-0.5">
+                        <span id="savingText" class="text-[9px] text-emerald-600 font-bold"></span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="p-4 bg-white border-t border-slate-200 mt-auto">
+                <button id="downloadSingleBtn" class="w-full border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium py-2 px-4 rounded-lg transition flex justify-center items-center gap-2 mb-2 text-sm active:scale-95">
+                    <i class="fa-solid fa-download"></i> Download Current
+                </button>
+                
+                <button id="downloadAllBtn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg shadow-brand-500/30 transition flex justify-center items-center gap-2 active:scale-95 text-sm">
+                    <i class="fa-solid fa-images"></i> Download All Images
+                </button>
+                <p id="bulkStatus" class="text-[10px] text-center text-slate-400 mt-2 h-4 truncate"></p>
+            </div>
+        </aside>
+
+    </main>
+
+    <script>
+        // --- Configuration ---
+        const CONFIG = {
+            minRealQuality: 0.2, // 20%
+            maxRealQuality: 1.0, 
+            defaultSlider: 25    // ~30% Visual
+        };
+
+        // --- State Management ---
+        let state = {
+            files: [], 
+            activeIndex: -1,
+            isDeleteMode: false
+        };
+
+        // --- DOM Elements ---
+        const els = {
+            fileInput: document.getElementById('fileInput'),
+            uploadOverlay: document.getElementById('uploadOverlay'),
+            previewImg: document.getElementById('previewImg'),
+            previewBadge: document.getElementById('previewBadge'),
+            removeImgBtn: document.getElementById('removeImgBtn'),
+            loader: document.getElementById('loader'),
+            queueBar: document.getElementById('queueBar'),
+            queueCount: document.getElementById('queueCount'),
+            emptyState: document.getElementById('emptyState'),
+            statsCard: document.getElementById('statsCard'),
+            origSize: document.getElementById('origSize'),
+            compSize: document.getElementById('compSize'),
+            savingBar: document.getElementById('savingBar'),
+            savingText: document.getElementById('savingText'),
+            bulkStatus: document.getElementById('bulkStatus'),
+            slider: document.getElementById('qualitySlider'),
+            display: document.getElementById('qualityDisplay'),
+            btnSingle: document.getElementById('downloadSingleBtn'),
+            btnAll: document.getElementById('downloadAllBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            toggleDeleteBtn: document.getElementById('toggleDeleteBtn'),
+            deleteBtnText: document.getElementById('deleteBtnText')
+        };
+
+        // --- Event Listeners ---
+        els.slider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            e.target.style.setProperty('--range-progress', val + '%');
+            const displayVal = Math.round(10 + (val * 0.9));
+            els.display.innerText = displayVal + "%";
+        });
+
+        els.slider.addEventListener('change', () => {
+            if(state.activeIndex !== -1) compressCurrent();
+        });
+
+        // Drag & Drop
+        let dragCounter = 0;
+        window.addEventListener('dragenter', (e) => { e.preventDefault(); dragCounter++; document.body.classList.add('drag-active'); });
+        window.addEventListener('dragleave', (e) => { e.preventDefault(); dragCounter--; if (dragCounter === 0) document.body.classList.remove('drag-active'); });
+        window.addEventListener('dragover', (e) => { e.preventDefault(); });
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.body.classList.remove('drag-active');
+            dragCounter = 0;
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        els.fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFiles(Array.from(e.target.files));
+                els.fileInput.value = '';
+            }
+        });
+
+        els.btnSingle.addEventListener('click', downloadSingle);
+        els.btnAll.addEventListener('click', downloadAllImages); // Direct download logic
+
+        // --- Core Functions ---
+        function handleFiles(newFiles) {
+            const validFiles = newFiles.filter(f => f.type.startsWith('image/'));
+            if (validFiles.length === 0) {
+                alert("Please select JPG, PNG or WEBP images.");
+                return;
+            }
+
+            const processedFiles = validFiles.map(f => ({
+                id: Math.random().toString(36).substr(2, 9),
+                file: f,
+                compressedBlob: null,
+            }));
+
+            state.files = [...state.files, ...processedFiles];
+            updateAppVisibility();
+            renderQueue();
+
+            if (state.activeIndex === -1) {
+                selectImage(0);
+            } else {
+                selectImage(state.files.length - processedFiles.length);
+            }
+        }
+
+        // --- DELETE MODE LOGIC ---
+        function toggleDeleteMode() {
+            state.isDeleteMode = !state.isDeleteMode;
+            
+            // UI Update for Button
+            if(state.isDeleteMode) {
+                els.toggleDeleteBtn.classList.add('bg-red-100', 'text-red-600', 'border-red-200');
+                els.toggleDeleteBtn.classList.remove('text-slate-400', 'border-transparent');
+                els.deleteBtnText.innerText = "Done Removing";
+            } else {
+                els.toggleDeleteBtn.classList.remove('bg-red-100', 'text-red-600', 'border-red-200');
+                els.toggleDeleteBtn.classList.add('text-slate-400', 'border-transparent');
+                els.deleteBtnText.innerText = "Remove Item";
+            }
+            
+            // Refresh Queue to show/hide shake effect
+            renderQueue();
+        }
+
+        function handleQueueClick(index) {
+            if(state.isDeleteMode) {
+                // Delete Logic
+                removeImage(index);
+            } else {
+                // Select Logic
+                selectImage(index);
+            }
+        }
+
+        function removeImage(index) {
+            state.files.splice(index, 1);
+            
+            if(state.files.length === 0) {
+                resetApp();
+            } else {
+                // Adjust active index
+                if(index === state.activeIndex) {
+                     // Active was deleted, go to prev or 0
+                     state.activeIndex = Math.max(0, index - 1);
+                } else if (index < state.activeIndex) {
+                    // Item before active was deleted, shift active index left
+                    state.activeIndex--;
+                }
+                
+                updateAppVisibility();
+                renderQueue();
+                selectImage(state.activeIndex);
+            }
+        }
+
+        function updateAppVisibility() {
+            if (state.files.length > 0) {
+                els.uploadOverlay.classList.add('hidden');
+                els.resetBtn.classList.remove('hidden');
+                els.resetBtn.classList.add('flex');
+            } else {
+                els.uploadOverlay.classList.remove('hidden');
+                els.resetBtn.classList.add('hidden');
+                els.resetBtn.classList.remove('flex');
+                
+                // Reset Preview
+                els.previewImg.src = '';
+                els.previewImg.style.display = 'none';
+                els.previewBadge.classList.add('hidden');
+                els.removeImgBtn.classList.add('hidden');
+                els.origSize.innerText = '--';
+                els.compSize.innerText = '--';
+                els.savingBar.style.width = '0%';
+                els.savingText.innerText = '';
+                state.activeIndex = -1;
+                
+                // Turn off delete mode if list empty
+                if(state.isDeleteMode) toggleDeleteMode();
+            }
+        }
+
+        function renderQueue() {
+            els.queueBar.innerHTML = '';
+            els.queueCount.innerText = state.files.length;
+
+            state.files.forEach((item, idx) => {
+                const div = document.createElement('div');
+                // Added shake-mode and delete-overlay classes conditionally
+                const baseClasses = "flex-none w-14 h-14 rounded-lg overflow-hidden border-2 cursor-pointer transition relative bg-slate-200 shrink-0";
+                const activeClasses = (idx === state.activeIndex && !state.isDeleteMode) ? 'border-brand-600 ring-2 ring-brand-100 opacity-100 scale-105' : 'border-white opacity-60 hover:opacity-100';
+                const deleteClasses = state.isDeleteMode ? 'shake-mode delete-overlay' : '';
+                
+                div.className = `${baseClasses} ${activeClasses} ${deleteClasses}`;
+                
+                const thumbUrl = URL.createObjectURL(item.file);
+                div.style.backgroundImage = `url(${thumbUrl})`;
+                div.style.backgroundSize = 'cover';
+                div.style.backgroundPosition = 'center';
+                
+                // Modified Click Handler
+                div.onclick = () => handleQueueClick(idx);
+                
+                if (idx === state.activeIndex && !state.isDeleteMode) {
+                    const badge = document.createElement('div');
+                    badge.className = "absolute top-0 right-0 w-3 h-3 bg-brand-600 rounded-bl-lg";
+                    div.appendChild(badge);
+                }
+
+                els.queueBar.appendChild(div);
+            });
+            // Keep scroll position
+        }
+
+        function selectImage(index) {
+            if (index < 0 || index >= state.files.length) return;
+            state.activeIndex = index;
+            renderQueue(); // Update UI active state
+            compressCurrent();
+        }
+
+        function removeCurrentImage() {
+            if(state.activeIndex === -1) return;
+            removeImage(state.activeIndex);
+        }
+
+        function resetApp() {
+            state.files = [];
+            state.activeIndex = -1;
+            state.isDeleteMode = false;
+            // Reset delete button UI
+            els.toggleDeleteBtn.classList.remove('bg-red-100', 'text-red-600', 'border-red-200');
+            els.toggleDeleteBtn.classList.add('text-slate-400', 'border-transparent');
+            els.deleteBtnText.innerText = "Remove Item";
+            
+            updateAppVisibility();
+        }
+
+        async function compressCurrent() {
+            if(state.activeIndex === -1 || !state.files[state.activeIndex]) return;
+            
+            const item = state.files[state.activeIndex];
+            els.loader.classList.remove('hidden');
+            els.previewBadge.classList.add('hidden');
+            els.removeImgBtn.classList.add('hidden');
+            els.statsCard.style.opacity = "0.6";
+
+            await new Promise(r => setTimeout(r, 20));
+
+            const sliderVal = parseInt(els.slider.value);
+            const quality = CONFIG.minRealQuality + ((sliderVal / 100) * (CONFIG.maxRealQuality - CONFIG.minRealQuality));
+
+            try {
+                // If blob exists and quality setting hasn't changed heavily, could optimize, but we re-compress to be safe
+                const blob = await processImageToBlob(item.file, quality);
+                state.files[state.activeIndex].compressedBlob = blob;
+                
+                const url = URL.createObjectURL(blob);
+                els.previewImg.src = url;
+                els.previewImg.style.display = 'block';
+                els.previewBadge.classList.remove('hidden');
+                els.removeImgBtn.classList.remove('hidden');
+                els.removeImgBtn.classList.add('flex');
+                
+                els.origSize.innerText = formatBytes(item.file.size);
+                els.compSize.innerText = formatBytes(blob.size);
+                
+                const savings = ((item.file.size - blob.size) / item.file.size) * 100;
+                if(savings > 0) {
+                    els.savingBar.style.width = savings + "%";
+                    els.savingBar.classList.remove('bg-red-500');
+                    els.savingBar.classList.add('bg-emerald-500');
+                    els.savingText.innerText = `SAVED ${Math.round(savings)}%`;
+                    els.savingText.className = "text-[9px] text-emerald-600 font-bold";
+                } else {
+                    els.savingBar.style.width = "100%";
+                    els.savingBar.classList.add('bg-red-500');
+                    els.savingBar.classList.remove('bg-emerald-500');
+                    els.savingText.innerText = `INCREASED`;
+                    els.savingText.className = "text-[9px] text-red-600 font-bold";
+                }
+                els.statsCard.style.opacity = "1";
+
+            } catch (err) {
+                console.error("Compression error:", err);
+                alert("Could not process this image.");
+            } finally {
+                els.loader.classList.add('hidden');
+            }
+        }
+
+        function processImageToBlob(file, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = "#FFFFFF";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                        canvas.toBlob((blob) => {
+                            if(blob) resolve(blob);
+                            else reject(new Error("Canvas to Blob failed"));
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function downloadSingle() {
+            if(state.activeIndex === -1) return;
+            const item = state.files[state.activeIndex];
+            if(!item.compressedBlob) return;
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(item.compressedBlob);
+            const name = item.file.name.split('.')[0];
+            link.download = `${name}-optimized.jpg`;
+            link.click();
+        }
+
+        // --- NEW DIRECT DOWNLOAD FUNCTION ---
+        async function downloadAllImages() {
+            if(state.files.length === 0) return;
+            
+            els.btnAll.disabled = true;
+            const originalText = els.btnAll.innerHTML;
+            els.btnAll.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> Downloading...`;
+            els.bulkStatus.innerText = "Preparing downloads...";
+
+            const sliderVal = parseInt(els.slider.value);
+            const quality = CONFIG.minRealQuality + ((sliderVal / 100) * (CONFIG.maxRealQuality - CONFIG.minRealQuality));
+
+            try {
+                let downloadedCount = 0;
+                
+                // Alert for browser permission
+                els.bulkStatus.innerText = "Allow multiple downloads if asked!";
+                
+                for (let i = 0; i < state.files.length; i++) {
+                    const file = state.files[i].file;
+                    
+                    // Always re-compress to ensure global slider value is used
+                    const blob = await processImageToBlob(file, quality);
+                    
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    const name = file.name.split('.')[0] + '-rama-compressed.jpg';
+                    link.download = name;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    downloadedCount++;
+                    els.bulkStatus.innerText = `Downloaded ${downloadedCount}/${state.files.length}`;
+
+                    // Small delay to prevent browser choking/blocking
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+                
+                els.bulkStatus.innerText = "All downloads started!";
+
+            } catch (err) {
+                console.error(err);
+                alert("Error during bulk download.");
+            } finally {
+                setTimeout(() => {
+                    els.btnAll.disabled = false;
+                    els.btnAll.innerHTML = originalText;
+                    els.bulkStatus.innerText = "";
+                }, 2000);
+            }
+        }
+
+        function formatBytes(bytes) {
+            if(bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Init
+        els.slider.style.setProperty('--range-progress', '25%');
+
+    </script>
+</body>
+</html>
+
