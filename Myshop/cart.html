@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Checkout - Ramazone</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        .slab-card { border: 2px solid transparent; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .slab-card.selected { border-color: #2563eb; background-color: #eff6ff; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1); }
+        .slab-card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); background-color: #f1f5f9; }
+
+        /* Order Tracking Pulse */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .st-placed { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2); }
+        .st-accepted { background: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+        .st-out_for_delivery { background: #8b5cf6; box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2); }
+        .st-delivered { background: #22c55e; }
+
+        /* Success Animation */
+        .success-overlay { position: fixed; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+        .success-overlay.active { opacity: 1; pointer-events: auto; }
+        .checkmark-circle { width: 80px; height: 80px; border-radius: 50%; background: #22c55e; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); animation: pulse-green 2s infinite; }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+
+        /* Invoice Print Style */
+        @media print {
+            body * { visibility: hidden; }
+            #invoiceModal, #invoiceModal * { visibility: visible; }
+            #invoiceModal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: white; z-index: 9999; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased pb-40">
+
+    <!-- HEADER -->
+    <div class="bg-white sticky top-0 z-20 px-5 py-4 flex items-center gap-4 shadow-sm border-b border-slate-100">
+        <button onclick="window.location.href='home.html'" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 border border-slate-200 text-slate-600 active:scale-95 transition hover:bg-slate-100">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div>
+            <h1 class="text-lg font-extrabold text-slate-900 leading-none">Checkout</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Review Order</p>
+        </div>
+    </div>
+
+    <div class="p-5 max-w-md mx-auto space-y-6">
+
+        <!-- 1. LIVE ORDER TRACKING (With Chat & Invoice) -->
+        <div id="liveTrackingSection" class="hidden">
+            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Order History & Status</h2>
+            <div id="activeOrdersList" class="space-y-4">
+                <!-- Orders injected here -->
+            </div>
+        </div>
+
+        <!-- 2. CART ITEMS -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-50 px-5 py-3 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="text-xs font-bold text-slate-600 uppercase tracking-wide">Items in Cart</h2>
+                <span class="text-[10px] font-bold bg-white text-slate-400 px-2 py-1 rounded border border-slate-200" id="itemCountBadge">0 Items</span>
+            </div>
+            
+            <div id="cartList" class="divide-y divide-slate-50">
+                <!-- Items Injected Here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="cartEmptyState" class="py-12 text-center hidden">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-cart-shopping text-slate-300 text-xl"></i>
+                </div>
+                <p class="text-slate-400 text-sm font-medium">Your cart is empty.</p>
+                <button onclick="window.location.href='home.html'" class="mt-4 text-xs font-bold text-indigo-600 border border-indigo-100 bg-indigo-50 px-5 py-2.5 rounded-full hover:bg-indigo-100 transition">Browse Store</button>
+            </div>
+        </div>
+
+        <!-- 3. DELIVERY SLABS -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i class="fa-solid fa-cube text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Parcel Size</h3>
+                        <p class="text-[10px] text-slate-400 font-medium">Based on total weight</p>
+                    </div>
+                </div>
+                
+                <!-- Weight Badge -->
+                <div id="weightBadge" class="hidden bg-slate-900 text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1">
+                    <i class="fa-solid fa-scale-balanced"></i> <span id="totalWeightDisplay">0 KG</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="selectRate(50, 'SMALL (0-10KG)')" id="rateBtn50" class="slab-card bg-white rounded-xl p-3 text-left shadow-sm border border-slate-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-2 opacity-0 group-[.selected]:opacity-100 transition-opacity"><i class="fa-solid fa-circle-check text-blue-600"></i></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Small</p>
+                    <p class="text-xl font-extrabold text-slate-800">₹50</p>
+                    <p class="text-[10px] text-slate-500 font-medium mt-1">0 - 10 KG</p>
+                </button>
+                <button onclick="selectRate(70, 'MEDIUM (11-20KG)')" id="rateBtn70" class="slab-card bg-white rounded-xl p-3 text-left shadow-sm border border-slate-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-2 opacity-0 group-[.selected]:opacity-100 transition-opacity"><i class="fa-solid fa-circle-check text-blue-600"></i></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Medium</p>
+                    <p class="text-xl font-extrabold text-slate-800">₹70</p>
+                    <p class="text-[10px] text-slate-500 font-medium mt-1">11 - 20 KG</p>
+                </button>
+                <button onclick="selectRate(80, 'LARGE (21-30KG)')" id="rateBtn80" class="slab-card bg-white rounded-xl p-3 text-left shadow-sm border border-slate-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-2 opacity-0 group-[.selected]:opacity-100 transition-opacity"><i class="fa-solid fa-circle-check text-blue-600"></i></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Large</p>
+                    <p class="text-xl font-extrabold text-slate-800">₹80</p>
+                    <p class="text-[10px] text-slate-500 font-medium mt-1">21 - 30 KG</p>
+                </button>
+                <button onclick="selectRate(100, 'HEAVY (31-50KG)')" id="rateBtn100" class="slab-card bg-white rounded-xl p-3 text-left shadow-sm border border-slate-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-2 opacity-0 group-[.selected]:opacity-100 transition-opacity"><i class="fa-solid fa-circle-check text-blue-600"></i></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Heavy</p>
+                    <p class="text-xl font-extrabold text-slate-800">₹100</p>
+                    <p class="text-[10px] text-slate-500 font-medium mt-1">31 - 50 KG</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. DELIVERY ADDRESS -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+                <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Delivery Location</label>
+                <button onclick="getLocation()" id="btnAutoLoc" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition flex items-center gap-1.5 active:scale-95">
+                    <i class="fa-solid fa-location-crosshairs"></i> Detect GPS
+                </button>
+            </div>
+            <textarea id="deliveryAddress" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800 resize-none h-24 placeholder-slate-400 shadow-inner" placeholder="Shop Name, Street, Landmark..."></textarea>
+            <input type="hidden" id="lat" value="0">
+            <input type="hidden" id="lng" value="0">
+        </div>
+
+    </div>
+
+    <!-- BOTTOM ACTION BAR -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 pb-6 shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40 rounded-t-2xl">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total Payable</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-extrabold text-slate-900">₹<span id="displayTotal">0</span></span>
+                </div>
+            </div>
+            <button onclick="placeOrder()" id="placeOrderBtn" class="flex-1 bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale">
+                <span>PLACE ORDER</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- SUCCESS OVERLAY -->
+    <div id="successOverlay" class="success-overlay">
+        <div class="checkmark-circle mb-6"><i class="fa-solid fa-check text-4xl text-white"></i></div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Order Placed!</h2>
+        <p class="text-slate-500 text-sm mb-8">Redirecting...</p>
+    </div>
+
+    <!-- INVOICE MODAL (Hidden by default, used for printing) -->
+    <div id="invoiceModal" class="fixed inset-0 bg-white z-[100] hidden p-8 flex flex-col">
+        <div class="text-center border-b-2 border-slate-800 pb-6 mb-6">
+            <h1 class="text-3xl font-extrabold text-slate-900 uppercase tracking-widest">INVOICE</h1>
+            <p class="text-slate-500 font-mono text-sm mt-2">Ramazone Delivery Service</p>
+        </div>
+        
+        <div class="flex justify-between mb-8">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase">Billed To</p>
+                <p class="font-bold text-lg text-slate-800" id="invName">Customer Name</p>
+                <p class="text-sm text-slate-600" id="invMobile">+91 XXXXX</p>
+                <p class="text-sm text-slate-600 mt-1 max-w-[200px]" id="invAddr">Address</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-slate-400 uppercase">Order Details</p>
+                <p class="font-bold text-lg text-slate-800" id="invId">#ORD-000</p>
+                <p class="text-sm text-slate-600" id="invDate">Jan 01, 2024</p>
+                <p class="text-sm font-bold text-green-600 mt-1" id="invStatus">DELIVERED</p>
+            </div>
+        </div>
+
+        <table class="w-full mb-8">
+            <thead class="bg-slate-100 border-b border-slate-200">
+                <tr>
+                    <th class="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase">Item Description</th>
+                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-500 uppercase">Qty</th>
+                </tr>
+            </thead>
+            <tbody id="invItems" class="text-sm text-slate-700 divide-y divide-slate-100">
+                <!-- Items -->
+            </tbody>
+        </table>
+
+        <div class="flex justify-end mb-12">
+            <div class="w-1/2">
+                <div class="flex justify-between py-2 border-b border-slate-100">
+                    <span class="font-bold text-slate-500">Delivery Fee</span>
+                    <span class="font-bold text-slate-800">₹<span id="invFee">0</span></span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-slate-800">
+                    <span class="font-extrabold text-slate-900 text-lg">Total</span>
+                    <span class="font-extrabold text-slate-900 text-lg">₹<span id="invTotal">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto text-center">
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">Thank you for your business</p>
+            <div class="no-print">
+                <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-black">PRINT / SAVE PDF</button>
+                <button onclick="document.getElementById('invoiceModal').classList.add('hidden')" class="ml-2 text-slate-500 font-bold py-3 px-8 hover:text-red-500">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-full shadow-xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold flex gap-2 items-center">
+        <i class="fa-solid fa-circle-info text-yellow-400"></i><span id="toastMsg">Alert</span>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+            authDomain: "tipsplit-e3wes.firebaseapp.com",
+            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tipsplit-e3wes",
+            storageBucket: "tipsplit-e3wes.firebasestorage.app",
+            messagingSenderId: "984733883633",
+            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const ADMIN_PHONE = "917903698180";
+        const session = JSON.parse(localStorage.getItem('rmz_user'));
+        if (!session || !session.isLoggedIn) window.location.href = 'index.html';
+
+        let selectedCharge = 0;
+        let selectedLabel = "";
+        let trackedOrdersData = {}; // Store order data for invoice
+
+        window.onload = () => {
+            renderCart();
+            trackMyOrders(); // START TRACKING
+            db.ref('users/' + session.mobile + '/address').once('value', s => { if(s.exists()) document.getElementById('deliveryAddress').value = s.val(); });
+        };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast'); document.getElementById('toastMsg').innerText = msg;
+            t.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2500);
+        }
+
+        // --- ORDER TRACKING ---
+        function trackMyOrders() {
+            db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).on('value', snap => {
+                const list = document.getElementById('activeOrdersList');
+                const section = document.getElementById('liveTrackingSection');
+                list.innerHTML = '';
+                let hasActive = false;
+                trackedOrdersData = {};
+
+                if(snap.exists()) {
+                    const orders = Object.values(snap.val()).reverse(); // Show newest first
+                    if(orders.length > 0) section.classList.remove('hidden');
+
+                    orders.forEach(o => {
+                        trackedOrdersData[o.orderId] = o;
+                        
+                        let statusText = "Order Placed"; 
+                        let statusColor = "st-placed"; 
+                        let statusMsg = "Waiting for partner acceptance...";
+                        let actionBtn = '';
+                        let partnerName = o.deliveryBoyName || 'Partner';
+                        let cardBg = "bg-white";
+
+                        // --- STATUS LOGIC ---
+                        if(o.status === 'placed') {
+                           // Default
+                        }
+                        else if(o.status === 'admin_accepted') { 
+                            statusText = "Accepted"; 
+                            statusColor = "st-accepted"; 
+                            statusMsg = "Assigning delivery partner..."; 
+                        }
+                        else if(o.status === 'accepted') { 
+                            statusText = "Accepted"; 
+                            statusColor = "st-accepted"; 
+                            statusMsg = `${partnerName} has accepted your order.`;
+                            
+                            // WhatsApp Chat with /a
+                            if(o.deliveryBoyMobile) {
+                                actionBtn = `<a href="https://wa.me/91${o.deliveryBoyMobile}?text=${encodeURIComponent('/a')}" target="_blank" class="text-[10px] font-bold text-green-600 border border-green-200 bg-green-50 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-green-100 transition absolute top-4 right-4"><i class="fa-brands fa-whatsapp text-sm"></i> Chat</a>`;
+                            }
+                        }
+                        else if(o.status === 'out_for_delivery') { 
+                            statusText = "Out for Delivery"; 
+                            statusColor = "st-out_for_delivery"; 
+                            statusMsg = `${partnerName} is arriving soon!`; 
+                            
+                            if(o.deliveryBoyMobile) {
+                                actionBtn = `<a href="https://wa.me/91${o.deliveryBoyMobile}?text=${encodeURIComponent('/a')}" target="_blank" class="text-[10px] font-bold text-green-600 border border-green-200 bg-green-50 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-green-100 transition absolute top-4 right-4"><i class="fa-brands fa-whatsapp text-sm"></i> Chat</a>`;
+                            }
+                        }
+                        else if(o.status === 'delivered') {
+                            statusText = "Delivered";
+                            statusColor = "st-delivered";
+                            statusMsg = "Order Completed Successfully.";
+                            cardBg = "bg-slate-50"; // Dim delivered orders slightly
+                            
+                            // Invoice Button
+                            actionBtn = `<button onclick="openInvoice('${o.orderId}')" class="text-[10px] font-bold text-slate-600 border border-slate-300 bg-white px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-slate-100 transition absolute top-4 right-4"><i class="fa-solid fa-file-invoice"></i> Invoice</button>`;
+                        }
+
+                        // Product List Preview for Delivered Orders
+                        let productPreview = '';
+                        if(o.status === 'delivered' && o.cart) {
+                            productPreview = `<div class="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-600">
+                                <p class="font-bold mb-1 uppercase text-[10px] text-slate-400">Order Items:</p>
+                                <ul class="list-disc pl-4 space-y-0.5">
+                                    ${o.cart.map(i => `<li>${i.count}x ${i.name}</li>`).join('')}
+                                </ul>
+                            </div>`;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = `${cardBg} border border-slate-200 rounded-xl p-4 shadow-sm relative overflow-hidden`;
+                        card.innerHTML = `
+                            <div class="absolute top-0 left-0 w-1 h-full ${o.status==='delivered'?'bg-green-500':(o.status==='placed'?'bg-amber-500':'bg-blue-500')}"></div>
+                            ${actionBtn}
+                            <div class="flex justify-between items-start mb-2 pl-2 pr-20"> 
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm flex items-center">
+                                        <span class="status-dot ${statusColor}"></span> ${statusText}
+                                    </h3>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">ID: #${o.orderId.slice(-6)}</p>
+                                </div>
+                                <span class="font-bold text-slate-700 text-sm">₹${o.payment.deliveryFee}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 pl-2 font-medium">${statusMsg}</p>
+                            ${productPreview}
+                        `;
+                        list.appendChild(card);
+                    });
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- INVOICE GENERATOR ---
+        function openInvoice(oid) {
+            const o = trackedOrdersData[oid];
+            if(!o) return;
+
+            document.getElementById('invName').innerText = o.user.name;
+            document.getElementById('invMobile').innerText = o.user.mobile;
+            document.getElementById('invAddr').innerText = o.location.address;
+            document.getElementById('invId').innerText = "#" + o.orderId.slice(-6);
+            document.getElementById('invDate').innerText = new Date(o.timestamp).toLocaleDateString();
+            document.getElementById('invFee').innerText = o.payment.deliveryFee;
+            document.getElementById('invTotal').innerText = o.payment.deliveryFee; // Assuming only delivery fee is paid for now, modify if item price included
+            
+            const tbody = document.getElementById('invItems');
+            tbody.innerHTML = '';
+            if(o.cart) {
+                o.cart.forEach(i => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="py-2 px-4 border-b border-slate-50">
+                                <p class="font-bold text-slate-800">${i.name}</p>
+                                <p class="text-[10px] text-slate-400">${i.qty}</p>
+                            </td>
+                            <td class="py-2 px-4 border-b border-slate-50 text-right font-bold text-slate-700">x${i.count}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('invoiceModal').classList.remove('hidden');
+        }
+
+        // --- CART LOGIC ---
+        function getCart() { return JSON.parse(localStorage.getItem('rmz_cart')) || []; }
+        function saveCart(c) { localStorage.setItem('rmz_cart', JSON.stringify(c)); }
+
+        function renderCart() {
+            const cart = getCart();
+            const list = document.getElementById('cartList');
+            document.getElementById('itemCountBadge').innerText = `${cart.length} Items`;
+            list.innerHTML = '';
+
+            if (cart.length === 0) {
+                document.getElementById('cartEmptyState').classList.remove('hidden');
+                document.getElementById('placeOrderBtn').disabled = true;
+                return;
+            }
+            document.getElementById('cartEmptyState').classList.add('hidden');
+            document.getElementById('placeOrderBtn').disabled = false;
+
+            cart.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-4";
+                div.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm"><span class="text-indigo-600 mr-1">${item.count}x</span> ${item.name}</h4>
+                        <p class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">${item.qty}</p>
+                    </div>
+                    <button onclick="removeItem(${idx})" class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                list.appendChild(div);
+            });
+            calculateWeight(cart);
+        }
+
+        function removeItem(idx) {
+            const c = getCart(); c.splice(idx, 1); saveCart(c); renderCart();
+        }
+
+        // --- WEIGHT LOGIC ---
+        function calculateWeight(cart) {
+            let totalKg = 0;
+            cart.forEach(item => {
+                let txt = item.qty.toLowerCase().replace(/\s/g, '');
+                let weight = 0;
+                let mul = item.count || 1;
+                let match;
+
+                if (match = txt.match(/(\d+(\.\d+)?)kg/)) weight = parseFloat(match[1]);
+                else if ((match = txt.match(/(\d+)g/)) || (match = txt.match(/(\d+)gm/))) weight = parseFloat(match[1]) / 1000;
+                else if ((match = txt.match(/(\d+(\.\d+)?)l/)) || (match = txt.match(/(\d+(\.\d+)?)ltr/))) weight = parseFloat(match[1]);
+                else if (match = txt.match(/(\d+)ml/)) weight = parseFloat(match[1]) / 1000;
+
+                totalKg += (weight * mul);
+            });
+
+            const badge = document.getElementById('weightBadge');
+            if (totalKg > 0) {
+                badge.classList.remove('hidden');
+                document.getElementById('totalWeightDisplay').innerText = `${totalKg.toFixed(2)} KG`;
+                autoSelectSlab(totalKg);
+            } else {
+                badge.classList.add('hidden');
+                if(selectedCharge === 0) selectRate(50, 'SMALL (0-10KG)');
+            }
+        }
+
+        function autoSelectSlab(kg) {
+            ['50','70','80','100'].forEach(r => document.getElementById('rateBtn'+r).classList.remove('disabled'));
+            if (kg > 10) document.getElementById('rateBtn50').classList.add('disabled');
+            if (kg > 20) document.getElementById('rateBtn70').classList.add('disabled');
+            if (kg > 30) document.getElementById('rateBtn80').classList.add('disabled');
+            
+            let rec = 50, lbl = 'SMALL (0-10KG)';
+            if (kg > 30) { rec = 100; lbl = 'HEAVY (31-50KG)'; }
+            else if (kg > 20) { rec = 80; lbl = 'LARGE (21-30KG)'; }
+            else if (kg > 10) { rec = 70; lbl = 'MEDIUM (11-20KG)'; }
+
+            if (selectedCharge < rec || selectedCharge === 0) selectRate(rec, lbl);
+        }
+
+        function selectRate(amt, lbl) {
+            selectedCharge = amt; selectedLabel = lbl;
+            document.querySelectorAll('.slab-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('rateBtn'+amt).classList.add('selected');
+            document.getElementById('displayTotal').innerText = amt;
+        }
+
+        function getLocation() {
+            const btn = document.getElementById('btnAutoLoc'); btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            if("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(p => {
+                    document.getElementById('lat').value = p.coords.latitude;
+                    document.getElementById('lng').value = p.coords.longitude;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> GPS Set';
+                    btn.classList.replace('text-indigo-600', 'text-green-600');
+                    btn.classList.replace('bg-indigo-50', 'bg-green-50');
+                    showToast("GPS Locked");
+                }, () => { btn.innerHTML = 'Retry GPS'; showToast("GPS Failed"); });
+            }
+        }
+
+        async function placeOrder() {
+            const cart = getCart();
+            const address = document.getElementById('deliveryAddress').value.trim();
+            const lat = parseFloat(document.getElementById('lat').value) || 0;
+            const lng = parseFloat(document.getElementById('lng').value) || 0;
+
+            if(!selectedCharge) return showToast("Select Parcel Size");
+            if(!address) return showToast("Address Required");
+
+            const btn = document.getElementById('placeOrderBtn');
+            btn.disabled = true; btn.innerHTML = 'Processing...';
+
+            const orderData = {
+                orderId: 'ORD-' + Date.now().toString().slice(-6),
+                user: { name: session.name, mobile: session.mobile, shopName: session.shopName || session.name + "'s Store" },
+                location: { address, lat, lng },
+                cart: cart,
+                payment: { deliveryFee: selectedCharge, slab: selectedLabel, mode: 'COD' },
+                status: 'placed',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            try {
+                const newOrderRef = db.ref('orders').push();
+                await newOrderRef.set(orderData);
+                db.ref('users/' + session.mobile).update({ address: address });
+                document.getElementById('successOverlay').classList.add('active');
+
+                // Redirect to Home after 2 seconds
+                setTimeout(() => {
+                    localStorage.removeItem('rmz_cart');
+                    window.location.href = 'home.html';
+                }, 2000);
+
+            } catch (err) {
+                console.error(err);
+                showToast("Error Placing Order");
+                btn.disabled = false; btn.innerHTML = 'Try Again';
+            }
+        }
+    </script>
+</body>
+</html>
+
