@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Partner Dashboard - Ramazone</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #111827; color: white; -webkit-tap-highlight-color: transparent; }
+        .toggle-checkbox:checked { right: 0; border-color: #22c55e; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #22c55e; }
+        .sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        .sidebar.open { transform: translateX(0); }
+        .overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .overlay.open { opacity: 1; pointer-events: auto; }
+        .glass-card { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(75, 85, 99, 0.4); }
+        .pulse-border { animation: pulse-orange 2s infinite; }
+        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+    </style>
+</head>
+<body class="pb-24">
+
+    <!-- HEADER -->
+    <header class="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-30 px-4 py-3 flex items-center justify-between shadow-lg">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition active:scale-95">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            <div>
+                <h1 class="text-sm font-bold leading-none text-white" id="headerName">Partner</h1>
+                <p class="text-[10px] text-gray-400 mt-1 uppercase" id="vehicleType">Bike</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider" id="dutyStatusText">OFFLINE</span>
+            <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                <input type="checkbox" name="toggle" id="dutySwitch" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 left-0 top-0 z-10" onchange="toggleDuty()"/>
+                <label for="dutySwitch" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer transition-colors duration-300"></label>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR MENU -->
+    <div id="menuOverlay" class="overlay fixed inset-0 bg-black/80 z-40 backdrop-blur-sm" onclick="toggleMenu()"></div>
+    <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-gray-900 z-50 shadow-2xl flex flex-col border-r border-gray-800">
+        <div class="p-6 bg-gray-800 border-b border-gray-700">
+            <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-3 border-2 border-amber-500">
+                <i class="fa-solid fa-user text-2xl text-gray-400"></i>
+            </div>
+            <h2 class="font-bold text-lg text-white" id="menuName">Partner</h2>
+            <p class="text-xs text-gray-400 font-mono" id="menuMobile">+91 ...</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3">
+                <i class="fa-solid fa-key text-amber-500 w-5"></i> Change PIN
+            </button>
+            <button onclick="updateVehicle()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3">
+                <i class="fa-solid fa-motorcycle text-amber-500 w-5"></i> Vehicle Info
+            </button>
+            <div class="h-px bg-gray-800 my-2"></div>
+            <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-900/30 text-red-500 font-medium text-sm flex items-center gap-3">
+                <i class="fa-solid fa-power-off w-5"></i> Logout
+            </button>
+        </nav>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="px-4 mt-20">
+        
+        <!-- STATS BOXES -->
+        <div id="statsSection" class="hidden grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex flex-col items-center shadow-lg">
+                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Earnings</span>
+                <span class="text-xl font-bold text-green-400 mt-1">₹<span id="earnings">0</span></span>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex flex-col items-center shadow-lg">
+                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Trips</span>
+                <span class="text-xl font-bold text-amber-500 mt-1" id="trips">0</span>
+            </div>
+        </div>
+
+        <!-- Offline State -->
+        <div id="offlineState" class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-600"><i class="fa-solid fa-power-off text-3xl"></i></div>
+            <h2 class="text-lg font-bold text-gray-300">You are Offline</h2>
+            <p class="text-sm text-gray-500 mt-1">Go Online to receive orders</p>
+        </div>
+
+        <!-- Online Scanning -->
+        <div id="noOrdersState" class="hidden flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 relative">
+                <span class="absolute w-full h-full rounded-full animate-ping bg-amber-500/20"></span>
+                <i class="fa-solid fa-radar text-3xl text-amber-500"></i>
+            </div>
+            <h2 class="text-lg font-bold text-gray-300">Scanning Area...</h2>
+            <p class="text-xs text-gray-500 mt-4 bg-gray-800 px-3 py-1 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i> <span id="locStatus">GPS Waiting...</span></p>
+        </div>
+
+        <!-- ORDERS LIST -->
+        <div id="ordersContainer" class="hidden space-y-4 pb-20">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex justify-between">
+                <span>Available Deliveries</span>
+                <span id="orderCount" class="bg-amber-600 text-white px-1.5 rounded">0</span>
+            </h3>
+            <div id="ordersList" class="space-y-4"></div>
+        </div>
+
+        <!-- ACTIVE ORDER PANEL -->
+        <div id="activeOrderPanel" class="hidden fixed inset-0 z-50 bg-gray-900 flex flex-col animate-[slideUp_0.3s_ease-out]">
+            <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center shadow-md">
+                <h2 class="font-bold text-amber-500">Live Task</h2>
+                <span class="text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold" id="activeStatus">Processing</span>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 space-y-6">
+                <!-- Shop -->
+                <div class="relative pl-6 border-l-2 border-gray-700">
+                    <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900"></span>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase">Pick Up From</h3>
+                    <p class="text-lg font-bold text-white mt-0.5" id="actShop">Shop Name</p>
+                    <button onclick="openMap('shop')" class="mt-2 text-xs bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-1.5 rounded hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-diamond-turn-right mr-1"></i> Navigate to Shop</button>
+                </div>
+                
+                <!-- Items Box -->
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Order Items</h4>
+                    <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
+                </div>
+
+                <!-- Drop Off -->
+                <div class="relative pl-6 border-l-2 border-gray-700">
+                    <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-500 border-2 border-gray-900"></span>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase">Deliver To</h3>
+                    <p class="text-lg font-bold text-white mt-0.5" id="actCust">Customer Name</p>
+                    <p class="text-sm text-gray-400" id="actAddr">Address</p>
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="openMap('cust')" class="text-xs bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded flex-1 hover:bg-green-600 hover:text-white transition"><i class="fa-solid fa-location-arrow mr-1"></i> Map</button>
+                        <button onclick="callCust()" class="text-xs bg-gray-700 border border-gray-600 px-3 py-2 rounded text-white flex-1 hover:bg-gray-600"><i class="fa-solid fa-phone mr-1"></i> Call</button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-xl flex justify-between items-center border border-gray-700">
+                    <span class="text-sm text-gray-400 font-bold">Cash to Collect</span>
+                    <span class="text-2xl font-bold text-white">₹<span id="actFee">0</span></span>
+                </div>
+            </div>
+            <div class="p-5 bg-gray-800 border-t border-gray-700">
+                <button onclick="changeStatus()" id="actionBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition">UPDATE STATUS</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+            authDomain: "tipsplit-e3wes.firebaseapp.com",
+            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tipsplit-e3wes",
+            storageBucket: "tipsplit-e3wes.firebasestorage.app",
+            messagingSenderId: "984733883633",
+            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const session = JSON.parse(localStorage.getItem('rmz_delivery_user'));
+        if (!session) window.location.href = 'delivery-login.html';
+
+        let isOnline = false, activeOrder = null, watchId;
+        const PARTNER_PAY = 20; // Fixed pay per order
+
+        window.onload = () => {
+            document.getElementById('headerName').innerText = session.name;
+            document.getElementById('vehicleType').innerText = session.vehicle;
+            document.getElementById('menuName').innerText = session.name;
+            document.getElementById('menuMobile').innerText = '+91 ' + session.mobile;
+            
+            // Persistent Online Check
+            const savedDuty = localStorage.getItem('rmz_duty_on') === 'true';
+            if(savedDuty) {
+                document.getElementById('dutySwitch').checked = true;
+                toggleDuty();
+            }
+            fetchEarnings(); 
+            // ACTIVE CHECKER: This will catch both manually accepted and ADMIN assigned orders
+            checkForActive();
+        };
+
+        function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
+        function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
+
+        function toggleDuty() {
+            isOnline = document.getElementById('dutySwitch').checked;
+            localStorage.setItem('rmz_duty_on', isOnline);
+            const status = document.getElementById('dutyStatusText');
+            
+            if(isOnline) {
+                status.innerText = "ONLINE"; status.classList.add('text-green-400');
+                document.getElementById('offlineState').classList.add('hidden');
+                document.getElementById('statsSection').classList.remove('hidden');
+                db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().set('offline');
+                startGPS();
+                listenOrders();
+            } else {
+                status.innerText = "OFFLINE"; status.classList.remove('text-green-400');
+                document.getElementById('offlineState').classList.remove('hidden');
+                document.getElementById('noOrdersState').classList.add('hidden');
+                document.getElementById('ordersContainer').classList.add('hidden');
+                document.getElementById('statsSection').classList.add('hidden');
+                stopGPS();
+                db.ref('deliveryBoys/'+session.mobile+'/status').set('offline');
+                db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().cancel();
+                db.ref('orders').off();
+            }
+        }
+
+        function startGPS() {
+            if("geolocation" in navigator) {
+                db.ref('deliveryBoys/'+session.mobile).update({status:'online'});
+                watchId = navigator.geolocation.watchPosition(p => {
+                    document.getElementById('locStatus').innerText = "GPS Live";
+                    db.ref('deliveryBoys/'+session.mobile).update({
+                        status:'online',
+                        location:{lat:p.coords.latitude, lng:p.coords.longitude},
+                        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }, e => document.getElementById('locStatus').innerText = "GPS Weak", {enableHighAccuracy: true});
+            }
+        }
+        function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
+
+        // --- ORDER LISTENER ---
+        function listenOrders() {
+            const list = document.getElementById('ordersList');
+            
+            db.ref('orders').on('value', snap => {
+                if(!isOnline) return;
+                
+                list.innerHTML = '';
+                let count = 0;
+                
+                if(snap.exists()) {
+                    Object.entries(snap.val()).forEach(([id, o]) => {
+                        // Only show available orders. If assigned to me, checkForActive() handles it.
+                        if(o.status === 'placed') {
+                            count++;
+                            
+                            let prodTxt = o.cart ? o.cart.map(i => `${i.count}x ${i.name}`).join(', ') : 'Items';
+                            const deliveryFee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : '0';
+
+                            const div = document.createElement('div');
+                            div.className = "glass-card p-4 rounded-xl pulse-border";
+                            
+                            // Visual hint if user is busy
+                            const btnDisabled = activeOrder ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+                            const btnText = activeOrder ? 'Finish Current Task First' : 'ACCEPT ORDER';
+                            const bgClass = activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500';
+                            
+                            div.innerHTML = `
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-white text-lg">${o.user.shopName}</h4>
+                                    <span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${deliveryFee}</span>
+                                </div>
+                                <div class="text-xs text-gray-400 space-y-1 mb-3">
+                                    <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
+                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${o.location.address}</p>
+                                    <p><i class="fa-solid fa-weight-hanging mr-1"></i> ${o.payment.slab || 'Standard'}</p>
+                                </div>
+                                <button onclick="acceptOrder('${id}')" class="w-full ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
+                                    ${btnText}
+                                </button>
+                            `;
+                            list.appendChild(div);
+                        }
+                    });
+                }
+                
+                document.getElementById('orderCount').innerText = count;
+                
+                if(!activeOrder) {
+                    if(count > 0) {
+                        document.getElementById('noOrdersState').classList.add('hidden');
+                        document.getElementById('ordersContainer').classList.remove('hidden');
+                    } else {
+                        document.getElementById('noOrdersState').classList.remove('hidden');
+                        document.getElementById('ordersContainer').classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        function acceptOrder(id) {
+            if(activeOrder) return showToast("Complete current order first!");
+            if(!confirm("Are you sure you want to accept?")) return;
+            
+            db.ref('orders/'+id).transaction(o => {
+                if(o && (o.status === 'placed')) {
+                    o.status = 'accepted'; 
+                    o.deliveryBoyId = session.mobile; 
+                    o.deliveryBoyName = session.name; 
+                    o.deliveryBoyMobile = session.mobile; // For WhatsApp
+                    return o;
+                }
+            }, (err, comm, snap) => {
+                if(comm) { showToast("Accepted!"); loadActive(id, snap.val()); }
+                else showToast("Taken by others or deleted!");
+            });
+        }
+
+        function checkForActive() {
+            // Updated to listen continuously for any order assigned to me (Admin or Manual)
+            db.ref('orders').orderByChild('deliveryBoyId').equalTo(session.mobile).on('value', snap => {
+                if(snap.exists()) {
+                    let foundActive = false;
+                    const orders = snap.val();
+                    // Loop through my orders to find one that is NOT delivered
+                    Object.keys(orders).forEach(key => {
+                        const o = orders[key];
+                        if(o.status !== 'delivered') {
+                            loadActive(key, o);
+                            foundActive = true;
+                            // Ensure Online Mode
+                            if(!document.getElementById('dutySwitch').checked) {
+                                document.getElementById('dutySwitch').checked = true;
+                                toggleDuty();
+                            }
+                        }
+                    });
+                    
+                    if(!foundActive) {
+                        // If no active orders, clear UI
+                        activeOrder = null;
+                        document.getElementById('activeOrderPanel').classList.add('hidden');
+                        document.getElementById('statsSection').classList.remove('hidden');
+                        document.getElementById('ordersContainer').classList.remove('hidden');
+                    }
+                }
+            });
+        }
+
+        function loadActive(id, o) {
+            activeOrder = {id, ...o};
+            document.getElementById('ordersContainer').classList.add('hidden');
+            document.getElementById('noOrdersState').classList.add('hidden');
+            document.getElementById('statsSection').classList.add('hidden');
+            document.getElementById('activeOrderPanel').classList.remove('hidden');
+            
+            document.getElementById('actShop').innerText = o.user.shopName;
+            document.getElementById('actCust').innerText = o.user.name;
+            document.getElementById('actAddr').innerText = o.location.address;
+            document.getElementById('actFee').innerText = o.payment.deliveryFee;
+
+            const ul = document.getElementById('actItems');
+            ul.innerHTML = o.cart.map(i => `
+                <li class="flex justify-between border-b border-gray-700 pb-1 last:border-0">
+                    <span>${i.name}</span>
+                    <span class="text-white font-bold">${i.qty} x${i.count}</span>
+                </li>
+            `).join('');
+            
+            // If assigned by Admin, show notification
+            if(o.status === 'accepted' && !activeOrder.seen) {
+                showToast("New Order Assigned!");
+                // Optionally mark as seen locally or just let it be
+            }
+            
+            updateBtnUI(o.status);
+        }
+
+        function updateBtnUI(status) {
+            const b = document.getElementById('actionBtn');
+            const s = document.getElementById('activeStatus');
+            if(status === 'accepted') {
+                s.innerText = "Going to Shop"; s.className = "text-xs bg-blue-500/20 text-blue-500 px-2 py-1 rounded uppercase font-bold";
+                b.innerText = "PICKED UP ORDER"; b.className = "w-full bg-blue-600 text-white font-bold py-4 rounded-xl";
+                b.onclick = () => updateStatus('out_for_delivery');
+            } else if(status === 'out_for_delivery') {
+                s.innerText = "Out for Delivery"; s.className = "text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold";
+                b.innerText = "DELIVERED & CASH COLLECTED"; b.className = "w-full bg-green-600 text-white font-bold py-4 rounded-xl";
+                b.onclick = () => updateStatus('delivered');
+            }
+        }
+
+        function updateStatus(st) {
+            if(st === 'delivered' && !confirm("Confirm Cash Collected?")) return;
+            
+            const updates = { status: st };
+            
+            db.ref('orders/'+activeOrder.id).update(updates).then(() => {
+                if(st === 'delivered') {
+                    showToast("Order Completed!");
+                    
+                    db.ref('deliveryBoys/'+session.mobile+'/earnings').transaction(current => (current || 0) + PARTNER_PAY);
+                    db.ref('deliveryBoys/'+session.mobile+'/trips').transaction(current => (current || 0) + 1);
+
+                    db.ref('orders/'+activeOrder.id).update({
+                        completedAt: firebase.database.ServerValue.TIMESTAMP,
+                        partnerPay: PARTNER_PAY
+                    });
+                    
+                    // The checkForActive listener will automatically handle UI reset
+                }
+                else updateBtnUI(st);
+            });
+        }
+
+        function fetchEarnings() {
+            db.ref('deliveryBoys/'+session.mobile).on('value', s => {
+                if(s.exists()) {
+                    const d = s.val();
+                    document.getElementById('earnings').innerText = d.earnings || 0;
+                    document.getElementById('trips').innerText = d.trips || 0;
+                }
+            });
+        }
+
+        // Utils
+        function changePin() { toggleMenu(); const p = prompt("New PIN:"); if(p && p.length===4) db.ref('deliveryBoys/'+session.mobile).update({pin:p}).then(()=>showToast("PIN Changed")); }
+        function updateVehicle() { toggleMenu(); const v = prompt("Vehicle (Bike/Cycle):"); if(v) { db.ref('deliveryBoys/'+session.mobile).update({vehicle:v}); session.vehicle=v; localStorage.setItem('rmz_delivery_user',JSON.stringify(session)); document.getElementById('vehicleType').innerText=v; }}
+        function logout() { localStorage.removeItem('rmz_delivery_user'); window.location.href='delivery-login.html'; }
+        function openMap(type) { window.open(`https://maps.google.com/?q=${activeOrder.location.lat},${activeOrder.location.lng}`, '_blank'); }
+        function callCust() { window.open(`tel:${activeOrder.user.mobile}`); }
+    </script>
+</body>
+</html>
