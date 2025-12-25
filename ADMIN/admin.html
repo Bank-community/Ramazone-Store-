@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin HQ - Ramazone</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
+        .nav-item.active { background-color: #3b82f6; color: white; font-weight: bold; }
+        .status-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; }
+        .st-placed { background: #fef3c7; color: #d97706; }
+        .st-accepted { background: #dbeafe; color: #2563eb; }
+        .st-delivered { background: #dcfce7; color: #16a34a; }
+        .prod-list::-webkit-scrollbar { width: 4px; }
+        .prod-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        
+        /* Modal Styles */
+        .modal-overlay { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
+        .partner-select-card:hover { border-color: #3b82f6; background-color: #1e293b; }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- HEADER -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center shadow-md z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-shield-halved text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Admin HQ</h1>
+                <p class="text-xs text-slate-400 font-mono">Control Center</p>
+            </div>
+        </div>
+        <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-power-off"></i></button>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex">
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="switchTab('orders')" id="nav-orders" class="nav-item active w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
+                    <i class="fa-solid fa-box-open w-5"></i> Live Orders
+                </button>
+                <button onclick="switchTab('partners')" id="nav-partners" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
+                    <i class="fa-solid fa-motorcycle w-5"></i> Delivery Force
+                </button>
+                <button onclick="switchTab('marketing')" id="nav-marketing" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
+                    <i class="fa-solid fa-bullhorn w-5"></i> Banner & Ads
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <div class="bg-slate-800 rounded-lg p-3">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Revenue</p>
+                    <p class="text-xl font-bold text-green-400">₹<span id="totalRev">0</span></p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="flex-1 overflow-y-auto bg-slate-950 p-6 relative">
+            
+            <!-- MOBILE TABS -->
+            <div class="md:hidden flex bg-slate-900 p-1 rounded-lg mb-6 sticky top-0 z-10 shadow-lg">
+                <button onclick="switchTab('orders')" class="flex-1 py-2 text-xs font-bold rounded text-center transition bg-blue-600 text-white" id="mob-orders">Orders</button>
+                <button onclick="switchTab('partners')" class="flex-1 py-2 text-xs font-bold rounded text-center text-slate-400" id="mob-partners">Partners</button>
+                <button onclick="switchTab('marketing')" class="flex-1 py-2 text-xs font-bold rounded text-center text-slate-400" id="mob-marketing">Ads</button>
+            </div>
+
+            <!-- TAB: ORDERS -->
+            <div id="tab-orders" class="space-y-6">
+                <div class="flex justify-between items-end">
+                    <h2 class="text-2xl font-bold text-white">Live Activity</h2>
+                    <span class="text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-300 border border-slate-700">Auto-refreshing</span>
+                </div>
+                
+                <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- TAB: PARTNERS -->
+            <div id="tab-partners" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold text-white">Delivery Fleet</h2>
+                <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+                    <table class="w-full text-left text-sm text-slate-400">
+                        <thead class="bg-slate-950 text-xs uppercase font-bold text-slate-500">
+                            <tr><th class="p-4">Name</th><th class="p-4">Status</th><th class="p-4">Vehicle</th><th class="p-4">Earnings</th><th class="p-4">Action</th></tr>
+                        </thead>
+                        <tbody id="partnersTable" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: MARKETING -->
+            <div id="tab-marketing" class="hidden space-y-6 max-w-xl mx-auto">
+                <h2 class="text-2xl font-bold text-white text-center">App Banner Control</h2>
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Banner Text</label>
+                    <input type="text" id="bannerText" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none mb-4" placeholder="e.g. 50% Off on Rice">
+                    <button onclick="updateBanner()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition">PUBLISH UPDATE</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ASSIGN PARTNER MODAL -->
+    <div id="assignModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+                <h3 class="font-bold text-white">Assign Delivery Partner</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer">
+                <!-- Partner List Injected Here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+            authDomain: "tipsplit-e3wes.firebaseapp.com",
+            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tipsplit-e3wes",
+            storageBucket: "tipsplit-e3wes.firebasestorage.app",
+            messagingSenderId: "984733883633",
+            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let processedOrders = new Set();
+        let selectedOrderIdForAssignment = null;
+
+        function logout() { if(confirm("Exit?")) window.location.href = 'index.html'; }
+        function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
+        function switchTab(id) { ['orders','partners','marketing'].forEach(t=>{document.getElementById('tab-'+t).classList.add('hidden'); document.getElementById('nav-'+t)?.classList.remove('active'); document.getElementById('mob-'+t)?.classList.replace('bg-blue-600','text-slate-400'); document.getElementById('mob-'+t)?.classList.remove('text-white'); }); document.getElementById('tab-'+id).classList.remove('hidden'); document.getElementById('nav-'+id)?.classList.add('active'); const m=document.getElementById('mob-'+id); if(m){m.classList.add('bg-blue-600','text-white'); m.classList.remove('text-slate-400');} }
+
+        // --- ORDER MONITORING & COMPLETION ALERTS ---
+        db.ref('orders').on('value', snap => {
+            const grid = document.getElementById('ordersGrid');
+            grid.innerHTML = '';
+            let total = 0;
+
+            if(snap.exists()) {
+                const data = snap.val();
+                Object.entries(data).reverse().forEach(([id, order]) => {
+                    // Alert for completion
+                    if(order.status === 'delivered' && !processedOrders.has(id)) {
+                        processedOrders.add(id);
+                        const boyName = order.deliveryBoyName || "Partner";
+                        alert(`💰 PAYMENT ALERT!\n\nOrder #${order.orderId} Completed by ${boyName}.\n\nPlease pay him ₹20 immediately.`);
+                    }
+
+                    if(order.status === 'delivered') total += parseInt(order.payment.deliveryFee || 0);
+
+                    // Build Product List
+                    let productsHTML = '';
+                    if(order.cart && order.cart.length > 0) {
+                        productsHTML = order.cart.map(i => `
+                            <div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0">
+                                <span class="text-slate-300">${i.count}x ${i.name}</span>
+                                <span class="text-slate-500">${i.qty}</span>
+                            </div>
+                        `).join('');
+                    }
+
+                    // Status Logic
+                    let stClass = 'st-placed';
+                    let statusDisplay = order.status;
+                    let partnerInfo = '';
+
+                    if(order.status === 'accepted') { 
+                        stClass = 'st-accepted'; 
+                        partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName}</div>`;
+                    }
+                    if(order.status === 'out_for_delivery') {
+                         stClass = 'st-accepted'; // Use same blue for active delivery
+                         partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName}</div>`;
+                    }
+                    if(order.status === 'delivered') stClass = 'st-delivered';
+
+                    // ACTION BUTTONS
+                    let adminAction = '';
+                    if(order.status === 'placed') {
+                        adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">ASSIGN PARTNER <i class="fa-solid fa-user-plus ml-1"></i></button>`;
+                    } else if (order.status === 'accepted') {
+                        adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN</button>`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition group relative overflow-hidden";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-white text-base">${order.user.name}</h3>
+                                <p class="text-xs text-blue-400 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${order.user.mobile}</p>
+                            </div>
+                            <span class="status-badge ${stClass}">${statusDisplay}</span>
+                        </div>
+                        
+                        <div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1">
+                            <i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}
+                        </div>
+
+                        <div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">
+                            ${productsHTML}
+                        </div>
+
+                        <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 truncate">
+                            <i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}
+                        </div>
+
+                        ${partnerInfo}
+                        ${adminAction}
+
+                        <div class="mt-auto pt-3 border-t border-slate-800 flex justify-between items-center">
+                            <div>
+                                <span class="block text-[10px] text-slate-500 uppercase font-bold">Fee</span>
+                                <span class="font-bold text-white text-lg">₹${order.payment.deliveryFee}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <a href="https://maps.google.com/?q=${order.location.lat},${order.location.lng}" target="_blank" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Map"><i class="fa-solid fa-map-location-dot text-xs"></i></a>
+                                <a href="tel:${order.user.mobile}" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition" title="Call"><i class="fa-solid fa-phone text-xs"></i></a>
+                                <button onclick="deleteOrder('${id}')" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } else {
+                grid.innerHTML = `<div class="text-slate-500 col-span-full text-center py-10">No Orders</div>`;
+            }
+            document.getElementById('totalRev').innerText = total;
+        });
+
+        // --- ASSIGNMENT LOGIC ---
+        function openAssignModal(orderId) {
+            selectedOrderIdForAssignment = orderId;
+            document.getElementById('assignModal').classList.remove('hidden');
+            loadPartnersForAssignment();
+        }
+
+        function closeModal() {
+            document.getElementById('assignModal').classList.add('hidden');
+            selectedOrderIdForAssignment = null;
+        }
+
+        function loadPartnersForAssignment() {
+            const container = document.getElementById('partnerListContainer');
+            container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">Loading Partners...</p>';
+
+            db.ref('deliveryBoys').once('value', snap => {
+                container.innerHTML = '';
+                if(snap.exists()) {
+                    let hasOnline = false;
+                    Object.entries(snap.val()).forEach(([mobile, boy]) => {
+                        // Only show ONLINE partners
+                        if(boy.status === 'online') {
+                            hasOnline = true;
+                            const div = document.createElement('div');
+                            div.className = "partner-select-card bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center cursor-pointer transition";
+                            div.onclick = () => assignToPartner(mobile, boy.name);
+                            div.innerHTML = `
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold border border-slate-600">
+                                        ${boy.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white text-sm">${boy.name}</h4>
+                                        <p class="text-[10px] text-slate-400 capitalize">${boy.vehicle} • ${mobile}</p>
+                                    </div>
+                                </div>
+                                <button class="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full hover:bg-indigo-500">ASSIGN</button>
+                            `;
+                            container.appendChild(div);
+                        }
+                    });
+
+                    if(!hasOnline) {
+                        container.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fa-solid fa-bed text-2xl text-slate-600 mb-2"></i>
+                                <p class="text-slate-400 text-xs">No partners are Online right now.</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    container.innerHTML = `<p class="text-slate-500 text-xs text-center">No Partners Registered.</p>`;
+                }
+            });
+        }
+
+        function assignToPartner(mobile, name) {
+            if(!selectedOrderIdForAssignment) return;
+            if(!confirm(`Assign order to ${name}?`)) return;
+
+            db.ref('orders/' + selectedOrderIdForAssignment).update({
+                status: 'accepted',
+                deliveryBoyId: mobile,
+                deliveryBoyName: name,
+                deliveryBoyMobile: mobile, // Important for WhatsApp link
+                assignedAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                showToast(`Assigned to ${name}`);
+                closeModal();
+            }).catch(e => showToast("Error: " + e.message));
+        }
+
+        function deleteOrder(id) { if(confirm("Delete Permanently?")) db.ref('orders/'+id).remove(); }
+        
+        // PARTNER TABLE
+        db.ref('deliveryBoys').on('value', snap => {
+            const tbody = document.getElementById('partnersTable'); tbody.innerHTML = '';
+            if(snap.exists()) {
+                Object.entries(snap.val()).forEach(([mobile, boy]) => {
+                    const row = document.createElement('tr');
+                    const isOnline = boy.status === 'online';
+                    row.innerHTML = `
+                        <td class="p-4"><div class="font-bold text-white">${boy.name}</div><div class="text-[10px] text-slate-500">${mobile}</div></td>
+                        <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold ${isOnline?'bg-green-900/30 text-green-400':'bg-slate-800 text-slate-500'}">${boy.status ? boy.status.toUpperCase() : 'OFFLINE'}</span></td>
+                        <td class="p-4 text-xs capitalize">${boy.vehicle}</td>
+                        <td class="p-4 text-sm font-bold text-green-400">₹${boy.earnings || 0}</td>
+                        <td class="p-4 text-xs font-mono text-slate-500">
+                             ${isOnline && boy.location ? `<a href="https://maps.google.com/?q=${boy.location.lat},${boy.location.lng}" target="_blank" class="text-blue-400 hover:underline">Track</a>` : 'N/A'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        });
+
+        function updateBanner() { const t=document.getElementById('bannerText').value; db.ref('admin/banner').set({text:t,updatedAt:firebase.database.ServerValue.TIMESTAMP}).then(()=>showToast("Banner Updated")); }
+        db.ref('admin/banner').once('value', s => { if(s.exists()) document.getElementById('bannerText').value = s.val().text; });
+    </script>
+</body>
+</html>
