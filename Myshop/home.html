@@ -31,7 +31,7 @@
         }
         .btn-square-add:active { transform: translateY(4px); box-shadow: 0 0 0 #0f172a; }
 
-        /* Floating Cart Enhancement */
+        /* Floating Cart */
         .cart-float {
             background: linear-gradient(135deg, #2563eb, #1d4ed8);
             box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
@@ -42,6 +42,18 @@
             width: 22px; height: 22px;
             accent-color: #ef4444;
             transform: scale(1.1);
+        }
+        
+        /* Modal Transitions */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.2s, transform 0.2s; }
+        
+        /* Invoice Print Style */
+        @media print {
+            body * { visibility: hidden; }
+            #invoiceModal, #invoiceModal * { visibility: visible; }
+            #invoiceModal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: white; z-index: 9999; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -82,6 +94,10 @@
             </label>
         </div>
         <nav class="flex-1 p-4 space-y-1">
+            <button onclick="openHistory()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
+                <i class="fa-solid fa-clock-rotate-left text-blue-500 w-5"></i> Order History
+            </button>
+            <div class="h-px bg-slate-100 my-2"></div>
             <button onclick="changeShopName()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
                 <i class="fa-solid fa-pen-nib text-slate-400 w-5"></i> Change Shop Name
             </button>
@@ -106,6 +122,73 @@
             <div class="flex gap-2">
                 <button onclick="closeAddressModal()" class="flex-1 py-2 text-slate-500 font-bold text-xs bg-slate-100 rounded">CANCEL</button>
                 <button onclick="saveAddress()" class="flex-1 py-2 text-white font-bold text-xs bg-slate-900 rounded">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ORDER HISTORY MODAL -->
+    <div id="historyModal" class="hidden fixed inset-0 z-[70] bg-white flex flex-col">
+        <div class="bg-white border-b border-slate-100 p-4 flex items-center gap-3 sticky top-0 z-10 shadow-sm">
+            <button onclick="closeHistory()" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 class="font-bold text-slate-900">Order History</h2>
+        </div>
+        <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+            <!-- Loaded via JS -->
+        </div>
+    </div>
+
+    <!-- INVOICE MODAL -->
+    <div id="invoiceModal" class="fixed inset-0 bg-white z-[100] hidden p-8 flex flex-col overflow-y-auto">
+        <div class="text-center border-b-2 border-slate-800 pb-6 mb-6">
+            <h1 class="text-3xl font-extrabold text-slate-900 uppercase tracking-widest">INVOICE</h1>
+            <p class="text-slate-500 font-mono text-sm mt-2">Ramazone Delivery Service</p>
+        </div>
+        
+        <div class="flex justify-between mb-8">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase">Billed To</p>
+                <p class="font-bold text-lg text-slate-800" id="invName">Customer Name</p>
+                <p class="text-sm text-slate-600" id="invMobile">+91 XXXXX</p>
+                <p class="text-sm text-slate-600 mt-1 max-w-[200px]" id="invAddr">Address</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-slate-400 uppercase">Order Details</p>
+                <p class="font-bold text-lg text-slate-800" id="invId">#ORD-000</p>
+                <p class="text-sm text-slate-600" id="invDate">Jan 01, 2024</p>
+                <p class="text-sm font-bold text-green-600 mt-1" id="invStatus">DELIVERED</p>
+            </div>
+        </div>
+
+        <table class="w-full mb-8">
+            <thead class="bg-slate-100 border-b border-slate-200">
+                <tr>
+                    <th class="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase">Item Description</th>
+                    <th class="text-right py-3 px-4 text-xs font-bold text-slate-500 uppercase">Qty</th>
+                </tr>
+            </thead>
+            <tbody id="invItems" class="text-sm text-slate-700 divide-y divide-slate-100"></tbody>
+        </table>
+
+        <div class="flex justify-end mb-12">
+            <div class="w-1/2">
+                <div class="flex justify-between py-2 border-b border-slate-100">
+                    <span class="font-bold text-slate-500">Delivery Fee</span>
+                    <span class="font-bold text-slate-800">₹<span id="invFee">0</span></span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-slate-800">
+                    <span class="font-extrabold text-slate-900 text-lg">Total</span>
+                    <span class="font-extrabold text-slate-900 text-lg">₹<span id="invTotal">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto text-center">
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">Thank you for your business</p>
+            <div class="no-print">
+                <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-black">PRINT / SAVE PDF</button>
+                <button onclick="document.getElementById('invoiceModal').classList.add('hidden')" class="ml-2 text-slate-500 font-bold py-3 px-8 hover:text-red-500">CLOSE</button>
             </div>
         </div>
     </div>
@@ -206,18 +289,26 @@
         const session = JSON.parse(localStorage.getItem('rmz_user'));
         if (!session || !session.isLoggedIn) window.location.href = 'index.html';
         const userMobile = session.mobile;
+        const CACHE_KEY = `rmz_products_${userMobile}`;
 
         let editMode = false;
         let deleteMode = false;
         let editItemId = null;
         let itemsToDelete = new Set();
         let allProducts = [];
+        let historyData = {};
 
         window.onload = () => {
             loadShopData();
             loadBanner();
             loadProfile();
             updateCartBadge();
+            
+            // 1. FAST LOAD FROM LOCAL STORAGE
+            loadLocalProducts();
+            
+            // 2. START FIREBASE SYNC (Updates Cache Automatically)
+            syncProducts();
         };
 
         function showToast(msg) {
@@ -228,8 +319,36 @@
             setTimeout(() => { t.classList.add('opacity-0', 'pointer-events-none'); t.style.transform = "translate(-50%, -10px)"; }, 2000);
         }
 
+        // --- LOCAL STORAGE & SYNC SYSTEM ---
+        function loadLocalProducts() {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if(cached) {
+                try {
+                    allProducts = JSON.parse(cached);
+                    renderList();
+                    console.log("⚡ Instant Load from Cache");
+                } catch(e) { console.error("Cache Error", e); }
+            }
+        }
+
+        function syncProducts() {
+            db.ref('products/' + userMobile).on('value', snapshot => {
+                if(snapshot.exists()) {
+                    allProducts = Object.entries(snapshot.val()).reverse();
+                    // Update Local Storage
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(allProducts));
+                    document.getElementById('itemCount').innerText = allProducts.length;
+                    renderList();
+                    console.log("🔄 Synced with Cloud");
+                } else {
+                    allProducts = [];
+                    localStorage.removeItem(CACHE_KEY);
+                    renderList();
+                }
+            });
+        }
+
         function loadShopData() {
-            // Priority: LocalStorage Name -> Firebase Name
             if(session.shopName) document.getElementById('headerShopName').innerText = session.shopName;
             
             db.ref('users/' + userMobile).on('value', s => {
@@ -238,7 +357,6 @@
                     const shop = d.shopName || d.name + "'s Store";
                     document.getElementById('headerShopName').innerText = shop;
                     document.getElementById('menuName').innerText = d.name;
-                    // Update Local Session
                     session.shopName = shop;
                     session.name = d.name;
                     localStorage.setItem('rmz_user', JSON.stringify(session));
@@ -254,7 +372,7 @@
 
         // --- GLOBAL MODES ---
         function toggleEditMode() {
-            if(deleteMode) toggleDeleteMode(); // Turn off delete
+            if(deleteMode) toggleDeleteMode(); 
             editMode = !editMode;
             const btn = document.getElementById('globalEditBtn');
             
@@ -269,7 +387,7 @@
         }
 
         function toggleDeleteMode() {
-            if(editMode) toggleEditMode(); // Turn off edit
+            if(editMode) toggleEditMode();
             deleteMode = !deleteMode;
             const btn = document.getElementById('globalDeleteBtn');
             const bar = document.getElementById('bulkDeleteBar');
@@ -287,17 +405,6 @@
         }
 
         // --- RENDER ---
-        db.ref('products/' + userMobile).on('value', snapshot => {
-            allProducts = [];
-            if(snapshot.exists()) {
-                allProducts = Object.entries(snapshot.val()).reverse();
-                document.getElementById('itemCount').innerText = allProducts.length;
-            } else {
-                document.getElementById('itemCount').innerText = "0";
-            }
-            renderList();
-        });
-
         function renderList() {
             const list = document.getElementById('productList');
             list.innerHTML = '';
@@ -336,7 +443,6 @@
                     li.onclick = () => loadForEdit(id, item.name, item.qty);
                     li.classList.add('cursor-pointer');
                 } else {
-                    // Default Mode: Add to Cart
                     rightAction = `<button onclick="addToCartLocal('${item.name}', '${item.qty}')" class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-900 hover:text-white transition active:scale-90"><i class="fa-solid fa-plus text-xs"></i></button>`;
                 }
 
@@ -389,47 +495,73 @@
             btn.classList.remove('bg-indigo-600', 'rounded');
         }
 
-        // --- DELETE ---
-        function toggleCheck(id) {
-            if(itemsToDelete.has(id)) itemsToDelete.delete(id);
-            else itemsToDelete.add(id);
-            renderList();
-        }
+        // --- HISTORY & INVOICE ---
+        function openHistory() {
+            toggleMenu();
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+            document.getElementById('historyModal').classList.remove('hidden');
 
-        function deleteSelectedItems() {
-            if(itemsToDelete.size === 0) return showToast("No items selected");
-            if(confirm(`Delete ${itemsToDelete.size} items?`)) {
-                itemsToDelete.forEach(id => db.ref(`products/${userMobile}/${id}`).remove());
-                toggleDeleteMode();
-                showToast("Deleted");
+            db.ref('orders').orderByChild('user/mobile').equalTo(userMobile).once('value', s => {
+                list.innerHTML = '';
+                if(s.exists()) {
+                    const all = Object.values(s.val()).reverse().filter(o => o.status === 'delivered');
+                    if(all.length === 0) { list.innerHTML = '<div class="text-center p-8 text-slate-400">No delivered orders yet</div>'; return; }
+                    
+                    all.forEach(o => {
+                        historyData[o.orderId] = o; // Store for invoice
+                        const div = document.createElement('div');
+                        div.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm";
+                        div.innerHTML = `
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-bold text-slate-800">Order #${o.orderId.slice(-6)}</h3>
+                                    <p class="text-xs text-slate-500">${new Date(o.timestamp).toLocaleDateString()}</p>
+                                </div>
+                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded">DELIVERED</span>
+                            </div>
+                            <div class="text-xs text-slate-500 mb-3">
+                                <p>Items: ${o.cart ? o.cart.length : 0}</p>
+                                <p>Fee: ₹${o.payment.deliveryFee}</p>
+                            </div>
+                            <button onclick="openInvoice('${o.orderId}')" class="w-full bg-slate-900 text-white text-xs font-bold py-2.5 rounded-lg">DOWNLOAD INVOICE</button>
+                        `;
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.innerHTML = '<div class="text-center p-8 text-slate-400">No history found</div>';
+                }
+            });
+        }
+        function closeHistory() { document.getElementById('historyModal').classList.add('hidden'); }
+
+        function openInvoice(oid) {
+            const o = historyData[oid];
+            if(!o) return;
+            document.getElementById('invName').innerText = o.user.name;
+            document.getElementById('invMobile').innerText = o.user.mobile;
+            document.getElementById('invAddr').innerText = o.location.address;
+            document.getElementById('invId').innerText = "#" + o.orderId.slice(-6);
+            document.getElementById('invDate').innerText = new Date(o.timestamp).toLocaleDateString();
+            document.getElementById('invFee').innerText = o.payment.deliveryFee;
+            document.getElementById('invTotal').innerText = o.payment.deliveryFee;
+            
+            const tbody = document.getElementById('invItems');
+            tbody.innerHTML = '';
+            if(o.cart) {
+                o.cart.forEach(i => {
+                    tbody.innerHTML += `<tr><td class="py-2 px-4 border-b border-slate-50"><p class="font-bold text-slate-800">${i.name}</p><p class="text-[10px] text-slate-400">${i.qty}</p></td><td class="py-2 px-4 border-b border-slate-50 text-right font-bold text-slate-700">x${i.count}</td></tr>`;
+                });
             }
-        }
-
-        // --- CART ---
-        function addToCartLocal(name, qty) {
-            let cart = JSON.parse(localStorage.getItem('rmz_cart')) || [];
-            const exists = cart.find(i => i.name === name && i.qty === qty);
-            if(exists) exists.count = (exists.count || 1) + 1;
-            else cart.push({ name, qty, count: 1 });
-            localStorage.setItem('rmz_cart', JSON.stringify(cart));
-            updateCartBadge();
-            showToast("Added to Bill");
-        }
-
-        function updateCartBadge() {
-            const c = JSON.parse(localStorage.getItem('rmz_cart')) || [];
-            const b = document.getElementById('floatCartBadge');
-            const h = document.getElementById('headerBadge');
-            if(c.length > 0) { b.innerText = c.length; b.classList.remove('hidden'); h.classList.remove('hidden'); }
-            else { b.classList.add('hidden'); h.classList.add('hidden'); }
+            document.getElementById('invoiceModal').classList.remove('hidden');
         }
 
         // --- EXTRAS ---
-        function changeShopName() {
-            toggleMenu();
-            const n = prompt("Enter New Shop Name:");
-            if(n) db.ref('users/'+userMobile).update({shopName: n}).then(()=>showToast("Shop Name Updated"));
-        }
+        function toggleCheck(id) { if(itemsToDelete.has(id)) itemsToDelete.delete(id); else itemsToDelete.add(id); renderList(); }
+        function deleteSelectedItems() { if(itemsToDelete.size === 0) return showToast("No items selected"); if(confirm(`Delete ${itemsToDelete.size} items?`)) { itemsToDelete.forEach(id => db.ref(`products/${userMobile}/${id}`).remove()); toggleDeleteMode(); showToast("Deleted"); } }
+        function addToCartLocal(name, qty) { let cart = JSON.parse(localStorage.getItem('rmz_cart')) || []; const exists = cart.find(i => i.name === name && i.qty === qty); if(exists) exists.count = (exists.count || 1) + 1; else cart.push({ name, qty, count: 1 }); localStorage.setItem('rmz_cart', JSON.stringify(cart)); updateCartBadge(); showToast("Added to Bill"); }
+        function updateCartBadge() { const c = JSON.parse(localStorage.getItem('rmz_cart')) || []; const b = document.getElementById('floatCartBadge'); const h = document.getElementById('headerBadge'); if(c.length > 0) { b.innerText = c.length; b.classList.remove('hidden'); h.classList.remove('hidden'); } else { b.classList.add('hidden'); h.classList.add('hidden'); } }
+        function changeShopName() { toggleMenu(); const n = prompt("Enter New Shop Name:"); if(n) db.ref('users/'+userMobile).update({shopName: n}).then(()=>showToast("Shop Name Updated")); }
         function loadBanner() { db.ref('admin/banner').on('value', s => { const c = document.getElementById('bannerContainer'); if(s.exists()) c.innerHTML = `<div class="bg-indigo-600 text-white p-3 rounded-lg shadow-sm text-center text-sm font-bold">${s.val().text}</div>`; else c.innerHTML = ''; }); }
         function loadProfile() { db.ref('users/'+userMobile+'/logo').once('value', s => { if(s.exists()) document.getElementById('profileImg').src = s.val(); }); }
         function uploadCompressedLogo() { const f = document.getElementById('logoInput').files[0]; if(f) { const r = new FileReader(); r.readAsDataURL(f); r.onload = e => { const i = new Image(); i.src = e.target.result; i.onload = () => { const c = document.createElement('canvas'); const x = c.getContext('2d'); const w = 300; const sc = w/i.width; c.width=w; c.height=i.height*sc; x.drawImage(i,0,0,c.width,c.height); const d = c.toDataURL('image/jpeg', 0.7); document.getElementById('profileImg').src=d; db.ref('users/'+userMobile).update({logo:d}).then(()=>showToast("Logo Updated")); }}}}
@@ -441,3 +573,4 @@
     </script>
 </body>
 </html>
+
