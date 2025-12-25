@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ramazone - My Workshop</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .input-group:focus-within { transform: translateY(-2px); transition: all 0.3s; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #1e293b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] transition-all duration-300 opacity-0 pointer-events-none text-xs font-semibold flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-yellow-400"></i><span id="toastMsg">Notification</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-grow flex flex-col justify-center items-center p-6">
+        <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-100 p-8 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-pink-500"></div>
+
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-slate-900 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg rotate-3">
+                    <i class="fa-solid fa-store text-2xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-900">My Workshop</h1>
+                <p class="text-slate-400 text-xs font-medium mt-1">Ramazone Seller Panel</p>
+            </div>
+
+            <form id="authForm" class="space-y-5">
+                <div class="input-group">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mobile Number</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 text-slate-400 font-bold text-sm">+91</span>
+                        <input type="tel" id="mobile" required pattern="[0-9]{10}" maxlength="10" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-800 tracking-widest" placeholder="XXXXXXXXXX" oninput="checkUserExists()">
+                    </div>
+                </div>
+
+                <div id="nameField" class="input-group hidden">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Owner Name</label>
+                    <input type="text" id="ownerName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-semibold" placeholder="Ex: Rahul Sharma">
+                </div>
+
+                <div class="input-group">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Store PIN</label>
+                    <input type="password" id="pin" required maxlength="4" pattern="[0-9]*" inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-800 tracking-[0.5em] text-center text-lg" placeholder="••••">
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex items-center justify-center gap-2">
+                    <span id="btnText">OPEN SHUTTER</span>
+                    <div class="loader" id="btnLoader"></div>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center border-t border-slate-100 pt-4">
+                <button onclick="handleForgotPin()" class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-2 rounded-lg w-full">
+                    <i class="fa-brands fa-whatsapp mr-1"></i> Forgot PIN?
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+            authDomain: "tipsplit-e3wes.firebaseapp.com",
+            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tipsplit-e3wes",
+            storageBucket: "tipsplit-e3wes.firebasestorage.app",
+            messagingSenderId: "984733883633",
+            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // --- AUTH CHECK ---
+        const existingUser = localStorage.getItem('rmz_user');
+        if (existingUser) {
+            // Agar user pehle se login hai, direct bhej do
+            window.location.href = 'home.html';
+        }
+
+        // --- LOGIC ---
+        const form = document.getElementById('authForm');
+        const mobileInput = document.getElementById('mobile');
+        const nameField = document.getElementById('nameField');
+        const ownerNameInput = document.getElementById('ownerName');
+        const btnText = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+        let typingTimer;
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            t.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 3000);
+        }
+
+        function checkUserExists() {
+            clearTimeout(typingTimer);
+            const mobile = mobileInput.value;
+            if (mobile.length === 10) {
+                typingTimer = setTimeout(() => {
+                    db.ref('users/' + mobile).once('value').then((snapshot) => {
+                        if (snapshot.exists()) {
+                            nameField.classList.add('hidden');
+                            ownerNameInput.required = false;
+                            btnText.innerText = "OPEN WORKSHOP";
+                        } else {
+                            nameField.classList.remove('hidden');
+                            ownerNameInput.required = true;
+                            btnText.innerText = "CREATE WORKSHOP";
+                        }
+                    });
+                }, 500);
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mobile = mobileInput.value;
+            const pin = document.getElementById('pin').value;
+            const name = ownerNameInput.value;
+
+            if(mobile.length !== 10) return showToast("Invalid Mobile");
+            if(pin.length !== 4) return showToast("PIN must be 4 digits");
+
+            btnLoader.style.display = 'block';
+            btnText.style.display = 'none';
+
+            try {
+                const userRef = db.ref('users/' + mobile);
+                const snapshot = await userRef.once('value');
+
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    if (userData.pin === pin) {
+                        saveAndRedirect(userData, mobile);
+                    } else {
+                        showToast("Wrong PIN");
+                        resetBtn();
+                    }
+                } else {
+                    if (!name.trim()) { showToast("Name Required"); resetBtn(); return; }
+                    const newUser = { name: name, pin: pin, mobile: mobile, joinedAt: new Date().toISOString() };
+                    await userRef.set(newUser);
+                    saveAndRedirect(newUser, mobile);
+                }
+            } catch (error) {
+                showToast("Error: " + error.message);
+                resetBtn();
+            }
+        });
+
+        function saveAndRedirect(user, mobile) {
+            const sessionData = { mobile: mobile, name: user.name, isLoggedIn: true };
+            localStorage.setItem('rmz_user', JSON.stringify(sessionData));
+            showToast("Success! Opening...");
+            
+            // REDIRECT FIX:
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 500);
+        }
+
+        function resetBtn() {
+            btnLoader.style.display = 'none';
+            btnText.style.display = 'block';
+        }
+
+        window.handleForgotPin = function() {
+            const m = mobileInput.value;
+            window.open(`https://wa.me/917903698180?text=Forgot PIN for ${m}`, '_blank');
+        }
+    </script>
+</body>
+</html>
