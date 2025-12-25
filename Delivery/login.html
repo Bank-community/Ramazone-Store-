@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Delivery Partner - Ramazone</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #111827; color: white; }
+        .input-dark { background-color: #1f2937; border: 1px solid #374151; color: white; transition: all 0.3s; }
+        .input-dark:focus { border-color: #f59e0b; outline: none; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
+        .btn-partner { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+        .btn-partner:active { transform: scale(0.98); }
+        .vehicle-option { border: 1px solid #374151; background: #1f2937; color: #9ca3af; }
+        .vehicle-option.selected { background: #f59e0b; color: #fff; border-color: #f59e0b; font-weight: bold; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-center p-6">
+
+    <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-600 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-2xl transform rotate-3">
+            <i class="fa-solid fa-motorcycle text-3xl text-white"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight">Ramazone <span class="text-amber-500">Fleet</span></h1>
+        <p class="text-slate-400 text-sm mt-1">Delivery Partner App</p>
+    </div>
+
+    <div class="w-full max-w-sm mx-auto bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl">
+        <form id="loginForm" class="space-y-5">
+            
+            <!-- Mobile -->
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Mobile Number</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-3.5 text-gray-400 font-bold text-sm">+91</span>
+                    <input type="tel" id="mobile" required maxlength="10" pattern="[0-9]{10}" class="input-dark w-full rounded-xl pl-12 pr-4 py-3.5 font-bold tracking-widest text-lg" placeholder="XXXXXXXXXX" oninput="checkUser()">
+                </div>
+            </div>
+
+            <!-- PIN Field (Always Visible but Hidden Logic handled via JS) -->
+            <div id="pinSection" class="hidden">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Security PIN</label>
+                <input type="password" id="pin" required maxlength="4" pattern="[0-9]*" inputmode="numeric" class="input-dark w-full rounded-xl px-4 py-3.5 font-bold text-center tracking-[0.5em] text-lg" placeholder="••••">
+            </div>
+
+            <!-- Registration Fields -->
+            <div id="newFields" class="space-y-5 hidden opacity-0 transition-opacity duration-500">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Full Name</label>
+                    <input type="text" id="fullName" class="input-dark w-full rounded-xl px-4 py-3.5 font-semibold" placeholder="Enter your name">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Vehicle Type</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="selectVehicle('bike')" id="veh-bike" class="vehicle-option py-3 rounded-lg flex flex-col items-center gap-1 transition"><i class="fa-solid fa-motorcycle"></i> <span class="text-[10px]">Bike</span></button>
+                        <button type="button" onclick="selectVehicle('scooter')" id="veh-scooter" class="vehicle-option py-3 rounded-lg flex flex-col items-center gap-1 transition"><i class="fa-solid fa-moped"></i> <span class="text-[10px]">Scooter</span></button>
+                        <button type="button" onclick="selectVehicle('cycle')" id="veh-cycle" class="vehicle-option py-3 rounded-lg flex flex-col items-center gap-1 transition"><i class="fa-solid fa-bicycle"></i> <span class="text-[10px]">Cycle</span></button>
+                    </div>
+                    <input type="hidden" id="selectedVehicle" value="">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-partner w-full text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center gap-2 mt-4 hidden">
+                <span id="btnText">LOGIN</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+        </form>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold flex gap-2 items-center">
+        <i class="fa-solid fa-bell text-amber-500"></i><span id="toastMsg">Alert</span>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
+            authDomain: "tipsplit-e3wes.firebaseapp.com",
+            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tipsplit-e3wes",
+            storageBucket: "tipsplit-e3wes.firebasestorage.app",
+            messagingSenderId: "984733883633",
+            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        if(localStorage.getItem('rmz_delivery_user')) window.location.href = 'delivery-home.html';
+
+        let typingTimer;
+        let isNewUser = false;
+
+        function showToast(msg) {
+            const t = document.getElementById('toast'); document.getElementById('toastMsg').innerText = msg;
+            t.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2500);
+        }
+
+        function checkUser() {
+            clearTimeout(typingTimer);
+            const mobile = document.getElementById('mobile').value;
+            const pinSec = document.getElementById('pinSection');
+            const newFields = document.getElementById('newFields');
+            const btn = document.getElementById('submitBtn');
+
+            if (mobile.length === 10) {
+                typingTimer = setTimeout(() => {
+                    db.ref('deliveryBoys/' + mobile).once('value', s => {
+                        pinSec.classList.remove('hidden');
+                        btn.classList.remove('hidden');
+                        
+                        if (s.exists()) {
+                            // EXISTING USER
+                            isNewUser = false;
+                            newFields.classList.add('hidden', 'opacity-0');
+                            document.getElementById('btnText').innerText = "LOGIN SECURELY";
+                        } else {
+                            // NEW USER
+                            isNewUser = true;
+                            newFields.classList.remove('hidden');
+                            setTimeout(() => newFields.classList.remove('opacity-0'), 50);
+                            document.getElementById('btnText').innerText = "SET PIN & REGISTER";
+                            showToast("New Partner? Set up profile.");
+                        }
+                    });
+                }, 500);
+            } else {
+                pinSec.classList.add('hidden');
+                newFields.classList.add('hidden', 'opacity-0');
+                btn.classList.add('hidden');
+            }
+        }
+
+        function selectVehicle(type) {
+            document.querySelectorAll('.vehicle-option').forEach(b => b.classList.remove('selected'));
+            document.getElementById('veh-' + type).classList.add('selected');
+            document.getElementById('selectedVehicle').value = type;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mobile = document.getElementById('mobile').value;
+            const pin = document.getElementById('pin').value;
+            
+            if (pin.length !== 4) return showToast("PIN must be 4 digits");
+
+            if (isNewUser) {
+                const name = document.getElementById('fullName').value;
+                const vehicle = document.getElementById('selectedVehicle').value;
+                if (!name || !vehicle) return showToast("Fill all details");
+                
+                const profile = { name, mobile, vehicle, pin, status: 'offline', joinedAt: firebase.database.ServerValue.TIMESTAMP };
+                await db.ref('deliveryBoys/' + mobile).set(profile);
+                saveAndRedirect(profile);
+            } else {
+                db.ref('deliveryBoys/' + mobile).once('value', s => {
+                    const data = s.val();
+                    if(data.pin === pin) saveAndRedirect(data);
+                    else showToast("Wrong PIN!");
+                });
+            }
+        });
+
+        function saveAndRedirect(user) {
+            localStorage.setItem('rmz_delivery_user', JSON.stringify(user));
+            showToast("Success! Entering Hub...");
+            setTimeout(() => window.location.href = 'delivery-home.html', 1000);
+        }
+    </script>
+</body>
+</html>
