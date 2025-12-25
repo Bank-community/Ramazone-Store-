@@ -179,7 +179,7 @@
         if (!session) window.location.href = 'delivery-login.html';
 
         let isOnline = false, activeOrder = null, watchId;
-        const PARTNER_PAY = 20; // Fixed pay per order
+        const PARTNER_PAY = 20;
 
         window.onload = () => {
             document.getElementById('headerName').innerText = session.name;
@@ -187,14 +187,12 @@
             document.getElementById('menuName').innerText = session.name;
             document.getElementById('menuMobile').innerText = '+91 ' + session.mobile;
             
-            // Persistent Online Check
             const savedDuty = localStorage.getItem('rmz_duty_on') === 'true';
             if(savedDuty) {
                 document.getElementById('dutySwitch').checked = true;
                 toggleDuty();
             }
             fetchEarnings(); 
-            // ACTIVE CHECKER: This will catch both manually accepted and ADMIN assigned orders
             checkForActive();
         };
 
@@ -241,7 +239,6 @@
         }
         function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
 
-        // --- ORDER LISTENER ---
         function listenOrders() {
             const list = document.getElementById('ordersList');
             
@@ -253,30 +250,34 @@
                 
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([id, o]) => {
-                        // Only show available orders. If assigned to me, checkForActive() handles it.
+                        // CRITICAL FIX: Safe access for o.user to prevent crashes if bad data exists
+                        const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
+                        const address = o.location && o.location.address ? o.location.address : "Address Hidden";
+                        const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
+                        const slab = o.payment && o.payment.slab ? o.payment.slab : 'Standard';
+
+                        // Show orders that are 'placed'
                         if(o.status === 'placed') {
                             count++;
                             
                             let prodTxt = o.cart ? o.cart.map(i => `${i.count}x ${i.name}`).join(', ') : 'Items';
-                            const deliveryFee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : '0';
-
+                            
                             const div = document.createElement('div');
                             div.className = "glass-card p-4 rounded-xl pulse-border";
                             
-                            // Visual hint if user is busy
                             const btnDisabled = activeOrder ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
                             const btnText = activeOrder ? 'Finish Current Task First' : 'ACCEPT ORDER';
                             const bgClass = activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500';
                             
                             div.innerHTML = `
                                 <div class="flex justify-between items-start mb-2">
-                                    <h4 class="font-bold text-white text-lg">${o.user.shopName}</h4>
-                                    <span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${deliveryFee}</span>
+                                    <h4 class="font-bold text-white text-lg">${shopName}</h4>
+                                    <span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${fee}</span>
                                 </div>
                                 <div class="text-xs text-gray-400 space-y-1 mb-3">
                                     <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
-                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${o.location.address}</p>
-                                    <p><i class="fa-solid fa-weight-hanging mr-1"></i> ${o.payment.slab || 'Standard'}</p>
+                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
+                                    <p><i class="fa-solid fa-weight-hanging mr-1"></i> ${slab}</p>
                                 </div>
                                 <button onclick="acceptOrder('${id}')" class="w-full ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
                                     ${btnText}
@@ -310,7 +311,7 @@
                     o.status = 'accepted'; 
                     o.deliveryBoyId = session.mobile; 
                     o.deliveryBoyName = session.name; 
-                    o.deliveryBoyMobile = session.mobile; // For WhatsApp
+                    o.deliveryBoyMobile = session.mobile;
                     return o;
                 }
             }, (err, comm, snap) => {
@@ -320,18 +321,15 @@
         }
 
         function checkForActive() {
-            // Updated to listen continuously for any order assigned to me (Admin or Manual)
             db.ref('orders').orderByChild('deliveryBoyId').equalTo(session.mobile).on('value', snap => {
                 if(snap.exists()) {
                     let foundActive = false;
                     const orders = snap.val();
-                    // Loop through my orders to find one that is NOT delivered
                     Object.keys(orders).forEach(key => {
                         const o = orders[key];
                         if(o.status !== 'delivered') {
                             loadActive(key, o);
                             foundActive = true;
-                            // Ensure Online Mode
                             if(!document.getElementById('dutySwitch').checked) {
                                 document.getElementById('dutySwitch').checked = true;
                                 toggleDuty();
@@ -340,7 +338,6 @@
                     });
                     
                     if(!foundActive) {
-                        // If no active orders, clear UI
                         activeOrder = null;
                         document.getElementById('activeOrderPanel').classList.add('hidden');
                         document.getElementById('statsSection').classList.remove('hidden');
@@ -357,24 +354,24 @@
             document.getElementById('statsSection').classList.add('hidden');
             document.getElementById('activeOrderPanel').classList.remove('hidden');
             
-            document.getElementById('actShop').innerText = o.user.shopName;
-            document.getElementById('actCust').innerText = o.user.name;
-            document.getElementById('actAddr').innerText = o.location.address;
-            document.getElementById('actFee').innerText = o.payment.deliveryFee;
+            // Safe Access for Active Order
+            const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
+            const custName = o.user && o.user.name ? o.user.name : "Customer";
+            const address = o.location && o.location.address ? o.location.address : "Unknown Address";
+            const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
+
+            document.getElementById('actShop').innerText = shopName;
+            document.getElementById('actCust').innerText = custName;
+            document.getElementById('actAddr').innerText = address;
+            document.getElementById('actFee').innerText = fee;
 
             const ul = document.getElementById('actItems');
-            ul.innerHTML = o.cart.map(i => `
+            ul.innerHTML = o.cart ? o.cart.map(i => `
                 <li class="flex justify-between border-b border-gray-700 pb-1 last:border-0">
                     <span>${i.name}</span>
                     <span class="text-white font-bold">${i.qty} x${i.count}</span>
                 </li>
-            `).join('');
-            
-            // If assigned by Admin, show notification
-            if(o.status === 'accepted' && !activeOrder.seen) {
-                showToast("New Order Assigned!");
-                // Optionally mark as seen locally or just let it be
-            }
+            `).join('') : '';
             
             updateBtnUI(o.status);
         }
@@ -409,8 +406,6 @@
                         completedAt: firebase.database.ServerValue.TIMESTAMP,
                         partnerPay: PARTNER_PAY
                     });
-                    
-                    // The checkForActive listener will automatically handle UI reset
                 }
                 else updateBtnUI(st);
             });
@@ -430,8 +425,16 @@
         function changePin() { toggleMenu(); const p = prompt("New PIN:"); if(p && p.length===4) db.ref('deliveryBoys/'+session.mobile).update({pin:p}).then(()=>showToast("PIN Changed")); }
         function updateVehicle() { toggleMenu(); const v = prompt("Vehicle (Bike/Cycle):"); if(v) { db.ref('deliveryBoys/'+session.mobile).update({vehicle:v}); session.vehicle=v; localStorage.setItem('rmz_delivery_user',JSON.stringify(session)); document.getElementById('vehicleType').innerText=v; }}
         function logout() { localStorage.removeItem('rmz_delivery_user'); window.location.href='delivery-login.html'; }
-        function openMap(type) { window.open(`https://maps.google.com/?q=${activeOrder.location.lat},${activeOrder.location.lng}`, '_blank'); }
-        function callCust() { window.open(`tel:${activeOrder.user.mobile}`); }
+        function openMap(type) { 
+            if(activeOrder && activeOrder.location)
+                window.open(`https://maps.google.com/?q=${activeOrder.location.lat},${activeOrder.location.lng}`, '_blank'); 
+        }
+        function callCust() { 
+            if(activeOrder && activeOrder.user)
+                window.open(`tel:${activeOrder.user.mobile}`); 
+        }
     </script>
 </body>
 </html>
+
+
