@@ -16,14 +16,15 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
         .nav-item.active { background-color: #3b82f6; color: white; font-weight: bold; }
+        
         .status-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; }
         .st-placed { background: #fef3c7; color: #d97706; }
         .st-accepted { background: #dbeafe; color: #2563eb; }
         .st-delivered { background: #dcfce7; color: #16a34a; }
+        
         .prod-list::-webkit-scrollbar { width: 4px; }
         .prod-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         
-        /* Modal Styles */
         .modal-overlay { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
         .partner-select-card:hover { border-color: #3b82f6; background-color: #1e293b; }
     </style>
@@ -46,17 +47,21 @@
 
     <div class="flex flex-1 overflow-hidden">
         
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR (DESKTOP) -->
         <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex">
             <nav class="flex-1 p-4 space-y-2">
                 <button onclick="switchTab('orders')" id="nav-orders" class="nav-item active w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
-                    <i class="fa-solid fa-box-open w-5"></i> Live Orders
+                    <i class="fa-solid fa-box-open w-5"></i> Live Orders 
+                    <span id="sidebarActiveCount" class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-auto hidden">0</span>
+                </button>
+                <button onclick="switchTab('history')" id="nav-history" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
+                    <i class="fa-solid fa-clock-rotate-left w-5"></i> History
                 </button>
                 <button onclick="switchTab('partners')" id="nav-partners" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
                     <i class="fa-solid fa-motorcycle w-5"></i> Delivery Force
                 </button>
-                <button onclick="switchTab('marketing')" id="nav-marketing" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
-                    <i class="fa-solid fa-bullhorn w-5"></i> Banner & Ads
+                <button onclick="switchTab('alerts')" id="nav-alerts" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
+                    <i class="fa-solid fa-bell w-5"></i> Alerts (Today)
                 </button>
             </nav>
             <div class="p-4 border-t border-slate-800">
@@ -71,42 +76,73 @@
         <main class="flex-1 overflow-y-auto bg-slate-950 p-6 relative">
             
             <!-- MOBILE TABS -->
-            <div class="md:hidden flex bg-slate-900 p-1 rounded-lg mb-6 sticky top-0 z-10 shadow-lg">
-                <button onclick="switchTab('orders')" class="flex-1 py-2 text-xs font-bold rounded text-center transition bg-blue-600 text-white" id="mob-orders">Orders</button>
-                <button onclick="switchTab('partners')" class="flex-1 py-2 text-xs font-bold rounded text-center text-slate-400" id="mob-partners">Partners</button>
-                <button onclick="switchTab('marketing')" class="flex-1 py-2 text-xs font-bold rounded text-center text-slate-400" id="mob-marketing">Ads</button>
+            <div class="md:hidden grid grid-cols-4 gap-1 bg-slate-900 p-1 rounded-lg mb-6 sticky top-0 z-10 shadow-lg">
+                <button onclick="switchTab('orders')" class="py-2 text-[10px] font-bold rounded text-center transition bg-blue-600 text-white" id="mob-orders">
+                    <i class="fa-solid fa-bolt block mb-1"></i> LIVE <span id="mobActiveCount" class="bg-red-500 text-white px-1.5 rounded-full ml-1 text-[9px] hidden">0</span>
+                </button>
+                <button onclick="switchTab('history')" class="py-2 text-[10px] font-bold rounded text-center text-slate-400" id="mob-history">
+                    <i class="fa-solid fa-clock block mb-1"></i> DONE
+                </button>
+                <button onclick="switchTab('partners')" class="py-2 text-[10px] font-bold rounded text-center text-slate-400" id="mob-partners">
+                    <i class="fa-solid fa-users block mb-1"></i> TEAM
+                </button>
+                <button onclick="switchTab('alerts')" class="py-2 text-[10px] font-bold rounded text-center text-slate-400" id="mob-alerts">
+                    <i class="fa-solid fa-bell block mb-1"></i> ALERTS
+                </button>
             </div>
 
-            <!-- TAB: ORDERS -->
+            <!-- TAB: LIVE ORDERS -->
             <div id="tab-orders" class="space-y-6">
                 <div class="flex justify-between items-end">
-                    <h2 class="text-2xl font-bold text-white">Live Activity</h2>
-                    <span class="text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-300 border border-slate-700">Auto-refreshing</span>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-2xl font-bold text-white">Live Activity</h2>
+                        <span id="headerActiveCount" class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full hidden">0 Active</span>
+                    </div>
+                    <span class="text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-300 border border-slate-700">Realtime</span>
                 </div>
-                
                 <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- TAB: HISTORY (DELIVERED) -->
+            <div id="tab-history" class="hidden space-y-6">
+                <div class="flex justify-between items-end">
+                    <h2 class="text-2xl font-bold text-white">Order History</h2>
+                    <span class="text-xs bg-green-900/30 text-green-400 px-3 py-1 rounded-full border border-green-900">Completed Orders</span>
+                </div>
+                <div id="historyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
             <!-- TAB: PARTNERS -->
             <div id="tab-partners" class="hidden space-y-6">
                 <h2 class="text-2xl font-bold text-white">Delivery Fleet</h2>
-                <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+                <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-400">
                         <thead class="bg-slate-950 text-xs uppercase font-bold text-slate-500">
-                            <tr><th class="p-4">Name</th><th class="p-4">Status</th><th class="p-4">Vehicle</th><th class="p-4">Earnings</th><th class="p-4">Action</th></tr>
+                            <tr>
+                                <th class="p-4">Name & Chat</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Vehicle</th>
+                                <th class="p-4">Earnings</th>
+                                <th class="p-4">Action</th>
+                            </tr>
                         </thead>
                         <tbody id="partnersTable" class="divide-y divide-slate-800"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TAB: MARKETING -->
-            <div id="tab-marketing" class="hidden space-y-6 max-w-xl mx-auto">
-                <h2 class="text-2xl font-bold text-white text-center">App Banner Control</h2>
-                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Banner Text</label>
-                    <input type="text" id="bannerText" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none mb-4" placeholder="e.g. 50% Off on Rice">
-                    <button onclick="updateBanner()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition">PUBLISH UPDATE</button>
+            <!-- TAB: NOTIFICATIONS (ALERTS) -->
+            <div id="tab-alerts" class="hidden space-y-6 max-w-2xl mx-auto">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <h2 class="text-2xl font-bold text-white text-center">Today's Alerts</h2>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700" id="todayDateDisplay"></span>
+                </div>
+                
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+                    <div id="notificationList" class="divide-y divide-slate-800">
+                        <!-- Notifications injected here -->
+                    </div>
+                    <div id="noAlertsMsg" class="hidden p-8 text-center text-slate-500 text-sm">No activity today yet.</div>
                 </div>
             </div>
 
@@ -120,9 +156,7 @@
                 <h3 class="font-bold text-white">Assign Delivery Partner</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer">
-                <!-- Partner List Injected Here -->
-            </div>
+            <div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer"></div>
         </div>
     </div>
 
@@ -142,110 +176,219 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let processedOrders = new Set();
         let selectedOrderIdForAssignment = null;
+        
+        // Date Display
+        document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString();
 
         function logout() { if(confirm("Exit?")) window.location.href = 'index.html'; }
         function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
-        function switchTab(id) { ['orders','partners','marketing'].forEach(t=>{document.getElementById('tab-'+t).classList.add('hidden'); document.getElementById('nav-'+t)?.classList.remove('active'); document.getElementById('mob-'+t)?.classList.replace('bg-blue-600','text-slate-400'); document.getElementById('mob-'+t)?.classList.remove('text-white'); }); document.getElementById('tab-'+id).classList.remove('hidden'); document.getElementById('nav-'+id)?.classList.add('active'); const m=document.getElementById('mob-'+id); if(m){m.classList.add('bg-blue-600','text-white'); m.classList.remove('text-slate-400');} }
+        
+        function switchTab(id) { 
+            ['orders','history','partners','alerts'].forEach(t=>{
+                document.getElementById('tab-'+t).classList.add('hidden'); 
+                document.getElementById('nav-'+t)?.classList.remove('active'); 
+                const m = document.getElementById('mob-'+t);
+                if(m) { m.classList.replace('bg-blue-600','text-slate-400'); m.classList.remove('text-white'); }
+            }); 
+            document.getElementById('tab-'+id).classList.remove('hidden'); 
+            document.getElementById('nav-'+id)?.classList.add('active'); 
+            const m=document.getElementById('mob-'+id); 
+            if(m){ m.classList.add('bg-blue-600','text-white'); m.classList.remove('text-slate-400'); } 
+        }
 
-        // --- ORDER MONITORING & COMPLETION ALERTS ---
+        function timeAgo(timeStamp) {
+            if(!timeStamp) return '';
+            const seconds = Math.floor((new Date() - timeStamp) / 1000);
+            let interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hrs ago";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " mins ago";
+            return "Just now";
+        }
+
+        // --- MAIN LOGIC: LIVE, HISTORY & NOTIFICATIONS ---
         db.ref('orders').on('value', snap => {
-            const grid = document.getElementById('ordersGrid');
-            grid.innerHTML = '';
-            let total = 0;
+            const liveGrid = document.getElementById('ordersGrid');
+            const histGrid = document.getElementById('historyGrid');
+            const notifList = document.getElementById('notificationList');
+            const noAlerts = document.getElementById('noAlertsMsg');
+            
+            liveGrid.innerHTML = '';
+            histGrid.innerHTML = '';
+            notifList.innerHTML = '';
+            
+            let totalRevenue = 0;
+            let activeCount = 0;
+            let todayAlertCount = 0;
+
+            const startOfToday = new Date();
+            startOfToday.setHours(0,0,0,0);
 
             if(snap.exists()) {
                 const data = snap.val();
-                Object.entries(data).reverse().forEach(([id, order]) => {
-                    // Alert for completion
-                    if(order.status === 'delivered' && !processedOrders.has(id)) {
-                        processedOrders.add(id);
-                        const boyName = order.deliveryBoyName || "Partner";
-                        alert(`💰 PAYMENT ALERT!\n\nOrder #${order.orderId} Completed by ${boyName}.\n\nPlease pay him ₹20 immediately.`);
+                const orders = Object.entries(data).reverse(); // Newest first
+
+                orders.forEach(([id, order]) => {
+                    
+                    // 1. STATS
+                    if(order.status === 'delivered') totalRevenue += parseInt(order.payment.deliveryFee || 0);
+                    if(order.status !== 'delivered') activeCount++;
+
+                    // 2. GENERATE CARD HTML
+                    const cardHTML = createOrderCard(id, order);
+
+                    // 3. SEGREGATE: Live vs History
+                    if(order.status === 'delivered') {
+                        histGrid.innerHTML += cardHTML;
+                    } else {
+                        liveGrid.innerHTML += cardHTML;
                     }
 
-                    if(order.status === 'delivered') total += parseInt(order.payment.deliveryFee || 0);
-
-                    // Build Product List
-                    let productsHTML = '';
-                    if(order.cart && order.cart.length > 0) {
-                        productsHTML = order.cart.map(i => `
-                            <div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0">
-                                <span class="text-slate-300">${i.count}x ${i.name}</span>
-                                <span class="text-slate-500">${i.qty}</span>
+                    // 4. ALERTS (TODAY ONLY)
+                    if(new Date(order.timestamp) >= startOfToday) {
+                        todayAlertCount++;
+                        const statusColor = order.status === 'delivered' ? 'text-green-400' : (order.status === 'placed' ? 'text-amber-400' : 'text-blue-400');
+                        const notifItem = `
+                            <div class="p-4 flex justify-between items-center hover:bg-slate-800/50 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full ${order.status === 'delivered' ? 'bg-green-500' : 'bg-slate-500'}"></div>
+                                    <div>
+                                        <p class="text-sm font-bold text-white">${order.user.name}</p>
+                                        <p class="text-[10px] text-slate-500">Shop: ${order.user.shopName}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-bold uppercase ${statusColor}">${order.status}</span>
+                                    <p class="text-[10px] text-slate-600">#${order.orderId.slice(-6)}</p>
+                                    <p class="text-[9px] text-slate-600">${new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                </div>
                             </div>
-                        `).join('');
+                        `;
+                        notifList.innerHTML += notifItem;
                     }
+                });
+            } else {
+                liveGrid.innerHTML = `<div class="text-slate-500 col-span-full text-center py-10">No Orders</div>`;
+            }
 
-                    // Status Logic
-                    let stClass = 'st-placed';
-                    let statusDisplay = order.status;
-                    let partnerInfo = '';
+            // Update UI Counters
+            document.getElementById('totalRev').innerText = totalRevenue;
+            
+            const activeElements = [document.getElementById('sidebarActiveCount'), document.getElementById('mobActiveCount'), document.getElementById('headerActiveCount')];
+            activeElements.forEach(el => {
+                if(activeCount > 0) {
+                    el.innerText = activeCount + (el.id === 'headerActiveCount' ? ' Active' : '');
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
 
-                    if(order.status === 'accepted') { 
-                        stClass = 'st-accepted'; 
-                        partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName}</div>`;
-                    }
-                    if(order.status === 'out_for_delivery') {
-                         stClass = 'st-accepted'; // Use same blue for active delivery
-                         partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName}</div>`;
-                    }
-                    if(order.status === 'delivered') stClass = 'st-delivered';
+            if(todayAlertCount === 0) noAlerts.classList.remove('hidden');
+            else noAlerts.classList.add('hidden');
+        });
 
-                    // ACTION BUTTONS
-                    let adminAction = '';
-                    if(order.status === 'placed') {
-                        adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">ASSIGN PARTNER <i class="fa-solid fa-user-plus ml-1"></i></button>`;
-                    } else if (order.status === 'accepted') {
-                        adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN</button>`;
-                    }
+        // --- HELPER: CREATE ORDER CARD ---
+        function createOrderCard(id, order) {
+            let productsHTML = '';
+            // New WhatsApp Format logic
+            let waItems = '';
 
-                    const card = document.createElement('div');
-                    card.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition group relative overflow-hidden";
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-bold text-white text-base">${order.user.name}</h3>
-                                <p class="text-xs text-blue-400 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${order.user.mobile}</p>
-                            </div>
-                            <span class="status-badge ${stClass}">${statusDisplay}</span>
+            if(order.cart && order.cart.length > 0) {
+                order.cart.forEach(i => {
+                    productsHTML += `
+                        <div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0">
+                            <span class="text-slate-300">${i.count}x ${i.name}</span>
+                            <span class="text-slate-500">${i.qty}</span>
                         </div>
-                        
-                        <div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1">
-                            <i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}
-                        </div>
+                    `;
+                    // Formatting for WhatsApp: Item (Qty) xCount
+                    waItems += `${i.name} (${i.qty}) x${i.count}\n`;
+                });
+            }
 
-                        <div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">
-                            ${productsHTML}
-                        </div>
+            // Status Logic
+            let stClass = 'st-placed';
+            let statusDisplay = order.status;
+            let partnerInfo = '';
+            let deliveredByInfo = ''; // Specific for History
 
-                        <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 truncate">
-                            <i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}
-                        </div>
-
-                        ${partnerInfo}
-                        ${adminAction}
-
-                        <div class="mt-auto pt-3 border-t border-slate-800 flex justify-between items-center">
-                            <div>
-                                <span class="block text-[10px] text-slate-500 uppercase font-bold">Fee</span>
-                                <span class="font-bold text-white text-lg">₹${order.payment.deliveryFee}</span>
-                            </div>
-                            <div class="flex gap-2">
-                                <a href="https://maps.google.com/?q=${order.location.lat},${order.location.lng}" target="_blank" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Map"><i class="fa-solid fa-map-location-dot text-xs"></i></a>
-                                <a href="tel:${order.user.mobile}" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition" title="Call"><i class="fa-solid fa-phone text-xs"></i></a>
-                                <button onclick="deleteOrder('${id}')" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>
+            if(order.status === 'accepted' || order.status === 'out_for_delivery') { 
+                stClass = 'st-accepted'; 
+                partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName || 'Partner'}</div>`;
+            }
+            if(order.status === 'delivered') {
+                stClass = 'st-delivered';
+                // Show who delivered it in history
+                if(order.deliveryBoyName) {
+                    deliveredByInfo = `
+                        <div class="mt-2 pt-2 border-t border-slate-800">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">Delivered By</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-green-400 font-bold">${order.deliveryBoyName}</span>
+                                <a href="tel:${order.deliveryBoyMobile}" class="text-[10px] text-slate-400 underline">${order.deliveryBoyMobile}</a>
                             </div>
                         </div>
                     `;
-                    grid.appendChild(card);
-                });
-            } else {
-                grid.innerHTML = `<div class="text-slate-500 col-span-full text-center py-10">No Orders</div>`;
+                }
             }
-            document.getElementById('totalRev').innerText = total;
-        });
+
+            // ACTION BUTTONS (Assign)
+            let adminAction = '';
+            if(order.status === 'placed') {
+                adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">ASSIGN PARTNER <i class="fa-solid fa-user-plus ml-1"></i></button>`;
+            } else if (order.status === 'accepted') {
+                adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN</button>`;
+            }
+
+            // WhatsApp Share Text Construction
+            const waText = `*Customer:* ${order.user.name}\n*Order ID:* #${order.orderId}\n\n*Items:*\n${waItems}`;
+            const waLink = `https://wa.me/?text=${encodeURIComponent(waText)}`;
+
+            return `
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition group relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-white text-base">${order.user.name}</h3>
+                            <p class="text-xs text-blue-400 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${order.user.mobile}</p>
+                        </div>
+                        <span class="status-badge ${stClass}">${statusDisplay}</span>
+                    </div>
+                    
+                    <div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1">
+                        <i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}
+                    </div>
+
+                    <div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">
+                        ${productsHTML}
+                    </div>
+
+                    <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 truncate">
+                        <i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}
+                    </div>
+
+                    ${partnerInfo}
+                    ${deliveredByInfo}
+                    ${adminAction}
+
+                    <div class="mt-auto pt-3 border-t border-slate-800 flex justify-between items-center">
+                        <div>
+                            <span class="block text-[10px] text-slate-500 uppercase font-bold">Fee</span>
+                            <span class="font-bold text-white text-lg">₹${order.payment.deliveryFee}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <!-- WHATSAPP SHARE BUTTON -->
+                            <a href="${waLink}" target="_blank" class="w-8 h-8 rounded bg-green-900/40 text-green-500 border border-green-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition" title="Share List on WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+                            
+                            <a href="https://maps.google.com/?q=${order.location.lat},${order.location.lng}" target="_blank" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Map"><i class="fa-solid fa-map-location-dot text-xs"></i></a>
+                            <a href="tel:${order.user.mobile}" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition" title="Call"><i class="fa-solid fa-phone text-xs"></i></a>
+                            <button onclick="deleteOrder('${id}')" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
         // --- ASSIGNMENT LOGIC ---
         function openAssignModal(orderId) {
@@ -268,7 +411,6 @@
                 if(snap.exists()) {
                     let hasOnline = false;
                     Object.entries(snap.val()).forEach(([mobile, boy]) => {
-                        // Only show ONLINE partners
                         if(boy.status === 'online') {
                             hasOnline = true;
                             const div = document.createElement('div');
@@ -312,7 +454,7 @@
                 status: 'accepted',
                 deliveryBoyId: mobile,
                 deliveryBoyName: name,
-                deliveryBoyMobile: mobile, // Important for WhatsApp link
+                deliveryBoyMobile: mobile,
                 assignedAt: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 showToast(`Assigned to ${name}`);
@@ -329,9 +471,30 @@
                 Object.entries(snap.val()).forEach(([mobile, boy]) => {
                     const row = document.createElement('tr');
                     const isOnline = boy.status === 'online';
+                    
+                    // Offline duration logic
+                    let statusHtml = '';
+                    if(isOnline) {
+                        statusHtml = `<span class="px-2 py-1 rounded text-[10px] font-bold bg-green-900/30 text-green-400">ONLINE</span>`;
+                    } else {
+                        const timeText = boy.lastUpdated ? timeAgo(boy.lastUpdated) : '';
+                        statusHtml = `
+                            <div class="flex flex-col">
+                                <span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-500 w-fit">OFFLINE</span>
+                                <span class="text-[9px] text-slate-600 mt-1">${timeText}</span>
+                            </div>
+                        `;
+                    }
+
                     row.innerHTML = `
-                        <td class="p-4"><div class="font-bold text-white">${boy.name}</div><div class="text-[10px] text-slate-500">${mobile}</div></td>
-                        <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold ${isOnline?'bg-green-900/30 text-green-400':'bg-slate-800 text-slate-500'}">${boy.status ? boy.status.toUpperCase() : 'OFFLINE'}</span></td>
+                        <td class="p-4">
+                            <div class="font-bold text-white flex items-center gap-2">
+                                ${boy.name}
+                                <a href="https://wa.me/91${mobile}" target="_blank" class="text-green-500 hover:text-green-400"><i class="fa-brands fa-whatsapp"></i></a>
+                            </div>
+                            <div class="text-[10px] text-slate-500">${mobile}</div>
+                        </td>
+                        <td class="p-4">${statusHtml}</td>
                         <td class="p-4 text-xs capitalize">${boy.vehicle}</td>
                         <td class="p-4 text-sm font-bold text-green-400">₹${boy.earnings || 0}</td>
                         <td class="p-4 text-xs font-mono text-slate-500">
@@ -342,9 +505,8 @@
                 });
             }
         });
-
-        function updateBanner() { const t=document.getElementById('bannerText').value; db.ref('admin/banner').set({text:t,updatedAt:firebase.database.ServerValue.TIMESTAMP}).then(()=>showToast("Banner Updated")); }
-        db.ref('admin/banner').once('value', s => { if(s.exists()) document.getElementById('bannerText').value = s.val().text; });
     </script>
 </body>
 </html>
+
+
