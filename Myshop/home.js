@@ -26,11 +26,12 @@ let deleteMode = false;
 let editItemId = null;
 let itemsToDelete = new Set();
 let allProducts = [];
+let filteredProducts = [];
 let historyData = {};
 
 // Slider Variables
 let slides = [];
-let slideIndex = 1; // Start from 1 because 0 is a clone
+let slideIndex = 1;
 let slideInterval;
 let isTransitioning = false;
 
@@ -44,8 +45,8 @@ window.onload = () => {
     // Core Features
     initSeamlessSlider();
     calculateStats();
-    loadLocalProducts(); // Show cached data first
-    syncProducts(); // Sync live data in background
+    loadLocalProducts(); 
+    syncProducts(); 
 };
 
 // --- UTILS ---
@@ -112,14 +113,21 @@ function initSeamlessSlider() {
     db.ref(`users/${targetMobile}/banner`).once('value', uSnap => {
         if(uSnap.exists()) {
             const b = uSnap.val();
-            slides.push({ type: 'user', text: b.text || 'Welcome', color: b.color || '#3b82f6', bold: b.bold || false });
+            slides.push({ 
+                type: 'user', 
+                text: b.text || 'Welcome', 
+                color: b.color || '#3b82f6', 
+                bold: b.bold || false,
+                textColor: b.textColor || '#ffffff', // NEW
+                fontSize: b.fontSize || 'text-2xl'   // NEW
+            });
         }
         
         db.ref('admin/sliders').once('value', aSnap => {
             if(aSnap.exists()) {
                 Object.values(aSnap.val()).forEach(s => slides.push({ type: 'admin', img: s.img, link: s.link || '#' }));
             }
-            if(slides.length === 0) slides.push({type: 'user', text: 'Welcome', color: '#1e293b'});
+            if(slides.length === 0) slides.push({type: 'user', text: 'Welcome', color: '#1e293b', textColor: '#ffffff', fontSize: 'text-2xl'});
             renderSeamlessSlider();
         });
     });
@@ -129,7 +137,7 @@ function renderSeamlessSlider() {
     const track = document.getElementById('sliderTrack');
     const dotsContainer = document.getElementById('dotsContainer');
     
-    // Create Clones for Seamless Effect (First slide at end, Last slide at beginning)
+    // Create Clones for Seamless Effect
     const firstClone = slides[0];
     const lastClone = slides[slides.length - 1];
     
@@ -142,30 +150,31 @@ function renderSeamlessSlider() {
     allSlides.forEach(s => {
         const div = document.createElement('div');
         div.className = "slide";
-        div.style.width = "100%"; // Ensure full width
+        div.style.width = "100%"; 
         if(s.type === 'user') {
             div.style.backgroundColor = s.color;
-            div.innerHTML = `<span class="px-8 text-white text-xl md:text-2xl ${s.bold ? 'font-extrabold' : 'font-medium'}">${s.text}</span>`;
+            // Applied new styles here
+            div.innerHTML = `<span style="color: ${s.textColor};" class="px-8 text-center ${s.fontSize} ${s.bold ? 'font-extrabold' : 'font-medium'}">${s.text}</span>`;
         } else {
             div.innerHTML = `<img src="${s.img}" class="w-full h-full object-cover" onclick="window.location.href='${s.link}'">`;
         }
         track.appendChild(div);
     });
 
-    // Render Dots (Only for actual slides)
+    // Render Dots
     slides.forEach((_, idx) => {
         const dot = document.createElement('div');
         dot.className = `slider-dot ${idx === 0 ? 'active' : ''}`;
         dotsContainer.appendChild(dot);
     });
 
-    // Set initial position (show first real slide, not clone)
+    // Set initial position
     track.style.transform = `translateX(-100%)`; 
 
     // Auto Slide
     startSeamlessInterval();
     
-    // Transition End Listener (The Magic Trick)
+    // Transition End Listener
     track.addEventListener('transitionend', () => {
         isTransitioning = false;
         if (slideIndex >= slides.length + 1) {
@@ -213,7 +222,6 @@ function prevSeamlessSlide() {
 }
 
 function updateSeamlessDots() {
-    // Map internal index to visual dot index
     let dotIndex = slideIndex - 1;
     if (dotIndex < 0) dotIndex = slides.length - 1;
     if (dotIndex >= slides.length) dotIndex = 0;
@@ -247,46 +255,63 @@ function calculateStats() {
     }
 }
 
-// --- PRODUCTS LOGIC (WITH LOCAL STORAGE CACHING) ---
+// --- PRODUCTS & SEARCH ---
 function loadLocalProducts() {
     const cached = localStorage.getItem(CACHE_KEY);
     if(cached) { 
-        allProducts = JSON.parse(cached); 
+        allProducts = JSON.parse(cached);
+        filteredProducts = allProducts; 
         document.getElementById('statProductCount').innerText = allProducts.length;
-        renderList(); 
-        // console.log("Loaded from Cache");
+        renderList(allProducts); 
     }
 }
 
 function syncProducts() {
-    // This updates the cache and UI seamlessly
     db.ref('products/' + targetMobile).on('value', snapshot => {
         if(snapshot.exists()) {
             allProducts = Object.entries(snapshot.val()).reverse();
-            // Save to Local Storage
             localStorage.setItem(CACHE_KEY, JSON.stringify(allProducts));
             
             document.getElementById('statProductCount').innerText = allProducts.length;
-            renderList();
+            
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            if(query) filterProducts(); 
+            else {
+                filteredProducts = allProducts;
+                renderList(allProducts);
+            }
         } else {
             allProducts = [];
+            filteredProducts = [];
             localStorage.removeItem(CACHE_KEY);
             document.getElementById('statProductCount').innerText = "0";
-            renderList();
+            renderList([]);
         }
     });
 }
 
-function renderList() {
+function filterProducts() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    if (!query) {
+        filteredProducts = allProducts;
+    } else {
+        filteredProducts = allProducts.filter(([id, item]) => 
+            item.name.toLowerCase().includes(query)
+        );
+    }
+    renderList(filteredProducts);
+}
+
+function renderList(products) {
     const list = document.getElementById('productList');
     list.innerHTML = '';
     
-    if(allProducts.length === 0) {
-        list.innerHTML = `<div class="p-8 text-center opacity-50"><p class="text-xs">Shelf Empty</p></div>`;
+    if(products.length === 0) {
+        list.innerHTML = `<div class="p-8 text-center opacity-50"><p class="text-xs">No items found</p></div>`;
         return;
     }
 
-    allProducts.forEach(([id, item]) => {
+    products.forEach(([id, item]) => {
         const li = document.createElement('li');
         li.className = "bg-white border-b border-slate-50 p-4 flex items-center justify-between hover:bg-slate-50 transition-colors";
         
@@ -368,21 +393,27 @@ function saveProduct() {
     }
 }
 
-// --- BANNER SETTINGS ---
+// --- BANNER SETTINGS (ENHANCED) ---
 function setBanColor(c) {
     document.getElementById('selectedColor').value = c;
     document.getElementById('banText').style.borderColor = c;
-    showToast("Color Selected");
+}
+
+function setBanTextColor(c) {
+    document.getElementById('selectedTextColor').value = c;
+    showToast("Text Color Selected");
 }
 
 function saveBannerSettings() {
     const text = document.getElementById('banText').value;
     const color = document.getElementById('selectedColor').value;
+    const textColor = document.getElementById('selectedTextColor').value;
+    const fontSize = document.getElementById('banFontSize').value;
     const bold = document.getElementById('banBold').checked;
     
     if(!text) return showToast("Enter Text");
 
-    db.ref(`users/${targetMobile}/banner`).set({text, color, bold})
+    db.ref(`users/${targetMobile}/banner`).set({text, color, textColor, fontSize, bold})
     .then(() => {
         showToast("Banner Updated");
         document.getElementById('bannerModal').classList.add('hidden');
@@ -398,7 +429,7 @@ function toggleEditMode() {
     const btn = document.getElementById('globalEditBtn');
     if(editMode) { btn.classList.add('bg-indigo-100', 'text-indigo-600'); showToast("Tap item to Edit"); } 
     else { btn.classList.remove('bg-indigo-100', 'text-indigo-600'); }
-    renderList();
+    renderList(allProducts);
 }
 
 function toggleDeleteMode() {
@@ -409,10 +440,10 @@ function toggleDeleteMode() {
     const bar = document.getElementById('bulkDeleteBar');
     if(deleteMode) { btn.classList.add('bg-red-100', 'text-red-600'); bar.classList.remove('hidden'); showToast("Select items"); } 
     else { btn.classList.remove('bg-red-100', 'text-red-600'); bar.classList.add('hidden'); itemsToDelete.clear(); }
-    renderList();
+    renderList(allProducts); 
 }
 
-function toggleCheck(id) { if(itemsToDelete.has(id)) itemsToDelete.delete(id); else itemsToDelete.add(id); renderList(); }
+function toggleCheck(id) { if(itemsToDelete.has(id)) itemsToDelete.delete(id); else itemsToDelete.add(id); renderList(allProducts); }
 
 function deleteSelectedItems() {
     if(itemsToDelete.size === 0) return showToast("No items selected");
