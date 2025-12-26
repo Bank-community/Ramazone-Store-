@@ -12,6 +12,9 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- ImageKit SDK -->
+    <script type="text/javascript" src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
@@ -25,29 +28,62 @@
         .prod-list::-webkit-scrollbar { width: 4px; }
         .prod-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         
-        .modal-overlay { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
+        .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
         .partner-select-card:hover { border-color: #3b82f6; background-color: #1e293b; }
+
+        /* Drawer Menu Styles */
+        .drawer { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        .drawer.open { transform: translateX(0); }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-    <!-- HEADER -->
-    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center shadow-md z-20">
+    <!-- HEADER (Modified with Menu Button) -->
+    <header class="bg-slate-900 border-b border-slate-800 px-4 py-4 flex justify-between items-center shadow-md z-20">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
-                <i class="fa-solid fa-shield-halved text-white text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold tracking-tight">Admin HQ</h1>
-                <p class="text-xs text-slate-400 font-mono">Control Center</p>
+            <!-- Menu Button -->
+            <button onclick="toggleDrawer()" class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition border border-slate-700">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30 hidden sm:flex">
+                    <i class="fa-solid fa-shield-halved text-white text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight leading-none">Admin HQ</h1>
+                    <p class="text-[10px] text-slate-400 font-mono hidden sm:block">Control Center</p>
+                </div>
             </div>
         </div>
-        <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-power-off"></i></button>
+        <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition px-2"><i class="fa-solid fa-power-off"></i></button>
     </header>
+
+    <!-- DRAWER MENU (New Feature) -->
+    <div id="menuDrawer" class="drawer fixed inset-y-0 left-0 w-[85%] max-w-xs bg-slate-900 z-50 border-r border-slate-700 shadow-2xl flex flex-col">
+        <div class="p-6 border-b border-slate-800 bg-slate-950">
+            <h2 class="text-lg font-bold text-white">Admin Tools</h2>
+            <p class="text-xs text-slate-500">Advanced Management</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-3 overflow-y-auto">
+            <button onclick="openModal('bannerModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-pink-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
+                <i class="fa-solid fa-images w-5 text-pink-500"></i> Manage App Banners
+            </button>
+            <button onclick="openModal('customerModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
+                <i class="fa-solid fa-users w-5 text-blue-500"></i> Customer Database
+            </button>
+            <button onclick="openModal('partnerModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-green-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
+                <i class="fa-solid fa-helmet-safety w-5 text-green-500"></i> Delivery Team Info
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="toggleDrawer()" class="w-full py-3 text-slate-500 font-bold hover:text-white text-xs uppercase tracking-widest">Close Menu</button>
+        </div>
+    </div>
+    <div id="drawerOverlay" class="fixed inset-0 bg-black/80 z-40 hidden backdrop-blur-sm" onclick="toggleDrawer()"></div>
 
     <div class="flex flex-1 overflow-hidden">
         
-        <!-- SIDEBAR (DESKTOP) -->
+        <!-- SIDEBAR (DESKTOP - Original) -->
         <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex">
             <nav class="flex-1 p-4 space-y-2">
                 <button onclick="switchTab('orders')" id="nav-orders" class="nav-item active w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
@@ -72,10 +108,10 @@
             </div>
         </aside>
 
-        <!-- MAIN -->
-        <main class="flex-1 overflow-y-auto bg-slate-950 p-6 relative">
+        <!-- MAIN CONTENT (Original Logic) -->
+        <main class="flex-1 overflow-y-auto bg-slate-950 p-4 sm:p-6 relative">
             
-            <!-- MOBILE TABS -->
+            <!-- MOBILE TABS (Original 4 Grid) -->
             <div class="md:hidden grid grid-cols-4 gap-1 bg-slate-900 p-1 rounded-lg mb-6 sticky top-0 z-10 shadow-lg">
                 <button onclick="switchTab('orders')" class="py-2 text-[10px] font-bold rounded text-center transition bg-blue-600 text-white" id="mob-orders">
                     <i class="fa-solid fa-bolt block mb-1"></i> LIVE <span id="mobActiveCount" class="bg-red-500 text-white px-1.5 rounded-full ml-1 text-[9px] hidden">0</span>
@@ -95,7 +131,7 @@
             <div id="tab-orders" class="space-y-6">
                 <div class="flex justify-between items-end">
                     <div class="flex items-center gap-3">
-                        <h2 class="text-2xl font-bold text-white">Live Activity</h2>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">Live Activity</h2>
                         <span id="headerActiveCount" class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full hidden">0 Active</span>
                     </div>
                     <span class="text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-300 border border-slate-700">Realtime</span>
@@ -106,7 +142,7 @@
             <!-- TAB: HISTORY (DELIVERED) -->
             <div id="tab-history" class="hidden space-y-6">
                 <div class="flex justify-between items-end">
-                    <h2 class="text-2xl font-bold text-white">Order History</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white">Order History</h2>
                     <span class="text-xs bg-green-900/30 text-green-400 px-3 py-1 rounded-full border border-green-900">Completed Orders</span>
                 </div>
                 <div id="historyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -114,7 +150,7 @@
 
             <!-- TAB: PARTNERS -->
             <div id="tab-partners" class="hidden space-y-6">
-                <h2 class="text-2xl font-bold text-white">Delivery Fleet</h2>
+                <h2 class="text-xl sm:text-2xl font-bold text-white">Delivery Fleet</h2>
                 <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-400">
                         <thead class="bg-slate-950 text-xs uppercase font-bold text-slate-500">
@@ -134,14 +170,12 @@
             <!-- TAB: NOTIFICATIONS (ALERTS) -->
             <div id="tab-alerts" class="hidden space-y-6 max-w-2xl mx-auto">
                 <div class="flex items-center justify-center gap-2 mb-2">
-                    <h2 class="text-2xl font-bold text-white text-center">Today's Alerts</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white text-center">Today's Alerts</h2>
                     <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700" id="todayDateDisplay"></span>
                 </div>
                 
                 <div class="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-                    <div id="notificationList" class="divide-y divide-slate-800">
-                        <!-- Notifications injected here -->
-                    </div>
+                    <div id="notificationList" class="divide-y divide-slate-800"></div>
                     <div id="noAlertsMsg" class="hidden p-8 text-center text-slate-500 text-sm">No activity today yet.</div>
                 </div>
             </div>
@@ -149,21 +183,77 @@
         </main>
     </div>
 
-    <!-- ASSIGN PARTNER MODAL -->
-    <div id="assignModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+    <!-- MODAL: BANNER MANAGER (New) -->
+    <div id="bannerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Manage App Banners</h3>
+                <button onclick="closeModal('bannerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 space-y-4 overflow-y-auto">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Upload Image</label>
+                    <input type="file" id="bannerFile" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 mb-3">
+                    
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Redirect Link (Optional)</label>
+                    <input type="text" id="bannerLink" placeholder="https://..." class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm mb-3">
+                    
+                    <button onclick="uploadBanner()" id="uploadBtn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition">UPLOAD & PUBLISH</button>
+                </div>
+                <h4 class="text-xs font-bold text-slate-500 uppercase mt-2">Active Banners</h4>
+                <div id="bannerList" class="space-y-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CUSTOMER DETAILS (New) -->
+    <div id="customerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Customer Database</h3>
+                <button onclick="closeModal('customerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-4">
+                <table class="w-full text-left text-sm text-slate-400">
+                    <thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Shop Name</th><th class="p-3">PIN/Pass</th><th class="p-3">Joined</th></tr></thead>
+                    <tbody id="custTable" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PARTNER DETAILS (New) -->
+    <div id="partnerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Delivery Partner Details</h3>
+                <button onclick="closeModal('partnerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-4">
+                <table class="w-full text-left text-sm text-slate-400">
+                    <thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Vehicle</th><th class="p-3">PIN/Pass</th><th class="p-3">Status</th></tr></thead>
+                    <tbody id="partnerDetailTable" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSIGN PARTNER MODAL (Original) -->
+    <div id="assignModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4">
         <div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
             <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
                 <h3 class="font-bold text-white">Assign Delivery Partner</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer"></div>
         </div>
     </div>
 
     <!-- TOAST -->
-    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
 
     <script>
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
             authDomain: "tipsplit-e3wes.firebaseapp.com",
@@ -173,14 +263,112 @@
             messagingSenderId: "984733883633",
             appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
         };
+        
+        // --- IMAGEKIT SETUP ---
+        // (Ismein aapni keys wahi rakhein jo pehle thi, ya placeholder use karein agar abhi nahi daali)
+        const imageKit = new ImageKit({
+            publicKey: "public_key_test", // Replace if you have
+            urlEndpoint: "https://ik.imagekit.io/your_id", // Replace if you have
+        });
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let selectedOrderIdForAssignment = null;
-        
-        // Date Display
         document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString();
 
+        // --- MENU DRAWER & MODAL LOGIC ---
+        function toggleDrawer() {
+            const d = document.getElementById('menuDrawer');
+            const o = document.getElementById('drawerOverlay');
+            if(d.classList.contains('open')) { d.classList.remove('open'); o.classList.add('hidden'); }
+            else { d.classList.add('open'); o.classList.remove('hidden'); }
+        }
+
+        function openModal(id) {
+            toggleDrawer(); 
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'customerModal') loadCustomers();
+            if(id === 'partnerModal') loadPartnerDetails();
+            if(id === 'bannerModal') loadBanners();
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- BANNER UPLOAD ---
+        function uploadBanner() {
+            const file = document.getElementById('bannerFile').files[0];
+            const link = document.getElementById('bannerLink').value || '#';
+            if(!file) return showToast("Select Image");
+
+            const btn = document.getElementById('uploadBtn');
+            btn.innerHTML = 'Uploading...'; btn.disabled = true;
+
+            imageKit.upload({
+                file : file, fileName : "banner_" + Date.now() + ".jpg", tags : ["banner"]
+            }, function(err, result) {
+                if(err) uploadBase64Banner(file, link, btn); // Fallback
+                else saveBannerToDb(result.url, link, btn);
+            });
+        }
+
+        function uploadBase64Banner(file, link, btn) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function () { saveBannerToDb(reader.result, link, btn); };
+            reader.onerror = function () { showToast("Failed"); btn.innerHTML='UPLOAD'; btn.disabled=false; };
+        }
+
+        function saveBannerToDb(imgUrl, link, btn) {
+            db.ref('admin/sliders').push({ img: imgUrl, link: link }).then(() => {
+                showToast("Banner Live!");
+                document.getElementById('bannerFile').value='';
+                document.getElementById('bannerLink').value='';
+                btn.innerHTML='UPLOAD & PUBLISH'; btn.disabled=false;
+                loadBanners();
+            });
+        }
+
+        function loadBanners() {
+            const list = document.getElementById('bannerList');
+            list.innerHTML = '<p class="text-xs text-slate-500">Loading...</p>';
+            db.ref('admin/sliders').once('value', s => {
+                list.innerHTML = '';
+                if(s.exists()) {
+                    Object.entries(s.val()).forEach(([key, val]) => {
+                        list.innerHTML += `
+                            <div class="bg-slate-800 p-2 rounded-lg flex items-center gap-3 border border-slate-700">
+                                <img src="${val.img}" class="w-16 h-10 object-cover rounded">
+                                <div class="flex-1 overflow-hidden"><p class="text-[10px] text-blue-400 truncate">${val.link}</p></div>
+                                <button onclick="db.ref('admin/sliders/${key}').remove(); loadBanners()" class="text-red-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        `;
+                    });
+                } else list.innerHTML = '<p class="text-xs text-slate-500">No active banners.</p>';
+            });
+        }
+
+        // --- DETAILS LOADERS ---
+        function loadCustomers() {
+            const t = document.getElementById('custTable'); t.innerHTML='<tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>';
+            db.ref('users').once('value', s => {
+                t.innerHTML='';
+                if(s.exists()) Object.values(s.val()).forEach(u => {
+                    t.innerHTML += `<tr class="hover:bg-slate-800"><td class="p-3 font-bold text-white">${u.name}</td><td class="p-3">${u.mobile}</td><td class="p-3">${u.shopName||'-'}</td><td class="p-3 text-amber-500">${u.pin||'-'}</td><td class="p-3 text-xs">${new Date(u.joinedAt||Date.now()).toLocaleDateString()}</td></tr>`;
+                });
+            });
+        }
+        function loadPartnerDetails() {
+            const t = document.getElementById('partnerDetailTable'); t.innerHTML='<tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>';
+            db.ref('deliveryBoys').once('value', s => {
+                t.innerHTML='';
+                if(s.exists()) Object.entries(s.val()).forEach(([m,u]) => {
+                    t.innerHTML += `<tr class="hover:bg-slate-800"><td class="p-3 font-bold text-white">${u.name}</td><td class="p-3">${m}</td><td class="p-3 capitalize">${u.vehicle}</td><td class="p-3 text-amber-500">${u.pin}</td><td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] ${u.status==='online'?'bg-green-900 text-green-400':'bg-slate-700 text-slate-400'}">${u.status}</span></td></tr>`;
+                });
+            });
+        }
+
+        // --- ORIGINAL APP LOGIC ---
         function logout() { if(confirm("Exit?")) window.location.href = 'index.html'; }
         function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
         
@@ -207,205 +395,94 @@
             return "Just now";
         }
 
-        // --- MAIN LOGIC: LIVE, HISTORY & NOTIFICATIONS ---
+        // MAIN LISTENERS
         db.ref('orders').on('value', snap => {
             const liveGrid = document.getElementById('ordersGrid');
             const histGrid = document.getElementById('historyGrid');
             const notifList = document.getElementById('notificationList');
             const noAlerts = document.getElementById('noAlertsMsg');
             
-            liveGrid.innerHTML = '';
-            histGrid.innerHTML = '';
-            notifList.innerHTML = '';
-            
-            let totalRevenue = 0;
-            let activeCount = 0;
-            let todayAlertCount = 0;
-
-            const startOfToday = new Date();
-            startOfToday.setHours(0,0,0,0);
+            liveGrid.innerHTML = ''; histGrid.innerHTML = ''; notifList.innerHTML = '';
+            let totalRevenue = 0, activeCount = 0, todayAlertCount = 0;
+            const startOfToday = new Date(); startOfToday.setHours(0,0,0,0);
 
             if(snap.exists()) {
-                const data = snap.val();
-                const orders = Object.entries(data).reverse(); // Newest first
-
-                orders.forEach(([id, order]) => {
-                    
-                    // 1. STATS
+                Object.entries(snap.val()).reverse().forEach(([id, order]) => {
                     if(order.status === 'delivered') totalRevenue += parseInt(order.payment.deliveryFee || 0);
-                    if(order.status !== 'delivered') activeCount++;
+                    else activeCount++;
 
-                    // 2. GENERATE CARD HTML
                     const cardHTML = createOrderCard(id, order);
+                    if(order.status === 'delivered') histGrid.innerHTML += cardHTML;
+                    else liveGrid.innerHTML += cardHTML;
 
-                    // 3. SEGREGATE: Live vs History
-                    if(order.status === 'delivered') {
-                        histGrid.innerHTML += cardHTML;
-                    } else {
-                        liveGrid.innerHTML += cardHTML;
-                    }
-
-                    // 4. ALERTS (TODAY ONLY)
                     if(new Date(order.timestamp) >= startOfToday) {
                         todayAlertCount++;
                         const statusColor = order.status === 'delivered' ? 'text-green-400' : (order.status === 'placed' ? 'text-amber-400' : 'text-blue-400');
-                        const notifItem = `
+                        notifList.innerHTML += `
                             <div class="p-4 flex justify-between items-center hover:bg-slate-800/50 transition">
                                 <div class="flex items-center gap-3">
                                     <div class="w-2 h-2 rounded-full ${order.status === 'delivered' ? 'bg-green-500' : 'bg-slate-500'}"></div>
-                                    <div>
-                                        <p class="text-sm font-bold text-white">${order.user.name}</p>
-                                        <p class="text-[10px] text-slate-500">Shop: ${order.user.shopName}</p>
-                                    </div>
+                                    <div><p class="text-sm font-bold text-white">${order.user.name}</p><p class="text-[10px] text-slate-500">Shop: ${order.user.shopName}</p></div>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-xs font-bold uppercase ${statusColor}">${order.status}</span>
-                                    <p class="text-[10px] text-slate-600">#${order.orderId.slice(-6)}</p>
-                                    <p class="text-[9px] text-slate-600">${new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                                </div>
+                                <div class="text-right"><span class="text-xs font-bold uppercase ${statusColor}">${order.status}</span><p class="text-[10px] text-slate-600">#${order.orderId.slice(-6)}</p><p class="text-[9px] text-slate-600">${new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div>
                             </div>
                         `;
-                        notifList.innerHTML += notifItem;
                     }
                 });
-            } else {
-                liveGrid.innerHTML = `<div class="text-slate-500 col-span-full text-center py-10">No Orders</div>`;
-            }
+            } else liveGrid.innerHTML = `<div class="text-slate-500 col-span-full text-center py-10">No Orders</div>`;
 
-            // Update UI Counters
             document.getElementById('totalRev').innerText = totalRevenue;
-            
-            const activeElements = [document.getElementById('sidebarActiveCount'), document.getElementById('mobActiveCount'), document.getElementById('headerActiveCount')];
-            activeElements.forEach(el => {
-                if(activeCount > 0) {
-                    el.innerText = activeCount + (el.id === 'headerActiveCount' ? ' Active' : '');
-                    el.classList.remove('hidden');
-                } else {
-                    el.classList.add('hidden');
-                }
-            });
-
-            if(todayAlertCount === 0) noAlerts.classList.remove('hidden');
-            else noAlerts.classList.add('hidden');
+            const ae = [document.getElementById('sidebarActiveCount'), document.getElementById('mobActiveCount'), document.getElementById('headerActiveCount')];
+            ae.forEach(el => { if(activeCount>0) { el.innerText = activeCount+(el.id==='headerActiveCount'?' Active':''); el.classList.remove('hidden'); } else el.classList.add('hidden'); });
+            if(todayAlertCount === 0) noAlerts.classList.remove('hidden'); else noAlerts.classList.add('hidden');
         });
 
-        // --- HELPER: CREATE ORDER CARD ---
         function createOrderCard(id, order) {
             let productsHTML = '';
-            // New WhatsApp Format logic
             let waItems = '';
+            if(order.cart) order.cart.forEach(i => {
+                productsHTML += `<div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0"><span class="text-slate-300">${i.count}x ${i.name}</span><span class="text-slate-500">${i.qty}</span></div>`;
+                waItems += `${i.name} (${i.qty}) x${i.count}\n`;
+            });
 
-            if(order.cart && order.cart.length > 0) {
-                order.cart.forEach(i => {
-                    productsHTML += `
-                        <div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0">
-                            <span class="text-slate-300">${i.count}x ${i.name}</span>
-                            <span class="text-slate-500">${i.qty}</span>
-                        </div>
-                    `;
-                    // Formatting for WhatsApp: Item (Qty) xCount
-                    waItems += `${i.name} (${i.qty}) x${i.count}\n`;
-                });
-            }
-
-            // Status Logic
             let stClass = 'st-placed';
-            let statusDisplay = order.status;
             let partnerInfo = '';
-            let deliveredByInfo = ''; // Specific for History
-
             if(order.status === 'accepted' || order.status === 'out_for_delivery') { 
                 stClass = 'st-accepted'; 
                 partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName || 'Partner'}</div>`;
             }
-            if(order.status === 'delivered') {
-                stClass = 'st-delivered';
-                // Show who delivered it in history
-                if(order.deliveryBoyName) {
-                    deliveredByInfo = `
-                        <div class="mt-2 pt-2 border-t border-slate-800">
-                            <p class="text-[10px] text-slate-500 uppercase font-bold">Delivered By</p>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-green-400 font-bold">${order.deliveryBoyName}</span>
-                                <a href="tel:${order.deliveryBoyMobile}" class="text-[10px] text-slate-400 underline">${order.deliveryBoyMobile}</a>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
+            if(order.status === 'delivered') stClass = 'st-delivered';
 
-            // ACTION BUTTONS (Assign)
             let adminAction = '';
-            if(order.status === 'placed') {
-                adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">ASSIGN PARTNER <i class="fa-solid fa-user-plus ml-1"></i></button>`;
-            } else if (order.status === 'accepted') {
-                adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN</button>`;
-            }
+            if(order.status === 'placed') adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">ASSIGN PARTNER <i class="fa-solid fa-user-plus ml-1"></i></button>`;
+            else if (order.status === 'accepted') adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN</button>`;
 
-            // WhatsApp Share Text Construction
-            const waText = `*Customer:* ${order.user.name}\n*Order ID:* #${order.orderId}\n\n*Items:*\n${waItems}`;
-            const waLink = `https://wa.me/?text=${encodeURIComponent(waText)}`;
+            const waLink = `https://wa.me/?text=${encodeURIComponent(`*Customer:* ${order.user.name}\n*Order ID:* #${order.orderId}\n\n*Items:*\n${waItems}`)}`;
 
             return `
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition group relative overflow-hidden">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-bold text-white text-base">${order.user.name}</h3>
-                            <p class="text-xs text-blue-400 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${order.user.mobile}</p>
-                        </div>
-                        <span class="status-badge ${stClass}">${statusDisplay}</span>
-                    </div>
-                    
-                    <div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1">
-                        <i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}
-                    </div>
-
-                    <div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">
-                        ${productsHTML}
-                    </div>
-
-                    <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 truncate">
-                        <i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}
-                    </div>
-
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition relative overflow-hidden">
+                    <div class="flex justify-between items-start"><div><h3 class="font-bold text-white text-base">${order.user.name}</h3><p class="text-xs text-blue-400 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${order.user.mobile}</p></div><span class="status-badge ${stClass}">${order.status}</span></div>
+                    <div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1"><i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}</div>
+                    <div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">${productsHTML}</div>
+                    <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}</div>
                     ${partnerInfo}
-                    ${deliveredByInfo}
                     ${adminAction}
-
                     <div class="mt-auto pt-3 border-t border-slate-800 flex justify-between items-center">
-                        <div>
-                            <span class="block text-[10px] text-slate-500 uppercase font-bold">Fee</span>
-                            <span class="font-bold text-white text-lg">₹${order.payment.deliveryFee}</span>
-                        </div>
+                        <div><span class="block text-[10px] text-slate-500 uppercase font-bold">Fee</span><span class="font-bold text-white text-lg">₹${order.payment.deliveryFee}</span></div>
                         <div class="flex gap-2">
-                            <!-- WHATSAPP SHARE BUTTON -->
-                            <a href="${waLink}" target="_blank" class="w-8 h-8 rounded bg-green-900/40 text-green-500 border border-green-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition" title="Share List on WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></a>
-                            
-                            <a href="https://maps.google.com/?q=${order.location.lat},${order.location.lng}" target="_blank" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Map"><i class="fa-solid fa-map-location-dot text-xs"></i></a>
-                            <a href="tel:${order.user.mobile}" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition" title="Call"><i class="fa-solid fa-phone text-xs"></i></a>
-                            <button onclick="deleteOrder('${id}')" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>
+                            <a href="${waLink}" target="_blank" class="w-8 h-8 rounded bg-green-900/40 text-green-500 border border-green-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+                            <a href="https://maps.google.com/?q=${order.location.lat},${order.location.lng}" target="_blank" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-map-location-dot text-xs"></i></a>
+                            <a href="tel:${order.user.mobile}" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition"><i class="fa-solid fa-phone text-xs"></i></a>
+                            <button onclick="deleteOrder('${id}')" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // --- ASSIGNMENT LOGIC ---
-        function openAssignModal(orderId) {
-            selectedOrderIdForAssignment = orderId;
-            document.getElementById('assignModal').classList.remove('hidden');
-            loadPartnersForAssignment();
-        }
-
-        function closeModal() {
-            document.getElementById('assignModal').classList.add('hidden');
-            selectedOrderIdForAssignment = null;
-        }
-
+        function openAssignModal(orderId) { selectedOrderIdForAssignment = orderId; document.getElementById('assignModal').classList.remove('hidden'); loadPartnersForAssignment(); }
         function loadPartnersForAssignment() {
-            const container = document.getElementById('partnerListContainer');
-            container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">Loading Partners...</p>';
-
+            const container = document.getElementById('partnerListContainer'); container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">Loading...</p>';
             db.ref('deliveryBoys').once('value', snap => {
                 container.innerHTML = '';
                 if(snap.exists()) {
@@ -414,94 +491,39 @@
                         if(boy.status === 'online') {
                             hasOnline = true;
                             const div = document.createElement('div');
-                            div.className = "partner-select-card bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center cursor-pointer transition";
+                            div.className = "partner-select-card bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center cursor-pointer transition mb-2";
                             div.onclick = () => assignToPartner(mobile, boy.name);
-                            div.innerHTML = `
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold border border-slate-600">
-                                        ${boy.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-white text-sm">${boy.name}</h4>
-                                        <p class="text-[10px] text-slate-400 capitalize">${boy.vehicle} • ${mobile}</p>
-                                    </div>
-                                </div>
-                                <button class="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full hover:bg-indigo-500">ASSIGN</button>
-                            `;
+                            div.innerHTML = `<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold border border-slate-600">${boy.name.charAt(0)}</div><div><h4 class="font-bold text-white text-sm">${boy.name}</h4><p class="text-[10px] text-slate-400 capitalize">${boy.vehicle}</p></div></div><button class="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full hover:bg-indigo-500">ASSIGN</button>`;
                             container.appendChild(div);
                         }
                     });
-
-                    if(!hasOnline) {
-                        container.innerHTML = `
-                            <div class="text-center py-8">
-                                <i class="fa-solid fa-bed text-2xl text-slate-600 mb-2"></i>
-                                <p class="text-slate-400 text-xs">No partners are Online right now.</p>
-                            </div>
-                        `;
-                    }
-                } else {
-                    container.innerHTML = `<p class="text-slate-500 text-xs text-center">No Partners Registered.</p>`;
-                }
+                    if(!hasOnline) container.innerHTML = '<div class="text-center py-4 text-slate-500 text-xs">No partners Online.</div>';
+                } else container.innerHTML = '<p class="text-slate-500 text-xs text-center">No Partners.</p>';
             });
         }
-
         function assignToPartner(mobile, name) {
-            if(!selectedOrderIdForAssignment) return;
-            if(!confirm(`Assign order to ${name}?`)) return;
-
-            db.ref('orders/' + selectedOrderIdForAssignment).update({
-                status: 'accepted',
-                deliveryBoyId: mobile,
-                deliveryBoyName: name,
-                deliveryBoyMobile: mobile,
-                assignedAt: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                showToast(`Assigned to ${name}`);
-                closeModal();
-            }).catch(e => showToast("Error: " + e.message));
+            if(!selectedOrderIdForAssignment || !confirm(`Assign to ${name}?`)) return;
+            db.ref('orders/' + selectedOrderIdForAssignment).update({ status: 'accepted', deliveryBoyId: mobile, deliveryBoyName: name, deliveryBoyMobile: mobile, assignedAt: firebase.database.ServerValue.TIMESTAMP })
+            .then(() => { showToast(`Assigned to ${name}`); closeModal('assignModal'); });
         }
-
         function deleteOrder(id) { if(confirm("Delete Permanently?")) db.ref('orders/'+id).remove(); }
-        
-        // PARTNER TABLE
+
+        // Partner Table Listener
         db.ref('deliveryBoys').on('value', snap => {
             const tbody = document.getElementById('partnersTable'); tbody.innerHTML = '';
             if(snap.exists()) {
                 Object.entries(snap.val()).forEach(([mobile, boy]) => {
-                    const row = document.createElement('tr');
                     const isOnline = boy.status === 'online';
-                    
-                    // Offline duration logic
-                    let statusHtml = '';
-                    if(isOnline) {
-                        statusHtml = `<span class="px-2 py-1 rounded text-[10px] font-bold bg-green-900/30 text-green-400">ONLINE</span>`;
-                    } else {
-                        const timeText = boy.lastUpdated ? timeAgo(boy.lastUpdated) : '';
-                        statusHtml = `
-                            <div class="flex flex-col">
-                                <span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-500 w-fit">OFFLINE</span>
-                                <span class="text-[9px] text-slate-600 mt-1">${timeText}</span>
-                            </div>
-                        `;
-                    }
-
-                    row.innerHTML = `
-                        <td class="p-4">
-                            <div class="font-bold text-white flex items-center gap-2">
-                                ${boy.name}
-                                <a href="https://wa.me/91${mobile}" target="_blank" class="text-green-500 hover:text-green-400"><i class="fa-brands fa-whatsapp"></i></a>
-                            </div>
-                            <div class="text-[10px] text-slate-500">${mobile}</div>
-                        </td>
-                        <td class="p-4">${statusHtml}</td>
-                        <td class="p-4 text-xs capitalize">${boy.vehicle}</td>
-                        <td class="p-4 text-sm font-bold text-green-400">₹${boy.earnings || 0}</td>
-                        <td class="p-4 text-xs font-mono text-slate-500">
-                             ${isOnline && boy.location ? `<a href="https://maps.google.com/?q=${boy.location.lat},${boy.location.lng}" target="_blank" class="text-blue-400 hover:underline">Track</a>` : 'N/A'}
-                        </td>
+                    let statusHtml = isOnline ? `<span class="px-2 py-1 rounded text-[10px] font-bold bg-green-900/30 text-green-400">ONLINE</span>` : `<span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-500">OFFLINE</span>`;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="p-4"><div class="font-bold text-white flex items-center gap-2">${boy.name}<a href="https://wa.me/91${mobile}" target="_blank" class="text-green-500"><i class="fa-brands fa-whatsapp"></i></a></div><div class="text-[10px] text-slate-500">${mobile}</div></td>
+                            <td class="p-4">${statusHtml}</td>
+                            <td class="p-4 text-xs capitalize">${boy.vehicle}</td>
+                            <td class="p-4 text-sm font-bold text-green-400">₹${boy.earnings || 0}</td>
+                            <td class="p-4 text-xs font-mono text-slate-500">${isOnline && boy.location ? `<a href="https://maps.google.com/?q=${boy.location.lat},${boy.location.lng}" target="_blank" class="text-blue-400 hover:underline">Track</a>` : 'N/A'}</td>
+                        </tr>
                     `;
-                    tbody.appendChild(row);
                 });
             }
         });
