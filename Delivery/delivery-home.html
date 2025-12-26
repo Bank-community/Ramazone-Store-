@@ -121,12 +121,12 @@
                 <span class="text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold" id="activeStatus">Processing</span>
             </div>
             <div class="flex-1 overflow-y-auto p-5 space-y-6">
-                <!-- Shop -->
+                <!-- Delivery Partner (Pick Up Section) -->
                 <div class="relative pl-6 border-l-2 border-gray-700">
                     <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900"></span>
-                    <h3 class="text-xs font-bold text-gray-400 uppercase">Pick Up From</h3>
-                    <p class="text-lg font-bold text-white mt-0.5" id="actShop">Shop Name</p>
-                    <button onclick="openMap('shop')" class="mt-2 text-xs bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-1.5 rounded hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-diamond-turn-right mr-1"></i> Navigate to Shop</button>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase">Partner</h3>
+                    <p class="text-lg font-bold text-white mt-0.5" id="actShop">Delivery Boy Name</p>
+                    <p class="text-xs text-gray-500" id="actShopLoc">Current Location</p>
                 </div>
                 
                 <!-- Items Box -->
@@ -135,14 +135,17 @@
                     <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
                 </div>
 
-                <!-- Drop Off -->
+                <!-- Drop Off (Customer Section) -->
                 <div class="relative pl-6 border-l-2 border-gray-700">
                     <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-500 border-2 border-gray-900"></span>
                     <h3 class="text-xs font-bold text-gray-400 uppercase">Deliver To</h3>
                     <p class="text-lg font-bold text-white mt-0.5" id="actCust">Customer Name</p>
                     <p class="text-sm text-gray-400" id="actAddr">Address</p>
+                    
+                    <!-- NEW WHATSAPP BUTTON -->
                     <div class="flex gap-2 mt-3">
-                        <button onclick="openMap('cust')" class="text-xs bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded flex-1 hover:bg-green-600 hover:text-white transition"><i class="fa-solid fa-location-arrow mr-1"></i> Map</button>
+                         <button onclick="openWhatsApp()" class="text-xs bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded flex-1 hover:bg-green-600 hover:text-white transition"><i class="fa-brands fa-whatsapp mr-1"></i> Chat</button>
+                        <button onclick="openMap('cust')" class="text-xs bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded flex-1 hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-location-arrow mr-1"></i> Map</button>
                         <button onclick="callCust()" class="text-xs bg-gray-700 border border-gray-600 px-3 py-2 rounded text-white flex-1 hover:bg-gray-600"><i class="fa-solid fa-phone mr-1"></i> Call</button>
                     </div>
                 </div>
@@ -250,13 +253,11 @@
                 
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([id, o]) => {
-                        // CRITICAL FIX: Safe access for o.user to prevent crashes if bad data exists
                         const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
                         const address = o.location && o.location.address ? o.location.address : "Address Hidden";
                         const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
                         const slab = o.payment && o.payment.slab ? o.payment.slab : 'Standard';
 
-                        // Show orders that are 'placed'
                         if(o.status === 'placed') {
                             count++;
                             
@@ -279,9 +280,12 @@
                                     <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
                                     <p><i class="fa-solid fa-weight-hanging mr-1"></i> ${slab}</p>
                                 </div>
-                                <button onclick="acceptOrder('${id}')" class="w-full ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
-                                    ${btnText}
-                                </button>
+                                <div class="flex gap-2">
+                                    <button onclick="window.open('https://maps.google.com/?q=${o.location.lat},${o.location.lng}', '_blank')" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Check Location"><i class="fa-solid fa-map-location-dot"></i></button>
+                                    <button onclick="acceptOrder('${id}')" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
+                                        ${btnText}
+                                    </button>
+                                </div>
                             `;
                             list.appendChild(div);
                         }
@@ -360,7 +364,10 @@
             const address = o.location && o.location.address ? o.location.address : "Unknown Address";
             const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
 
-            document.getElementById('actShop').innerText = shopName;
+            // Updated: Show Delivery Boy Name and Location in 'Partner' Section
+            document.getElementById('actShop').innerText = session.name;
+            document.getElementById('actShopLoc').innerText = "Live Location Active";
+            
             document.getElementById('actCust').innerText = custName;
             document.getElementById('actAddr').innerText = address;
             document.getElementById('actFee').innerText = fee;
@@ -432,6 +439,10 @@
         function callCust() { 
             if(activeOrder && activeOrder.user)
                 window.open(`tel:${activeOrder.user.mobile}`); 
+        }
+        function openWhatsApp() {
+            if(activeOrder && activeOrder.user)
+                window.open(`https://wa.me/91${activeOrder.user.mobile}`, '_blank');
         }
     </script>
 </body>
