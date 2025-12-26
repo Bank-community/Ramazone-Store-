@@ -75,7 +75,7 @@
             padding: 8px 4px;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            height: 80px; /* Slightly taller for subtitles */
+            height: 80px; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -85,6 +85,20 @@
         /* Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Color Picker Input Style */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            padding: 0;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
 
         @media print {
             body * { visibility: hidden; }
@@ -96,21 +110,16 @@
 </head>
 <body class="text-slate-800 antialiased pb-32">
 
-    <!-- HEADER (Height fixed to 64px/h-16 to prevent clipping) -->
+    <!-- HEADER -->
     <header class="bg-white sticky top-0 z-30 shadow-sm border-b border-slate-100 px-4 h-16 flex items-center justify-center relative">
-        <!-- Left: Menu -->
         <button onclick="toggleMenu()" class="absolute left-4 w-10 h-10 flex items-center justify-center text-slate-500 hover:text-slate-900 transition active:scale-95">
             <i class="fa-solid fa-bars text-xl"></i>
         </button>
-        
-        <!-- Center: Title -->
         <div class="flex items-center justify-center h-full">
             <h1 class="text-lg font-extrabold text-slate-900 leading-none truncate max-w-[200px]" id="headerShopName">My Shop</h1>
         </div>
-        
-        <!-- Right: Shop Icon (Padding removed, plain icon) -->
         <button onclick="window.location.href='cart.html'" class="absolute right-4 w-10 h-10 flex items-center justify-center text-slate-600 active:scale-95 transition hover:text-blue-600">
-            <i class="fa-solid fa-store text-2xl"></i> <!-- Icon size increased slightly -->
+            <i class="fa-solid fa-store text-2xl"></i>
             <span id="headerBadge" class="absolute top-1 right-0 bg-red-500 w-2.5 h-2.5 rounded-full hidden border border-white"></span>
         </button>
     </header>
@@ -124,28 +133,23 @@
     <!-- SEAMLESS SLIDER -->
     <div class="slider-container" id="sliderContainer">
         <div id="sliderTrack" class="slider-wrapper">
-            <!-- Slides injected via JS -->
             <div class="slide bg-slate-200"></div>
         </div>
-        <!-- Dots -->
         <div id="dotsContainer" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none"></div>
     </div>
 
-    <!-- DASHBOARD STATS (Subtitles added) -->
+    <!-- DASHBOARD STATS -->
     <div class="px-4 py-3 grid grid-cols-3 gap-2">
-        <!-- Card 1: Products -->
         <div class="stat-card">
             <p class="text-[10px] text-slate-400 font-bold uppercase mb-0.5">Products</p>
             <p class="text-lg font-extrabold text-slate-800 leading-none" id="statProductCount">0</p>
             <p class="text-[9px] text-slate-400 font-medium mt-1 bg-slate-100 px-1.5 rounded">Total Items</p>
         </div>
-        <!-- Card 2: Today's Orders -->
         <div class="stat-card">
             <p class="text-[10px] text-slate-400 font-bold uppercase mb-0.5">Today</p>
             <p class="text-lg font-extrabold text-indigo-600 leading-none" id="statOrderCount">0</p>
             <p class="text-[9px] text-slate-400 font-medium mt-1 bg-indigo-50 text-indigo-400 px-1.5 rounded">New Orders</p>
         </div>
-        <!-- Card 3: Range -->
         <div class="stat-card">
             <p class="text-[10px] text-slate-400 font-bold uppercase mb-0.5">Range</p>
             <p class="text-lg font-extrabold text-emerald-600 leading-none">3 KM</p>
@@ -171,13 +175,21 @@
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="sidebarNav"></nav>
     </div>
 
-    <!-- PRODUCT LIST SECTION (Gap reduced further) -->
+    <!-- PRODUCT LIST & SEARCH -->
     <div class="px-4 pb-10 min-h-[50vh] mt-0.5">
-        <div class="flex items-center justify-between px-1 mb-2 border-t border-slate-100 pt-3">
+        <div class="flex items-center justify-between px-1 mb-3 border-t border-slate-100 pt-3">
             <div class="flex items-center gap-2">
                 <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Inventory</p>
             </div>
             
+            <!-- SEARCH BAR (With Border) -->
+            <div class="flex-1 mx-3">
+                <div class="relative">
+                    <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Search items..." class="w-full bg-white border border-slate-300 rounded-full py-1.5 pl-8 pr-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all">
+                    <i class="fa-solid fa-search absolute left-3 top-2 text-slate-400 text-xs"></i>
+                </div>
+            </div>
+
             <div class="flex bg-white rounded-lg border border-slate-200 p-0.5 shadow-sm">
                 <button onclick="shareStore()" class="w-8 h-8 flex items-center justify-center rounded text-slate-400 hover:text-green-600 hover:bg-green-50 transition" title="Share Store">
                     <i class="fa-solid fa-share-nodes text-xs"></i>
@@ -245,29 +257,61 @@
         </div>
     </div>
 
-    <!-- BANNER MODAL -->
+    <!-- BANNER MODAL (ENHANCED) -->
     <div id="bannerModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl">
             <h3 class="font-bold text-slate-900 mb-4">Customize Shop Banner</h3>
-            <div class="space-y-3">
+            <div class="space-y-4">
+                <!-- Banner Text -->
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Banner Text</label>
-                    <input type="text" id="banText" class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm font-bold" placeholder="e.g. 20% OFF TODAY">
+                    <input type="text" id="banText" class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm font-bold mt-1" placeholder="e.g. Welcome to my Shop">
                 </div>
+
+                <!-- Background Color -->
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Background Color</label>
-                    <div class="flex gap-2 mt-1" id="colorPicker">
-                        <button onclick="setBanColor('#ef4444')" class="w-8 h-8 rounded-full bg-red-500 ring-2 ring-transparent hover:ring-slate-400 focus:ring-slate-900"></button>
-                        <button onclick="setBanColor('#f59e0b')" class="w-8 h-8 rounded-full bg-amber-500 ring-2 ring-transparent hover:ring-slate-400 focus:ring-slate-900"></button>
-                        <button onclick="setBanColor('#10b981')" class="w-8 h-8 rounded-full bg-emerald-500 ring-2 ring-transparent hover:ring-slate-400 focus:ring-slate-900"></button>
-                        <button onclick="setBanColor('#3b82f6')" class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-transparent hover:ring-slate-400 focus:ring-slate-900"></button>
-                        <button onclick="setBanColor('#6366f1')" class="w-8 h-8 rounded-full bg-indigo-500 ring-2 ring-transparent hover:ring-slate-400 focus:ring-slate-900"></button>
-                        <button onclick="setBanColor('#8b5cf6')" class="w-8 h-8 rounded-full bg-violet-500 ring-2 ring-transparent hover:ring-slate-400 focus:ring-slate-900"></button>
+                    <div class="flex items-center gap-2 mt-1">
+                        <!-- Presets -->
+                        <button onclick="setBanColor('#ef4444')" class="w-8 h-8 rounded-full bg-red-500 ring-2 ring-transparent hover:ring-slate-400"></button>
+                        <button onclick="setBanColor('#f59e0b')" class="w-8 h-8 rounded-full bg-amber-500 ring-2 ring-transparent hover:ring-slate-400"></button>
+                        <button onclick="setBanColor('#10b981')" class="w-8 h-8 rounded-full bg-emerald-500 ring-2 ring-transparent hover:ring-slate-400"></button>
+                        <button onclick="setBanColor('#3b82f6')" class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-transparent hover:ring-slate-400"></button>
+                        <button onclick="setBanColor('#6366f1')" class="w-8 h-8 rounded-full bg-indigo-500 ring-2 ring-transparent hover:ring-slate-400"></button>
+                        <!-- Custom Picker -->
+                        <div class="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-slate-200">
+                            <input type="color" id="customColorPicker" class="absolute -top-2 -left-2 w-12 h-12 p-0 cursor-pointer" onchange="setBanColor(this.value)">
+                        </div>
                     </div>
                     <input type="hidden" id="selectedColor" value="#3b82f6">
                 </div>
+
+                <!-- Text Style (Row) -->
+                <div class="flex gap-4">
+                    <!-- Text Color -->
+                    <div class="flex-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Text Color</label>
+                        <div class="flex gap-2 mt-1">
+                            <button onclick="setBanTextColor('#ffffff')" class="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm"></button>
+                            <button onclick="setBanTextColor('#1e293b')" class="w-8 h-8 rounded-full bg-slate-800 border border-slate-800 shadow-sm"></button>
+                            <button onclick="setBanTextColor('#facc15')" class="w-8 h-8 rounded-full bg-yellow-400 border border-yellow-400 shadow-sm"></button>
+                        </div>
+                        <input type="hidden" id="selectedTextColor" value="#ffffff">
+                    </div>
+                    <!-- Font Size -->
+                    <div class="flex-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Size</label>
+                        <select id="banFontSize" class="w-full mt-1 bg-slate-50 border border-slate-200 text-xs font-bold rounded p-2">
+                            <option value="text-lg">Normal</option>
+                            <option value="text-2xl" selected>Large</option>
+                            <option value="text-4xl">Extra Large</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Bold Toggle -->
                 <div class="flex items-center gap-3 pt-2">
-                    <input type="checkbox" id="banBold" class="w-5 h-5 accent-indigo-600 rounded">
+                    <input type="checkbox" id="banBold" class="w-5 h-5 accent-indigo-600 rounded" checked>
                     <label for="banBold" class="text-sm font-bold text-slate-700">Bold Text</label>
                 </div>
             </div>
@@ -359,4 +403,3 @@
 
 </body>
 </html>
-
