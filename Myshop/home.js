@@ -118,46 +118,46 @@ function setupUI() {
     document.getElementById('sidebarNav').innerHTML = menuHtml;
 }
 
-// --- SEARCH BAR LOGIC (UPDATED FOR BOTTOM STICKY UI) ---
+// --- SEARCH BAR LOGIC (UPDATED FOR PERSISTENT VIEW) ---
+
 function activateSearch() {
-    // Add class to body to change layout to "Search Mode"
+    // 1. Enable Search Mode Style (Bottom Bar, Hidden Header)
     document.body.classList.add('search-mode');
-    document.getElementById('headerControls').classList.add('hidden');
-    document.getElementById('clearSearchBtn').classList.remove('hidden');
     
-    // Optional: Scroll to bottom to ensure view is correct when keyboard opens
-    setTimeout(() => {
-        window.scrollTo(0, document.body.scrollHeight);
-    }, 300);
+    // 2. Hide specific controls inside search bar to make space
+    document.getElementById('headerControls').classList.add('hidden');
+    
+    // 3. Show Close/Clear button
+    document.getElementById('clearSearchBtn').classList.remove('hidden');
 }
 
 function deactivateSearch() {
-    // Only revert layout if input is empty, otherwise keep "Search Mode" active
-    // This keeps the search bar at the bottom while user scrolls results
-    setTimeout(() => {
-        const val = document.getElementById('searchInput').value;
-        if(!val) {
-            document.body.classList.remove('search-mode');
-            document.getElementById('headerControls').classList.remove('hidden');
-            document.getElementById('clearSearchBtn').classList.add('hidden');
-        }
-    }, 200);
+    // UPDATED: Intentionally Left Empty.
+    // Pehle ye 'blur' hone par wapas normal mode me bhej deta tha.
+    // Ab hum chahte hain ki 'Add' button dabane par ya keyboard band hone par bhi
+    // Search interface (Bottom Bar) waisa hi rahe.
+    // Normal mode me wapas sirf 'Close (X)' button dabane par jayega.
 }
 
 function clearSearch() {
     const input = document.getElementById('searchInput');
     input.value = '';
-    filterProducts(); // Reset List
     
-    // Completely reset UI
+    // 1. Reset List to show all products
+    filterProducts(); 
+    
+    // 2. Remove Search Mode Style
     document.body.classList.remove('search-mode');
+    
+    // 3. Bring back controls
     document.getElementById('headerControls').classList.remove('hidden');
     document.getElementById('clearSearchBtn').classList.add('hidden');
     
-    input.blur(); // Close Keyboard
+    // 4. Keyboard Hide karein
+    input.blur(); 
 }
 
-// --- REPEAT LAST ORDER ---
+// --- NEW FEATURE: REPEAT LAST ORDER (FIXED: NO QTY INCREASE) ---
 function repeatLastOrder() {
     showToast("Fetching last order...");
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).limitToLast(1).once('value', snap => {
@@ -166,8 +166,11 @@ function repeatLastOrder() {
             if(orderData && orderData.cart && orderData.cart.length > 0) {
                 let currentCart = JSON.parse(localStorage.getItem('rmz_cart')) || [];
                 
+                // Logic Fix: Agar item pehle se hai, toh usse hata kar fresh count add karo
                 orderData.cart.forEach(prevItem => {
+                    // Remove if already exists
                     currentCart = currentCart.filter(i => !(i.name === prevItem.name && i.qty === prevItem.qty));
+                    // Push the item fresh with original count
                     currentCart.push({ name: prevItem.name, qty: prevItem.qty, count: prevItem.count || 1 });
                 });
 
@@ -183,15 +186,16 @@ function repeatLastOrder() {
     });
 }
 
-// --- CONTACT SUPPORT ---
+// --- NEW FEATURE: CONTACT SUPPORT ---
 function openSupportOptions() {
-    toggleMenu(); 
+    toggleMenu(); // Close sidebar
     document.getElementById('supportModal').classList.remove('hidden');
 }
 
 function sendSupportMsg(issueType) {
     const waNumber = "7903698180";
     
+    // Fetch total orders count before sending
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).once('value', snap => {
         const totalOrders = snap.exists() ? Object.keys(snap.val()).length : 0;
         
@@ -211,9 +215,10 @@ Please assist me.`;
     });
 }
 
-// --- SEAMLESS SLIDER ---
+// --- SEAMLESS SLIDER LOGIC ---
 function initSeamlessSlider() {
     slides = [];
+    // Fetch Banners
     db.ref(`users/${targetMobile}/banner`).once('value', uSnap => {
         if(uSnap.exists()) {
             const b = uSnap.val();
@@ -241,13 +246,16 @@ function renderSeamlessSlider() {
     const track = document.getElementById('sliderTrack');
     const dotsContainer = document.getElementById('dotsContainer');
     
+    // Create Clones for Seamless Effect
     const firstClone = slides[0];
     const lastClone = slides[slides.length - 1];
+    
     const allSlides = [lastClone, ...slides, firstClone];
     
     track.innerHTML = '';
     dotsContainer.innerHTML = '';
     
+    // Render All Slides (including clones)
     allSlides.forEach(s => {
         const div = document.createElement('div');
         div.className = "slide";
@@ -261,15 +269,20 @@ function renderSeamlessSlider() {
         track.appendChild(div);
     });
 
+    // Render Dots
     slides.forEach((_, idx) => {
         const dot = document.createElement('div');
         dot.className = `slider-dot ${idx === 0 ? 'active' : ''}`;
         dotsContainer.appendChild(dot);
     });
 
+    // Set initial position
     track.style.transform = `translateX(-100%)`; 
+
+    // Auto Slide
     startSeamlessInterval();
     
+    // Transition End Listener
     track.addEventListener('transitionend', () => {
         isTransitioning = false;
         if (slideIndex >= slides.length + 1) {
@@ -284,6 +297,7 @@ function renderSeamlessSlider() {
         }
     });
 
+    // Touch Support
     const container = document.getElementById('sliderContainer');
     let startX = 0;
     container.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(slideInterval); });
@@ -394,11 +408,6 @@ function filterProducts() {
         );
     }
     renderList(filteredProducts);
-    
-    // Auto Scroll to bottom if in search mode (Ensures items are near the search bar)
-    if(document.body.classList.contains('search-mode')) {
-        setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 50);
-    }
 }
 
 function renderList(products) {
@@ -406,8 +415,7 @@ function renderList(products) {
     list.innerHTML = '';
     
     if(products.length === 0) {
-        // Show empty message properly aligned
-        list.innerHTML = `<div class="p-8 text-center opacity-50 flex flex-col items-center justify-center h-40"><p class="text-xs">No items found</p></div>`;
+        list.innerHTML = `<div class="p-8 text-center opacity-50"><p class="text-xs">No items found</p></div>`;
         return;
     }
 
@@ -440,9 +448,8 @@ function renderList(products) {
             li.onclick = () => openAddModal(id, item.name, item.qty);
             li.classList.add('cursor-pointer');
         } else {
-            // FIX: onmousedown="event.preventDefault()" prevents the button click from stealing focus
-            // This keeps the keyboard OPEN when adding items
-            rightAction = `<button onmousedown="event.preventDefault()" onclick="addToCartLocal('${item.name}', '${item.qty}')" class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-900 hover:text-white transition active:scale-90"><i class="fa-solid fa-plus text-xs"></i></button>`;
+            // Note: Added 'e.preventDefault()' handling in HTML script to prevent focus loss
+            rightAction = `<button onclick="addToCartLocal('${item.name}', '${item.qty}')" class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-900 hover:text-white transition active:scale-90"><i class="fa-solid fa-plus text-xs"></i></button>`;
         }
 
         li.innerHTML = `${leftContent} ${rightAction}`;
@@ -664,4 +671,3 @@ function openInvoice(oid) {
     if(o.cart) { o.cart.forEach(i => { tbody.innerHTML += `<tr><td class="py-2 px-4 border-b border-slate-50"><p class="font-bold text-slate-800">${i.name}</p><p class="text-[10px] text-slate-400">${i.qty}</p></td><td class="py-2 px-4 border-b border-slate-50 text-right font-bold text-slate-700">x${i.count}</td></tr>`; }); }
     document.getElementById('invoiceModal').classList.remove('hidden');
 }
-
