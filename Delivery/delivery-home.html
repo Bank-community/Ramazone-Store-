@@ -135,6 +135,21 @@
                     <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
                 </div>
 
+                <!-- NEW: Customer Preferences Box -->
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Preferences</h4>
+                    <div class="flex gap-3">
+                        <div class="flex-1 bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Time</p>
+                            <p class="text-sm font-bold text-blue-400" id="actPrefTime">Evening</p>
+                        </div>
+                        <div class="flex-1 bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
+                            <p class="text-sm font-bold text-pink-400" id="actPrefBudget">Standard</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Drop Off (Customer Section) -->
                 <div class="relative pl-6 border-l-2 border-gray-700">
                     <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-500 border-2 border-gray-900"></span>
@@ -257,6 +272,10 @@
                         const address = o.location && o.location.address ? o.location.address : "Address Hidden";
                         const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
                         const slab = o.payment && o.payment.slab ? o.payment.slab : 'Standard';
+                        
+                        // NEW: Preferences extraction
+                        const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
+                        const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
 
                         if(o.status === 'placed') {
                             count++;
@@ -279,6 +298,11 @@
                                     <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
                                     <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
                                     <p><i class="fa-solid fa-weight-hanging mr-1"></i> ${slab}</p>
+                                    <!-- NEW: BADGES -->
+                                    <div class="flex gap-2 mt-2">
+                                        <span class="bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-700"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
+                                        <span class="bg-pink-900 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-700"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
+                                    </div>
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="window.open('https://maps.google.com/?q=${o.location.lat},${o.location.lng}', '_blank')" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Check Location"><i class="fa-solid fa-map-location-dot"></i></button>
@@ -358,19 +382,25 @@
             document.getElementById('statsSection').classList.add('hidden');
             document.getElementById('activeOrderPanel').classList.remove('hidden');
             
-            // Safe Access for Active Order
             const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
             const custName = o.user && o.user.name ? o.user.name : "Customer";
             const address = o.location && o.location.address ? o.location.address : "Unknown Address";
             const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
+            
+            // NEW: Prefs for Active Panel
+            const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
+            const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
 
-            // Updated: Show Delivery Boy Name and Location in 'Partner' Section
             document.getElementById('actShop').innerText = session.name;
             document.getElementById('actShopLoc').innerText = "Live Location Active";
             
             document.getElementById('actCust').innerText = custName;
             document.getElementById('actAddr').innerText = address;
             document.getElementById('actFee').innerText = fee;
+            
+            // Set Prefs
+            document.getElementById('actPrefTime').innerText = prefTime;
+            document.getElementById('actPrefBudget').innerText = prefBudg;
 
             const ul = document.getElementById('actItems');
             ul.innerHTML = o.cart ? o.cart.map(i => `
@@ -447,5 +477,4 @@
     </script>
 </body>
 </html>
-
 
