@@ -63,6 +63,8 @@ function logout() { localStorage.removeItem('rmz_user'); window.location.href='i
 
 // --- UI SETUP ---
 function setupUI() {
+    let menuHtml = '';
+
     if (isOwner) {
         document.getElementById('ownerControls').classList.remove('hidden');
         document.getElementById('fabAddStock').classList.remove('hidden');
@@ -71,7 +73,7 @@ function setupUI() {
         document.getElementById('menuMobile').innerText = '+91 ' + session.mobile;
         
         // Owner Specific Menu
-        document.getElementById('sidebarNav').innerHTML = `
+        menuHtml += `
             <button onclick="openAddModal()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
                 <i class="fa-solid fa-box text-indigo-500 w-5"></i> Add Stock
             </button>
@@ -91,19 +93,86 @@ function setupUI() {
             <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
                 <i class="fa-solid fa-key text-slate-400 w-5"></i> Change PIN
             </button>
-            <div class="h-px bg-slate-100 my-2"></div>
-            <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-50 text-red-500 font-bold text-sm flex items-center gap-3">
-                <i class="fa-solid fa-power-off w-5"></i> Logout
-            </button>
         `;
     } else {
         // Guest Menu
-        document.getElementById('sidebarNav').innerHTML = `
+        menuHtml += `
             <button onclick="window.location.href='index.html'" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
                 <i class="fa-solid fa-store text-indigo-500 w-5"></i> Create My Own Store
             </button>
         `;
     }
+
+    // Common Menu Item (Contact Support) - ADDED
+    menuHtml += `
+        <div class="h-px bg-slate-100 my-2"></div>
+        <button onclick="openSupportOptions()" class="w-full text-left px-4 py-3 rounded hover:bg-green-50 text-green-600 font-bold text-sm flex items-center gap-3">
+            <i class="fa-brands fa-whatsapp w-5 text-xl"></i> Contact Support
+        </button>
+        <div class="h-px bg-slate-100 my-2"></div>
+        <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-50 text-red-500 font-bold text-sm flex items-center gap-3">
+            <i class="fa-solid fa-power-off w-5"></i> Logout
+        </button>
+    `;
+
+    document.getElementById('sidebarNav').innerHTML = menuHtml;
+}
+
+// --- NEW FEATURE: REPEAT LAST ORDER ---
+function repeatLastOrder() {
+    showToast("Fetching last order...");
+    db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).limitToLast(1).once('value', snap => {
+        if (snap.exists()) {
+            const orderData = Object.values(snap.val())[0];
+            if(orderData && orderData.cart && orderData.cart.length > 0) {
+                let currentCart = JSON.parse(localStorage.getItem('rmz_cart')) || [];
+                
+                // Merge logic: Add previous items to current cart
+                orderData.cart.forEach(prevItem => {
+                    const exists = currentCart.find(i => i.name === prevItem.name && i.qty === prevItem.qty);
+                    if(exists) exists.count = (exists.count || 1) + (prevItem.count || 1);
+                    else currentCart.push(prevItem);
+                });
+
+                localStorage.setItem('rmz_cart', JSON.stringify(currentCart));
+                updateCartBadge();
+                showToast("Items added from previous order!");
+            } else {
+                showToast("Previous order was empty/invalid.");
+            }
+        } else {
+            showToast("No previous orders found.");
+        }
+    });
+}
+
+// --- NEW FEATURE: CONTACT SUPPORT ---
+function openSupportOptions() {
+    toggleMenu(); // Close sidebar
+    document.getElementById('supportModal').classList.remove('hidden');
+}
+
+function sendSupportMsg(issueType) {
+    const waNumber = "7903698180";
+    
+    // Fetch total orders count before sending
+    db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).once('value', snap => {
+        const totalOrders = snap.exists() ? Object.keys(snap.val()).length : 0;
+        
+        const message = `*Ramazone Support Request*
+---------------------------
+*Name:* ${session.name}
+*Mobile:* ${session.mobile}
+*Total Orders:* ${totalOrders}
+---------------------------
+*Issue:* ${issueType}
+
+Please assist me.`;
+
+        const url = `https://wa.me/91${waNumber}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+        document.getElementById('supportModal').classList.add('hidden');
+    });
 }
 
 // --- SEAMLESS SLIDER LOGIC ---
@@ -346,6 +415,27 @@ function renderList(products) {
         li.innerHTML = `${leftContent} ${rightAction}`;
         list.appendChild(li);
     });
+}
+
+// --- CUSTOM REQUEST (NEW FEATURE) ---
+function openCustomRequestModal() {
+    document.getElementById('customRequestModal').classList.remove('hidden');
+    document.getElementById('reqItemName').focus();
+}
+
+function closeCustomRequestModal() {
+    document.getElementById('customRequestModal').classList.add('hidden');
+    document.getElementById('reqItemName').value = '';
+}
+
+function addCustomItemToCart() {
+    const text = document.getElementById('reqItemName').value.trim();
+    if(!text) return showToast("Please write something");
+
+    // Treat the entire text as the name, and Qty as "Custom List"
+    // This allows the existing cart structure to work without modification
+    addToCartLocal(text, "Special Request");
+    closeCustomRequestModal();
 }
 
 // --- ADD/EDIT STOCK MODAL ---
