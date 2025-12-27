@@ -19,99 +19,67 @@ let selectedCharge = 0;
 let selectedLabel = "";
 let selectedBudget = "standard"; // standard, high, custom
 let selectedTime = "Evening";
+let hasActiveOrder = false; // Flag to track active order status
 
 // --- INITIALIZATION ---
 window.onload = () => {
-    // 1. Check for Active Order immediately (Fast Load)
+    // 1. Check if user has an active order (But don't redirect)
     checkActiveOrder();
 
-    // 2. Load Cart & Other UI only if no active order
-    if(!document.body.classList.contains('tracking-mode')) {
-        renderCart();
-        loadSavedAddress();
-        
-        // Default Selections UI
-        highlightBudget('standard');
-        highlightTime('Evening');
-    }
+    // 2. Load Cart & Other UI
+    renderCart();
+    loadSavedAddress();
+    
+    // Default Selections UI
+    highlightBudget('standard');
+    highlightTime('Evening');
 };
 
-// --- ONE ORDER POLICY & NEXT DAY RESET ---
+// --- ONE ORDER POLICY CHECK (NON-REDIRECTING) ---
 function checkActiveOrder() {
     const savedOrder = JSON.parse(localStorage.getItem('rmz_active_order'));
     
     if (savedOrder) {
-        const orderDate = new Date(savedOrder.timestamp);
+        // Fix: Handle timestamp safety
+        let ts = savedOrder.timestamp;
+        if (typeof ts === 'object') ts = Date.now(); // Fallback if corrupted
+        
+        const orderDate = new Date(ts);
         const today = new Date();
         const isSameDay = orderDate.getDate() === today.getDate() && 
                           orderDate.getMonth() === today.getMonth() && 
                           orderDate.getFullYear() === today.getFullYear();
 
         if (isSameDay && savedOrder.status !== 'delivered' && savedOrder.status !== 'cancelled') {
-            // ACTIVE ORDER EXISTS -> Show Tracking, Hide Cart
-            enableTrackingMode(savedOrder);
-            syncOrderStatus(savedOrder.id); // Check DB for updates in background
+            // Active Order Exists -> Don't Redirect, just Lock UI
+            hasActiveOrder = true;
+            disablePlaceOrderButton();
         } else {
-            // OLD ORDER / DELIVERED -> Reset
+            // Old/Completed Order -> Clear it
             localStorage.removeItem('rmz_active_order');
-            // Logic to restore items to cart could go here if needed, 
-            // currently we just clear the "Active" block so user can order again.
+            hasActiveOrder = false;
         }
     }
 }
 
-function enableTrackingMode(order) {
-    document.body.classList.add('tracking-mode');
-    document.getElementById('liveTrackingSection').classList.remove('hidden');
-    document.getElementById('checkoutFormContainer').classList.add('hidden');
-    document.getElementById('bottomBar').classList.add('hidden');
+function disablePlaceOrderButton() {
+    const btn = document.getElementById('placeOrderBtn');
+    if(btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <div class="flex flex-col items-center leading-tight">
+                <span class="text-xs opacity-75">ORDER IN PROGRESS</span>
+                <span class="text-[10px] font-normal">Wait for delivery</span>
+            </div>
+        `;
+        btn.classList.add('bg-slate-400', 'cursor-not-allowed');
+        btn.classList.remove('bg-slate-900', 'hover:bg-black', 'shadow-lg');
+    }
     
-    // Update Tracking UI
-    document.getElementById('trackId').innerText = order.orderId ? order.orderId.slice(-6) : '...';
-    updateTimelineUI(order.status);
-}
-
-function syncOrderStatus(orderId) {
-    db.ref('orders/' + orderId).on('value', snap => {
-        if(snap.exists()) {
-            const updatedOrder = snap.val();
-            // Update LocalStorage
-            localStorage.setItem('rmz_active_order', JSON.stringify({id: orderId, ...updatedOrder}));
-            updateTimelineUI(updatedOrder.status);
-            
-            if(updatedOrder.status === 'delivered') {
-                // Keep showing delivered state until next day or manual close? 
-                // For now, let it show delivered. Next refresh next day will clear it.
-            }
-        } else {
-            // Order deleted? Reset.
-            localStorage.removeItem('rmz_active_order');
-            window.location.reload();
-        }
-    });
-}
-
-function updateTimelineUI(status) {
-    const steps = ['placed', 'accepted', 'out_for_delivery', 'delivered'];
-    let passed = true;
-    
-    // Normalize status
-    let currentStep = status;
-    if(currentStep === 'admin_accepted') currentStep = 'placed'; 
-
-    steps.forEach(step => {
-        const el = document.getElementById(`step-${step}`);
-        if(!el) return;
-        
-        el.classList.remove('active');
-        el.querySelector('.timeline-icon').style.backgroundColor = '#e2e8f0';
-        
-        if(passed) {
-            el.classList.add('active');
-            el.querySelector('.timeline-icon').style.backgroundColor = '#22c55e';
-        }
-        if(step === currentStep) passed = false;
-    });
+    // Show a polite notification
+    setTimeout(() => {
+        showToast("Tracking active order...");
+    }, 500);
 }
 
 // --- CART RENDERING & LOGIC ---
@@ -136,7 +104,6 @@ function renderCart() {
         const div = document.createElement('div');
         div.className = "flex items-center justify-between p-4";
         
-        // Quantity Controls Logic
         div.innerHTML = `
             <div>
                 <h4 class="font-bold text-slate-800 text-sm">${item.name}</h4>
@@ -173,7 +140,7 @@ function updateQty(idx, change) {
     }
     
     saveCart(cart);
-    renderCart(); // Re-render to update UI & Weight
+    renderCart();
 }
 
 // --- WEIGHT & SLABS ---
@@ -215,7 +182,6 @@ function autoSelectSlab(kg) {
     else if (kg > 20) { rec = 80; lbl = 'LARGE (21-30KG)'; }
     else if (kg > 10) { rec = 70; lbl = 'MEDIUM (11-20KG)'; }
 
-    // If current selected is invalid, force update. Otherwise stick to user choice if valid.
     if (selectedCharge < rec || selectedCharge === 0) selectRate(rec, lbl);
 }
 
@@ -233,7 +199,6 @@ function selectBudget(type) {
     const btn = document.getElementById(`bud_${type}`);
     btn.classList.add('selected', 'border-amber-500', 'bg-white', 'shadow-sm');
     
-    // Show/Hide Custom Input
     const inputDiv = document.getElementById('customBudgetInput');
     if (type === 'custom') {
         inputDiv.classList.remove('hidden');
@@ -242,7 +207,6 @@ function selectBudget(type) {
         inputDiv.classList.add('hidden');
     }
 }
-// Initial Highlight Helper
 function highlightBudget(type) { selectBudget(type); }
 
 function selectTime(time) {
@@ -288,6 +252,9 @@ function getLocation() {
 
 // --- PLACE ORDER ---
 async function placeOrder() {
+    // Final Security Check
+    if(hasActiveOrder) return showToast("You already have an active order.");
+
     const cart = getCart();
     const address = document.getElementById('deliveryAddress').value.trim();
     const lat = parseFloat(document.getElementById('lat').value) || 0;
@@ -297,7 +264,6 @@ async function placeOrder() {
     if(!address) return showToast("Address Required");
     if(cart.length === 0) return showToast("Cart is empty");
 
-    // Prepare Extra Data
     let budgetFinal = selectedBudget;
     if(selectedBudget === 'custom') {
         const amt = document.getElementById('customAmount').value;
@@ -308,39 +274,36 @@ async function placeOrder() {
     const btn = document.getElementById('placeOrderBtn');
     btn.disabled = true; btn.innerHTML = '<span class="animate-pulse">Processing...</span>';
 
-    const orderData = {
+    // 1. Base Data
+    const baseOrderData = {
         orderId: 'ORD-' + Date.now().toString().slice(-6),
         user: { name: session.name, mobile: session.mobile, shopName: session.shopName || session.name + "'s Store" },
         location: { address, lat, lng },
         cart: cart,
         payment: { deliveryFee: selectedCharge, slab: selectedLabel, mode: 'COD' },
         preferences: { budget: budgetFinal, deliveryTime: selectedTime },
-        status: 'placed',
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        status: 'placed'
     };
 
+    // 2. Data for Firebase (Server Timestamp)
+    const firebaseData = { ...baseOrderData, timestamp: firebase.database.ServerValue.TIMESTAMP };
+    // 3. Data for Local (Client Timestamp)
+    const localData = { ...baseOrderData, timestamp: Date.now() };
+
     try {
-        // 1. Push to Firebase
-        const newOrderRef = await db.ref('orders').push(orderData);
-        
-        // 2. Save Address for future
+        const newOrderRef = await db.ref('orders').push(firebaseData);
         db.ref('users/' + session.mobile).update({ address: address });
         
-        // 3. Set Local Active Order (For Auto-Tracking)
-        localStorage.setItem('rmz_active_order', JSON.stringify({id: newOrderRef.key, ...orderData}));
-        
-        // 4. Clear Cart
+        // Save Correctly to LocalStorage
+        localStorage.setItem('rmz_active_order', JSON.stringify({id: newOrderRef.key, ...localData}));
         localStorage.removeItem('rmz_cart');
 
-        // 5. Success Animation
         const overlay = document.getElementById('successOverlay');
         overlay.classList.add('active');
 
         setTimeout(() => {
             overlay.classList.remove('active');
-            // Instead of reloading, we switch UI modes directly
-            enableTrackingMode({id: newOrderRef.key, ...orderData});
-            btn.disabled = false; btn.innerHTML = '<div>...</div>'; // Reset button text structure
+            window.location.href = 'home.html';
         }, 2000);
 
     } catch (err) {
@@ -355,3 +318,4 @@ function showToast(msg) {
     t.classList.remove('opacity-0', 'pointer-events-none');
     setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2500);
 }
+
