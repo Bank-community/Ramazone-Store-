@@ -118,17 +118,22 @@ function setupUI() {
     document.getElementById('sidebarNav').innerHTML = menuHtml;
 }
 
-// --- SEARCH BAR LOGIC (UPDATED) ---
+// --- SEARCH BAR LOGIC (UPDATED FOR BOTTOM STICKY UI) ---
 function activateSearch() {
-    // Enable Search Mode UI
+    // Add class to body to change layout to "Search Mode"
     document.body.classList.add('search-mode');
     document.getElementById('headerControls').classList.add('hidden');
     document.getElementById('clearSearchBtn').classList.remove('hidden');
+    
+    // Optional: Scroll to bottom to ensure view is correct when keyboard opens
+    setTimeout(() => {
+        window.scrollTo(0, document.body.scrollHeight);
+    }, 300);
 }
 
 function deactivateSearch() {
-    // Only revert if empty, otherwise keep search mode active
-    // This allows user to scroll list while keeping search bar at bottom
+    // Only revert layout if input is empty, otherwise keep "Search Mode" active
+    // This keeps the search bar at the bottom while user scrolls results
     setTimeout(() => {
         const val = document.getElementById('searchInput').value;
         if(!val) {
@@ -142,14 +147,14 @@ function deactivateSearch() {
 function clearSearch() {
     const input = document.getElementById('searchInput');
     input.value = '';
-    filterProducts(); // Reset list
+    filterProducts(); // Reset List
     
-    // Reset UI completely
+    // Completely reset UI
     document.body.classList.remove('search-mode');
     document.getElementById('headerControls').classList.remove('hidden');
     document.getElementById('clearSearchBtn').classList.add('hidden');
     
-    input.blur(); // Close keyboard
+    input.blur(); // Close Keyboard
 }
 
 // --- REPEAT LAST ORDER ---
@@ -389,6 +394,11 @@ function filterProducts() {
         );
     }
     renderList(filteredProducts);
+    
+    // Auto Scroll to bottom if in search mode (Ensures items are near the search bar)
+    if(document.body.classList.contains('search-mode')) {
+        setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 50);
+    }
 }
 
 function renderList(products) {
@@ -396,7 +406,8 @@ function renderList(products) {
     list.innerHTML = '';
     
     if(products.length === 0) {
-        list.innerHTML = `<div class="p-8 text-center opacity-50"><p class="text-xs">No items found</p></div>`;
+        // Show empty message properly aligned
+        list.innerHTML = `<div class="p-8 text-center opacity-50 flex flex-col items-center justify-center h-40"><p class="text-xs">No items found</p></div>`;
         return;
     }
 
@@ -429,7 +440,8 @@ function renderList(products) {
             li.onclick = () => openAddModal(id, item.name, item.qty);
             li.classList.add('cursor-pointer');
         } else {
-            // Prevent Default on Mouse Down prevents focus loss on the search input
+            // FIX: onmousedown="event.preventDefault()" prevents the button click from stealing focus
+            // This keeps the keyboard OPEN when adding items
             rightAction = `<button onmousedown="event.preventDefault()" onclick="addToCartLocal('${item.name}', '${item.qty}')" class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-900 hover:text-white transition active:scale-90"><i class="fa-solid fa-plus text-xs"></i></button>`;
         }
 
@@ -652,3 +664,4 @@ function openInvoice(oid) {
     if(o.cart) { o.cart.forEach(i => { tbody.innerHTML += `<tr><td class="py-2 px-4 border-b border-slate-50"><p class="font-bold text-slate-800">${i.name}</p><p class="text-[10px] text-slate-400">${i.qty}</p></td><td class="py-2 px-4 border-b border-slate-50 text-right font-bold text-slate-700">x${i.count}</td></tr>`; }); }
     document.getElementById('invoiceModal').classList.remove('hidden');
 }
+
