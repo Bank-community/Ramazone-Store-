@@ -88,63 +88,74 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* --- NEW SEARCH UI LOGIC (Updated for Bottom Layout) --- */
+        /* --- CHAT-STYLE SEARCH UI LOGIC --- */
         
-        /* Jab 'search-mode' class body par add hogi, tab ye elements hide honge */
+        /* Elements to hide when searching */
         body.search-mode .hide-on-search {
             display: none !important;
         }
         
-        /* Prevent body scroll when searching to keep layout stable */
+        /* Search Mode Body Layout */
         body.search-mode {
-            overflow: hidden;
-            background-color: #f1f5f9; /* Dim background */
+            overflow: hidden; /* Prevent background scrolling */
+            background-color: #f8fafc;
         }
 
-        /* SEARCH BAR - BOTTOM FIXED */
+        /* 1. SEARCH BAR - Fixed at BOTTOM */
         body.search-mode #searchContainer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            top: auto; /* Reset top */
-            z-index: 60; /* Sabse upar */
+            top: auto;
+            z-index: 60;
             background: white;
-            padding: 12px 16px;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1); /* Shadow upwards */
+            padding: 10px 16px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
             border-top: 1px solid #e2e8f0;
             border-bottom: none;
             margin: 0;
             width: 100%;
+            height: auto;
         }
 
-        /* PRODUCT LIST - FILLS SPACE ABOVE SEARCH BAR */
+        /* 2. PRODUCT LIST - Fills space ABOVE search bar */
         body.search-mode #productList {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 70px; /* Search bar height approx */
-            padding-top: 10px;
-            padding-bottom: 20px;
-            padding-left: 10px;
-            padding-right: 10px;
-            overflow-y: auto;
-            min-height: auto;
-            background: #f8fafc;
+            bottom: 70px; /* Space for search bar */
             z-index: 50;
+            
+            /* Magic for Chat Style: Content sticks to bottom */
             display: flex;
-            flex-direction: column-reverse; /* Items stack from bottom up like chat (optional, remove if standard list preferred) */
-            justify-content: flex-end; /* Start from top */
+            flex-direction: column; /* Items stack normally (Top to Bottom) */
+            justify-content: flex-end; /* But the whole block is pushed to the bottom */
+            
+            overflow-y: auto; /* Scrollable if list is long */
+            padding: 16px;
+            padding-bottom: 10px;
+            background-color: #f8fafc;
+            min-height: 0; /* Important for flex scrolling */
         }
         
-        /* Remove column-reverse if you want standard top-down list */
-        body.search-mode #productList {
-            flex-direction: column; 
-            justify-content: flex-start;
+        /* Ensure list items look good in chat mode */
+        body.search-mode #productList li {
+            border-radius: 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            border: 1px solid #f1f5f9;
+            background: white;
+            animation: popIn 0.2s ease-out;
+        }
+        
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Sticky Search Active State - Input Styling Update */
+        /* Input Styling in Search Mode */
         body.search-mode #searchInput {
             background-color: #f1f5f9;
             border-color: #cbd5e1;
@@ -242,7 +253,7 @@
                     <input type="text" id="searchInput" onfocus="activateSearch()" onblur="deactivateSearch()" onkeyup="filterProducts()" placeholder="Search items..." class="w-full bg-white border border-slate-300 rounded-full py-2 pl-9 pr-8 text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all">
                     <i class="fa-solid fa-search absolute left-3.5 top-2.5 text-slate-400 text-xs"></i>
                     
-                    <!-- Clear Button - Visible Only in Search Mode (Handled by JS/CSS) -->
+                    <!-- Close/Clear Button -->
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1.5 w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 z-10">
                         <i class="fa-solid fa-xmark text-[10px]"></i>
                     </button>
@@ -281,6 +292,7 @@
             <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
         </button>
 
+        <!-- Product List -->
         <ul id="productList" class="space-y-0.5">
             <div class="text-center py-12">
                 <div class="loader inline-block"></div>
@@ -510,11 +522,10 @@
     <script src="home.js"></script>
     <script>
         // --- NEW FIX: PREVENT KEYBOARD CLOSE ON ADD CLICK ---
-        // This script intercepts clicks on the product list during search mode
         document.getElementById('productList').addEventListener('mousedown', function(e) {
             // Check if user clicked a button (like the 'Add' button)
             if(document.body.classList.contains('search-mode') && e.target.closest('button')) {
-                // Prevent default behavior (which is losing focus from input)
+                // Prevent default behavior (focus loss from input)
                 e.preventDefault();
             }
         });
@@ -522,3 +533,5 @@
 
 </body>
 </html>
+
+
