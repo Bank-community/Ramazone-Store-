@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #111827; color: white; -webkit-tap-highlight-color: transparent; }
@@ -24,11 +24,12 @@
         .glass-card { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(75, 85, 99, 0.4); }
         .pulse-border { animation: pulse-orange 2s infinite; }
         @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+        
+        .badge-me { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: 1px solid #60a5fa; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
     </style>
 </head>
 <body class="pb-24">
 
-    <!-- HEADER -->
     <header class="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-30 px-4 py-3 flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-3">
             <button onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition active:scale-95">
@@ -49,15 +50,21 @@
         </div>
     </header>
 
-    <!-- SIDEBAR MENU -->
     <div id="menuOverlay" class="overlay fixed inset-0 bg-black/80 z-40 backdrop-blur-sm" onclick="toggleMenu()"></div>
     <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-gray-900 z-50 shadow-2xl flex flex-col border-r border-gray-800">
         <div class="p-6 bg-gray-800 border-b border-gray-700">
-            <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-3 border-2 border-amber-500">
+            <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-3 border-2 border-amber-500 overflow-hidden">
                 <i class="fa-solid fa-user text-2xl text-gray-400"></i>
             </div>
             <h2 class="font-bold text-lg text-white" id="menuName">Partner</h2>
             <p class="text-xs text-gray-400 font-mono" id="menuMobile">+91 ...</p>
+            <div class="mt-2 flex gap-1 justify-center">
+                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+            </div>
         </div>
         <nav class="flex-1 p-4 space-y-2">
             <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3">
@@ -73,10 +80,8 @@
         </nav>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="px-4 mt-20">
         
-        <!-- STATS BOXES -->
         <div id="statsSection" class="hidden grid grid-cols-2 gap-3 mb-6">
             <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex flex-col items-center shadow-lg">
                 <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Earnings</span>
@@ -88,14 +93,12 @@
             </div>
         </div>
 
-        <!-- Offline State -->
         <div id="offlineState" class="flex flex-col items-center justify-center py-12 text-center">
             <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-600"><i class="fa-solid fa-power-off text-3xl"></i></div>
             <h2 class="text-lg font-bold text-gray-300">You are Offline</h2>
-            <p class="text-sm text-gray-500 mt-1">Go Online to receive orders</p>
+            <p class="text-sm text-gray-500 mt-1">Go Online to start your shift</p>
         </div>
 
-        <!-- Online Scanning -->
         <div id="noOrdersState" class="hidden flex flex-col items-center justify-center py-12 text-center">
             <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 relative">
                 <span class="absolute w-full h-full rounded-full animate-ping bg-amber-500/20"></span>
@@ -105,37 +108,33 @@
             <p class="text-xs text-gray-500 mt-4 bg-gray-800 px-3 py-1 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i> <span id="locStatus">GPS Waiting...</span></p>
         </div>
 
-        <!-- ORDERS LIST -->
         <div id="ordersContainer" class="hidden space-y-4 pb-20">
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex justify-between">
-                <span>Available Deliveries</span>
+                <span>Available Tasks</span>
                 <span id="orderCount" class="bg-amber-600 text-white px-1.5 rounded">0</span>
             </h3>
             <div id="ordersList" class="space-y-4"></div>
         </div>
 
-        <!-- ACTIVE ORDER PANEL -->
         <div id="activeOrderPanel" class="hidden fixed inset-0 z-50 bg-gray-900 flex flex-col animate-[slideUp_0.3s_ease-out]">
             <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center shadow-md">
                 <h2 class="font-bold text-amber-500">Live Task</h2>
                 <span class="text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold" id="activeStatus">Processing</span>
             </div>
             <div class="flex-1 overflow-y-auto p-5 space-y-6">
-                <!-- Delivery Partner (Pick Up Section) -->
+                
                 <div class="relative pl-6 border-l-2 border-gray-700">
                     <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900"></span>
-                    <h3 class="text-xs font-bold text-gray-400 uppercase">Partner</h3>
-                    <p class="text-lg font-bold text-white mt-0.5" id="actShop">Delivery Boy Name</p>
-                    <p class="text-xs text-gray-500" id="actShopLoc">Current Location</p>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase">Partner (You)</h3>
+                    <p class="text-lg font-bold text-white mt-0.5" id="actShop">You</p>
+                    <p class="text-xs text-gray-500" id="actShopLoc">Live Location Active</p>
                 </div>
                 
-                <!-- Items Box -->
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
                     <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Order Items</h4>
                     <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
                 </div>
 
-                <!-- NEW: Customer Preferences Box -->
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
                     <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Preferences</h4>
                     <div class="flex gap-3">
@@ -150,14 +149,12 @@
                     </div>
                 </div>
 
-                <!-- Drop Off (Customer Section) -->
                 <div class="relative pl-6 border-l-2 border-gray-700">
                     <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-500 border-2 border-gray-900"></span>
                     <h3 class="text-xs font-bold text-gray-400 uppercase">Deliver To</h3>
                     <p class="text-lg font-bold text-white mt-0.5" id="actCust">Customer Name</p>
                     <p class="text-sm text-gray-400" id="actAddr">Address</p>
                     
-                    <!-- NEW WHATSAPP BUTTON -->
                     <div class="flex gap-2 mt-3">
                          <button onclick="openWhatsApp()" class="text-xs bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded flex-1 hover:bg-green-600 hover:text-white transition"><i class="fa-brands fa-whatsapp mr-1"></i> Chat</button>
                         <button onclick="openMap('cust')" class="text-xs bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded flex-1 hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-location-arrow mr-1"></i> Map</button>
@@ -177,7 +174,13 @@
 
     </div>
 
-    <!-- TOAST -->
+    <div id="celebrationOverlay" class="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center hidden">
+        <div class="text-center animate-[popIn_0.5s_ease-out]">
+            <div class="text-6xl mb-2">🎉</div>
+            <h2 class="text-3xl font-extrabold text-white drop-shadow-lg">Great Job!</h2>
+            <p class="text-xl text-green-400 font-bold drop-shadow-md">+ ₹20 Earned</p>
+        </div>
+    </div>
     <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
 
     <script>
@@ -196,7 +199,7 @@
         const session = JSON.parse(localStorage.getItem('rmz_delivery_user'));
         if (!session) window.location.href = 'delivery-login.html';
 
-        let isOnline = false, activeOrder = null, watchId;
+        let isOnline = false, activeOrder = null, watchId, heartbeatInterval;
         const PARTNER_PAY = 20;
 
         window.onload = () => {
@@ -228,6 +231,7 @@
                 document.getElementById('statsSection').classList.remove('hidden');
                 db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().set('offline');
                 startGPS();
+                startHeartbeat(); // Start Silent Ping
                 listenOrders();
             } else {
                 status.innerText = "OFFLINE"; status.classList.remove('text-green-400');
@@ -236,12 +240,47 @@
                 document.getElementById('ordersContainer').classList.add('hidden');
                 document.getElementById('statsSection').classList.add('hidden');
                 stopGPS();
+                stopHeartbeat(); // Stop Ping
                 db.ref('deliveryBoys/'+session.mobile+'/status').set('offline');
                 db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().cancel();
                 db.ref('orders').off();
             }
         }
 
+        // --- HEARTBEAT SYSTEM (SILENT TRACKING) ---
+        function startHeartbeat() {
+            if(heartbeatInterval) clearInterval(heartbeatInterval);
+            
+            // Ping immediately then every 60s
+            pingServer();
+            heartbeatInterval = setInterval(pingServer, 60000); 
+        }
+
+        function stopHeartbeat() {
+            if(heartbeatInterval) clearInterval(heartbeatInterval);
+        }
+
+        async function pingServer() {
+            if(!isOnline) return;
+            
+            let batteryLevel = 'Unknown';
+            try {
+                // Silent Battery Check
+                if(navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    batteryLevel = Math.round(battery.level * 100) + '%';
+                }
+            } catch(e) {}
+
+            // Silent DB Update
+            db.ref('deliveryBoys/'+session.mobile).update({
+                lastHeartbeat: firebase.database.ServerValue.TIMESTAMP,
+                status: 'online', // Ensure online
+                battery: batteryLevel
+            });
+        }
+
+        // --- GPS TRACKING ---
         function startGPS() {
             if("geolocation" in navigator) {
                 db.ref('deliveryBoys/'+session.mobile).update({status:'online'});
@@ -259,10 +298,8 @@
 
         function listenOrders() {
             const list = document.getElementById('ordersList');
-            
             db.ref('orders').on('value', snap => {
                 if(!isOnline) return;
-                
                 list.innerHTML = '';
                 let count = 0;
                 
@@ -272,23 +309,30 @@
                         const address = o.location && o.location.address ? o.location.address : "Address Hidden";
                         const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
                         const slab = o.payment && o.payment.slab ? o.payment.slab : 'Standard';
-                        
-                        // NEW: Preferences extraction
                         const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
                         const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
 
-                        if(o.status === 'placed') {
+                        let assignedInfo = "";
+                        let cardClass = "glass-card";
+                        
+                        if(o.status === 'placed' || (o.status === 'accepted' && o.deliveryBoyId === session.mobile)) {
                             count++;
                             
+                            if(o.deliveryBoyId === session.mobile) {
+                                assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`;
+                                cardClass = "glass-card border-2 border-blue-500 bg-blue-900/20";
+                            }
+
                             let prodTxt = o.cart ? o.cart.map(i => `${i.count}x ${i.name}`).join(', ') : 'Items';
                             
                             const div = document.createElement('div');
-                            div.className = "glass-card p-4 rounded-xl pulse-border";
+                            div.className = `${cardClass} p-4 rounded-xl pulse-border relative`;
                             
-                            const btnDisabled = activeOrder ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
-                            const btnText = activeOrder ? 'Finish Current Task First' : 'ACCEPT ORDER';
-                            const bgClass = activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500';
-                            
+                            const btnDisabled = (activeOrder && activeOrder.id !== id) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+                            const btnText = (activeOrder && activeOrder.id === id) ? 'CONTINUE TASK' : (activeOrder ? 'Finish Current' : 'ACCEPT ORDER');
+                            const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
+                            const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${JSON.stringify(o).replace(/"/g, '"')})` : `acceptOrder('${id}')`;
+
                             div.innerHTML = `
                                 <div class="flex justify-between items-start mb-2">
                                     <h4 class="font-bold text-white text-lg">${shopName}</h4>
@@ -298,15 +342,15 @@
                                     <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
                                     <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
                                     <p><i class="fa-solid fa-weight-hanging mr-1"></i> ${slab}</p>
-                                    <!-- NEW: BADGES -->
                                     <div class="flex gap-2 mt-2">
                                         <span class="bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-700"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
                                         <span class="bg-pink-900 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-700"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
                                     </div>
+                                    ${assignedInfo}
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="window.open('https://maps.google.com/?q=${o.location.lat},${o.location.lng}', '_blank')" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Check Location"><i class="fa-solid fa-map-location-dot"></i></button>
-                                    <button onclick="acceptOrder('${id}')" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
+                                    <button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
                                         ${btnText}
                                     </button>
                                 </div>
@@ -382,23 +426,20 @@
             document.getElementById('statsSection').classList.add('hidden');
             document.getElementById('activeOrderPanel').classList.remove('hidden');
             
-            const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
             const custName = o.user && o.user.name ? o.user.name : "Customer";
             const address = o.location && o.location.address ? o.location.address : "Unknown Address";
             const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
-            
-            // NEW: Prefs for Active Panel
             const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
             const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
 
-            document.getElementById('actShop').innerText = session.name;
-            document.getElementById('actShopLoc').innerText = "Live Location Active";
+            document.getElementById('actShop').innerText = "You (Partner)";
+            document.getElementById('actShop').classList.add('text-blue-400');
+            document.getElementById('actShopLoc').innerText = "Your GPS is Live Tracking";
             
             document.getElementById('actCust').innerText = custName;
             document.getElementById('actAddr').innerText = address;
             document.getElementById('actFee').innerText = fee;
             
-            // Set Prefs
             document.getElementById('actPrefTime').innerText = prefTime;
             document.getElementById('actPrefBudget').innerText = prefBudg;
 
@@ -434,7 +475,8 @@
             
             db.ref('orders/'+activeOrder.id).update(updates).then(() => {
                 if(st === 'delivered') {
-                    showToast("Order Completed!");
+                    triggerCelebration();
+                    showToast("Order Completed! Great Job!");
                     
                     db.ref('deliveryBoys/'+session.mobile+'/earnings').transaction(current => (current || 0) + PARTNER_PAY);
                     db.ref('deliveryBoys/'+session.mobile+'/trips').transaction(current => (current || 0) + 1);
@@ -448,6 +490,13 @@
             });
         }
 
+        function triggerCelebration() {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            const overlay = document.getElementById('celebrationOverlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('hidden'), 3000);
+        }
+
         function fetchEarnings() {
             db.ref('deliveryBoys/'+session.mobile).on('value', s => {
                 if(s.exists()) {
@@ -458,23 +507,12 @@
             });
         }
 
-        // Utils
         function changePin() { toggleMenu(); const p = prompt("New PIN:"); if(p && p.length===4) db.ref('deliveryBoys/'+session.mobile).update({pin:p}).then(()=>showToast("PIN Changed")); }
         function updateVehicle() { toggleMenu(); const v = prompt("Vehicle (Bike/Cycle):"); if(v) { db.ref('deliveryBoys/'+session.mobile).update({vehicle:v}); session.vehicle=v; localStorage.setItem('rmz_delivery_user',JSON.stringify(session)); document.getElementById('vehicleType').innerText=v; }}
         function logout() { localStorage.removeItem('rmz_delivery_user'); window.location.href='delivery-login.html'; }
-        function openMap(type) { 
-            if(activeOrder && activeOrder.location)
-                window.open(`https://maps.google.com/?q=${activeOrder.location.lat},${activeOrder.location.lng}`, '_blank'); 
-        }
-        function callCust() { 
-            if(activeOrder && activeOrder.user)
-                window.open(`tel:${activeOrder.user.mobile}`); 
-        }
-        function openWhatsApp() {
-            if(activeOrder && activeOrder.user)
-                window.open(`https://wa.me/91${activeOrder.user.mobile}`, '_blank');
-        }
+        function openMap(type) { if(activeOrder && activeOrder.location) window.open(`https://maps.google.com/?q=${activeOrder.location.lat},${activeOrder.location.lng}`, '_blank'); }
+        function callCust() { if(activeOrder && activeOrder.user) window.open(`tel:${activeOrder.user.mobile}`); }
+        function openWhatsApp() { if(activeOrder && activeOrder.user) window.open(`https://wa.me/91${activeOrder.user.mobile}`, '_blank'); }
     </script>
 </body>
 </html>
-
