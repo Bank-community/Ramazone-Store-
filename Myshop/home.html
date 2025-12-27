@@ -30,103 +30,94 @@
         /* Custom Checkbox */
         .custom-check { width: 22px; height: 22px; accent-color: #ef4444; transform: scale(1.1); }
         
-        /* --- SLIDER CSS (16:4 Ratio) --- */
-        .slider-container {
-            width: 100%;
-            aspect-ratio: 16/4;
-            overflow: hidden;
-            position: relative;
-            background: #e2e8f0;
-        }
-        
-        .slider-wrapper {
-            display: flex;
-            height: 100%;
-        }
-        
-        .slide {
-            height: 100%;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            background-size: cover;
-            background-position: center;
-        }
-
-        /* Dot Indicators */
-        .slider-dot {
-            width: 6px; height: 6px; background: rgba(255,255,255,0.5); border-radius: 50%; transition: all 0.3s;
-        }
+        /* --- SLIDER CSS --- */
+        .slider-container { width: 100%; aspect-ratio: 16/4; overflow: hidden; position: relative; background: #e2e8f0; }
+        .slider-wrapper { display: flex; height: 100%; }
+        .slide { height: 100%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; text-align: center; background-size: cover; background-position: center; }
+        .slider-dot { width: 6px; height: 6px; background: rgba(255,255,255,0.5); border-radius: 50%; transition: all 0.3s; }
         .slider-dot.active { width: 18px; background: white; border-radius: 10px; }
 
         /* Stats Card Style */
-        .stat-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 8px 4px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            height: 80px; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .repeat-btn {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 4px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .repeat-btn { background: #f0fdf4; border: 1px solid #bbf7d0; cursor: pointer; transition: all 0.2s; }
         .repeat-btn:active { transform: scale(0.95); background: #dcfce7; }
 
-        /* Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* --- NEW SEARCH FOCUS LOGIC (CSS ONLY) --- */
+        /* --- NEW SEARCH UI LOGIC (UPDATED FOR BOTTOM ALIGNMENT) --- */
         
-        /* Jab 'search-mode' class body par add hogi, tab ye elements hide honge */
-        body.search-mode .hide-on-search {
-            display: none !important;
-        }
+        /* Hide elements when search mode is active */
+        body.search-mode .hide-on-search { display: none !important; }
 
-        /* Adjust Product List when search is active */
+        /* Product List styling when Search is Active */
         body.search-mode #productList {
-            padding-top: 80px; /* Push list down to be visible below fixed search bar */
+            padding-top: 10px;
+            padding-bottom: 80px; /* Space for the bottom search bar */
             min-height: 100vh;
+            background: #fff;
+            
+            /* Magic Flex Logic to push items to Bottom */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-end; /* Items start from bottom */
         }
 
-        /* Sticky Search Active State */
+        /* Search Container: Sticky at Bottom */
         body.search-mode #searchContainer {
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
             right: 0;
-            z-index: 60; /* Sabse upar */
+            top: auto;
+            z-index: 999;
             background: white;
             padding: 12px 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border-bottom: 1px solid #f1f5f9;
-            margin: 0;
-            width: 100%;
+            border-top: none;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Color Picker Input Style */
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            overflow: hidden;
-            padding: 0;
-            cursor: pointer;
+        /* Input Styling for Search Mode (Yellow Border) */
+        body.search-mode #searchInput {
+            border: 2px solid #fbbf24; /* Amber-400 */
+            border-radius: 50px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            padding-left: 45px;
+            font-size: 14px;
+            color: #334155;
+            box-shadow: none;
         }
+        
+        /* Icon positioning in search mode */
+        body.search-mode .search-icon-pos {
+            top: 50%;
+            transform: translateY(-50%);
+            left: 28px;
+            color: #94a3b8;
+            font-size: 16px;
+            z-index: 1000;
+        }
+
+        /* Close Button Styling */
+        body.search-mode #clearSearchBtn {
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e2e8f0;
+            color: #64748b;
+            width: 24px;
+            height: 24px;
+        }
+
+        body.search-mode #headerControls { display: none; }
+
+        /* Color Picker Styles */
+        input[type="color"] { -webkit-appearance: none; border: none; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; padding: 0; cursor: pointer; }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
 
@@ -200,21 +191,22 @@
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="sidebarNav"></nav>
     </div>
 
-    <div class="px-4 pb-10 min-h-[50vh] mt-0.5 relative">
+    <div class="px-0 pb-10 min-h-[50vh] mt-0.5 relative">
         
-        <div id="searchContainer" class="search-container flex items-center justify-between px-1 mb-3 border-t border-slate-100 pt-3 gap-3 bg-transparent transition-all duration-300">
-            <div class="flex-1">
-                <div class="relative">
-                    <input type="text" id="searchInput" onfocus="activateSearch()" onblur="deactivateSearch()" onkeyup="filterProducts()" placeholder="Search items..." class="w-full bg-white border border-slate-300 rounded-full py-2 pl-9 pr-8 text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all">
-                    <i class="fa-solid fa-search absolute left-3.5 top-2.5 text-slate-400 text-xs"></i>
+        <div id="searchContainer" class="flex items-center justify-between px-4 mb-3 border-t border-slate-100 pt-3 gap-3 bg-white transition-all duration-300">
+            <div class="flex-1 w-full">
+                <div class="relative w-full">
+                    <input type="text" id="searchInput" onfocus="activateSearch()" onblur="deactivateSearch()" onkeyup="filterProducts()" placeholder="Search items..." class="w-full bg-white border border-slate-300 rounded-full py-2 pl-9 pr-10 text-sm font-medium focus:ring-0 focus:border-amber-400 shadow-sm transition-all outline-none">
                     
-                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1.5 w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800">
-                        <i class="fa-solid fa-xmark text-[10px]"></i>
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-slate-400 text-sm search-icon-pos"></i>
+                    
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1.5 w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 z-10">
+                        <i class="fa-solid fa-xmark text-[10px] font-bold"></i>
                     </button>
                 </div>
             </div>
 
-            <div id="headerControls" class="flex bg-white rounded-lg border border-slate-200 p-0.5 shadow-sm h-9 items-center">
+            <div id="headerControls" class="flex bg-white rounded-lg border border-slate-200 p-0.5 shadow-sm h-9 items-center flex-shrink-0">
                 <button onclick="shareStore()" class="w-8 h-8 flex items-center justify-center rounded text-slate-400 hover:text-green-600 hover:bg-green-50 transition" title="Share Store">
                     <i class="fa-solid fa-share-nodes text-xs"></i>
                 </button>
@@ -232,21 +224,22 @@
             </div>
         </div>
 
-        <button id="customReqBtn" onclick="openCustomRequestModal()" class="hide-on-search w-full mb-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl py-3 px-4 shadow-lg flex items-center justify-between active:scale-95 transition border border-slate-700">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-yellow-400">
-                    <i class="fa-solid fa-pen-to-square"></i>
+        <div class="px-4">
+            <button id="customReqBtn" onclick="openCustomRequestModal()" class="hide-on-search w-full mb-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl py-3 px-4 shadow-lg flex items-center justify-between active:scale-95 transition border border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-yellow-400">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-xs font-bold text-yellow-400">🪄Magic Box 🎁 Kuch aur chahiye?</p>
+                        <p class="text-[10px] text-slate-400">Ramazone - बस नाम लिखिए… बाकी हम संभाल लेंगे।</p>
+                    </div>
                 </div>
-                <div class="text-left">
-                    <p class="text-xs font-bold text-yellow-400">🪄Magic Box 🎁 Kuch aur chahiye?</p>
-                    <p class="text-[10px] text-slate-400">Ramazone - बस नाम लिखिए…
-बाकी हम संभाल लेंगे।</p>
-                </div>
-            </div>
-            <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
-        </button>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+            </button>
+        </div>
 
-        <ul id="productList" class="space-y-0.5">
+        <ul id="productList" class="space-y-0.5 px-0">
             <div class="text-center py-12">
                 <div class="loader inline-block"></div>
                 <p class="text-xs text-slate-400 mt-2">Loading Products...</p>
@@ -254,7 +247,7 @@
         </ul>
     </div>
 
-    <div class="text-center py-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 border-t border-slate-200">
+    <div class="hide-on-search text-center py-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 border-t border-slate-200">
         Delivered by Ramazone 🚚
     </div>
 
@@ -265,7 +258,7 @@
         </button>
     </div>
 
-    <div class="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-3">
+    <div class="hide-on-search fixed bottom-6 right-6 z-30 flex flex-col items-end gap-3">
         <button id="fabAddStock" onclick="openAddModal()" class="hidden add-float w-12 h-12 rounded-full text-white flex items-center justify-center active:scale-90 transition hover:bg-slate-800">
             <i class="fa-solid fa-plus text-lg"></i>
         </button>
