@@ -89,89 +89,15 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* --- CHAT-STYLE SEARCH UI LOGIC --- */
-        
-        /* Elements to hide when searching */
-        body.search-mode .hide-on-search {
-            display: none !important;
-        }
-        
-        /* Search Mode Body Layout */
-        body.search-mode {
-            overflow: hidden; /* Prevent background scrolling */
-            background-color: #f8fafc;
-        }
+        body.search-mode .hide-on-search { display: none !important; }
+        body.search-mode { overflow: hidden; background-color: #f8fafc; }
+        body.search-mode #searchContainer { position: fixed; bottom: 0; left: 0; right: 0; top: auto; z-index: 60; background: white; padding: 10px 16px; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1); border-top: 1px solid #e2e8f0; border-bottom: none; margin: 0; width: 100%; height: auto; }
+        body.search-mode #productList { position: fixed; top: 0; left: 0; right: 0; bottom: 70px; z-index: 50; display: flex; flex-direction: column; justify-content: flex-end; overflow-y: auto; padding: 16px; padding-bottom: 10px; background-color: #f8fafc; min-height: 0; }
+        body.search-mode #productList li { border-radius: 12px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; background: white; animation: popIn 0.2s ease-out; }
+        @keyframes popIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body.search-mode #searchInput { background-color: #f1f5f9; border-color: #cbd5e1; }
 
-        /* 1. SEARCH BAR - Fixed at BOTTOM */
-        body.search-mode #searchContainer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: auto;
-            z-index: 60;
-            background: white;
-            padding: 10px 16px;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-            border-top: 1px solid #e2e8f0;
-            border-bottom: none;
-            margin: 0;
-            width: 100%;
-            height: auto;
-        }
-
-        /* 2. PRODUCT LIST - Fills space ABOVE search bar */
-        body.search-mode #productList {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 70px; /* Space for search bar */
-            z-index: 50;
-            
-            /* Magic for Chat Style: Content sticks to bottom */
-            display: flex;
-            flex-direction: column; /* Items stack normally (Top to Bottom) */
-            justify-content: flex-end; /* But the whole block is pushed to the bottom */
-            
-            overflow-y: auto; /* Scrollable if list is long */
-            padding: 16px;
-            padding-bottom: 10px;
-            background-color: #f8fafc;
-            min-height: 0; /* Important for flex scrolling */
-        }
-        
-        /* Ensure list items look good in chat mode */
-        body.search-mode #productList li {
-            border-radius: 12px;
-            margin-bottom: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            border: 1px solid #f1f5f9;
-            background: white;
-            animation: popIn 0.2s ease-out;
-        }
-        
-        @keyframes popIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Input Styling in Search Mode */
-        body.search-mode #searchInput {
-            background-color: #f1f5f9;
-            border-color: #cbd5e1;
-        }
-
-        /* Color Picker Input Style */
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            overflow: hidden;
-            padding: 0;
-            cursor: pointer;
-        }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; padding: 0; cursor: pointer; }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
 
@@ -181,6 +107,13 @@
             #invoiceModal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: white; z-index: 9999; }
             .no-print { display: none !important; }
         }
+
+        /* Timeline in Modal */
+        .modal-timeline-item { position: relative; padding-left: 24px; padding-bottom: 20px; border-left: 2px solid #e2e8f0; }
+        .modal-timeline-item:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
+        .modal-timeline-dot { position: absolute; left: -7px; top: 0; width: 12px; height: 12px; border-radius: 50%; background: #e2e8f0; border: 2px solid #fff; }
+        .modal-timeline-item.active .modal-timeline-dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); }
+        .modal-timeline-item.active { border-left-color: #22c55e; }
     </style>
 </head>
 <body class="text-slate-800 antialiased pb-32">
@@ -208,6 +141,29 @@
             <div class="slide bg-slate-200"></div>
         </div>
         <div id="dotsContainer" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none"></div>
+    </div>
+
+    <!-- LIVE TRACKING BANNER (NEW FEATURE) -->
+    <div id="liveOrderBanner" onclick="openTrackingModal()" class="hidden hide-on-search mx-4 mt-4 bg-white rounded-xl shadow-lg border border-blue-100 p-4 flex items-center justify-between relative overflow-hidden active:scale-95 transition cursor-pointer group">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition">
+                <div class="relative">
+                    <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                    </span>
+                    <i class="fa-solid fa-truck-fast text-blue-600 text-lg"></i>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Order</p>
+                <h3 class="font-bold text-slate-800 text-sm" id="bannerStatus">Processing...</h3>
+            </div>
+        </div>
+        <div class="text-right">
+            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full group-hover:bg-blue-600 group-hover:text-white transition shadow-sm">Track <i class="fa-solid fa-chevron-right text-[10px] ml-1"></i></span>
+        </div>
     </div>
 
     <div id="statsSection" class="hide-on-search px-4 py-3 grid grid-cols-3 gap-2">
@@ -329,7 +285,63 @@
         </button>
     </div>
 
-    <div id="supportModal" class="hidden fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+    <!-- TRACKING MODAL (NEW FEATURE) -->
+    <div id="trackingModal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
+        <div class="bg-white w-full max-w-md h-[85vh] sm:h-auto rounded-t-2xl sm:rounded-2xl p-0 shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.3s_ease-out]">
+            <!-- Header -->
+            <div class="bg-slate-900 p-4 flex justify-between items-center shrink-0">
+                 <div>
+                    <h2 class="text-white font-bold text-lg">Order #<span id="modalOrderId">...</span></h2>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Live Status Update</p>
+                </div>
+                <button onclick="closeTrackingModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-90"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+    
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-5 bg-slate-50 space-y-5">
+                 <!-- Timeline -->
+                 <div class="space-y-0 pl-2 border-l-2 border-slate-200 ml-2 py-2" id="modalTimeline">
+                     <!-- Items injected via JS -->
+                 </div>
+    
+                 <!-- Partner Info Card -->
+                 <div id="modalPartnerCard" class="hidden bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                     <div class="flex items-center gap-3">
+                         <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center"><i class="fa-solid fa-motorcycle text-green-600"></i></div>
+                         <div>
+                             <p class="text-[10px] text-slate-400 font-bold uppercase">Delivery Partner</p>
+                             <h4 class="font-bold text-slate-800 text-sm" id="modalPartnerName">Assigning...</h4>
+                         </div>
+                     </div>
+                     <div class="flex gap-2 mt-3">
+                         <a id="btnCallPartner" href="#" class="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-lg text-xs font-bold text-center border border-slate-200 hover:bg-slate-200"><i class="fa-solid fa-phone mr-1"></i> Call</a>
+                         <a id="btnChatPartner" href="#" class="flex-1 bg-green-50 text-green-600 py-2.5 rounded-lg text-xs font-bold text-center border border-green-100 hover:bg-green-100"><i class="fa-brands fa-whatsapp mr-1 text-sm"></i> Chat</a>
+                     </div>
+                 </div>
+    
+                 <!-- Order Items List -->
+                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                     <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-100 pb-2 flex justify-between items-center">
+                         <span>Ordered Items</span>
+                         <i class="fa-solid fa-basket-shopping"></i>
+                     </h3>
+                     <div id="modalItemsList" class="space-y-3 text-sm"></div>
+                     <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 p-2 rounded-lg">
+                         <span class="font-bold text-slate-600 text-xs uppercase">Total Amount</span>
+                         <span class="font-extrabold text-slate-900 text-lg">₹<span id="modalTotal">0</span></span>
+                     </div>
+                 </div>
+            </div>
+            
+            <!-- Cancel / Help Actions -->
+            <div class="p-4 bg-white border-t border-slate-100 shrink-0" id="modalFooterActions">
+                <p class="text-[10px] text-center text-slate-400 mb-3 font-bold uppercase">Having issues?</p>
+                <button onclick="openSupportOptions()" class="w-full py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition">CONTACT SUPPORT</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="supportModal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-[slideUp_0.2s_ease-out]">
             <div class="text-center mb-6">
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 text-green-600">
@@ -533,5 +545,3 @@
 
 </body>
 </html>
-
-
