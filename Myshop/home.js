@@ -14,8 +14,10 @@ const db = firebase.database();
 // --- STATE MANAGEMENT ---
 const session = JSON.parse(localStorage.getItem('rmz_user'));
 const urlParams = new URLSearchParams(window.location.search);
+// Default to session mobile if 'shop' param is missing (for owner view)
 const targetMobile = urlParams.get('shop') || (session ? session.mobile : null);
 
+// If no target shop and no session, go to login
 if (!targetMobile) window.location.href = 'index.html'; 
 
 const isOwner = session && session.mobile === targetMobile;
@@ -35,18 +37,26 @@ let slideIndex = 1;
 let slideInterval;
 let isTransitioning = false;
 
+// Tracking Variables
+let activeTrackingOrder = null;
+
 // --- INITIALIZATION ---
 window.onload = () => {
+    // 1. UI & User Data
     setupUI();
     loadShopData();
     loadProfile();
     updateCartBadge();
     
-    // Core Features
-    initSeamlessSlider();
+    // 2. Core Content (Products & Slider)
+    // IMPORTANT: Order matters here to prevent empty screens
+    loadLocalProducts(); // Show cached first for speed
+    syncProducts();      // Then fetch fresh from Firebase
+    initSeamlessSlider(); // Start slider
+    
+    // 3. Stats & Tracking
     calculateStats();
-    loadLocalProducts(); 
-    syncProducts(); 
+    checkActiveOrderHome(); // Check for live order banner
 };
 
 // --- UTILS ---
@@ -55,13 +65,251 @@ function showToast(msg) {
     document.getElementById('toastMsg').innerText = msg;
     t.classList.remove('opacity-0', 'pointer-events-none');
     t.style.transform = "translate(-50%, 0)";
-    setTimeout(() => { t.classList.add('opacity-0', 'pointer-events-none'); t.style.transform = "translate(-50%, -10px)"; }, 2000);
+    setTimeout(() => { 
+        t.classList.add('opacity-0', 'pointer-events-none'); 
+        t.style.transform = "translate(-50%, -10px)"; 
+    }, 2000);
 }
 
-function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-function logout() { localStorage.removeItem('rmz_user'); window.location.href='index.html'; }
+function toggleMenu() { 
+    document.getElementById('sidebar').classList.toggle('open'); 
+    document.getElementById('menuOverlay').classList.toggle('open'); 
+}
 
-// --- UI SETUP ---
+function logout() { 
+    localStorage.removeItem('rmz_user'); 
+    window.location.href='index.html'; 
+}
+
+// --- TRACKING & BANNER LOGIC ---
+
+function checkActiveOrderHome() {
+    const savedOrder = JSON.parse(localStorage.getItem('rmz_active_order'));
+    
+    if (savedOrder) {
+        let ts = savedOrder.timestamp;
+        // Safety check for timestamp type
+        if (typeof ts === 'object' || !ts) ts = Date.now(); 
+        
+        const orderDate = new Date(ts);
+        const today = new Date();
+        const isSameDay = orderDate.getDate() === today.getDate() && 
+                          orderDate.getMonth() === today.getMonth() && 
+                          orderDate.getFullYear() === today.getFullYear();
+
+        if (isSameDay && savedOrder.status !== 'delivered' && savedOrder.status !== 'cancelled') {
+            activateBanner(savedOrder);
+            return;
+        } else {
+            // Clear expired/invalid local data
+            localStorage.removeItem('rmz_active_order');
+        }
+    }
+    // Fallback: Check Cloud if nothing local found
+    fetchActiveOrderFromCloud();
+}
+
+function fetchActiveOrderFromCloud() {
+    // Check for the last order made by this user in DB
+    if(!session || !session.mobile) return;
+
+    db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).limitToLast(1).once('value', snap => {
+        if(snap.exists()) {
+            const data = snap.val();
+            const orderId = Object.keys(data)[0];
+            const order = data[orderId];
+            
+            let ts = order.timestamp; 
+            if(typeof ts === 'object' || !ts) ts = Date.now();
+
+            const orderDate = new Date(ts);
+            const today = new Date();
+            const isSameDay = orderDate.getDate() === today.getDate() && 
+                              orderDate.getMonth() === today.getMonth() && 
+                              orderDate.getFullYear() === today.getFullYear();
+
+            if (isSameDay && order.status !== 'delivered' && order.status !== 'cancelled') {
+                const fullOrder = { id: orderId, ...order, timestamp: ts }; // Store clean TS
+                localStorage.setItem('rmz_active_order', JSON.stringify(fullOrder));
+                activateBanner(fullOrder);
+            }
+        }
+    });
+}
+
+function activateBanner(order) {
+    activeTrackingOrder = order;
+    const banner = document.getElementById('liveOrderBanner');
+    if(banner) banner.classList.remove('hidden');
+    syncHomeOrderStatus(order.id);
+}
+
+function syncHomeOrderStatus(orderId) {
+    db.ref('orders/' + orderId).on('value', snap => {
+        if(snap.exists()) {
+            const updatedOrder = snap.val();
+            activeTrackingOrder = { id: orderId, ...updatedOrder };
+            
+            // Keep local storage updated
+            localStorage.setItem('rmz_active_order', JSON.stringify(activeTrackingOrder));
+            
+            updateBannerText(updatedOrder.status);
+
+            // Update Modal if open
+            if(!document.getElementById('trackingModal').classList.contains('hidden')) {
+                renderTrackingModalUI(activeTrackingOrder);
+            }
+        } else {
+            // Order Deleted (Cancelled by Admin/User)
+            localStorage.removeItem('rmz_active_order');
+            activeTrackingOrder = null;
+            document.getElementById('liveOrderBanner').classList.add('hidden');
+            document.getElementById('trackingModal').classList.add('hidden');
+        }
+    });
+}
+
+function updateBannerText(status) {
+    const statusEl = document.getElementById('bannerStatus');
+    let text = "Processing...";
+    
+    // Map status codes to readable text
+    if(status === 'placed') text = "Waiting for Confirmation";
+    else if(status === 'accepted') text = "Partner Assigned";
+    else if(status === 'out_for_delivery') text = "Out for Delivery";
+    else if(status === 'delivered') text = "Delivered";
+    
+    if(statusEl) statusEl.innerText = text;
+}
+
+// --- TRACKING MODAL LOGIC (EDIT/CANCEL/VIEW) ---
+
+function openTrackingModal() {
+    if(!activeTrackingOrder) return;
+    document.getElementById('trackingModal').classList.remove('hidden');
+    renderTrackingModalUI(activeTrackingOrder);
+}
+
+function closeTrackingModal() {
+    document.getElementById('trackingModal').classList.add('hidden');
+}
+
+function renderTrackingModalUI(order) {
+    document.getElementById('modalOrderId').innerText = order.orderId ? order.orderId.slice(-6) : '...';
+    document.getElementById('modalTotal').innerText = order.payment.deliveryFee;
+
+    // 1. Render Timeline
+    const steps = ['placed', 'accepted', 'out_for_delivery', 'delivered'];
+    const labels = { 
+        placed: 'Order Placed', 
+        accepted: 'Partner Assigned', 
+        out_for_delivery: 'Out for Delivery', 
+        delivered: 'Delivered' 
+    };
+    const timelineContainer = document.getElementById('modalTimeline');
+    timelineContainer.innerHTML = '';
+
+    let passed = true;
+    let currentStep = order.status;
+    if(currentStep === 'admin_accepted') currentStep = 'placed'; 
+
+    steps.forEach(step => {
+        let isActive = passed;
+        if(step === currentStep) passed = false;
+
+        timelineContainer.innerHTML += `
+            <div class="modal-timeline-item ${isActive ? 'active' : ''}">
+                <div class="modal-timeline-dot"></div>
+                <h4 class="text-xs font-bold ${isActive ? 'text-slate-800' : 'text-slate-400'}">${labels[step]}</h4>
+            </div>
+        `;
+    });
+
+    // 2. Dynamic Actions Area (Cancel/Edit OR Partner Info)
+    const pCard = document.getElementById('modalPartnerCard');
+    const actionsContainer = document.getElementById('modalFooterActions');
+
+    // Show Edit/Cancel only if status is 'placed' (not accepted yet)
+    if(order.status === 'placed' || order.status === 'admin_accepted') {
+        pCard.classList.add('hidden');
+        
+        actionsContainer.innerHTML = `
+            <div class="flex gap-3">
+                <button onclick="cancelOrder()" class="flex-1 py-3 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100 border border-red-100 transition">CANCEL ORDER</button>
+                <button onclick="editOrder()" class="flex-1 py-3 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-100 border border-indigo-100 transition">EDIT / ADD ITEMS</button>
+            </div>
+            <p class="text-[9px] text-center text-slate-400 mt-2">You can edit until a partner accepts.</p>
+        `;
+    } else {
+        // Partner Assigned -> Show Partner Card & Support
+        if(order.deliveryBoyName) {
+            pCard.classList.remove('hidden');
+            document.getElementById('modalPartnerName').innerText = `${order.deliveryBoyName} (${order.deliveryBoyMobile})`;
+            document.getElementById('btnCallPartner').href = `tel:${order.deliveryBoyMobile}`;
+            document.getElementById('btnChatPartner').href = `https://wa.me/91${order.deliveryBoyMobile}`;
+        } else {
+            // Accepted but no name yet? Should be rare
+            pCard.classList.add('hidden');
+        }
+        
+        actionsContainer.innerHTML = `
+            <p class="text-[10px] text-center text-slate-400 mb-3 font-bold uppercase">Need help?</p>
+            <button onclick="openSupportOptions()" class="w-full py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition">CONTACT SUPPORT</button>
+        `;
+    }
+
+    // 3. Items List
+    const itemsContainer = document.getElementById('modalItemsList');
+    itemsContainer.innerHTML = '';
+    if(order.cart) {
+        order.cart.forEach(item => {
+            itemsContainer.innerHTML += `
+                <div class="flex justify-between border-b border-slate-50 last:border-0 py-1">
+                    <span>${item.name} <span class="text-slate-400 text-[10px]">(${item.qty})</span></span>
+                    <span class="font-bold text-slate-700">x${item.count}</span>
+                </div>
+            `;
+        });
+    }
+}
+
+// --- ORDER MODIFICATION FUNCTIONS ---
+
+function cancelOrder() {
+    if(!activeTrackingOrder) return;
+    if(confirm("Are you sure you want to Cancel this order?")) {
+        // Delete from Firebase
+        db.ref('orders/' + activeTrackingOrder.id).remove()
+        .then(() => {
+            showToast("Order Cancelled");
+            localStorage.removeItem('rmz_active_order');
+            activeTrackingOrder = null;
+            document.getElementById('trackingModal').classList.add('hidden');
+            document.getElementById('liveOrderBanner').classList.add('hidden');
+        })
+        .catch(e => showToast("Error cancelling"));
+    }
+}
+
+function editOrder() {
+    if(!activeTrackingOrder) return;
+    if(confirm("To edit, we will cancel this order and add items back to your cart. Continue?")) {
+        // 1. Restore items to cart in Local Storage
+        localStorage.setItem('rmz_cart', JSON.stringify(activeTrackingOrder.cart));
+        updateCartBadge();
+        
+        // 2. Delete current order from DB
+        db.ref('orders/' + activeTrackingOrder.id).remove()
+        .then(() => {
+            localStorage.removeItem('rmz_active_order');
+            // 3. Redirect to Cart Page
+            window.location.href = 'cart.html';
+        });
+    }
+}
+
+
+// --- UI SETUP & NAVIGATION ---
 function setupUI() {
     let menuHtml = '';
 
@@ -72,7 +320,6 @@ function setupUI() {
         document.getElementById('menuName').innerText = session.name || 'Owner';
         document.getElementById('menuMobile').innerText = '+91 ' + session.mobile;
         
-        // Owner Specific Menu
         menuHtml += `
             <button onclick="openAddModal()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
                 <i class="fa-solid fa-box text-indigo-500 w-5"></i> Add Stock
@@ -103,7 +350,7 @@ function setupUI() {
         `;
     }
 
-    // Common Menu Item (Contact Support)
+    // Common Items
     menuHtml += `
         <div class="h-px bg-slate-100 my-2"></div>
         <button onclick="openSupportOptions()" class="w-full text-left px-4 py-3 rounded hover:bg-green-50 text-green-600 font-bold text-sm flex items-center gap-3">
@@ -118,47 +365,37 @@ function setupUI() {
     document.getElementById('sidebarNav').innerHTML = menuHtml;
 }
 
-// --- SEARCH BAR LOGIC (UPDATED FOR PERSISTENT VIEW) ---
+// --- SEARCH BAR LOGIC ---
 
 function activateSearch() {
-    // 1. Enable Search Mode Style (Bottom Bar, Hidden Header)
     document.body.classList.add('search-mode');
-    
-    // 2. Hide specific controls inside search bar to make space
     document.getElementById('headerControls').classList.add('hidden');
-    
-    // 3. Show Close/Clear button
     document.getElementById('clearSearchBtn').classList.remove('hidden');
 }
 
 function deactivateSearch() {
-    // UPDATED: Intentionally Left Empty.
-    // Pehle ye 'blur' hone par wapas normal mode me bhej deta tha.
-    // Ab hum chahte hain ki 'Add' button dabane par ya keyboard band hone par bhi
-    // Search interface (Bottom Bar) waisa hi rahe.
-    // Normal mode me wapas sirf 'Close (X)' button dabane par jayega.
+    // Left empty to keep search open until 'X' is clicked
 }
 
 function clearSearch() {
     const input = document.getElementById('searchInput');
     input.value = '';
     
-    // 1. Reset List to show all products
+    // Reset products
     filterProducts(); 
     
-    // 2. Remove Search Mode Style
+    // Reset UI
     document.body.classList.remove('search-mode');
-    
-    // 3. Bring back controls
     document.getElementById('headerControls').classList.remove('hidden');
     document.getElementById('clearSearchBtn').classList.add('hidden');
     
-    // 4. Keyboard Hide karein
     input.blur(); 
 }
 
-// --- NEW FEATURE: REPEAT LAST ORDER (FIXED: NO QTY INCREASE) ---
+// --- REPEAT LAST ORDER ---
 function repeatLastOrder() {
+    if(activeTrackingOrder) return showToast("Finish current order first!");
+
     showToast("Fetching last order...");
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).limitToLast(1).once('value', snap => {
         if (snap.exists()) {
@@ -166,11 +403,9 @@ function repeatLastOrder() {
             if(orderData && orderData.cart && orderData.cart.length > 0) {
                 let currentCart = JSON.parse(localStorage.getItem('rmz_cart')) || [];
                 
-                // Logic Fix: Agar item pehle se hai, toh usse hata kar fresh count add karo
+                // Add items, replacing old quantities if duplicate
                 orderData.cart.forEach(prevItem => {
-                    // Remove if already exists
                     currentCart = currentCart.filter(i => !(i.name === prevItem.name && i.qty === prevItem.qty));
-                    // Push the item fresh with original count
                     currentCart.push({ name: prevItem.name, qty: prevItem.qty, count: prevItem.count || 1 });
                 });
 
@@ -186,39 +421,30 @@ function repeatLastOrder() {
     });
 }
 
-// --- NEW FEATURE: CONTACT SUPPORT ---
+// --- CONTACT SUPPORT ---
 function openSupportOptions() {
-    toggleMenu(); // Close sidebar
+    toggleMenu(); 
     document.getElementById('supportModal').classList.remove('hidden');
 }
 
 function sendSupportMsg(issueType) {
     const waNumber = "7903698180";
-    
-    // Fetch total orders count before sending
+    // Check total orders for context
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).once('value', snap => {
         const totalOrders = snap.exists() ? Object.keys(snap.val()).length : 0;
         
-        const message = `*Ramazone Support Request*
----------------------------
-*Name:* ${session.name}
-*Mobile:* ${session.mobile}
-*Total Orders:* ${totalOrders}
----------------------------
-*Issue:* ${issueType}
+        const message = `*Ramazone Support Request*\n---------------------------\n*Name:* ${session.name}\n*Mobile:* ${session.mobile}\n*Total Orders:* ${totalOrders}\n---------------------------\n*Issue:* ${issueType}\n\nPlease assist me.`;
 
-Please assist me.`;
-
-        const url = `https://wa.me/91${waNumber}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
+        window.open(`https://wa.me/91${waNumber}?text=${encodeURIComponent(message)}`, '_blank');
         document.getElementById('supportModal').classList.add('hidden');
     });
 }
 
-// --- SEAMLESS SLIDER LOGIC ---
+// --- SLIDER LOGIC (RESTORED) ---
 function initSeamlessSlider() {
     slides = [];
-    // Fetch Banners
+    
+    // 1. Fetch Shop Banner
     db.ref(`users/${targetMobile}/banner`).once('value', uSnap => {
         if(uSnap.exists()) {
             const b = uSnap.val();
@@ -232,11 +458,14 @@ function initSeamlessSlider() {
             });
         }
         
+        // 2. Fetch Admin Sliders
         db.ref('admin/sliders').once('value', aSnap => {
             if(aSnap.exists()) {
                 Object.values(aSnap.val()).forEach(s => slides.push({ type: 'admin', img: s.img, link: s.link || '#' }));
             }
+            // Fallback
             if(slides.length === 0) slides.push({type: 'user', text: 'Welcome', color: '#1e293b', textColor: '#ffffff', fontSize: 'text-2xl'});
+            
             renderSeamlessSlider();
         });
     });
@@ -246,16 +475,18 @@ function renderSeamlessSlider() {
     const track = document.getElementById('sliderTrack');
     const dotsContainer = document.getElementById('dotsContainer');
     
-    // Create Clones for Seamless Effect
+    // Need at least one slide
+    if(!track || slides.length === 0) return;
+
+    // Clone for seamless loop
     const firstClone = slides[0];
     const lastClone = slides[slides.length - 1];
-    
     const allSlides = [lastClone, ...slides, firstClone];
     
     track.innerHTML = '';
     dotsContainer.innerHTML = '';
     
-    // Render All Slides (including clones)
+    // Render Slides
     allSlides.forEach(s => {
         const div = document.createElement('div');
         div.className = "slide";
@@ -276,13 +507,13 @@ function renderSeamlessSlider() {
         dotsContainer.appendChild(dot);
     });
 
-    // Set initial position
+    // Reset Position
     track.style.transform = `translateX(-100%)`; 
 
-    // Auto Slide
+    // Start Auto Loop
     startSeamlessInterval();
     
-    // Transition End Listener
+    // Event Listener for Loop Reset
     track.addEventListener('transitionend', () => {
         isTransitioning = false;
         if (slideIndex >= slides.length + 1) {
@@ -363,7 +594,7 @@ function calculateStats() {
     }
 }
 
-// --- PRODUCTS & SEARCH ---
+// --- PRODUCT LOADING (RESTORED) ---
 function loadLocalProducts() {
     const cached = localStorage.getItem(CACHE_KEY);
     if(cached) { 
@@ -382,6 +613,7 @@ function syncProducts() {
             
             document.getElementById('statProductCount').innerText = allProducts.length;
             
+            // Keep search filter if active
             const query = document.getElementById('searchInput').value.toLowerCase();
             if(query) filterProducts(); 
             else {
@@ -448,7 +680,7 @@ function renderList(products) {
             li.onclick = () => openAddModal(id, item.name, item.qty);
             li.classList.add('cursor-pointer');
         } else {
-            // Note: Added 'e.preventDefault()' handling in HTML script to prevent focus loss
+            // Main 'Add' button
             rightAction = `<button onclick="addToCartLocal('${item.name}', '${item.qty}')" class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-900 hover:text-white transition active:scale-90"><i class="fa-solid fa-plus text-xs"></i></button>`;
         }
 
@@ -590,9 +822,27 @@ function shareStore() {
 }
 
 // --- CART LOGIC ---
-function addToCartLocal(name, qty) { let cart = JSON.parse(localStorage.getItem('rmz_cart')) || []; const exists = cart.find(i => i.name === name && i.qty === qty); if(exists) exists.count = (exists.count || 1) + 1; else cart.push({ name, qty, count: 1 }); localStorage.setItem('rmz_cart', JSON.stringify(cart)); updateCartBadge(); showToast("Added to Bill"); }
+function addToCartLocal(name, qty) { 
+    // Always allow adding to cart (Fix: Removed Active Order Restriction)
+    let cart = JSON.parse(localStorage.getItem('rmz_cart')) || []; 
+    const exists = cart.find(i => i.name === name && i.qty === qty); 
+    if(exists) exists.count = (exists.count || 1) + 1; 
+    else cart.push({ name, qty, count: 1 }); 
+    localStorage.setItem('rmz_cart', JSON.stringify(cart)); 
+    updateCartBadge(); 
+    showToast("Added to Bill"); 
+}
 
-function updateCartBadge() { const c = JSON.parse(localStorage.getItem('rmz_cart')) || []; const b = document.getElementById('floatCartBadge'); const h = document.getElementById('headerBadge'); if(c.length > 0) { b.innerText = c.length; b.classList.remove('hidden'); h.classList.remove('hidden'); } else { b.classList.add('hidden'); h.classList.add('hidden'); } }
+function updateCartBadge() { 
+    const c = JSON.parse(localStorage.getItem('rmz_cart')) || []; 
+    const b = document.getElementById('floatCartBadge'); 
+    const h = document.getElementById('headerBadge'); 
+    if(c.length > 0) { 
+        b.innerText = c.length; b.classList.remove('hidden'); h.classList.remove('hidden'); 
+    } else { 
+        b.classList.add('hidden'); h.classList.add('hidden'); 
+    } 
+}
 
 function loadShopData() {
     db.ref('users/' + targetMobile).on('value', s => {
@@ -605,9 +855,30 @@ function loadShopData() {
 }
 
 // --- PROFILE & SETTINGS ---
-function loadProfile() { db.ref('users/'+targetMobile+'/logo').once('value', s => { if(s.exists()) document.getElementById('profileImg').src = s.val(); }); }
+function loadProfile() { 
+    db.ref('users/'+targetMobile+'/logo').once('value', s => { 
+        if(s.exists()) document.getElementById('profileImg').src = s.val(); 
+    }); 
+}
 
-function uploadCompressedLogo() { if(!isOwner) return; const f = document.getElementById('logoInput').files[0]; if(f) { const r = new FileReader(); r.readAsDataURL(f); r.onload = e => { const i = new Image(); i.src = e.target.result; i.onload = () => { const c = document.createElement('canvas'); const x = c.getContext('2d'); const w = 300; const sc = w/i.width; c.width=w; c.height=i.height*sc; x.drawImage(i,0,0,c.width,c.height); const d = c.toDataURL('image/jpeg', 0.7); document.getElementById('profileImg').src=d; db.ref('users/'+targetMobile).update({logo:d}).then(()=>showToast("Logo Updated")); }}}}
+function uploadCompressedLogo() { 
+    if(!isOwner) return; 
+    const f = document.getElementById('logoInput').files[0]; 
+    if(f) { 
+        const r = new FileReader(); r.readAsDataURL(f); 
+        r.onload = e => { 
+            const i = new Image(); i.src = e.target.result; 
+            i.onload = () => { 
+                const c = document.createElement('canvas'); 
+                const x = c.getContext('2d'); const w = 300; const sc = w/i.width; 
+                c.width=w; c.height=i.height*sc; x.drawImage(i,0,0,c.width,c.height); 
+                const d = c.toDataURL('image/jpeg', 0.7); 
+                document.getElementById('profileImg').src=d; 
+                db.ref('users/'+targetMobile).update({logo:d}).then(()=>showToast("Logo Updated")); 
+            }
+        }
+    }
+}
 
 function openAddressModal() { toggleMenu(); document.getElementById('addressModal').classList.remove('hidden'); db.ref('users/'+targetMobile+'/address').once('value', s => { if(s.exists()) document.getElementById('updateAddrText').value = s.val(); }); }
 function closeAddressModal() { document.getElementById('addressModal').classList.add('hidden'); }
@@ -671,3 +942,4 @@ function openInvoice(oid) {
     if(o.cart) { o.cart.forEach(i => { tbody.innerHTML += `<tr><td class="py-2 px-4 border-b border-slate-50"><p class="font-bold text-slate-800">${i.name}</p><p class="text-[10px] text-slate-400">${i.qty}</p></td><td class="py-2 px-4 border-b border-slate-50 text-right font-bold text-slate-700">x${i.count}</td></tr>`; }); }
     document.getElementById('invoiceModal').classList.remove('hidden');
 }
+
