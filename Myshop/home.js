@@ -103,7 +103,7 @@ function setupUI() {
         `;
     }
 
-    // Common Menu Item (Contact Support) - ADDED
+    // Common Menu Item (Contact Support)
     menuHtml += `
         <div class="h-px bg-slate-100 my-2"></div>
         <button onclick="openSupportOptions()" class="w-full text-left px-4 py-3 rounded hover:bg-green-50 text-green-600 font-bold text-sm flex items-center gap-3">
@@ -118,7 +118,38 @@ function setupUI() {
     document.getElementById('sidebarNav').innerHTML = menuHtml;
 }
 
-// --- NEW FEATURE: REPEAT LAST ORDER ---
+// --- SEARCH BAR LOGIC (UPDATED: STICKY & HIDE ELEMENTS) ---
+function activateSearch() {
+    // 'search-mode' class body par lagate hi CSS baaki elements hide kar dega
+    document.body.classList.add('search-mode');
+    document.getElementById('headerControls').classList.add('hidden');
+    document.getElementById('clearSearchBtn').classList.remove('hidden');
+}
+
+function deactivateSearch() {
+    // Timeout isliye taaki agar user 'Clear' button dabaye toh woh pehle register ho jaye
+    setTimeout(() => {
+        const val = document.getElementById('searchInput').value;
+        if(!val) {
+            document.body.classList.remove('search-mode');
+            document.getElementById('headerControls').classList.remove('hidden');
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+        }
+    }, 200);
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    filterProducts(); // List reset karein
+    document.getElementById('searchInput').blur(); // Keyboard band karein
+    
+    // Force reset UI
+    document.body.classList.remove('search-mode');
+    document.getElementById('headerControls').classList.remove('hidden');
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+}
+
+// --- NEW FEATURE: REPEAT LAST ORDER (FIXED: NO QTY INCREASE) ---
 function repeatLastOrder() {
     showToast("Fetching last order...");
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).limitToLast(1).once('value', snap => {
@@ -127,16 +158,18 @@ function repeatLastOrder() {
             if(orderData && orderData.cart && orderData.cart.length > 0) {
                 let currentCart = JSON.parse(localStorage.getItem('rmz_cart')) || [];
                 
-                // Merge logic: Add previous items to current cart
+                // Logic Fix: Agar item pehle se hai, toh usse hata kar fresh count add karo
+                // Isse quantity double nahi hogi, balki pichle order wali set ho jayegi
                 orderData.cart.forEach(prevItem => {
-                    const exists = currentCart.find(i => i.name === prevItem.name && i.qty === prevItem.qty);
-                    if(exists) exists.count = (exists.count || 1) + (prevItem.count || 1);
-                    else currentCart.push(prevItem);
+                    // Remove if already exists
+                    currentCart = currentCart.filter(i => !(i.name === prevItem.name && i.qty === prevItem.qty));
+                    // Push the item fresh with original count
+                    currentCart.push({ name: prevItem.name, qty: prevItem.qty, count: prevItem.count || 1 });
                 });
 
                 localStorage.setItem('rmz_cart', JSON.stringify(currentCart));
                 updateCartBadge();
-                showToast("Items added from previous order!");
+                showToast("Cart updated from previous order!");
             } else {
                 showToast("Previous order was empty/invalid.");
             }
@@ -187,8 +220,8 @@ function initSeamlessSlider() {
                 text: b.text || 'Welcome', 
                 color: b.color || '#3b82f6', 
                 bold: b.bold || false,
-                textColor: b.textColor || '#ffffff', // NEW
-                fontSize: b.fontSize || 'text-2xl'   // NEW
+                textColor: b.textColor || '#ffffff', 
+                fontSize: b.fontSize || 'text-2xl'
             });
         }
         
@@ -222,7 +255,6 @@ function renderSeamlessSlider() {
         div.style.width = "100%"; 
         if(s.type === 'user') {
             div.style.backgroundColor = s.color;
-            // Applied new styles here
             div.innerHTML = `<span style="color: ${s.textColor};" class="px-8 text-center ${s.fontSize} ${s.bold ? 'font-extrabold' : 'font-medium'}">${s.text}</span>`;
         } else {
             div.innerHTML = `<img src="${s.img}" class="w-full h-full object-cover" onclick="window.location.href='${s.link}'">`;
@@ -417,7 +449,7 @@ function renderList(products) {
     });
 }
 
-// --- CUSTOM REQUEST (NEW FEATURE) ---
+// --- CUSTOM REQUEST ---
 function openCustomRequestModal() {
     document.getElementById('customRequestModal').classList.remove('hidden');
     document.getElementById('reqItemName').focus();
@@ -432,8 +464,6 @@ function addCustomItemToCart() {
     const text = document.getElementById('reqItemName').value.trim();
     if(!text) return showToast("Please write something");
 
-    // Treat the entire text as the name, and Qty as "Custom List"
-    // This allows the existing cart structure to work without modification
     addToCartLocal(text, "Special Request");
     closeCustomRequestModal();
 }
@@ -483,7 +513,7 @@ function saveProduct() {
     }
 }
 
-// --- BANNER SETTINGS (ENHANCED) ---
+// --- BANNER SETTINGS ---
 function setBanColor(c) {
     document.getElementById('selectedColor').value = c;
     document.getElementById('banText').style.borderColor = c;
