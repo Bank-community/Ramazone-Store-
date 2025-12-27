@@ -16,9 +16,12 @@
     <!-- ImageKit SDK -->
     <script type="text/javascript" src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
 
-    <!-- Leaflet JS (Free Maps) -->
+    <!-- Leaflet JS (Maps) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Chart.js (Analytics) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
@@ -43,6 +46,10 @@
         #map { height: 100%; width: 100%; border-radius: 12px; z-index: 1; }
         .leaflet-popup-content-wrapper { background: #1e293b; color: white; border-radius: 8px; }
         .leaflet-popup-tip { background: #1e293b; }
+
+        /* Hide Scrollbar for Horizontal Nav */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
@@ -101,6 +108,9 @@
                 <button onclick="switchTab('map')" id="nav-map" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
                     <i class="fa-solid fa-map-location-dot w-5 text-green-400"></i> Live Map
                 </button>
+                <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
+                    <i class="fa-solid fa-chart-pie w-5 text-purple-400"></i> Analytics
+                </button>
                 <button onclick="switchTab('history')" id="nav-history" class="nav-item w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
                     <i class="fa-solid fa-clock-rotate-left w-5"></i> History
                 </button>
@@ -122,21 +132,24 @@
         <!-- MAIN CONTENT -->
         <main class="flex-1 overflow-y-auto bg-slate-950 p-4 sm:p-6 relative">
             
-            <!-- MOBILE TABS -->
-            <div class="md:hidden grid grid-cols-5 gap-1 bg-slate-900 p-1 rounded-lg mb-6 sticky top-0 z-10 shadow-lg">
-                <button onclick="switchTab('orders')" class="py-2 text-[9px] font-bold rounded text-center transition bg-blue-600 text-white" id="mob-orders">
+            <!-- MOBILE TABS (Updated: Scrollable Row) -->
+            <div class="md:hidden flex gap-2 bg-slate-900 p-2 rounded-lg mb-6 sticky top-0 z-10 shadow-lg overflow-x-auto no-scrollbar">
+                <button onclick="switchTab('orders')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center transition bg-blue-600 text-white min-w-[70px]" id="mob-orders">
                     <i class="fa-solid fa-bolt block mb-1 text-sm"></i> LIVE <span id="mobActiveCount" class="bg-red-500 text-white px-1 rounded-full ml-0.5 text-[8px] hidden">0</span>
                 </button>
-                <button onclick="switchTab('map')" class="py-2 text-[9px] font-bold rounded text-center text-slate-400" id="mob-map">
+                <button onclick="switchTab('map')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center text-slate-400 min-w-[70px]" id="mob-map">
                     <i class="fa-solid fa-map block mb-1 text-sm"></i> MAP
                 </button>
-                <button onclick="switchTab('history')" class="py-2 text-[9px] font-bold rounded text-center text-slate-400" id="mob-history">
+                <button onclick="switchTab('analytics')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center text-slate-400 min-w-[70px]" id="mob-analytics">
+                    <i class="fa-solid fa-chart-line block mb-1 text-sm"></i> DATA
+                </button>
+                <button onclick="switchTab('history')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center text-slate-400 min-w-[70px]" id="mob-history">
                     <i class="fa-solid fa-clock block mb-1 text-sm"></i> DONE
                 </button>
-                <button onclick="switchTab('partners')" class="py-2 text-[9px] font-bold rounded text-center text-slate-400" id="mob-partners">
+                <button onclick="switchTab('partners')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center text-slate-400 min-w-[70px]" id="mob-partners">
                     <i class="fa-solid fa-users block mb-1 text-sm"></i> TEAM
                 </button>
-                <button onclick="switchTab('alerts')" class="py-2 text-[9px] font-bold rounded text-center text-slate-400" id="mob-alerts">
+                <button onclick="switchTab('alerts')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center text-slate-400 min-w-[70px]" id="mob-alerts">
                     <i class="fa-solid fa-bell block mb-1 text-sm"></i> ALERT
                 </button>
             </div>
@@ -153,7 +166,7 @@
                 <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
-            <!-- TAB: LIVE MAP (NEW) -->
+            <!-- TAB: LIVE MAP -->
             <div id="tab-map" class="hidden h-full flex flex-col space-y-4" style="height: calc(100vh - 180px);">
                 <div class="flex justify-between items-center shrink-0">
                     <h2 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-earth-americas text-blue-500"></i> Fleet Tracker</h2>
@@ -165,6 +178,48 @@
                 <div class="flex-1 bg-slate-800 rounded-2xl border border-slate-700 p-1 relative overflow-hidden">
                     <div id="map"></div>
                     <div id="mapLoading" class="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-[1000] text-white font-bold">Initializing Map...</div>
+                </div>
+            </div>
+
+            <!-- TAB: ANALYTICS (NEW) -->
+            <div id="tab-analytics" class="hidden space-y-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-white">Business Intelligence</h2>
+                
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Total Orders</p>
+                        <p class="text-2xl font-bold text-white mt-1" id="anTotalOrders">0</p>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Total Revenue</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1">₹<span id="anTotalRev">0</span></p>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Avg. Order Value</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1">₹<span id="anAvgVal">0</span></p>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Active Customers</p>
+                        <p class="text-2xl font-bold text-pink-400 mt-1" id="anActiveCust">0</p>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <h3 class="text-sm font-bold text-slate-300 mb-4">Last 7 Days Sales</h3>
+                    <div class="h-64">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Products -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <h3 class="text-sm font-bold text-slate-300 mb-4">Top Selling Products</h3>
+                    <div id="topProductsList" class="space-y-2 text-sm text-slate-400">
+                        <!-- Injected via JS -->
+                        <p class="text-center text-xs">Loading data...</p>
+                    </div>
                 </div>
             </div>
 
@@ -296,73 +351,12 @@
 
         let selectedOrderIdForAssignment = null;
         let map, markers = {};
+        let salesChartInstance = null; // Chart Instance
         document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString();
-
-        // --- MAP LOGIC (LEAFLET) ---
-        function initMap() {
-            if(map) return; // Already initialized
-            
-            // Default center: India (Zoomed out) - will auto fit bounds later
-            map = L.map('map').setView([20.5937, 78.9629], 5);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap',
-                maxZoom: 19
-            }).addTo(map);
-
-            document.getElementById('mapLoading').classList.add('hidden');
-            
-            // Start Tracking on Map
-            trackPartnersOnMap();
-        }
-
-        function trackPartnersOnMap() {
-            db.ref('deliveryBoys').on('value', snap => {
-                if(!map) return;
-                
-                const bounds = [];
-                if(snap.exists()) {
-                    Object.entries(snap.val()).forEach(([mobile, boy]) => {
-                        if(boy.location && boy.location.lat && boy.location.lng) {
-                            const lat = boy.location.lat;
-                            const lng = boy.location.lng;
-                            const isOnline = boy.status === 'online';
-                            
-                            // Color Logic: Green (Online), Red (Offline)
-                            const color = isOnline ? 'green' : 'red';
-                            
-                            // Custom Icon (Simple Circle)
-                            const iconHtml = `<div style="background:${color}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow: 0 0 5px black;"></div>`;
-                            const customIcon = L.divIcon({ className: 'custom-map-icon', html: iconHtml });
-
-                            if(markers[mobile]) {
-                                // Move existing marker
-                                markers[mobile].setLatLng([lat, lng]);
-                                markers[mobile].setIcon(customIcon); // Update color if status changed
-                                markers[mobile].setPopupContent(`<b>${boy.name}</b><br>${boy.status}<br>${boy.battery || ''}`);
-                            } else {
-                                // Create new marker
-                                const marker = L.marker([lat, lng], {icon: customIcon}).addTo(map)
-                                    .bindPopup(`<b>${boy.name}</b><br>${boy.status}<br>${boy.battery || ''}`);
-                                markers[mobile] = marker;
-                            }
-                            
-                            // Add to bounds only if online or recent
-                            if(isOnline) bounds.push([lat, lng]);
-                        }
-                    });
-                    
-                    // Auto-fit map to show all online drivers
-                    if(bounds.length > 0) {
-                        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-                    }
-                }
-            });
-        }
 
         // --- NAVIGATION TABS ---
         function switchTab(id) { 
-            ['orders','map','history','partners','alerts'].forEach(t=>{
+            ['orders','map','analytics','history','partners','alerts'].forEach(t=>{
                 document.getElementById('tab-'+t).classList.add('hidden'); 
                 document.getElementById('nav-'+t)?.classList.remove('active'); 
                 const m = document.getElementById('mob-'+t);
@@ -374,13 +368,151 @@
             const m=document.getElementById('mob-'+id); 
             if(m){ m.classList.add('bg-blue-600','text-white'); m.classList.remove('text-slate-400'); } 
 
-            // Initialize Map if opening Map tab
             if(id === 'map') {
                 setTimeout(() => {
                     if(!map) initMap();
-                    else map.invalidateSize(); // Fix gray area issue
+                    else map.invalidateSize(); 
                 }, 100);
             }
+            if(id === 'analytics') {
+                initAnalytics();
+            }
+        }
+
+        // --- MAP LOGIC ---
+        function initMap() {
+            if(map) return;
+            map = L.map('map').setView([20.5937, 78.9629], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+            document.getElementById('mapLoading').classList.add('hidden');
+            trackPartnersOnMap();
+        }
+
+        function trackPartnersOnMap() {
+            db.ref('deliveryBoys').on('value', snap => {
+                if(!map) return;
+                const bounds = [];
+                if(snap.exists()) {
+                    Object.entries(snap.val()).forEach(([mobile, boy]) => {
+                        if(boy.location && boy.location.lat && boy.location.lng) {
+                            const lat = boy.location.lat;
+                            const lng = boy.location.lng;
+                            const isOnline = boy.status === 'online';
+                            const color = isOnline ? 'green' : 'red';
+                            const iconHtml = `<div style="background:${color}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow: 0 0 5px black;"></div>`;
+                            const customIcon = L.divIcon({ className: 'custom-map-icon', html: iconHtml });
+
+                            if(markers[mobile]) {
+                                markers[mobile].setLatLng([lat, lng]);
+                                markers[mobile].setIcon(customIcon);
+                                markers[mobile].setPopupContent(`<b>${boy.name}</b><br>${boy.status}<br>${boy.battery || ''}`);
+                            } else {
+                                const marker = L.marker([lat, lng], {icon: customIcon}).addTo(map)
+                                    .bindPopup(`<b>${boy.name}</b><br>${boy.status}<br>${boy.battery || ''}`);
+                                markers[mobile] = marker;
+                            }
+                            if(isOnline) bounds.push([lat, lng]);
+                        }
+                    });
+                    if(bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+                }
+            });
+        }
+
+        // --- ANALYTICS LOGIC (NEW) ---
+        function initAnalytics() {
+            db.ref('orders').once('value', snap => {
+                let totalOrders = 0;
+                let totalRev = 0;
+                let customers = new Set();
+                let productCounts = {};
+                
+                // For Chart (Last 7 Days)
+                const last7Days = {};
+                const today = new Date();
+                for(let i=6; i>=0; i--) {
+                    const d = new Date(today);
+                    d.setDate(today.getDate() - i);
+                    last7Days[d.toLocaleDateString()] = 0;
+                }
+
+                if(snap.exists()) {
+                    Object.values(snap.val()).forEach(o => {
+                        if(o.status === 'delivered') {
+                            totalOrders++;
+                            totalRev += parseInt(o.payment.deliveryFee || 0);
+                            customers.add(o.user.mobile);
+                            
+                            // Product Stats
+                            if(o.cart) {
+                                o.cart.forEach(p => {
+                                    productCounts[p.name] = (productCounts[p.name] || 0) + (p.count || 1);
+                                });
+                            }
+
+                            // Chart Data
+                            const dateKey = new Date(o.timestamp).toLocaleDateString();
+                            if(last7Days.hasOwnProperty(dateKey)) {
+                                last7Days[dateKey] += parseInt(o.payment.deliveryFee || 0);
+                            }
+                        }
+                    });
+                }
+
+                // Update Cards
+                document.getElementById('anTotalOrders').innerText = totalOrders;
+                document.getElementById('anTotalRev').innerText = totalRev;
+                document.getElementById('anAvgVal').innerText = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
+                document.getElementById('anActiveCust').innerText = customers.size;
+
+                // Render Chart
+                renderSalesChart(Object.keys(last7Days), Object.values(last7Days));
+
+                // Render Top Products
+                const sortedProducts = Object.entries(productCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+                const prodContainer = document.getElementById('topProductsList');
+                prodContainer.innerHTML = '';
+                if(sortedProducts.length > 0) {
+                    sortedProducts.forEach(([name, count], index) => {
+                        prodContainer.innerHTML += `
+                            <div class="flex justify-between items-center bg-slate-800 p-2 rounded">
+                                <span class="truncate flex-1"><span class="text-blue-500 font-bold mr-2">#${index+1}</span>${name}</span>
+                                <span class="bg-slate-700 px-2 py-0.5 rounded text-xs text-white">${count} sold</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    prodContainer.innerHTML = '<p class="text-center text-xs text-slate-500">No sales data yet.</p>';
+                }
+            });
+        }
+
+        function renderSalesChart(labels, data) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            if(salesChartInstance) salesChartInstance.destroy(); // Prevent duplicate charts
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sales (₹)',
+                        data: data,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: {size: 10} } }
+                    }
+                }
+            });
         }
 
         // --- MENU & MODALS ---
@@ -564,4 +696,3 @@
     </script>
 </body>
 </html>
-
