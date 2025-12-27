@@ -9,16 +9,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Firebase -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding-bottom: 100px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding-bottom: 100px; -webkit-tap-highlight-color: transparent; }
         
-        /* Modern Cards */
-        .slab-card { border: 2px solid transparent; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .slab-card.selected { border-color: #2563eb; background-color: #eff6ff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15); }
+        /* Modern Cards & Selection States */
+        .slab-card, .budget-card, .time-chip { 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 2px solid transparent; 
+        }
+        
+        /* Selected States */
+        .slab-card.selected { border-color: #2563eb; background-color: #eff6ff; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1); }
+        .budget-card.selected { border-color: #f59e0b; background-color: #fffbeb; }
+        .time-chip.selected { background-color: #1e293b; color: white; border-color: #1e293b; }
+        
+        /* Disabled State */
         .slab-card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); background-color: #f1f5f9; }
 
         /* Timeline Styles */
@@ -27,19 +36,17 @@
         .timeline-icon { position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; border: 2px solid #fff; transition: all 0.3s; }
         .timeline-item.active .timeline-icon { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
         .timeline-item.active { border-left-color: #22c55e; }
-        
+
+        /* Quantity Control Buttons */
+        .qty-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; transition: active 0.1s; }
+        .qty-btn:active { transform: scale(0.9); }
+
         /* Success Animation */
         .success-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
         .success-overlay.active { opacity: 1; pointer-events: auto; }
         .checkmark-circle { width: 80px; height: 80px; border-radius: 50%; background: #22c55e; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); animation: pulse-green 2s infinite; }
         @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
-
-        /* Product Sheet */
-        .product-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); z-index: 80; transform: translateY(100%); transition: transform 0.3s ease-out; max-height: 70vh; display: flex; flex-direction: column; }
-        .product-sheet.open { transform: translateY(0); }
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 70; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .sheet-overlay.open { opacity: 1; pointer-events: auto; }
-
+        
         /* Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
@@ -53,15 +60,14 @@
         </button>
         <div>
             <h1 class="text-lg font-extrabold text-slate-900 leading-none">Checkout</h1>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Review & Track</p>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Finalize & Order</p>
         </div>
     </div>
 
     <div class="p-4 max-w-md mx-auto space-y-5">
 
-        <!-- 1. LIVE TRACKING SECTION (Replaces Checkout when active) -->
+        <!-- 1. LIVE TRACKING SECTION (Hidden by default, Auto-shown if active) -->
         <div id="liveTrackingSection" class="hidden space-y-4">
-            
             <!-- Active Order Card -->
             <div id="trackingCard" class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden relative">
                 <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
@@ -72,31 +78,24 @@
                     <span class="bg-green-500 text-[10px] font-bold px-2 py-1 rounded text-white animate-pulse">LIVE</span>
                 </div>
                 
-                <div class="p-6 pb-20"> <!-- Added padding bottom for view products btn -->
+                <div class="p-6">
                     <!-- TIMELINE -->
                     <div class="space-y-1 pl-2">
-                        <!-- Step 1: Placed -->
                         <div class="timeline-item active" id="step-placed">
                             <div class="timeline-icon"></div>
                             <h4 class="text-sm font-bold text-slate-800">Order Placed</h4>
                             <p class="text-[10px] text-slate-500">Waiting for confirmation</p>
                         </div>
-                        
-                        <!-- Step 2: Accepted -->
                         <div class="timeline-item" id="step-accepted">
                             <div class="timeline-icon"></div>
                             <h4 class="text-sm font-bold text-slate-800">Delivery Partner Assigned</h4>
                             <p class="text-[10px] text-slate-500" id="partnerInfo">Matching nearby partner...</p>
                         </div>
-                        
-                        <!-- Step 3: Out for Delivery -->
                         <div class="timeline-item" id="step-out">
                             <div class="timeline-icon"></div>
                             <h4 class="text-sm font-bold text-slate-800">Out for Delivery</h4>
                             <p class="text-[10px] text-slate-500">Partner is on the way</p>
                         </div>
-                        
-                        <!-- Step 4: Delivered -->
                         <div class="timeline-item" id="step-delivered">
                             <div class="timeline-icon"></div>
                             <h4 class="text-sm font-bold text-slate-800">Delivered</h4>
@@ -105,46 +104,23 @@
                     </div>
                 </div>
 
-                <!-- EDIT / CANCEL ACTIONS (Only visible when status is 'placed') -->
-                <div id="modificationActions" class="hidden px-4 pb-4 border-t border-slate-100 pt-4 bg-slate-50">
-                    <p class="text-[10px] text-center text-slate-400 mb-2 font-bold uppercase">Change of plans?</p>
-                    <div class="flex gap-2">
-                        <button onclick="cancelOrder()" class="flex-1 bg-white border border-red-200 text-red-500 font-bold py-2.5 rounded-xl text-xs hover:bg-red-50 transition shadow-sm">
-                            <i class="fa-solid fa-xmark mr-1"></i> Cancel
-                        </button>
-                        <button onclick="editOrder()" class="flex-1 bg-white border border-indigo-200 text-indigo-600 font-bold py-2.5 rounded-xl text-xs hover:bg-indigo-50 transition shadow-sm">
-                            <i class="fa-solid fa-pen mr-1"></i> Edit / Add Items
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Action Buttons (Chat/Call) - Visible when accepted -->
+                <!-- Actions for Live Order -->
                 <div id="trackingActions" class="px-4 pb-4 hidden border-t border-slate-100 pt-3">
                     <div class="flex gap-2">
                         <a id="trackCallBtn" href="#" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-200 text-xs">
                             <i class="fa-solid fa-phone"></i> Call Partner
                         </a>
-                        <a id="trackChatBtn" href="#" target="_blank" class="flex-1 bg-green-100 text-green-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-green-200 text-xs">
-                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                        </a>
                     </div>
                 </div>
-
-                <!-- VIEW PRODUCTS LINK (Bottom of card) -->
-                <button onclick="toggleProductSheet()" class="w-full py-3 bg-slate-50 border-t border-slate-100 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition flex items-center justify-center gap-2">
-                    <span>View Ordered Products</span>
-                    <i class="fa-solid fa-chevron-up"></i>
-                </button>
             </div>
-
-            <p class="text-center text-[10px] text-slate-400 mt-4">Keep this screen open for live updates.</p>
+            <p class="text-center text-[10px] text-slate-400 mt-4">⚠️ You have an active order. Please wait for delivery to place a new one.</p>
         </div>
 
 
         <!-- 2. CHECKOUT FORM (Visible by default) -->
         <div id="checkoutFormContainer">
             
-            <!-- Cart Items -->
+            <!-- A. Cart Items with Qty Controls -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-50 px-5 py-3 border-b border-slate-100 flex justify-between items-center">
                     <h2 class="text-xs font-bold text-slate-600 uppercase tracking-wide">Your Cart</h2>
@@ -159,28 +135,20 @@
                         <i class="fa-solid fa-cart-shopping text-slate-300 text-2xl"></i>
                     </div>
                     <p class="text-slate-500 text-sm font-bold">Your cart feels light!</p>
-                    <p class="text-slate-400 text-xs mb-4">Add items to get started.</p>
-                    <button onclick="window.location.href='home.html'" class="text-xs font-bold text-white bg-slate-900 px-6 py-3 rounded-full shadow-lg hover:bg-black transition">START SHOPPING</button>
-                </div>
-                
-                <!-- Add More Link (Visible if cart has items) -->
-                <div id="addMoreLink" class="p-3 text-center bg-slate-50 border-t border-slate-100 hidden">
-                    <button onclick="window.location.href='home.html'" class="text-xs font-bold text-indigo-600 hover:underline">+ Add more items</button>
+                    <button onclick="window.location.href='home.html'" class="mt-4 text-xs font-bold text-white bg-slate-900 px-6 py-3 rounded-full shadow-lg">START SHOPPING</button>
                 </div>
             </div>
 
-            <!-- Delivery Slabs -->
+            <!-- B. Delivery Slabs -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-cube text-blue-500"></i> Parcel Size
-                    </h3>
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-cube text-blue-500"></i> Parcel Size</h3>
                     <div id="weightBadge" class="hidden bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-bold">
                         <i class="fa-solid fa-scale-balanced mr-1"></i><span id="totalWeightDisplay">0 KG</span>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
+                    <!-- Slabs populated via JS or static logic -->
                     <button onclick="selectRate(50, 'SMALL (0-10KG)')" id="rateBtn50" class="slab-card bg-slate-50 rounded-xl p-3 text-left relative overflow-hidden group">
                         <div class="absolute top-2 right-2 opacity-0 group-[.selected]:opacity-100"><i class="fa-solid fa-circle-check text-blue-600"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase">Small</p>
@@ -208,7 +176,7 @@
                 </div>
             </div>
 
-            <!-- Delivery Address -->
+            <!-- C. Address -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
                 <div class="flex justify-between items-center mb-3">
                     <label class="text-xs font-bold text-slate-600 uppercase">Delivery Location</label>
@@ -216,49 +184,71 @@
                         <i class="fa-solid fa-location-crosshairs"></i> Detect GPS
                     </button>
                 </div>
-                <textarea id="deliveryAddress" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800 resize-none h-24 placeholder-slate-400" placeholder="Shop Name, Street, Landmark..."></textarea>
-                <input type="hidden" id="lat" value="0">
-                <input type="hidden" id="lng" value="0">
+                <textarea id="deliveryAddress" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800 resize-none h-20 placeholder-slate-400" placeholder="Shop Name, Street, Landmark..."></textarea>
+                <input type="hidden" id="lat" value="0"><input type="hidden" id="lng" value="0">
+            </div>
+
+            <!-- D. Budget & Quality Preference (NEW) -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Budget & Quality Preference</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <!-- High Quality -->
+                    <button onclick="selectBudget('high')" id="bud_high" class="budget-card bg-slate-50 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
+                        <i class="fa-solid fa-star text-amber-400 text-lg"></i>
+                        <span class="text-[10px] font-bold text-slate-600">Best Quality</span>
+                    </button>
+                    <!-- Market Standard (Default) -->
+                    <button onclick="selectBudget('standard')" id="bud_standard" class="budget-card selected bg-white border-amber-500 rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-shop text-blue-500 text-lg"></i>
+                        <span class="text-[10px] font-bold text-slate-600">Standard</span>
+                    </button>
+                    <!-- Custom Budget -->
+                    <button onclick="selectBudget('custom')" id="bud_custom" class="budget-card bg-slate-50 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
+                        <i class="fa-solid fa-indian-rupee-sign text-green-600 text-lg"></i>
+                        <span class="text-[10px] font-bold text-slate-600">Custom</span>
+                    </button>
+                </div>
+                <!-- Hidden Input for Custom Budget -->
+                <div id="customBudgetInput" class="hidden mt-3 animate-[fadeIn_0.3s]">
+                    <label class="text-[10px] text-slate-400 uppercase font-bold">Enter Amount (₹)</label>
+                    <input type="number" id="customAmount" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="e.g. 5000">
+                </div>
+            </div>
+
+            <!-- E. Preferred Time (NEW) -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Preferred Delivery Time</h3>
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    <button onclick="selectTime('Evening')" id="time_Evening" class="time-chip selected shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Evening</button>
+                    <button onclick="selectTime('Afternoon')" id="time_Afternoon" class="time-chip shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Afternoon</button>
+                    <button onclick="selectTime('Next Morning')" id="time_Next Morning" class="time-chip shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Next Morning</button>
+                    <button onclick="selectTime('Anytime')" id="time_Anytime" class="time-chip shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Anytime</button>
+                </div>
             </div>
 
         </div> 
         <!-- End Checkout Form -->
-
     </div>
 
-    <!-- STICKY FOOTER ACTION BAR -->
-    <div id="bottomBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 pb-6 shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40 rounded-t-2xl">
-        <div class="max-w-md mx-auto flex items-center justify-between gap-4">
-            <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total Payable</p>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-2xl font-extrabold text-slate-900">₹<span id="displayTotal">0</span></span>
+    <!-- 3. REDESIGNED BOTTOM BAR (Split Layout) -->
+    <div id="bottomBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-3 shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40">
+        <div class="max-w-md mx-auto flex items-center gap-3">
+            <!-- Home Button -->
+            <button onclick="window.location.href='home.html'" class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition active:scale-95 border border-slate-200">
+                <i class="fa-solid fa-store text-xl"></i>
+            </button>
+            
+            <!-- Place Order Button -->
+            <button onclick="placeOrder()" id="placeOrderBtn" class="flex-1 bg-slate-900 hover:bg-black text-white rounded-xl shadow-lg active:scale-95 transition flex items-center justify-between px-6 h-14 disabled:opacity-50 disabled:grayscale">
+                <div class="text-left">
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">PAYABLE</p>
+                    <p class="text-xl font-extrabold leading-none">₹<span id="displayTotal">0</span></p>
                 </div>
-            </div>
-            <button onclick="placeOrder()" id="placeOrderBtn" class="flex-1 bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale">
-                <span>PLACE ORDER</span>
-                <i class="fa-solid fa-arrow-right"></i>
+                <div class="flex items-center gap-2 font-bold text-sm">
+                    <span>PLACE ORDER</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
             </button>
-        </div>
-    </div>
-
-    <!-- PRODUCT SHEET (New Feature) -->
-    <div id="sheetOverlay" class="sheet-overlay" onclick="toggleProductSheet()"></div>
-    <div id="productSheet" class="product-sheet">
-        <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-bold text-slate-900">Ordered Items</h3>
-            <button onclick="toggleProductSheet()" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center">
-                <i class="fa-solid fa-chevron-down"></i>
-            </button>
-        </div>
-        <div id="sheetContent" class="p-4 overflow-y-auto flex-1 space-y-3">
-            <!-- Items injected here -->
-        </div>
-        <div class="p-4 border-t border-slate-100 bg-slate-50">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-500 uppercase">Total Bill</span>
-                <span class="text-xl font-bold text-slate-900">₹<span id="sheetTotal">0</span></span>
-            </div>
         </div>
     </div>
 
@@ -266,392 +256,15 @@
     <div id="successOverlay" class="success-overlay">
         <div class="checkmark-circle mb-6"><i class="fa-solid fa-check text-4xl text-white"></i></div>
         <h2 class="text-2xl font-bold text-slate-900 mb-2">Order Placed!</h2>
-        <p class="text-slate-500 text-sm mb-8">Please wait, redirecting to tracking...</p>
+        <p class="text-slate-500 text-sm mb-8">Redirecting to live tracking...</p>
     </div>
 
     <!-- TOAST -->
-    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-full shadow-xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold flex gap-2 items-center">
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-full shadow-xl z-[110] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold flex gap-2 items-center">
         <i class="fa-solid fa-circle-info text-yellow-400"></i><span id="toastMsg">Alert</span>
     </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
-            authDomain: "tipsplit-e3wes.firebaseapp.com",
-            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "tipsplit-e3wes",
-            storageBucket: "tipsplit-e3wes.firebasestorage.app",
-            messagingSenderId: "984733883633",
-            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        const session = JSON.parse(localStorage.getItem('rmz_user'));
-        if (!session || !session.isLoggedIn) window.location.href = 'index.html';
-
-        let selectedCharge = 0;
-        let selectedLabel = "";
-        let isTrackingMode = false;
-        let currentActiveOrder = null;
-
-        window.onload = () => {
-            renderCart();
-            trackMyOrders(); // START TRACKING LISTENER
-            // Auto-fill address if available
-            db.ref('users/' + session.mobile + '/address').once('value', s => { if(s.exists()) document.getElementById('deliveryAddress').value = s.val(); });
-        };
-
-        function showToast(msg) {
-            const t = document.getElementById('toast'); document.getElementById('toastMsg').innerText = msg;
-            t.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2500);
-        }
-
-        // --- NEW FEATURES LOGIC ---
-
-        function toggleProductSheet() {
-            document.getElementById('productSheet').classList.toggle('open');
-            document.getElementById('sheetOverlay').classList.toggle('open');
-            
-            if(document.getElementById('productSheet').classList.contains('open') && currentActiveOrder) {
-                renderSheetItems(currentActiveOrder);
-            }
-        }
-
-        function renderSheetItems(order) {
-            const container = document.getElementById('sheetContent');
-            container.innerHTML = '';
-            
-            if(order.cart) {
-                order.cart.forEach(item => {
-                    container.innerHTML += `
-                        <div class="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
-                            <div>
-                                <p class="font-bold text-slate-800 text-sm">${item.name}</p>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">${item.qty}</p>
-                            </div>
-                            <span class="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">x${item.count}</span>
-                        </div>
-                    `;
-                });
-                document.getElementById('sheetTotal').innerText = order.payment.deliveryFee;
-            }
-        }
-
-        function cancelOrder() {
-            if(!currentActiveOrder) return;
-            if(confirm("Are you sure you want to Cancel this order?")) {
-                db.ref('orders/' + currentActiveOrder.id).remove()
-                .then(() => {
-                    showToast("Order Cancelled");
-                    // Tracking listener will automatically hide tracking section
-                })
-                .catch(e => showToast("Error cancelling"));
-            }
-        }
-
-        function editOrder() {
-            if(!currentActiveOrder) return;
-            if(confirm("To edit, we will cancel this order and add items back to your cart. Continue?")) {
-                // 1. Restore items to local storage cart
-                localStorage.setItem('rmz_cart', JSON.stringify(currentActiveOrder.cart));
-                
-                // 2. Remove order from DB
-                db.ref('orders/' + currentActiveOrder.id).remove()
-                .then(() => {
-                    // 3. Redirect to Home for editing
-                    window.location.href = 'home.html';
-                });
-            }
-        }
-
-
-        // --- LIVE TRACKING LOGIC (TIMELINE) ---
-        function trackMyOrders() {
-            db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).on('value', snap => {
-                const trackingSec = document.getElementById('liveTrackingSection');
-                const formSec = document.getElementById('checkoutFormContainer');
-                const bottomBar = document.getElementById('bottomBar');
-                
-                let activeOrder = null;
-
-                if(snap.exists()) {
-                    const orders = [];
-                    snap.forEach(child => {
-                        orders.push({id: child.key, ...child.val()});
-                    });
-                    // Find the most recent active order
-                    activeOrder = orders.reverse().find(o => o.status !== 'delivered');
-                }
-
-                if(activeOrder) {
-                    currentActiveOrder = activeOrder;
-                    isTrackingMode = true;
-                    trackingSec.classList.remove('hidden');
-                    formSec.classList.add('hidden');
-                    bottomBar.classList.add('hidden'); // Hide Place Order button
-                    updateTimeline(activeOrder);
-                } else {
-                    currentActiveOrder = null;
-                    isTrackingMode = false;
-                    trackingSec.classList.add('hidden');
-                    formSec.classList.remove('hidden');
-                    bottomBar.classList.remove('hidden');
-                }
-            });
-        }
-
-        function updateTimeline(order) {
-            document.getElementById('trackId').innerText = order.orderId.slice(-6);
-            
-            const steps = ['placed', 'accepted', 'out_for_delivery', 'delivered'];
-            // Normalize status for timeline
-            let currentStep = order.status;
-            if(currentStep === 'admin_accepted') currentStep = 'placed'; 
-            
-            // Partner Info & Modals
-            const partnerInfo = document.getElementById('partnerInfo');
-            const actions = document.getElementById('trackingActions');
-            const modActions = document.getElementById('modificationActions'); // NEW
-            
-            // LOGIC: If Accepted/Out -> Disable Edit/Cancel
-            if(order.status === 'placed' || order.status === 'admin_accepted') {
-                modActions.classList.remove('hidden'); // Show Edit/Cancel
-                actions.classList.add('hidden'); // Hide Call/Chat
-            } else {
-                modActions.classList.add('hidden'); // Hide Edit/Cancel
-                actions.classList.remove('hidden'); // Show Call/Chat when accepted
-            }
-
-            if(order.deliveryBoyName) {
-                partnerInfo.innerText = `${order.deliveryBoyName} (${order.deliveryBoyMobile})`;
-                partnerInfo.classList.add('text-green-600', 'font-bold');
-                
-                document.getElementById('trackCallBtn').href = `tel:${order.deliveryBoyMobile}`;
-                document.getElementById('trackChatBtn').href = `https://wa.me/91${order.deliveryBoyMobile}`;
-            } else {
-                partnerInfo.innerText = "Matching nearby partner...";
-                partnerInfo.classList.remove('text-green-600', 'font-bold');
-            }
-
-            // Update Timeline Colors
-            let passed = true;
-            steps.forEach(step => {
-                const el = document.getElementById(`step-${step}`);
-                if(!el) return; 
-                
-                el.classList.remove('active');
-                el.querySelector('.timeline-icon').style.backgroundColor = '#e2e8f0';
-                
-                if(passed) {
-                    el.classList.add('active');
-                    el.querySelector('.timeline-icon').style.backgroundColor = '#22c55e';
-                }
-
-                if(step === 'out_for_delivery' && currentStep === 'out_for_delivery') {
-                    el.querySelector('.timeline-icon').classList.add('animate-pulse');
-                } else {
-                    el.querySelector('.timeline-icon').classList.remove('animate-pulse');
-                }
-
-                 if(step === currentStep) passed = false; 
-            });
-            
-            // Fail-safe manual overrides for multi-step visual
-            const setActive = (id) => {
-                const el = document.getElementById(id);
-                el.classList.add('active');
-                el.querySelector('.timeline-icon').style.backgroundColor = '#22c55e';
-            }
-            
-            // Reset All First
-            document.querySelectorAll('.timeline-item').forEach(el => {
-                el.classList.remove('active');
-                el.querySelector('.timeline-icon').style.backgroundColor = '#e2e8f0';
-            });
-
-            if(order.status === 'placed' || order.status === 'admin_accepted') {
-                setActive('step-placed');
-            } else if (order.status === 'accepted') {
-                setActive('step-placed');
-                setActive('step-accepted');
-            } else if (order.status === 'out_for_delivery') {
-                setActive('step-placed');
-                setActive('step-accepted');
-                setActive('step-out');
-            }
-        }
-
-        // --- CART LOGIC ---
-        function getCart() { return JSON.parse(localStorage.getItem('rmz_cart')) || []; }
-        function saveCart(c) { localStorage.setItem('rmz_cart', JSON.stringify(c)); }
-
-        function renderCart() {
-            if(isTrackingMode) return; // Don't render cart if tracking
-
-            const cart = getCart();
-            const list = document.getElementById('cartList');
-            document.getElementById('itemCountBadge').innerText = `${cart.length} Items`;
-            list.innerHTML = '';
-
-            if (cart.length === 0) {
-                document.getElementById('cartEmptyState').classList.remove('hidden');
-                document.getElementById('addMoreLink').classList.add('hidden');
-                document.getElementById('placeOrderBtn').disabled = true;
-                document.getElementById('bottomBar').classList.add('hidden'); // Hide payment bar if empty
-                return;
-            }
-            document.getElementById('cartEmptyState').classList.add('hidden');
-            document.getElementById('addMoreLink').classList.remove('hidden');
-            document.getElementById('placeOrderBtn').disabled = false;
-            document.getElementById('bottomBar').classList.remove('hidden');
-
-            cart.forEach((item, idx) => {
-                const div = document.createElement('div');
-                div.className = "flex items-center justify-between p-4";
-                div.innerHTML = `
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm"><span class="text-indigo-600 mr-1">${item.count}x</span> ${item.name}</h4>
-                        <p class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">${item.qty}</p>
-                    </div>
-                    <button onclick="removeItem(${idx})" class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-                `;
-                list.appendChild(div);
-            });
-            calculateWeight(cart);
-        }
-
-        function removeItem(idx) {
-            const c = getCart(); c.splice(idx, 1); saveCart(c); renderCart();
-        }
-
-        // --- WEIGHT & SLAB LOGIC ---
-        function calculateWeight(cart) {
-            let totalKg = 0;
-            cart.forEach(item => {
-                let txt = item.qty.toLowerCase().replace(/\s/g, '');
-                let weight = 0;
-                let mul = item.count || 1;
-                let match;
-
-                if (match = txt.match(/(\d+(\.\d+)?)kg/)) weight = parseFloat(match[1]);
-                else if ((match = txt.match(/(\d+)g/)) || (match = txt.match(/(\d+)gm/))) weight = parseFloat(match[1]) / 1000;
-                else if ((match = txt.match(/(\d+(\.\d+)?)l/)) || (match = txt.match(/(\d+(\.\d+)?)ltr/))) weight = parseFloat(match[1]);
-                else if (match = txt.match(/(\d+)ml/)) weight = parseFloat(match[1]) / 1000;
-
-                totalKg += (weight * mul);
-            });
-
-            const badge = document.getElementById('weightBadge');
-            if (totalKg > 0) {
-                badge.classList.remove('hidden');
-                document.getElementById('totalWeightDisplay').innerText = `${totalKg.toFixed(2)} KG`;
-                autoSelectSlab(totalKg);
-            } else {
-                badge.classList.add('hidden');
-                if(selectedCharge === 0) selectRate(50, 'SMALL (0-10KG)');
-            }
-        }
-
-        function autoSelectSlab(kg) {
-            ['50','70','80','100'].forEach(r => document.getElementById('rateBtn'+r).classList.remove('disabled'));
-            if (kg > 10) document.getElementById('rateBtn50').classList.add('disabled');
-            if (kg > 20) document.getElementById('rateBtn70').classList.add('disabled');
-            if (kg > 30) document.getElementById('rateBtn80').classList.add('disabled');
-            
-            let rec = 50, lbl = 'SMALL (0-10KG)';
-            if (kg > 30) { rec = 100; lbl = 'HEAVY (31-50KG)'; }
-            else if (kg > 20) { rec = 80; lbl = 'LARGE (21-30KG)'; }
-            else if (kg > 10) { rec = 70; lbl = 'MEDIUM (11-20KG)'; }
-
-            if (selectedCharge < rec || selectedCharge === 0) selectRate(rec, lbl);
-        }
-
-        function selectRate(amt, lbl) {
-            selectedCharge = amt; selectedLabel = lbl;
-            document.querySelectorAll('.slab-card').forEach(c => c.classList.remove('selected'));
-            document.getElementById('rateBtn'+amt).classList.add('selected');
-            document.getElementById('displayTotal').innerText = amt;
-        }
-
-        // --- LOCATION LOGIC ---
-        function getLocation() {
-            const btn = document.getElementById('btnAutoLoc'); 
-            const addrBox = document.getElementById('deliveryAddress');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detecting...';
-            
-            if("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(async p => {
-                    const lat = p.coords.latitude;
-                    const lng = p.coords.longitude;
-                    
-                    document.getElementById('lat').value = lat;
-                    document.getElementById('lng').value = lng;
-                    
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Found';
-                    btn.classList.replace('text-indigo-600', 'text-green-600');
-                    btn.classList.replace('bg-indigo-50', 'bg-green-50');
-                    
-                    try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                        const data = await response.json();
-                        if(data && data.display_name) {
-                            addrBox.value = data.display_name;
-                            showToast("Address Auto-filled!");
-                        }
-                    } catch(e) {
-                        showToast("GPS Coords set. Type address.");
-                    }
-
-                }, () => { btn.innerHTML = 'Retry GPS'; showToast("GPS Failed"); });
-            }
-        }
-
-        // --- PLACE ORDER ---
-        async function placeOrder() {
-            const cart = getCart();
-            const address = document.getElementById('deliveryAddress').value.trim();
-            const lat = parseFloat(document.getElementById('lat').value) || 0;
-            const lng = parseFloat(document.getElementById('lng').value) || 0;
-
-            if(!selectedCharge) return showToast("Select Parcel Size");
-            if(!address) return showToast("Address Required");
-
-            const btn = document.getElementById('placeOrderBtn');
-            btn.disabled = true; btn.innerHTML = 'Processing...';
-
-            const orderData = {
-                orderId: 'ORD-' + Date.now().toString().slice(-6),
-                user: { name: session.name, mobile: session.mobile, shopName: session.shopName || session.name + "'s Store" },
-                location: { address, lat, lng },
-                cart: cart,
-                payment: { deliveryFee: selectedCharge, slab: selectedLabel, mode: 'COD' },
-                status: 'placed',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-
-            try {
-                await db.ref('orders').push(orderData);
-                db.ref('users/' + session.mobile).update({ address: address });
-                
-                const overlay = document.getElementById('successOverlay');
-                overlay.classList.add('active');
-                localStorage.removeItem('rmz_cart');
-
-                // No Redirect, just UI update via listener
-                setTimeout(() => {
-                    overlay.classList.remove('active');
-                    btn.disabled = false; btn.innerHTML = `<span>PLACE ORDER</span><i class="fa-solid fa-arrow-right"></i>`;
-                }, 2000);
-
-            } catch (err) {
-                console.error(err);
-                showToast("Error Placing Order");
-                btn.disabled = false; btn.innerHTML = 'Try Again';
-            }
-        }
-    </script>
+    <!-- Link to JS Logic -->
+    <script src="cart.js"></script>
 </body>
 </html>
-
