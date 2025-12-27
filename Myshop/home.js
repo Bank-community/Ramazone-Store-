@@ -118,16 +118,17 @@ function setupUI() {
     document.getElementById('sidebarNav').innerHTML = menuHtml;
 }
 
-// --- SEARCH BAR LOGIC (UPDATED: STICKY & HIDE ELEMENTS) ---
+// --- SEARCH BAR LOGIC (UPDATED) ---
 function activateSearch() {
-    // 'search-mode' class body par lagate hi CSS baaki elements hide kar dega
+    // Enable Search Mode UI
     document.body.classList.add('search-mode');
     document.getElementById('headerControls').classList.add('hidden');
     document.getElementById('clearSearchBtn').classList.remove('hidden');
 }
 
 function deactivateSearch() {
-    // Timeout isliye taaki agar user 'Clear' button dabaye toh woh pehle register ho jaye
+    // Only revert if empty, otherwise keep search mode active
+    // This allows user to scroll list while keeping search bar at bottom
     setTimeout(() => {
         const val = document.getElementById('searchInput').value;
         if(!val) {
@@ -139,17 +140,19 @@ function deactivateSearch() {
 }
 
 function clearSearch() {
-    document.getElementById('searchInput').value = '';
-    filterProducts(); // List reset karein
-    document.getElementById('searchInput').blur(); // Keyboard band karein
+    const input = document.getElementById('searchInput');
+    input.value = '';
+    filterProducts(); // Reset list
     
-    // Force reset UI
+    // Reset UI completely
     document.body.classList.remove('search-mode');
     document.getElementById('headerControls').classList.remove('hidden');
     document.getElementById('clearSearchBtn').classList.add('hidden');
+    
+    input.blur(); // Close keyboard
 }
 
-// --- NEW FEATURE: REPEAT LAST ORDER (FIXED: NO QTY INCREASE) ---
+// --- REPEAT LAST ORDER ---
 function repeatLastOrder() {
     showToast("Fetching last order...");
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).limitToLast(1).once('value', snap => {
@@ -158,12 +161,8 @@ function repeatLastOrder() {
             if(orderData && orderData.cart && orderData.cart.length > 0) {
                 let currentCart = JSON.parse(localStorage.getItem('rmz_cart')) || [];
                 
-                // Logic Fix: Agar item pehle se hai, toh usse hata kar fresh count add karo
-                // Isse quantity double nahi hogi, balki pichle order wali set ho jayegi
                 orderData.cart.forEach(prevItem => {
-                    // Remove if already exists
                     currentCart = currentCart.filter(i => !(i.name === prevItem.name && i.qty === prevItem.qty));
-                    // Push the item fresh with original count
                     currentCart.push({ name: prevItem.name, qty: prevItem.qty, count: prevItem.count || 1 });
                 });
 
@@ -179,16 +178,15 @@ function repeatLastOrder() {
     });
 }
 
-// --- NEW FEATURE: CONTACT SUPPORT ---
+// --- CONTACT SUPPORT ---
 function openSupportOptions() {
-    toggleMenu(); // Close sidebar
+    toggleMenu(); 
     document.getElementById('supportModal').classList.remove('hidden');
 }
 
 function sendSupportMsg(issueType) {
     const waNumber = "7903698180";
     
-    // Fetch total orders count before sending
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).once('value', snap => {
         const totalOrders = snap.exists() ? Object.keys(snap.val()).length : 0;
         
@@ -208,10 +206,9 @@ Please assist me.`;
     });
 }
 
-// --- SEAMLESS SLIDER LOGIC ---
+// --- SEAMLESS SLIDER ---
 function initSeamlessSlider() {
     slides = [];
-    // Fetch Banners
     db.ref(`users/${targetMobile}/banner`).once('value', uSnap => {
         if(uSnap.exists()) {
             const b = uSnap.val();
@@ -239,16 +236,13 @@ function renderSeamlessSlider() {
     const track = document.getElementById('sliderTrack');
     const dotsContainer = document.getElementById('dotsContainer');
     
-    // Create Clones for Seamless Effect
     const firstClone = slides[0];
     const lastClone = slides[slides.length - 1];
-    
     const allSlides = [lastClone, ...slides, firstClone];
     
     track.innerHTML = '';
     dotsContainer.innerHTML = '';
     
-    // Render All Slides (including clones)
     allSlides.forEach(s => {
         const div = document.createElement('div');
         div.className = "slide";
@@ -262,20 +256,15 @@ function renderSeamlessSlider() {
         track.appendChild(div);
     });
 
-    // Render Dots
     slides.forEach((_, idx) => {
         const dot = document.createElement('div');
         dot.className = `slider-dot ${idx === 0 ? 'active' : ''}`;
         dotsContainer.appendChild(dot);
     });
 
-    // Set initial position
     track.style.transform = `translateX(-100%)`; 
-
-    // Auto Slide
     startSeamlessInterval();
     
-    // Transition End Listener
     track.addEventListener('transitionend', () => {
         isTransitioning = false;
         if (slideIndex >= slides.length + 1) {
@@ -290,7 +279,6 @@ function renderSeamlessSlider() {
         }
     });
 
-    // Touch Support
     const container = document.getElementById('sliderContainer');
     let startX = 0;
     container.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(slideInterval); });
@@ -441,7 +429,8 @@ function renderList(products) {
             li.onclick = () => openAddModal(id, item.name, item.qty);
             li.classList.add('cursor-pointer');
         } else {
-            rightAction = `<button onclick="addToCartLocal('${item.name}', '${item.qty}')" class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-900 hover:text-white transition active:scale-90"><i class="fa-solid fa-plus text-xs"></i></button>`;
+            // Prevent Default on Mouse Down prevents focus loss on the search input
+            rightAction = `<button onmousedown="event.preventDefault()" onclick="addToCartLocal('${item.name}', '${item.qty}')" class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-900 hover:text-white transition active:scale-90"><i class="fa-solid fa-plus text-xs"></i></button>`;
         }
 
         li.innerHTML = `${leftContent} ${rightAction}`;
@@ -663,4 +652,3 @@ function openInvoice(oid) {
     if(o.cart) { o.cart.forEach(i => { tbody.innerHTML += `<tr><td class="py-2 px-4 border-b border-slate-50"><p class="font-bold text-slate-800">${i.name}</p><p class="text-[10px] text-slate-400">${i.qty}</p></td><td class="py-2 px-4 border-b border-slate-50 text-right font-bold text-slate-700">x${i.count}</td></tr>`; }); }
     document.getElementById('invoiceModal').classList.remove('hidden');
 }
-
