@@ -80,14 +80,15 @@
     <!-- MAIN CONTENT -->
     <div class="px-4 mt-20">
         
-        <!-- NEW: SMART RADIUS CONTROLLER -->
+        <!-- SMART RADIUS CONTROLLER (MAX 10 KM) -->
         <div id="radiusControl" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-4">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-crosshairs text-amber-500 mr-1"></i> Scanning Range</h3>
                 <span class="text-sm font-bold text-white bg-gray-700 px-2 py-0.5 rounded"><span id="radiusVal">5</span> KM</span>
             </div>
-            <input type="range" min="1" max="50" value="5" class="w-full" id="radiusSlider" oninput="updateRadius(this.value)" onchange="listenOrders()">
-            <p class="text-[9px] text-gray-500 mt-1 text-center">Only showing orders within this circle.</p>
+            <!-- MAX CHANGED TO 10 -->
+            <input type="range" min="1" max="10" value="5" class="w-full" id="radiusSlider" oninput="updateRadius(this.value)" onchange="listenOrders()">
+            <p class="text-[9px] text-gray-500 mt-1 text-center">Showing orders within this circle.</p>
         </div>
 
         <!-- Stats -->
@@ -168,10 +169,20 @@
                     <p class="text-lg font-bold text-white mt-0.5" id="actCust">Customer Name</p>
                     <p class="text-sm text-gray-400" id="actAddr">Address</p>
                     
+                    <!-- NEW MAP ACTIONS -->
                     <div class="flex gap-2 mt-3">
-                         <button onclick="openWhatsApp()" class="text-xs bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded flex-1 hover:bg-green-600 hover:text-white transition"><i class="fa-brands fa-whatsapp mr-1"></i> Chat</button>
-                        <button onclick="openMap('cust')" class="text-xs bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded flex-1 hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-location-arrow mr-1"></i> Map</button>
-                        <button onclick="callCust()" class="text-xs bg-gray-700 border border-gray-600 px-3 py-2 rounded text-white flex-1 hover:bg-gray-600"><i class="fa-solid fa-phone mr-1"></i> Call</button>
+                        <button onclick="openMap('dir')" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-600 hover:text-white transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-location-arrow"></i> Navigate
+                        </button>
+                        <button onclick="openMap('view')" class="bg-gray-700 border border-gray-600 px-3 py-2 rounded text-xs text-white hover:bg-gray-600" title="Street View">
+                            <i class="fa-solid fa-street-view text-lg"></i>
+                        </button>
+                        <button onclick="openWhatsApp()" class="bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded text-xs hover:bg-green-600 hover:text-white">
+                            <i class="fa-brands fa-whatsapp text-lg"></i>
+                        </button>
+                        <button onclick="callCust()" class="bg-gray-700 border border-gray-600 px-3 py-2 rounded text-white hover:bg-gray-600">
+                            <i class="fa-solid fa-phone text-lg"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -216,6 +227,9 @@
         let isOnline = false, activeOrder = null, watchId, heartbeatInterval;
         let myLat = 0, myLng = 0;
         let serviceRadius = localStorage.getItem('rmz_pref_radius') || 5;
+        // Cap radius at 10 if previously higher
+        if(serviceRadius > 10) serviceRadius = 10;
+        
         const PARTNER_PAY = 20;
 
         window.onload = () => {
@@ -258,7 +272,7 @@
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return (R * c).toFixed(1); // Return string with 1 decimal
+            return (R * c).toFixed(1); 
         }
 
         // --- TOGGLE DUTY ---
@@ -312,14 +326,12 @@
                     myLng = p.coords.longitude;
                     document.getElementById('locStatus').innerText = "GPS Live";
                     
-                    // Update server
                     db.ref('deliveryBoys/'+session.mobile).update({
                         status:'online',
                         location:{lat:myLat, lng:myLng},
                         lastUpdated: firebase.database.ServerValue.TIMESTAMP
                     });
                     
-                    // Refresh List to apply new distance
                     listenOrders();
                     
                 }, e => document.getElementById('locStatus').innerText = "GPS Weak", {enableHighAccuracy: true});
@@ -327,7 +339,7 @@
         }
         function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
 
-        // --- FILTERED ORDERS LISTENER ---
+        // --- LISTEN ORDERS (MAX 10KM FILTER) ---
         function listenOrders() {
             const list = document.getElementById('ordersList');
             
@@ -338,10 +350,7 @@
                 
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([id, o]) => {
-                        // Calculate Distance
                         const dist = parseFloat(getDistance(myLat, myLng, o.location.lat, o.location.lng));
-                        
-                        // Condition: Must be PLACED AND within Radius (OR Accepted by me)
                         const isInRange = dist <= parseFloat(serviceRadius);
                         const isMyOrder = (o.status === 'accepted' && o.deliveryBoyId === session.mobile);
                         
@@ -368,6 +377,9 @@
                             const div = document.createElement('div');
                             div.className = `${cardClass} p-4 rounded-xl pulse-border relative`;
                             
+                            // Map Action: Direct Direction
+                            const mapAction = `openMapDirect(${o.location.lat},${o.location.lng})`;
+
                             const btnDisabled = (activeOrder && activeOrder.id !== id) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
                             const btnText = (activeOrder && activeOrder.id === id) ? 'CONTINUE TASK' : (activeOrder ? 'Finish Current' : 'ACCEPT ORDER');
                             const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
@@ -388,7 +400,7 @@
                                     ${assignedInfo}
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="window.open('https://maps.google.com/?q=${o.location.lat},${o.location.lng}', '_blank')" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Check Location"><i class="fa-solid fa-map-location-dot"></i></button>
+                                    <button onclick="${mapAction}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Navigate"><i class="fa-solid fa-location-arrow"></i></button>
                                     <button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
                                         ${btnText}
                                     </button>
@@ -464,7 +476,7 @@
             document.getElementById('ordersContainer').classList.add('hidden');
             document.getElementById('noOrdersState').classList.add('hidden');
             document.getElementById('statsSection').classList.add('hidden');
-            document.getElementById('radiusControl').classList.add('hidden'); // Hide slider during active task
+            document.getElementById('radiusControl').classList.add('hidden');
             document.getElementById('activeOrderPanel').classList.remove('hidden');
             
             const custName = o.user && o.user.name ? o.user.name : "Customer";
@@ -552,7 +564,29 @@
         function changePin() { toggleMenu(); const p = prompt("New PIN:"); if(p && p.length===4) db.ref('deliveryBoys/'+session.mobile).update({pin:p}).then(()=>showToast("PIN Changed")); }
         function updateVehicle() { toggleMenu(); const v = prompt("Vehicle (Bike/Cycle):"); if(v) { db.ref('deliveryBoys/'+session.mobile).update({vehicle:v}); session.vehicle=v; localStorage.setItem('rmz_delivery_user',JSON.stringify(session)); document.getElementById('vehicleType').innerText=v; }}
         function logout() { localStorage.removeItem('rmz_delivery_user'); window.location.href='delivery-login.html'; }
-        function openMap(type) { if(activeOrder && activeOrder.location) window.open(`https://maps.google.com/?q=${activeOrder.location.lat},${activeOrder.location.lng}`, '_blank'); }
+        
+        // BETTER MAPS FUNCTIONS
+        function openMapDirect(lat, lng) {
+            // Direct Navigation URL
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+        }
+        
+        function openMap(type) { 
+            if(!activeOrder || !activeOrder.location) return;
+            const lat = activeOrder.location.lat;
+            const lng = activeOrder.location.lng;
+            
+            if(type === 'dir') {
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+            } else if (type === 'view') {
+                // Try to open street view / panorama
+                window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`, '_blank');
+            } else if (type === 'cust') {
+                // Just viewing the location pin
+                window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank');
+            }
+        }
+        
         function callCust() { if(activeOrder && activeOrder.user) window.open(`tel:${activeOrder.user.mobile}`); }
         function openWhatsApp() { if(activeOrder && activeOrder.user) window.open(`https://wa.me/91${activeOrder.user.mobile}`, '_blank'); }
     </script>
