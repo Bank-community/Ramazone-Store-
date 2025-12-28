@@ -9,8 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -25,11 +27,15 @@
         .pulse-border { animation: pulse-orange 2s infinite; }
         @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
         
-        .badge-me { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: 1px solid #60a5fa; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        /* Range Slider Style */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #f59e0b; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(245,158,11,0.5); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #374151; border-radius: 2px; }
     </style>
 </head>
 <body class="pb-24">
 
+    <!-- HEADER -->
     <header class="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-30 px-4 py-3 flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-3">
             <button onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition active:scale-95">
@@ -50,6 +56,7 @@
         </div>
     </header>
 
+    <!-- SIDEBAR -->
     <div id="menuOverlay" class="overlay fixed inset-0 bg-black/80 z-40 backdrop-blur-sm" onclick="toggleMenu()"></div>
     <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-gray-900 z-50 shadow-2xl flex flex-col border-r border-gray-800">
         <div class="p-6 bg-gray-800 border-b border-gray-700">
@@ -59,29 +66,31 @@
             <h2 class="font-bold text-lg text-white" id="menuName">Partner</h2>
             <p class="text-xs text-gray-400 font-mono" id="menuMobile">+91 ...</p>
             <div class="mt-2 flex gap-1 justify-center">
-                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
-                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
-                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
-                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
-                <i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+                <i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i>
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3">
-                <i class="fa-solid fa-key text-amber-500 w-5"></i> Change PIN
-            </button>
-            <button onclick="updateVehicle()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3">
-                <i class="fa-solid fa-motorcycle text-amber-500 w-5"></i> Vehicle Info
-            </button>
+            <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-key text-amber-500 w-5"></i> Change PIN</button>
+            <button onclick="updateVehicle()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-motorcycle text-amber-500 w-5"></i> Vehicle Info</button>
             <div class="h-px bg-gray-800 my-2"></div>
-            <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-900/30 text-red-500 font-medium text-sm flex items-center gap-3">
-                <i class="fa-solid fa-power-off w-5"></i> Logout
-            </button>
+            <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-900/30 text-red-500 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-power-off w-5"></i> Logout</button>
         </nav>
     </div>
 
+    <!-- MAIN CONTENT -->
     <div class="px-4 mt-20">
         
+        <!-- NEW: SMART RADIUS CONTROLLER -->
+        <div id="radiusControl" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-crosshairs text-amber-500 mr-1"></i> Scanning Range</h3>
+                <span class="text-sm font-bold text-white bg-gray-700 px-2 py-0.5 rounded"><span id="radiusVal">5</span> KM</span>
+            </div>
+            <input type="range" min="1" max="50" value="5" class="w-full" id="radiusSlider" oninput="updateRadius(this.value)" onchange="listenOrders()">
+            <p class="text-[9px] text-gray-500 mt-1 text-center">Only showing orders within this circle.</p>
+        </div>
+
+        <!-- Stats -->
         <div id="statsSection" class="hidden grid grid-cols-2 gap-3 mb-6">
             <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex flex-col items-center shadow-lg">
                 <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Earnings</span>
@@ -93,29 +102,33 @@
             </div>
         </div>
 
+        <!-- Offline -->
         <div id="offlineState" class="flex flex-col items-center justify-center py-12 text-center">
             <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-600"><i class="fa-solid fa-power-off text-3xl"></i></div>
             <h2 class="text-lg font-bold text-gray-300">You are Offline</h2>
             <p class="text-sm text-gray-500 mt-1">Go Online to start your shift</p>
         </div>
 
+        <!-- Online Scanning -->
         <div id="noOrdersState" class="hidden flex flex-col items-center justify-center py-12 text-center">
             <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 relative">
                 <span class="absolute w-full h-full rounded-full animate-ping bg-amber-500/20"></span>
                 <i class="fa-solid fa-radar text-3xl text-amber-500"></i>
             </div>
-            <h2 class="text-lg font-bold text-gray-300">Scanning Area...</h2>
+            <h2 class="text-lg font-bold text-gray-300">Scanning <span id="scanKm">5</span> KM Area...</h2>
             <p class="text-xs text-gray-500 mt-4 bg-gray-800 px-3 py-1 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i> <span id="locStatus">GPS Waiting...</span></p>
         </div>
 
+        <!-- Orders List -->
         <div id="ordersContainer" class="hidden space-y-4 pb-20">
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex justify-between">
-                <span>Available Tasks</span>
+                <span>Nearby Tasks</span>
                 <span id="orderCount" class="bg-amber-600 text-white px-1.5 rounded">0</span>
             </h3>
             <div id="ordersList" class="space-y-4"></div>
         </div>
 
+        <!-- Active Order Panel -->
         <div id="activeOrderPanel" class="hidden fixed inset-0 z-50 bg-gray-900 flex flex-col animate-[slideUp_0.3s_ease-out]">
             <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center shadow-md">
                 <h2 class="font-bold text-amber-500">Live Task</h2>
@@ -174,6 +187,7 @@
 
     </div>
 
+    <!-- Overlays -->
     <div id="celebrationOverlay" class="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center hidden">
         <div class="text-center animate-[popIn_0.5s_ease-out]">
             <div class="text-6xl mb-2">🎉</div>
@@ -200,6 +214,8 @@
         if (!session) window.location.href = 'delivery-login.html';
 
         let isOnline = false, activeOrder = null, watchId, heartbeatInterval;
+        let myLat = 0, myLng = 0;
+        let serviceRadius = localStorage.getItem('rmz_pref_radius') || 5;
         const PARTNER_PAY = 20;
 
         window.onload = () => {
@@ -208,6 +224,11 @@
             document.getElementById('menuName').innerText = session.name;
             document.getElementById('menuMobile').innerText = '+91 ' + session.mobile;
             
+            // Set saved radius
+            document.getElementById('radiusSlider').value = serviceRadius;
+            document.getElementById('radiusVal').innerText = serviceRadius;
+            document.getElementById('scanKm').innerText = serviceRadius;
+
             const savedDuty = localStorage.getItem('rmz_duty_on') === 'true';
             if(savedDuty) {
                 document.getElementById('dutySwitch').checked = true;
@@ -220,6 +241,27 @@
         function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
         function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
 
+        // --- NEW: RADIUS LOGIC ---
+        function updateRadius(val) {
+            serviceRadius = val;
+            localStorage.setItem('rmz_pref_radius', val);
+            document.getElementById('radiusVal').innerText = val;
+            document.getElementById('scanKm').innerText = val;
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            if(!lat1 || !lon1 || !lat2 || !lon2) return 9999;
+            const R = 6371; // Earth radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return (R * c).toFixed(1); // Return string with 1 decimal
+        }
+
+        // --- TOGGLE DUTY ---
         function toggleDuty() {
             isOnline = document.getElementById('dutySwitch').checked;
             localStorage.setItem('rmz_duty_on', isOnline);
@@ -229,9 +271,10 @@
                 status.innerText = "ONLINE"; status.classList.add('text-green-400');
                 document.getElementById('offlineState').classList.add('hidden');
                 document.getElementById('statsSection').classList.remove('hidden');
+                document.getElementById('radiusControl').classList.remove('hidden');
                 db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().set('offline');
                 startGPS();
-                startHeartbeat(); // Start Silent Ping
+                startHeartbeat();
                 listenOrders();
             } else {
                 status.innerText = "OFFLINE"; status.classList.remove('text-green-400');
@@ -239,65 +282,55 @@
                 document.getElementById('noOrdersState').classList.add('hidden');
                 document.getElementById('ordersContainer').classList.add('hidden');
                 document.getElementById('statsSection').classList.add('hidden');
+                document.getElementById('radiusControl').classList.add('hidden');
                 stopGPS();
-                stopHeartbeat(); // Stop Ping
+                stopHeartbeat();
                 db.ref('deliveryBoys/'+session.mobile+'/status').set('offline');
                 db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().cancel();
                 db.ref('orders').off();
             }
         }
 
-        // --- HEARTBEAT SYSTEM (SILENT TRACKING) ---
+        // --- HEARTBEAT & GPS ---
         function startHeartbeat() {
             if(heartbeatInterval) clearInterval(heartbeatInterval);
-            
-            // Ping immediately then every 60s
-            pingServer();
-            heartbeatInterval = setInterval(pingServer, 60000); 
+            pingServer(); heartbeatInterval = setInterval(pingServer, 60000); 
         }
-
-        function stopHeartbeat() {
-            if(heartbeatInterval) clearInterval(heartbeatInterval);
-        }
-
+        function stopHeartbeat() { if(heartbeatInterval) clearInterval(heartbeatInterval); }
         async function pingServer() {
             if(!isOnline) return;
-            
             let batteryLevel = 'Unknown';
-            try {
-                // Silent Battery Check
-                if(navigator.getBattery) {
-                    const battery = await navigator.getBattery();
-                    batteryLevel = Math.round(battery.level * 100) + '%';
-                }
-            } catch(e) {}
-
-            // Silent DB Update
-            db.ref('deliveryBoys/'+session.mobile).update({
-                lastHeartbeat: firebase.database.ServerValue.TIMESTAMP,
-                status: 'online', // Ensure online
-                battery: batteryLevel
-            });
+            try { if(navigator.getBattery) { const battery = await navigator.getBattery(); batteryLevel = Math.round(battery.level * 100) + '%'; } } catch(e) {}
+            db.ref('deliveryBoys/'+session.mobile).update({ lastHeartbeat: firebase.database.ServerValue.TIMESTAMP, status: 'online', battery: batteryLevel });
         }
 
-        // --- GPS TRACKING ---
         function startGPS() {
             if("geolocation" in navigator) {
                 db.ref('deliveryBoys/'+session.mobile).update({status:'online'});
                 watchId = navigator.geolocation.watchPosition(p => {
+                    myLat = p.coords.latitude;
+                    myLng = p.coords.longitude;
                     document.getElementById('locStatus').innerText = "GPS Live";
+                    
+                    // Update server
                     db.ref('deliveryBoys/'+session.mobile).update({
                         status:'online',
-                        location:{lat:p.coords.latitude, lng:p.coords.longitude},
+                        location:{lat:myLat, lng:myLng},
                         lastUpdated: firebase.database.ServerValue.TIMESTAMP
                     });
+                    
+                    // Refresh List to apply new distance
+                    listenOrders();
+                    
                 }, e => document.getElementById('locStatus').innerText = "GPS Weak", {enableHighAccuracy: true});
             }
         }
         function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
 
+        // --- FILTERED ORDERS LISTENER ---
         function listenOrders() {
             const list = document.getElementById('ordersList');
+            
             db.ref('orders').on('value', snap => {
                 if(!isOnline) return;
                 list.innerHTML = '';
@@ -305,20 +338,27 @@
                 
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([id, o]) => {
-                        const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
-                        const address = o.location && o.location.address ? o.location.address : "Address Hidden";
-                        const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
-                        const slab = o.payment && o.payment.slab ? o.payment.slab : 'Standard';
-                        const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
-                        const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
-
-                        let assignedInfo = "";
-                        let cardClass = "glass-card";
+                        // Calculate Distance
+                        const dist = parseFloat(getDistance(myLat, myLng, o.location.lat, o.location.lng));
                         
-                        if(o.status === 'placed' || (o.status === 'accepted' && o.deliveryBoyId === session.mobile)) {
+                        // Condition: Must be PLACED AND within Radius (OR Accepted by me)
+                        const isInRange = dist <= parseFloat(serviceRadius);
+                        const isMyOrder = (o.status === 'accepted' && o.deliveryBoyId === session.mobile);
+                        
+                        if((o.status === 'placed' && isInRange) || isMyOrder) {
                             count++;
                             
-                            if(o.deliveryBoyId === session.mobile) {
+                            const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
+                            const address = o.location && o.location.address ? o.location.address : "Address Hidden";
+                            const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
+                            const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
+                            const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
+
+                            let assignedInfo = "";
+                            let cardClass = "glass-card";
+                            let distanceBadge = `<span class="text-amber-400 font-bold ml-1"><i class="fa-solid fa-route"></i> ${dist} KM</span>`;
+                            
+                            if(isMyOrder) {
                                 assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`;
                                 cardClass = "glass-card border-2 border-blue-500 bg-blue-900/20";
                             }
@@ -331,7 +371,7 @@
                             const btnDisabled = (activeOrder && activeOrder.id !== id) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
                             const btnText = (activeOrder && activeOrder.id === id) ? 'CONTINUE TASK' : (activeOrder ? 'Finish Current' : 'ACCEPT ORDER');
                             const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
-                            const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${JSON.stringify(o).replace(/"/g, '"')})` : `acceptOrder('${id}')`;
+                            const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${JSON.stringify(o).replace(/"/g, '&quot;')})` : `acceptOrder('${id}')`;
 
                             div.innerHTML = `
                                 <div class="flex justify-between items-start mb-2">
@@ -340,8 +380,7 @@
                                 </div>
                                 <div class="text-xs text-gray-400 space-y-1 mb-3">
                                     <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
-                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
-                                    <p><i class="fa-solid fa-weight-hanging mr-1"></i> ${slab}</p>
+                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address} ${distanceBadge}</p>
                                     <div class="flex gap-2 mt-2">
                                         <span class="bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-700"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
                                         <span class="bg-pink-900 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-700"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
@@ -414,6 +453,7 @@
                         document.getElementById('activeOrderPanel').classList.add('hidden');
                         document.getElementById('statsSection').classList.remove('hidden');
                         document.getElementById('ordersContainer').classList.remove('hidden');
+                        document.getElementById('radiusControl').classList.remove('hidden');
                     }
                 }
             });
@@ -424,6 +464,7 @@
             document.getElementById('ordersContainer').classList.add('hidden');
             document.getElementById('noOrdersState').classList.add('hidden');
             document.getElementById('statsSection').classList.add('hidden');
+            document.getElementById('radiusControl').classList.add('hidden'); // Hide slider during active task
             document.getElementById('activeOrderPanel').classList.remove('hidden');
             
             const custName = o.user && o.user.name ? o.user.name : "Customer";
@@ -507,6 +548,7 @@
             });
         }
 
+        // Utils
         function changePin() { toggleMenu(); const p = prompt("New PIN:"); if(p && p.length===4) db.ref('deliveryBoys/'+session.mobile).update({pin:p}).then(()=>showToast("PIN Changed")); }
         function updateVehicle() { toggleMenu(); const v = prompt("Vehicle (Bike/Cycle):"); if(v) { db.ref('deliveryBoys/'+session.mobile).update({vehicle:v}); session.vehicle=v; localStorage.setItem('rmz_delivery_user',JSON.stringify(session)); document.getElementById('vehicleType').innerText=v; }}
         function logout() { localStorage.removeItem('rmz_delivery_user'); window.location.href='delivery-login.html'; }
@@ -516,3 +558,5 @@
     </script>
 </body>
 </html>
+
+
