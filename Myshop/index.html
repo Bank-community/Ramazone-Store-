@@ -45,6 +45,9 @@
         
         /* Modal Overlay */
         .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
+        
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
     </style>
 </head>
 <body class="text-slate-800 antialiased flex flex-col min-h-screen bg-slate-50">
@@ -195,12 +198,27 @@
                         <p class="text-[10px] font-bold text-indigo-400 uppercase">Security Question</p>
                         <p class="text-sm font-bold text-indigo-900 mt-1" id="dispSecQ">Loading...</p>
                     </div>
-                    <div>
-                        <input type="text" id="recAnswer" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 text-center" placeholder="Enter Your Answer">
+                    
+                    <div id="attemptContainer">
+                        <input type="text" id="recAnswer" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 text-center focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Enter Your Answer">
+                        <p id="attemptsLeft" class="text-[10px] text-right text-slate-400 font-bold mt-1">3 attempts left</p>
                     </div>
-                    <button onclick="verifySecurityAnswer()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+
+                    <button onclick="verifySecurityAnswer()" id="btnVerifyAns" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
                         Verify & Show PIN
                     </button>
+
+                    <!-- FALLBACK: 3 WRONG ATTEMPTS -->
+                    <div id="wrongAnsFallback" class="hidden pt-4 border-t border-slate-100 animate-[fadeIn_0.3s_ease-out]">
+                        <div class="bg-red-50 p-3 rounded-lg border border-red-100 mb-3 text-center">
+                            <p class="text-xs font-bold text-red-500"><i class="fa-solid fa-lock"></i> Account Locked</p>
+                            <p class="text-[10px] text-red-400">Security Limit Reached.</p>
+                        </div>
+                        <button onclick="contactAdminRecovery()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg hover:bg-black transition">
+                            <i class="fa-brands fa-whatsapp text-lg text-green-400"></i> Admin Verification (Manual)
+                        </button>
+                        <p class="text-[9px] text-center text-slate-400 mt-2">Admin will verify your number before providing PIN.</p>
+                    </div>
                 </div>
 
                 <!-- Step 2B: Manual Fallback (If no question set) -->
@@ -367,9 +385,11 @@
             btnText.style.display = 'block';
         }
 
-        // --- SECURE RECOVERY SYSTEM ---
+        // --- SECURE RECOVERY SYSTEM (3 STRIKE LOGIC) ---
         let recoveredUserData = null;
         let recoveryMobile = '';
+        let wrongAttempts = 0;
+        const MAX_ATTEMPTS = 3;
 
         function openForgotPinModal() {
             document.getElementById('forgotPinModal').classList.remove('hidden');
@@ -380,12 +400,21 @@
 
         function closeForgotPinModal() {
             document.getElementById('forgotPinModal').classList.add('hidden');
-            // Reset Views
+            
+            // Reset ALL States
             document.getElementById('stepCheckMobile').classList.remove('hidden');
             document.getElementById('stepSecQuestion').classList.add('hidden');
             document.getElementById('stepManualRec').classList.add('hidden');
             document.getElementById('stepShowPin').classList.add('hidden');
+            document.getElementById('wrongAnsFallback').classList.add('hidden');
+            
+            // Reset Input & Logic
             document.getElementById('recAnswer').value = '';
+            document.getElementById('recAnswer').disabled = false;
+            document.getElementById('recAnswer').classList.remove('opacity-50');
+            document.getElementById('btnVerifyAns').classList.remove('hidden');
+            wrongAttempts = 0;
+            document.getElementById('attemptsLeft').innerText = "3 attempts left";
         }
 
         function checkUserForRecovery() {
@@ -408,6 +437,7 @@
                         // Plan B: Automated Secure Recovery
                         document.getElementById('stepCheckMobile').classList.add('hidden');
                         document.getElementById('stepSecQuestion').classList.remove('hidden');
+                        document.getElementById('wrongAnsFallback').classList.add('hidden');
                         
                         // Map Question Codes to Text
                         const qMap = {
@@ -418,6 +448,11 @@
                             'bike': 'What is your dream bike?'
                         };
                         document.getElementById('dispSecQ').innerText = qMap[recoveredUserData.securityQ] || "Secret Question";
+                        
+                        // Reset Attempts on successful fetch
+                        wrongAttempts = 0;
+                        document.getElementById('attemptsLeft').innerText = `${MAX_ATTEMPTS} attempts left`;
+
                     } else {
                         // Plan C: Manual Fallback
                         document.getElementById('stepCheckMobile').classList.add('hidden');
@@ -431,6 +466,8 @@
 
         function verifySecurityAnswer() {
             const inputAns = document.getElementById('recAnswer').value.trim().toLowerCase();
+            const inputField = document.getElementById('recAnswer');
+            
             if(!inputAns) return showToast("Enter Answer");
 
             // Check Answer (Case Insensitive)
@@ -439,13 +476,40 @@
                 document.getElementById('stepShowPin').classList.remove('hidden');
                 document.getElementById('recoveredPin').innerText = recoveredUserData.pin;
             } else {
-                showToast("Incorrect Answer!");
+                // WRONG ANSWER LOGIC
+                wrongAttempts++;
+                const attemptsLeft = MAX_ATTEMPTS - wrongAttempts;
+                
+                // Shake Animation for effect
+                inputField.classList.add('shake');
+                setTimeout(() => inputField.classList.remove('shake'), 500);
+
+                if(wrongAttempts >= MAX_ATTEMPTS) {
+                    // LOCKOUT
+                    document.getElementById('attemptsLeft').innerHTML = "<span class='text-red-500'>Limit Reached!</span>";
+                    document.getElementById('attemptsLeft').classList.add('text-red-500');
+                    
+                    inputField.disabled = true;
+                    inputField.classList.add('opacity-50', 'bg-slate-100');
+                    inputField.value = "LOCKED";
+                    
+                    document.getElementById('btnVerifyAns').classList.add('hidden');
+                    document.getElementById('wrongAnsFallback').classList.remove('hidden');
+                    showToast("Account Security Locked!");
+                } else {
+                    // WARNING
+                    document.getElementById('attemptsLeft').innerText = `${attemptsLeft} attempts left`;
+                    document.getElementById('attemptsLeft').classList.add('text-red-400');
+                    showToast(`Wrong! ${attemptsLeft} attempts left.`);
+                }
             }
         }
 
         function contactAdminRecovery() {
             const m = recoveryMobile;
-            const text = `Hi Admin, I forgot my PIN for Mobile: ${m}. I have not set a security question. Please verify me manually.`;
+            // SECURITY ID helps you identify user intent
+            const secId = Date.now().toString().slice(-4);
+            const text = `Hi Admin, I forgot my PIN for Mobile: ${m}.\nMy Security Answer was wrong/forgotten.\nRef ID: ${secId}\n\nPlease verify that I am messaging from the registered number.`;
             window.open(`https://wa.me/917903698180?text=${encodeURIComponent(text)}`, '_blank');
         }
 
