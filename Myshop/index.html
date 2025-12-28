@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ramazone - My Workshop</title>
+    <title>Ramazone - Start Your Journey</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,57 +23,116 @@
         .input-group:focus-within { transform: translateY(-2px); transition: all 0.3s; }
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #1e293b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Modern Card Hover */
+        .option-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent; }
+        .option-card:active { transform: scale(0.95); }
+        .option-card.selected { border-color: #3b82f6; background-color: #eff6ff; }
+
+        /* Animation */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden-section { display: none; }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+<body class="text-slate-800 antialiased flex flex-col min-h-screen bg-slate-50">
 
-    <!-- Toast -->
+    <!-- Toast Notification -->
     <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] transition-all duration-300 opacity-0 pointer-events-none text-xs font-semibold flex items-center gap-2">
         <i class="fa-solid fa-circle-info text-yellow-400"></i><span id="toastMsg">Notification</span>
     </div>
 
-    <!-- Main Content -->
-    <div class="flex-grow flex flex-col justify-center items-center p-6">
-        <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-100 p-8 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-pink-500"></div>
-
+    <!-- Main Container -->
+    <div class="flex-grow flex flex-col justify-center items-center p-6 w-full max-w-md mx-auto">
+        
+        <!-- SECTION 1: LANDING SELECTION (Default Visible) -->
+        <div id="landingSection" class="w-full space-y-6 fade-in">
             <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-slate-900 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg rotate-3">
-                    <i class="fa-solid fa-store text-2xl text-white"></i>
-                </div>
-                <h1 class="text-2xl font-bold text-slate-900">My Workshop</h1>
-                <p class="text-slate-400 text-xs font-medium mt-1">Ramazone Seller Panel</p>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Ramazone</h1>
+                <p class="text-slate-500 text-sm mt-2">Choose your role to continue</p>
             </div>
 
-            <form id="authForm" class="space-y-5">
-                <div class="input-group">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mobile Number</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-3.5 text-slate-400 font-bold text-sm">+91</span>
-                        <input type="tel" id="mobile" required pattern="[0-9]{10}" maxlength="10" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-800 tracking-widest" placeholder="XXXXXXXXXX" oninput="checkUserExists()">
+            <!-- Option 1: Shop Owner -->
+            <div onclick="showShopLogin()" class="option-card bg-white p-6 rounded-2xl shadow-lg border border-slate-100 cursor-pointer flex items-center gap-5 hover:shadow-xl">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white shadow-md shrink-0">
+                    <i class="fa-solid fa-store text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg">Create a Customer Store</h3>
+                    <p class="text-xs text-slate-500 mt-1">Start selling your products online. Managed by you.</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 ml-auto"></i>
+            </div>
+
+            <!-- Option 2: Delivery Partner (Links to Delivery Folder) -->
+            <div onclick="window.location.href='../Delivery/delivery-login.html'" class="option-card bg-white p-6 rounded-2xl shadow-lg border border-slate-100 cursor-pointer flex items-center gap-5 hover:shadow-xl">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-white shadow-md shrink-0">
+                    <i class="fa-solid fa-motorcycle text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg">Delivery Partner</h3>
+                    <p class="text-xs text-slate-500 mt-1">Join our fleet, deliver orders and earn money.</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 ml-auto"></i>
+            </div>
+
+            <div class="text-center mt-12">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Powered by Ramazone Tech</p>
+            </div>
+        </div>
+
+        <!-- SECTION 2: SHOP LOGIN FORM (Hidden Initially) -->
+        <div id="shopLoginSection" class="w-full hidden-section">
+            
+            <!-- Back Button -->
+            <button onclick="showLanding()" class="mb-6 flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-xs transition">
+                <div class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </div>
+                <span>Back to Selection</span>
+            </button>
+
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 relative overflow-hidden fade-in">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-pink-500"></div>
+
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-slate-900 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg rotate-3">
+                        <i class="fa-solid fa-store text-2xl text-white"></i>
                     </div>
+                    <h1 class="text-2xl font-bold text-slate-900">My Workshop</h1>
+                    <p class="text-slate-400 text-xs font-medium mt-1">Seller & Customer Panel</p>
                 </div>
 
-                <div id="nameField" class="input-group hidden">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Owner Name</label>
-                    <input type="text" id="ownerName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-semibold" placeholder="Ex: Rahul Sharma">
+                <form id="authForm" class="space-y-5">
+                    <div class="input-group">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mobile Number</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-3.5 text-slate-400 font-bold text-sm">+91</span>
+                            <input type="tel" id="mobile" required pattern="[0-9]{10}" maxlength="10" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-800 tracking-widest" placeholder="XXXXXXXXXX" oninput="checkUserExists()">
+                        </div>
+                    </div>
+
+                    <div id="nameField" class="input-group hidden">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Owner Name</label>
+                        <input type="text" id="ownerName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-semibold" placeholder="Ex: Rahul Sharma">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Store PIN</label>
+                        <input type="password" id="pin" required maxlength="4" pattern="[0-9]*" inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-800 tracking-[0.5em] text-center text-lg" placeholder="••••">
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex items-center justify-center gap-2 transition active:scale-95">
+                        <span id="btnText">OPEN SHUTTER</span>
+                        <div class="loader" id="btnLoader"></div>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center border-t border-slate-100 pt-4">
+                    <button onclick="handleForgotPin()" class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-2 rounded-lg w-full">
+                        <i class="fa-brands fa-whatsapp mr-1"></i> Forgot PIN?
+                    </button>
                 </div>
-
-                <div class="input-group">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Store PIN</label>
-                    <input type="password" id="pin" required maxlength="4" pattern="[0-9]*" inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-bold text-slate-800 tracking-[0.5em] text-center text-lg" placeholder="••••">
-                </div>
-
-                <button type="submit" id="submitBtn" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex items-center justify-center gap-2">
-                    <span id="btnText">OPEN SHUTTER</span>
-                    <div class="loader" id="btnLoader"></div>
-                </button>
-            </form>
-
-            <div class="mt-6 text-center border-t border-slate-100 pt-4">
-                <button onclick="handleForgotPin()" class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-2 rounded-lg w-full">
-                    <i class="fa-brands fa-whatsapp mr-1"></i> Forgot PIN?
-                </button>
             </div>
         </div>
     </div>
@@ -95,11 +154,22 @@
         // --- AUTH CHECK ---
         const existingUser = localStorage.getItem('rmz_user');
         if (existingUser) {
-            // Agar user pehle se login hai, direct bhej do
+            // Already logged in as Shop Owner -> Go Home directly
             window.location.href = 'home.html';
         }
 
-        // --- LOGIC ---
+        // --- NAVIGATION FUNCTIONS ---
+        function showShopLogin() {
+            document.getElementById('landingSection').classList.add('hidden-section');
+            document.getElementById('shopLoginSection').classList.remove('hidden-section');
+        }
+
+        function showLanding() {
+            document.getElementById('shopLoginSection').classList.add('hidden-section');
+            document.getElementById('landingSection').classList.remove('hidden-section');
+        }
+
+        // --- LOGIN LOGIC ---
         const form = document.getElementById('authForm');
         const mobileInput = document.getElementById('mobile');
         const nameField = document.getElementById('nameField');
@@ -175,11 +245,7 @@
             const sessionData = { mobile: mobile, name: user.name, isLoggedIn: true };
             localStorage.setItem('rmz_user', JSON.stringify(sessionData));
             showToast("Success! Opening...");
-            
-            // REDIRECT FIX:
-            setTimeout(() => {
-                window.location.href = 'home.html';
-            }, 500);
+            setTimeout(() => window.location.href = 'home.html', 500);
         }
 
         function resetBtn() {
@@ -194,3 +260,4 @@
     </script>
 </body>
 </html>
+
