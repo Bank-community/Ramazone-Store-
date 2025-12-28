@@ -23,10 +23,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Firebase SDKs (Added Auth) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
@@ -116,7 +115,7 @@
                     <p class="text-slate-400 text-xs font-medium mt-1">Seller & Customer Panel</p>
                 </div>
 
-                <form id="authForm" class="space-y-5">
+                <form id="authForm" class="space-y-4">
                     <div class="input-group">
                         <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mobile Number</label>
                         <div class="relative">
@@ -125,9 +124,28 @@
                         </div>
                     </div>
 
-                    <div id="nameField" class="input-group hidden">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Owner Name</label>
-                        <input type="text" id="ownerName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-semibold" placeholder="Ex: Rahul Sharma">
+                    <div id="newUserDataFields" class="hidden space-y-4 animate-[fadeIn_0.3s_ease-out]">
+                        <div class="input-group">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Owner Name</label>
+                            <input type="text" id="ownerName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-slate-800 font-semibold" placeholder="Ex: Rahul Sharma">
+                        </div>
+                        
+                        <!-- NEW: Security Question -->
+                        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                            <h4 class="text-xs font-bold text-indigo-700 mb-2 flex items-center gap-1"><i class="fa-solid fa-shield-cat"></i> Security Setup</h4>
+                            <div class="space-y-2">
+                                <select id="regSecQ" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="" disabled selected>Select Secret Question</option>
+                                    <option value="school">What was your first school name?</option>
+                                    <option value="pet">What is your pet's name?</option>
+                                    <option value="mother">What is your mother's name?</option>
+                                    <option value="city">In which city were you born?</option>
+                                    <option value="bike">What is your dream bike?</option>
+                                </select>
+                                <input type="text" id="regSecA" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Your Answer (Gupt Jawab)">
+                            </div>
+                            <p class="text-[9px] text-indigo-400 mt-1">*Used to recover password if forgotten.</p>
+                        </div>
                     </div>
 
                     <div class="input-group">
@@ -150,42 +168,54 @@
         </div>
     </div>
 
-    <!-- FORGOT PIN MODAL (New Secure Flow) -->
+    <!-- FORGOT PIN MODAL (Security Question System) -->
     <div id="forgotPinModal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-overlay p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-[fadeIn_0.3s_ease-out]">
             <div class="bg-slate-900 p-4 flex justify-between items-center">
-                <h3 class="text-white font-bold text-lg"><i class="fa-solid fa-shield-halved mr-2 text-indigo-400"></i>Secure Recovery</h3>
+                <h3 class="text-white font-bold text-lg"><i class="fa-solid fa-user-lock mr-2 text-indigo-400"></i>Recover PIN</h3>
                 <button onclick="closeForgotPinModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
             <div class="p-6">
-                <!-- Step 1: Send OTP -->
-                <div id="stepSendOtp" class="space-y-4">
-                    <p class="text-xs text-slate-500">Enter your registered mobile number. We will send an OTP to verify it's really you.</p>
+                <!-- Step 1: Check Mobile -->
+                <div id="stepCheckMobile" class="space-y-4">
+                    <p class="text-xs text-slate-500">Enter your registered mobile number to proceed.</p>
                     <div class="relative">
                         <span class="absolute left-4 top-3.5 text-slate-400 font-bold text-sm">+91</span>
-                        <input type="tel" id="forgotMobile" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 font-bold text-slate-800 tracking-widest" placeholder="9876543210" maxlength="10">
+                        <input type="tel" id="recMobile" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 font-bold text-slate-800 tracking-widest" placeholder="9876543210" maxlength="10">
                     </div>
-                    <!-- Invisible Recaptcha Container -->
-                    <div id="recaptcha-container"></div>
-                    
-                    <button onclick="sendOtp()" id="btnSendOtp" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex justify-center items-center">
-                        <span>Send OTP Code</span>
+                    <button onclick="checkUserForRecovery()" id="btnCheckRec" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                        Proceed
                     </button>
                 </div>
 
-                <!-- Step 2: Verify OTP -->
-                <div id="stepVerifyOtp" class="space-y-4 hidden">
-                    <p class="text-xs text-slate-500">OTP sent to <b id="otpSentTo" class="text-slate-800"></b>. Enter code below.</p>
-                    <input type="number" id="otpInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-center text-lg tracking-[0.5em]" placeholder="123456">
-                    
-                    <button onclick="verifyOtp()" id="btnVerifyOtp" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex justify-center items-center">
-                        <span>Verify & Show PIN</span>
+                <!-- Step 2A: Answer Security Question -->
+                <div id="stepSecQuestion" class="hidden space-y-4">
+                    <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-center">
+                        <p class="text-[10px] font-bold text-indigo-400 uppercase">Security Question</p>
+                        <p class="text-sm font-bold text-indigo-900 mt-1" id="dispSecQ">Loading...</p>
+                    </div>
+                    <div>
+                        <input type="text" id="recAnswer" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 text-center" placeholder="Enter Your Answer">
+                    </div>
+                    <button onclick="verifySecurityAnswer()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                        Verify & Show PIN
                     </button>
-                    <button onclick="resetForgotFlow()" class="w-full text-slate-400 text-xs font-bold py-2">Change Number</button>
                 </div>
 
-                <!-- Step 3: Show PIN -->
+                <!-- Step 2B: Manual Fallback (If no question set) -->
+                <div id="stepManualRec" class="hidden text-center space-y-4">
+                    <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600 text-2xl mb-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-800">Security Setup Not Found</h4>
+                    <p class="text-xs text-slate-500">You haven't set a security question. Please contact admin for manual verification.</p>
+                    <button onclick="contactAdminRecovery()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Request PIN on WhatsApp
+                    </button>
+                </div>
+
+                <!-- Step 3: Success -->
                 <div id="stepShowPin" class="hidden text-center space-y-4 py-4">
                     <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600 text-2xl mb-2">
                         <i class="fa-solid fa-unlock-keyhole"></i>
@@ -195,7 +225,6 @@
                         <p class="text-xs text-slate-500 uppercase font-bold mb-1">Your Current PIN</p>
                         <p class="text-3xl font-mono font-extrabold text-slate-900 tracking-widest" id="recoveredPin">----</p>
                     </div>
-                    <p class="text-[10px] text-slate-400">Please memorize it or change it after login.</p>
                     <button onclick="closeForgotPinModal()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl mt-2">Login Now</button>
                 </div>
             </div>
@@ -215,15 +244,6 @@
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const auth = firebase.auth();
-        
-        // Setup Recaptcha Invisible
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-            'size': 'invisible',
-            'callback': (response) => {
-                // reCAPTCHA solved, allow signInWithPhoneNumber.
-            }
-        });
 
         // --- AUTH CHECK ---
         const existingUser = localStorage.getItem('rmz_user');
@@ -245,7 +265,7 @@
         // --- LOGIN LOGIC ---
         const form = document.getElementById('authForm');
         const mobileInput = document.getElementById('mobile');
-        const nameField = document.getElementById('nameField');
+        const newUserFields = document.getElementById('newUserDataFields');
         const ownerNameInput = document.getElementById('ownerName');
         const btnText = document.getElementById('btnText');
         const btnLoader = document.getElementById('btnLoader');
@@ -265,12 +285,18 @@
                 typingTimer = setTimeout(() => {
                     db.ref('users/' + mobile).once('value').then((snapshot) => {
                         if (snapshot.exists()) {
-                            nameField.classList.add('hidden');
+                            // User exists - Hide extra fields
+                            newUserFields.classList.add('hidden');
                             ownerNameInput.required = false;
+                            document.getElementById('regSecQ').required = false;
+                            document.getElementById('regSecA').required = false;
                             btnText.innerText = "OPEN WORKSHOP";
                         } else {
-                            nameField.classList.remove('hidden');
+                            // New User - Show Name & Security fields
+                            newUserFields.classList.remove('hidden');
                             ownerNameInput.required = true;
+                            document.getElementById('regSecQ').required = true;
+                            document.getElementById('regSecA').required = true;
                             btnText.innerText = "CREATE WORKSHOP";
                         }
                     });
@@ -282,8 +308,7 @@
             e.preventDefault();
             const mobile = mobileInput.value;
             const pin = document.getElementById('pin').value;
-            const name = ownerNameInput.value;
-
+            
             if(mobile.length !== 10) return showToast("Invalid Mobile");
             if(pin.length !== 4) return showToast("PIN must be 4 digits");
 
@@ -295,6 +320,7 @@
                 const snapshot = await userRef.once('value');
 
                 if (snapshot.exists()) {
+                    // LOGIN MODE
                     const userData = snapshot.val();
                     if (userData.pin === pin) {
                         saveAndRedirect(userData, mobile);
@@ -303,8 +329,23 @@
                         resetBtn();
                     }
                 } else {
-                    if (!name.trim()) { showToast("Name Required"); resetBtn(); return; }
-                    const newUser = { name: name, pin: pin, mobile: mobile, joinedAt: new Date().toISOString() };
+                    // REGISTER MODE
+                    const name = ownerNameInput.value.trim();
+                    const secQ = document.getElementById('regSecQ').value;
+                    const secA = document.getElementById('regSecA').value.trim().toLowerCase();
+
+                    if (!name) { showToast("Name Required"); resetBtn(); return; }
+                    if (!secQ || !secA) { showToast("Set Security Question!"); resetBtn(); return; }
+
+                    const newUser = { 
+                        name: name, 
+                        pin: pin, 
+                        mobile: mobile, 
+                        securityQ: secQ,
+                        securityA: secA,
+                        joinedAt: new Date().toISOString() 
+                    };
+                    
                     await userRef.set(newUser);
                     saveAndRedirect(newUser, mobile);
                 }
@@ -326,98 +367,90 @@
             btnText.style.display = 'block';
         }
 
-        // --- NEW SECURE FORGOT PIN LOGIC ---
-        let confirmationResult = null;
+        // --- SECURE RECOVERY SYSTEM ---
+        let recoveredUserData = null;
+        let recoveryMobile = '';
 
         function openForgotPinModal() {
             document.getElementById('forgotPinModal').classList.remove('hidden');
-            // Auto fill mobile if typed in login
             if(mobileInput.value.length === 10) {
-                document.getElementById('forgotMobile').value = mobileInput.value;
+                document.getElementById('recMobile').value = mobileInput.value;
             }
         }
 
         function closeForgotPinModal() {
             document.getElementById('forgotPinModal').classList.add('hidden');
-            resetForgotFlow();
-        }
-
-        function resetForgotFlow() {
-            document.getElementById('stepSendOtp').classList.remove('hidden');
-            document.getElementById('stepVerifyOtp').classList.add('hidden');
+            // Reset Views
+            document.getElementById('stepCheckMobile').classList.remove('hidden');
+            document.getElementById('stepSecQuestion').classList.add('hidden');
+            document.getElementById('stepManualRec').classList.add('hidden');
             document.getElementById('stepShowPin').classList.add('hidden');
-            document.getElementById('otpInput').value = '';
+            document.getElementById('recAnswer').value = '';
         }
 
-        function sendOtp() {
-            const mobile = document.getElementById('forgotMobile').value;
-            if(mobile.length !== 10) return showToast("Enter valid 10-digit mobile");
+        function checkUserForRecovery() {
+            recoveryMobile = document.getElementById('recMobile').value;
+            if(recoveryMobile.length !== 10) return showToast("Enter Valid Mobile");
 
-            const btn = document.getElementById('btnSendOtp');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            const btn = document.getElementById('btnCheckRec');
+            btn.innerHTML = 'Checking...';
             btn.disabled = true;
 
-            const phoneNumber = "+91" + mobile;
-            const appVerifier = window.recaptchaVerifier;
+            db.ref('users/' + recoveryMobile).once('value').then(snap => {
+                btn.innerHTML = 'Proceed';
+                btn.disabled = false;
 
-            auth.signInWithPhoneNumber(phoneNumber, appVerifier)
-                .then((result) => {
-                    // SMS Sent
-                    confirmationResult = result;
-                    showToast("OTP Sent Successfully!");
-                    document.getElementById('stepSendOtp').classList.add('hidden');
-                    document.getElementById('stepVerifyOtp').classList.remove('hidden');
-                    document.getElementById('otpSentTo').innerText = "+91 " + mobile;
-                    btn.innerHTML = 'Send OTP Code';
-                    btn.disabled = false;
-                }).catch((error) => {
-                    console.error(error);
-                    showToast("Error: " + error.message);
-                    btn.innerHTML = 'Send OTP Code';
-                    btn.disabled = false;
-                    // Reset Recaptcha
-                    window.recaptchaVerifier.render().then(function(widgetId) {
-                        grecaptcha.reset(widgetId);
-                    });
-                });
-        }
-
-        function verifyOtp() {
-            const code = document.getElementById('otpInput').value;
-            if(code.length < 6) return showToast("Enter 6-digit OTP");
-
-            const btn = document.getElementById('btnVerifyOtp');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-            btn.disabled = true;
-
-            confirmationResult.confirm(code).then((result) => {
-                // User Verified! Now Fetch PIN
-                const user = result.user;
-                // Important: We use the mobile number entered, but ensure it matches auth
-                const mobile = document.getElementById('forgotMobile').value;
-                
-                db.ref('users/' + mobile).once('value').then(snapshot => {
-                    if(snapshot.exists()) {
-                        const data = snapshot.val();
-                        document.getElementById('stepVerifyOtp').classList.add('hidden');
-                        document.getElementById('stepShowPin').classList.remove('hidden');
-                        document.getElementById('recoveredPin').innerText = data.pin;
+                if(snap.exists()) {
+                    recoveredUserData = snap.val();
+                    
+                    // Check if security question is set
+                    if(recoveredUserData.securityQ && recoveredUserData.securityA) {
+                        // Plan B: Automated Secure Recovery
+                        document.getElementById('stepCheckMobile').classList.add('hidden');
+                        document.getElementById('stepSecQuestion').classList.remove('hidden');
+                        
+                        // Map Question Codes to Text
+                        const qMap = {
+                            'school': 'What was your first school name?',
+                            'pet': 'What is your pet\'s name?',
+                            'mother': 'What is your mother\'s name?',
+                            'city': 'In which city were you born?',
+                            'bike': 'What is your dream bike?'
+                        };
+                        document.getElementById('dispSecQ').innerText = qMap[recoveredUserData.securityQ] || "Secret Question";
                     } else {
-                        showToast("User not found in database!");
-                        resetForgotFlow();
+                        // Plan C: Manual Fallback
+                        document.getElementById('stepCheckMobile').classList.add('hidden');
+                        document.getElementById('stepManualRec').classList.remove('hidden');
                     }
-                });
-
-                btn.innerHTML = 'Verify & Show PIN';
-                btn.disabled = false;
-            }).catch((error) => {
-                showToast("Invalid OTP");
-                btn.innerHTML = 'Verify & Show PIN';
-                btn.disabled = false;
+                } else {
+                    showToast("User not found!");
+                }
             });
+        }
+
+        function verifySecurityAnswer() {
+            const inputAns = document.getElementById('recAnswer').value.trim().toLowerCase();
+            if(!inputAns) return showToast("Enter Answer");
+
+            // Check Answer (Case Insensitive)
+            if(inputAns === recoveredUserData.securityA) {
+                document.getElementById('stepSecQuestion').classList.add('hidden');
+                document.getElementById('stepShowPin').classList.remove('hidden');
+                document.getElementById('recoveredPin').innerText = recoveredUserData.pin;
+            } else {
+                showToast("Incorrect Answer!");
+            }
+        }
+
+        function contactAdminRecovery() {
+            const m = recoveryMobile;
+            const text = `Hi Admin, I forgot my PIN for Mobile: ${m}. I have not set a security question. Please verify me manually.`;
+            window.open(`https://wa.me/917903698180?text=${encodeURIComponent(text)}`, '_blank');
         }
 
     </script>
 </body>
 </html>
+
 
