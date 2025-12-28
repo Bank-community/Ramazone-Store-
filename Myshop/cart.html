@@ -9,45 +9,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding-bottom: 100px; -webkit-tap-highlight-color: transparent; }
         
-        /* Modern Cards & Selection States */
-        .slab-card, .budget-card, .time-chip { 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            border: 2px solid transparent; 
+        /* Smooth Transitions */
+        .step-container { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .hidden-step { display: none; opacity: 0; }
+        
+        /* Cards */
+        .slab-card, .budget-card, .time-chip, .addr-card { 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent; 
         }
         
         /* Selected States */
         .slab-card.selected { border-color: #2563eb; background-color: #eff6ff; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1); }
-        .budget-card.selected { border-color: #f59e0b; background-color: #fffbeb; }
+        .budget-card.selected { border-color: #f59e0b; background-color: #fffbeb; transform: translateY(-2px); }
         .time-chip.selected { background-color: #1e293b; color: white; border-color: #1e293b; }
+        .addr-card.selected { border-color: #22c55e; background-color: #f0fdf4; }
         
         /* Disabled State */
         .slab-card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); background-color: #f1f5f9; }
 
-        /* Timeline Styles */
-        .timeline-item { position: relative; padding-left: 30px; padding-bottom: 24px; border-left: 2px solid #e2e8f0; }
-        .timeline-item:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
-        .timeline-icon { position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; border: 2px solid #fff; transition: all 0.3s; }
-        .timeline-item.active .timeline-icon { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
-        .timeline-item.active { border-left-color: #22c55e; }
-
-        /* Quantity Control Buttons */
+        /* Qty Buttons */
         .qty-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; transition: active 0.1s; }
         .qty-btn:active { transform: scale(0.9); }
 
-        /* Success Animation */
-        .success-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
-        .success-overlay.active { opacity: 1; pointer-events: auto; }
-        .checkmark-circle { width: 80px; height: 80px; border-radius: 50%; background: #22c55e; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); animation: pulse-green 2s infinite; }
-        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        /* Modal Overlay */
+        .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
         
-        /* Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -55,100 +48,78 @@
 
     <!-- HEADER -->
     <div class="bg-white sticky top-0 z-20 px-4 py-3 flex items-center gap-4 shadow-sm border-b border-slate-100">
-        <button onclick="window.location.href='home.html'" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 transition">
+        <button onclick="handleBack()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 transition">
             <i class="fa-solid fa-arrow-left"></i>
         </button>
         <div>
-            <h1 class="text-lg font-extrabold text-slate-900 leading-none">Checkout</h1>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Finalize & Order</p>
+            <h1 class="text-lg font-extrabold text-slate-900 leading-none" id="pageTitle">My Cart</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5" id="pageSub">Review Items</p>
         </div>
     </div>
 
     <div class="p-4 max-w-md mx-auto space-y-5">
 
-        <!-- 1. LIVE TRACKING SECTION (Hidden by default, Auto-shown if active) -->
-        <div id="liveTrackingSection" class="hidden space-y-4">
-            <!-- Active Order Card -->
-            <div id="trackingCard" class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden relative">
-                <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
-                    <div>
-                        <h2 class="text-sm font-bold">Order #<span id="trackId">...</span></h2>
-                        <p class="text-[10px] text-slate-400">Live Status Update</p>
-                    </div>
-                    <span class="bg-green-500 text-[10px] font-bold px-2 py-1 rounded text-white animate-pulse">LIVE</span>
-                </div>
-                
-                <div class="p-6">
-                    <!-- TIMELINE -->
-                    <div class="space-y-1 pl-2">
-                        <div class="timeline-item active" id="step-placed">
-                            <div class="timeline-icon"></div>
-                            <h4 class="text-sm font-bold text-slate-800">Order Placed</h4>
-                            <p class="text-[10px] text-slate-500">Waiting for confirmation</p>
-                        </div>
-                        <div class="timeline-item" id="step-accepted">
-                            <div class="timeline-icon"></div>
-                            <h4 class="text-sm font-bold text-slate-800">Delivery Partner Assigned</h4>
-                            <p class="text-[10px] text-slate-500" id="partnerInfo">Matching nearby partner...</p>
-                        </div>
-                        <div class="timeline-item" id="step-out">
-                            <div class="timeline-icon"></div>
-                            <h4 class="text-sm font-bold text-slate-800">Out for Delivery</h4>
-                            <p class="text-[10px] text-slate-500">Partner is on the way</p>
-                        </div>
-                        <div class="timeline-item" id="step-delivered">
-                            <div class="timeline-icon"></div>
-                            <h4 class="text-sm font-bold text-slate-800">Delivered</h4>
-                            <p class="text-[10px] text-slate-500">Enjoy your items!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions for Live Order -->
-                <div id="trackingActions" class="px-4 pb-4 hidden border-t border-slate-100 pt-3">
-                    <div class="flex gap-2">
-                        <a id="trackCallBtn" href="#" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-200 text-xs">
-                            <i class="fa-solid fa-phone"></i> Call Partner
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <p class="text-center text-[10px] text-slate-400 mt-4">⚠️ You have an active order. Please wait for delivery to place a new one.</p>
-        </div>
-
-
-        <!-- 2. CHECKOUT FORM (Visible by default) -->
-        <div id="checkoutFormContainer">
-            
-            <!-- A. Cart Items with Qty Controls -->
+        <!-- STEP 1: CART ITEMS ONLY -->
+        <div id="step1_cart" class="step-container space-y-4">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-50 px-5 py-3 border-b border-slate-100 flex justify-between items-center">
-                    <h2 class="text-xs font-bold text-slate-600 uppercase tracking-wide">Your Cart</h2>
+                    <h2 class="text-xs font-bold text-slate-600 uppercase tracking-wide">Added Products</h2>
                     <span class="text-[10px] font-bold bg-white text-slate-400 px-2 py-1 rounded border border-slate-200" id="itemCountBadge">0 Items</span>
                 </div>
                 
                 <div id="cartList" class="divide-y divide-slate-50"></div>
 
-                <!-- Empty State -->
                 <div id="cartEmptyState" class="py-12 text-center hidden">
                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
                         <i class="fa-solid fa-cart-shopping text-slate-300 text-2xl"></i>
                     </div>
-                    <p class="text-slate-500 text-sm font-bold">Your cart feels light!</p>
+                    <p class="text-slate-500 text-sm font-bold">Your cart is empty!</p>
                     <button onclick="window.location.href='home.html'" class="mt-4 text-xs font-bold text-white bg-slate-900 px-6 py-3 rounded-full shadow-lg">START SHOPPING</button>
                 </div>
             </div>
+            
+            <div id="addMoreLink" class="text-center">
+                <button onclick="window.location.href='home.html'" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center justify-center gap-1 mx-auto py-2">
+                    <i class="fa-solid fa-plus"></i> Add more items
+                </button>
+            </div>
+        </div>
 
-            <!-- B. Delivery Slabs -->
+        <!-- STEP 2: DETAILS (Hidden Initially) -->
+        <div id="step2_details" class="step-container hidden-step space-y-4">
+            
+            <!-- A. Location Manager -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-xs font-bold text-slate-600 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-map-pin text-red-500"></i> Delivery Location
+                    </label>
+                    <button onclick="openLocationModal()" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition">
+                        CHANGE
+                    </button>
+                </div>
+                
+                <!-- Selected Address Preview -->
+                <div id="selectedAddressCard" class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-800" id="dispAddrTitle">Select Address</h4>
+                        <p class="text-xs text-slate-500 leading-snug mt-0.5 line-clamp-2" id="dispAddrText">Tap change to select...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B. Parcel Size -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-cube text-blue-500"></i> Parcel Size</h3>
+                    <h3 class="text-xs font-bold text-slate-600 uppercase"><i class="fa-solid fa-cube text-blue-500 mr-1"></i> Parcel Size</h3>
                     <div id="weightBadge" class="hidden bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-bold">
                         <i class="fa-solid fa-scale-balanced mr-1"></i><span id="totalWeightDisplay">0 KG</span>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <!-- Slabs populated via JS or static logic -->
                     <button onclick="selectRate(50, 'SMALL (0-10KG)')" id="rateBtn50" class="slab-card bg-slate-50 rounded-xl p-3 text-left relative overflow-hidden group">
                         <div class="absolute top-2 right-2 opacity-0 group-[.selected]:opacity-100"><i class="fa-solid fa-circle-check text-blue-600"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase">Small</p>
@@ -176,48 +147,42 @@
                 </div>
             </div>
 
-            <!-- C. Address -->
+            <!-- C. Budget & Quality (Refined) -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
-                <div class="flex justify-between items-center mb-3">
-                    <label class="text-xs font-bold text-slate-600 uppercase">Delivery Location</label>
-                    <button onclick="getLocation()" id="btnAutoLoc" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition flex items-center gap-1.5 active:scale-95">
-                        <i class="fa-solid fa-location-crosshairs"></i> Detect GPS
-                    </button>
-                </div>
-                <textarea id="deliveryAddress" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800 resize-none h-20 placeholder-slate-400" placeholder="Shop Name, Street, Landmark..."></textarea>
-                <input type="hidden" id="lat" value="0"><input type="hidden" id="lng" value="0">
-            </div>
-
-            <!-- D. Budget & Quality Preference (NEW) -->
-            <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
-                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Budget & Quality Preference</h3>
+                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Budget & Quality</h3>
                 <div class="grid grid-cols-3 gap-2">
-                    <!-- High Quality -->
-                    <button onclick="selectBudget('high')" id="bud_high" class="budget-card bg-slate-50 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
-                        <i class="fa-solid fa-star text-amber-400 text-lg"></i>
-                        <span class="text-[10px] font-bold text-slate-600">Best Quality</span>
+                    <button onclick="selectBudget('high')" id="bud_high" class="budget-card bg-slate-50 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-20">
+                        <i class="fa-solid fa-star text-amber-400 text-sm"></i>
+                        <div class="leading-tight">
+                            <span class="text-[10px] font-bold text-slate-700 block">Best Quality</span>
+                            <span class="text-[8px] font-bold text-slate-400 uppercase">High Price</span>
+                        </div>
                     </button>
-                    <!-- Market Standard (Default) -->
-                    <button onclick="selectBudget('standard')" id="bud_standard" class="budget-card selected bg-white border-amber-500 rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-sm">
-                        <i class="fa-solid fa-shop text-blue-500 text-lg"></i>
-                        <span class="text-[10px] font-bold text-slate-600">Standard</span>
+                    
+                    <button onclick="selectBudget('standard')" id="bud_standard" class="budget-card selected bg-white border-amber-500 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-20 shadow-sm">
+                        <i class="fa-solid fa-shop text-blue-500 text-sm"></i>
+                        <div class="leading-tight">
+                            <span class="text-[10px] font-bold text-slate-700 block">Market Std.</span>
+                            <span class="text-[8px] font-bold text-slate-400 uppercase">Normal Price</span>
+                        </div>
                     </button>
-                    <!-- Custom Budget -->
-                    <button onclick="selectBudget('custom')" id="bud_custom" class="budget-card bg-slate-50 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
-                        <i class="fa-solid fa-indian-rupee-sign text-green-600 text-lg"></i>
-                        <span class="text-[10px] font-bold text-slate-600">Custom</span>
+                    
+                    <button onclick="selectBudget('custom')" id="bud_custom" class="budget-card bg-slate-50 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-20">
+                        <i class="fa-solid fa-indian-rupee-sign text-green-600 text-sm"></i>
+                        <div class="leading-tight">
+                            <span class="text-[10px] font-bold text-slate-700 block">Your Budget</span>
+                            <span class="text-[8px] font-bold text-slate-400 uppercase">Enter Amount</span>
+                        </div>
                     </button>
                 </div>
-                <!-- Hidden Input for Custom Budget -->
                 <div id="customBudgetInput" class="hidden mt-3 animate-[fadeIn_0.3s]">
-                    <label class="text-[10px] text-slate-400 uppercase font-bold">Enter Amount (₹)</label>
-                    <input type="number" id="customAmount" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="e.g. 5000">
+                    <input type="number" id="customAmount" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Enter Max Amount (₹)">
                 </div>
             </div>
 
-            <!-- E. Preferred Time (NEW) -->
+            <!-- D. Preferred Time -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
-                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Preferred Delivery Time</h3>
+                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Preferred Time</h3>
                 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                     <button onclick="selectTime('Evening')" id="time_Evening" class="time-chip selected shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Evening</button>
                     <button onclick="selectTime('Afternoon')" id="time_Afternoon" class="time-chip shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Afternoon</button>
@@ -227,28 +192,77 @@
             </div>
 
         </div> 
-        <!-- End Checkout Form -->
     </div>
 
-    <!-- 3. REDESIGNED BOTTOM BAR (Split Layout) -->
+    <!-- BOTTOM BAR (Dynamic) -->
     <div id="bottomBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-3 shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40">
         <div class="max-w-md mx-auto flex items-center gap-3">
-            <!-- Home Button -->
-            <button onclick="window.location.href='home.html'" class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition active:scale-95 border border-slate-200">
-                <i class="fa-solid fa-store text-xl"></i>
+            
+            <!-- STEP 1 ACTION -->
+            <div id="step1_action" class="w-full">
+                <button onclick="goToDetails()" id="btnContinue" class="w-full bg-slate-900 hover:bg-black text-white rounded-xl shadow-lg active:scale-95 transition flex items-center justify-between px-6 h-14">
+                    <div class="text-left">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">TOTAL</p>
+                        <p class="text-xl font-extrabold leading-none">₹<span id="cartTotal">0</span></p>
+                    </div>
+                    <div class="flex items-center gap-2 font-bold text-sm">
+                        <span>CONTINUE</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </button>
+            </div>
+
+            <!-- STEP 2 ACTION -->
+            <div id="step2_action" class="w-full hidden">
+                <button onclick="placeOrder()" id="placeOrderBtn" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-lg active:scale-95 transition flex items-center justify-between px-6 h-14 disabled:opacity-50 disabled:grayscale">
+                    <div class="text-left">
+                        <p class="text-[9px] text-green-200 font-bold uppercase tracking-wider">PAYABLE</p>
+                        <p class="text-xl font-extrabold leading-none">₹<span id="finalTotal">0</span></p>
+                    </div>
+                    <div class="flex items-center gap-2 font-bold text-sm">
+                        <span>PLACE ORDER</span>
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- LOCATION MODAL -->
+    <div id="locationModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-overlay p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl animate-[slideUp_0.3s_ease-out]">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Select Address</h3>
+                <button onclick="closeLocationModal()" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-3 max-h-[60vh] overflow-y-auto mb-4" id="addressList">
+                <!-- Addresses Injected JS -->
+            </div>
+
+            <button onclick="addNewLocation()" id="btnAddLocation" class="w-full py-3 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-100 transition active:scale-95">
+                <i class="fa-solid fa-location-crosshairs"></i> Add New Location
             </button>
             
-            <!-- Place Order Button -->
-            <button onclick="placeOrder()" id="placeOrderBtn" class="flex-1 bg-slate-900 hover:bg-black text-white rounded-xl shadow-lg active:scale-95 transition flex items-center justify-between px-6 h-14 disabled:opacity-50 disabled:grayscale">
-                <div class="text-left">
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">PAYABLE</p>
-                    <p class="text-xl font-extrabold leading-none">₹<span id="displayTotal">0</span></p>
+            <!-- Hidden Edit Form -->
+            <div id="addAddrForm" class="hidden space-y-3 pt-2">
+                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-xs text-indigo-700 flex items-center gap-2">
+                    <i class="fa-solid fa-check-circle"></i> <span id="detectedCoords">GPS Detected</span>
                 </div>
-                <div class="flex items-center gap-2 font-bold text-sm">
-                    <span>PLACE ORDER</span>
-                    <i class="fa-solid fa-arrow-right"></i>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Save As (Title)</label>
+                    <input type="text" id="newAddrTitle" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold mt-1" placeholder="e.g. Home, Office">
                 </div>
-            </button>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Address Details</label>
+                    <textarea id="newAddrText" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium mt-1 resize-none h-16" placeholder="Street, Landmark..."></textarea>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="cancelAddAddr()" class="flex-1 py-3 text-slate-500 font-bold text-xs bg-slate-100 rounded-lg">CANCEL</button>
+                    <button onclick="saveNewAddress()" class="flex-1 py-3 text-white font-bold text-xs bg-slate-900 rounded-lg">SAVE LOCATION</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -264,7 +278,7 @@
         <i class="fa-solid fa-circle-info text-yellow-400"></i><span id="toastMsg">Alert</span>
     </div>
 
-    <!-- Link to JS Logic -->
     <script src="cart.js"></script>
 </body>
 </html>
+
