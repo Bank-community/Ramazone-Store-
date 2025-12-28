@@ -8,7 +8,7 @@
 
 <!-- Social Media Preview -->
 <meta property="og:title" content="Ramazone Customer Inventory Store– managed by you.">
-<meta property="og:description" content=Add products online. And delivery service.">
+<meta property="og:description" content="Add products online. And delivery service.">
 <meta property="og:image" content="https://ik.imagekit.io/nsyr92pse/1000118240-optimized.jpg">
 <meta property="og:url" content="https://www.ramazone.in/Myshop/index.html">
 <meta property="og:type" content="website">
@@ -23,9 +23,10 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Added Auth) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
@@ -42,12 +43,15 @@
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .hidden-section { display: none; }
+        
+        /* Modal Overlay */
+        .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
     </style>
 </head>
 <body class="text-slate-800 antialiased flex flex-col min-h-screen bg-slate-50">
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] transition-all duration-300 opacity-0 pointer-events-none text-xs font-semibold flex items-center gap-2">
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl z-[100] transition-all duration-300 opacity-0 pointer-events-none text-xs font-semibold flex items-center gap-2">
         <i class="fa-solid fa-circle-info text-yellow-400"></i><span id="toastMsg">Notification</span>
     </div>
 
@@ -138,9 +142,61 @@
                 </form>
 
                 <div class="mt-6 text-center border-t border-slate-100 pt-4">
-                    <button onclick="handleForgotPin()" class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-2 rounded-lg w-full">
-                        <i class="fa-brands fa-whatsapp mr-1"></i> Forgot PIN?
+                    <button onclick="openForgotPinModal()" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-4 py-2 rounded-lg w-full transition border border-indigo-100">
+                        <i class="fa-solid fa-key mr-1"></i> Forgot PIN?
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORGOT PIN MODAL (New Secure Flow) -->
+    <div id="forgotPinModal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-overlay p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+            <div class="bg-slate-900 p-4 flex justify-between items-center">
+                <h3 class="text-white font-bold text-lg"><i class="fa-solid fa-shield-halved mr-2 text-indigo-400"></i>Secure Recovery</h3>
+                <button onclick="closeForgotPinModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Step 1: Send OTP -->
+                <div id="stepSendOtp" class="space-y-4">
+                    <p class="text-xs text-slate-500">Enter your registered mobile number. We will send an OTP to verify it's really you.</p>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 text-slate-400 font-bold text-sm">+91</span>
+                        <input type="tel" id="forgotMobile" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 font-bold text-slate-800 tracking-widest" placeholder="9876543210" maxlength="10">
+                    </div>
+                    <!-- Invisible Recaptcha Container -->
+                    <div id="recaptcha-container"></div>
+                    
+                    <button onclick="sendOtp()" id="btnSendOtp" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex justify-center items-center">
+                        <span>Send OTP Code</span>
+                    </button>
+                </div>
+
+                <!-- Step 2: Verify OTP -->
+                <div id="stepVerifyOtp" class="space-y-4 hidden">
+                    <p class="text-xs text-slate-500">OTP sent to <b id="otpSentTo" class="text-slate-800"></b>. Enter code below.</p>
+                    <input type="number" id="otpInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-center text-lg tracking-[0.5em]" placeholder="123456">
+                    
+                    <button onclick="verifyOtp()" id="btnVerifyOtp" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex justify-center items-center">
+                        <span>Verify & Show PIN</span>
+                    </button>
+                    <button onclick="resetForgotFlow()" class="w-full text-slate-400 text-xs font-bold py-2">Change Number</button>
+                </div>
+
+                <!-- Step 3: Show PIN -->
+                <div id="stepShowPin" class="hidden text-center space-y-4 py-4">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600 text-2xl mb-2">
+                        <i class="fa-solid fa-unlock-keyhole"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800">Identity Verified!</h4>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <p class="text-xs text-slate-500 uppercase font-bold mb-1">Your Current PIN</p>
+                        <p class="text-3xl font-mono font-extrabold text-slate-900 tracking-widest" id="recoveredPin">----</p>
+                    </div>
+                    <p class="text-[10px] text-slate-400">Please memorize it or change it after login.</p>
+                    <button onclick="closeForgotPinModal()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl mt-2">Login Now</button>
                 </div>
             </div>
         </div>
@@ -159,11 +215,19 @@
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
+        
+        // Setup Recaptcha Invisible
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+            'size': 'invisible',
+            'callback': (response) => {
+                // reCAPTCHA solved, allow signInWithPhoneNumber.
+            }
+        });
 
         // --- AUTH CHECK ---
         const existingUser = localStorage.getItem('rmz_user');
         if (existingUser) {
-            // Already logged in as Shop Owner -> Go Home directly
             window.location.href = 'home.html';
         }
 
@@ -262,10 +326,97 @@
             btnText.style.display = 'block';
         }
 
-        window.handleForgotPin = function() {
-            const m = mobileInput.value;
-            window.open(`https://wa.me/917903698180?text=Forgot PIN for ${m}`, '_blank');
+        // --- NEW SECURE FORGOT PIN LOGIC ---
+        let confirmationResult = null;
+
+        function openForgotPinModal() {
+            document.getElementById('forgotPinModal').classList.remove('hidden');
+            // Auto fill mobile if typed in login
+            if(mobileInput.value.length === 10) {
+                document.getElementById('forgotMobile').value = mobileInput.value;
+            }
         }
+
+        function closeForgotPinModal() {
+            document.getElementById('forgotPinModal').classList.add('hidden');
+            resetForgotFlow();
+        }
+
+        function resetForgotFlow() {
+            document.getElementById('stepSendOtp').classList.remove('hidden');
+            document.getElementById('stepVerifyOtp').classList.add('hidden');
+            document.getElementById('stepShowPin').classList.add('hidden');
+            document.getElementById('otpInput').value = '';
+        }
+
+        function sendOtp() {
+            const mobile = document.getElementById('forgotMobile').value;
+            if(mobile.length !== 10) return showToast("Enter valid 10-digit mobile");
+
+            const btn = document.getElementById('btnSendOtp');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            btn.disabled = true;
+
+            const phoneNumber = "+91" + mobile;
+            const appVerifier = window.recaptchaVerifier;
+
+            auth.signInWithPhoneNumber(phoneNumber, appVerifier)
+                .then((result) => {
+                    // SMS Sent
+                    confirmationResult = result;
+                    showToast("OTP Sent Successfully!");
+                    document.getElementById('stepSendOtp').classList.add('hidden');
+                    document.getElementById('stepVerifyOtp').classList.remove('hidden');
+                    document.getElementById('otpSentTo').innerText = "+91 " + mobile;
+                    btn.innerHTML = 'Send OTP Code';
+                    btn.disabled = false;
+                }).catch((error) => {
+                    console.error(error);
+                    showToast("Error: " + error.message);
+                    btn.innerHTML = 'Send OTP Code';
+                    btn.disabled = false;
+                    // Reset Recaptcha
+                    window.recaptchaVerifier.render().then(function(widgetId) {
+                        grecaptcha.reset(widgetId);
+                    });
+                });
+        }
+
+        function verifyOtp() {
+            const code = document.getElementById('otpInput').value;
+            if(code.length < 6) return showToast("Enter 6-digit OTP");
+
+            const btn = document.getElementById('btnVerifyOtp');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+
+            confirmationResult.confirm(code).then((result) => {
+                // User Verified! Now Fetch PIN
+                const user = result.user;
+                // Important: We use the mobile number entered, but ensure it matches auth
+                const mobile = document.getElementById('forgotMobile').value;
+                
+                db.ref('users/' + mobile).once('value').then(snapshot => {
+                    if(snapshot.exists()) {
+                        const data = snapshot.val();
+                        document.getElementById('stepVerifyOtp').classList.add('hidden');
+                        document.getElementById('stepShowPin').classList.remove('hidden');
+                        document.getElementById('recoveredPin').innerText = data.pin;
+                    } else {
+                        showToast("User not found in database!");
+                        resetForgotFlow();
+                    }
+                });
+
+                btn.innerHTML = 'Verify & Show PIN';
+                btn.disabled = false;
+            }).catch((error) => {
+                showToast("Invalid OTP");
+                btn.innerHTML = 'Verify & Show PIN';
+                btn.disabled = false;
+            });
+        }
+
     </script>
 </body>
 </html>
