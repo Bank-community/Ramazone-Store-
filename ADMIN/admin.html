@@ -8,25 +8,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
-    <!-- ImageKit SDK -->
+    <!-- SDKs -->
     <script type="text/javascript" src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
-
-    <!-- Leaflet JS (Maps) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Chart.js (Analytics) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
         .nav-item.active { background-color: #3b82f6; color: white; font-weight: bold; }
         
+        /* Status Badges */
         .status-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; }
         .st-placed { background: #fef3c7; color: #d97706; }
         .st-accepted { background: #dbeafe; color: #2563eb; }
@@ -34,22 +31,16 @@
         
         .prod-list::-webkit-scrollbar { width: 4px; }
         .prod-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
         .partner-select-card:hover { border-color: #3b82f6; background-color: #1e293b; }
-
-        /* Drawer Menu Styles */
         .drawer { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
         .drawer.open { transform: translateX(0); }
-
-        /* Map Container */
         #map { height: 100%; width: 100%; border-radius: 12px; z-index: 1; }
-        .leaflet-popup-content-wrapper { background: #1e293b; color: white; border-radius: 8px; }
-        .leaflet-popup-tip { background: #1e293b; }
-
-        /* Hide Scrollbar for Horizontal Nav */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Filter Button Active State */
+        .map-filter-btn.active { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
@@ -70,7 +61,12 @@
                 </div>
             </div>
         </div>
-        <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition px-2"><i class="fa-solid fa-power-off"></i></button>
+        <div class="flex items-center gap-3">
+            <div id="adminGpsStatus" class="text-[10px] font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded hidden sm:block">
+                <i class="fa-solid fa-location-crosshairs"></i> Locating...
+            </div>
+            <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition px-2"><i class="fa-solid fa-power-off"></i></button>
+        </div>
     </header>
 
     <!-- DRAWER MENU -->
@@ -132,7 +128,7 @@
         <!-- MAIN CONTENT -->
         <main class="flex-1 overflow-y-auto bg-slate-950 p-4 sm:p-6 relative">
             
-            <!-- MOBILE TABS (Updated: Scrollable Row) -->
+            <!-- MOBILE TABS -->
             <div class="md:hidden flex gap-2 bg-slate-900 p-2 rounded-lg mb-6 sticky top-0 z-10 shadow-lg overflow-x-auto no-scrollbar">
                 <button onclick="switchTab('orders')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center transition bg-blue-600 text-white min-w-[70px]" id="mob-orders">
                     <i class="fa-solid fa-bolt block mb-1 text-sm"></i> LIVE <span id="mobActiveCount" class="bg-red-500 text-white px-1 rounded-full ml-0.5 text-[8px] hidden">0</span>
@@ -166,13 +162,22 @@
                 <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
-            <!-- TAB: LIVE MAP -->
+            <!-- TAB: LIVE MAP (UPDATED) -->
             <div id="tab-map" class="hidden h-full flex flex-col space-y-4" style="height: calc(100vh - 180px);">
-                <div class="flex justify-between items-center shrink-0">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-3">
                     <h2 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-earth-americas text-blue-500"></i> Fleet Tracker</h2>
-                    <div class="flex gap-2 text-[10px] font-bold uppercase">
-                        <span class="px-2 py-1 bg-green-900/50 text-green-400 rounded border border-green-800">Online</span>
-                        <span class="px-2 py-1 bg-slate-800 text-slate-400 rounded border border-slate-700">Offline</span>
+                    
+                    <!-- NEW FILTER BUTTONS -->
+                    <div class="flex gap-2 w-full sm:w-auto overflow-x-auto">
+                        <button onclick="setMapFilter('all')" class="map-filter-btn active px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-bold border border-slate-700 hover:bg-slate-700 transition flex items-center gap-2 whitespace-nowrap" id="filter-all">
+                            ALL <span id="cnt-all" class="bg-slate-900 px-1.5 py-0.5 rounded text-white">0</span>
+                        </button>
+                        <button onclick="setMapFilter('online')" class="map-filter-btn px-3 py-1.5 bg-green-900/20 text-green-400 rounded-lg text-[10px] font-bold border border-green-900/50 hover:bg-green-900/40 transition flex items-center gap-2 whitespace-nowrap" id="filter-online">
+                            <i class="fa-solid fa-circle text-[6px]"></i> ONLINE <span id="cnt-online" class="bg-green-900 px-1.5 py-0.5 rounded text-white">0</span>
+                        </button>
+                        <button onclick="setMapFilter('offline')" class="map-filter-btn px-3 py-1.5 bg-red-900/20 text-red-400 rounded-lg text-[10px] font-bold border border-red-900/50 hover:bg-red-900/40 transition flex items-center gap-2 whitespace-nowrap" id="filter-offline">
+                            OFFLINE <span id="cnt-offline" class="bg-red-900 px-1.5 py-0.5 rounded text-white">0</span>
+                        </button>
                     </div>
                 </div>
                 <div class="flex-1 bg-slate-800 rounded-2xl border border-slate-700 p-1 relative overflow-hidden">
@@ -181,46 +186,17 @@
                 </div>
             </div>
 
-            <!-- TAB: ANALYTICS (NEW) -->
+            <!-- TAB: ANALYTICS -->
             <div id="tab-analytics" class="hidden space-y-6">
                 <h2 class="text-xl sm:text-2xl font-bold text-white">Business Intelligence</h2>
-                
-                <!-- Summary Cards -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">Total Orders</p>
-                        <p class="text-2xl font-bold text-white mt-1" id="anTotalOrders">0</p>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">Total Revenue</p>
-                        <p class="text-2xl font-bold text-green-400 mt-1">₹<span id="anTotalRev">0</span></p>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">Avg. Order Value</p>
-                        <p class="text-2xl font-bold text-blue-400 mt-1">₹<span id="anAvgVal">0</span></p>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">Active Customers</p>
-                        <p class="text-2xl font-bold text-pink-400 mt-1" id="anActiveCust">0</p>
-                    </div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-400 uppercase font-bold">Total Orders</p><p class="text-2xl font-bold text-white mt-1" id="anTotalOrders">0</p></div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-400 uppercase font-bold">Total Revenue</p><p class="text-2xl font-bold text-green-400 mt-1">₹<span id="anTotalRev">0</span></p></div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-400 uppercase font-bold">Avg. Order Value</p><p class="text-2xl font-bold text-blue-400 mt-1">₹<span id="anAvgVal">0</span></p></div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-400 uppercase font-bold">Active Customers</p><p class="text-2xl font-bold text-pink-400 mt-1" id="anActiveCust">0</p></div>
                 </div>
-
-                <!-- Chart -->
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <h3 class="text-sm font-bold text-slate-300 mb-4">Last 7 Days Sales</h3>
-                    <div class="h-64">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Top Products -->
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <h3 class="text-sm font-bold text-slate-300 mb-4">Top Selling Products</h3>
-                    <div id="topProductsList" class="space-y-2 text-sm text-slate-400">
-                        <!-- Injected via JS -->
-                        <p class="text-center text-xs">Loading data...</p>
-                    </div>
-                </div>
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><h3 class="text-sm font-bold text-slate-300 mb-4">Last 7 Days Sales</h3><div class="h-64"><canvas id="salesChart"></canvas></div></div>
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><h3 class="text-sm font-bold text-slate-300 mb-4">Top Selling Products</h3><div id="topProductsList" class="space-y-2 text-sm text-slate-400"><p class="text-center text-xs">Loading data...</p></div></div>
             </div>
 
             <!-- TAB: HISTORY -->
@@ -237,15 +213,7 @@
                 <h2 class="text-xl sm:text-2xl font-bold text-white">Delivery Fleet</h2>
                 <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-400">
-                        <thead class="bg-slate-950 text-xs uppercase font-bold text-slate-500">
-                            <tr>
-                                <th class="p-4">Name & Chat</th>
-                                <th class="p-4">Status</th>
-                                <th class="p-4">Battery</th>
-                                <th class="p-4">Earnings</th>
-                                <th class="p-4">Last Active</th>
-                            </tr>
-                        </thead>
+                        <thead class="bg-slate-950 text-xs uppercase font-bold text-slate-500"><tr><th class="p-4">Name & Chat</th><th class="p-4">Status</th><th class="p-4">Battery</th><th class="p-4">Earnings</th><th class="p-4">Last Active</th></tr></thead>
                         <tbody id="partnersTable" class="divide-y divide-slate-800"></tbody>
                     </table>
                 </div>
@@ -266,433 +234,16 @@
         </main>
     </div>
 
-    <!-- MODALS (SAME AS BEFORE) -->
-    <div id="bannerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
-        <div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
-                <h3 class="font-bold text-white">Manage App Banners</h3>
-                <button onclick="closeModal('bannerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-5 space-y-4 overflow-y-auto">
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Upload Image</label>
-                    <input type="file" id="bannerFile" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 mb-3">
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Redirect Link (Optional)</label>
-                    <input type="text" id="bannerLink" placeholder="https://..." class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm mb-3">
-                    <button onclick="uploadBanner()" id="uploadBtn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition">UPLOAD & PUBLISH</button>
-                </div>
-                <h4 class="text-xs font-bold text-slate-500 uppercase mt-2">Active Banners</h4>
-                <div id="bannerList" class="space-y-3"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="customerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
-        <div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
-                <h3 class="font-bold text-white">Customer Database</h3>
-                <button onclick="closeModal('customerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="flex-1 overflow-auto p-4">
-                <table class="w-full text-left text-sm text-slate-400">
-                    <thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Shop Name</th><th class="p-3">PIN/Pass</th><th class="p-3">Joined</th></tr></thead>
-                    <tbody id="custTable" class="divide-y divide-slate-800"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="partnerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
-        <div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
-                <h3 class="font-bold text-white">Delivery Partner Details</h3>
-                <button onclick="closeModal('partnerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="flex-1 overflow-auto p-4">
-                <table class="w-full text-left text-sm text-slate-400">
-                    <thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Vehicle</th><th class="p-3">PIN/Pass</th><th class="p-3">Status</th></tr></thead>
-                    <tbody id="partnerDetailTable" class="divide-y divide-slate-800"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="assignModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4">
-        <div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-                <h3 class="font-bold text-white">Assign Delivery Partner</h3>
-                <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer"></div>
-        </div>
-    </div>
+    <!-- Modals (Same as before) -->
+    <div id="bannerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><h3 class="font-bold text-white">Manage App Banners</h3><button onclick="closeModal('bannerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 space-y-4 overflow-y-auto"><div class="bg-slate-800 p-4 rounded-xl border border-slate-700"><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Upload Image</label><input type="file" id="bannerFile" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 mb-3"><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Redirect Link (Optional)</label><input type="text" id="bannerLink" placeholder="https://..." class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm mb-3"><button onclick="uploadBanner()" id="uploadBtn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition">UPLOAD & PUBLISH</button></div><h4 class="text-xs font-bold text-slate-500 uppercase mt-2">Active Banners</h4><div id="bannerList" class="space-y-3"></div></div></div></div>
+    <div id="customerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><h3 class="font-bold text-white">Customer Database</h3><button onclick="closeModal('customerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="flex-1 overflow-auto p-4"><table class="w-full text-left text-sm text-slate-400"><thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Shop Name</th><th class="p-3">PIN/Pass</th><th class="p-3">Joined</th></tr></thead><tbody id="custTable" class="divide-y divide-slate-800"></tbody></table></div></div></div>
+    <div id="partnerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><h3 class="font-bold text-white">Delivery Partner Details</h3><button onclick="closeModal('partnerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="flex-1 overflow-auto p-4"><table class="w-full text-left text-sm text-slate-400"><thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Vehicle</th><th class="p-3">PIN/Pass</th><th class="p-3">Status</th></tr></thead><tbody id="partnerDetailTable" class="divide-y divide-slate-800"></tbody></table></div></div></div>
+    <div id="assignModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950"><h3 class="font-bold text-white">Assign Delivery Partner</h3><button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer"></div></div></div>
 
     <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
 
-    <script>
-        // CONFIG
-        const firebaseConfig = {
-            apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
-            authDomain: "tipsplit-e3wes.firebaseapp.com",
-            databaseURL: "https://tipsplit-e3wes-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "tipsplit-e3wes",
-            storageBucket: "tipsplit-e3wes.firebasestorage.app",
-            messagingSenderId: "984733883633",
-            appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
-        };
-        
-        const imageKit = new ImageKit({
-            publicKey: "public_key_test", 
-            urlEndpoint: "https://ik.imagekit.io/your_id", 
-        });
-
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let selectedOrderIdForAssignment = null;
-        let map, markers = {};
-        let salesChartInstance = null; // Chart Instance
-        document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString();
-
-        // --- NAVIGATION TABS ---
-        function switchTab(id) { 
-            ['orders','map','analytics','history','partners','alerts'].forEach(t=>{
-                document.getElementById('tab-'+t).classList.add('hidden'); 
-                document.getElementById('nav-'+t)?.classList.remove('active'); 
-                const m = document.getElementById('mob-'+t);
-                if(m) { m.classList.replace('bg-blue-600','text-slate-400'); m.classList.remove('text-white'); }
-            }); 
-            
-            document.getElementById('tab-'+id).classList.remove('hidden'); 
-            document.getElementById('nav-'+id)?.classList.add('active'); 
-            const m=document.getElementById('mob-'+id); 
-            if(m){ m.classList.add('bg-blue-600','text-white'); m.classList.remove('text-slate-400'); } 
-
-            if(id === 'map') {
-                setTimeout(() => {
-                    if(!map) initMap();
-                    else map.invalidateSize(); 
-                }, 100);
-            }
-            if(id === 'analytics') {
-                initAnalytics();
-            }
-        }
-
-        // --- MAP LOGIC ---
-        function initMap() {
-            if(map) return;
-            map = L.map('map').setView([20.5937, 78.9629], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-            document.getElementById('mapLoading').classList.add('hidden');
-            trackPartnersOnMap();
-        }
-
-        function trackPartnersOnMap() {
-            db.ref('deliveryBoys').on('value', snap => {
-                if(!map) return;
-                const bounds = [];
-                if(snap.exists()) {
-                    Object.entries(snap.val()).forEach(([mobile, boy]) => {
-                        if(boy.location && boy.location.lat && boy.location.lng) {
-                            const lat = boy.location.lat;
-                            const lng = boy.location.lng;
-                            const isOnline = boy.status === 'online';
-                            const color = isOnline ? 'green' : 'red';
-                            const iconHtml = `<div style="background:${color}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow: 0 0 5px black;"></div>`;
-                            const customIcon = L.divIcon({ className: 'custom-map-icon', html: iconHtml });
-
-                            if(markers[mobile]) {
-                                markers[mobile].setLatLng([lat, lng]);
-                                markers[mobile].setIcon(customIcon);
-                                markers[mobile].setPopupContent(`<b>${boy.name}</b><br>${boy.status}<br>${boy.battery || ''}`);
-                            } else {
-                                const marker = L.marker([lat, lng], {icon: customIcon}).addTo(map)
-                                    .bindPopup(`<b>${boy.name}</b><br>${boy.status}<br>${boy.battery || ''}`);
-                                markers[mobile] = marker;
-                            }
-                            if(isOnline) bounds.push([lat, lng]);
-                        }
-                    });
-                    if(bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-                }
-            });
-        }
-
-        // --- ANALYTICS LOGIC (NEW) ---
-        function initAnalytics() {
-            db.ref('orders').once('value', snap => {
-                let totalOrders = 0;
-                let totalRev = 0;
-                let customers = new Set();
-                let productCounts = {};
-                
-                // For Chart (Last 7 Days)
-                const last7Days = {};
-                const today = new Date();
-                for(let i=6; i>=0; i--) {
-                    const d = new Date(today);
-                    d.setDate(today.getDate() - i);
-                    last7Days[d.toLocaleDateString()] = 0;
-                }
-
-                if(snap.exists()) {
-                    Object.values(snap.val()).forEach(o => {
-                        if(o.status === 'delivered') {
-                            totalOrders++;
-                            totalRev += parseInt(o.payment.deliveryFee || 0);
-                            customers.add(o.user.mobile);
-                            
-                            // Product Stats
-                            if(o.cart) {
-                                o.cart.forEach(p => {
-                                    productCounts[p.name] = (productCounts[p.name] || 0) + (p.count || 1);
-                                });
-                            }
-
-                            // Chart Data
-                            const dateKey = new Date(o.timestamp).toLocaleDateString();
-                            if(last7Days.hasOwnProperty(dateKey)) {
-                                last7Days[dateKey] += parseInt(o.payment.deliveryFee || 0);
-                            }
-                        }
-                    });
-                }
-
-                // Update Cards
-                document.getElementById('anTotalOrders').innerText = totalOrders;
-                document.getElementById('anTotalRev').innerText = totalRev;
-                document.getElementById('anAvgVal').innerText = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
-                document.getElementById('anActiveCust').innerText = customers.size;
-
-                // Render Chart
-                renderSalesChart(Object.keys(last7Days), Object.values(last7Days));
-
-                // Render Top Products
-                const sortedProducts = Object.entries(productCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
-                const prodContainer = document.getElementById('topProductsList');
-                prodContainer.innerHTML = '';
-                if(sortedProducts.length > 0) {
-                    sortedProducts.forEach(([name, count], index) => {
-                        prodContainer.innerHTML += `
-                            <div class="flex justify-between items-center bg-slate-800 p-2 rounded">
-                                <span class="truncate flex-1"><span class="text-blue-500 font-bold mr-2">#${index+1}</span>${name}</span>
-                                <span class="bg-slate-700 px-2 py-0.5 rounded text-xs text-white">${count} sold</span>
-                            </div>
-                        `;
-                    });
-                } else {
-                    prodContainer.innerHTML = '<p class="text-center text-xs text-slate-500">No sales data yet.</p>';
-                }
-            });
-        }
-
-        function renderSalesChart(labels, data) {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            
-            if(salesChartInstance) salesChartInstance.destroy(); // Prevent duplicate charts
-
-            salesChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Sales (₹)',
-                        data: data,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: {size: 10} } }
-                    }
-                }
-            });
-        }
-
-        // --- MENU & MODALS ---
-        function toggleDrawer() {
-            const d = document.getElementById('menuDrawer');
-            const o = document.getElementById('drawerOverlay');
-            if(d.classList.contains('open')) { d.classList.remove('open'); o.classList.add('hidden'); }
-            else { d.classList.add('open'); o.classList.remove('hidden'); }
-        }
-
-        function openModal(id) {
-            toggleDrawer(); 
-            document.getElementById(id).classList.remove('hidden');
-            if(id === 'customerModal') loadCustomers();
-            if(id === 'partnerModal') loadPartnerDetails();
-            if(id === 'bannerModal') loadBanners();
-        }
-
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        // --- BANNER LOGIC ---
-        function uploadBanner() {
-            const file = document.getElementById('bannerFile').files[0];
-            const link = document.getElementById('bannerLink').value || '#';
-            if(!file) return showToast("Select Image");
-            const btn = document.getElementById('uploadBtn');
-            btn.innerHTML = 'Uploading...'; btn.disabled = true;
-            imageKit.upload({ file : file, fileName : "banner_" + Date.now() + ".jpg", tags : ["banner"] }, function(err, result) {
-                if(err) uploadBase64Banner(file, link, btn); 
-                else saveBannerToDb(result.url, link, btn);
-            });
-        }
-        function uploadBase64Banner(file, link, btn) {
-            const reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = function () { saveBannerToDb(reader.result, link, btn); };
-            reader.onerror = function () { showToast("Failed"); btn.innerHTML='UPLOAD'; btn.disabled=false; };
-        }
-        function saveBannerToDb(imgUrl, link, btn) {
-            db.ref('admin/sliders').push({ img: imgUrl, link: link }).then(() => {
-                showToast("Banner Live!"); document.getElementById('bannerFile').value='';
-                btn.innerHTML='UPLOAD & PUBLISH'; btn.disabled=false; loadBanners();
-            });
-        }
-        function loadBanners() {
-            const list = document.getElementById('bannerList'); list.innerHTML = '<p class="text-xs text-slate-500">Loading...</p>';
-            db.ref('admin/sliders').once('value', s => {
-                list.innerHTML = '';
-                if(s.exists()) Object.entries(s.val()).forEach(([key, val]) => {
-                    list.innerHTML += `<div class="bg-slate-800 p-2 rounded-lg flex items-center gap-3 border border-slate-700"><img src="${val.img}" class="w-16 h-10 object-cover rounded"><div class="flex-1 overflow-hidden"><p class="text-[10px] text-blue-400 truncate">${val.link}</p></div><button onclick="db.ref('admin/sliders/${key}').remove(); loadBanners()" class="text-red-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button></div>`;
-                }); else list.innerHTML = '<p class="text-xs text-slate-500">No active banners.</p>';
-            });
-        }
-
-        // --- DATA LOADERS ---
-        function loadCustomers() {
-            const t = document.getElementById('custTable'); t.innerHTML='<tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>';
-            db.ref('users').once('value', s => {
-                t.innerHTML='';
-                if(s.exists()) Object.values(s.val()).forEach(u => {
-                    t.innerHTML += `<tr class="hover:bg-slate-800"><td class="p-3 font-bold text-white">${u.name}</td><td class="p-3">${u.mobile}</td><td class="p-3">${u.shopName||'-'}</td><td class="p-3 text-amber-500">${u.pin||'-'}</td><td class="p-3 text-xs">${new Date(u.joinedAt||Date.now()).toLocaleDateString()}</td></tr>`;
-                });
-            });
-        }
-        function loadPartnerDetails() {
-            const t = document.getElementById('partnerDetailTable'); t.innerHTML='<tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>';
-            db.ref('deliveryBoys').once('value', s => {
-                t.innerHTML='';
-                if(s.exists()) Object.entries(s.val()).forEach(([m,u]) => {
-                    t.innerHTML += `<tr class="hover:bg-slate-800"><td class="p-3 font-bold text-white">${u.name}</td><td class="p-3">${m}</td><td class="p-3 capitalize">${u.vehicle}</td><td class="p-3 text-amber-500">${u.pin}</td><td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] ${u.status==='online'?'bg-green-900 text-green-400':'bg-slate-700 text-slate-400'}">${u.status}</span></td></tr>`;
-                });
-            });
-        }
-
-        // --- GENERAL LOGIC ---
-        function logout() { if(confirm("Exit?")) window.location.href = 'index.html'; }
-        function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
-
-        db.ref('orders').on('value', snap => {
-            const liveGrid = document.getElementById('ordersGrid');
-            const histGrid = document.getElementById('historyGrid');
-            const notifList = document.getElementById('notificationList');
-            const noAlerts = document.getElementById('noAlertsMsg');
-            
-            liveGrid.innerHTML = ''; histGrid.innerHTML = ''; notifList.innerHTML = '';
-            let totalRevenue = 0, activeCount = 0, todayAlertCount = 0;
-            const startOfToday = new Date(); startOfToday.setHours(0,0,0,0);
-
-            if(snap.exists()) {
-                Object.entries(snap.val()).reverse().forEach(([id, order]) => {
-                    if(order.status === 'delivered') totalRevenue += parseInt(order.payment.deliveryFee || 0);
-                    else activeCount++;
-
-                    const cardHTML = createOrderCard(id, order);
-                    if(order.status === 'delivered') histGrid.innerHTML += cardHTML;
-                    else liveGrid.innerHTML += cardHTML;
-
-                    if(new Date(order.timestamp) >= startOfToday) {
-                        todayAlertCount++;
-                        const statusColor = order.status === 'delivered' ? 'text-green-400' : (order.status === 'placed' ? 'text-amber-400' : 'text-blue-400');
-                        notifList.innerHTML += `<div class="p-4 flex justify-between items-center hover:bg-slate-800/50 transition"><div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full ${order.status === 'delivered' ? 'bg-green-500' : 'bg-slate-500'}"></div><div><p class="text-sm font-bold text-white">${order.user.name}</p><p class="text-[10px] text-slate-500">Shop: ${order.user.shopName}</p></div></div><div class="text-right"><span class="text-xs font-bold uppercase ${statusColor}">${order.status}</span><p class="text-[10px] text-slate-600">#${order.orderId.slice(-6)}</p><p class="text-[9px] text-slate-600">${new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div></div>`;
-                    }
-                });
-            } else liveGrid.innerHTML = `<div class="text-slate-500 col-span-full text-center py-10">No Orders</div>`;
-
-            document.getElementById('totalRev').innerText = totalRevenue;
-            const ae = [document.getElementById('sidebarActiveCount'), document.getElementById('mobActiveCount'), document.getElementById('headerActiveCount')];
-            ae.forEach(el => { if(activeCount>0) { el.innerText = activeCount+(el.id==='headerActiveCount'?' Active':''); el.classList.remove('hidden'); } else el.classList.add('hidden'); });
-            if(todayAlertCount === 0) noAlerts.classList.remove('hidden'); else noAlerts.classList.add('hidden');
-        });
-
-        function createOrderCard(id, order) {
-            let productsHTML = ''; let waItems = '';
-            if(order.cart) order.cart.forEach(i => {
-                productsHTML += `<div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0"><span class="text-slate-300">${i.count}x ${i.name}</span><span class="text-slate-500">${i.qty}</span></div>`;
-                waItems += `${i.name} (${i.qty}) x${i.count}\n`;
-            });
-            let stClass = 'st-placed'; let partnerInfo = '';
-            if(order.status === 'accepted' || order.status === 'out_for_delivery') { 
-                stClass = 'st-accepted'; partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName || 'Partner'}</div>`;
-            }
-            if(order.status === 'delivered') stClass = 'st-delivered';
-            let adminAction = '';
-            if(order.status === 'placed') adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">ASSIGN PARTNER <i class="fa-solid fa-user-plus ml-1"></i></button>`;
-            else if (order.status === 'accepted') adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN</button>`;
-            const waLink = `https://wa.me/?text=${encodeURIComponent(`*Customer:* ${order.user.name}\n*Order ID:* #${order.orderId}\n\n*Items:*\n${waItems}`)}`;
-            return `<div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition relative overflow-hidden"><div class="flex justify-between items-start"><div><h3 class="font-bold text-white text-base">${order.user.name}</h3><p class="text-xs text-blue-400 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${order.user.mobile}</p></div><span class="status-badge ${stClass}">${order.status}</span></div><div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1"><i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}</div><div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">${productsHTML}</div><div class="bg-slate-950 rounded p-2 text-xs text-slate-400 truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}</div>${partnerInfo}${adminAction}<div class="mt-auto pt-3 border-t border-slate-800 flex justify-between items-center"><div><span class="block text-[10px] text-slate-500 uppercase font-bold">Fee</span><span class="font-bold text-white text-lg">₹${order.payment.deliveryFee}</span></div><div class="flex gap-2"><a href="${waLink}" target="_blank" class="w-8 h-8 rounded bg-green-900/40 text-green-500 border border-green-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition"><i class="fa-brands fa-whatsapp text-sm"></i></a><a href="https://maps.google.com/?q=${order.location.lat},${order.location.lng}" target="_blank" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-map-location-dot text-xs"></i></a><a href="tel:${order.user.mobile}" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition"><i class="fa-solid fa-phone text-xs"></i></a><button onclick="deleteOrder('${id}')" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash text-xs"></i></button></div></div></div>`;
-        }
-
-        function openAssignModal(orderId) { selectedOrderIdForAssignment = orderId; document.getElementById('assignModal').classList.remove('hidden'); loadPartnersForAssignment(); }
-        function loadPartnersForAssignment() {
-            const container = document.getElementById('partnerListContainer'); container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">Loading...</p>';
-            db.ref('deliveryBoys').once('value', snap => {
-                container.innerHTML = '';
-                if(snap.exists()) {
-                    let hasOnline = false;
-                    Object.entries(snap.val()).forEach(([mobile, boy]) => {
-                        if(boy.status === 'online') {
-                            hasOnline = true;
-                            const div = document.createElement('div');
-                            div.className = "partner-select-card bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center cursor-pointer transition mb-2";
-                            div.onclick = () => assignToPartner(mobile, boy.name);
-                            div.innerHTML = `<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold border border-slate-600">${boy.name.charAt(0)}</div><div><h4 class="font-bold text-white text-sm">${boy.name}</h4><p class="text-[10px] text-slate-400 capitalize">${boy.vehicle}</p></div></div><button class="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full hover:bg-indigo-500">ASSIGN</button>`;
-                            container.appendChild(div);
-                        }
-                    });
-                    if(!hasOnline) container.innerHTML = '<div class="text-center py-4 text-slate-500 text-xs">No partners Online.</div>';
-                } else container.innerHTML = '<p class="text-slate-500 text-xs text-center">No Partners.</p>';
-            });
-        }
-        function assignToPartner(mobile, name) {
-            if(!selectedOrderIdForAssignment || !confirm(`Assign to ${name}?`)) return;
-            db.ref('orders/' + selectedOrderIdForAssignment).update({ status: 'accepted', deliveryBoyId: mobile, deliveryBoyName: name, deliveryBoyMobile: mobile, assignedAt: firebase.database.ServerValue.TIMESTAMP })
-            .then(() => { showToast(`Assigned to ${name}`); closeModal('assignModal'); });
-        }
-        function deleteOrder(id) { if(confirm("Delete Permanently?")) db.ref('orders/'+id).remove(); }
-
-        // PARTNER TABLE (Updated with Battery Info)
-        db.ref('deliveryBoys').on('value', snap => {
-            const tbody = document.getElementById('partnersTable'); tbody.innerHTML = '';
-            if(snap.exists()) {
-                Object.entries(snap.val()).forEach(([mobile, boy]) => {
-                    const isOnline = boy.status === 'online';
-                    let statusHtml = isOnline ? `<span class="px-2 py-1 rounded text-[10px] font-bold bg-green-900/30 text-green-400">ONLINE</span>` : `<span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-500">OFFLINE</span>`;
-                    
-                    // Battery & Last Active
-                    const bat = boy.battery ? `<i class="fa-solid fa-battery-half text-slate-400 mr-1"></i>${boy.battery}` : '-';
-                    const lastActive = boy.lastHeartbeat ? new Date(boy.lastHeartbeat).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="p-4"><div class="font-bold text-white flex items-center gap-2">${boy.name}<a href="https://wa.me/91${mobile}" target="_blank" class="text-green-500"><i class="fa-brands fa-whatsapp"></i></a></div><div class="text-[10px] text-slate-500">${mobile}</div></td>
-                            <td class="p-4">${statusHtml}</td>
-                            <td class="p-4 text-xs font-mono text-slate-400">${bat}</td>
-                            <td class="p-4 text-sm font-bold text-green-400">₹${boy.earnings || 0}</td>
-                            <td class="p-4 text-xs font-mono text-slate-500">${lastActive}</td>
-                        </tr>
-                    `;
-                });
-            }
-        });
-    </script>
+    <!-- EXTERNAL JS -->
+    <script src="admin.js"></script>
 </body>
 </html>
+
