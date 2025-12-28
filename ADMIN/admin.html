@@ -10,11 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
-    <!-- SDKs -->
     <script type="text/javascript" src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -45,7 +43,6 @@
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-    <!-- HEADER -->
     <header class="bg-slate-900 border-b border-slate-800 px-4 py-4 flex justify-between items-center shadow-md z-20">
         <div class="flex items-center gap-3">
             <button onclick="toggleDrawer()" class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition border border-slate-700">
@@ -69,7 +66,6 @@
         </div>
     </header>
 
-    <!-- DRAWER MENU -->
     <div id="menuDrawer" class="drawer fixed inset-y-0 left-0 w-[85%] max-w-xs bg-slate-900 z-50 border-r border-slate-700 shadow-2xl flex flex-col">
         <div class="p-6 border-b border-slate-800 bg-slate-950">
             <h2 class="text-lg font-bold text-white">Admin Tools</h2>
@@ -94,7 +90,6 @@
 
     <div class="flex flex-1 overflow-hidden">
         
-        <!-- SIDEBAR (DESKTOP) -->
         <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex">
             <nav class="flex-1 p-4 space-y-2">
                 <button onclick="switchTab('orders')" id="nav-orders" class="nav-item active w-full text-left px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition flex items-center gap-3">
@@ -125,10 +120,8 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="flex-1 overflow-y-auto bg-slate-950 p-4 sm:p-6 relative">
             
-            <!-- MOBILE TABS -->
             <div class="md:hidden flex gap-2 bg-slate-900 p-2 rounded-lg mb-6 sticky top-0 z-10 shadow-lg overflow-x-auto no-scrollbar">
                 <button onclick="switchTab('orders')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center transition bg-blue-600 text-white min-w-[70px]" id="mob-orders">
                     <i class="fa-solid fa-bolt block mb-1 text-sm"></i> LIVE <span id="mobActiveCount" class="bg-red-500 text-white px-1 rounded-full ml-0.5 text-[8px] hidden">0</span>
@@ -150,7 +143,6 @@
                 </button>
             </div>
 
-            <!-- TAB: LIVE ORDERS -->
             <div id="tab-orders" class="space-y-6">
                 <div class="flex justify-between items-end">
                     <div class="flex items-center gap-3">
@@ -162,12 +154,10 @@
                 <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
-            <!-- TAB: LIVE MAP (UPDATED) -->
             <div id="tab-map" class="hidden h-full flex flex-col space-y-4" style="height: calc(100vh - 180px);">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-3">
                     <h2 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-earth-americas text-blue-500"></i> Fleet Tracker</h2>
                     
-                    <!-- NEW FILTER BUTTONS -->
                     <div class="flex gap-2 w-full sm:w-auto overflow-x-auto">
                         <button onclick="setMapFilter('all')" class="map-filter-btn active px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-bold border border-slate-700 hover:bg-slate-700 transition flex items-center gap-2 whitespace-nowrap" id="filter-all">
                             ALL <span id="cnt-all" class="bg-slate-900 px-1.5 py-0.5 rounded text-white">0</span>
@@ -186,7 +176,6 @@
                 </div>
             </div>
 
-            <!-- TAB: ANALYTICS -->
             <div id="tab-analytics" class="hidden space-y-6">
                 <h2 class="text-xl sm:text-2xl font-bold text-white">Business Intelligence</h2>
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -199,7 +188,6 @@
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><h3 class="text-sm font-bold text-slate-300 mb-4">Top Selling Products</h3><div id="topProductsList" class="space-y-2 text-sm text-slate-400"><p class="text-center text-xs">Loading data...</p></div></div>
             </div>
 
-            <!-- TAB: HISTORY -->
             <div id="tab-history" class="hidden space-y-6">
                 <div class="flex justify-between items-end">
                     <h2 class="text-xl sm:text-2xl font-bold text-white">Order History</h2>
@@ -208,7 +196,6 @@
                 <div id="historyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
-            <!-- TAB: PARTNERS -->
             <div id="tab-partners" class="hidden space-y-6">
                 <h2 class="text-xl sm:text-2xl font-bold text-white">Delivery Fleet</h2>
                 <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden overflow-x-auto">
@@ -219,7 +206,6 @@
                 </div>
             </div>
 
-            <!-- TAB: ALERTS -->
             <div id="tab-alerts" class="hidden space-y-6 max-w-2xl mx-auto">
                 <div class="flex items-center justify-center gap-2 mb-2">
                     <h2 class="text-xl sm:text-2xl font-bold text-white text-center">Today's Alerts</h2>
@@ -234,16 +220,89 @@
         </main>
     </div>
 
-    <!-- Modals (Same as before) -->
     <div id="bannerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><h3 class="font-bold text-white">Manage App Banners</h3><button onclick="closeModal('bannerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 space-y-4 overflow-y-auto"><div class="bg-slate-800 p-4 rounded-xl border border-slate-700"><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Upload Image</label><input type="file" id="bannerFile" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 mb-3"><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Redirect Link (Optional)</label><input type="text" id="bannerLink" placeholder="https://..." class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm mb-3"><button onclick="uploadBanner()" id="uploadBtn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition">UPLOAD & PUBLISH</button></div><h4 class="text-xs font-bold text-slate-500 uppercase mt-2">Active Banners</h4><div id="bannerList" class="space-y-3"></div></div></div></div>
-    <div id="customerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><h3 class="font-bold text-white">Customer Database</h3><button onclick="closeModal('customerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="flex-1 overflow-auto p-4"><table class="w-full text-left text-sm text-slate-400"><thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Shop Name</th><th class="p-3">PIN/Pass</th><th class="p-3">Joined</th></tr></thead><tbody id="custTable" class="divide-y divide-slate-800"></tbody></table></div></div></div>
-    <div id="partnerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><h3 class="font-bold text-white">Delivery Partner Details</h3><button onclick="closeModal('partnerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="flex-1 overflow-auto p-4"><table class="w-full text-left text-sm text-slate-400"><thead class="bg-slate-800 text-white sticky top-0"><tr><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Vehicle</th><th class="p-3">PIN/Pass</th><th class="p-3">Status</th></tr></thead><tbody id="partnerDetailTable" class="divide-y divide-slate-800"></tbody></table></div></div></div>
+    
+    <div id="customerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-5xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[85vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Customer Database</h3>
+                <button onclick="closeModal('customerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-4">
+                <table class="w-full text-left text-sm text-slate-400">
+                    <thead class="bg-slate-800 text-white sticky top-0 z-10">
+                        <tr>
+                            <th class="p-3 whitespace-nowrap">Name</th>
+                            <th class="p-3 whitespace-nowrap">Mobile</th>
+                            <th class="p-3 whitespace-nowrap">Shop Name</th>
+                            <th class="p-3 whitespace-nowrap">PIN</th>
+                            <th class="p-3 whitespace-nowrap">Recovery</th>
+                            <th class="p-3 whitespace-nowrap">Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody id="custTable" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="partnerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Delivery Partner Details</h3>
+                <button onclick="closeModal('partnerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-4">
+                <table class="w-full text-left text-sm text-slate-400">
+                    <thead class="bg-slate-800 text-white sticky top-0">
+                        <tr>
+                            <th class="p-3">Name</th>
+                            <th class="p-3">Mobile</th>
+                            <th class="p-3">Vehicle</th>
+                            <th class="p-3">PIN/Pass</th>
+                            <th class="p-3 whitespace-nowrap">Recovery</th> <th class="p-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partnerDetailTable" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="assignModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950"><h3 class="font-bold text-white">Assign Delivery Partner</h3><button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer"></div></div></div>
+
+    <div id="pinRecoveryModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-sm rounded-2xl border border-slate-700 shadow-2xl animate-[slideUp_0.2s_ease-out]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white"><i class="fa-solid fa-key text-amber-500 mr-2"></i>Send Recovery PIN</h3>
+                <button onclick="closeModal('pinRecoveryModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-user-lock text-2xl text-slate-400"></i>
+                    </div>
+                    <p class="text-sm text-slate-400">Send PIN to <b id="recName" class="text-white">User</b></p>
+                    <p class="text-xs text-slate-500 font-mono mt-1" id="recMobile">98XXXXXXXX</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="sendPinWhatsApp()" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition">
+                        <i class="fa-brands fa-whatsapp text-2xl"></i>
+                        <span class="text-[10px] uppercase">WhatsApp</span>
+                    </button>
+                    <button onclick="sendPinSMS()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition">
+                        <i class="fa-solid fa-comment-sms text-2xl"></i>
+                        <span class="text-[10px] uppercase">Text SMS</span>
+                    </button>
+                </div>
+                <p class="text-[9px] text-center text-slate-600">The message will be pre-filled on your device.</p>
+            </div>
+        </div>
+    </div>
 
     <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
 
-    <!-- EXTERNAL JS -->
     <script src="admin.js"></script>
 </body>
 </html>
-
