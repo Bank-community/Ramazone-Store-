@@ -25,6 +25,13 @@ let adminLat = null, adminLng = null;
 let partnersData = {}; // Store raw data
 let currentMapFilter = 'all'; // Default filter
 
+// Variables for PIN Recovery
+let recTargetMobile = null;
+let recTargetPin = null;
+let recTargetName = null;
+let recTargetContext = null; // 'customer' or 'partner'
+let recTargetShop = null; // Shop Name for dynamic messaging
+
 // --- INITIALIZATION ---
 window.onload = () => {
     document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString();
@@ -370,15 +377,147 @@ function assignToPartner(mobile, name) {
 }
 function deleteOrder(id) { if(confirm("Delete Permanently?")) db.ref('orders/'+id).remove(); }
 
-// --- DATA LISTS ---
+// --- DATA LISTS & UTILS ---
+
+// Toggle Eye Icon Logic
+window.togglePin = function(btn, pin) {
+    const span = btn.parentElement.querySelector('.pin-text');
+    const icon = btn.querySelector('i');
+    
+    if (span.innerText === '••••') {
+        span.innerText = pin;
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        icon.parentElement.classList.add('text-white');
+        icon.parentElement.classList.remove('text-slate-500');
+    } else {
+        span.innerText = '••••';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        icon.parentElement.classList.remove('text-white');
+        icon.parentElement.classList.add('text-slate-500');
+    }
+}
+
+// Updated Customer Loader (With Eye Icon + Send Button + Context)
 function loadCustomers() {
-    const t = document.getElementById('custTable'); t.innerHTML='<tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>';
-    db.ref('users').once('value', s => { t.innerHTML=''; if(s.exists()) Object.values(s.val()).forEach(u => { t.innerHTML += `<tr class="hover:bg-slate-800"><td class="p-3 font-bold text-white">${u.name}</td><td class="p-3">${u.mobile}</td><td class="p-3">${u.shopName||'-'}</td><td class="p-3 text-amber-500">${u.pin||'-'}</td><td class="p-3 text-xs">${new Date(u.joinedAt||Date.now()).toLocaleDateString()}</td></tr>`; }); });
+    const t = document.getElementById('custTable'); 
+    t.innerHTML='<tr><td colspan="6" class="p-4 text-center">Loading...</td></tr>';
+    
+    db.ref('users').once('value', s => { 
+        t.innerHTML=''; 
+        if(s.exists()) {
+            Object.values(s.val()).forEach(u => { 
+                t.innerHTML += `
+                    <tr class="hover:bg-slate-800">
+                        <td class="p-3 font-bold text-white">${u.name}</td>
+                        <td class="p-3 font-mono">${u.mobile}</td>
+                        <td class="p-3">${u.shopName || '-'}</td>
+                        <td class="p-3 font-mono tracking-widest text-xs flex items-center gap-2">
+                            <span class="text-amber-500 pin-text">••••</span>
+                            <button onclick="togglePin(this, '${u.pin}')" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-eye"></i></button>
+                        </td>
+                        <td class="p-3">
+                            <button onclick="openPinRecovery('${u.mobile}', '${u.pin}', '${u.name}', 'customer', '${u.shopName || 'Ramazone Store'}')" class="bg-slate-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-[10px] font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-key"></i> SEND
+                            </button>
+                        </td>
+                        <td class="p-3 text-xs text-slate-500">${new Date(u.joinedAt || Date.now()).toLocaleDateString()}</td>
+                    </tr>
+                `; 
+            }); 
+        } else {
+            t.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">No Customers Found</td></tr>';
+        }
+    });
 }
+
+// Updated Partner Loader (With Eye Icon + Send Button + Context)
 function loadPartnerDetails() {
-    const t = document.getElementById('partnerDetailTable'); t.innerHTML='<tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>';
-    db.ref('deliveryBoys').once('value', s => { t.innerHTML=''; if(s.exists()) Object.entries(s.val()).forEach(([m,u]) => { t.innerHTML += `<tr class="hover:bg-slate-800"><td class="p-3 font-bold text-white">${u.name}</td><td class="p-3">${m}</td><td class="p-3 capitalize">${u.vehicle}</td><td class="p-3 text-amber-500">${u.pin}</td><td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] ${u.status==='online'?'bg-green-900 text-green-400':'bg-slate-700 text-slate-400'}">${u.status}</span></td></tr>`; }); });
+    const t = document.getElementById('partnerDetailTable'); t.innerHTML='<tr><td colspan="6" class="p-4 text-center">Loading...</td></tr>';
+    
+    db.ref('deliveryBoys').once('value', s => { 
+        t.innerHTML=''; 
+        if(s.exists()) {
+            Object.entries(s.val()).forEach(([m,u]) => { 
+                t.innerHTML += `
+                <tr class="hover:bg-slate-800">
+                    <td class="p-3 font-bold text-white">${u.name}</td>
+                    <td class="p-3">${m}</td>
+                    <td class="p-3 capitalize">${u.vehicle}</td>
+                    <td class="p-3 font-mono tracking-widest text-xs flex items-center gap-2">
+                        <span class="text-amber-500 pin-text">••••</span>
+                        <button onclick="togglePin(this, '${u.pin}')" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-eye"></i></button>
+                    </td>
+                    <td class="p-3">
+                        <button onclick="openPinRecovery('${m}', '${u.pin}', '${u.name}', 'partner', 'Ramazone Delivery Team')" class="bg-slate-700 hover:bg-green-600 text-white px-3 py-1.5 rounded text-[10px] font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-key"></i> SEND
+                        </button>
+                    </td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] ${u.status==='online'?'bg-green-900 text-green-400':'bg-slate-700 text-slate-400'}">${u.status}</span></td>
+                </tr>`; 
+            }); 
+        }
+    });
 }
+
+// Universal PIN Recovery Logic
+function openPinRecovery(mobile, pin, name, context, shopName) {
+    if(!pin) { showToast("User has no PIN set"); return; }
+    
+    recTargetMobile = mobile;
+    recTargetPin = pin;
+    recTargetName = name;
+    recTargetContext = context; // 'customer' or 'partner'
+    recTargetShop = shopName;
+
+    // Update Modal UI
+    document.getElementById('recName').innerText = name + (context === 'partner' ? ' (Partner)' : '');
+    document.getElementById('recMobile').innerText = "+91 " + mobile;
+    
+    // Open Modal
+    document.getElementById('pinRecoveryModal').classList.remove('hidden');
+}
+
+function sendPinWhatsApp() {
+    if(!recTargetMobile) return;
+    
+    // Dynamic Message Logic
+    let header = `Hello ${recTargetName}`;
+    let body = "";
+    
+    if (recTargetContext === 'customer') {
+        body = `Your Login PIN for *${recTargetShop}* is: *${recTargetPin}*`;
+    } else {
+        body = `Your Login PIN for *Ramazone Delivery App* is: *${recTargetPin}*`;
+    }
+    
+    const msg = `${header},\n\n${body}\n\nPlease keep it safe.\n- Admin Team`;
+    
+    window.open(`https://wa.me/91${recTargetMobile}?text=${encodeURIComponent(msg)}`, '_blank');
+    closeModal('pinRecoveryModal');
+}
+
+function sendPinSMS() {
+    if(!recTargetMobile) return;
+    
+    let body = "";
+    if (recTargetContext === 'customer') {
+        body = `Hello ${recTargetName}, Your PIN for ${recTargetShop} is: ${recTargetPin}. Keep it safe.`;
+    } else {
+        body = `Hello ${recTargetName}, Your PIN for Ramazone Delivery is: ${recTargetPin}. Keep it safe.`;
+    }
+    
+    // Universal SMS Link (Works on Android & iOS)
+    const ua = navigator.userAgent.toLowerCase();
+    const url = (ua.indexOf("iphone") > -1 || ua.indexOf("ipad") > -1)
+        ? `sms:${recTargetMobile}&body=${encodeURIComponent(body)}`
+        : `sms:${recTargetMobile}?body=${encodeURIComponent(body)}`;
+        
+    window.location.href = url;
+    closeModal('pinRecoveryModal');
+}
+
 function loadBanners() {
     const list = document.getElementById('bannerList'); list.innerHTML = '<p class="text-xs text-slate-500">Loading...</p>';
     db.ref('admin/sliders').once('value', s => { list.innerHTML = ''; if(s.exists()) Object.entries(s.val()).forEach(([key, val]) => { list.innerHTML += `<div class="bg-slate-800 p-2 rounded-lg flex items-center gap-3 border border-slate-700"><img src="${val.img}" class="w-16 h-10 object-cover rounded"><div class="flex-1 overflow-hidden"><p class="text-[10px] text-blue-400 truncate">${val.link}</p></div><button onclick="db.ref('admin/sliders/${key}').remove(); loadBanners()" class="text-red-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button></div>`; }); else list.innerHTML = '<p class="text-xs text-slate-500">No active banners.</p>'; });
@@ -396,7 +535,7 @@ function saveBannerToDb(imgUrl, link, btn) {
     db.ref('admin/sliders').push({ img: imgUrl, link: link }).then(() => { showToast("Banner Live!"); document.getElementById('bannerFile').value=''; btn.innerHTML='UPLOAD & PUBLISH'; btn.disabled=false; loadBanners(); });
 }
 
-// Partner Status Table
+// Partner Status Table (Main Dashboard)
 db.ref('deliveryBoys').on('value', snap => {
     const tbody = document.getElementById('partnersTable'); tbody.innerHTML = '';
     if(snap.exists()) {
