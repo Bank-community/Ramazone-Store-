@@ -20,8 +20,8 @@ let selectedCharge = 0;
 let selectedLabel = "";
 let selectedBudget = "standard";
 let selectedTime = "Evening";
-let selectedAddress = null; // Object: { title, text, lat, lng }
-let tempGeoData = null; // For new address
+let selectedAddress = null;
+let tempGeoData = null;
 
 // --- INITIALIZATION ---
 window.onload = () => {
@@ -32,7 +32,6 @@ window.onload = () => {
     highlightBudget('standard');
     highlightTime('Evening');
     
-    // Pre-load addresses from DB
     loadSavedAddresses();
 };
 
@@ -57,7 +56,7 @@ function checkActiveOrder() {
 }
 
 function disablePlaceOrderButton() {
-    const btn = document.getElementById('placeOrderBtn');
+    const btn = document.getElementById('btnStep2');
     if(btn) {
         btn.disabled = true;
         btn.innerHTML = `<div class="flex flex-col items-center leading-tight"><span class="text-xs opacity-75">ORDER ACTIVE</span><span class="text-[10px] font-normal">Please wait...</span></div>`;
@@ -72,31 +71,37 @@ function goToDetails() {
     if (cart.length === 0) return showToast("Cart is empty");
     
     currentStep = 2;
+    // Hide Step 1 UI
     document.getElementById('step1_cart').classList.add('hidden-step');
-    document.getElementById('step1_action').classList.add('hidden');
+    document.getElementById('btnStep1').classList.add('hidden');
     
+    // Show Step 2 UI
     document.getElementById('step2_details').classList.remove('hidden-step');
-    document.getElementById('step2_action').classList.remove('hidden');
+    document.getElementById('btnStep2').classList.remove('hidden');
     
+    // Update Header
     document.getElementById('pageTitle').innerText = "Delivery Details";
     document.getElementById('pageSub').innerText = "Final Step";
     
-    // Auto Select Live Location if no address selected
     if(!selectedAddress) selectLiveLocation();
 }
 
 function handleBack() {
     if (currentStep === 2) {
         currentStep = 1;
+        // Hide Step 2 UI
         document.getElementById('step2_details').classList.add('hidden-step');
-        document.getElementById('step2_action').classList.add('hidden');
+        document.getElementById('btnStep2').classList.add('hidden');
         
+        // Show Step 1 UI
         document.getElementById('step1_cart').classList.remove('hidden-step');
-        document.getElementById('step1_action').classList.remove('hidden');
+        document.getElementById('btnStep1').classList.remove('hidden');
         
+        // Update Header
         document.getElementById('pageTitle').innerText = "My Cart";
         document.getElementById('pageSub').innerText = "Review Items";
     } else {
+        // Step 1 Back -> Go Home
         window.location.href = 'home.html';
     }
 }
@@ -111,18 +116,13 @@ function renderCart() {
     document.getElementById('itemCountBadge').innerText = `${cart.length} Items`;
     list.innerHTML = '';
 
-    // Calculate Total for Display
-    let cartValue = 0; // Assuming 0 for item price, will update if product price exists
-    // Currently item price logic is missing in your system, so relying on Delivery Fee only.
-    // If you had prices: cart.reduce((sum, item) => sum + (item.price * item.count), 0);
-    
     if (cart.length === 0) {
         document.getElementById('cartEmptyState').classList.remove('hidden');
-        document.getElementById('step1_action').classList.add('hidden');
+        document.getElementById('bottomBar').classList.add('hidden'); // Hide entire bar if empty
         return;
     }
     document.getElementById('cartEmptyState').classList.add('hidden');
-    document.getElementById('step1_action').classList.remove('hidden');
+    document.getElementById('bottomBar').classList.remove('hidden');
 
     cart.forEach((item, idx) => {
         const div = document.createElement('div');
@@ -160,7 +160,7 @@ function updateQty(idx, change) {
     renderCart();
 }
 
-// --- LOCATION MANAGER LOGIC ---
+// --- LOCATION LOGIC ---
 function openLocationModal() {
     document.getElementById('locationModal').classList.remove('hidden');
     loadSavedAddresses();
@@ -174,18 +174,13 @@ function loadSavedAddresses() {
     const list = document.getElementById('addressList');
     list.innerHTML = '';
     
-    // 1. Live Location Option
     list.innerHTML += `
         <div onclick="selectLiveLocation()" class="addr-card ${!selectedAddress || selectedAddress.type === 'live' ? 'selected' : ''} bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-100">
             <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-crosshairs"></i></div>
-            <div>
-                <h4 class="font-bold text-sm text-slate-800">Live GPS Location</h4>
-                <p class="text-xs text-slate-500">Detect current position</p>
-            </div>
+            <div><h4 class="font-bold text-sm text-slate-800">Live GPS Location</h4><p class="text-xs text-slate-500">Detect current position</p></div>
         </div>
     `;
 
-    // 2. Fetch Saved from Firebase
     db.ref('users/' + session.mobile + '/savedAddresses').once('value', snap => {
         let count = 0;
         if(snap.exists()) {
@@ -197,18 +192,13 @@ function loadSavedAddresses() {
                     <div class="addr-card ${isSel ? 'selected' : ''} bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 group">
                         <div class="flex items-center gap-3" onclick="selectSavedAddress('${key}', '${addr.title}', '${addr.text}', ${addr.lat}, ${addr.lng})">
                             <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-house"></i></div>
-                            <div>
-                                <h4 class="font-bold text-sm text-slate-800">${addr.title}</h4>
-                                <p class="text-xs text-slate-500 line-clamp-1">${addr.text}</p>
-                            </div>
+                            <div><h4 class="font-bold text-sm text-slate-800">${addr.title}</h4><p class="text-xs text-slate-500 line-clamp-1">${addr.text}</p></div>
                         </div>
                         <button onclick="deleteAddress('${key}')" class="text-slate-300 hover:text-red-500 px-2"><i class="fa-solid fa-trash text-xs"></i></button>
                     </div>
                 `;
             });
         }
-        
-        // Hide "Add" button if limit reached (3)
         const btnAdd = document.getElementById('btnAddLocation');
         if(count >= 3) btnAdd.classList.add('hidden');
         else btnAdd.classList.remove('hidden');
@@ -225,14 +215,12 @@ function addNewLocation() {
             const lng = p.coords.longitude;
             tempGeoData = { lat, lng };
             
-            // Reverse Geocode
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                 const data = await res.json();
                 document.getElementById('newAddrText').value = data.display_name || "";
-            } catch(e) { console.log(e); }
+            } catch(e) {}
 
-            // Show Form
             document.getElementById('addressList').classList.add('hidden');
             document.getElementById('btnAddLocation').classList.add('hidden');
             document.getElementById('addAddrForm').classList.remove('hidden');
@@ -244,14 +232,11 @@ function addNewLocation() {
 function saveNewAddress() {
     const title = document.getElementById('newAddrTitle').value.trim();
     const text = document.getElementById('newAddrText').value.trim();
-    
     if(!title || !text || !tempGeoData) return showToast("Fill all details");
     
     const newAddr = { title, text, lat: tempGeoData.lat, lng: tempGeoData.lng };
     db.ref('users/' + session.mobile + '/savedAddresses').push(newAddr).then(() => {
-        showToast("Location Saved!");
-        cancelAddAddr();
-        loadSavedAddresses();
+        showToast("Location Saved!"); cancelAddAddr(); loadSavedAddresses();
     });
 }
 
@@ -272,30 +257,23 @@ function deleteAddress(key) {
 
 function selectSavedAddress(key, title, text, lat, lng) {
     selectedAddress = { type: 'saved', key, title, text, lat, lng };
-    updateAddressUI();
-    closeLocationModal();
+    updateAddressUI(); closeLocationModal();
 }
 
 function selectLiveLocation() {
     const btnTitle = document.getElementById('dispAddrTitle');
     btnTitle.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detecting...';
-    
     if("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(async p => {
-            const lat = p.coords.latitude;
-            const lng = p.coords.longitude;
-            let text = "Current GPS Location";
-            
+            const lat = p.coords.latitude; const lng = p.coords.longitude; let text = "Current GPS Location";
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                 const data = await res.json();
                 if(data.display_name) text = data.display_name;
             } catch(e) {}
-
             selectedAddress = { type: 'live', title: "Live Location", text, lat, lng };
             updateAddressUI();
             if(!document.getElementById('locationModal').classList.contains('hidden')) closeLocationModal();
-            
         }, () => showToast("GPS Failed"));
     }
 }
@@ -307,30 +285,21 @@ function updateAddressUI() {
     }
 }
 
-// --- WEIGHT & PRICE LOGIC ---
+// --- WEIGHT & PRICE ---
 function calculateWeight(cart) {
     let totalKg = 0;
     cart.forEach(item => {
         let txt = item.qty.toLowerCase().replace(/\s/g, '');
-        let weight = 0;
-        let mul = item.count || 1;
-        let match;
+        let weight = 0; let mul = item.count || 1; let match;
         if (match = txt.match(/(\d+(\.\d+)?)kg/)) weight = parseFloat(match[1]);
         else if ((match = txt.match(/(\d+)g/)) || (match = txt.match(/(\d+)gm/))) weight = parseFloat(match[1]) / 1000;
         else if ((match = txt.match(/(\d+(\.\d+)?)l/)) || (match = txt.match(/(\d+(\.\d+)?)ltr/))) weight = parseFloat(match[1]);
         else if (match = txt.match(/(\d+)ml/)) weight = parseFloat(match[1]) / 1000;
         totalKg += (weight * mul);
     });
-
     const badge = document.getElementById('weightBadge');
-    if (totalKg > 0) {
-        badge.classList.remove('hidden');
-        document.getElementById('totalWeightDisplay').innerText = `${totalKg.toFixed(2)} KG`;
-        autoSelectSlab(totalKg);
-    } else {
-        badge.classList.add('hidden');
-        if(selectedCharge === 0) selectRate(50, 'SMALL (0-10KG)');
-    }
+    if (totalKg > 0) { badge.classList.remove('hidden'); document.getElementById('totalWeightDisplay').innerText = `${totalKg.toFixed(2)} KG`; autoSelectSlab(totalKg); } 
+    else { badge.classList.add('hidden'); if(selectedCharge === 0) selectRate(50, 'SMALL (0-10KG)'); }
 }
 
 function autoSelectSlab(kg) {
@@ -338,12 +307,8 @@ function autoSelectSlab(kg) {
     if (kg > 10) document.getElementById('rateBtn50').classList.add('disabled');
     if (kg > 20) document.getElementById('rateBtn70').classList.add('disabled');
     if (kg > 30) document.getElementById('rateBtn80').classList.add('disabled');
-    
     let rec = 50, lbl = 'SMALL (0-10KG)';
-    if (kg > 30) { rec = 100; lbl = 'HEAVY (31-50KG)'; }
-    else if (kg > 20) { rec = 80; lbl = 'LARGE (21-30KG)'; }
-    else if (kg > 10) { rec = 70; lbl = 'MEDIUM (11-20KG)'; }
-
+    if (kg > 30) { rec = 100; lbl = 'HEAVY (31-50KG)'; } else if (kg > 20) { rec = 80; lbl = 'LARGE (21-30KG)'; } else if (kg > 10) { rec = 70; lbl = 'MEDIUM (11-20KG)'; }
     if (selectedCharge < rec || selectedCharge === 0) selectRate(rec, lbl);
 }
 
@@ -371,7 +336,7 @@ function selectTime(time) {
 }
 function highlightTime(t) { selectTime(t); }
 
-// --- FINAL ORDER PLACEMENT ---
+// --- FINAL ORDER ---
 async function placeOrder() {
     if(!selectedCharge) return showToast("Select Parcel Size");
     if(!selectedAddress) return showToast("Select Location");
@@ -384,48 +349,32 @@ async function placeOrder() {
         budgetFinal = `Custom: ₹${amt}`;
     }
 
-    const btn = document.getElementById('placeOrderBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="animate-pulse">Processing...</span>';
+    const btn = document.getElementById('btnStep2');
+    btn.disabled = true; btn.innerHTML = 'Processing...';
 
-    // SHOP NAME FIX: Fetch fresh shop name
-    let shopName = session.name + "'s Store"; // Default fallback
-    try {
-        const uSnap = await db.ref('users/' + session.mobile + '/shopName').once('value');
-        if(uSnap.exists()) shopName = uSnap.val();
-    } catch(e) {}
+    let shopName = session.name + "'s Store";
+    try { const uSnap = await db.ref('users/' + session.mobile + '/shopName').once('value'); if(uSnap.exists()) shopName = uSnap.val(); } catch(e) {}
 
-    // Prepare Data
-    const baseOrderData = {
+    const orderData = {
         orderId: 'ORD-' + Date.now().toString().slice(-6),
         user: { name: session.name, mobile: session.mobile, shopName: shopName },
         location: { address: selectedAddress.text, lat: selectedAddress.lat, lng: selectedAddress.lng, title: selectedAddress.title },
         cart: cart,
         payment: { deliveryFee: selectedCharge, slab: selectedLabel, mode: 'COD' },
         preferences: { budget: budgetFinal, deliveryTime: selectedTime },
-        status: 'placed'
+        status: 'placed',
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     };
 
-    const firebaseData = { ...baseOrderData, timestamp: firebase.database.ServerValue.TIMESTAMP };
-    const localData = { ...baseOrderData, timestamp: Date.now() };
-
     try {
-        const newOrderRef = await db.ref('orders').push(firebaseData);
-        
-        localStorage.setItem('rmz_active_order', JSON.stringify({id: newOrderRef.key, ...localData}));
+        const newOrderRef = await db.ref('orders').push(orderData);
+        localStorage.setItem('rmz_active_order', JSON.stringify({id: newOrderRef.key, ...orderData, timestamp: Date.now()}));
         localStorage.removeItem('rmz_cart');
-
         const overlay = document.getElementById('successOverlay');
         overlay.classList.add('active');
-
-        setTimeout(() => {
-            overlay.classList.remove('active');
-            window.location.href = 'home.html';
-        }, 2000);
-
+        setTimeout(() => { overlay.classList.remove('active'); window.location.href = 'home.html'; }, 2000);
     } catch (err) {
-        console.error(err);
-        showToast("Error Placing Order");
-        btn.disabled = false; btn.innerHTML = 'Try Again';
+        console.error(err); showToast("Error Placing Order"); btn.disabled = false; btn.innerHTML = 'Try Again';
     }
 }
 
