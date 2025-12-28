@@ -210,14 +210,15 @@
 
                     <!-- FALLBACK: 3 WRONG ATTEMPTS -->
                     <div id="wrongAnsFallback" class="hidden pt-4 border-t border-slate-100 animate-[fadeIn_0.3s_ease-out]">
-                        <div class="bg-red-50 p-3 rounded-lg border border-red-100 mb-3 text-center">
-                            <p class="text-xs font-bold text-red-500"><i class="fa-solid fa-lock"></i> Account Locked</p>
-                            <p class="text-[10px] text-red-400">Security Limit Reached.</p>
+                        <div class="bg-red-50 p-3 rounded-lg border border-red-100 mb-3">
+                            <p class="text-xs font-bold text-red-500 text-center mb-1"><i class="fa-solid fa-lock"></i> Account Locked</p>
+                            <p class="text-[10px] text-slate-600 leading-tight text-center">
+                                <b>Security Policy:</b> If your WhatsApp number does NOT match registered number, PIN will be sent via <span class="text-red-600 font-bold">SMS</span> to registered mobile only.
+                            </p>
                         </div>
                         <button onclick="contactAdminRecovery()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg hover:bg-black transition">
-                            <i class="fa-brands fa-whatsapp text-lg text-green-400"></i> Admin Verification (Manual)
+                            <i class="fa-brands fa-whatsapp text-lg text-green-400"></i> Manual Admin Verification
                         </button>
-                        <p class="text-[9px] text-center text-slate-400 mt-2">Admin will verify your number before providing PIN.</p>
                     </div>
                 </div>
 
@@ -227,7 +228,7 @@
                         <i class="fa-solid fa-triangle-exclamation"></i>
                     </div>
                     <h4 class="text-sm font-bold text-slate-800">Security Setup Not Found</h4>
-                    <p class="text-xs text-slate-500">You haven't set a security question. Please contact admin for manual verification.</p>
+                    <p class="text-xs text-slate-500">Contact admin for verification. If numbers don't match, PIN will be sent via SMS.</p>
                     <button onclick="contactAdminRecovery()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2">
                         <i class="fa-brands fa-whatsapp text-lg"></i> Request PIN on WhatsApp
                     </button>
@@ -509,7 +510,8 @@
             const m = recoveryMobile;
             // SECURITY ID helps you identify user intent
             const secId = Date.now().toString().slice(-4);
-            const text = `Hi Admin, I forgot my PIN for Mobile: ${m}.\nMy Security Answer was wrong/forgotten.\nRef ID: ${secId}\n\nPlease verify that I am messaging from the registered number.`;
+            // Updated Message to reflect strict policy
+            const text = `Hi Admin, I forgot my PIN for Mobile: ${m}.\nRef ID: ${secId}\n\nNOTE: If my WhatsApp number does not match registered mobile, please SMS the PIN to my registered number (${m}).`;
             window.open(`https://wa.me/917903698180?text=${encodeURIComponent(text)}`, '_blank');
         }
 
