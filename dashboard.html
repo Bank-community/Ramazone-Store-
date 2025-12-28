@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ramazone Central</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; overflow-x: hidden; }
+        
+        /* Background Animation */
+        .bg-animate {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+        }
+        .blob {
+            position: absolute; filter: blur(80px); opacity: 0.4; animation: float 10s infinite ease-in-out;
+        }
+        .blob-1 { top: 10%; left: 10%; width: 300px; height: 300px; background: #3b82f6; animation-delay: 0s; }
+        .blob-2 { bottom: 20%; right: 10%; width: 250px; height: 250px; background: #ec4899; animation-delay: 2s; }
+        .blob-3 { top: 40%; left: 40%; width: 200px; height: 200px; background: #10b981; animation-delay: 4s; }
+
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, -20px); } }
+
+        /* Glass Card */
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .icon-box {
+            width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen items-center justify-center p-6">
+
+    <!-- Animated Background -->
+    <div class="bg-animate">
+        <div class="blob blob-1 rounded-full"></div>
+        <div class="blob blob-2 rounded-full"></div>
+        <div class="blob blob-3 rounded-full"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="w-full max-w-5xl z-10">
+        
+        <div class="text-center mb-12 animate-[fadeIn_0.5s_ease-out]">
+            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-2">
+                Ramazone <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-500">Central</span>
+            </h1>
+            <p class="text-slate-400 text-lg">Select a portal to continue</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- CARD 1: ADMIN -->
+            <a href="ADMIN/admin.html" class="dashboard-card rounded-3xl p-8 flex flex-col items-center text-center group cursor-pointer">
+                <div class="icon-box bg-gradient-to-br from-blue-500 to-blue-700 text-white group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Admin HQ</h2>
+                <p class="text-sm text-slate-400">Manage orders, track fleet, view analytics, and control everything.</p>
+                <div class="mt-6 px-4 py-2 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-wider border border-blue-500/30 group-hover:bg-blue-500 group-hover:text-white transition">
+                    Access Panel
+                </div>
+            </a>
+
+            <!-- CARD 2: SHOP (CUSTOMER/OWNER) -->
+            <a href="Myshop/index.html" class="dashboard-card rounded-3xl p-8 flex flex-col items-center text-center group cursor-pointer relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">MAIN APP</div>
+                <div class="icon-box bg-gradient-to-br from-pink-500 to-rose-600 text-white group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">My Shop</h2>
+                <p class="text-sm text-slate-400">For shop owners to manage products and customers to place orders.</p>
+                <div class="mt-6 px-4 py-2 rounded-full bg-pink-500/20 text-pink-300 text-xs font-bold uppercase tracking-wider border border-pink-500/30 group-hover:bg-pink-500 group-hover:text-white transition">
+                    Open Store
+                </div>
+            </a>
+
+            <!-- CARD 3: DELIVERY FLEET -->
+            <a href="Delivery/delivery-login.html" class="dashboard-card rounded-3xl p-8 flex flex-col items-center text-center group cursor-pointer">
+                <div class="icon-box bg-gradient-to-br from-amber-400 to-orange-600 text-white group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-motorcycle"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Delivery Fleet</h2>
+                <p class="text-sm text-slate-400">For partners to accept tasks, navigate, and earn money.</p>
+                <div class="mt-6 px-4 py-2 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/30 group-hover:bg-amber-500 group-hover:text-white transition">
+                    Start Duty
+                </div>
+            </a>
+
+        </div>
+
+        <div class="mt-12 text-center text-xs text-slate-600 font-mono">
+            System Status: <span class="text-green-500">● Operational</span>
+        </div>
+
+    </div>
+
+</body>
+</html>
