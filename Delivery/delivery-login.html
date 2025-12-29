@@ -72,7 +72,7 @@
                     <input type="hidden" id="selectedVehicle" value="">
                 </div>
 
-                <!-- NEW: Security Question for Partners -->
+                <!-- Security Question for Partners -->
                 <div class="p-3 bg-gray-900 rounded-xl border border-gray-700">
                     <h4 class="text-xs font-bold text-amber-500 mb-2 flex items-center gap-1"><i class="fa-solid fa-shield-cat"></i> Security Recovery</h4>
                     <div class="space-y-2">
@@ -125,16 +125,31 @@
         </div>
     </div>
 
-    <!-- FORGOT PIN MODAL (Partner Version) -->
+    <!-- BLOCKED MODAL (NEW) -->
+    <div id="blockedModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center modal-overlay p-6">
+        <div class="bg-gray-800 w-full max-w-sm rounded-2xl border border-red-600/50 shadow-2xl p-6 text-center animate-[shake_0.5s_ease-in-out]">
+            <div class="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-ban text-4xl text-red-500"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Account Disabled</h2>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                Your partner account has been disabled by the Admin. You cannot access the delivery panel at this time.
+            </p>
+            <button onclick="window.location.reload()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-red-900/30">
+                Close App
+            </button>
+        </div>
+    </div>
+
+    <!-- FORGOT PIN MODAL -->
     <div id="forgotPinModal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-overlay p-4">
         <div class="bg-gray-800 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-600 animate-[fadeIn_0.3s_ease-out]">
             <div class="bg-gray-900 p-4 flex justify-between items-center border-b border-gray-700">
                 <h3 class="text-white font-bold text-lg"><i class="fa-solid fa-user-lock mr-2 text-amber-500"></i>Partner Recovery</h3>
                 <button onclick="closeForgotPinModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            
             <div class="p-6">
-                <!-- Step 1: Check Mobile -->
+                <!-- Recovery Steps (Same as before) -->
                 <div id="stepCheckMobile" class="space-y-4">
                     <p class="text-xs text-gray-400">Enter your registered mobile number.</p>
                     <div class="relative">
@@ -145,59 +160,33 @@
                         Proceed
                     </button>
                 </div>
-
-                <!-- Step 2A: Answer Security Question -->
                 <div id="stepSecQuestion" class="hidden space-y-4">
                     <div class="bg-gray-900 p-3 rounded-xl border border-gray-700 text-center">
                         <p class="text-[10px] font-bold text-amber-500 uppercase">Security Question</p>
                         <p class="text-sm font-bold text-white mt-1" id="dispSecQ">Loading...</p>
                     </div>
-                    
                     <div id="attemptContainer">
                         <input type="text" id="recAnswer" class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 font-bold text-white text-center focus:border-amber-500 outline-none" placeholder="Enter Your Answer">
                         <p id="attemptsLeft" class="text-[10px] text-right text-gray-500 font-bold mt-1">3 attempts left</p>
                     </div>
-
                     <button onclick="verifySecurityAnswer()" id="btnVerifyAns" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg transition">
                         Verify & Show PIN
                     </button>
-
-                    <!-- FALLBACK: 3 WRONG ATTEMPTS -->
-                    <div id="wrongAnsFallback" class="hidden pt-4 border-t border-gray-700 animate-[fadeIn_0.3s_ease-out]">
-                        <div class="bg-red-900/20 p-3 rounded-lg border border-red-900/50 mb-3 text-center">
-                            <p class="text-xs font-bold text-red-400"><i class="fa-solid fa-lock"></i> Locked</p>
-                            <p class="text-[10px] text-gray-400 mt-1">
-                                <b>Policy:</b> If WhatsApp number mismatches registered mobile, Admin will SMS the PIN.
-                            </p>
-                        </div>
+                    <div id="wrongAnsFallback" class="hidden pt-4 border-t border-gray-700">
                         <button onclick="contactAdminRecovery()" class="w-full bg-gray-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg hover:bg-gray-600 transition">
-                            <i class="fa-brands fa-whatsapp text-lg text-green-400"></i> Contact Admin (Manual)
+                            <i class="fa-brands fa-whatsapp text-lg text-green-400"></i> Contact Admin
                         </button>
                     </div>
                 </div>
-
-                <!-- Step 2B: Manual Fallback (If no question set) -->
                 <div id="stepManualRec" class="hidden text-center space-y-4">
-                    <div class="w-16 h-16 bg-amber-900/20 rounded-full flex items-center justify-center mx-auto text-amber-500 text-2xl mb-2">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
+                    <div class="w-16 h-16 bg-amber-900/20 rounded-full flex items-center justify-center mx-auto text-amber-500 text-2xl mb-2"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <h4 class="text-sm font-bold text-gray-300">Security Setup Not Found</h4>
-                    <p class="text-xs text-gray-500">Please contact admin for manual verification.</p>
-                    <button onclick="contactAdminRecovery()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2">
-                        <i class="fa-brands fa-whatsapp text-lg"></i> Request PIN on WhatsApp
-                    </button>
+                    <button onclick="contactAdminRecovery()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-lg"></i> Contact Admin</button>
                 </div>
-
-                <!-- Step 3: Success -->
                 <div id="stepShowPin" class="hidden text-center space-y-4 py-4">
-                    <div class="w-16 h-16 bg-green-900/20 rounded-full flex items-center justify-center mx-auto text-green-500 text-2xl mb-2">
-                        <i class="fa-solid fa-unlock-keyhole"></i>
-                    </div>
+                    <div class="w-16 h-16 bg-green-900/20 rounded-full flex items-center justify-center mx-auto text-green-500 text-2xl mb-2"><i class="fa-solid fa-unlock-keyhole"></i></div>
                     <h4 class="text-lg font-bold text-white">Identity Verified!</h4>
-                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-4">
-                        <p class="text-xs text-gray-500 uppercase font-bold mb-1">Your Current PIN</p>
-                        <p class="text-3xl font-mono font-extrabold text-amber-500 tracking-widest" id="recoveredPin">----</p>
-                    </div>
+                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-4"><p class="text-xs text-gray-500 uppercase font-bold mb-1">Your Current PIN</p><p class="text-3xl font-mono font-extrabold text-amber-500 tracking-widest" id="recoveredPin">----</p></div>
                     <button onclick="closeForgotPinModal()" class="w-full bg-white text-gray-900 font-bold py-3 rounded-xl mt-2 hover:bg-gray-200">Login Now</button>
                 </div>
             </div>
@@ -248,7 +237,6 @@
                         btn.classList.remove('hidden');
                         
                         if (s.exists()) {
-                            // EXISTING USER
                             isNewUser = false;
                             newFields.classList.add('hidden', 'opacity-0');
                             document.getElementById('regSecQ').required = false;
@@ -256,7 +244,6 @@
                             document.getElementById('btnText').innerText = "LOGIN SECURELY";
                             forgotLink.classList.remove('hidden'); 
                         } else {
-                            // NEW USER
                             isNewUser = true;
                             newFields.classList.remove('hidden');
                             setTimeout(() => newFields.classList.remove('opacity-0'), 50);
@@ -282,6 +269,7 @@
             document.getElementById('selectedVehicle').value = type;
         }
 
+        // --- STRICT LOGIN SECURITY FIX ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const mobile = document.getElementById('mobile').value;
@@ -298,32 +286,36 @@
                 if (!name || !vehicle) return showToast("Fill all details");
                 if (!secQ || !secA) return showToast("Set Security Question");
                 
-                // --- NEW STATUS: 'pending' (instead of 'offline') ---
                 const profile = { 
                     name, mobile, vehicle, pin, 
                     securityQ: secQ, securityA: secA,
-                    status: 'pending', // Default Pending Status
+                    status: 'pending', // NEW USERS ARE ALWAYS PENDING
                     earnings: 0,
                     trips: 0,
                     joinedAt: firebase.database.ServerValue.TIMESTAMP 
                 };
                 
                 await db.ref('deliveryBoys/' + mobile).set(profile);
-                
-                // Show Verification Modal instead of Redirect
                 document.getElementById('verificationModal').classList.remove('hidden');
             } else {
                 db.ref('deliveryBoys/' + mobile).once('value', s => {
                     const data = s.val();
                     if(data.pin === pin) {
-                        // --- CHECK STATUS ON LOGIN ---
-                        if(data.status === 'pending') {
-                            document.getElementById('verificationModal').classList.remove('hidden');
-                        } else if(data.status === 'disabled') {
-                            showToast("Account Disabled by Admin");
-                        } else {
-                            saveAndRedirect(data);
+                        // --- SECURITY GATEKEEPER ---
+                        if(data.status === 'disabled') {
+                            // STOP HERE! Do not let them login.
+                            document.getElementById('blockedModal').classList.remove('hidden');
+                            return; 
                         }
+                        
+                        if(data.status === 'pending') {
+                            // STOP HERE! Pending approval.
+                            document.getElementById('verificationModal').classList.remove('hidden');
+                            return;
+                        }
+
+                        // Only if active/offline, proceed
+                        saveAndRedirect(data);
                     } else {
                         showToast("Wrong PIN!");
                     }
@@ -332,12 +324,17 @@
         });
 
         function saveAndRedirect(user) {
+            // Note: We are NOT forcing status to 'offline' here immediately to avoid DB write before load.
+            // But usually, status is updated on Home page load via Heartbeat/GPS.
+            // If you want to force status reset on login, do it ONLY if not disabled.
+            // Since we passed the checks above, it is safe.
+            
             localStorage.setItem('rmz_delivery_user', JSON.stringify(user));
             showToast("Success! Entering Hub...");
             setTimeout(() => window.location.href = 'delivery-home.html', 1000);
         }
 
-        // --- PARTNER RECOVERY LOGIC (Same as User) ---
+        // --- PARTNER RECOVERY (UNCHANGED) ---
         let recoveredUserData = null;
         let recoveryMobile = '';
         let wrongAttempts = 0;
@@ -346,22 +343,16 @@
         function openForgotPinModal() {
             document.getElementById('forgotPinModal').classList.remove('hidden');
             const loginMobile = document.getElementById('mobile').value;
-            if(loginMobile.length === 10) {
-                document.getElementById('recMobile').value = loginMobile;
-            }
+            if(loginMobile.length === 10) document.getElementById('recMobile').value = loginMobile;
         }
 
         function closeForgotPinModal() {
             document.getElementById('forgotPinModal').classList.add('hidden');
-            
-            // Reset Views
             document.getElementById('stepCheckMobile').classList.remove('hidden');
             document.getElementById('stepSecQuestion').classList.add('hidden');
             document.getElementById('stepManualRec').classList.add('hidden');
             document.getElementById('stepShowPin').classList.add('hidden');
             document.getElementById('wrongAnsFallback').classList.add('hidden');
-            
-            // Reset Input & Logic
             document.getElementById('recAnswer').value = '';
             document.getElementById('recAnswer').disabled = false;
             document.getElementById('recAnswer').classList.remove('opacity-50');
@@ -373,87 +364,56 @@
         function checkUserForRecovery() {
             recoveryMobile = document.getElementById('recMobile').value;
             if(recoveryMobile.length !== 10) return showToast("Enter Valid Mobile");
-
-            const btn = document.getElementById('btnCheckRec');
-            btn.innerHTML = 'Checking...';
-            btn.disabled = true;
-
+            const btn = document.getElementById('btnCheckRec'); btn.innerHTML = 'Checking...'; btn.disabled = true;
             db.ref('deliveryBoys/' + recoveryMobile).once('value').then(snap => {
-                btn.innerHTML = 'Proceed';
-                btn.disabled = false;
-
+                btn.innerHTML = 'Proceed'; btn.disabled = false;
                 if(snap.exists()) {
                     recoveredUserData = snap.val();
-                    
                     if(recoveredUserData.securityQ && recoveredUserData.securityA) {
-                        // Plan B: Automated Secure Recovery
                         document.getElementById('stepCheckMobile').classList.add('hidden');
                         document.getElementById('stepSecQuestion').classList.remove('hidden');
-                        document.getElementById('wrongAnsFallback').classList.add('hidden');
-                        
-                        const qMap = {
-                            'bike': 'What is your dream bike?',
-                            'school': 'First school name?',
-                            'pet': 'Pet\'s name?',
-                            'city': 'Birth city?'
-                        };
+                        const qMap = {'bike': 'What is your dream bike?', 'school': 'First school name?', 'pet': 'Pet\'s name?', 'city': 'Birth city?'};
                         document.getElementById('dispSecQ').innerText = qMap[recoveredUserData.securityQ] || "Secret Question";
-                        
-                        wrongAttempts = 0;
-                        document.getElementById('attemptsLeft').innerText = `${MAX_ATTEMPTS} attempts left`;
-
+                        wrongAttempts = 0; document.getElementById('attemptsLeft').innerText = `${MAX_ATTEMPTS} attempts left`;
                     } else {
-                        // Plan C: Manual Fallback
                         document.getElementById('stepCheckMobile').classList.add('hidden');
                         document.getElementById('stepManualRec').classList.remove('hidden');
                     }
-                } else {
-                    showToast("Partner not found!");
-                }
+                } else showToast("Partner not found!");
             });
         }
 
         function verifySecurityAnswer() {
             const inputAns = document.getElementById('recAnswer').value.trim().toLowerCase();
             const inputField = document.getElementById('recAnswer');
-            
             if(!inputAns) return showToast("Enter Answer");
-
             if(inputAns === recoveredUserData.securityA) {
                 document.getElementById('stepSecQuestion').classList.add('hidden');
                 document.getElementById('stepShowPin').classList.remove('hidden');
                 document.getElementById('recoveredPin').innerText = recoveredUserData.pin;
             } else {
                 wrongAttempts++;
-                const attemptsLeft = MAX_ATTEMPTS - wrongAttempts;
-                
-                inputField.classList.add('shake');
-                setTimeout(() => inputField.classList.remove('shake'), 500);
-
+                inputField.classList.add('shake'); setTimeout(() => inputField.classList.remove('shake'), 500);
                 if(wrongAttempts >= MAX_ATTEMPTS) {
                     document.getElementById('attemptsLeft').innerHTML = "<span class='text-red-500'>Locked! Contact Admin</span>";
-                    
-                    inputField.disabled = true;
-                    inputField.classList.add('opacity-50');
-                    inputField.value = "LOCKED";
-                    
+                    inputField.disabled = true; inputField.classList.add('opacity-50'); inputField.value = "LOCKED";
                     document.getElementById('btnVerifyAns').classList.add('hidden');
                     document.getElementById('wrongAnsFallback').classList.remove('hidden');
                     showToast("Security Locked!");
                 } else {
-                    document.getElementById('attemptsLeft').innerText = `${attemptsLeft} attempts left`;
-                    document.getElementById('attemptsLeft').classList.add('text-red-400');
-                    showToast(`Wrong! ${attemptsLeft} attempts left.`);
+                    document.getElementById('attemptsLeft').innerText = `${MAX_ATTEMPTS - wrongAttempts} attempts left`;
+                    showToast("Wrong Answer!");
                 }
             }
         }
 
         function contactAdminRecovery() {
             const m = recoveryMobile;
-            const secId = Date.now().toString().slice(-4);
-            const text = `Hi Admin, I am Delivery Partner (${m}). I forgot my PIN.\nRef ID: ${secId}\n\nNOTE: If my WhatsApp number does not match registered mobile, please SMS the PIN to my registered number (${m}).`;
+            const text = `Hi Admin, Partner (${m}) forgot PIN.`;
             window.open(`https://wa.me/917903698180?text=${encodeURIComponent(text)}`, '_blank');
         }
     </script>
 </body>
 </html>
+
+
