@@ -122,6 +122,18 @@ db.ref('orders').on('value', snap => {
     if(todayAlertCount === 0) noAlerts.classList.remove('hidden'); else noAlerts.classList.add('hidden');
 });
 
+// Helper for Time Format
+function formatTimeAMPM(timestamp) {
+    const date = new Date(timestamp);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    const strTime = hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ' ' + ampm;
+    return strTime;
+}
+
 function createOrderCard(id, order) {
     let productsHTML = ''; let waItems = '';
     if(order.cart) order.cart.forEach(i => {
@@ -135,17 +147,34 @@ function createOrderCard(id, order) {
     }
     if(order.status === 'delivered') stClass = 'st-delivered';
 
+    // --- MAIN UPDATE: REPLACED OLD ASSIGN BUTTON LOGIC ---
     let adminAction = '';
-    if(order.status === 'placed') adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">ASSIGN PARTNER <i class="fa-solid fa-user-plus ml-1"></i></button>`;
-    else if (order.status === 'accepted') adminAction = `<button onclick="openAssignModal('${id}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN</button>`;
+    
+    // Check if location exists for distance calculation
+    const hasGPS = order.location && order.location.lat && order.location.lng;
+    const btnAction = hasGPS ? `openDistanceModal('${id}', ${order.location.lat}, ${order.location.lng})` : `openAssignModal('${id}')`;
+    const btnIcon = hasGPS ? `<i class="fa-solid fa-map-location-dot ml-1"></i>` : `<i class="fa-solid fa-user-plus ml-1"></i>`;
+    const btnText = hasGPS ? "CHECK RIDERS (KM)" : "ASSIGN PARTNER";
+
+    if(order.status === 'placed') {
+        adminAction = `<button onclick="${btnAction}" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">${btnText} ${btnIcon}</button>`;
+    } else if (order.status === 'accepted') {
+        // Even for re-assign, prefer distance check
+        adminAction = `<button onclick="${btnAction}" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN (Check KM)</button>`;
+    }
 
     const prefTime = order.preferences && order.preferences.deliveryTime ? order.preferences.deliveryTime : "Standard";
     const prefBudg = order.preferences && order.preferences.budget ? order.preferences.budget : "Standard";
     
+    // NEW: Time Badge
+    const orderTimeStr = formatTimeAMPM(order.timestamp);
+
+    // --- ADDRESS BOX: CLEANED UP (Removed Small Button) ---
+    // Kept scrollable text and optional HQ distance badge if needed
     let distBadge = '';
     if(adminLat && order.location && order.location.lat) {
         const d = getDistance(adminLat, adminLng, order.location.lat, order.location.lng);
-        distBadge = `<span class="bg-slate-800 text-white px-2 py-0.5 rounded text-[10px] ml-1 border border-slate-700"><i class="fa-solid fa-route text-blue-400"></i> ${d} KM</span>`;
+        distBadge = `<span class="bg-slate-800 text-white px-2 py-0.5 rounded text-[10px] ml-1 border border-slate-700 shrink-0"><i class="fa-solid fa-route text-blue-400"></i> ${d} KM</span>`;
     }
 
     const waLink = `https://wa.me/?text=${encodeURIComponent(`*Customer:* ${order.user.name}\n*Order ID:* #${order.orderId}\n\n*Items:*\n${waItems}`)}`;
@@ -158,16 +187,25 @@ function createOrderCard(id, order) {
             </div>
             <div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1"><i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}</div>
             <div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">${productsHTML}</div>
+            
             <div class="flex gap-2">
                 <span class="bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-800"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
                 <span class="bg-pink-900/50 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-800"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
+                <!-- Time Badge -->
+                <span class="time-badge-style px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-hourglass-start mr-1"></i>${orderTimeStr}</span>
             </div>
-            <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 truncate flex justify-between items-center">
-                <span><i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}</span>
+
+            <!-- Clean Address Box -->
+            <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 flex justify-between items-center">
+                <span class="truncate w-full block" title="${order.location.address}">
+                    <i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}
+                </span>
                 ${distBadge}
             </div>
+            
             ${partnerInfo}
             ${adminAction}
+            
             <div class="mt-auto pt-3 border-t border-slate-800 flex justify-between items-center">
                 <div><span class="block text-[10px] text-slate-500 uppercase font-bold">Fee</span><span class="font-bold text-white text-lg">₹${order.payment.deliveryFee}</span></div>
                 <div class="flex gap-2">
@@ -181,11 +219,73 @@ function createOrderCard(id, order) {
     `;
 }
 
+// --- NEW FUNCTION: CALCULATE PARTNER DISTANCES ---
+function openDistanceModal(orderId, custLat, custLng) {
+    selectedOrderIdForAssignment = orderId; 
+    const modal = document.getElementById('calcDistanceModal');
+    const container = document.getElementById('distanceListContainer');
+    
+    modal.classList.remove('hidden');
+    container.innerHTML = '<p class="text-center text-slate-500 text-xs py-4"><i class="fa-solid fa-spinner fa-spin"></i> Calculating Distances...</p>';
+
+    db.ref('deliveryBoys').once('value', snap => {
+        container.innerHTML = '';
+        if(snap.exists()) {
+            const partners = [];
+            
+            Object.entries(snap.val()).forEach(([mobile, boy]) => {
+                let distVal = 9999;
+                if(boy.location && boy.location.lat && boy.location.lng) {
+                    distVal = parseFloat(getDistance(custLat, custLng, boy.location.lat, boy.location.lng));
+                }
+                partners.push({ ...boy, mobile, dist: distVal });
+            });
+
+            // Sort: Nearest First
+            partners.sort((a, b) => a.dist - b.dist);
+
+            if(partners.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-500 text-xs">No partners found.</p>';
+                return;
+            }
+
+            partners.forEach(p => {
+                const isOnline = p.status === 'online';
+                const distDisplay = p.dist === 9999 ? "Unknown Loc" : `${p.dist} KM`;
+                const statusColor = isOnline ? 'text-green-400' : 'text-slate-500';
+                const btnState = isOnline ? '' : 'disabled style="opacity:0.5; cursor:not-allowed;"';
+                
+                const div = document.createElement('div');
+                div.className = "bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center mb-2";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold border border-slate-600 ${isOnline ? 'border-green-500' : ''}">
+                            ${p.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white text-sm">${p.name} <span class="text-[10px] ${statusColor}">(${p.status})</span></h4>
+                            <p class="text-xs text-amber-500 font-bold"><i class="fa-solid fa-route"></i> ${distDisplay} away</p>
+                        </div>
+                    </div>
+                    <button onclick="assignToPartner('${p.mobile}', '${p.name}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-3 py-1.5 rounded transition shadow-lg" ${btnState}>
+                        ASSIGN
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+
+        } else {
+            container.innerHTML = '<p class="text-center text-slate-500 text-xs">No partners data.</p>';
+        }
+    });
+}
+
+
 // --- MAP & FILTERS (UPDATED) ---
 function initMap() {
     if(map) return;
     map = L.map('map').setView([20.5937, 78.9629], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
     document.getElementById('mapLoading').classList.add('hidden');
     layerGroup = L.layerGroup().addTo(map); // Init Layer Group
     
@@ -373,7 +473,11 @@ function loadPartnersForAssignment() {
 function assignToPartner(mobile, name) {
     if(!selectedOrderIdForAssignment || !confirm(`Assign to ${name}?`)) return;
     db.ref('orders/' + selectedOrderIdForAssignment).update({ status: 'accepted', deliveryBoyId: mobile, deliveryBoyName: name, deliveryBoyMobile: mobile, assignedAt: firebase.database.ServerValue.TIMESTAMP })
-    .then(() => { showToast(`Assigned to ${name}`); closeModal('assignModal'); });
+    .then(() => { 
+        showToast(`Assigned to ${name}`); 
+        closeModal('assignModal'); 
+        closeModal('calcDistanceModal'); // Close distance modal too if open
+    });
 }
 function deleteOrder(id) { if(confirm("Delete Permanently?")) db.ref('orders/'+id).remove(); }
 
@@ -548,4 +652,3 @@ db.ref('deliveryBoys').on('value', snap => {
         });
     }
 });
-
