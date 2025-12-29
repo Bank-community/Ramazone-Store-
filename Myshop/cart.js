@@ -19,7 +19,7 @@ let currentStep = 1;
 let selectedCharge = 0;
 let selectedLabel = "";
 let selectedBudget = "standard";
-let selectedTime = "Evening";
+let selectedTime = "Standard"; // Default
 let selectedAddress = null;
 let tempGeoData = null;
 
@@ -30,11 +30,27 @@ window.onload = () => {
     
     // UI Defaults
     highlightBudget('standard');
-    highlightTime('Evening');
     
-    // Initial Load - Will handle auto-selection
-    loadSavedAddresses();
+    // Auto-Location Logic
+    initLocationLogic();
 };
+
+function initLocationLogic() {
+    const savedDef = localStorage.getItem('rmz_def_addr');
+    if (savedDef) {
+        loadSavedAddresses();
+    } else {
+        db.ref('users/' + session.mobile + '/savedAddresses').once('value', snap => {
+            if (snap.exists()) {
+                loadSavedAddresses();
+            } else {
+                console.log("No saved address found. Triggering Auto GPS...");
+                loadSavedAddresses(); 
+                selectLiveLocation(); 
+            }
+        });
+    }
+}
 
 // --- ONE ORDER POLICY CHECK ---
 function checkActiveOrder() {
@@ -81,12 +97,7 @@ function goToDetails() {
     document.getElementById('pageTitle').innerText = "Delivery Details";
     document.getElementById('pageSub').innerText = "Final Step";
     
-    // IMPORTANT: If no address is selected yet, check for default logic here too
-    if(!selectedAddress) {
-        // Fallback: Check local storage for default
-        const defKey = localStorage.getItem('rmz_def_addr');
-        if(!defKey) selectLiveLocation(); // Only go to live if no default found
-    }
+    window.scrollTo(0, 0);
 }
 
 function handleBack() {
@@ -140,7 +151,6 @@ function renderCart() {
         list.appendChild(div);
     });
     
-    // Recalculate weight on every render (handles + and -)
     calculateWeight(cart);
 }
 
@@ -160,7 +170,7 @@ function updateQty(idx, change) {
     renderCart();
 }
 
-// --- SMART LOCATION LOGIC (With Default Persistence) ---
+// --- SMART LOCATION LOGIC ---
 function openLocationModal() {
     document.getElementById('locationModal').classList.remove('hidden');
     loadSavedAddresses();
@@ -174,7 +184,6 @@ function loadSavedAddresses() {
     const list = document.getElementById('addressList');
     list.innerHTML = '';
     
-    // Live Option
     list.innerHTML += `
         <div onclick="selectLiveLocation()" class="addr-card ${!selectedAddress || selectedAddress.type === 'live' ? 'selected' : ''} bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3 cursor-pointer hover:bg-slate-100">
             <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-crosshairs"></i></div>
@@ -184,20 +193,15 @@ function loadSavedAddresses() {
 
     db.ref('users/' + session.mobile + '/savedAddresses').once('value', snap => {
         let count = 0;
-        let foundDefault = false;
         const savedDefaultKey = localStorage.getItem('rmz_def_addr');
 
         if(snap.exists()) {
             const addrs = snap.val();
             Object.entries(addrs).forEach(([key, addr]) => {
                 count++;
-                
-                // Check if this is the default saved address
                 const isDefault = savedDefaultKey === key;
                 if(isDefault && !selectedAddress) {
-                    // Auto select it on load
                     selectSavedAddress(key, addr.title, addr.text, addr.lat, addr.lng);
-                    foundDefault = true;
                 }
 
                 const isSel = selectedAddress && selectedAddress.key === key;
@@ -221,12 +225,9 @@ function loadSavedAddresses() {
             });
         }
         
-        // Button Logic
         const btnAdd = document.getElementById('btnAddLocation');
         if(count >= 3) btnAdd.classList.add('hidden');
         else btnAdd.classList.remove('hidden');
-
-        // Logic: If no default found and no selection made, Live Location is default (handled in goToDetails)
     });
 }
 
@@ -239,6 +240,7 @@ function addNewLocation() {
             const lat = p.coords.latitude;
             const lng = p.coords.longitude;
             tempGeoData = { lat, lng };
+            document.getElementById('detectedCoords').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
             
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
@@ -260,18 +262,12 @@ function saveNewAddress() {
     if(!title || !text || !tempGeoData) return showToast("Fill all details");
     
     const newAddr = { title, text, lat: tempGeoData.lat, lng: tempGeoData.lng };
-    // Save to DB
     const newRef = db.ref('users/' + session.mobile + '/savedAddresses').push();
     newRef.set(newAddr).then(() => {
-        // Automatically make new address default
         localStorage.setItem('rmz_def_addr', newRef.key);
         showToast("Location Saved & Set as Default!");
-        
-        // Select it immediately
         selectSavedAddress(newRef.key, title, text, tempGeoData.lat, tempGeoData.lng);
-        
         cancelAddAddr();
-        // No need to reload list here as selectSavedAddress closes modal
     });
 }
 
@@ -294,14 +290,12 @@ function deleteAddress(key) {
 function setDefault(key) {
     localStorage.setItem('rmz_def_addr', key);
     showToast("Default Location Updated");
-    loadSavedAddresses(); // Refresh to show star icon
+    loadSavedAddresses();
 }
 
 function selectSavedAddress(key, title, text, lat, lng) {
     selectedAddress = { type: 'saved', key, title, text, lat, lng };
-    // Also update default preference when user manually selects
     localStorage.setItem('rmz_def_addr', key);
-    
     updateAddressUI();
     closeLocationModal();
 }
@@ -322,12 +316,10 @@ function selectLiveLocation() {
             } catch(e) {}
 
             selectedAddress = { type: 'live', title: "Live Location", text, lat, lng };
-            // Clear default preference if user chooses Live
             localStorage.removeItem('rmz_def_addr');
-            
             updateAddressUI();
             if(!document.getElementById('locationModal').classList.contains('hidden')) closeLocationModal();
-        }, () => showToast("GPS Failed"));
+        }, () => { showToast("GPS Failed"); btnTitle.innerText = "GPS Failed"; });
     }
 }
 
@@ -338,7 +330,7 @@ function updateAddressUI() {
     }
 }
 
-// --- SMART WEIGHT & PRICE (BUFFER LOGIC) ---
+// --- WEIGHT & PRICE LOGIC (LOCKED SELECTION) ---
 function calculateWeight(cart) {
     let totalKg = 0;
     cart.forEach(item => {
@@ -357,60 +349,60 @@ function calculateWeight(cart) {
     if (totalKg > 0) {
         badge.classList.remove('hidden');
         document.getElementById('totalWeightDisplay').innerText = `${totalKg.toFixed(2)} KG`;
-        // ALWAYS Auto-Select based on weight (Logic 1 KG Buffer)
         autoSelectSlab(totalKg);
     } else {
         badge.classList.add('hidden');
-        selectRate(50, 'SMALL (0-10KG)'); // Default fallback
+        selectRateLocked(50, 'SMALL (0-10KG)');
     }
 }
 
 function autoSelectSlab(kg) {
-    // Enable all first
-    ['50','70','80','100'].forEach(r => document.getElementById('rateBtn'+r).classList.remove('disabled'));
-    
-    // Disable lower slabs based on weight (with +1KG BUFFER logic)
-    // Display: 10KG -> Logic Limit: 11KG
-    if (kg > 11) document.getElementById('rateBtn50').classList.add('disabled');
-    if (kg > 21) document.getElementById('rateBtn70').classList.add('disabled');
-    if (kg > 31) document.getElementById('rateBtn80').classList.add('disabled');
-    
     let rec = 50, lbl = 'SMALL (0-10KG)';
-    
-    // Logic for selection (Buffer applied: 31, 21, 11)
     if (kg > 31) { rec = 100; lbl = 'HEAVY (31-50KG)'; }
     else if (kg > 21) { rec = 80; lbl = 'LARGE (21-30KG)'; }
     else if (kg > 11) { rec = 70; lbl = 'MEDIUM (11-20KG)'; }
     else { rec = 50; lbl = 'SMALL (0-10KG)'; }
 
-    // Auto-apply selection
-    selectRate(rec, lbl);
+    selectRateLocked(rec, lbl);
 }
 
-// Manual selection (User clicks) - still respects disabled state
 function manualSelectRate(amt) {
-    const btn = document.getElementById('rateBtn'+amt);
-    if(btn.classList.contains('disabled')) return showToast("Item weight too high for this slab");
-    
-    // Find label
-    let lbl = '';
-    if(amt===50) lbl='SMALL (0-10KG)';
-    if(amt===70) lbl='MEDIUM (11-20KG)';
-    if(amt===80) lbl='LARGE (21-30KG)';
-    if(amt===100) lbl='HEAVY (31-50KG)';
-    
-    selectRate(amt, lbl);
+    // This function is effectively disabled by the locked logic below,
+    // but kept empty or minimal to prevent errors if clicked.
+    showToast("Charge is auto-calculated by weight");
 }
 
-function selectRate(amt, lbl) {
+function selectRateLocked(amt, lbl) {
     selectedCharge = amt; selectedLabel = lbl;
-    document.querySelectorAll('.slab-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById('rateBtn'+amt).classList.add('selected');
-    document.getElementById('cartTotal').innerText = amt;
-    document.getElementById('finalTotal').innerText = amt;
+    
+    // Disable ALL slab cards first
+    document.querySelectorAll('.slab-card').forEach(c => {
+        c.classList.remove('selected');
+        c.classList.add('disabled'); // Make them look disabled
+        c.style.pointerEvents = 'none'; // Prevent clicking
+        c.style.opacity = '0.5';
+    });
+
+    // Select and Highlight ONLY the correct one
+    const activeBtn = document.getElementById('rateBtn'+amt);
+    if(activeBtn) {
+        activeBtn.classList.add('selected');
+        activeBtn.classList.remove('disabled');
+        activeBtn.style.opacity = '1';
+        // Note: pointerEvents still none so user can't toggle it, 
+        // but it looks fully active/selected.
+    }
+
+    updateTotals();
 }
 
-// --- BUDGET & TIME ---
+function updateTotals() {
+    // No Surcharge Logic anymore
+    document.getElementById('cartTotal').innerText = selectedCharge;
+    document.getElementById('finalTotal').innerText = selectedCharge;
+}
+
+// --- BUDGET LOGIC ---
 function selectBudget(type) {
     selectedBudget = type;
     document.querySelectorAll('.budget-card').forEach(c => c.classList.remove('selected', 'border-amber-500', 'bg-white', 'shadow-sm'));
@@ -419,19 +411,64 @@ function selectBudget(type) {
 }
 function highlightBudget(t) { selectBudget(t); }
 
+// --- TIME LOGIC (MANUAL ONLY - NO CHARGE) ---
 function selectTime(time) {
-    selectedTime = time;
-    document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
-    document.getElementById(`time_${time}`).classList.add('selected');
+    // This handles the chips (Evening/Morning) if user clicks them
+    updateTimeUI(time);
 }
-function highlightTime(t) { selectTime(t); }
+
+function selectManualTime(timeStr) {
+    if(!timeStr) return;
+    
+    // Convert 24h to AM/PM for display
+    const [hours, minutes] = timeStr.split(':');
+    const displayTime = formatAMPM(hours, minutes);
+    
+    updateTimeUI(displayTime);
+}
+
+function updateTimeUI(displayTime) {
+    selectedTime = displayTime;
+    
+    // Reset Chips Selection Visuals
+    document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
+    
+    // If it matches a chip, highlight it, else just update text
+    const chip = document.getElementById(`time_${displayTime}`);
+    if(chip) chip.classList.add('selected');
+
+    // Update Display Text
+    const dispEl = document.getElementById('timeDisplay');
+    dispEl.innerText = displayTime;
+    dispEl.className = "text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200";
+    
+    showToast(`Time set to ${displayTime}`);
+}
+
+function formatAMPM(hours, minutes) {
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    return hours + ':' + minutes + ' ' + ampm;
+}
 
 // --- FINAL ORDER ---
 async function placeOrder() {
-    if(!selectedCharge) return showToast("Select Parcel Size");
+    if(!selectedCharge) return showToast("Select Delivery Charge");
     if(!selectedAddress) return showToast("Select Location");
 
     const cart = getCart();
+    
+    // Handle Magic Box
+    const magicNote = document.getElementById('magicBoxInput').value.trim();
+    if(magicNote) {
+        cart.push({
+            name: magicNote,
+            qty: "Special Request",
+            count: 1
+        });
+    }
+
     let budgetFinal = selectedBudget;
     if(selectedBudget === 'custom') {
         const amt = document.getElementById('customAmount').value;
@@ -450,7 +487,7 @@ async function placeOrder() {
         user: { name: session.name, mobile: session.mobile, shopName: shopName },
         location: { address: selectedAddress.text, lat: selectedAddress.lat, lng: selectedAddress.lng, title: selectedAddress.title },
         cart: cart,
-        payment: { deliveryFee: selectedCharge, slab: selectedLabel, mode: 'COD' },
+        payment: { deliveryFee: selectedCharge, slab: selectedLabel, surcharge: 0, mode: 'COD' },
         preferences: { budget: budgetFinal, deliveryTime: selectedTime },
         status: 'placed',
         timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -473,4 +510,3 @@ function showToast(msg) {
     t.classList.remove('opacity-0', 'pointer-events-none');
     setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2500);
 }
-
