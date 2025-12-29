@@ -64,30 +64,29 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return (R * c).toFixed(1); 
 }
 
-// --- NEW: WEIGHT CALCULATOR HELPER ---
+// --- WEIGHT CALCULATOR ---
 function calculateOrderWeight(cart) {
     if (!cart || !Array.isArray(cart)) return 0;
     let totalKg = 0;
     cart.forEach(item => {
-        if (item.qty === 'Special Request') return; // Skip text requests
+        if (item.qty === 'Special Request') return; 
         
-        let txt = item.qty.toLowerCase().replace(/\s/g, ''); // Remove spaces
+        let txt = item.qty.toLowerCase().replace(/\s/g, ''); 
         let weight = 0; 
         let mul = item.count || 1; 
         let match;
         
-        // Regex for various units
         if (match = txt.match(/(\d+(\.\d+)?)kg/)) weight = parseFloat(match[1]);
         else if ((match = txt.match(/(\d+)g/)) || (match = txt.match(/(\d+)gm/))) weight = parseFloat(match[1]) / 1000;
-        else if ((match = txt.match(/(\d+(\.\d+)?)l/)) || (match = txt.match(/(\d+(\.\d+)?)ltr/))) weight = parseFloat(match[1]); // Treat Litre as KG roughly
+        else if ((match = txt.match(/(\d+(\.\d+)?)l/)) || (match = txt.match(/(\d+(\.\d+)?)ltr/))) weight = parseFloat(match[1]);
         else if (match = txt.match(/(\d+)ml/)) weight = parseFloat(match[1]) / 1000;
         
         totalKg += (weight * mul);
     });
-    return totalKg.toFixed(2); // Return string with 2 decimals
+    return totalKg.toFixed(2); 
 }
 
-// --- ORDER LISTENER (UPDATED WITH PARTNER NAME) ---
+// --- ORDER LISTENER ---
 db.ref('orders').on('value', snap => {
     const liveGrid = document.getElementById('ordersGrid');
     const histGrid = document.getElementById('historyGrid');
@@ -112,7 +111,6 @@ db.ref('orders').on('value', snap => {
                 todayAlertCount++;
                 const statusColor = order.status === 'delivered' ? 'text-green-400' : (order.status === 'placed' ? 'text-amber-400' : 'text-blue-400');
                 
-                // Show Assigned Partner Name if exists
                 let partnerNameDisplay = "";
                 if(order.deliveryBoyName) {
                     partnerNameDisplay = `<p class="text-[9px] text-blue-300 font-mono mt-0.5"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName}</p>`;
@@ -145,7 +143,6 @@ db.ref('orders').on('value', snap => {
     if(todayAlertCount === 0) noAlerts.classList.remove('hidden'); else noAlerts.classList.add('hidden');
 });
 
-// Helper for Time Format
 function formatTimeAMPM(timestamp) {
     const date = new Date(timestamp);
     let hours = date.getHours();
@@ -160,10 +157,9 @@ function formatTimeAMPM(timestamp) {
 function createOrderCard(id, order) {
     let productsHTML = ''; 
     let waItems = '';
-    let specialReqHTML = ''; // To store the special box content
+    let specialReqHTML = '';
 
     if(order.cart) order.cart.forEach(i => {
-        // CHECK FOR SPECIAL REQUEST
         if (i.qty === 'Special Request') {
             specialReqHTML += `
                 <div class="bg-amber-900/20 border border-amber-600/50 p-2 rounded text-xs text-amber-200 mt-2 flex items-start gap-2">
@@ -181,13 +177,23 @@ function createOrderCard(id, order) {
         }
     });
 
-    let stClass = 'st-placed'; let partnerInfo = '';
-    if(order.status === 'accepted' || order.status === 'out_for_delivery') { 
-        stClass = 'st-accepted'; partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName || 'Partner'}</div>`;
-    }
-    if(order.status === 'delivered') stClass = 'st-delivered';
+    let stClass = 'st-placed'; 
+    let partnerInfo = '';
 
-    // --- BUTTON LOGIC ---
+    // --- STATUS & PARTNER DISPLAY LOGIC (UPDATED) ---
+    if(order.status === 'accepted' || order.status === 'out_for_delivery') { 
+        stClass = 'st-accepted'; 
+        partnerInfo = `<div class="text-[10px] text-blue-400 mt-1"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName || 'Partner'}</div>`;
+    }
+    
+    if(order.status === 'delivered') {
+        stClass = 'st-delivered';
+        // ADDED: Display who delivered it
+        if(order.deliveryBoyName) {
+            partnerInfo = `<div class="text-[10px] text-green-500 mt-1 font-bold"><i class="fa-solid fa-user-check"></i> Delivered by ${order.deliveryBoyName}</div>`;
+        }
+    }
+
     let adminAction = '';
     const hasGPS = order.location && order.location.lat && order.location.lng;
     const btnAction = hasGPS ? `openDistanceModal('${id}', ${order.location.lat}, ${order.location.lng})` : `openAssignModal('${id}')`;
@@ -203,14 +209,10 @@ function createOrderCard(id, order) {
     const prefTime = order.preferences && order.preferences.deliveryTime ? order.preferences.deliveryTime : "Standard";
     const prefBudg = order.preferences && order.preferences.budget ? order.preferences.budget : "Standard";
     
-    // NEW: Calculate Weight
     const orderWeight = calculateOrderWeight(order.cart);
     const weightBadge = `<span class="bg-slate-800 text-white px-2 py-0.5 rounded text-[10px] font-bold border border-slate-600"><i class="fa-solid fa-weight-hanging mr-1 text-gray-400"></i>${orderWeight} KG</span>`;
-
-    // NEW: Time Badge
     const orderTimeStr = formatTimeAMPM(order.timestamp);
 
-    // --- ADDRESS BOX ---
     let distBadge = '';
     if(adminLat && order.location && order.location.lat) {
         const d = getDistance(adminLat, adminLng, order.location.lat, order.location.lng);
@@ -232,13 +234,10 @@ function createOrderCard(id, order) {
             <div class="flex gap-2 flex-wrap">
                 <span class="bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-800"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
                 <span class="bg-pink-900/50 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-800"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
-                <!-- Time Badge -->
                 <span class="time-badge-style px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-hourglass-start mr-1"></i>${orderTimeStr}</span>
-                <!-- Weight Badge (NEW) -->
                 ${weightBadge}
             </div>
 
-            <!-- Clean Address Box -->
             <div class="bg-slate-950 rounded p-2 text-xs text-slate-400 flex justify-between items-center">
                 <span class="truncate w-full block" title="${order.location.address}">
                     <i class="fa-solid fa-location-dot mr-1"></i> ${order.location.address}
@@ -246,7 +245,6 @@ function createOrderCard(id, order) {
                 ${distBadge}
             </div>
 
-            <!-- SPECIAL REQUEST BOX (NEW: Placed right after address) -->
             ${specialReqHTML}
             
             ${partnerInfo}
@@ -287,7 +285,6 @@ function openDistanceModal(orderId, custLat, custLng) {
                 partners.push({ ...boy, mobile, dist: distVal });
             });
 
-            // Sort: Nearest First
             partners.sort((a, b) => a.dist - b.dist);
 
             if(partners.length === 0) {
@@ -326,23 +323,18 @@ function openDistanceModal(orderId, custLat, custLng) {
     });
 }
 
-
-// --- MAP & FILTERS (UPDATED) ---
+// --- MAP & FILTERS ---
 function initMap() {
     if(map) return;
     map = L.map('map').setView([20.5937, 78.9629], 5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
     document.getElementById('mapLoading').classList.add('hidden');
-    layerGroup = L.layerGroup().addTo(map); // Init Layer Group
-    
-    // We already called trackPartnersOnMap in onload, so data might be ready
+    layerGroup = L.layerGroup().addTo(map);
     renderMarkers();
 }
 
 function setMapFilter(filter) {
     currentMapFilter = filter;
-    
-    // Update Button UI
     document.querySelectorAll('.map-filter-btn').forEach(b => {
         b.classList.remove('active', 'border-white', 'bg-slate-700');
         if(b.id === `filter-${filter}`) {
@@ -350,7 +342,6 @@ function setMapFilter(filter) {
             if(filter === 'all') b.classList.add('bg-slate-700');
         }
     });
-
     renderMarkers();
 }
 
@@ -370,7 +361,6 @@ function updateMapCounts() {
         if(boy.status === 'online') online++;
         else offline++;
     });
-    
     document.getElementById('cnt-all').innerText = online + offline;
     document.getElementById('cnt-online').innerText = online;
     document.getElementById('cnt-offline').innerText = offline;
@@ -378,23 +368,18 @@ function updateMapCounts() {
 
 function renderMarkers() {
     if(!map || !layerGroup) return;
-    layerGroup.clearLayers(); // Clear old markers
-    
+    layerGroup.clearLayers();
     const bounds = [];
-    
     Object.entries(partnersData).forEach(([mobile, boy]) => {
         if(boy.location && boy.location.lat && boy.location.lng) {
             const isOnline = boy.status === 'online';
-            
-            // Filter Logic
             if(currentMapFilter === 'online' && !isOnline) return;
             if(currentMapFilter === 'offline' && isOnline) return;
 
             const lat = boy.location.lat;
             const lng = boy.location.lng;
-            const color = isOnline ? '#22c55e' : '#ef4444'; // Tailwind Green-500 : Red-500
+            const color = isOnline ? '#22c55e' : '#ef4444';
             
-            // Custom Marker
             const iconHtml = `<div style="background:${color}; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow: 0 0 8px ${color};"></div>`;
             const customIcon = L.divIcon({ className: 'custom-map-icon', html: iconHtml, iconSize: [14, 14] });
 
@@ -406,12 +391,10 @@ function renderMarkers() {
                         <span style="font-size:10px;">🔋 ${boy.battery || '?'}</span>
                     </div>
                 `);
-            
             layerGroup.addLayer(marker);
             if(isOnline) bounds.push([lat, lng]);
         }
     });
-
     if(bounds.length > 0 && currentMapFilter !== 'offline') {
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
@@ -522,14 +505,12 @@ function assignToPartner(mobile, name) {
     .then(() => { 
         showToast(`Assigned to ${name}`); 
         closeModal('assignModal'); 
-        closeModal('calcDistanceModal'); // Close distance modal too if open
+        closeModal('calcDistanceModal');
     });
 }
 function deleteOrder(id) { if(confirm("Delete Permanently?")) db.ref('orders/'+id).remove(); }
 
 // --- DATA LISTS & UTILS ---
-
-// Toggle Eye Icon Logic
 window.togglePin = function(btn, pin) {
     const span = btn.parentElement.querySelector('.pin-text');
     const icon = btn.querySelector('i');
@@ -549,7 +530,6 @@ window.togglePin = function(btn, pin) {
     }
 }
 
-// Updated Customer Loader (With Eye Icon + Send Button + Context)
 function loadCustomers() {
     const t = document.getElementById('custTable'); 
     t.innerHTML='<tr><td colspan="6" class="p-4 text-center">Loading...</td></tr>';
@@ -582,7 +562,6 @@ function loadCustomers() {
     });
 }
 
-// Updated Partner Loader (With Eye Icon + Send Button + Context)
 function loadPartnerDetails() {
     const t = document.getElementById('partnerDetailTable'); t.innerHTML='<tr><td colspan="6" class="p-4 text-center">Loading...</td></tr>';
     
@@ -611,59 +590,44 @@ function loadPartnerDetails() {
     });
 }
 
-// Universal PIN Recovery Logic
 function openPinRecovery(mobile, pin, name, context, shopName) {
     if(!pin) { showToast("User has no PIN set"); return; }
-    
     recTargetMobile = mobile;
     recTargetPin = pin;
     recTargetName = name;
-    recTargetContext = context; // 'customer' or 'partner'
+    recTargetContext = context; 
     recTargetShop = shopName;
-
-    // Update Modal UI
     document.getElementById('recName').innerText = name + (context === 'partner' ? ' (Partner)' : '');
     document.getElementById('recMobile').innerText = "+91 " + mobile;
-    
-    // Open Modal
     document.getElementById('pinRecoveryModal').classList.remove('hidden');
 }
 
 function sendPinWhatsApp() {
     if(!recTargetMobile) return;
-    
-    // Dynamic Message Logic
     let header = `Hello ${recTargetName}`;
     let body = "";
-    
     if (recTargetContext === 'customer') {
         body = `Your Login PIN for *${recTargetShop}* is: *${recTargetPin}*`;
     } else {
         body = `Your Login PIN for *Ramazone Delivery App* is: *${recTargetPin}*`;
     }
-    
-    const msg = `${header},\n\n${body}\n\nPlease keep it safe.\n- Admin Team`;
-    
+    const msg = `${header},\n\n${body}\n\nPlease keep it safe.\n- Team *Ramazone*`;
     window.open(`https://wa.me/91${recTargetMobile}?text=${encodeURIComponent(msg)}`, '_blank');
     closeModal('pinRecoveryModal');
 }
 
 function sendPinSMS() {
     if(!recTargetMobile) return;
-    
     let body = "";
     if (recTargetContext === 'customer') {
         body = `Hello ${recTargetName}, Your PIN for ${recTargetShop} is: ${recTargetPin}. Keep it safe.`;
     } else {
         body = `Hello ${recTargetName}, Your PIN for Ramazone Delivery is: ${recTargetPin}. Keep it safe.`;
     }
-    
-    // Universal SMS Link (Works on Android & iOS)
     const ua = navigator.userAgent.toLowerCase();
     const url = (ua.indexOf("iphone") > -1 || ua.indexOf("ipad") > -1)
         ? `sms:${recTargetMobile}&body=${encodeURIComponent(body)}`
         : `sms:${recTargetMobile}?body=${encodeURIComponent(body)}`;
-        
     window.location.href = url;
     closeModal('pinRecoveryModal');
 }
@@ -685,7 +649,6 @@ function saveBannerToDb(imgUrl, link, btn) {
     db.ref('admin/sliders').push({ img: imgUrl, link: link }).then(() => { showToast("Banner Live!"); document.getElementById('bannerFile').value=''; btn.innerHTML='UPLOAD & PUBLISH'; btn.disabled=false; loadBanners(); });
 }
 
-// Partner Status Table (Main Dashboard)
 db.ref('deliveryBoys').on('value', snap => {
     const tbody = document.getElementById('partnersTable'); tbody.innerHTML = '';
     if(snap.exists()) {
@@ -698,4 +661,3 @@ db.ref('deliveryBoys').on('value', snap => {
         });
     }
 });
-
