@@ -103,22 +103,21 @@
                         <i class="fa-solid fa-location-dot"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-sm text-slate-800" id="dispAddrTitle">Select Address</h4>
-                        <p class="text-xs text-slate-500 leading-snug mt-0.5 line-clamp-2" id="dispAddrText">Tap change to select...</p>
+                        <h4 class="font-bold text-sm text-slate-800" id="dispAddrTitle">Detecting Location...</h4>
+                        <p class="text-xs text-slate-500 leading-snug mt-0.5 line-clamp-2" id="dispAddrText">Please wait, finding GPS...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- B. Parcel Size (Smart Auto-Select) -->
+            <!-- B. Delivery Charges (Renamed from Parcel Size) -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xs font-bold text-slate-600 uppercase"><i class="fa-solid fa-cube text-blue-500 mr-1"></i> Parcel Size</h3>
+                    <h3 class="text-xs font-bold text-slate-600 uppercase"><i class="fa-solid fa-truck-fast text-blue-500 mr-1"></i> Delivery Charges</h3>
                     <div id="weightBadge" class="hidden bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] font-bold">
                         <i class="fa-solid fa-scale-balanced mr-1"></i><span id="totalWeightDisplay">0 KG</span>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <!-- Cards show FRONTEND limits (10kg) but Logic uses (11kg) -->
                     <button onclick="manualSelectRate(50)" id="rateBtn50" class="slab-card bg-slate-50 rounded-xl p-3 text-left relative overflow-hidden group">
                         <div class="absolute top-2 right-2 opacity-0 group-[.selected]:opacity-100"><i class="fa-solid fa-circle-check text-blue-600"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase">Small</p>
@@ -146,28 +145,28 @@
                 </div>
             </div>
 
-            <!-- C. Budget & Quality -->
+            <!-- C. Budget & Quality (Updated Titles) -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
                 <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Budget & Quality</h3>
                 <div class="grid grid-cols-3 gap-2">
-                    <button onclick="selectBudget('high')" id="bud_high" class="budget-card bg-slate-50 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-20">
+                    <button onclick="selectBudget('high')" id="bud_high" class="budget-card bg-slate-50 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-24">
                         <i class="fa-solid fa-star text-amber-400 text-sm"></i>
                         <div class="leading-tight">
-                            <span class="text-[10px] font-bold text-slate-700 block">Best Quality</span>
+                            <span class="text-[10px] font-bold text-slate-700 block">Best Quality Product</span>
                             <span class="text-[8px] font-bold text-slate-400 uppercase">High Price</span>
                         </div>
                     </button>
-                    <button onclick="selectBudget('standard')" id="bud_standard" class="budget-card selected bg-white border-amber-500 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-20 shadow-sm">
+                    <button onclick="selectBudget('standard')" id="bud_standard" class="budget-card selected bg-white border-amber-500 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-24 shadow-sm">
                         <i class="fa-solid fa-shop text-blue-500 text-sm"></i>
                         <div class="leading-tight">
-                            <span class="text-[10px] font-bold text-slate-700 block">Market Std.</span>
+                            <span class="text-[10px] font-bold text-slate-700 block">Market Std. Product</span>
                             <span class="text-[8px] font-bold text-slate-400 uppercase">Normal Price</span>
                         </div>
                     </button>
-                    <button onclick="selectBudget('custom')" id="bud_custom" class="budget-card bg-slate-50 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-20">
+                    <button onclick="selectBudget('custom')" id="bud_custom" class="budget-card bg-slate-50 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 text-center h-24">
                         <i class="fa-solid fa-indian-rupee-sign text-green-600 text-sm"></i>
                         <div class="leading-tight">
-                            <span class="text-[10px] font-bold text-slate-700 block">Your Budget</span>
+                            <span class="text-[10px] font-bold text-slate-700 block">Your Budget Product</span>
                             <span class="text-[8px] font-bold text-slate-400 uppercase">Enter Amount</span>
                         </div>
                     </button>
@@ -177,15 +176,36 @@
                 </div>
             </div>
 
-            <!-- D. Time -->
+            <!-- D. Prepare Timing (Updated with Manual Input) -->
             <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
-                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Preferred Time</h3>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xs font-bold text-slate-600 uppercase">Prepare Timing</h3>
+                    <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded" id="timeDisplay">Standard</span>
+                </div>
+                
+                <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200 mb-3">
+                     <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-slate-500 shadow-sm border border-slate-100">
+                         <i class="fa-regular fa-clock"></i>
+                     </div>
+                     <div class="flex-1">
+                         <input type="time" id="manualTimeInput" class="w-full bg-transparent text-sm font-bold text-slate-800 focus:outline-none" onchange="selectManualTime(this.value)">
+                         <p class="text-[10px] text-slate-400">Tap to select exact time</p>
+                     </div>
+                </div>
+
                 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                     <button onclick="selectTime('Evening')" id="time_Evening" class="time-chip selected shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Evening</button>
                     <button onclick="selectTime('Afternoon')" id="time_Afternoon" class="time-chip shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Afternoon</button>
                     <button onclick="selectTime('Next Morning')" id="time_Next Morning" class="time-chip shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Next Morning</button>
-                    <button onclick="selectTime('Anytime')" id="time_Anytime" class="time-chip shrink-0 px-4 py-2 rounded-full border border-slate-200 text-xs font-bold bg-slate-50 text-slate-600">Anytime</button>
                 </div>
+            </div>
+
+            <!-- E. Magic Box (New) -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-600 uppercase mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> Magic Box <span class="text-[9px] text-slate-400 font-normal normal-case">(Delivery Note / Special Request)</span>
+                </h3>
+                <textarea id="magicBoxInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 h-20 resize-none" placeholder="Koi special request? Yahan likhein..."></textarea>
             </div>
 
         </div> 
@@ -270,4 +290,3 @@
     <script src="cart.js"></script>
 </body>
 </html>
-
