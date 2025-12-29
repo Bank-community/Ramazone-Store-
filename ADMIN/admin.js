@@ -64,6 +64,29 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return (R * c).toFixed(1); 
 }
 
+// --- NEW: WEIGHT CALCULATOR HELPER ---
+function calculateOrderWeight(cart) {
+    if (!cart || !Array.isArray(cart)) return 0;
+    let totalKg = 0;
+    cart.forEach(item => {
+        if (item.qty === 'Special Request') return; // Skip text requests
+        
+        let txt = item.qty.toLowerCase().replace(/\s/g, ''); // Remove spaces
+        let weight = 0; 
+        let mul = item.count || 1; 
+        let match;
+        
+        // Regex for various units
+        if (match = txt.match(/(\d+(\.\d+)?)kg/)) weight = parseFloat(match[1]);
+        else if ((match = txt.match(/(\d+)g/)) || (match = txt.match(/(\d+)gm/))) weight = parseFloat(match[1]) / 1000;
+        else if ((match = txt.match(/(\d+(\.\d+)?)l/)) || (match = txt.match(/(\d+(\.\d+)?)ltr/))) weight = parseFloat(match[1]); // Treat Litre as KG roughly
+        else if (match = txt.match(/(\d+)ml/)) weight = parseFloat(match[1]) / 1000;
+        
+        totalKg += (weight * mul);
+    });
+    return totalKg.toFixed(2); // Return string with 2 decimals
+}
+
 // --- ORDER LISTENER (UPDATED WITH PARTNER NAME) ---
 db.ref('orders').on('value', snap => {
     const liveGrid = document.getElementById('ordersGrid');
@@ -135,10 +158,27 @@ function formatTimeAMPM(timestamp) {
 }
 
 function createOrderCard(id, order) {
-    let productsHTML = ''; let waItems = '';
+    let productsHTML = ''; 
+    let waItems = '';
+    let specialReqHTML = ''; // To store the special box content
+
     if(order.cart) order.cart.forEach(i => {
-        productsHTML += `<div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0"><span class="text-slate-300">${i.count}x ${i.name}</span><span class="text-slate-500">${i.qty}</span></div>`;
-        waItems += `${i.name} (${i.qty}) x${i.count}\n`;
+        // CHECK FOR SPECIAL REQUEST
+        if (i.qty === 'Special Request') {
+            specialReqHTML += `
+                <div class="bg-amber-900/20 border border-amber-600/50 p-2 rounded text-xs text-amber-200 mt-2 flex items-start gap-2">
+                    <i class="fa-solid fa-pen-to-square mt-0.5 text-amber-500"></i>
+                    <div>
+                        <p class="font-bold uppercase text-[9px] text-amber-500 mb-0.5">Special Request</p>
+                        <p>${i.name}</p>
+                    </div>
+                </div>
+            `;
+            waItems += `✨ REQUEST: ${i.name}\n`;
+        } else {
+            productsHTML += `<div class="flex justify-between text-xs py-1 border-b border-slate-800 last:border-0"><span class="text-slate-300">${i.count}x ${i.name}</span><span class="text-slate-500">${i.qty}</span></div>`;
+            waItems += `${i.name} (${i.qty}) x${i.count}\n`;
+        }
     });
 
     let stClass = 'st-placed'; let partnerInfo = '';
@@ -147,10 +187,8 @@ function createOrderCard(id, order) {
     }
     if(order.status === 'delivered') stClass = 'st-delivered';
 
-    // --- MAIN UPDATE: REPLACED OLD ASSIGN BUTTON LOGIC ---
+    // --- BUTTON LOGIC ---
     let adminAction = '';
-    
-    // Check if location exists for distance calculation
     const hasGPS = order.location && order.location.lat && order.location.lng;
     const btnAction = hasGPS ? `openDistanceModal('${id}', ${order.location.lat}, ${order.location.lng})` : `openAssignModal('${id}')`;
     const btnIcon = hasGPS ? `<i class="fa-solid fa-map-location-dot ml-1"></i>` : `<i class="fa-solid fa-user-plus ml-1"></i>`;
@@ -159,18 +197,20 @@ function createOrderCard(id, order) {
     if(order.status === 'placed') {
         adminAction = `<button onclick="${btnAction}" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-lg transition shadow-lg shadow-indigo-500/20">${btnText} ${btnIcon}</button>`;
     } else if (order.status === 'accepted') {
-        // Even for re-assign, prefer distance check
         adminAction = `<button onclick="${btnAction}" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN (Check KM)</button>`;
     }
 
     const prefTime = order.preferences && order.preferences.deliveryTime ? order.preferences.deliveryTime : "Standard";
     const prefBudg = order.preferences && order.preferences.budget ? order.preferences.budget : "Standard";
     
+    // NEW: Calculate Weight
+    const orderWeight = calculateOrderWeight(order.cart);
+    const weightBadge = `<span class="bg-slate-800 text-white px-2 py-0.5 rounded text-[10px] font-bold border border-slate-600"><i class="fa-solid fa-weight-hanging mr-1 text-gray-400"></i>${orderWeight} KG</span>`;
+
     // NEW: Time Badge
     const orderTimeStr = formatTimeAMPM(order.timestamp);
 
-    // --- ADDRESS BOX: CLEANED UP (Removed Small Button) ---
-    // Kept scrollable text and optional HQ distance badge if needed
+    // --- ADDRESS BOX ---
     let distBadge = '';
     if(adminLat && order.location && order.location.lat) {
         const d = getDistance(adminLat, adminLng, order.location.lat, order.location.lng);
@@ -186,13 +226,16 @@ function createOrderCard(id, order) {
                 <span class="status-badge ${stClass}">${order.status}</span>
             </div>
             <div class="text-[10px] text-slate-500 bg-slate-950/50 p-1.5 rounded flex items-center gap-1"><i class="fa-solid fa-store"></i> Shop: ${order.user.shopName}</div>
+            
             <div class="bg-slate-950 rounded p-2 max-h-24 overflow-y-auto prod-list">${productsHTML}</div>
             
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-wrap">
                 <span class="bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-800"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
                 <span class="bg-pink-900/50 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-800"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
                 <!-- Time Badge -->
                 <span class="time-badge-style px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-hourglass-start mr-1"></i>${orderTimeStr}</span>
+                <!-- Weight Badge (NEW) -->
+                ${weightBadge}
             </div>
 
             <!-- Clean Address Box -->
@@ -202,6 +245,9 @@ function createOrderCard(id, order) {
                 </span>
                 ${distBadge}
             </div>
+
+            <!-- SPECIAL REQUEST BOX (NEW: Placed right after address) -->
+            ${specialReqHTML}
             
             ${partnerInfo}
             ${adminAction}
@@ -652,3 +698,4 @@ db.ref('deliveryBoys').on('value', snap => {
         });
     }
 });
+
