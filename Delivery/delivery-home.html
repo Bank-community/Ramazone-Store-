@@ -256,6 +256,15 @@
             document.getElementById('radiusVal').innerText = serviceRadius;
             document.getElementById('scanKm').innerText = serviceRadius;
 
+            // --- ACCOUNT STATUS CHECK (DISABLE LOGIC) ---
+            db.ref('deliveryBoys/' + session.mobile + '/status').on('value', snap => {
+                const s = snap.val();
+                if(s === 'disabled') {
+                    alert("Your account has been disabled by Admin.");
+                    logout();
+                }
+            });
+
             const savedDuty = localStorage.getItem('rmz_duty_on') === 'true';
             if(savedDuty) {
                 document.getElementById('dutySwitch').checked = true;
@@ -268,7 +277,7 @@
         function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
         function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
 
-        // --- NEW: RADIUS LOGIC ---
+        // --- RADIUS LOGIC ---
         function updateRadius(val) {
             serviceRadius = val;
             localStorage.setItem('rmz_pref_radius', val);
@@ -288,7 +297,7 @@
             return (R * c).toFixed(1); 
         }
 
-        // --- NEW: WEIGHT CALCULATOR ---
+        // --- WEIGHT CALCULATOR ---
         function calculateOrderWeight(cart) {
             if (!cart || !Array.isArray(cart)) return 0;
             let totalKg = 0;
@@ -337,17 +346,27 @@
             }
         }
 
-        // --- HEARTBEAT & GPS ---
+        // --- HEARTBEAT & GPS (UPDATED FOR TIME TRACKING) ---
         function startHeartbeat() {
             if(heartbeatInterval) clearInterval(heartbeatInterval);
             pingServer(); heartbeatInterval = setInterval(pingServer, 60000); 
         }
         function stopHeartbeat() { if(heartbeatInterval) clearInterval(heartbeatInterval); }
+        
         async function pingServer() {
             if(!isOnline) return;
             let batteryLevel = 'Unknown';
             try { if(navigator.getBattery) { const battery = await navigator.getBattery(); batteryLevel = Math.round(battery.level * 100) + '%'; } } catch(e) {}
-            db.ref('deliveryBoys/'+session.mobile).update({ lastHeartbeat: firebase.database.ServerValue.TIMESTAMP, status: 'online', battery: batteryLevel });
+            
+            const updates = { 
+                lastHeartbeat: firebase.database.ServerValue.TIMESTAMP, 
+                status: 'online', 
+                battery: batteryLevel 
+            };
+            db.ref('deliveryBoys/'+session.mobile).update(updates);
+            
+            // Increment Online Minutes
+            db.ref('deliveryBoys/'+session.mobile+'/onlineMinutes').transaction(m => (m || 0) + 1);
         }
 
         function startGPS() {
@@ -364,9 +383,7 @@
                         lastUpdated: firebase.database.ServerValue.TIMESTAMP
                     });
                     
-                    // RE-CALCULATE DISTANCE FOR ACTIVE CARD IF EXISTS
                     if(activeOrder) updateActiveDistance();
-                    
                     listenOrders();
                     
                 }, e => document.getElementById('locStatus').innerText = "GPS Weak", {enableHighAccuracy: true});
@@ -374,7 +391,7 @@
         }
         function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
 
-        // --- LISTEN ORDERS (MAX 10KM FILTER) ---
+        // --- LISTEN ORDERS ---
         function listenOrders() {
             const list = document.getElementById('ordersList');
             
@@ -398,17 +415,14 @@
                             const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
                             const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
                             
-                            // ORDER TIME
                             let orderTime = "N/A";
                             if(o.timestamp) {
                                 const d = new Date(o.timestamp);
                                 orderTime = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                             }
 
-                            // WEIGHT
                             const weight = calculateOrderWeight(o.cart);
 
-                            // SPECIAL REQUEST CHECK
                             let specialReqHTML = '';
                             if(o.cart) o.cart.forEach(item => {
                                 if(item.qty === 'Special Request') {
@@ -443,7 +457,6 @@
                             const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
                             const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${JSON.stringify(o).replace(/"/g, '&quot;')})` : `acceptOrder('${id}')`;
 
-                            // --- 4-GRID LAYOUT FOR CARD (WITH WEIGHT) ---
                             const gridHTML = `
                                 <div class="grid grid-cols-2 gap-2 mt-3 mb-2">
                                     <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
@@ -579,7 +592,6 @@
             document.getElementById('actPrefTime').innerText = prefTime;
             document.getElementById('actPrefBudget').innerText = prefBudg;
 
-            // NEW: UPDATE TIME & DISTANCE
             updateActiveDistance();
             
             let orderTime = "N/A";
@@ -597,7 +609,6 @@
                 </li>
             `).join('') : '';
 
-            // ACTIVE PAGE EXTRA DETAILS (Weight & Special Request)
             const weight = calculateOrderWeight(o.cart);
             let specialReqHTML = '';
             if(o.cart) o.cart.forEach(item => {
@@ -626,7 +637,6 @@
             updateBtnUI(o.status);
         }
 
-        // Helper to update distance dynamically
         function updateActiveDistance() {
             if(activeOrder && activeOrder.location && activeOrder.location.lat) {
                 const d = getDistance(myLat, myLng, activeOrder.location.lat, activeOrder.location.lng);
@@ -654,6 +664,20 @@
             
             const updates = { status: st };
             
+            // --- NEW: Save Pickup Location & Calc Distance ---
+            if (st === 'out_for_delivery') {
+                updates.pickupLocation = { lat: myLat, lng: myLng };
+            }
+
+            if (st === 'delivered') {
+                if(activeOrder.pickupLocation) {
+                    const dist = getDistance(activeOrder.pickupLocation.lat, activeOrder.pickupLocation.lng, myLat, myLng);
+                    if(dist && !isNaN(dist)) {
+                        db.ref('deliveryBoys/'+session.mobile+'/totalDistance').transaction(d => (d || 0) + parseFloat(dist));
+                    }
+                }
+            }
+            
             db.ref('orders/'+activeOrder.id).update(updates).then(() => {
                 if(st === 'delivered') {
                     triggerCelebration();
@@ -661,6 +685,8 @@
                     
                     db.ref('deliveryBoys/'+session.mobile+'/earnings').transaction(current => (current || 0) + PARTNER_PAY);
                     db.ref('deliveryBoys/'+session.mobile+'/trips').transaction(current => (current || 0) + 1);
+                    // NEW: Lifetime Earnings
+                    db.ref('deliveryBoys/'+session.mobile+'/lifetimeEarnings').transaction(current => (current || 0) + PARTNER_PAY);
 
                     db.ref('orders/'+activeOrder.id).update({
                         completedAt: firebase.database.ServerValue.TIMESTAMP,
@@ -695,7 +721,6 @@
         
         // BETTER MAPS FUNCTIONS
         function openMapDirect(lat, lng) {
-            // Direct Navigation URL
             window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
         }
         
@@ -707,10 +732,8 @@
             if(type === 'dir') {
                 window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
             } else if (type === 'view') {
-                // Try to open street view / panorama
                 window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`, '_blank');
             } else if (type === 'cust') {
-                // Just viewing the location pin
                 window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank');
             }
         }
@@ -720,5 +743,3 @@
     </script>
 </body>
 </html>
-
-
