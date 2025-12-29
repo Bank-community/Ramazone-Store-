@@ -37,37 +37,24 @@
         .drawer.open { transform: translateX(0); }
         #map { height: 100%; width: 100%; border-radius: 12px; z-index: 1; }
         
-        /* Filter Button Active State */
         .map-filter-btn.active { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
-
-        /* --- NEW STYLES FOR REQUESTED FEATURES --- */
         
-        /* 1. Distance Button Style (will be used in JS) */
-        .dist-btn {
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .dist-btn:hover {
-            background-color: #3b82f6; /* Blue hover */
-            color: white;
-            border-color: #3b82f6;
-        }
-        .dist-btn:active { transform: scale(0.95); }
-
-        /* 2. Time Badge Style */
-        .time-badge-style {
-            background: rgba(51, 65, 85, 0.5); /* slate-800/50 */
-            color: #94a3b8; /* slate-400 */
-            border: 1px solid #1e293b; /* slate-800 */
-            font-family: monospace;
-        }
+        /* New Styles for Tabs & Toggle */
+        .modal-tab { border-bottom: 2px solid transparent; color: #94a3b8; transition: all 0.3s; }
+        .modal-tab.active { border-color: #3b82f6; color: white; font-weight: bold; }
+        
+        .toggle-checkbox:checked { right: 0; border-color: #22c55e; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #22c55e; }
+        .toggle-checkbox { right: auto; left: 0; }
+        .toggle-label { width: 3rem; height: 1.5rem; }
+        
+        /* Time Badge */
+        .time-badge-style { background: rgba(51, 65, 85, 0.5); color: #94a3b8; border: 1px solid #1e293b; font-family: monospace; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
+    <!-- HEADER -->
     <header class="bg-slate-900 border-b border-slate-800 px-4 py-4 flex justify-between items-center shadow-md z-20">
         <div class="flex items-center gap-3">
             <button onclick="toggleDrawer()" class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition border border-slate-700">
@@ -91,6 +78,7 @@
         </div>
     </header>
 
+    <!-- DRAWER MENU -->
     <div id="menuDrawer" class="drawer fixed inset-y-0 left-0 w-[85%] max-w-xs bg-slate-900 z-50 border-r border-slate-700 shadow-2xl flex flex-col">
         <div class="p-6 border-b border-slate-800 bg-slate-950">
             <h2 class="text-lg font-bold text-white">Admin Tools</h2>
@@ -105,6 +93,7 @@
             </button>
             <button onclick="openModal('partnerModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-green-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
                 <i class="fa-solid fa-helmet-safety w-5 text-green-500"></i> Delivery Team Info
+                <span id="pendingReqBadge" class="hidden ml-auto bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">New</span>
             </button>
         </nav>
         <div class="p-4 border-t border-slate-800">
@@ -113,6 +102,7 @@
     </div>
     <div id="drawerOverlay" class="fixed inset-0 bg-black/80 z-40 hidden backdrop-blur-sm" onclick="toggleDrawer()"></div>
 
+    <!-- MAIN LAYOUT -->
     <div class="flex flex-1 overflow-hidden">
         
         <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex">
@@ -147,6 +137,7 @@
 
         <main class="flex-1 overflow-y-auto bg-slate-950 p-4 sm:p-6 relative">
             
+            <!-- MOBILE TABS -->
             <div class="md:hidden flex gap-2 bg-slate-900 p-2 rounded-lg mb-6 sticky top-0 z-10 shadow-lg overflow-x-auto no-scrollbar">
                 <button onclick="switchTab('orders')" class="flex-shrink-0 px-4 py-2 text-[9px] font-bold rounded text-center transition bg-blue-600 text-white min-w-[70px]" id="mob-orders">
                     <i class="fa-solid fa-bolt block mb-1 text-sm"></i> LIVE <span id="mobActiveCount" class="bg-red-500 text-white px-1 rounded-full ml-0.5 text-[8px] hidden">0</span>
@@ -168,6 +159,7 @@
                 </button>
             </div>
 
+            <!-- TAB CONTENT: ORDERS -->
             <div id="tab-orders" class="space-y-6">
                 <div class="flex justify-between items-end">
                     <div class="flex items-center gap-3">
@@ -179,10 +171,10 @@
                 <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
+            <!-- TAB CONTENT: MAP -->
             <div id="tab-map" class="hidden h-full flex flex-col space-y-4" style="height: calc(100vh - 180px);">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-3">
                     <h2 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-earth-americas text-blue-500"></i> Fleet Tracker</h2>
-                    
                     <div class="flex gap-2 w-full sm:w-auto overflow-x-auto">
                         <button onclick="setMapFilter('all')" class="map-filter-btn active px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-bold border border-slate-700 hover:bg-slate-700 transition flex items-center gap-2 whitespace-nowrap" id="filter-all">
                             ALL <span id="cnt-all" class="bg-slate-900 px-1.5 py-0.5 rounded text-white">0</span>
@@ -201,6 +193,7 @@
                 </div>
             </div>
 
+            <!-- TAB CONTENT: ANALYTICS -->
             <div id="tab-analytics" class="hidden space-y-6">
                 <h2 class="text-xl sm:text-2xl font-bold text-white">Business Intelligence</h2>
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -213,6 +206,7 @@
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><h3 class="text-sm font-bold text-slate-300 mb-4">Top Selling Products</h3><div id="topProductsList" class="space-y-2 text-sm text-slate-400"><p class="text-center text-xs">Loading data...</p></div></div>
             </div>
 
+            <!-- TAB CONTENT: HISTORY -->
             <div id="tab-history" class="hidden space-y-6">
                 <div class="flex justify-between items-end">
                     <h2 class="text-xl sm:text-2xl font-bold text-white">Order History</h2>
@@ -221,8 +215,12 @@
                 <div id="historyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
+            <!-- TAB CONTENT: ACTIVE FLEET -->
             <div id="tab-partners" class="hidden space-y-6">
-                <h2 class="text-xl sm:text-2xl font-bold text-white">Delivery Fleet</h2>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl sm:text-2xl font-bold text-white">Delivery Fleet</h2>
+                    <button onclick="openModal('partnerModal')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-lg border border-slate-700">Manage Team</button>
+                </div>
                 <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-400">
                         <thead class="bg-slate-950 text-xs uppercase font-bold text-slate-500"><tr><th class="p-4">Name & Chat</th><th class="p-4">Status</th><th class="p-4">Battery</th><th class="p-4">Earnings</th><th class="p-4">Last Active</th></tr></thead>
@@ -231,6 +229,7 @@
                 </div>
             </div>
 
+            <!-- TAB CONTENT: ALERTS -->
             <div id="tab-alerts" class="hidden space-y-6 max-w-2xl mx-auto">
                 <div class="flex items-center justify-center gap-2 mb-2">
                     <h2 class="text-xl sm:text-2xl font-bold text-white text-center">Today's Alerts</h2>
@@ -245,6 +244,124 @@
         </main>
     </div>
 
+    <!-- MODAL: PARTNER MANAGEMENT (NEW & IMPROVED) -->
+    <div id="partnerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-5xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[85vh]">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Delivery Fleet Management</h3>
+                <button onclick="closeModal('partnerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-800 bg-slate-950 px-4">
+                <button onclick="switchPartnerTab('active')" id="btn-tab-active" class="modal-tab active px-4 py-3 text-sm font-bold border-b-2">Active Fleet</button>
+                <button onclick="switchPartnerTab('requests')" id="btn-tab-requests" class="modal-tab px-4 py-3 text-sm font-bold border-b-2 flex items-center gap-2">
+                    New Requests <span id="reqCountBadge" class="bg-red-500 text-white text-[10px] px-1.5 rounded-full hidden">0</span>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-auto bg-slate-900 p-4 relative">
+                
+                <!-- Active Fleet List -->
+                <div id="view-active-partners">
+                    <table class="w-full text-left text-sm text-slate-400">
+                        <thead class="bg-slate-800 text-white sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Name</th>
+                                <th class="p-3">Vehicle</th>
+                                <th class="p-3">Wallet</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="partnerDetailTable" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+
+                <!-- Pending Requests List -->
+                <div id="view-partner-requests" class="hidden space-y-3">
+                    <p class="text-center text-slate-500 text-xs py-10" id="noReqMsg">No pending requests.</p>
+                    <div id="requestsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PARTNER NANO DETAILS (NEW) -->
+    <div id="partnerFullDetailModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh] animate-[scaleIn_0.2s_ease-out]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-lg font-bold text-white border border-slate-600" id="nanoInitials">U</div>
+                    <div>
+                        <h3 class="font-bold text-white text-base" id="nanoName">Partner Name</h3>
+                        <p class="text-[10px] text-slate-400 font-mono" id="nanoMobile">+91 ...</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('partnerFullDetailModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto space-y-6">
+                
+                <!-- Status & Toggle -->
+                <div class="flex justify-between items-center bg-slate-800 p-3 rounded-xl border border-slate-700">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Account Access</p>
+                        <p class="text-xs text-slate-500 mt-1" id="nanoStatusText">Account is Active</p>
+                    </div>
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                        <input type="checkbox" id="nanoToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 top-0" onchange="togglePartnerStatus()">
+                        <label for="nanoToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-600 cursor-pointer transition-colors duration-300"></label>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Lifetime Earnings</p>
+                        <p class="text-xl font-bold text-green-400 mt-1">₹<span id="nanoLifeEarn">0</span></p>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Total Distance</p>
+                        <p class="text-xl font-bold text-blue-400 mt-1"><span id="nanoDist">0</span> km</p>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Total Online</p>
+                        <p class="text-xl font-bold text-amber-400 mt-1"><span id="nanoOnlineTime">0</span> hrs</p>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Joined On</p>
+                        <p class="text-sm font-bold text-white mt-2" id="nanoJoined">Jan 01</p>
+                    </div>
+                </div>
+
+                <!-- Payout Manager -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex justify-between">
+                        <span>Current Balance</span>
+                        <span class="text-white text-sm">₹<span id="nanoCurrentBal">0</span></span>
+                    </h4>
+                    <div class="flex gap-2">
+                        <input type="number" id="payoutAmount" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 text-sm text-white focus:outline-none focus:border-green-500" placeholder="Amount Paid">
+                        <button onclick="submitPayout()" class="bg-green-600 hover:bg-green-500 text-white font-bold text-xs px-4 rounded-lg whitespace-nowrap">SETTLE</button>
+                    </div>
+                    <p class="text-[9px] text-slate-500 mt-2">Entering amount reduces current balance. History is preserved.</p>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="pt-4 border-t border-slate-800">
+                    <button onclick="deletePartnerAccount()" class="w-full py-3 bg-red-900/20 text-red-500 hover:bg-red-900/40 border border-red-900/50 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash"></i> DELETE PARTNER PERMANENTLY
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- OTHER MODALS (EXISTING) -->
     <div id="bannerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><h3 class="font-bold text-white">Manage App Banners</h3><button onclick="closeModal('bannerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 space-y-4 overflow-y-auto"><div class="bg-slate-800 p-4 rounded-xl border border-slate-700"><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Upload Image</label><input type="file" id="bannerFile" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 mb-3"><label class="block text-xs font-bold text-slate-400 uppercase mb-2">Redirect Link (Optional)</label><input type="text" id="bannerLink" placeholder="https://..." class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm mb-3"><button onclick="uploadBanner()" id="uploadBtn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition">UPLOAD & PUBLISH</button></div><h4 class="text-xs font-bold text-slate-500 uppercase mt-2">Active Banners</h4><div id="bannerList" class="space-y-3"></div></div></div></div>
     
     <div id="customerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
@@ -271,29 +388,6 @@
         </div>
     </div>
     
-    <div id="partnerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
-        <div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[80vh]">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
-                <h3 class="font-bold text-white">Delivery Partner Details</h3>
-                <button onclick="closeModal('partnerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="flex-1 overflow-auto p-4">
-                <table class="w-full text-left text-sm text-slate-400">
-                    <thead class="bg-slate-800 text-white sticky top-0">
-                        <tr>
-                            <th class="p-3">Name</th>
-                            <th class="p-3">Mobile</th>
-                            <th class="p-3">Vehicle</th>
-                            <th class="p-3">PIN/Pass</th>
-                            <th class="p-3 whitespace-nowrap">Recovery</th> <th class="p-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="partnerDetailTable" class="divide-y divide-slate-800"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
     <div id="assignModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4"><div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950"><h3 class="font-bold text-white">Assign Delivery Partner</h3><button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="p-4 overflow-y-auto space-y-2" id="partnerListContainer"></div></div></div>
 
     <div id="pinRecoveryModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center modal-overlay p-4">
@@ -310,7 +404,6 @@
                     <p class="text-sm text-slate-400">Send PIN to <b id="recName" class="text-white">User</b></p>
                     <p class="text-xs text-slate-500 font-mono mt-1" id="recMobile">98XXXXXXXX</p>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="sendPinWhatsApp()" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition">
                         <i class="fa-brands fa-whatsapp text-2xl"></i>
