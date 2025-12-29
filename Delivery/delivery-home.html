@@ -12,10 +12,6 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
-    <!-- ImageKit for Photo Proof -->
-    <script type="text/javascript" src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
-    
     <!-- Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -35,8 +31,6 @@
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #f59e0b; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(245,158,11,0.5); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #374151; border-radius: 2px; }
-        
-        .modal-overlay { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); }
     </style>
 </head>
 <body class="pb-24">
@@ -86,12 +80,13 @@
     <!-- MAIN CONTENT -->
     <div class="px-4 mt-20">
         
-        <!-- SMART RADIUS CONTROLLER -->
+        <!-- SMART RADIUS CONTROLLER (MAX 10 KM) -->
         <div id="radiusControl" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-4">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-crosshairs text-amber-500 mr-1"></i> Scanning Range</h3>
                 <span class="text-sm font-bold text-white bg-gray-700 px-2 py-0.5 rounded"><span id="radiusVal">5</span> KM</span>
             </div>
+            <!-- MAX CHANGED TO 10 -->
             <input type="range" min="1" max="10" value="5" class="w-full" id="radiusSlider" oninput="updateRadius(this.value)" onchange="listenOrders()">
             <p class="text-[9px] text-gray-500 mt-1 text-center">Showing orders within this circle.</p>
         </div>
@@ -154,16 +149,27 @@
                     <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
                 </div>
 
+                <!-- NEW: Updated Preferences Panel with Time & Distance Boxes -->
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Preferences</h4>
-                    <div class="flex gap-3">
-                        <div class="flex-1 bg-gray-900 p-2 rounded border border-gray-600 text-center">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase">Time</p>
+                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Trip & Preferences</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Pref. Time</p>
                             <p class="text-sm font-bold text-blue-400" id="actPrefTime">Evening</p>
                         </div>
-                        <div class="flex-1 bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
                             <p class="text-sm font-bold text-pink-400" id="actPrefBudget">Standard</p>
+                        </div>
+                        <!-- NEW BOX: Order Time -->
+                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Order Time</p>
+                            <p class="text-sm font-bold text-white" id="actOrderTime">--:--</p>
+                        </div>
+                        <!-- NEW BOX: Distance -->
+                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Distance</p>
+                            <p class="text-sm font-bold text-amber-400" id="actDist">Calc...</p>
                         </div>
                     </div>
                 </div>
@@ -174,6 +180,7 @@
                     <p class="text-lg font-bold text-white mt-0.5" id="actCust">Customer Name</p>
                     <p class="text-sm text-gray-400" id="actAddr">Address</p>
                     
+                    <!-- MAP ACTIONS -->
                     <div class="flex gap-2 mt-3">
                         <button onclick="openMap('dir')" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-600 hover:text-white transition flex items-center justify-center gap-1">
                             <i class="fa-solid fa-location-arrow"></i> Navigate
@@ -191,10 +198,7 @@
                 </div>
 
                 <div class="bg-gray-800 p-4 rounded-xl flex justify-between items-center border border-gray-700">
-                    <div>
-                        <span class="text-sm text-gray-400 font-bold block">Payment Mode</span>
-                        <span class="text-xs font-bold text-slate-500" id="paymentModeBadge">COD</span>
-                    </div>
+                    <span class="text-sm text-gray-400 font-bold">Cash to Collect</span>
                     <span class="text-2xl font-bold text-white">₹<span id="actFee">0</span></span>
                 </div>
             </div>
@@ -203,28 +207,6 @@
             </div>
         </div>
 
-    </div>
-
-    <!-- PHOTO PROOF MODAL (NEW) -->
-    <div id="proofModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4">
-        <div class="bg-gray-900 w-full max-w-sm rounded-2xl border border-gray-700 shadow-2xl p-6">
-            <h3 class="text-lg font-bold text-white mb-2">📸 Delivery Proof</h3>
-            <p class="text-xs text-gray-400 mb-4">Since payment is prepaid, please upload a photo of the parcel at the doorstep.</p>
-            
-            <div class="bg-gray-800 rounded-xl border border-gray-700 h-48 flex items-center justify-center relative overflow-hidden mb-4 group cursor-pointer" onclick="document.getElementById('proofFile').click()">
-                <img id="proofPreview" class="hidden w-full h-full object-cover">
-                <div id="proofPlaceholder" class="text-center">
-                    <i class="fa-solid fa-camera text-2xl text-gray-500 mb-2 group-hover:text-blue-400 transition"></i>
-                    <p class="text-xs text-gray-500">Tap to Capture</p>
-                </div>
-            </div>
-            <input type="file" id="proofFile" accept="image/*" class="hidden" onchange="previewProof(this)">
-            
-            <div class="flex gap-3">
-                <button onclick="closeProofModal()" class="flex-1 py-3 bg-gray-800 text-gray-300 font-bold rounded-xl text-xs hover:bg-gray-700">CANCEL</button>
-                <button onclick="uploadAndComplete()" id="btnConfirmProof" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl text-xs hover:bg-green-500 shadow-lg">CONFIRM</button>
-            </div>
-        </div>
     </div>
 
     <!-- Overlays -->
@@ -247,13 +229,6 @@
             messagingSenderId: "984733883633",
             appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
         };
-        
-        // ImageKit (Replace with your keys if you have them, else it falls back to basic check)
-        const imageKit = new ImageKit({
-            publicKey: "public_key_test", 
-            urlEndpoint: "https://ik.imagekit.io/your_id", 
-        });
-
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -263,7 +238,9 @@
         let isOnline = false, activeOrder = null, watchId, heartbeatInterval;
         let myLat = 0, myLng = 0;
         let serviceRadius = localStorage.getItem('rmz_pref_radius') || 5;
+        // Cap radius at 10 if previously higher
         if(serviceRadius > 10) serviceRadius = 10;
+        
         const PARTNER_PAY = 20;
 
         window.onload = () => {
@@ -271,6 +248,8 @@
             document.getElementById('vehicleType').innerText = session.vehicle;
             document.getElementById('menuName').innerText = session.name;
             document.getElementById('menuMobile').innerText = '+91 ' + session.mobile;
+            
+            // Set saved radius
             document.getElementById('radiusSlider').value = serviceRadius;
             document.getElementById('radiusVal').innerText = serviceRadius;
             document.getElementById('scanKm').innerText = serviceRadius;
@@ -287,13 +266,24 @@
         function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toastMsg').innerText=msg; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'),2000); }
         function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
 
-        // --- RADIUS & DISTANCE ---
-        function updateRadius(val) { serviceRadius = val; localStorage.setItem('rmz_pref_radius', val); document.getElementById('radiusVal').innerText = val; document.getElementById('scanKm').innerText = val; }
+        // --- NEW: RADIUS LOGIC ---
+        function updateRadius(val) {
+            serviceRadius = val;
+            localStorage.setItem('rmz_pref_radius', val);
+            document.getElementById('radiusVal').innerText = val;
+            document.getElementById('scanKm').innerText = val;
+        }
+
         function getDistance(lat1, lon1, lat2, lon2) {
             if(!lat1 || !lon1 || !lat2 || !lon2) return 9999;
-            const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return (R * c).toFixed(1); 
+            const R = 6371; // Earth radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return (R * c).toFixed(1); 
         }
 
         // --- TOGGLE DUTY ---
@@ -301,167 +291,337 @@
             isOnline = document.getElementById('dutySwitch').checked;
             localStorage.setItem('rmz_duty_on', isOnline);
             const status = document.getElementById('dutyStatusText');
+            
             if(isOnline) {
                 status.innerText = "ONLINE"; status.classList.add('text-green-400');
-                document.getElementById('offlineState').classList.add('hidden'); document.getElementById('statsSection').classList.remove('hidden'); document.getElementById('radiusControl').classList.remove('hidden');
+                document.getElementById('offlineState').classList.add('hidden');
+                document.getElementById('statsSection').classList.remove('hidden');
+                document.getElementById('radiusControl').classList.remove('hidden');
                 db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().set('offline');
-                startGPS(); startHeartbeat(); listenOrders();
+                startGPS();
+                startHeartbeat();
+                listenOrders();
             } else {
                 status.innerText = "OFFLINE"; status.classList.remove('text-green-400');
-                document.getElementById('offlineState').classList.remove('hidden'); document.getElementById('noOrdersState').classList.add('hidden'); document.getElementById('ordersContainer').classList.add('hidden'); document.getElementById('statsSection').classList.add('hidden'); document.getElementById('radiusControl').classList.add('hidden');
-                stopGPS(); stopHeartbeat(); db.ref('deliveryBoys/'+session.mobile+'/status').set('offline'); db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().cancel(); db.ref('orders').off();
+                document.getElementById('offlineState').classList.remove('hidden');
+                document.getElementById('noOrdersState').classList.add('hidden');
+                document.getElementById('ordersContainer').classList.add('hidden');
+                document.getElementById('statsSection').classList.add('hidden');
+                document.getElementById('radiusControl').classList.add('hidden');
+                stopGPS();
+                stopHeartbeat();
+                db.ref('deliveryBoys/'+session.mobile+'/status').set('offline');
+                db.ref('deliveryBoys/'+session.mobile+'/status').onDisconnect().cancel();
+                db.ref('orders').off();
             }
         }
 
         // --- HEARTBEAT & GPS ---
-        function startHeartbeat() { if(heartbeatInterval) clearInterval(heartbeatInterval); pingServer(); heartbeatInterval = setInterval(pingServer, 60000); }
+        function startHeartbeat() {
+            if(heartbeatInterval) clearInterval(heartbeatInterval);
+            pingServer(); heartbeatInterval = setInterval(pingServer, 60000); 
+        }
         function stopHeartbeat() { if(heartbeatInterval) clearInterval(heartbeatInterval); }
-        async function pingServer() { if(!isOnline) return; let batteryLevel = 'Unknown'; try { if(navigator.getBattery) { const battery = await navigator.getBattery(); batteryLevel = Math.round(battery.level * 100) + '%'; } } catch(e) {} db.ref('deliveryBoys/'+session.mobile).update({ lastHeartbeat: firebase.database.ServerValue.TIMESTAMP, status: 'online', battery: batteryLevel }); }
-        function startGPS() { if("geolocation" in navigator) { db.ref('deliveryBoys/'+session.mobile).update({status:'online'}); watchId = navigator.geolocation.watchPosition(p => { myLat = p.coords.latitude; myLng = p.coords.longitude; document.getElementById('locStatus').innerText = "GPS Live"; db.ref('deliveryBoys/'+session.mobile).update({ status:'online', location:{lat:myLat, lng:myLng}, lastUpdated: firebase.database.ServerValue.TIMESTAMP }); listenOrders(); }, e => document.getElementById('locStatus').innerText = "GPS Weak", {enableHighAccuracy: true}); } }
+        async function pingServer() {
+            if(!isOnline) return;
+            let batteryLevel = 'Unknown';
+            try { if(navigator.getBattery) { const battery = await navigator.getBattery(); batteryLevel = Math.round(battery.level * 100) + '%'; } } catch(e) {}
+            db.ref('deliveryBoys/'+session.mobile).update({ lastHeartbeat: firebase.database.ServerValue.TIMESTAMP, status: 'online', battery: batteryLevel });
+        }
+
+        function startGPS() {
+            if("geolocation" in navigator) {
+                db.ref('deliveryBoys/'+session.mobile).update({status:'online'});
+                watchId = navigator.geolocation.watchPosition(p => {
+                    myLat = p.coords.latitude;
+                    myLng = p.coords.longitude;
+                    document.getElementById('locStatus').innerText = "GPS Live";
+                    
+                    db.ref('deliveryBoys/'+session.mobile).update({
+                        status:'online',
+                        location:{lat:myLat, lng:myLng},
+                        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    
+                    // RE-CALCULATE DISTANCE FOR ACTIVE CARD IF EXISTS
+                    if(activeOrder) updateActiveDistance();
+                    
+                    listenOrders();
+                    
+                }, e => document.getElementById('locStatus').innerText = "GPS Weak", {enableHighAccuracy: true});
+            }
+        }
         function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
 
-        // --- ORDERS LISTENER ---
+        // --- LISTEN ORDERS (MAX 10KM FILTER) ---
         function listenOrders() {
             const list = document.getElementById('ordersList');
+            
             db.ref('orders').on('value', snap => {
-                if(!isOnline) return; list.innerHTML = ''; let count = 0;
+                if(!isOnline) return;
+                list.innerHTML = '';
+                let count = 0;
+                
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([id, o]) => {
                         const dist = parseFloat(getDistance(myLat, myLng, o.location.lat, o.location.lng));
                         const isInRange = dist <= parseFloat(serviceRadius);
                         const isMyOrder = (o.status === 'accepted' && o.deliveryBoyId === session.mobile);
+                        
                         if((o.status === 'placed' && isInRange) || isMyOrder) {
                             count++;
-                            const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop"; const address = o.location && o.location.address ? o.location.address : "Address Hidden"; const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0; const slab = o.payment && o.payment.slab ? o.payment.slab : 'Standard'; const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard"; const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
-                            let assignedInfo = ""; let cardClass = "glass-card"; let distanceBadge = `<span class="text-amber-400 font-bold ml-1"><i class="fa-solid fa-route"></i> ${dist} KM</span>`;
-                            if(isMyOrder) { assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`; cardClass = "glass-card border-2 border-blue-500 bg-blue-900/20"; }
+                            
+                            const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
+                            const address = o.location && o.location.address ? o.location.address : "Address Hidden";
+                            const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
+                            const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
+                            const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
+
+                            let assignedInfo = "";
+                            let cardClass = "glass-card";
+                            let distanceBadge = `<span class="text-amber-400 font-bold ml-1"><i class="fa-solid fa-route"></i> ${dist} KM</span>`;
+                            
+                            if(isMyOrder) {
+                                assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`;
+                                cardClass = "glass-card border-2 border-blue-500 bg-blue-900/20";
+                            }
+
                             let prodTxt = o.cart ? o.cart.map(i => `${i.count}x ${i.name}`).join(', ') : 'Items';
-                            const div = document.createElement('div'); div.className = `${cardClass} p-4 rounded-xl pulse-border relative`;
+                            
+                            const div = document.createElement('div');
+                            div.className = `${cardClass} p-4 rounded-xl pulse-border relative`;
+                            
+                            // Map Action: Direct Direction
                             const mapAction = `openMapDirect(${o.location.lat},${o.location.lng})`;
+
                             const btnDisabled = (activeOrder && activeOrder.id !== id) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
                             const btnText = (activeOrder && activeOrder.id === id) ? 'CONTINUE TASK' : (activeOrder ? 'Finish Current' : 'ACCEPT ORDER');
                             const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
                             const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${JSON.stringify(o).replace(/"/g, '&quot;')})` : `acceptOrder('${id}')`;
-                            div.innerHTML = `<div class="flex justify-between items-start mb-2"><h4 class="font-bold text-white text-lg">${shopName}</h4><span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${fee}</span></div><div class="text-xs text-gray-400 space-y-1 mb-3"><p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p><p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address} ${distanceBadge}</p><div class="flex gap-2 mt-2"><span class="bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-700"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span><span class="bg-pink-900 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-700"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span></div>${assignedInfo}</div><div class="flex gap-2"><button onclick="${mapAction}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Navigate"><i class="fa-solid fa-location-arrow"></i></button><button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>${btnText}</button></div>`;
+
+                            div.innerHTML = `
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-white text-lg">${shopName}</h4>
+                                    <span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${fee}</span>
+                                </div>
+                                <div class="text-xs text-gray-400 space-y-1 mb-3">
+                                    <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
+                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address} ${distanceBadge}</p>
+                                    <div class="flex gap-2 mt-2">
+                                        <span class="bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-700"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
+                                        <span class="bg-pink-900 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-700"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
+                                    </div>
+                                    ${assignedInfo}
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="${mapAction}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Navigate"><i class="fa-solid fa-location-arrow"></i></button>
+                                    <button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
+                                        ${btnText}
+                                    </button>
+                                </div>
+                            `;
                             list.appendChild(div);
                         }
                     });
                 }
+                
                 document.getElementById('orderCount').innerText = count;
-                if(!activeOrder) { if(count > 0) { document.getElementById('noOrdersState').classList.add('hidden'); document.getElementById('ordersContainer').classList.remove('hidden'); } else { document.getElementById('noOrdersState').classList.remove('hidden'); document.getElementById('ordersContainer').classList.add('hidden'); } }
+                
+                if(!activeOrder) {
+                    if(count > 0) {
+                        document.getElementById('noOrdersState').classList.add('hidden');
+                        document.getElementById('ordersContainer').classList.remove('hidden');
+                    } else {
+                        document.getElementById('noOrdersState').classList.remove('hidden');
+                        document.getElementById('ordersContainer').classList.add('hidden');
+                    }
+                }
             });
         }
 
-        function acceptOrder(id) { if(activeOrder) return showToast("Complete current order first!"); if(!confirm("Are you sure you want to accept?")) return; db.ref('orders/'+id).transaction(o => { if(o && (o.status === 'placed')) { o.status = 'accepted'; o.deliveryBoyId = session.mobile; o.deliveryBoyName = session.name; o.deliveryBoyMobile = session.mobile; return o; } }, (err, comm, snap) => { if(comm) { showToast("Accepted!"); loadActive(id, snap.val()); } else showToast("Taken by others or deleted!"); }); }
-        function checkForActive() { db.ref('orders').orderByChild('deliveryBoyId').equalTo(session.mobile).on('value', snap => { if(snap.exists()) { let foundActive = false; const orders = snap.val(); Object.keys(orders).forEach(key => { const o = orders[key]; if(o.status !== 'delivered') { loadActive(key, o); foundActive = true; if(!document.getElementById('dutySwitch').checked) { document.getElementById('dutySwitch').checked = true; toggleDuty(); } } }); if(!foundActive) { activeOrder = null; document.getElementById('activeOrderPanel').classList.add('hidden'); document.getElementById('statsSection').classList.remove('hidden'); document.getElementById('ordersContainer').classList.remove('hidden'); document.getElementById('radiusControl').classList.remove('hidden'); } } }); }
+        function acceptOrder(id) {
+            if(activeOrder) return showToast("Complete current order first!");
+            if(!confirm("Are you sure you want to accept?")) return;
+            
+            db.ref('orders/'+id).transaction(o => {
+                if(o && (o.status === 'placed')) {
+                    o.status = 'accepted'; 
+                    o.deliveryBoyId = session.mobile; 
+                    o.deliveryBoyName = session.name; 
+                    o.deliveryBoyMobile = session.mobile;
+                    return o;
+                }
+            }, (err, comm, snap) => {
+                if(comm) { showToast("Accepted!"); loadActive(id, snap.val()); }
+                else showToast("Taken by others or deleted!");
+            });
+        }
+
+        function checkForActive() {
+            db.ref('orders').orderByChild('deliveryBoyId').equalTo(session.mobile).on('value', snap => {
+                if(snap.exists()) {
+                    let foundActive = false;
+                    const orders = snap.val();
+                    Object.keys(orders).forEach(key => {
+                        const o = orders[key];
+                        if(o.status !== 'delivered') {
+                            loadActive(key, o);
+                            foundActive = true;
+                            if(!document.getElementById('dutySwitch').checked) {
+                                document.getElementById('dutySwitch').checked = true;
+                                toggleDuty();
+                            }
+                        }
+                    });
+                    
+                    if(!foundActive) {
+                        activeOrder = null;
+                        document.getElementById('activeOrderPanel').classList.add('hidden');
+                        document.getElementById('statsSection').classList.remove('hidden');
+                        document.getElementById('ordersContainer').classList.remove('hidden');
+                        document.getElementById('radiusControl').classList.remove('hidden');
+                    }
+                }
+            });
+        }
 
         function loadActive(id, o) {
             activeOrder = {id, ...o};
-            document.getElementById('ordersContainer').classList.add('hidden'); document.getElementById('noOrdersState').classList.add('hidden'); document.getElementById('statsSection').classList.add('hidden'); document.getElementById('radiusControl').classList.add('hidden'); document.getElementById('activeOrderPanel').classList.remove('hidden');
+            document.getElementById('ordersContainer').classList.add('hidden');
+            document.getElementById('noOrdersState').classList.add('hidden');
+            document.getElementById('statsSection').classList.add('hidden');
+            document.getElementById('radiusControl').classList.add('hidden');
+            document.getElementById('activeOrderPanel').classList.remove('hidden');
             
-            const custName = o.user && o.user.name ? o.user.name : "Customer"; const address = o.location && o.location.address ? o.location.address : "Unknown Address"; const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
-            const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard"; const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
-            const payMode = o.payment && o.payment.mode ? o.payment.mode : 'COD';
+            const custName = o.user && o.user.name ? o.user.name : "Customer";
+            const address = o.location && o.location.address ? o.location.address : "Unknown Address";
+            const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
+            const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
+            const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
 
-            document.getElementById('actShop').innerText = "You (Partner)"; document.getElementById('actShop').classList.add('text-blue-400'); document.getElementById('actShopLoc').innerText = "Your GPS is Live Tracking";
-            document.getElementById('actCust').innerText = custName; document.getElementById('actAddr').innerText = address; document.getElementById('actFee').innerText = fee;
-            document.getElementById('actPrefTime').innerText = prefTime; document.getElementById('actPrefBudget').innerText = prefBudg;
-            document.getElementById('paymentModeBadge').innerText = payMode; 
-            document.getElementById('paymentModeBadge').className = payMode === 'ONLINE' ? 'text-xs font-bold text-green-400 bg-green-900/30 px-2 py-1 rounded' : 'text-xs font-bold text-amber-500 bg-amber-900/30 px-2 py-1 rounded';
+            document.getElementById('actShop').innerText = "You (Partner)";
+            document.getElementById('actShop').classList.add('text-blue-400');
+            document.getElementById('actShopLoc').innerText = "Your GPS is Live Tracking";
+            
+            document.getElementById('actCust').innerText = custName;
+            document.getElementById('actAddr').innerText = address;
+            document.getElementById('actFee').innerText = fee;
+            
+            document.getElementById('actPrefTime').innerText = prefTime;
+            document.getElementById('actPrefBudget').innerText = prefBudg;
 
-            const ul = document.getElementById('actItems'); ul.innerHTML = o.cart ? o.cart.map(i => `<li class="flex justify-between border-b border-gray-700 pb-1 last:border-0"><span>${i.name}</span><span class="text-white font-bold">${i.qty} x${i.count}</span></li>`).join('') : '';
+            // NEW: UPDATE TIME & DISTANCE
+            updateActiveDistance();
+            
+            let orderTime = "N/A";
+            if(o.timestamp) {
+                const d = new Date(o.timestamp);
+                orderTime = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+            document.getElementById('actOrderTime').innerText = orderTime;
+
+            const ul = document.getElementById('actItems');
+            ul.innerHTML = o.cart ? o.cart.map(i => `
+                <li class="flex justify-between border-b border-gray-700 pb-1 last:border-0">
+                    <span>${i.name}</span>
+                    <span class="text-white font-bold">${i.qty} x${i.count}</span>
+                </li>
+            `).join('') : '';
+            
             updateBtnUI(o.status);
         }
 
+        // Helper to update distance dynamically
+        function updateActiveDistance() {
+            if(activeOrder && activeOrder.location && activeOrder.location.lat) {
+                const d = getDistance(myLat, myLng, activeOrder.location.lat, activeOrder.location.lng);
+                const el = document.getElementById('actDist');
+                if(el) el.innerText = d + " KM";
+            }
+        }
+
         function updateBtnUI(status) {
-            const b = document.getElementById('actionBtn'); const s = document.getElementById('activeStatus');
-            if(status === 'accepted') { s.innerText = "Going to Shop"; s.className = "text-xs bg-blue-500/20 text-blue-500 px-2 py-1 rounded uppercase font-bold"; b.innerText = "PICKED UP ORDER"; b.className = "w-full bg-blue-600 text-white font-bold py-4 rounded-xl"; b.onclick = () => updateStatus('out_for_delivery'); } 
-            else if(status === 'out_for_delivery') { s.innerText = "Out for Delivery"; s.className = "text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold"; b.innerText = "DELIVERED & COMPLETE"; b.className = "w-full bg-green-600 text-white font-bold py-4 rounded-xl"; b.onclick = () => updateStatus('delivered'); }
+            const b = document.getElementById('actionBtn');
+            const s = document.getElementById('activeStatus');
+            if(status === 'accepted') {
+                s.innerText = "Going to Shop"; s.className = "text-xs bg-blue-500/20 text-blue-500 px-2 py-1 rounded uppercase font-bold";
+                b.innerText = "PICKED UP ORDER"; b.className = "w-full bg-blue-600 text-white font-bold py-4 rounded-xl";
+                b.onclick = () => updateStatus('out_for_delivery');
+            } else if(status === 'out_for_delivery') {
+                s.innerText = "Out for Delivery"; s.className = "text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold";
+                b.innerText = "DELIVERED & CASH COLLECTED"; b.className = "w-full bg-green-600 text-white font-bold py-4 rounded-xl";
+                b.onclick = () => updateStatus('delivered');
+            }
         }
 
         function updateStatus(st) {
-            if(st === 'delivered') {
-                // LOGIC: Check Payment Mode
-                const mode = activeOrder.payment && activeOrder.payment.mode ? activeOrder.payment.mode : 'COD';
-                if(mode === 'ONLINE' || mode === 'UPI') {
-                    // Open Photo Proof Modal
-                    document.getElementById('proofModal').classList.remove('hidden');
-                    return;
-                }
-                
-                // For COD
-                if(!confirm("Confirm Cash Collected?")) return;
-            }
+            if(st === 'delivered' && !confirm("Confirm Cash Collected?")) return;
             
-            completeUpdate(st);
-        }
-
-        // --- PHOTO PROOF LOGIC ---
-        function closeProofModal() { document.getElementById('proofModal').classList.add('hidden'); document.getElementById('proofFile').value = ''; document.getElementById('proofPreview').classList.add('hidden'); document.getElementById('proofPlaceholder').classList.remove('hidden'); }
-        
-        function previewProof(input) {
-            if(input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('proofPreview').src = e.target.result;
-                    document.getElementById('proofPreview').classList.remove('hidden');
-                    document.getElementById('proofPlaceholder').classList.add('hidden');
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function uploadAndComplete() {
-            const file = document.getElementById('proofFile').files[0];
-            if(!file) return showToast("Capture Photo First");
-            
-            const btn = document.getElementById('btnConfirmProof');
-            btn.innerHTML = 'Uploading...'; btn.disabled = true;
-
-            // Upload Logic (ImageKit or Base64 Fallback)
-            imageKit.upload({
-                file : file, fileName : "proof_" + activeOrder.id + ".jpg", tags : ["proof"]
-            }, function(err, result) {
-                if(err) {
-                    // Fallback to Base64 if ImageKit fails or not configured
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = function() { saveProofAndFinish(reader.result); }
-                } else {
-                    saveProofAndFinish(result.url);
-                }
-            });
-        }
-
-        function saveProofAndFinish(url) {
-            db.ref('orders/'+activeOrder.id).update({ proofImage: url }).then(() => {
-                closeProofModal();
-                completeUpdate('delivered');
-            });
-        }
-
-        function completeUpdate(st) {
             const updates = { status: st };
+            
             db.ref('orders/'+activeOrder.id).update(updates).then(() => {
                 if(st === 'delivered') {
-                    triggerCelebration(); showToast("Order Completed! Great Job!");
+                    triggerCelebration();
+                    showToast("Order Completed! Great Job!");
+                    
                     db.ref('deliveryBoys/'+session.mobile+'/earnings').transaction(current => (current || 0) + PARTNER_PAY);
                     db.ref('deliveryBoys/'+session.mobile+'/trips').transaction(current => (current || 0) + 1);
-                    db.ref('orders/'+activeOrder.id).update({ completedAt: firebase.database.ServerValue.TIMESTAMP, partnerPay: PARTNER_PAY });
-                } else updateBtnUI(st);
+
+                    db.ref('orders/'+activeOrder.id).update({
+                        completedAt: firebase.database.ServerValue.TIMESTAMP,
+                        partnerPay: PARTNER_PAY
+                    });
+                }
+                else updateBtnUI(st);
             });
         }
 
-        function triggerCelebration() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); const overlay = document.getElementById('celebrationOverlay'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('hidden'), 3000); }
-        function fetchEarnings() { db.ref('deliveryBoys/'+session.mobile).on('value', s => { if(s.exists()) { const d = s.val(); document.getElementById('earnings').innerText = d.earnings || 0; document.getElementById('trips').innerText = d.trips || 0; } }); }
+        function triggerCelebration() {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            const overlay = document.getElementById('celebrationOverlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('hidden'), 3000);
+        }
+
+        function fetchEarnings() {
+            db.ref('deliveryBoys/'+session.mobile).on('value', s => {
+                if(s.exists()) {
+                    const d = s.val();
+                    document.getElementById('earnings').innerText = d.earnings || 0;
+                    document.getElementById('trips').innerText = d.trips || 0;
+                }
+            });
+        }
+
+        // Utils
         function changePin() { toggleMenu(); const p = prompt("New PIN:"); if(p && p.length===4) db.ref('deliveryBoys/'+session.mobile).update({pin:p}).then(()=>showToast("PIN Changed")); }
         function updateVehicle() { toggleMenu(); const v = prompt("Vehicle (Bike/Cycle):"); if(v) { db.ref('deliveryBoys/'+session.mobile).update({vehicle:v}); session.vehicle=v; localStorage.setItem('rmz_delivery_user',JSON.stringify(session)); document.getElementById('vehicleType').innerText=v; }}
         function logout() { localStorage.removeItem('rmz_delivery_user'); window.location.href='delivery-login.html'; }
-        function openMapDirect(lat, lng) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank'); }
-        function openMap(type) { if(!activeOrder || !activeOrder.location) return; const lat = activeOrder.location.lat; const lng = activeOrder.location.lng; if(type === 'dir') window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank'); else if (type === 'view') window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`, '_blank'); else if (type === 'cust') window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank'); }
+        
+        // BETTER MAPS FUNCTIONS
+        function openMapDirect(lat, lng) {
+            // Direct Navigation URL
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+        }
+        
+        function openMap(type) { 
+            if(!activeOrder || !activeOrder.location) return;
+            const lat = activeOrder.location.lat;
+            const lng = activeOrder.location.lng;
+            
+            if(type === 'dir') {
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+            } else if (type === 'view') {
+                // Try to open street view / panorama
+                window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`, '_blank');
+            } else if (type === 'cust') {
+                // Just viewing the location pin
+                window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank');
+            }
+        }
+        
         function callCust() { if(activeOrder && activeOrder.user) window.open(`tel:${activeOrder.user.mobile}`); }
         function openWhatsApp() { if(activeOrder && activeOrder.user) window.open(`https://wa.me/91${activeOrder.user.mobile}`, '_blank'); }
     </script>
 </body>
 </html>
-
