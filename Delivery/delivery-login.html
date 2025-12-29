@@ -103,6 +103,28 @@
         </div>
     </div>
 
+    <!-- VERIFICATION PENDING MODAL -->
+    <div id="verificationModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center modal-overlay p-6">
+        <div class="bg-gray-800 w-full max-w-sm rounded-2xl border border-gray-600 shadow-2xl p-6 text-center animate-[slideUp_0.3s_ease-out]">
+            <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <i class="fa-solid fa-hourglass-half text-4xl text-amber-500"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Verification Pending</h2>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+                Registration successful! Your profile is under review. You will be eligible for <b>Ramazone Delivery Partner</b> once verified.
+                <br><br>
+                <span class="text-amber-500">Our team will contact you soon.</span>
+            </p>
+            <div class="bg-gray-900 rounded-xl p-4 border border-gray-700 mb-6">
+                <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Status</p>
+                <p class="text-lg font-bold text-yellow-500 tracking-wider">WAITING APPROVAL</p>
+            </div>
+            <button onclick="window.location.reload()" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition">
+                OK, I'll Wait
+            </button>
+        </div>
+    </div>
+
     <!-- FORGOT PIN MODAL (Partner Version) -->
     <div id="forgotPinModal" class="fixed inset-0 z-50 hidden flex items-center justify-center modal-overlay p-4">
         <div class="bg-gray-800 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-600 animate-[fadeIn_0.3s_ease-out]">
@@ -232,7 +254,7 @@
                             document.getElementById('regSecQ').required = false;
                             document.getElementById('regSecA').required = false;
                             document.getElementById('btnText').innerText = "LOGIN SECURELY";
-                            forgotLink.classList.remove('hidden'); // Show Forgot PIN for existing users
+                            forgotLink.classList.remove('hidden'); 
                         } else {
                             // NEW USER
                             isNewUser = true;
@@ -241,7 +263,7 @@
                             document.getElementById('regSecQ').required = true;
                             document.getElementById('regSecA').required = true;
                             document.getElementById('btnText').innerText = "SET PIN & REGISTER";
-                            forgotLink.classList.add('hidden'); // Hide Forgot PIN for new users
+                            forgotLink.classList.add('hidden'); 
                             showToast("New Partner? Set up profile.");
                         }
                     });
@@ -276,19 +298,35 @@
                 if (!name || !vehicle) return showToast("Fill all details");
                 if (!secQ || !secA) return showToast("Set Security Question");
                 
+                // --- NEW STATUS: 'pending' (instead of 'offline') ---
                 const profile = { 
                     name, mobile, vehicle, pin, 
                     securityQ: secQ, securityA: secA,
-                    status: 'offline', 
+                    status: 'pending', // Default Pending Status
+                    earnings: 0,
+                    trips: 0,
                     joinedAt: firebase.database.ServerValue.TIMESTAMP 
                 };
+                
                 await db.ref('deliveryBoys/' + mobile).set(profile);
-                saveAndRedirect(profile);
+                
+                // Show Verification Modal instead of Redirect
+                document.getElementById('verificationModal').classList.remove('hidden');
             } else {
                 db.ref('deliveryBoys/' + mobile).once('value', s => {
                     const data = s.val();
-                    if(data.pin === pin) saveAndRedirect(data);
-                    else showToast("Wrong PIN!");
+                    if(data.pin === pin) {
+                        // --- CHECK STATUS ON LOGIN ---
+                        if(data.status === 'pending') {
+                            document.getElementById('verificationModal').classList.remove('hidden');
+                        } else if(data.status === 'disabled') {
+                            showToast("Account Disabled by Admin");
+                        } else {
+                            saveAndRedirect(data);
+                        }
+                    } else {
+                        showToast("Wrong PIN!");
+                    }
                 });
             }
         });
@@ -419,4 +457,3 @@
     </script>
 </body>
 </html>
-
