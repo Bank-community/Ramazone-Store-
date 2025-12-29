@@ -149,7 +149,7 @@
                     <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
                 </div>
 
-                <!-- NEW: Updated Preferences Panel with Time & Distance Boxes -->
+                <!-- Active Order Preferences Grid -->
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
                     <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Trip & Preferences</h4>
                     <div class="grid grid-cols-2 gap-3">
@@ -161,12 +161,12 @@
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
                             <p class="text-sm font-bold text-pink-400" id="actPrefBudget">Standard</p>
                         </div>
-                        <!-- NEW BOX: Order Time -->
+                        <!-- Order Time -->
                         <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Order Time</p>
                             <p class="text-sm font-bold text-white" id="actOrderTime">--:--</p>
                         </div>
-                        <!-- NEW BOX: Distance -->
+                        <!-- Distance -->
                         <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Distance</p>
                             <p class="text-sm font-bold text-amber-400" id="actDist">Calc...</p>
@@ -376,10 +376,16 @@
                             const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
                             const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
                             const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
+                            
+                            // ORDER TIME
+                            let orderTime = "N/A";
+                            if(o.timestamp) {
+                                const d = new Date(o.timestamp);
+                                orderTime = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            }
 
                             let assignedInfo = "";
                             let cardClass = "glass-card";
-                            let distanceBadge = `<span class="text-amber-400 font-bold ml-1"><i class="fa-solid fa-route"></i> ${dist} KM</span>`;
                             
                             if(isMyOrder) {
                                 assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`;
@@ -399,6 +405,28 @@
                             const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
                             const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${JSON.stringify(o).replace(/"/g, '&quot;')})` : `acceptOrder('${id}')`;
 
+                            // --- 4-GRID LAYOUT FOR CARD ---
+                            const gridHTML = `
+                                <div class="grid grid-cols-2 gap-2 mt-3 mb-2">
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Pref. Time</span>
+                                        <span class="text-xs font-bold text-blue-400 truncate">${prefTime}</span>
+                                    </div>
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Budget</span>
+                                        <span class="text-xs font-bold text-pink-400 truncate">${prefBudg}</span>
+                                    </div>
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Placed At</span>
+                                        <span class="text-xs font-bold text-white truncate">${orderTime}</span>
+                                    </div>
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Distance</span>
+                                        <span class="text-xs font-bold text-amber-400 truncate">${dist} KM</span>
+                                    </div>
+                                </div>
+                            `;
+
                             div.innerHTML = `
                                 <div class="flex justify-between items-start mb-2">
                                     <h4 class="font-bold text-white text-lg">${shopName}</h4>
@@ -406,11 +434,10 @@
                                 </div>
                                 <div class="text-xs text-gray-400 space-y-1 mb-3">
                                     <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
-                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address} ${distanceBadge}</p>
-                                    <div class="flex gap-2 mt-2">
-                                        <span class="bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-700"><i class="fa-regular fa-clock mr-1"></i>${prefTime}</span>
-                                        <span class="bg-pink-900 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold border border-pink-700"><i class="fa-solid fa-wallet mr-1"></i>${prefBudg}</span>
-                                    </div>
+                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
+                                    
+                                    ${gridHTML}
+                                    
                                     ${assignedInfo}
                                 </div>
                                 <div class="flex gap-2">
