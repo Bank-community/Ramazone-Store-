@@ -19,7 +19,8 @@ let currentStep = 1;
 let selectedCharge = 0;
 let selectedLabel = "";
 let selectedBudget = "standard";
-let selectedTime = "Standard"; // Default
+// Default set to Evening to match HTML
+let selectedTime = "Evening"; 
 let selectedAddress = null;
 let tempGeoData = null;
 
@@ -30,6 +31,10 @@ window.onload = () => {
     
     // UI Defaults
     highlightBudget('standard');
+    
+    // FORCE UPDATE TIME UI ON LOAD (Silent Mode)
+    // Yeh line ensure karegi ki text "Standard" na dikhe balki "Evening" dikhe
+    updateTimeUI('Evening', false); 
     
     // Auto-Location Logic
     initLocationLogic();
@@ -367,37 +372,30 @@ function autoSelectSlab(kg) {
 }
 
 function manualSelectRate(amt) {
-    // This function is effectively disabled by the locked logic below,
-    // but kept empty or minimal to prevent errors if clicked.
     showToast("Charge is auto-calculated by weight");
 }
 
 function selectRateLocked(amt, lbl) {
     selectedCharge = amt; selectedLabel = lbl;
     
-    // Disable ALL slab cards first
     document.querySelectorAll('.slab-card').forEach(c => {
         c.classList.remove('selected');
-        c.classList.add('disabled'); // Make them look disabled
-        c.style.pointerEvents = 'none'; // Prevent clicking
+        c.classList.add('disabled');
+        c.style.pointerEvents = 'none';
         c.style.opacity = '0.5';
     });
 
-    // Select and Highlight ONLY the correct one
     const activeBtn = document.getElementById('rateBtn'+amt);
     if(activeBtn) {
         activeBtn.classList.add('selected');
         activeBtn.classList.remove('disabled');
         activeBtn.style.opacity = '1';
-        // Note: pointerEvents still none so user can't toggle it, 
-        // but it looks fully active/selected.
     }
 
     updateTotals();
 }
 
 function updateTotals() {
-    // No Surcharge Logic anymore
     document.getElementById('cartTotal').innerText = selectedCharge;
     document.getElementById('finalTotal').innerText = selectedCharge;
 }
@@ -411,38 +409,36 @@ function selectBudget(type) {
 }
 function highlightBudget(t) { selectBudget(t); }
 
-// --- TIME LOGIC (MANUAL ONLY - NO CHARGE) ---
+// --- TIME LOGIC (FIXED: Default syncs with UI) ---
 function selectTime(time) {
-    // This handles the chips (Evening/Morning) if user clicks them
-    updateTimeUI(time);
+    updateTimeUI(time, true); // True means show toast on manual click
 }
 
 function selectManualTime(timeStr) {
     if(!timeStr) return;
-    
-    // Convert 24h to AM/PM for display
     const [hours, minutes] = timeStr.split(':');
     const displayTime = formatAMPM(hours, minutes);
-    
-    updateTimeUI(displayTime);
+    updateTimeUI(displayTime, true);
 }
 
-function updateTimeUI(displayTime) {
+function updateTimeUI(displayTime, showNotification = true) {
     selectedTime = displayTime;
     
     // Reset Chips Selection Visuals
     document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
     
-    // If it matches a chip, highlight it, else just update text
+    // If it matches a chip, highlight it
     const chip = document.getElementById(`time_${displayTime}`);
     if(chip) chip.classList.add('selected');
 
-    // Update Display Text
+    // Update Display Text and Style
     const dispEl = document.getElementById('timeDisplay');
     dispEl.innerText = displayTime;
+    
+    // Style update to show it's active
     dispEl.className = "text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200";
     
-    showToast(`Time set to ${displayTime}`);
+    if(showNotification) showToast(`Time set to ${displayTime}`);
 }
 
 function formatAMPM(hours, minutes) {
@@ -488,7 +484,7 @@ async function placeOrder() {
         location: { address: selectedAddress.text, lat: selectedAddress.lat, lng: selectedAddress.lng, title: selectedAddress.title },
         cart: cart,
         payment: { deliveryFee: selectedCharge, slab: selectedLabel, surcharge: 0, mode: 'COD' },
-        preferences: { budget: budgetFinal, deliveryTime: selectedTime },
+        preferences: { budget: budgetFinal, deliveryTime: selectedTime }, // Now sends 'Evening' correctly
         status: 'placed',
         timestamp: firebase.database.ServerValue.TIMESTAMP
     };
@@ -510,3 +506,4 @@ function showToast(msg) {
     t.classList.remove('opacity-0', 'pointer-events-none');
     setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2500);
 }
+
