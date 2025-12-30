@@ -76,6 +76,10 @@ function toggleMenu() {
     document.getElementById('menuOverlay').classList.toggle('open'); 
 }
 
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
 function logout() { 
     localStorage.removeItem('rmz_user'); 
     window.location.href='index.html'; 
@@ -313,6 +317,7 @@ function editOrder() {
 function setupUI() {
     let menuHtml = '';
 
+    // Common Top Items
     if (isOwner) {
         document.getElementById('ownerControls').classList.remove('hidden');
         document.getElementById('fabAddStock').classList.remove('hidden');
@@ -322,23 +327,17 @@ function setupUI() {
         
         menuHtml += `
             <button onclick="openAddModal()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
-                <i class="fa-solid fa-box text-indigo-500 w-5"></i> Add Stock
-            </button>
-            <button onclick="document.getElementById('bannerModal').classList.remove('hidden'); toggleMenu();" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
-                <i class="fa-solid fa-paintbrush text-pink-500 w-5"></i> My Banner Settings
+                <i class="fa-solid fa-box text-indigo-500 w-5"></i> Add Product
             </button>
             <button onclick="openHistory()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
                 <i class="fa-solid fa-clock-rotate-left text-blue-500 w-5"></i> Order History
             </button>
+            
             <div class="h-px bg-slate-100 my-2"></div>
-            <button onclick="changeShopName()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
-                <i class="fa-solid fa-pen-nib text-slate-400 w-5"></i> Change Shop Name
-            </button>
-            <button onclick="openAddressModal()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
-                <i class="fa-solid fa-location-dot text-slate-400 w-5"></i> Update Address
-            </button>
-            <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
-                <i class="fa-solid fa-key text-slate-400 w-5"></i> Change PIN
+            
+            <!-- NEW PROFILE SECTION -->
+            <button onclick="document.getElementById('profileMenuModal').classList.remove('hidden'); toggleMenu();" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
+                <i class="fa-solid fa-user-gear text-slate-500 w-5"></i> My Shop Profile
             </button>
         `;
     } else {
@@ -350,12 +349,20 @@ function setupUI() {
         `;
     }
 
-    // Common Items
+    // Common Bottom Items (New Features)
     menuHtml += `
-        <div class="h-px bg-slate-100 my-2"></div>
+        <button onclick="openVideoHelp()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
+            <i class="fa-brands fa-youtube text-red-500 w-5"></i> How to Use App
+        </button>
+        
         <button onclick="openSupportOptions()" class="w-full text-left px-4 py-3 rounded hover:bg-green-50 text-green-600 font-bold text-sm flex items-center gap-3">
             <i class="fa-brands fa-whatsapp w-5 text-xl"></i> Contact Support
         </button>
+        
+        <button onclick="openPolicies()" class="w-full text-left px-4 py-3 rounded hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-3">
+            <i class="fa-solid fa-shield-halved text-slate-400 w-5"></i> Policies & Terms
+        </button>
+
         <div class="h-px bg-slate-100 my-2"></div>
         <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-50 text-red-500 font-bold text-sm flex items-center gap-3">
             <i class="fa-solid fa-power-off w-5"></i> Logout
@@ -363,6 +370,65 @@ function setupUI() {
     `;
 
     document.getElementById('sidebarNav').innerHTML = menuHtml;
+}
+
+// --- NEW FEATURE: VIDEO HELP ---
+function openVideoHelp() {
+    toggleMenu();
+    document.getElementById('videoHelpModal').classList.remove('hidden');
+    const container = document.getElementById('videoListContainer');
+    container.innerHTML = '<p class="text-center text-slate-400 text-xs py-8"><i class="fa-solid fa-spinner fa-spin"></i> Loading videos...</p>';
+
+    db.ref('admin/videos').once('value', snap => {
+        container.innerHTML = '';
+        if(snap.exists()) {
+            Object.values(snap.val()).forEach(vid => {
+                const videoId = vid.link.split('v=')[1] || vid.link.split('/').pop();
+                const thumb = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                
+                container.innerHTML += `
+                    <div onclick="window.open('${vid.link}', '_blank')" class="flex gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100">
+                        <div class="w-24 h-16 bg-black rounded-lg flex-shrink-0 overflow-hidden relative">
+                            <img src="${thumb}" class="w-full h-full object-cover opacity-80">
+                            <div class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-play text-white text-lg drop-shadow-md"></i></div>
+                        </div>
+                        <div class="flex-1 py-1">
+                            <h4 class="text-sm font-bold text-slate-800 line-clamp-2 leading-tight">${vid.title}</h4>
+                            <p class="text-[10px] text-red-500 font-bold mt-1 uppercase">Watch Now</p>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            container.innerHTML = '<p class="text-center text-slate-400 text-xs py-8">No help videos found.</p>';
+        }
+    });
+}
+
+// --- NEW FEATURE: POLICIES ---
+function openPolicies() {
+    toggleMenu();
+    document.getElementById('policyViewModal').classList.remove('hidden');
+    loadPolicy('privacy'); // Load default
+}
+
+function loadPolicy(type) {
+    const contentArea = document.getElementById('policyContentArea');
+    contentArea.innerHTML = '<p class="text-center text-slate-400 mt-10">Loading...</p>';
+    
+    // Highlight buttons logic (simple visual)
+    // In a real app, toggle classes on buttons based on 'type'
+
+    db.ref('admin/policies/' + type).once('value', snap => {
+        if(snap.exists()) {
+            // Convert newlines to <br> for simple formatting if it's plain text
+            let text = snap.val();
+            if(!text.includes('<')) text = text.replace(/\n/g, '<br>');
+            contentArea.innerHTML = text;
+        } else {
+            contentArea.innerHTML = '<p class="text-center text-slate-400 mt-10">No content available.</p>';
+        }
+    });
 }
 
 // --- SEARCH BAR LOGIC ---
@@ -423,7 +489,9 @@ function repeatLastOrder() {
 
 // --- CONTACT SUPPORT ---
 function openSupportOptions() {
-    toggleMenu(); 
+    // Close sidebar if open
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('menuOverlay').classList.remove('open');
     document.getElementById('supportModal').classList.remove('hidden');
 }
 
@@ -710,6 +778,7 @@ function addCustomItemToCart() {
 
 // --- ADD/EDIT STOCK MODAL ---
 function openAddModal(id = null, name = '', qty = '') {
+    // Close sidebar
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('menuOverlay').classList.remove('open');
     
@@ -942,4 +1011,3 @@ function openInvoice(oid) {
     if(o.cart) { o.cart.forEach(i => { tbody.innerHTML += `<tr><td class="py-2 px-4 border-b border-slate-50"><p class="font-bold text-slate-800">${i.name}</p><p class="text-[10px] text-slate-400">${i.qty}</p></td><td class="py-2 px-4 border-b border-slate-50 text-right font-bold text-slate-700">x${i.count}</td></tr>`; }); }
     document.getElementById('invoiceModal').classList.remove('hidden');
 }
-
