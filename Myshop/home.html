@@ -143,7 +143,7 @@
         <div id="dotsContainer" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none"></div>
     </div>
 
-    <!-- LIVE TRACKING BANNER (NEW FEATURE) -->
+    <!-- LIVE TRACKING BANNER -->
     <div id="liveOrderBanner" onclick="openTrackingModal()" class="hidden hide-on-search mx-4 mt-4 bg-white rounded-xl shadow-lg border border-blue-100 p-4 flex items-center justify-between relative overflow-hidden active:scale-95 transition cursor-pointer group">
         <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>
         <div class="flex items-center gap-3">
@@ -285,7 +285,7 @@
         </button>
     </div>
 
-    <!-- TRACKING MODAL (NEW FEATURE) -->
+    <!-- TRACKING MODAL -->
     <div id="trackingModal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
         <div class="bg-white w-full max-w-md h-[85vh] sm:h-auto rounded-t-2xl sm:rounded-2xl p-0 shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.3s_ease-out]">
             <!-- Header -->
@@ -300,9 +300,7 @@
             <!-- Scrollable Content -->
             <div class="flex-1 overflow-y-auto p-5 bg-slate-50 space-y-5">
                  <!-- Timeline -->
-                 <div class="space-y-0 pl-2 border-l-2 border-slate-200 ml-2 py-2" id="modalTimeline">
-                     <!-- Items injected via JS -->
-                 </div>
+                 <div class="space-y-0 pl-2 border-l-2 border-slate-200 ml-2 py-2" id="modalTimeline"></div>
     
                  <!-- Partner Info Card -->
                  <div id="modalPartnerCard" class="hidden bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -394,7 +392,7 @@
     <div id="addStockModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0" id="addStockCard">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-900 text-lg" id="modalTitle">Add Stock</h3>
+                <h3 class="font-bold text-slate-900 text-lg" id="modalTitle">Add Product</h3>
                 <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4">
@@ -405,6 +403,67 @@
         </div>
     </div>
 
+    <!-- NEW MODAL 1: PROFILE SETTINGS MENU -->
+    <div id="profileMenuModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl animate-[slideUp_0.3s_ease-out]">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">My Shop Profile</h3>
+                <button onclick="closeModal('profileMenuModal')" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <button onclick="document.getElementById('bannerModal').classList.remove('hidden'); closeModal('profileMenuModal');" class="w-full text-left px-4 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm flex items-center gap-3 transition">
+                    <i class="fa-solid fa-image text-pink-500 w-6"></i> Banner Settings
+                </button>
+                <button onclick="changeShopName(); closeModal('profileMenuModal');" class="w-full text-left px-4 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm flex items-center gap-3 transition">
+                    <i class="fa-solid fa-store text-blue-500 w-6"></i> Change Shop Name
+                </button>
+                <button onclick="openAddressModal(); closeModal('profileMenuModal');" class="w-full text-left px-4 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm flex items-center gap-3 transition">
+                    <i class="fa-solid fa-location-dot text-green-500 w-6"></i> Update Address
+                </button>
+                <button onclick="changePin(); closeModal('profileMenuModal');" class="w-full text-left px-4 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm flex items-center gap-3 transition">
+                    <i class="fa-solid fa-key text-amber-500 w-6"></i> Change PIN
+                </button>
+                <label class="w-full text-left px-4 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm flex items-center gap-3 transition cursor-pointer">
+                    <i class="fa-solid fa-camera text-indigo-500 w-6"></i> Change Profile Picture
+                    <input type="file" class="hidden" accept="image/*" onchange="uploadCompressedLogo()">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW MODAL 2: HOW TO USE VIDEOS -->
+    <div id="videoHelpModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-0 shadow-xl overflow-hidden flex flex-col max-h-[80vh] animate-[slideUp_0.3s_ease-out]">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                <h3 class="font-bold text-slate-900 text-lg"><i class="fa-brands fa-youtube text-red-600 mr-2"></i>How to Use</h3>
+                <button onclick="closeModal('videoHelpModal')" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-3" id="videoListContainer">
+                <p class="text-center text-slate-400 text-xs py-8">Loading videos...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW MODAL 3: POLICIES VIEW -->
+    <div id="policyViewModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-0 shadow-xl overflow-hidden flex flex-col max-h-[80vh] animate-[slideUp_0.3s_ease-out]">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                <h3 class="font-bold text-slate-900 text-lg">Policies & Terms</h3>
+                <button onclick="closeModal('policyViewModal')" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-2 bg-slate-50 border-b border-slate-100 overflow-x-auto whitespace-nowrap">
+                <button onclick="loadPolicy('privacy')" class="px-4 py-2 text-xs font-bold bg-white rounded-lg shadow-sm border border-slate-200 mr-2 focus:ring-2 ring-indigo-500">Privacy</button>
+                <button onclick="loadPolicy('terms')" class="px-4 py-2 text-xs font-bold bg-white rounded-lg shadow-sm border border-slate-200 mr-2 focus:ring-2 ring-indigo-500">Terms</button>
+                <button onclick="loadPolicy('refund')" class="px-4 py-2 text-xs font-bold bg-white rounded-lg shadow-sm border border-slate-200 mr-2 focus:ring-2 ring-indigo-500">Refund</button>
+                <button onclick="loadPolicy('about')" class="px-4 py-2 text-xs font-bold bg-white rounded-lg shadow-sm border border-slate-200 focus:ring-2 ring-indigo-500">About</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 text-sm text-slate-600 leading-relaxed" id="policyContentArea">
+                Select a policy to view.
+            </div>
+        </div>
+    </div>
+
+    <!-- EXISTING BANNER MODAL (Reused in Profile) -->
     <div id="bannerModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl">
             <h3 class="font-bold text-slate-900 mb-4">Customize Shop Banner</h3>
