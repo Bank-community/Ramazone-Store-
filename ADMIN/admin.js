@@ -13,6 +13,7 @@ const firebaseConfig = {
 };
 
 // Initialize ImageKit for Banner Uploads
+// Note: Replace with your actual keys if needed
 const imageKit = new ImageKit({
     publicKey: "public_key_test", 
     urlEndpoint: "https://ik.imagekit.io/your_id", 
@@ -51,7 +52,7 @@ let recTargetName = null;
 let recTargetContext = null; 
 let recTargetShop = null;
 
-// Partner Management (New)
+// Partner Management
 let currentPartnerTab = 'active'; // 'active' or 'requests'
 let currentPartnerMobile = null; // For Nano Detail Modal
 
@@ -87,8 +88,8 @@ window.onload = () => {
 // ==========================================
 
 function switchTab(tabId) { 
-    // Define all tabs
-    const tabs = ['orders', 'map', 'analytics', 'history', 'partners', 'alerts'];
+    // Define all tabs (Added 'content' here)
+    const tabs = ['orders', 'map', 'analytics', 'history', 'partners', 'alerts', 'content'];
     
     // Hide all
     tabs.forEach(t => {
@@ -132,6 +133,10 @@ function switchTab(tabId) {
     if(tabId === 'analytics') { 
         initAnalytics(); 
     }
+
+    if(tabId === 'content') {
+        loadVideos(); // Load videos when content tab is opened
+    }
 }
 
 function toggleDrawer() {
@@ -170,7 +175,6 @@ function closeModal(id) {
 
 function logout() { 
     if(confirm("Are you sure you want to log out?")) {
-        // Optional: Clear session
         window.location.href = 'index.html'; 
     }
 }
@@ -188,30 +192,18 @@ function showToast(msg) {
 }
 
 // ==========================================
-// 5. PARTNER MANAGEMENT SYSTEM (HEAVY DUTY)
+// 5. PARTNER MANAGEMENT SYSTEM
 // ==========================================
 
-// --- A. DATA LISTENER ---
 function trackPartners() {
-    // Single Listener for ALL Partner Data
     db.ref('deliveryBoys').on('value', snap => {
         if(snap.exists()) {
             partnersData = snap.val();
-            
-            // 1. Update Dashboard Team Tab
             renderDashboardTeamList();
-            
-            // 2. Update Modal List (Manage Section)
             renderPartnerModalList();
-            
-            // 3. Update Map
             updateMapCounts();
             renderMarkers();
-            
-            // 4. Update Header Badges
             updatePartnerBadges();
-            
-            // 5. Refresh Nano Modal if open
             if(currentPartnerMobile && !document.getElementById('partnerFullDetailModal').classList.contains('hidden')) {
                 refreshNanoModal(currentPartnerMobile);
             }
@@ -223,17 +215,14 @@ function trackPartners() {
     });
 }
 
-// --- B. RENDERING FUNCTIONS ---
-
 function renderAllPartnerViews() {
     renderDashboardTeamList();
     renderPartnerModalList();
 }
 
 function renderDashboardTeamList() {
-    const tableBody = document.getElementById('partnersTable'); // In 'Delivery Force' Tab
+    const tableBody = document.getElementById('partnersTable');
     if(!tableBody) return;
-    
     tableBody.innerHTML = '';
     
     if(Object.keys(partnersData).length === 0) {
@@ -242,7 +231,6 @@ function renderDashboardTeamList() {
     }
 
     Object.entries(partnersData).forEach(([mobile, p]) => {
-        // Skip pending or invalid
         if(p.status === 'pending' || !p.name) return;
 
         const isOnline = p.status === 'online';
@@ -277,8 +265,8 @@ function renderDashboardTeamList() {
 }
 
 function renderPartnerModalList() {
-    const activeBody = document.getElementById('partnerDetailTable'); // In 'Manage Team' Modal
-    const reqList = document.getElementById('requestsList'); // In 'New Requests' Tab
+    const activeBody = document.getElementById('partnerDetailTable');
+    const reqList = document.getElementById('requestsList');
     
     if(activeBody) activeBody.innerHTML = '';
     if(reqList) reqList.innerHTML = '';
@@ -289,7 +277,6 @@ function renderPartnerModalList() {
     Object.entries(partnersData).forEach(([mobile, p]) => {
         if(!p.name) return;
 
-        // --- 1. NEW REQUESTS ---
         if(p.status === 'pending') {
             hasReq = true;
             if(reqList) {
@@ -300,7 +287,6 @@ function renderPartnerModalList() {
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center border border-amber-500/50 relative">
                                 <span class="text-amber-500 font-bold text-lg">${p.name.charAt(0).toUpperCase()}</span>
-                                <span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span></span>
                             </div>
                             <div>
                                 <h4 class="font-bold text-white text-base">${p.name}</h4>
@@ -324,8 +310,6 @@ function renderPartnerModalList() {
                 reqList.appendChild(card);
             }
         } 
-        
-        // --- 2. ACTIVE FLEET ---
         else {
             hasActive = true;
             if(activeBody) {
@@ -363,7 +347,6 @@ function renderPartnerModalList() {
         }
     });
 
-    // Handle Empty States
     const noReqMsg = document.getElementById('noReqMsg');
     if(noReqMsg) {
         if(!hasReq) noReqMsg.classList.remove('hidden');
@@ -395,15 +378,11 @@ function updatePartnerBadges() {
 
 function switchPartnerTab(type) {
     currentPartnerTab = type;
-    
     const btnActive = document.getElementById('btn-tab-active');
     const btnReq = document.getElementById('btn-tab-requests');
-    
-    // Reset Classes
     if(btnActive) btnActive.classList.remove('active', 'border-b-2');
     if(btnReq) btnReq.classList.remove('active', 'border-b-2');
     
-    // Apply Active State
     if(type === 'active') {
         if(btnActive) btnActive.classList.add('active', 'border-b-2');
         document.getElementById('view-active-partners').classList.remove('hidden');
@@ -413,11 +392,8 @@ function switchPartnerTab(type) {
         document.getElementById('view-active-partners').classList.add('hidden');
         document.getElementById('view-partner-requests').classList.remove('hidden');
     }
-    
     renderPartnerModalList();
 }
-
-// --- C. PARTNER ACTIONS ---
 
 function verifyOnWhatsApp(mobile, name) {
     const msg = `Hello ${name}, Welcome to Ramazone Delivery Fleet! 🛵\n\nYour registration is received. To activate your account, please send clear photos of:\n\n1. Aadhar Card (Front & Back)\n2. Driving License (For Bike)\n3. Your Selfie\n4. Bank Details/UPI for Payouts\n\nOnce verified, you can login.`;
@@ -427,7 +403,7 @@ function verifyOnWhatsApp(mobile, name) {
 function approvePartner(mobile) {
     if(confirm("Confirm Approval? This partner will be able to login.")) {
         db.ref('deliveryBoys/' + mobile).update({
-            status: 'offline', // Ready to login
+            status: 'offline', 
             joinedAt: firebase.database.ServerValue.TIMESTAMP,
             earnings: 0,
             lifetimeEarnings: 0,
@@ -439,14 +415,11 @@ function approvePartner(mobile) {
     }
 }
 
-// --- D. NANO DETAIL MODAL ---
-
 function openPartnerDetail(mobile) {
     currentPartnerMobile = mobile;
     const p = partnersData[mobile];
     if(!p) return;
 
-    // Populate Static Info
     document.getElementById('nanoInitials').innerText = p.name ? p.name.charAt(0).toUpperCase() : 'U';
     document.getElementById('nanoName').innerText = p.name;
     document.getElementById('nanoMobile').innerText = '+91 ' + mobile;
@@ -454,7 +427,6 @@ function openPartnerDetail(mobile) {
     const toggle = document.getElementById('nanoToggle');
     const statusTxt = document.getElementById('nanoStatusText');
     
-    // Status Display Logic
     if(p.status === 'disabled') {
         toggle.checked = false;
         statusTxt.innerText = "Partner is DISABLED (Login Blocked)";
@@ -490,14 +462,9 @@ function refreshNanoModal(mobile) {
 function togglePartnerStatus() {
     if(!currentPartnerMobile) return;
     const isChecked = document.getElementById('nanoToggle').checked;
-    
-    // If unchecked -> DISABLE
-    // If checked -> ENABLE (Set to 'offline' so they can login and start duty)
     const newStatus = isChecked ? 'offline' : 'disabled';
     
-    db.ref('deliveryBoys/' + currentPartnerMobile).update({
-        status: newStatus
-    }).then(() => {
+    db.ref('deliveryBoys/' + currentPartnerMobile).update({ status: newStatus }).then(() => {
         showToast(isChecked ? "Access Enabled" : "Access Disabled");
     });
 }
@@ -512,7 +479,6 @@ function submitPayout() {
     const currentBal = partnersData[currentPartnerMobile].earnings || 0;
     if(amount > currentBal) return showToast("Amount exceeds balance!");
 
-    // Transaction to safely deduct
     db.ref('deliveryBoys/' + currentPartnerMobile + '/earnings').transaction(curr => {
         return (curr || 0) - amount;
     }, (err, committed, snap) => {
@@ -520,7 +486,6 @@ function submitPayout() {
             showToast(`₹${amount} Settled Successfully`);
             input.value = '';
             
-            // Log Payout
             const logId = Date.now();
             db.ref('payouts/' + logId).set({
                 partnerId: currentPartnerMobile,
@@ -561,7 +526,6 @@ db.ref('orders').limitToLast(100).on('value', snap => {
     const notifList = document.getElementById('notificationList');
     const noAlerts = document.getElementById('noAlertsMsg');
     
-    // Clear lists
     if(liveGrid) liveGrid.innerHTML = ''; 
     if(histGrid) histGrid.innerHTML = ''; 
     if(notifList) notifList.innerHTML = '';
@@ -573,11 +537,9 @@ db.ref('orders').limitToLast(100).on('value', snap => {
 
     if(snap.exists()) {
         Object.entries(snap.val()).reverse().forEach(([id, order]) => {
-            // Stats Calculation
             if(order.status === 'delivered') totalRevenue += parseInt(order.payment.deliveryFee || 0);
             else activeCount++;
 
-            // Render Cards
             const cardHTML = createOrderCard(id, order);
             if(order.status === 'delivered') { 
                 if(histGrid) histGrid.innerHTML += cardHTML; 
@@ -585,14 +547,13 @@ db.ref('orders').limitToLast(100).on('value', snap => {
                 if(liveGrid) liveGrid.innerHTML += cardHTML; 
             }
 
-            // Notifications Logic
             if(new Date(order.timestamp) >= startOfToday) {
                 todayAlertCount++;
                 const statusColor = order.status === 'delivered' ? 'text-green-400' : (order.status === 'placed' ? 'text-amber-400' : 'text-blue-400');
                 
                 let partnerNameDisplay = "";
                 if(order.deliveryBoyName) {
-                    partnerNameDisplay = `<p class="text-[9px] text-blue-300 font-mono mt-0.5"><i class="fa-solid fa-motorcycle"></i> ${order.deliveryBoyName}</p>`;
+                    partnerNameDisplay = `<p class=\"text-[9px] text-blue-300 font-mono mt-0.5\"><i class=\"fa-solid fa-motorcycle\"></i> ${order.deliveryBoyName}</p>`;
                 }
 
                 if(notifList) notifList.innerHTML += `
@@ -618,11 +579,9 @@ db.ref('orders').limitToLast(100).on('value', snap => {
         liveGrid.innerHTML = `<div class="text-slate-500 col-span-full text-center py-10">No Active Orders</div>`;
     }
 
-    // Update Counters
     if(document.getElementById('totalRev')) document.getElementById('totalRev').innerText = totalRevenue;
     if(document.getElementById('anTotalRev')) document.getElementById('anTotalRev').innerText = totalRevenue;
     
-    // Update Badges
     const ae = [
         document.getElementById('sidebarActiveCount'), 
         document.getElementById('mobActiveCount'), 
@@ -639,14 +598,12 @@ db.ref('orders').limitToLast(100).on('value', snap => {
         } 
     });
     
-    // Alert State
     if(noAlerts) {
         if(todayAlertCount === 0) noAlerts.classList.remove('hidden'); 
         else noAlerts.classList.add('hidden');
     }
 });
 
-// --- HELPER: Time Formatter ---
 function formatTimeAMPM(timestamp) {
     const date = new Date(timestamp);
     let hours = date.getHours();
@@ -658,20 +615,17 @@ function formatTimeAMPM(timestamp) {
     return strTime;
 }
 
-// --- HELPER: Weight Calculator (IMPROVED REGEX) ---
 function calculateOrderWeight(cart) {
     if (!cart || !Array.isArray(cart)) return 0;
     let totalKg = 0;
     cart.forEach(item => {
         if (item.qty === 'Special Request') return; 
         
-        // Normalize: lowercase and remove spaces
         let txt = item.qty.toLowerCase().replace(/\s/g, ''); 
         let weight = 0; 
         let mul = item.count || 1; 
         let match;
         
-        // Regex Patterns for "5kg", "5.5kg", "500g", "1ltr"
         if (match = txt.match(/(\d+(\.\d+)?)kg/)) weight = parseFloat(match[1]);
         else if ((match = txt.match(/(\d+)g/)) || (match = txt.match(/(\d+)gm/))) weight = parseFloat(match[1]) / 1000;
         else if ((match = txt.match(/(\d+(\.\d+)?)l/)) || (match = txt.match(/(\d+(\.\d+)?)ltr/))) weight = parseFloat(match[1]);
@@ -682,7 +636,6 @@ function calculateOrderWeight(cart) {
     return totalKg.toFixed(2); 
 }
 
-// --- HELPER: Create Card HTML ---
 function createOrderCard(id, order) {
     let productsHTML = ''; 
     let waItems = ''; 
@@ -737,7 +690,6 @@ function createOrderCard(id, order) {
         adminAction = `<button onclick="${btnAction}" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded transition">RE-ASSIGN (Check KM)</button>`;
     }
 
-    // Badges Data
     const prefTime = order.preferences && order.preferences.deliveryTime ? order.preferences.deliveryTime : "Standard";
     const prefBudg = order.preferences && order.preferences.budget ? order.preferences.budget : "Standard";
     const orderWeight = calculateOrderWeight(order.cart);
@@ -847,7 +799,7 @@ function openDistanceModal(orderId, custLat, custLng) {
     const partners = [];
     if(partnersData) {
         Object.entries(partnersData).forEach(([mobile, boy]) => {
-            if(!boy || boy.status === 'pending') return; // Skip pending
+            if(!boy || boy.status === 'pending') return;
             let distVal = 9999;
             if(boy.location && boy.location.lat && boy.location.lng) {
                 distVal = parseFloat(getDistance(custLat, custLng, boy.location.lat, boy.location.lng));
@@ -1011,7 +963,7 @@ function renderMarkers() {
 }
 
 // ==========================================
-// 9. CUSTOMERS, PIN RECOVERY & BANNERS
+// 9. CUSTOMERS, PIN RECOVERY & BANNERS (LEGACY)
 // ==========================================
 
 function loadCustomers() {
@@ -1129,7 +1081,6 @@ function uploadBanner() {
     
     imageKit.upload({ file : file, fileName : "banner_" + Date.now() + ".jpg", tags : ["banner"] }, function(err, result) {
         if(err) { 
-            // Fallback to Base64 if ImageKit fails
             const reader = new FileReader(); 
             reader.readAsDataURL(file); 
             reader.onload = function () { saveBannerToDb(reader.result, link, btn); }; 
@@ -1162,7 +1113,6 @@ function initAnalytics() {
         const last7Days = {};
         const today = new Date();
         
-        // Init last 7 days keys
         for(let i=6; i>=0; i--) { 
             const d = new Date(today); 
             d.setDate(today.getDate()-i); 
@@ -1176,14 +1126,12 @@ function initAnalytics() {
                     totalRev += parseInt(o.payment.deliveryFee || 0);
                     customers.add(o.user.mobile);
                     
-                    // Product Counting
                     if(o.cart) {
                         o.cart.forEach(p => {
                             if(p.name) productCounts[p.name] = (productCounts[p.name] || 0) + (p.count || 1);
                         });
                     }
                     
-                    // Sales Chart Data
                     const dateKey = new Date(o.timestamp).toLocaleDateString();
                     if(last7Days.hasOwnProperty(dateKey)) {
                         last7Days[dateKey] += parseInt(o.payment.deliveryFee || 0);
@@ -1192,16 +1140,13 @@ function initAnalytics() {
             });
         }
 
-        // Update UI Counters
         document.getElementById('anTotalOrders').innerText = totalOrders;
         document.getElementById('anTotalRev').innerText = totalRev;
         document.getElementById('anAvgVal').innerText = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
         document.getElementById('anActiveCust').innerText = customers.size;
 
-        // Render Chart
         renderSalesChart(Object.keys(last7Days), Object.values(last7Days));
 
-        // Render Top Products
         const sortedProducts = Object.entries(productCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
         const prodContainer = document.getElementById('topProductsList');
         prodContainer.innerHTML = '';
@@ -1248,3 +1193,118 @@ function renderSalesChart(labels, data) {
         }
     });
 }
+
+// ==========================================
+// 11. CONTENT MANAGEMENT (MERGED)
+// ==========================================
+
+// --- A. Policies Logic ---
+function loadSelectedPolicy() {
+    const policyKey = document.getElementById('policySelector').value;
+    const editor = document.getElementById('policyEditor');
+    
+    editor.value = "Loading...";
+    editor.disabled = true;
+
+    db.ref('admin/policies/' + policyKey).once('value', snap => {
+        editor.disabled = false;
+        if(snap.exists()) {
+            editor.value = snap.val();
+        } else {
+            editor.value = "";
+            editor.placeholder = "No content yet. Write something...";
+        }
+    }, err => {
+        editor.disabled = false;
+        editor.value = "Error loading policy.";
+        console.error(err);
+    });
+}
+
+function savePolicy() {
+    const policyKey = document.getElementById('policySelector').value;
+    const content = document.getElementById('policyEditor').value;
+    const btn = document.getElementById('btnSavePolicy');
+
+    if(!content.trim()) return showToast("Content cannot be empty");
+
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+
+    db.ref('admin/policies/' + policyKey).set(content)
+    .then(() => {
+        showToast("Policy Updated Successfully!");
+        btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
+        btn.disabled = false;
+    })
+    .catch(err => {
+        showToast("Error saving: " + err.message);
+        btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
+        btn.disabled = false;
+    });
+}
+
+// --- B. Videos Logic ---
+function loadVideos() {
+    const list = document.getElementById('videoList');
+    if(!list) return;
+    
+    list.innerHTML = '<p class="text-center text-slate-500 text-xs py-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading videos...</p>';
+
+    db.ref('admin/videos').once('value', snap => {
+        list.innerHTML = '';
+        
+        if(snap.exists()) {
+            Object.entries(snap.val()).forEach(([key, vid]) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center group hover:bg-slate-750 transition";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-lg bg-red-900/20 text-red-500 flex items-center justify-center shrink-0 border border-red-900/30">
+                            <i class="fa-brands fa-youtube text-lg"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <h4 class="font-bold text-white text-sm truncate">${vid.title}</h4>
+                            <a href="${vid.link}" target="_blank" class="text-[10px] text-blue-400 hover:underline truncate block">${vid.link}</a>
+                        </div>
+                    </div>
+                    <button onclick="deleteVideo('${key}')" class="w-8 h-8 rounded-lg bg-slate-700 text-slate-400 hover:bg-red-600 hover:text-white transition flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        } else {
+            list.innerHTML = '<p class="text-center text-slate-500 text-xs py-4">No videos added yet.</p>';
+        }
+    });
+}
+
+function addVideo() {
+    const title = document.getElementById('vidTitle').value.trim();
+    const link = document.getElementById('vidLink').value.trim();
+
+    if(!title || !link) return showToast("Enter Title and Link");
+    if(!link.includes('youtube.com') && !link.includes('youtu.be')) return showToast("Only YouTube links allowed");
+
+    const newVid = { title, link, addedAt: firebase.database.ServerValue.TIMESTAMP };
+
+    db.ref('admin/videos').push(newVid)
+    .then(() => {
+        showToast("Video Added!");
+        document.getElementById('vidTitle').value = '';
+        document.getElementById('vidLink').value = '';
+        loadVideos();
+    });
+}
+
+function deleteVideo(key) {
+    if(confirm("Delete this video?")) {
+        db.ref('admin/videos/' + key).remove()
+        .then(() => {
+            showToast("Video Deleted");
+            loadVideos();
+        });
+    }
+}
+
