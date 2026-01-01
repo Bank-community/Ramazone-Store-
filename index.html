@@ -1,176 +1,365 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="hi" style="background-color: #002366;"> <!-- Blue bg to prevent white flash -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ramazone</title>
-    <link rel="manifest" href="/manifest.json">
-
-    <meta name="theme-color" content="#4F46E5" />
-    <link rel="apple-touch-icon" href="https://i.ibb.co/WvTg0bc5/20240813-084352.png">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-
-<body class="bg-white">
-
-    <div id="search-overlay"></div>
-    <div id="home-category-suggestions" class="hidden"></div>
-
-    <!-- HEADER -->
-    <header id="page-header" class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="py-2 flex items-center justify-between">
-                <div class="w-10">
-                    <button id="menu-toggle-btn" class="p-2 -ml-2"><img src="https://www.svgrepo.com/show/532195/menu.svg" alt="Menu" class="h-6 w-6"></button>
-                </div>
-                <div id="header-center-area" class="flex-grow text-center relative">
-                    <div id="header-logo-container">
-                        <a href="./index.html"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="inline-block" style="max-height: 40px;"></a>
-                    </div>
-                    <div id="header-search-container" class="absolute inset-0">
-                        <div class="search-link-header" id="header-search-trigger">
-                            <svg class="search-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
-                            <span>Search...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="w-auto flex justify-end items-center gap-2">
-                    <button id="install-app-btn" class="p-2 hidden"><img src="https://www.svgrepo.com/show/308714/mobile-download-phone-smartphone.svg" alt="Install App" class="h-6 w-6"></button>
-
-                    <!-- Cart Link -->
-                    <a href="order.html" id="header-cart-link" class="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
-                        <i class="fas fa-shopping-cart text-2xl"></i>
-                        <span id="cart-item-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white empty:hidden"></span>
-                    </a>
-
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- SIDE MENU -->
-    <div id="menu-overlay"></div>
-    <nav id="side-menu">
-        <div class="p-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold">Menu</h2>
-        </div>
-        <div class="menu-items"><a href="./index.html" class="menu-item active"><img src="https://www.svgrepo.com/show/521156/home-4.svg" alt="Home"><span>Home</span></a><a href="./order.html" class="menu-item" id="menu-cart-link"><img src="https://www.svgrepo.com/show/521847/shopping-cart.svg" alt="Cart"><span>Cart</span></a><a href="#" class="menu-item" id="menu-play-link" target="_blank"><img src="https://www.svgrepo.com/show/391122/video-play.svg" alt="Play"><span>Play</span></a><a href="#" class="menu-item" id="menu-cashback-link" target="_blank"><img src="https://www.svgrepo.com/show/491787/cashback-ui-web.svg" alt="Cashback"><span>Cashback</span></a>
-            <div id="menu-follow-item" class="menu-item"><img src="https://cdn-icons-png.flaticon.com/128/2326/2326024.png" alt="Follow"><span>Follow</span><i class="fas fa-chevron-down text-xs ml-auto"></i></div>
-            <div id="follow-submenu" class="submenu"></div>
-        </div>
-    </nav>
-
-    <!-- SEARCH BAR CONTAINER -->
-    <div id="search-bar-container"></div>
-
-    <!-- MAIN SLIDER -->
-    <div class="slider-wrapper">
-        <div class="slider-container">
-            <div class="slider" id="main-slider"></div>
-        </div>
-        <div class="slider-dots" id="slider-dots-container"></div>
-    </div>
-
-    <!-- NOTE: Single Banner section removed from here. It will now be loaded dynamically inside main-content-area -->
-
-    <!-- DYNAMIC SECTIONS AREA -->
-    <main id="main-content-area" class="mb-16 md:mb-0">
-    </main>
-
-    <!-- LOADERS & NOTIFICATIONS -->
-    <div id="deals-loader" class="deals-loader-container hidden">
-        <div class="spinner"></div>
-    </div>
-    <div class="social-media-links" id="social-links-container" style="display: none;"></div>
-    <div id="toast-notification"></div>
-
-    <!-- FOOTER -->
-    <footer id="desktop-footer">
-        <div class="container mx-auto">
-            <div class="footer-grid">
-                <div class="footer-column"><img src="https://i.ibb.co/CpBR4gjN/20250708-142020.png" alt="Ramazone Logo" class="h-10 mb-4">
-                    <p>Aapki Apni Dukaan.</p>
-                </div>
-                <div class="footer-column">
-                    <h3>Quick Links</h3><a href="#">About Us</a><a href="#">Contact Us</a>
-                </div>
-                <div class="footer-column">
-                    <h3>Help</h3><a href="#">Payments</a><a href="#">Shipping</a><a href="#">FAQ</a>
-                </div>
-                <div class="footer-column">
-                    <h3>Follow Us</h3>
-                    <div id="desktop-social-links" class="flex gap-4"></div>
-                </div>
-            </div>
-            <div class="footer-bottom">&copy; <span id="copyright-year">2025</span> Ramazone. All Rights Reserved.</div>
-        </div>
-    </footer>
-
-    <!-- ADD TO CART POPUP -->
-    <div id="home-go-to-cart-notification" class="fixed bottom-4 right-4 left-4 md:left-auto md:max-w-md bg-white rounded-lg shadow-2xl p-4 transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out z-50 pointer-events-none flex items-center justify-between">
-        <div>
-            <p class="font-bold text-gray-800">Successfully added to cart!</p>
-            <p id="home-notification-summary" class="text-sm text-gray-600"></p>
-        </div>
-        <a href="order.html" class="text-white font-bold py-2 px-5 rounded-lg text-sm" style="background-color: var(--primary-color);">View Cart</a>
-    </div>
-
-    <!-- LOCATION SELECTOR MODAL -->
-    <div id="location-overlay"></div>
-    <div id="location-selector-panel">
-        <div class="location-panel-header">
-            <h3>Select Location</h3>
-            <button id="close-location-btn">&times;</button>
-        </div>
-        <div class="location-panel-body">
-            <!-- TIER 1: STATES -->
-            <div class="loc-tier-header">
-                <span class="loc-tier-number">1</span> Select State
-            </div>
-            <div id="loc-state-tabs" class="loc-tab-container">
-                <div class="location-loading">Loading states...</div>
-            </div>
-
-            <!-- TIER 2: DISTRICTS -->
-            <div id="loc-district-tier" class="hidden">
-                <div class="loc-tier-header">
-                    <span class="loc-tier-number">2</span> Select District
-                </div>
-                <div id="loc-district-tabs" class="loc-tab-container">
-                    <p class="loc-tab-placeholder">Please select a state first.</p>
-                </div>
-            </div>
-
-            <!-- TIER 3: AREAS -->
-            <div id="loc-area-tier" class="hidden">
-                <div class="loc-tier-header">
-                    <span class="loc-tier-number">3</span> Select Area
-                </div>
-                <div class="location-search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="loc-area-search-input" placeholder="Search area in selected district...">
-                </div>
-                <div id="loc-area-list-container">
-                    <p class="loc-tab-placeholder">Please select a district first.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <meta name="theme-color" content="#002366"> <!-- Royal Blue Theme -->
+    <title>Trust Community Fund</title>
+    
+    <!-- Speed Optimization -->
+    <link rel="preload" href="user-style.css" as="style">
+    <link rel="preload" href="https://ik.imagekit.io/kdtvm0r78/1764742107098.png" as="image">
+    
+    <link rel="manifest" href="/manifest-user.json">
+    
+    <!-- NEW LOGO (App Icon) -->
+    <link rel="shortcut icon" href="https://ik.imagekit.io/kdtvm0r78/IMG-20251202-WA0000.jpg" type="image/x-icon">
+    <link rel="apple-touch-icon" href="https://ik.imagekit.io/kdtvm0r78/IMG-20251202-WA0000.jpg" sizes="180x180">
+    
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- Render Utils -->
-    <script src="render-utils.js"></script>
-    <!-- MAIN LOGIC -->
-    <script src="main.js"></script>
-</body>
+    <link rel="stylesheet" href="user-style.css">
 
+    <!-- SPLASH SCREEN STYLES -->
+    <style>
+        /* Splash Screen Container */
+        #custom-splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #002366; /* Matching Theme Color */
+            z-index: 99999; /* Always on top */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.5s ease-out, visibility 0.5s;
+        }
+
+        /* Splash Logo Styling */
+        .splash-logo {
+            width: 180px; 
+            height: 180px;
+            object-fit: contain;
+            animation: pulseLogo 2s infinite;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Splash Text Styling */
+        .splash-text {
+            color: white;
+            margin-top: 20px;
+            font-family: sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            animation: fadeInOut 1.5s infinite;
+        }
+
+        /* Happy New Year Text */
+        .new-year-text {
+            color: #FFD700; /* Gold Color */
+            margin-top: 10px;
+            font-family: 'Georgia', serif; 
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            animation: bounceIn 1.5s ease-out;
+        }
+
+        /* Animations */
+        @keyframes pulseLogo {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        /* Class to hide splash */
+        .splash-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body style="background-color: #002366; margin: 0;">
+
+    <!-- START CUSTOM SPLASH SCREEN -->
+    <div id="custom-splash-screen">
+        <img src="https://ik.imagekit.io/kdtvm0r78/1000120265_KnbojetdvB.png" alt="TCF Loading" class="splash-logo">
+        <p class="splash-text">TRUST COMMUNITY FUND</p>
+        <p class="new-year-text">✨ Happy New Year 2026 ✨</p>
+    </div>
+    <!-- END CUSTOM SPLASH SCREEN -->
+
+    <header class="animate-on-scroll">
+        <div id="headerDisplay" class="header-display">
+            <div class="ad-content"></div>
+            <div class="ticker-wrap">
+                <div class="ticker" id="newsTicker">Welcome to Trust Community Fund... Your trusted financial partner...</div>
+            </div>
+        </div>
+        <h1>Trust Community Fund</h1>
+        <h4>ESTD: 23 June 2024</h4>
+        <div class="header-actions" id="headerActionsContainer">
+            <p class="loading-text" style="color: white;">Loading Actions...</p>
+        </div>
+        
+        <div id="install-button-container" class="header-actions" style="padding-top: 0;"></div>
+
+    </header>
+     
+    <main class="content-wrapper">
+        <section class="bank-members animate-on-scroll"> 
+            <div class="header-container"> 
+                <h2 class="bank-headline">COMMUNITY MEMBERS</h2> 
+                <div class="header-buttons-wrapper" id="staticHeaderButtons">
+                </div>
+            </div> 
+            <div class="member-slider" id="memberContainer"> <p class="loading-text">Authenticating...</p> </div> 
+        </section> 
+
+        <section class="action-cards-section animate-on-scroll"> 
+            <h2>Quick Actions</h2> 
+            <div class="action-cards"> 
+                <div class="action-card info-card animate-on-scroll" id="totalMembersCard" style="cursor: pointer;">
+                    <img src="https://ik.imagekit.io/kdtvm0r78/IMG-20251202-WA0000.jpg" class="action-card-icon-img" alt="TCF Coin" style="width: 55px; height: 55px; margin-bottom: 8px;">
+                    <span class="info-card-label">All members</span>
+                    <span class="info-card-value" id="totalMembersValue">--</span>
+                </div> 
+                
+                <div class="action-card info-card animate-on-scroll" id="totalLoanCard" onclick="window.open('loan_dashbord.html')" style="cursor: pointer;">
+                    <i data-feather="trending-up" class="action-card-icon"></i>
+                    <span class="info-card-label">All time loan<br><small style="color: var(--primary-color); font-weight: bold; font-size: 0.9em;">Click here</small></span>
+                    <span class="info-card-value total-loan-value" id="totalLoanValue">₹--</span>
+                </div> 
+                <a href="members.html" class="action-card animate-on-scroll"><i data-feather="list" class="action-card-icon"></i><span>All members info</span></a> 
+                <a href="https://chat.whatsapp.com/G39I0hP55WIDHMu5YkAjDZ?mode=hqrt3" target="_blank" class="action-card whatsapp-card animate-on-scroll"><img src="https://www.svgrepo.com/show/452133/whatsapp.svg" alt="WhatsApp Icon" class="action-card-icon-img"><span>Whatsapp Support</span></a> 
+                <a href="loan_form.html" class="action-card animate-on-scroll"><i data-feather="file-text" class="action-card-icon"></i><span>Loan form</span></a> 
+                
+            <a href="https://chatgpt.com/g/g-p-693ea59f7ee881918218c0fa5516fd29-tcf-assistant/project" class="action-card animate-on-scroll">
+    <div class="action-card-icon">
+        <svg fill="#000000" viewBox="0 0 24 24" role="img" xmlns="http://www.w3.org/2000/svg">
+            <title>OpenAI icon</title>
+            <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"></path>
+        </svg>
+    </div>
+    <span>Chat GPT</span>
+</a>
+
+               <a href="gallery.html" class="action-card animate-on-scroll">
+    <span class="action-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+            <path d="M1.75 10.0004V14.0004C1.75 16.8288 1.75 18.243 2.62868 19.1217C2.84602 19.339 3.09612 19.5026 3.39228 19.6257C3.24986 18.5745 3.25 17.4288 3.25 16.099V7.90155C3.25 6.57182 3.24986 5.4261 3.39226 4.375C3.09611 4.49812 2.84601 4.6617 2.62868 4.87903C1.75 5.75771 1.75 7.17192 1.75 10.0004Z" fill="#1C274C"/>
+            <path d="M21.75 10.0004V14.0004C21.75 16.8288 21.75 18.243 20.8713 19.1217C20.654 19.339 20.4039 19.5026 20.1077 19.6257C20.2501 18.5745 20.25 17.4288 20.25 16.099V7.90156C20.25 6.57183 20.2501 5.4261 20.1077 4.375C20.4039 4.49812 20.654 4.6617 20.8713 4.87903C21.75 5.75771 21.75 7.17192 21.75 10.0004Z" fill="#1C274C"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.62868 2.87868C4.75 3.75736 4.75 5.17157 4.75 8V16C4.75 18.8284 4.75 20.2426 5.62868 21.1213C6.50736 22 7.92157 22 10.75 22H12.75C15.5784 22 16.9926 22 17.8713 21.1213C18.75 20.2426 18.75 18.8284 18.75 16V8C18.75 5.17157 18.75 3.75736 17.8713 2.87868C16.9926 2 15.5784 2 12.75 2H10.75C7.92157 2 6.50736 2 5.62868 2.87868ZM8 17C8 16.5858 8.33579 16.25 8.75 16.25H11.75C12.1642 16.25 12.5 16.5858 12.5 17C12.5 17.4142 12.1642 17.75 11.75 17.75H8.75C8.33579 17.75 8 17.4142 8 17ZM8 13C8 12.5858 8.33579 12.25 8.75 12.25H14.75C15.1642 12.25 15.5 12.5858 15.5 13C15.5 13.4142 15.1642 13.75 14.75 13.75H8.75C8.33579 13.75 8 13.4142 8 13ZM8 9C8 8.58579 8.33579 8.25 8.75 8.25H14.75C15.1642 8.25 15.5 8.58579 15.5 9C15.5 9.41421 15.1642 9.75 14.75 9.75H8.75C8.33579 9.75 8 9.41421 8 9Z" fill="#1C274C"/>
+        </svg>
+    </span>
+    <span>Rules<br>Certificate</span>
+</a>
+
+                <a href="calculator.html" class="action-card animate-on-scroll"><i data-feather="percent" class="action-card-icon"></i><span>Loan Calculator</span></a>
+            </div> 
+        </section>
+        
+        <section class="products-section animate-on-scroll">
+            <h2>Products on EMI</h2>
+            <div class="products-container" id="productsContainer">
+                <p class="loading-text">Loading Products...</p>
+            </div>
+        </section>
+
+        <section class="info-slider-section animate-on-scroll"> <h2>💡 Community Info</h2> <div class="info-slider-container" id="infoSlider"> </div> </section> 
+        <section class="letter-slider-section animate-on-scroll"> <h2><i data-feather="image"></i> About Community Letter</h2> <div class="slider-container"> <div class="slides" id="communityLetterSlides"></div> <button class="prev" id="prevSlideBtn">❮</button> <button class="next" id="nextSlideBtn">❯</button> </div> <div class="slide-indicator" id="slideIndicator"></div> </section> 
+    </main>
+
+    <footer>
+        <p>© <span id="currentYear"></span> Trust Community Fund. All rights reserved. <a href="Exit_Letter.html" style="color: #a0aec0; text-decoration: none; font-size: 0.8em; opacity: 0.7;" title="Exit Community Letter">Exit</a></p>
+    </footer>
+
+    <!-- LUXURY BALANCE MODAL -->
+    <div id="balanceModal" class="modal">
+        <div class="modal-content luxury-modal">
+            <span class="close" id="closeBalanceModal">×</span>
+            <h2 class="luxury-title">Community Funds</h2>
+            
+            <div class="balance-group">
+                <p class="balance-label">Total SIP Amount</p>
+                <div id="totalSipAmountDisplay" class="balance-value green-text">₹0</div>
+            </div>
+
+            <div class="balance-group">
+                <p class="balance-label">Total Current Loan Amount</p>
+                <div id="totalCurrentLoanDisplay" class="balance-value red-text">₹0</div>
+            </div>
+
+            <div class="balance-group">
+                <p class="balance-label">Net Return Amount (After 10% Deduction)</p>
+                <div id="netReturnAmountDisplay" class="balance-value gold-text-value">₹0</div>
+            </div>
+
+            <hr class="luxury-divider">
+
+            <div class="balance-group total-group">
+                <p class="balance-label total-label">Available Community Balance</p>
+                <div id="availableAmountDisplay" class="balance-value green-text large-text">₹0</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- LUXURY PENALTY WALLET MODAL -->
+    <div id="penaltyWalletModal" class="modal">
+        <div class="modal-content luxury-modal">
+            <span class="close" id="closePenaltyWalletModal">×</span>
+            <h2 class="luxury-title">PENALTY WALLET</h2>
+            
+            <div class="balance-group total-group">
+                <div id="penaltyBalance" class="balance-value red-text large-text">₹0</div>
+                <p class="balance-label">Current Penalty Balance</p>
+            </div>
+
+            <hr class="luxury-divider">
+            
+            <button id="viewHistoryBtn" class="civil-button" style="margin-bottom: 20px; width: 100%; border-radius: 8px;">View History</button>
+            <ul class="penalty-history-list" id="penaltyHistoryList" style="display: none;"></ul>
+        </div>
+    </div>
+
+    <div id="memberProfileModal" class="modal"> 
+        <div class="modal-content"> 
+            <span class="close" id="closeProfileModal">×</span> 
+            <div class="profile-modal-header" id="profileModalHeader"><img id="profileModalImage" src="" alt="Profile Picture"></div> 
+            <div class="profile-modal-prime-tag" id="profileModalPrimeTag">👑 Prime</div> 
+            <h2 id="profileModalName">Member Name</h2> 
+            <ul class="profile-stats-list"> 
+                <li><span class="stat-label"><i data-feather="calendar"></i> Joining Date</span><span id="profileModalJoiningDate" class="stat-value">--</span></li> 
+                <li><span class="stat-label"><i data-feather="dollar-sign"></i> Current Balance</span><span id="profileModalBalance" class="stat-value positive">₹0</span></li> 
+                <li><span class="stat-label"><i data-feather="trending-up"></i>Loan Return Pay</span><span id="profileModalReturn" class="stat-value info">₹0</span></li> 
+                <li><span class="stat-label"><i data-feather="check-circle"></i> This Month SIP</span><span id="profileModalSipStatus" class="stat-value">--</span></li> 
+                <li><span class="stat-label"><i data-feather="hash"></i> Loan Count</span><span id="profileModalLoanCount" class="stat-value">0</span></li> 
+            </ul> 
+            <button id="fullViewBtn" style="width: 100%; padding: 12px; margin-top: 20px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer;">Full View</button> 
+        </div> 
+    </div> 
+    
+    <div id="sipStatusModal" class="modal"> 
+        <div class="modal-content"> 
+            <span class="close" id="closeSipStatusModal">×</span> 
+            <h2>Current Month SIP Status</h2> 
+            <div class="sip-status-list" id="sipStatusListContainer"></div> 
+        </div> 
+    </div> 
+
+    <div id="allMembersModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeAllMembersModal">×</span>
+            <h2>All Community Members</h2>
+            <div class="all-members-list" id="allMembersListContainer"></div>
+        </div>
+    </div>
+
+    <div id="passwordPromptModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closePasswordModal">×</span>
+            <h2>Enter Password</h2>
+            <p style="margin-bottom: 20px; font-size: 0.9em; color: var(--light-text);">Please enter the member's password to view full details.</p>
+            <input type="number" id="passwordInput" placeholder="Password" style="width: 100%; padding: 12px; font-size: 1.1em; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; box-sizing: border-box;">
+            <button id="submitPasswordBtn" style="width: 100%; padding: 12px; background-color: var(--success-color); color: white; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer;">Submit</button>
+        </div>
+    </div>
+
+    <div id="fullProfileViewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeFullProfileModal">×</span>
+            <h2 id="fullProfileName">Member Full Details</h2>
+            <div class="full-profile-body">
+                <div class="full-profile-grid">
+                    <div class="full-profile-item"><strong>Membership ID</strong><span id="fullProfileMemberId">--</span></div>
+                    <div class="full-profile-item"><strong>Mobile Number</strong><span id="fullProfileMobile">--</span></div>
+                    <div class="full-profile-item"><strong>Date of Birth</strong><span id="fullProfileDob">--</span></div>
+                    <div class="full-profile-item"><strong>Aadhaar No.</strong><span id="fullProfileAadhaar">--</span></div>
+                    <div class="full-profile-item" style="grid-column: 1 / -1;"><strong>Address</strong><span id="fullProfileAddress">--</span></div>
+                    <div class="full-profile-item" style="background: #e6f7ff;"><strong>Extra Amount</strong><span id="fullProfileExtraAmount" style="font-weight: bold; color: var(--info-color);">--</span></div>
+                </div>
+                <div class="full-profile-images">
+                    <div><strong>Profile Photo</strong><img id="fullProfilePic" src="" alt="Profile Photo"></div>
+                    <div><strong>Document</strong><img id="fullProfileDoc" src="" alt="Document"></div>
+                    <div><strong>Signature</strong><img id="fullProfileSign" src="" alt="Signature"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal image-modal-overlay"> 
+    <span class="close" id="closeImageModal">×</span> 
+    <img class="image-modal-content" id="fullImageSrc" alt="Full Size Image"> 
+</div>
+
+    <div id="deviceVerificationModal" class="modal">
+        <div class="modal-content">
+        </div>
+    </div>
+
+    <div id="emiModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeEmiModal">×</span>
+            <h2 id="emiModalTitle">EMI Details</h2>
+            <ul class="emi-details-list" id="emiDetailsList">
+            </ul>
+        </div>
+    </div>
+    
+    <div id="notification-popup-container"></div>
+
+    <!-- UPDATED SCRIPT FOR SESSION CONTROL -->
+    <script>
+        // Immediately check if splash was shown in this session
+        const splash = document.getElementById('custom-splash-screen');
+        const hasShownSplash = sessionStorage.getItem('splashShown');
+
+        if (hasShownSplash === 'true') {
+            // Already shown? Hide IMMEDIATELY.
+            splash.style.display = 'none';
+        } else {
+            // First time? Let it run, then set the flag.
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    splash.classList.add('splash-hidden');
+                }, 2500); 
+
+                setTimeout(function() {
+                    splash.style.display = 'none';
+                    // Set flag so it doesn't show again until browser close
+                    sessionStorage.setItem('splashShown', 'true');
+                }, 3500);
+            });
+        }
+    </script>
+
+    <!-- FIXED SCRIPT LOADING: Pointing to user-main.js as module -->
+    <script type="module" src="user-main.js"></script>
+
+</body>
 </html>
+
+
