@@ -270,11 +270,27 @@
             drawCanvas();
         }
 
+        // --- UPDATED RESET FUNCTION WITH NEW DEFAULTS ---
         window.resetAdjustments = function(redraw = true) {
-            currentScale = 1;
-            currentOffsetX = 0;
-            currentOffsetY = 0;
+            // New Default Settings Requested by User:
+            
+            // 1. Zoom Out 5 times equivalent
+            // Start scale at 0.75 (Default 1.0 - 5 * 0.05)
+            currentScale = 0.75; 
+
+            // 2. Move Down 6 times equivalent
+            // 6 clicks * 10 units * moveFactor
+            if (canvas.width > 0) {
+                const moveFactor = canvas.width / 400;
+                // Move Down 6 clicks (each click is 10 units)
+                currentOffsetY = 60 * moveFactor; 
+            } else {
+                currentOffsetY = 0;
+            }
+            
+            currentOffsetX = 0; // Center Horizontally
             textVerticalOffset = 0;
+
             if(redraw) drawCanvas();
         }
 
@@ -365,5 +381,4 @@
     </script>
 </body>
 </html>
-
 
