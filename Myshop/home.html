@@ -348,48 +348,77 @@
     <!-- MAGIC BOX MODAL REMOVED -->
 
     <!-- NEW ADD STOCK MODAL (UPDATED) -->
-    <div id="addStockModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <!-- Card ko compact banaya gaya hai -->
-        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0 relative" id="addStockCard">
+<!-- REPLACE THE OLD "addStockModal" DIV WITH THIS NEW COMPACT VERSION -->
+<div id="addStockModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0 relative" id="addStockCard">
+        
+        <!-- Close Button -->
+        <button onclick="closeAddModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center z-10">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="space-y-4 mt-1">
             
-            <!-- Close Button (Absolute Top-Right) -->
-            <button onclick="closeAddModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center z-10">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <div class="space-y-4 mt-2">
+            <!-- Suggestion & Name Input (Ultra Compact) -->
+            <div class="relative">
+                <div id="suggestionBox" class="flex flex-wrap gap-2 mb-1 justify-start items-end min-h-[20px] transition-all">
+                    <!-- Suggestions will appear here -->
+                </div>
                 
-                <!-- Suggestion Area (Input ke just upar dikhega) -->
-                <div class="relative">
-                    <div id="suggestionBox" class="flex flex-wrap gap-2 mb-2 justify-start items-end min-h-[0px] transition-all">
-                        <!-- Suggestions yahan aayenge JS ke through -->
-                    </div>
-                    
-                    <!-- Product Name Input -->
-                    <input type="text" id="inpProdName" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all" placeholder="Product Name (e.g. Rice)">
-                </div>
-
-                <!-- Quantity Selection Buttons -->
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Select Quantity</label>
-                    <div class="grid grid-cols-3 gap-2 mb-2">
-                        <button onclick="selectQty('100g', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">100g</button>
-                        <button onclick="selectQty('1 kg', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">1 kg</button>
-                        <button onclick="selectQty('1 packet', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">1 Pkt</button>
-                        <button onclick="selectQty('1 piece', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">1 Pc</button>
-                        <!-- Custom Button -->
-                        <button onclick="toggleCustomQty(this)" class="qty-chip col-span-2 bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold py-2 rounded-lg text-xs hover:bg-indigo-600 hover:text-white transition">Custom</button>
-                    </div>
-
-                    <!-- Custom Input (Hidden by default) -->
-                    <input type="text" id="inpProdQty" class="hidden w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="Type Quantity (e.g. 500gm)">
-                </div>
-
-                <!-- Save Button -->
-                <button onclick="saveProduct()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg mt-2 active:scale-95 transition">SAVE ITEM</button>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Product Name</label>
+                <input type="text" id="inpProdName" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all placeholder:text-slate-300" placeholder="Type name...">
             </div>
+
+            <!-- Quantity Section -->
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Set Quantity</label>
+                
+                <!-- Main Control Row (Compact Height, Wide Buttons) -->
+                <div id="qtyControlRow" class="flex items-center gap-2 mb-2 transition-all">
+                    <!-- Wider Buttons (w-24) & Compact Height (h-10) -->
+                    <button onclick="adjustQty(-1)" class="w-24 h-10 bg-slate-100 rounded-xl text-slate-600 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center">
+                        <i class="fa-solid fa-minus text-lg"></i>
+                    </button>
+                    
+                    <input type="text" id="inpProdQty" class="flex-1 h-10 bg-slate-50 border border-slate-200 rounded-xl px-2 text-center text-lg font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="Qty">
+                    
+                    <!-- Wider Buttons (w-24) & Compact Height (h-10) -->
+                    <button onclick="adjustQty(1)" class="w-24 h-10 bg-slate-100 rounded-xl text-slate-600 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center">
+                        <i class="fa-solid fa-plus text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Single Line Scrollable Presets -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    <button onclick="setQtyPreset('100 g', this)" class="qty-chip shrink-0 px-4 py-2 rounded-lg border border-slate-100 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition">100 g</button>
+                    <button onclick="setQtyPreset('250 g', this)" class="qty-chip shrink-0 px-4 py-2 rounded-lg border border-slate-100 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition">250 g</button>
+                    <button onclick="setQtyPreset('500 g', this)" class="qty-chip shrink-0 px-4 py-2 rounded-lg border border-slate-100 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition">500 g</button>
+                    <button onclick="setQtyPreset('1 kg', this)" class="qty-chip shrink-0 px-4 py-2 rounded-lg border border-slate-100 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition">1 kg</button>
+                    <button onclick="setQtyPreset('1 Pkt', this)" class="qty-chip shrink-0 px-4 py-2 rounded-lg border border-slate-100 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition">1 Pkt</button>
+                    <button onclick="setQtyPreset('1 Pc', this)" class="qty-chip shrink-0 px-4 py-2 rounded-lg border border-slate-100 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition">1 Pc</button>
+                    
+                    
+                    <!-- CUSTOM BUTTON -->
+                    <button onclick="toggleCustomQty(this)" class="qty-chip shrink-0 px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold rounded-lg text-xs hover:bg-indigo-600 hover:text-white transition">Custom</button>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button onclick="saveProduct()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95 transition text-sm tracking-wide">SAVE PRODUCT</button>
         </div>
     </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
 
     <div id="profileMenuModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl animate-[slideUp_0.3s_ease-out]">
