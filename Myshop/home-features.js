@@ -372,169 +372,192 @@ function startSeamlessInterval() {
 
 // --- ADD/EDIT STOCK MODAL (UPDATED) ---
 function openAddModal(id = null, name = '', qty = '') {
-    // Close sidebar
+    // UI Cleanup
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('menuOverlay').classList.remove('open');
     
     const modal = document.getElementById('addStockModal');
     const card = document.getElementById('addStockCard');
+    const nameInput = document.getElementById('inpProdName');
+    const qtyInput = document.getElementById('inpProdQty');
     
-    // Reset inputs & suggestions & chips
+    // Clear Inputs & Suggestions
     document.getElementById('suggestionBox').innerHTML = '';
-    document.getElementById('inpProdQty').classList.add('hidden');
+    
+    // Reset Buttons
     document.querySelectorAll('.qty-chip').forEach(b => {
         b.classList.remove('bg-slate-900', 'text-white', 'bg-indigo-600', 'text-white');
         if(b.innerText === 'Custom') b.classList.add('bg-indigo-50', 'text-indigo-600');
-        else b.classList.add('bg-slate-50', 'text-slate-600');
+        else b.classList.add('bg-white', 'text-slate-500', 'border-slate-100');
     });
-    
+
     modal.classList.remove('hidden');
     setTimeout(() => card.classList.remove('translate-y-full'), 10);
 
     if(id) {
-        editItemId = id; // Global var from Core
-        document.getElementById('inpProdName').value = name;
+        // EDIT MODE
+        editItemId = id; 
+        nameInput.value = name;
+        qtyInput.value = qty;
         
-        // Try to match existing quantity to buttons
+        // Try to highlight if it matches a preset
         let matched = false;
         document.querySelectorAll('.qty-chip').forEach(btn => {
-            const btnText = btn.innerText.toLowerCase();
-            const qLower = qty.toLowerCase();
-            
-            // Map button text to stored value conventions
-            if(btnText === qLower || 
-               (btn.innerText === '1 Pkt' && qLower === '1 packet') ||
-               (btn.innerText === '1 Pc' && qLower === '1 piece')) {
-                selectQty(qty, btn);
-                matched = true;
+            // Simple match logic
+            if(qty.toLowerCase().includes(btn.innerText.toLowerCase().replace('pkt','packet').replace('pc','piece'))) {
+               // Highlight logic here if needed, but for now just showing value in input is enough
             }
         });
-        
-        if(!matched) {
-            // If no match found, open Custom mode
-            const customBtn = document.querySelector("button[onclick='toggleCustomQty(this)']");
-            if(customBtn) toggleCustomQty(customBtn);
-            document.getElementById('inpProdQty').value = qty;
-        }
-
     } else {
+        // ADD NEW MODE
         editItemId = null;
-        document.getElementById('inpProdName').value = '';
-        document.getElementById('inpProdQty').value = '';
+        nameInput.value = '';
+        qtyInput.value = ''; 
         selectedQtyValue = '';
+        
+        // Auto Focus Name
+        setTimeout(() => nameInput.focus(), 100);
+        showSmartSuggestions();
     }
 
-    // Attach Autocomplete Listener
-    const nameInput = document.getElementById('inpProdName');
-    nameInput.oninput = function() { searchMasterProduct(this.value); };
+    // Attach Listener
+    nameInput.oninput = function() {
+        if(this.value.length > 0) searchMasterProduct(this.value);
+        else showSmartSuggestions();
+    };
 }
 
 function closeAddModal() {
     const card = document.getElementById('addStockCard');
     card.classList.add('translate-y-full');
-    setTimeout(() => document.getElementById('addStockModal').classList.add('hidden'), 300);
+    setTimeout(() => {
+        document.getElementById('addStockModal').classList.add('hidden');
+        document.getElementById('inpProdName').blur();
+    }, 300);
 }
 
-// --- NEW FUNCTION: Search Master Products (Firebase) ---
-function searchMasterProduct(query) {
+// --- SMART SUGGESTIONS ---
+function showSmartSuggestions() {
     const box = document.getElementById('suggestionBox');
-    box.innerHTML = ''; // Clear old
-    
-    if(!query || query.length < 2) return;
+    box.innerHTML = ''; 
 
-    // Fetch from Firebase 'masterProducts'
-    // Note: Assuming 'masterProducts' structure exists in DB from admin side.
-    
     db.ref('masterProducts').once('value', snap => {
         if(!snap.exists()) return;
+        const allMaster = Object.values(snap.val());
+        // allProducts comes from home-core.js (loaded local cache)
+        const userItemNames = (typeof allProducts !== 'undefined') ? allProducts.map(p => p[1].name.toLowerCase()) : [];
         
-        const matches = [];
-        const data = snap.val();
+        const notAdded = allMaster.filter(m => !userItemNames.includes(m.name.toLowerCase()));
         
-        // Filter logic (Simple client side filter)
-        Object.values(data).forEach(item => {
-            if(item.name.toLowerCase().includes(query.toLowerCase())) {
-                matches.push(item.name);
-            }
-        });
-
-        // Top 3 Matches only
-        const top3 = matches.slice(0, 3);
-
-        top3.forEach(name => {
-            const span = document.createElement('span');
-            // Chat bubble styling
-            span.className = "bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border border-blue-200 hover:bg-blue-600 hover:text-white transition animate-[popIn_0.2s_ease-out]";
-            span.innerText = name;
-            span.onclick = () => {
-                document.getElementById('inpProdName').value = name;
-                box.innerHTML = ''; // Clear suggestions on selection
-            };
-            box.appendChild(span);
-        });
+        const suggestions = [];
+        for(let i=0; i<3 && notAdded.length > 0; i++) {
+            const rIndex = Math.floor(Math.random() * notAdded.length);
+            suggestions.push(notAdded[rIndex].name);
+            notAdded.splice(rIndex, 1); 
+        }
+        renderSuggestions(suggestions, box);
     });
 }
 
-// --- NEW FUNCTION: Quantity Button Logic ---
-function selectQty(val, btn) {
-    selectedQtyValue = val;
-    // Set fallback value just in case
-    const inp = document.getElementById('inpProdQty');
-    inp.value = val;
-    inp.classList.add('hidden'); // Hide custom input
+function searchMasterProduct(query) {
+    const box = document.getElementById('suggestionBox');
+    box.innerHTML = '';
+    if(!query || query.length < 2) return;
 
-    // Visual Reset
+    db.ref('masterProducts').once('value', snap => {
+        if(!snap.exists()) return;
+        const matches = [];
+        Object.values(snap.val()).forEach(item => {
+            if(item.name.toLowerCase().includes(query.toLowerCase())) matches.push(item.name);
+        });
+        renderSuggestions(matches.slice(0, 3), box);
+    });
+}
+
+function renderSuggestions(list, container) {
+    list.forEach(name => {
+        const span = document.createElement('span');
+        span.className = "bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border border-blue-100 hover:bg-blue-600 hover:text-white transition animate-[popIn_0.2s_ease-out]";
+        span.innerText = "+ " + name;
+        span.onclick = () => {
+            document.getElementById('inpProdName').value = name;
+        };
+        container.appendChild(span);
+    });
+}
+
+// --- QUANTITY LOGIC (Presets + Custom + Buttons) ---
+
+function setQtyPreset(val, btn) {
+    selectedQtyValue = val;
+    const input = document.getElementById('inpProdQty');
+    input.value = val;
+    
+    // Reset Visuals
     document.querySelectorAll('.qty-chip').forEach(b => {
-        b.classList.remove('bg-slate-900', 'text-white', 'bg-indigo-600', 'text-white');
-        if(b.innerText === 'Custom') {
-            b.classList.add('bg-indigo-50', 'text-indigo-600');
-        } else {
-            b.classList.add('bg-slate-50', 'text-slate-600');
-        }
+        b.classList.remove('bg-slate-900', 'text-white', 'bg-indigo-600');
+        if(b.innerText === 'Custom') b.classList.add('bg-indigo-50', 'text-indigo-600');
+        else b.classList.add('bg-white', 'text-slate-500', 'border-slate-100');
     });
 
-    // Highlight Selected
-    btn.classList.remove('bg-slate-50', 'text-slate-600');
+    // Highlight Clicked
+    btn.classList.remove('bg-white', 'text-slate-500', 'border-slate-100');
     btn.classList.add('bg-slate-900', 'text-white');
 }
 
 function toggleCustomQty(btn) {
     selectedQtyValue = 'custom';
+    const input = document.getElementById('inpProdQty');
     
-    // Reset Buttons
+    // Reset Visuals
     document.querySelectorAll('.qty-chip').forEach(b => {
-        b.classList.remove('bg-slate-900', 'text-white', 'bg-indigo-600', 'text-white');
-        b.classList.add('bg-slate-50', 'text-slate-600');
+        b.classList.remove('bg-slate-900', 'text-white', 'bg-indigo-600');
+        b.classList.add('bg-white', 'text-slate-500', 'border-slate-100');
     });
 
     // Highlight Custom
-    btn.classList.remove('bg-indigo-50', 'text-indigo-600');
+    btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'bg-white', 'text-slate-500');
     btn.classList.add('bg-indigo-600', 'text-white');
 
-    // Show Input
-    const inp = document.getElementById('inpProdQty');
-    inp.classList.remove('hidden');
-    inp.value = '';
-    inp.focus();
+    input.value = ''; 
+    input.focus();
 }
 
-// --- UPDATE: Save Product (Logic Update) ---
-function saveProduct() {
-    const name = document.getElementById('inpProdName').value.trim();
-    let qty = '';
-
-    // Determine Quantity
-    if(selectedQtyValue === 'custom') {
-        qty = document.getElementById('inpProdQty').value.trim();
-    } else if (selectedQtyValue) {
-        qty = selectedQtyValue;
-    } else {
-        // Fallback if user typed directly into hidden input somehow
-        qty = document.getElementById('inpProdQty').value.trim();
+function adjustQty(delta) {
+    const input = document.getElementById('inpProdQty');
+    let currentVal = input.value.trim();
+    
+    if(!currentVal) {
+        input.value = delta > 0 ? "1 Unit" : "";
+        return;
     }
 
+    const match = currentVal.match(/^(\d+(\.\d+)?)\s*(.*)$/);
+    if(match) {
+        let num = parseFloat(match[1]);
+        let unit = match[3] || ""; 
+        
+        let step = 1;
+        if(unit.toLowerCase().includes('g') && !unit.toLowerCase().includes('kg')) step = 50; 
+        if(unit.toLowerCase().includes('ml')) step = 100;
+
+        let newNum = num + (delta * step);
+        if(newNum <= 0) newNum = 0; 
+
+        input.value = `${newNum} ${unit}`.trim();
+    } else {
+        // Fallback for weird text
+        input.value = delta > 0 ? "1 " + currentVal : currentVal;
+    }
+}
+
+// --- SAVE PRODUCT ---
+function saveProduct() {
+    const name = document.getElementById('inpProdName').value.trim();
+    const qty = document.getElementById('inpProdQty').value.trim();
+
     if(!name) return showToast("Enter Name");
-    if(!qty) return showToast("Select Quantity");
+    if(!qty) return showToast("Enter Quantity");
 
     if(editItemId) {
         db.ref(`products/${targetMobile}/${editItemId}`).update({ name, qty })
@@ -786,3 +809,4 @@ function shareStore() {
     const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
 }
+
