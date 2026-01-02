@@ -143,7 +143,6 @@
         <div id="dotsContainer" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none"></div>
     </div>
 
-    <!-- LIVE TRACKING BANNER -->
     <div id="liveOrderBanner" onclick="openTrackingModal()" class="hidden hide-on-search mx-4 mt-4 bg-white rounded-xl shadow-lg border border-blue-100 p-4 flex items-center justify-between relative overflow-hidden active:scale-95 transition cursor-pointer group">
         <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>
         <div class="flex items-center gap-3">
@@ -209,7 +208,6 @@
                     <input type="text" id="searchInput" onfocus="activateSearch()" onblur="deactivateSearch()" onkeyup="filterProducts()" placeholder="Search items..." class="w-full bg-white border border-slate-300 rounded-full py-2 pl-9 pr-8 text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all">
                     <i class="fa-solid fa-search absolute left-3.5 top-2.5 text-slate-400 text-xs"></i>
                     
-                    <!-- Close/Clear Button -->
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1.5 w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 z-10">
                         <i class="fa-solid fa-xmark text-[10px]"></i>
                     </button>
@@ -234,22 +232,9 @@
             </div>
         </div>
 
-        <button id="customReqBtn" onclick="openCustomRequestModal()" class="hide-on-search w-full mb-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl py-3 px-4 shadow-lg flex items-center justify-between active:scale-95 transition border border-slate-700">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-yellow-400">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                </div>
-                <div class="text-left">
-                    <p class="text-xs font-bold text-yellow-400">🪄Magic Box 🎁 Kuch aur chahiye?</p>
-                    <p class="text-[10px] text-slate-400">Ramazone - बस नाम लिखिए…
-बाकी हम संभाल लेंगे।</p>
-                </div>
-            </div>
-            <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
-        </button>
+        <!-- MAGIC BOX REMOVED AS REQUESTED -->
 
-        <!-- Product List -->
-        <ul id="productList" class="space-y-0.5">
+        <ul id="productList" class="space-y-0.5 mt-2">
             <div class="text-center py-12">
                 <div class="loader inline-block"></div>
                 <p class="text-xs text-slate-400 mt-2">Loading Products...</p>
@@ -273,7 +258,8 @@
             <i class="fa-solid fa-plus text-lg"></i>
         </button>
 
-        <button onclick="window.location.href='cart.html'" class="cart-float text-white rounded-full pl-6 pr-8 py-4 flex items-center gap-3 active:scale-95 transition-all group shadow-2xl">
+        <!-- UPDATED CHECKOUT BUTTON -->
+        <button onclick="window.location.href='cart.html'" class="cart-float text-white rounded-full pl-6 pr-8 py-2.5 flex items-center gap-3 active:scale-95 transition-all group shadow-2xl">
             <div class="relative">
                 <i class="fa-solid fa-receipt text-xl group-hover:rotate-12 transition duration-300"></i>
                 <span id="floatCartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden border-2 border-blue-600">0</span>
@@ -285,10 +271,8 @@
         </button>
     </div>
 
-    <!-- TRACKING MODAL -->
     <div id="trackingModal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
         <div class="bg-white w-full max-w-md h-[85vh] sm:h-auto rounded-t-2xl sm:rounded-2xl p-0 shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.3s_ease-out]">
-            <!-- Header -->
             <div class="bg-slate-900 p-4 flex justify-between items-center shrink-0">
                  <div>
                     <h2 class="text-white font-bold text-lg">Order #<span id="modalOrderId">...</span></h2>
@@ -297,12 +281,9 @@
                 <button onclick="closeTrackingModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-90"><i class="fa-solid fa-xmark"></i></button>
             </div>
     
-            <!-- Scrollable Content -->
             <div class="flex-1 overflow-y-auto p-5 bg-slate-50 space-y-5">
-                 <!-- Timeline -->
                  <div class="space-y-0 pl-2 border-l-2 border-slate-200 ml-2 py-2" id="modalTimeline"></div>
     
-                 <!-- Partner Info Card -->
                  <div id="modalPartnerCard" class="hidden bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                      <div class="flex items-center gap-3">
                          <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center"><i class="fa-solid fa-motorcycle text-green-600"></i></div>
@@ -317,7 +298,6 @@
                      </div>
                  </div>
     
-                 <!-- Order Items List -->
                  <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                      <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-100 pb-2 flex justify-between items-center">
                          <span>Ordered Items</span>
@@ -331,7 +311,6 @@
                  </div>
             </div>
             
-            <!-- Cancel / Help Actions -->
             <div class="p-4 bg-white border-t border-slate-100 shrink-0" id="modalFooterActions">
                 <p class="text-[10px] text-center text-slate-400 mb-3 font-bold uppercase">Having issues?</p>
                 <button onclick="openSupportOptions()" class="w-full py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition">CONTACT SUPPORT</button>
@@ -366,44 +345,52 @@
         </div>
     </div>
 
-    <div id="customRequestModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl transform transition-all scale-100">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-                <h3 class="font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-nib text-indigo-600"></i> Write Your Order
-                </h3>
-                <button onclick="closeCustomRequestModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Product Name / Description</label>
-                    <textarea id="reqItemName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-600 h-24 resize-none" placeholder="Ex: Aata Ashirwad 5kg, White Bread..."></textarea>
-                </div>
-                
-                <button onclick="addCustomItemToCart()" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2">
-                    <span>ADD TO LIST</span>
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- MAGIC BOX MODAL REMOVED -->
 
+    <!-- NEW ADD STOCK MODAL (UPDATED) -->
     <div id="addStockModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0" id="addStockCard">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-900 text-lg" id="modalTitle">Add Product</h3>
-                <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="inpProdName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="Product Name (e.g. Rice)">
-                <input type="text" id="inpProdQty" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="Quantity/Unit (e.g. 1 KG)">
+        <!-- Card ko compact banaya gaya hai -->
+        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0 relative" id="addStockCard">
+            
+            <!-- Close Button (Absolute Top-Right) -->
+            <button onclick="closeAddModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center z-10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="space-y-4 mt-2">
+                
+                <!-- Suggestion Area (Input ke just upar dikhega) -->
+                <div class="relative">
+                    <div id="suggestionBox" class="flex flex-wrap gap-2 mb-2 justify-start items-end min-h-[0px] transition-all">
+                        <!-- Suggestions yahan aayenge JS ke through -->
+                    </div>
+                    
+                    <!-- Product Name Input -->
+                    <input type="text" id="inpProdName" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all" placeholder="Product Name (e.g. Rice)">
+                </div>
+
+                <!-- Quantity Selection Buttons -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 mb-1 block">Select Quantity</label>
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <button onclick="selectQty('100g', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">100g</button>
+                        <button onclick="selectQty('1 kg', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">1 kg</button>
+                        <button onclick="selectQty('1 packet', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">1 Pkt</button>
+                        <button onclick="selectQty('1 piece', this)" class="qty-chip bg-slate-50 border border-slate-200 text-slate-600 font-bold py-2 rounded-lg text-xs hover:bg-slate-900 hover:text-white transition">1 Pc</button>
+                        <!-- Custom Button -->
+                        <button onclick="toggleCustomQty(this)" class="qty-chip col-span-2 bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold py-2 rounded-lg text-xs hover:bg-indigo-600 hover:text-white transition">Custom</button>
+                    </div>
+
+                    <!-- Custom Input (Hidden by default) -->
+                    <input type="text" id="inpProdQty" class="hidden w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="Type Quantity (e.g. 500gm)">
+                </div>
+
+                <!-- Save Button -->
                 <button onclick="saveProduct()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg mt-2 active:scale-95 transition">SAVE ITEM</button>
             </div>
         </div>
     </div>
 
-    <!-- NEW MODAL 1: PROFILE SETTINGS MENU -->
     <div id="profileMenuModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl animate-[slideUp_0.3s_ease-out]">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
@@ -431,7 +418,6 @@
         </div>
     </div>
 
-    <!-- NEW MODAL 2: HOW TO USE VIDEOS -->
     <div id="videoHelpModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-0 shadow-xl overflow-hidden flex flex-col max-h-[80vh] animate-[slideUp_0.3s_ease-out]">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
@@ -444,7 +430,6 @@
         </div>
     </div>
 
-    <!-- NEW MODAL 3: POLICIES VIEW -->
     <div id="policyViewModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-0 shadow-xl overflow-hidden flex flex-col max-h-[80vh] animate-[slideUp_0.3s_ease-out]">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
@@ -463,7 +448,6 @@
         </div>
     </div>
 
-    <!-- EXISTING BANNER MODAL (Reused in Profile) -->
     <div id="bannerModal" class="hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-xl">
             <h3 class="font-bold text-slate-900 mb-4">Customize Shop Banner</h3>
@@ -590,7 +574,8 @@
         <span id="toastMsg">Updated</span>
     </div>
 
-    <script src="home.js"></script>
+    <script src="home-core.js"></script>
+    <script src="home-features.js"></script>
     <script>
         // --- NEW FIX: PREVENT KEYBOARD CLOSE ON ADD CLICK ---
         document.getElementById('productList').addEventListener('mousedown', function(e) {
