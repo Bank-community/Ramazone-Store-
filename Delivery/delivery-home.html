@@ -56,8 +56,8 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <!-- SOS BUTTON -->
-            <button onclick="triggerSOS()" class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-red-500 animate-pulse shadow-lg shadow-red-600/30">
+            <!-- SOS BUTTON (Updated with Number) -->
+            <button onclick="triggerSOS('7903698180')" class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-red-500 animate-pulse shadow-lg shadow-red-600/30">
                 <i class="fa-solid fa-bell text-xs"></i>
             </button>
 
@@ -102,7 +102,8 @@
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-shop text-amber-500 mr-1"></i> Nearby Wholesalers</h3>
                 <span class="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-gray-500">Verified</span>
             </div>
-            <div id="wsListContainer" class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+            <!-- Added snap-x for smoother scrolling -->
+            <div id="wsListContainer" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x w-full">
                 <!-- Cards injected by JS -->
             </div>
         </div>
