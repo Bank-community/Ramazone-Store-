@@ -9,14 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- LEAFLET MAPS (NEW ADDITION) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -43,16 +37,10 @@
         /* Horizontal Scrollbar Hide */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* MAP CUSTOM STYLES */
-        #deliveryMap { height: 100%; width: 100%; z-index: 1; border-radius: 12px; }
-        .map-container { height: 250px; width: 100%; position: relative; overflow: hidden; border-radius: 12px; border: 1px solid #374151; }
-        .custom-div-icon { background: transparent; border: none; }
     </style>
 </head>
 <body class="pb-24">
 
-    <!-- HEADER -->
     <header class="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-30 px-4 py-3 flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-3">
             <button onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition active:scale-95">
@@ -65,7 +53,6 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <!-- SOS BUTTON -->
             <button onclick="triggerSOS('7903698180')" class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-red-500 animate-pulse shadow-lg shadow-red-600/30">
                 <i class="fa-solid fa-bell text-xs"></i>
             </button>
@@ -80,7 +67,6 @@
         </div>
     </header>
 
-    <!-- SIDEBAR -->
     <div id="menuOverlay" class="overlay fixed inset-0 bg-black/80 z-40 backdrop-blur-sm" onclick="toggleMenu()"></div>
     <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-gray-900 z-50 shadow-2xl flex flex-col border-r border-gray-800">
         <div class="p-6 bg-gray-800 border-b border-gray-700">
@@ -102,21 +88,17 @@
         </nav>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="px-4 mt-20">
         
-        <!-- WHOLESALER STRIP -->
         <div id="wholesalerStrip" class="hidden mb-4">
             <div class="flex justify-between items-end mb-2 px-1">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-shop text-amber-500 mr-1"></i> Nearby Wholesalers</h3>
                 <span class="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-gray-500">Verified</span>
             </div>
             <div id="wsListContainer" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x w-full">
-                <!-- Cards injected by JS -->
-            </div>
+                </div>
         </div>
 
-        <!-- SMART RADIUS CONTROLLER -->
         <div id="radiusControl" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-4">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-crosshairs text-amber-500 mr-1"></i> Scanning Range</h3>
@@ -126,7 +108,6 @@
             <p class="text-[9px] text-gray-500 mt-1 text-center">Showing orders within this circle.</p>
         </div>
 
-        <!-- Stats -->
         <div id="statsSection" class="hidden grid grid-cols-2 gap-3 mb-6">
             <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex flex-col items-center shadow-lg">
                 <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Earnings</span>
@@ -138,14 +119,12 @@
             </div>
         </div>
 
-        <!-- Offline -->
         <div id="offlineState" class="flex flex-col items-center justify-center py-12 text-center">
             <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-600"><i class="fa-solid fa-power-off text-3xl"></i></div>
             <h2 class="text-lg font-bold text-gray-300">You are Offline</h2>
             <p class="text-sm text-gray-500 mt-1">Go Online to start your shift</p>
         </div>
 
-        <!-- Online Scanning -->
         <div id="noOrdersState" class="hidden flex flex-col items-center justify-center py-12 text-center">
             <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 relative">
                 <span class="absolute w-full h-full rounded-full animate-ping bg-amber-500/20"></span>
@@ -155,7 +134,6 @@
             <p class="text-xs text-gray-500 mt-4 bg-gray-800 px-3 py-1 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i> <span id="locStatus">GPS Waiting...</span></p>
         </div>
 
-        <!-- Orders List -->
         <div id="ordersContainer" class="hidden space-y-4 pb-20">
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex justify-between">
                 <span>Nearby Tasks</span>
@@ -164,7 +142,6 @@
             <div id="ordersList" class="space-y-4"></div>
         </div>
 
-        <!-- Active Order Panel -->
         <div id="activeOrderPanel" class="hidden fixed inset-0 z-50 bg-gray-900 flex flex-col animate-[slideUp_0.3s_ease-out]">
             <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center shadow-md">
                 <h2 class="font-bold text-amber-500">Live Task</h2>
@@ -172,18 +149,6 @@
             </div>
             <div class="flex-1 overflow-y-auto p-5 space-y-6">
                 
-                <!-- NEW MAP CONTAINER -->
-                <div id="liveMapSection" class="hidden mb-4 animate-[fadeIn_0.5s_ease-out]">
-                     <div class="flex justify-between items-end mb-2">
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-map text-blue-500 mr-1"></i> Smart Route</h3>
-                        <button onclick="toggleLiveMap()" class="text-[10px] text-red-400 font-bold hover:text-red-300">Hide Map</button>
-                    </div>
-                    <div class="map-container shadow-lg shadow-black/50">
-                        <div id="deliveryMap"></div>
-                        <div id="mapLoader" class="absolute inset-0 bg-slate-900/80 flex items-center justify-center z-[1000] text-white text-xs font-bold">Initializing GPS...</div>
-                    </div>
-                </div>
-
                 <div class="relative pl-6 border-l-2 border-gray-700">
                     <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900"></span>
                     <h3 class="text-xs font-bold text-gray-400 uppercase">Partner (You)</h3>
@@ -196,7 +161,6 @@
                     <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
                 </div>
 
-                <!-- Active Order Preferences Grid -->
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
                     <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Trip & Preferences</h4>
                     <div class="grid grid-cols-2 gap-3">
@@ -226,15 +190,12 @@
                     <p class="text-lg font-bold text-white mt-0.5" id="actCust">Customer Name</p>
                     <p class="text-sm text-gray-400" id="actAddr">Address</p>
                     
-                    <!-- MAP ACTIONS -->
                     <div class="flex gap-2 mt-3">
-                         <!-- SHOW MAP BUTTON (NEW) -->
-                        <button onclick="toggleLiveMap()" class="bg-indigo-600 text-white border border-indigo-500 px-3 py-2 rounded text-xs font-bold hover:bg-indigo-500 transition flex items-center justify-center gap-1 shadow-lg shadow-indigo-500/30">
-                            <i class="fa-solid fa-map"></i> View Map
-                        </button>
-                        
                         <button onclick="openMap('dir')" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-600 hover:text-white transition flex items-center justify-center gap-1">
                             <i class="fa-solid fa-location-arrow"></i> Navigate
+                        </button>
+                        <button onclick="openMap('view')" class="bg-gray-700 border border-gray-600 px-3 py-2 rounded text-xs text-white hover:bg-gray-600" title="Street View">
+                            <i class="fa-solid fa-street-view text-lg"></i>
                         </button>
                         <button onclick="openWhatsApp()" class="bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded text-xs hover:bg-green-600 hover:text-white">
                             <i class="fa-brands fa-whatsapp text-lg"></i>
@@ -257,10 +218,8 @@
 
     </div>
 
-    <!-- WHOLESALER FULL SCREEN PAGE -->
     <div id="wholesalerModal" class="hidden fixed inset-0 z-[100] bg-gray-900 flex flex-col w-full h-full modal-animate">
         
-        <!-- Incentive Header -->
         <div class="bg-gradient-to-r from-amber-600 to-yellow-600 p-4 text-center relative shadow-md shrink-0">
             <button onclick="closeWholesalerModal()" class="absolute top-4 left-4 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full text-white hover:bg-white/30 transition">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -272,10 +231,8 @@
             </p>
         </div>
 
-        <!-- Content Area -->
         <div class="p-5 overflow-y-auto space-y-6 flex-1 bg-slate-900 pb-20">
             
-            <!-- Add Form -->
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 relative shadow-lg">
                 <input type="hidden" id="wsEditId" value="">
                 <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
@@ -305,7 +262,6 @@
                 </div>
             </div>
 
-            <!-- My Added Shops List -->
             <div>
                 <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-800 pb-2">My Added Shops</h4>
                 <div id="myWholesalerList" class="space-y-3 pb-10">
@@ -319,7 +275,6 @@
         </div>
     </div>
 
-    <!-- Overlays -->
     <div id="celebrationOverlay" class="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center hidden">
         <div class="text-center animate-[popIn_0.5s_ease-out]">
             <div class="text-6xl mb-2">🎉</div>
