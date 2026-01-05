@@ -111,6 +111,7 @@ function toggleDuty() {
         startGPS();
         startHeartbeat();
         listenOrders();
+        updateWholesalerDisplay(); // Update wholesalers when going online
     } else {
         status.innerText = "OFFLINE"; status.classList.remove('text-green-400');
         document.getElementById('offlineState').classList.remove('hidden');
@@ -118,7 +119,6 @@ function toggleDuty() {
         document.getElementById('ordersContainer').classList.add('hidden');
         document.getElementById('statsSection').classList.add('hidden');
         document.getElementById('radiusControl').classList.add('hidden');
-        // NEW: Hide Wholesaler Strip when offline
         document.getElementById('wholesalerStrip').classList.add('hidden');
         stopGPS();
         stopHeartbeat();
@@ -366,10 +366,7 @@ function loadActive(id, o) {
     document.getElementById('radiusControl').classList.add('hidden');
     document.getElementById('activeOrderPanel').classList.remove('hidden');
     
-    // NEW: Show Wholesalers even in active mode, maybe useful?
-    // For now, let's keep it visible above the panel if needed, or hide it.
-    // The requirement said "Show when order comes". 
-    // Usually, focused mode hides distractions. Let's hide it for Active Order to keep focus.
+    // Hide wholesaler strip in active mode to focus on task
     document.getElementById('wholesalerStrip').classList.add('hidden'); 
     
     const custName = o.user && o.user.name ? o.user.name : "Customer";
@@ -542,18 +539,14 @@ function openWhatsApp() { if(activeOrder && activeOrder.user) window.open(`https
 // WHOLESALER SHOP LOGIC (ADD & VIEW)
 // ==========================================
 
-// 1. SOS Function
-function triggerSOS() {
+// 1. SOS Function (Updated Number)
+function triggerSOS(adminNumber) {
     if(!confirm("⚠️ SEND EMERGENCY SOS? \nLocation will be shared with Admin & Team.")) return;
     
-    if (navigator.share) {
-        navigator.share({
-            title: 'EMERGENCY SOS',
-            text: `🚨 SOS from ${session.name}!\nLocation: https://maps.google.com/?q=${myLat},${myLng}\nCall Immediately!`
-        }).then(() => showToast("SOS Shared")).catch(console.error);
-    } else {
-        window.open(`https://wa.me/?text=${encodeURIComponent(`🚨 *SOS EMERGENCY* 🚨\n\nPartner: ${session.name}\nPhone: ${session.mobile}\nLocation: https://maps.google.com/?q=${myLat},${myLng}`)}`);
-    }
+    const message = `🚨 *SOS EMERGENCY* 🚨\n\nPartner: ${session.name}\nPhone: ${session.mobile}\nLocation: https://maps.google.com/?q=${myLat},${myLng}\n\n*Call Immediately!*`;
+    
+    // Direct WhatsApp Link
+    window.open(`https://wa.me/91${adminNumber}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
 // 2. Fetch Wholesalers
@@ -565,7 +558,8 @@ function fetchApprovedWholesalers() {
                 approvedWholesalers.push({ id: child.key, ...child.val() });
             });
         }
-        updateWholesalerDisplay(); // Update display whenever data changes
+        console.log("Loaded Wholesalers:", approvedWholesalers.length);
+        updateWholesalerDisplay(); 
     });
 }
 
@@ -574,34 +568,32 @@ function updateWholesalerDisplay() {
     const strip = document.getElementById('wholesalerStrip');
     const container = document.getElementById('wsListContainer');
     
+    // Basic checks
     if(!approvedWholesalers.length || !isOnline) {
         strip.classList.add('hidden');
         return;
     }
 
-    // Filter by nearby (e.g., 20KM max) and sort by distance
+    // Filter by nearby (e.g., 50KM max just to be safe) and sort by distance
     const nearby = approvedWholesalers.map(ws => {
-        const d = parseFloat(getDistance(myLat, myLng, ws.location.lat, ws.location.lng));
+        let lat = ws.location ? ws.location.lat : 0;
+        let lng = ws.location ? ws.location.lng : 0;
+        const d = parseFloat(getDistance(myLat, myLng, lat, lng));
         return { ...ws, dist: d };
-    }).filter(ws => ws.dist < 20).sort((a, b) => a.dist - b.dist);
+    }).sort((a, b) => a.dist - b.dist);
 
     if(!nearby.length) {
         strip.classList.add('hidden');
         return;
     }
 
-    // Only show strip if we are in "Orders List" mode (not active order)
+    // Hide if in active order mode
     if(activeOrder) {
         strip.classList.add('hidden');
         return;
     }
-
-    // If we have orders or just want to show recommendations
-    // The requirement says "Jab delivery boy ko order aayega tabhi dikhaega"
-    // So let's check if there are any orders in the list first.
-    // However, `listenOrders` controls visibility of containers. 
-    // We can just show it if `ordersContainer` is visible.
     
+    // Only show if orders list is visible (meaning we are on Home tab waiting for orders)
     if(document.getElementById('ordersContainer').classList.contains('hidden')) {
         strip.classList.add('hidden'); 
         return; 
@@ -612,7 +604,12 @@ function updateWholesalerDisplay() {
 
     nearby.forEach(ws => {
         const div = document.createElement('div');
-        div.className = "flex-shrink-0 w-64 bg-slate-800 border border-slate-700 rounded-xl p-3 relative";
+        div.className = "flex-shrink-0 w-64 bg-slate-800 border border-slate-700 rounded-xl p-3 relative snap-center";
+        
+        // Safe Location handling
+        const lat = ws.location ? ws.location.lat : 0;
+        const lng = ws.location ? ws.location.lng : 0;
+
         div.innerHTML = `
             <div class="flex justify-between items-start mb-2">
                 <h4 class="font-bold text-white text-sm truncate w-3/4">${ws.shopName}</h4>
@@ -621,7 +618,7 @@ function updateWholesalerDisplay() {
             <p class="text-[10px] text-slate-400 mb-3 truncate"><i class="fa-solid fa-location-dot mr-1"></i>${ws.address}</p>
             <div class="flex gap-2">
                 <button onclick="window.open('tel:${ws.ownerMobile}')" class="bg-slate-700 hover:bg-slate-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-phone text-xs"></i></button>
-                <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${ws.location.lat},${ws.location.lng}')" class="bg-blue-600 hover:bg-blue-500 text-white w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-location-arrow text-xs"></i></button>
+                <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}')" class="bg-blue-600 hover:bg-blue-500 text-white w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-location-arrow text-xs"></i></button>
                 <button onclick="showWholesalerDetails('${ws.shopName}', '${ws.address}', '${ws.ownerMobile}')" class="bg-slate-700 hover:bg-slate-600 text-white px-3 h-8 rounded-lg text-[10px] font-bold flex-1 transition">View More</button>
             </div>
         `;
@@ -633,7 +630,7 @@ function showWholesalerDetails(name, addr, mob) {
     alert(`🏪 ${name}\n\n📍 ${addr}\n\n📞 ${mob}`);
 }
 
-// 4. Modal Logic (Add Shop)
+// 4. Modal Logic (Add Shop) - Remains same
 function openWholesalerModal() {
     toggleMenu();
     document.getElementById('wholesalerModal').classList.remove('hidden');
@@ -795,3 +792,4 @@ function editWsRequest(key, name, mobile, address, lat, lng) {
     
     document.querySelector('.modal-animate').scrollTop = 0;
 }
+
