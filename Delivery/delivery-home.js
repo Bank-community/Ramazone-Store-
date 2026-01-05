@@ -1,6 +1,7 @@
 // --- ANTI-DUPLICATE GUARD ---
 if (window.isDeliveryHomeScriptLoaded) {
     console.warn("Delivery Home Script is already running. Skipping duplicate execution.");
+    // This return prevents the rest of the script from executing again
 } else {
     window.isDeliveryHomeScriptLoaded = true;
 
@@ -26,14 +27,12 @@ if (window.isDeliveryHomeScriptLoaded) {
     let serviceRadius = localStorage.getItem('rmz_pref_radius') || 5;
     if(serviceRadius > 10) serviceRadius = 10;
 
-    // --- MAP VARIABLES ---
-    let deliveryMap = null;
-    let deliveryLayerGroup = null;
-    let isMapOpen = false;
-
     // Store Approved Wholesalers locally
     let approvedWholesalers = [];
+    
+    // GLOBAL VARIABLE FOR LISTENER MANAGEMENT
     let myWholesalerQuery = null;
+
     const PARTNER_PAY = 20;
 
     window.onload = () => {
@@ -187,6 +186,8 @@ if (window.isDeliveryHomeScriptLoaded) {
             battery: batteryLevel 
         };
         db.ref('deliveryBoys/'+session.mobile).update(updates);
+        
+        // Increment Online Minutes
         db.ref('deliveryBoys/'+session.mobile+'/onlineMinutes').transaction(m => (m || 0) + 1);
     }
 
@@ -207,10 +208,6 @@ if (window.isDeliveryHomeScriptLoaded) {
                 
                 if(activeOrder) updateActiveDistance();
                 
-                // --- MAP UPDATE HOOK ---
-                // Agar Map open hai, to markers update karo
-                if(isMapOpen) updateMapVisuals();
-                
                 updateWholesalerDisplay();
                 listenOrders(); 
                 
@@ -221,139 +218,6 @@ if (window.isDeliveryHomeScriptLoaded) {
         }
     }
     function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
-
-    // ==========================================
-    // 🗺️ SMART MAP SYSTEM (NEW)
-    // ==========================================
-
-    window.toggleLiveMap = function() {
-        const mapSection = document.getElementById('liveMapSection');
-        if(mapSection.classList.contains('hidden')) {
-            mapSection.classList.remove('hidden');
-            isMapOpen = true;
-            setTimeout(() => {
-                initDeliveryMap();
-                updateMapVisuals();
-            }, 300); // Small delay for animation
-        } else {
-            mapSection.classList.add('hidden');
-            isMapOpen = false;
-        }
-    }
-
-    function initDeliveryMap() {
-        if(deliveryMap) {
-            deliveryMap.invalidateSize(); // Fix gray area issue
-            return;
-        }
-
-        // Initialize Map centered on user or default
-        const startLat = myLat || 20.5937;
-        const startLng = myLng || 78.9629;
-
-        deliveryMap = L.map('deliveryMap', {
-            zoomControl: false, // Cleaner UI for mobile
-            attributionControl: false
-        }).setView([startLat, startLng], 14);
-
-        // Dark/Midnight Map Tile for Professional Look
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19
-        }).addTo(deliveryMap);
-
-        deliveryLayerGroup = L.layerGroup().addTo(deliveryMap);
-        document.getElementById('mapLoader').classList.add('hidden');
-    }
-
-    function updateMapVisuals() {
-        if(!deliveryMap || !deliveryLayerGroup) return;
-
-        deliveryLayerGroup.clearLayers();
-        const bounds = [];
-
-        // 1. RIDER MARKER (You) - Blue Bike Icon
-        if(myLat && myLng) {
-            const riderIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color:#3b82f6; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); animation: pulse-blue 2s infinite;">
-                        <i class="fa-solid fa-motorcycle text-white text-sm"></i>
-                       </div>`,
-                iconSize: [36, 36],
-                iconAnchor: [18, 18]
-            });
-
-            L.marker([myLat, myLng], {icon: riderIcon}).addTo(deliveryLayerGroup);
-            bounds.push([myLat, myLng]);
-        }
-
-        // 2. CUSTOMER MARKER (Goal) - Green House Icon
-        if(activeOrder && activeOrder.location && activeOrder.location.lat) {
-            const custLat = activeOrder.location.lat;
-            const custLng = activeOrder.location.lng;
-
-            const custIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color:#22c55e; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                        <i class="fa-solid fa-house text-white text-xs"></i>
-                       </div>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-            });
-
-            L.marker([custLat, custLng], {icon: custIcon})
-                .bindPopup(`<b style="color:black">Customer</b>`)
-                .addTo(deliveryLayerGroup);
-            
-            bounds.push([custLat, custLng]);
-
-            // 3. DRAW ROUTE LINE (Dotted Blue)
-            if(myLat && myLng) {
-                L.polyline([[myLat, myLng], [custLat, custLng]], {
-                    color: '#3b82f6',
-                    weight: 3,
-                    opacity: 0.6,
-                    dashArray: '5, 10' // Dotted Line
-                }).addTo(deliveryLayerGroup);
-            }
-        }
-
-        // 4. WHOLESALER MARKERS (Orange Shop) - Only nearby ones
-        if(approvedWholesalers.length > 0) {
-            approvedWholesalers.forEach(ws => {
-                if(ws.location && ws.location.lat) {
-                    const wsLat = ws.location.lat;
-                    const wsLng = ws.location.lng;
-                    const dist = getDistance(myLat, myLng, wsLat, wsLng);
-
-                    // Show only if within 3KM of rider OR close to customer
-                    if(dist <= 3) {
-                        const shopIcon = L.divIcon({
-                            className: 'custom-div-icon',
-                            html: `<div style="background-color:#f59e0b; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid white;">
-                                    <i class="fa-solid fa-shop text-white text-[10px]"></i>
-                                   </div>`,
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
-                        });
-
-                        L.marker([wsLat, wsLng], {icon: shopIcon})
-                            .bindPopup(`
-                                <div class="text-center">
-                                    <b style="color:#d97706">${ws.shopName}</b><br>
-                                    <a href="tel:${ws.ownerMobile}" style="background:#f59e0b; color:white; padding:2px 6px; text-decoration:none; border-radius:4px; font-size:10px; display:inline-block; margin-top:2px;">CALL</a>
-                                </div>
-                            `)
-                            .addTo(deliveryLayerGroup);
-                    }
-                }
-            });
-        }
-
-        // Fit Map Bounds
-        if(bounds.length > 0) {
-            deliveryMap.fitBounds(bounds, { padding: [50, 50] });
-        }
-    }
 
     // --- LISTEN ORDERS ---
     window.listenOrders = function() {
@@ -567,9 +431,6 @@ if (window.isDeliveryHomeScriptLoaded) {
 
         updateActiveDistance();
         
-        // --- MAP HOOK: Update Map if it is already open ---
-        if(isMapOpen) updateMapVisuals();
-
         let orderTime = "N/A";
         if(o.timestamp) {
             const d = new Date(o.timestamp);
@@ -806,6 +667,7 @@ if (window.isDeliveryHomeScriptLoaded) {
 
     window.closeWholesalerModal = function() {
         document.getElementById('wholesalerModal').classList.add('hidden');
+        // CLEANUP LISTENER
         if (myWholesalerQuery) {
             console.log("Cleanup: Detaching Wholesaler Listener");
             myWholesalerQuery.off();
@@ -876,7 +738,7 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(!lat || !lng) return showToast("Connect Location First");
 
         const data = {
-            partnerMobile: String(session.mobile),
+            partnerMobile: String(session.mobile), // Ensure string
             partnerName: session.name,
             shopName: name,
             ownerMobile: mobile,
@@ -901,71 +763,66 @@ if (window.isDeliveryHomeScriptLoaded) {
         }
     }
 
-    // --- CLIENT-SIDE FILTERING FOR MY SHOPS ---
     window.loadMyWholesalerRequests = function() {
         const list = document.getElementById('myWholesalerList');
         if(!list) return;
 
-        list.innerHTML = '<div class="flex flex-col items-center justify-center py-8 text-slate-600"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i><p class="text-xs">Syncing shops...</p></div>';
+        list.innerHTML = '<p class="text-center text-slate-600 text-xs py-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
         
+        // 1. DETACH PREVIOUS LISTENER IF EXISTS
         if (myWholesalerQuery) {
+            console.log("Detaching previous listener...");
             myWholesalerQuery.off();
         }
         
-        myWholesalerQuery = db.ref('wholesalerRequests');
+        // 2. CREATE NEW QUERY
+        // Ensuring partnerMobile is treated as string for query matching
+        const myMobileStr = String(session.mobile);
         
+        myWholesalerQuery = db.ref('wholesalerRequests').orderByChild('partnerMobile').equalTo(myMobileStr);
+        
+        // 3. ATTACH NEW LISTENER
         myWholesalerQuery.on('value', snap => {
+            console.log("Data Received:", snap.val()); // Debug log
             list.innerHTML = '';
             
             if(snap.exists()) {
-                const myRequests = [];
-                const myMobileStr = String(session.mobile);
+                const requests = [];
+                snap.forEach(c => requests.push({key: c.key, ...c.val()}));
+                requests.reverse(); 
 
-                snap.forEach(child => {
-                    const val = child.val();
-                    if (String(val.partnerMobile) === myMobileStr) {
-                         myRequests.push({key: child.key, ...val});
-                    }
-                });
+                requests.forEach(req => {
+                    let statusBadge = '';
+                    let actions = '';
+                    let opacity = '';
 
-                if(myRequests.length > 0) {
-                    myRequests.reverse(); 
-                    
-                    myRequests.forEach(req => {
-                        let statusBadge = '';
-                        let actions = '';
-                        let opacity = '';
-
-                        if(req.status === 'pending') {
-                            statusBadge = `<span class="bg-amber-900/40 text-amber-500 text-[10px] px-2 py-0.5 rounded border border-amber-900/50 uppercase font-bold">Pending</span>`;
-                            actions = `
-                                <div class="flex gap-2 mt-2">
-                                    <button onclick="editWsRequest('${req.key}', '${req.shopName}', '${req.ownerMobile}', '${req.address}', ${req.location.lat}, ${req.location.lng})" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-white flex-1 font-bold">Edit</button>
-                                    <button onclick="db.ref('wholesalerRequests/${req.key}').remove()" class="text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 px-3 py-1.5 rounded border border-red-900/50 flex-1 font-bold">Delete</button>
-                                </div>
-                            `;
-                        } else if(req.status === 'approved') {
-                            statusBadge = `<span class="bg-green-900/40 text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-900/50 uppercase font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Verified</span>`;
-                        } else {
-                            statusBadge = `<span class="bg-red-900/40 text-red-400 text-[10px] px-2 py-0.5 rounded border border-red-900/50 uppercase font-bold">Disabled</span>`;
-                            opacity = 'opacity-50';
-                        }
-
-                        list.innerHTML += `
-                            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 ${opacity} animate-[fadeIn_0.3s_ease-out]">
-                                <div class="flex justify-between items-start mb-1">
-                                    <h4 class="font-bold text-white text-sm">${req.shopName}</h4>
-                                    ${statusBadge}
-                                </div>
-                                <p class="text-[10px] text-slate-400 font-mono mb-1"><i class="fa-solid fa-phone mr-1"></i>${req.ownerMobile}</p>
-                                <p class="text-[10px] text-slate-500 truncate"><i class="fa-solid fa-map-pin mr-1"></i>${req.address}</p>
-                                ${actions}
+                    if(req.status === 'pending') {
+                        statusBadge = `<span class="bg-amber-900/40 text-amber-500 text-[10px] px-2 py-0.5 rounded border border-amber-900/50 uppercase font-bold">Pending</span>`;
+                        actions = `
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="editWsRequest('${req.key}', '${req.shopName}', '${req.ownerMobile}', '${req.address}', ${req.location.lat}, ${req.location.lng})" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-white flex-1 font-bold">Edit</button>
+                                <button onclick="db.ref('wholesalerRequests/${req.key}').remove()" class="text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 px-3 py-1.5 rounded border border-red-900/50 flex-1 font-bold">Delete</button>
                             </div>
                         `;
-                    });
-                } else {
-                     list.innerHTML = '<p class="text-center text-slate-600 text-xs py-4">You haven\'t added any shops yet.</p>';
-                }
+                    } else if(req.status === 'approved') {
+                        statusBadge = `<span class="bg-green-900/40 text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-900/50 uppercase font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Verified</span>`;
+                    } else {
+                        statusBadge = `<span class="bg-red-900/40 text-red-400 text-[10px] px-2 py-0.5 rounded border border-red-900/50 uppercase font-bold">Disabled</span>`;
+                        opacity = 'opacity-50';
+                    }
+
+                    list.innerHTML += `
+                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 ${opacity}">
+                            <div class="flex justify-between items-start mb-1">
+                                <h4 class="font-bold text-white text-sm">${req.shopName}</h4>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-[10px] text-slate-400 font-mono mb-1"><i class="fa-solid fa-phone mr-1"></i>${req.ownerMobile}</p>
+                            <p class="text-[10px] text-slate-500 truncate"><i class="fa-solid fa-map-pin mr-1"></i>${req.address}</p>
+                            ${actions}
+                        </div>
+                    `;
+                });
             } else {
                 list.innerHTML = '<p class="text-center text-slate-600 text-xs py-4">You haven\'t added any shops yet.</p>';
             }
@@ -988,4 +845,5 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(scrollContainer) scrollContainer.scrollTop = 0;
     }
 }
+
 
