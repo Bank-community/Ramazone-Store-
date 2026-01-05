@@ -16,11 +16,12 @@ if (!session) window.location.href = 'delivery-login.html';
 let isOnline = false, activeOrder = null, watchId, heartbeatInterval;
 let myLat = 0, myLng = 0;
 let serviceRadius = localStorage.getItem('rmz_pref_radius') || 5;
-// Cap radius at 10 if previously higher
 if(serviceRadius > 10) serviceRadius = 10;
 
 // Store Approved Wholesalers locally
 let approvedWholesalers = [];
+// Variable to manage the listener connection
+let wholesalerQuery = null; 
 
 const PARTNER_PAY = 20;
 
@@ -35,7 +36,7 @@ window.onload = () => {
     document.getElementById('radiusVal').innerText = serviceRadius;
     document.getElementById('scanKm').innerText = serviceRadius;
 
-    // --- ACCOUNT STATUS CHECK (DISABLE LOGIC) ---
+    // --- ACCOUNT STATUS CHECK ---
     db.ref('deliveryBoys/' + session.mobile + '/status').on('value', snap => {
         const s = snap.val();
         if(s === 'disabled') {
@@ -50,7 +51,7 @@ window.onload = () => {
         toggleDuty();
     }
     fetchEarnings(); 
-    fetchApprovedWholesalers(); // NEW: Load wholesalers in background
+    fetchApprovedWholesalers(); 
     checkForActive();
 };
 
@@ -67,7 +68,7 @@ function updateRadius(val) {
 
 function getDistance(lat1, lon1, lat2, lon2) {
     if(!lat1 || !lon1 || !lat2 || !lon2) return 9999;
-    const R = 6371; // Earth radius in km
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -111,7 +112,7 @@ function toggleDuty() {
         startGPS();
         startHeartbeat();
         listenOrders();
-        updateWholesalerDisplay(); // Update wholesalers when going online
+        updateWholesalerDisplay(); 
     } else {
         status.innerText = "OFFLINE"; status.classList.remove('text-green-400');
         document.getElementById('offlineState').classList.remove('hidden');
@@ -128,7 +129,7 @@ function toggleDuty() {
     }
 }
 
-// --- HEARTBEAT & GPS (UPDATED FOR TIME TRACKING) ---
+// --- HEARTBEAT & GPS ---
 function startHeartbeat() {
     if(heartbeatInterval) clearInterval(heartbeatInterval);
     pingServer(); heartbeatInterval = setInterval(pingServer, 60000); 
@@ -167,10 +168,8 @@ function startGPS() {
             
             if(activeOrder) updateActiveDistance();
             
-            // NEW: Update Wholesaler List relative to new position
             updateWholesalerDisplay();
-            
-            listenOrders(); // This might re-render too often, consider debouncing if needed.
+            listenOrders(); 
             
         }, e => document.getElementById('locStatus').innerText = "GPS Weak", {enableHighAccuracy: true});
     }
@@ -299,12 +298,11 @@ function listenOrders() {
             if(count > 0) {
                 document.getElementById('noOrdersState').classList.add('hidden');
                 document.getElementById('ordersContainer').classList.remove('hidden');
-                // Check if wholesalers should be shown
                 updateWholesalerDisplay();
             } else {
                 document.getElementById('noOrdersState').classList.remove('hidden');
                 document.getElementById('ordersContainer').classList.add('hidden');
-                document.getElementById('wholesalerStrip').classList.add('hidden'); // Hide if no orders
+                document.getElementById('wholesalerStrip').classList.add('hidden');
             }
         }
     });
@@ -351,7 +349,6 @@ function checkForActive() {
                 document.getElementById('statsSection').classList.remove('hidden');
                 document.getElementById('ordersContainer').classList.remove('hidden');
                 document.getElementById('radiusControl').classList.remove('hidden');
-                // Re-check for list display
                 listenOrders();
             }
         }
@@ -365,8 +362,6 @@ function loadActive(id, o) {
     document.getElementById('statsSection').classList.add('hidden');
     document.getElementById('radiusControl').classList.add('hidden');
     document.getElementById('activeOrderPanel').classList.remove('hidden');
-    
-    // Hide wholesaler strip in active mode to focus on task
     document.getElementById('wholesalerStrip').classList.add('hidden'); 
     
     const custName = o.user && o.user.name ? o.user.name : "Customer";
@@ -458,7 +453,6 @@ function updateStatus(st) {
     
     const updates = { status: st };
     
-    // --- NEW: Save Pickup Location & Calc Distance ---
     if (st === 'out_for_delivery') {
         updates.pickupLocation = { lat: myLat, lng: myLng };
     }
@@ -479,7 +473,6 @@ function updateStatus(st) {
             
             db.ref('deliveryBoys/'+session.mobile+'/earnings').transaction(current => (current || 0) + PARTNER_PAY);
             db.ref('deliveryBoys/'+session.mobile+'/trips').transaction(current => (current || 0) + 1);
-            // NEW: Lifetime Earnings
             db.ref('deliveryBoys/'+session.mobile+'/lifetimeEarnings').transaction(current => (current || 0) + PARTNER_PAY);
 
             db.ref('orders/'+activeOrder.id).update({
@@ -508,12 +501,10 @@ function fetchEarnings() {
     });
 }
 
-// Utils
 function changePin() { toggleMenu(); const p = prompt("New PIN:"); if(p && p.length===4) db.ref('deliveryBoys/'+session.mobile).update({pin:p}).then(()=>showToast("PIN Changed")); }
 function updateVehicle() { toggleMenu(); const v = prompt("Vehicle (Bike/Cycle):"); if(v) { db.ref('deliveryBoys/'+session.mobile).update({vehicle:v}); session.vehicle=v; localStorage.setItem('rmz_delivery_user',JSON.stringify(session)); document.getElementById('vehicleType').innerText=v; }}
 function logout() { localStorage.removeItem('rmz_delivery_user'); window.location.href='delivery-login.html'; }
 
-// BETTER MAPS FUNCTIONS
 function openMapDirect(lat, lng) {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
 }
@@ -536,20 +527,15 @@ function callCust() { if(activeOrder && activeOrder.user) window.open(`tel:${act
 function openWhatsApp() { if(activeOrder && activeOrder.user) window.open(`https://wa.me/91${activeOrder.user.mobile}`, '_blank'); }
 
 // ==========================================
-// WHOLESALER SHOP LOGIC (ADD & VIEW)
+// WHOLESALER SHOP LOGIC
 // ==========================================
 
-// 1. SOS Function (Updated Number)
 function triggerSOS(adminNumber) {
     if(!confirm("⚠️ SEND EMERGENCY SOS? \nLocation will be shared with Admin & Team.")) return;
-    
     const message = `🚨 *SOS EMERGENCY* 🚨\n\nPartner: ${session.name}\nPhone: ${session.mobile}\nLocation: https://maps.google.com/?q=${myLat},${myLng}\n\n*Call Immediately!*`;
-    
-    // Direct WhatsApp Link
     window.open(`https://wa.me/91${adminNumber}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-// 2. Fetch Wholesalers
 function fetchApprovedWholesalers() {
     db.ref('wholesalerRequests').orderByChild('status').equalTo('approved').on('value', snap => {
         approvedWholesalers = [];
@@ -558,23 +544,19 @@ function fetchApprovedWholesalers() {
                 approvedWholesalers.push({ id: child.key, ...child.val() });
             });
         }
-        console.log("Loaded Wholesalers:", approvedWholesalers.length);
         updateWholesalerDisplay(); 
     });
 }
 
-// 3. Render Wholesaler Strip
 function updateWholesalerDisplay() {
     const strip = document.getElementById('wholesalerStrip');
     const container = document.getElementById('wsListContainer');
     
-    // Basic checks
     if(!approvedWholesalers.length || !isOnline) {
         strip.classList.add('hidden');
         return;
     }
 
-    // Filter by nearby (e.g., 50KM max just to be safe) and sort by distance
     const nearby = approvedWholesalers.map(ws => {
         let lat = ws.location ? ws.location.lat : 0;
         let lng = ws.location ? ws.location.lng : 0;
@@ -587,16 +569,9 @@ function updateWholesalerDisplay() {
         return;
     }
 
-    // Hide if in active order mode
-    if(activeOrder) {
+    if(activeOrder || document.getElementById('ordersContainer').classList.contains('hidden')) {
         strip.classList.add('hidden');
         return;
-    }
-    
-    // Only show if orders list is visible (meaning we are on Home tab waiting for orders)
-    if(document.getElementById('ordersContainer').classList.contains('hidden')) {
-        strip.classList.add('hidden'); 
-        return; 
     }
 
     strip.classList.remove('hidden');
@@ -605,8 +580,6 @@ function updateWholesalerDisplay() {
     nearby.forEach(ws => {
         const div = document.createElement('div');
         div.className = "flex-shrink-0 w-64 bg-slate-800 border border-slate-700 rounded-xl p-3 relative snap-center";
-        
-        // Safe Location handling
         const lat = ws.location ? ws.location.lat : 0;
         const lng = ws.location ? ws.location.lng : 0;
 
@@ -630,13 +603,12 @@ function showWholesalerDetails(name, addr, mob) {
     alert(`🏪 ${name}\n\n📍 ${addr}\n\n📞 ${mob}`);
 }
 
-// 4. Modal Logic (Add Shop)
 function openWholesalerModal() {
     toggleMenu();
     const modal = document.getElementById('wholesalerModal');
     modal.classList.remove('hidden');
     
-    // Reset scroll to top of the content container
+    // Reset scroll
     const scrollContainer = modal.querySelector('.overflow-y-auto');
     if(scrollContainer) scrollContainer.scrollTop = 0;
     
@@ -646,6 +618,11 @@ function openWholesalerModal() {
 
 function closeWholesalerModal() {
     document.getElementById('wholesalerModal').classList.add('hidden');
+    // CLEANUP LISTENER
+    if (wholesalerQuery) {
+        wholesalerQuery.off();
+        wholesalerQuery = null;
+    }
 }
 
 function resetWsForm() {
@@ -740,7 +717,14 @@ function loadMyWholesalerRequests() {
     const list = document.getElementById('myWholesalerList');
     list.innerHTML = '<p class="text-center text-slate-600 text-xs py-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
     
-    db.ref('wholesalerRequests').orderByChild('partnerMobile').equalTo(session.mobile).on('value', snap => {
+    // DETACH PREVIOUS LISTENER IF EXISTS
+    if (wholesalerQuery) {
+        wholesalerQuery.off();
+    }
+    
+    wholesalerQuery = db.ref('wholesalerRequests').orderByChild('partnerMobile').equalTo(session.mobile);
+    
+    wholesalerQuery.on('value', snap => {
         list.innerHTML = '';
         if(snap.exists()) {
             const requests = [];
@@ -796,8 +780,9 @@ function editWsRequest(key, name, mobile, address, lat, lng) {
     document.getElementById('btnConnectLoc').innerHTML = '<i class="fa-solid fa-check"></i> Location Set (Tap to Update)';
     document.getElementById('btnWsSubmit').innerText = "UPDATE REQUEST";
     
-    // Reset scroll to top
     const modal = document.getElementById('wholesalerModal');
     const scrollContainer = modal.querySelector('.overflow-y-auto');
     if(scrollContainer) scrollContainer.scrollTop = 0;
 }
+
+
