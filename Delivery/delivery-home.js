@@ -1,7 +1,6 @@
 // --- ANTI-DUPLICATE GUARD ---
 if (window.isDeliveryHomeScriptLoaded) {
     console.warn("Delivery Home Script is already running. Skipping duplicate execution.");
-    // This return prevents the rest of the script from executing again
 } else {
     window.isDeliveryHomeScriptLoaded = true;
 
@@ -27,12 +26,14 @@ if (window.isDeliveryHomeScriptLoaded) {
     let serviceRadius = localStorage.getItem('rmz_pref_radius') || 5;
     if(serviceRadius > 10) serviceRadius = 10;
 
+    // --- MAP VARIABLES ---
+    let deliveryMap = null;
+    let deliveryLayerGroup = null;
+    let isMapOpen = false;
+
     // Store Approved Wholesalers locally
     let approvedWholesalers = [];
-    
-    // GLOBAL VARIABLE FOR LISTENER MANAGEMENT
     let myWholesalerQuery = null;
-
     const PARTNER_PAY = 20;
 
     window.onload = () => {
@@ -186,8 +187,6 @@ if (window.isDeliveryHomeScriptLoaded) {
             battery: batteryLevel 
         };
         db.ref('deliveryBoys/'+session.mobile).update(updates);
-        
-        // Increment Online Minutes
         db.ref('deliveryBoys/'+session.mobile+'/onlineMinutes').transaction(m => (m || 0) + 1);
     }
 
@@ -208,6 +207,10 @@ if (window.isDeliveryHomeScriptLoaded) {
                 
                 if(activeOrder) updateActiveDistance();
                 
+                // --- MAP UPDATE HOOK ---
+                // Agar Map open hai, to markers update karo
+                if(isMapOpen) updateMapVisuals();
+                
                 updateWholesalerDisplay();
                 listenOrders(); 
                 
@@ -218,6 +221,139 @@ if (window.isDeliveryHomeScriptLoaded) {
         }
     }
     function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
+
+    // ==========================================
+    // 🗺️ SMART MAP SYSTEM (NEW)
+    // ==========================================
+
+    window.toggleLiveMap = function() {
+        const mapSection = document.getElementById('liveMapSection');
+        if(mapSection.classList.contains('hidden')) {
+            mapSection.classList.remove('hidden');
+            isMapOpen = true;
+            setTimeout(() => {
+                initDeliveryMap();
+                updateMapVisuals();
+            }, 300); // Small delay for animation
+        } else {
+            mapSection.classList.add('hidden');
+            isMapOpen = false;
+        }
+    }
+
+    function initDeliveryMap() {
+        if(deliveryMap) {
+            deliveryMap.invalidateSize(); // Fix gray area issue
+            return;
+        }
+
+        // Initialize Map centered on user or default
+        const startLat = myLat || 20.5937;
+        const startLng = myLng || 78.9629;
+
+        deliveryMap = L.map('deliveryMap', {
+            zoomControl: false, // Cleaner UI for mobile
+            attributionControl: false
+        }).setView([startLat, startLng], 14);
+
+        // Dark/Midnight Map Tile for Professional Look
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(deliveryMap);
+
+        deliveryLayerGroup = L.layerGroup().addTo(deliveryMap);
+        document.getElementById('mapLoader').classList.add('hidden');
+    }
+
+    function updateMapVisuals() {
+        if(!deliveryMap || !deliveryLayerGroup) return;
+
+        deliveryLayerGroup.clearLayers();
+        const bounds = [];
+
+        // 1. RIDER MARKER (You) - Blue Bike Icon
+        if(myLat && myLng) {
+            const riderIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:#3b82f6; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); animation: pulse-blue 2s infinite;">
+                        <i class="fa-solid fa-motorcycle text-white text-sm"></i>
+                       </div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+
+            L.marker([myLat, myLng], {icon: riderIcon}).addTo(deliveryLayerGroup);
+            bounds.push([myLat, myLng]);
+        }
+
+        // 2. CUSTOMER MARKER (Goal) - Green House Icon
+        if(activeOrder && activeOrder.location && activeOrder.location.lat) {
+            const custLat = activeOrder.location.lat;
+            const custLng = activeOrder.location.lng;
+
+            const custIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:#22c55e; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                        <i class="fa-solid fa-house text-white text-xs"></i>
+                       </div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            L.marker([custLat, custLng], {icon: custIcon})
+                .bindPopup(`<b style="color:black">Customer</b>`)
+                .addTo(deliveryLayerGroup);
+            
+            bounds.push([custLat, custLng]);
+
+            // 3. DRAW ROUTE LINE (Dotted Blue)
+            if(myLat && myLng) {
+                L.polyline([[myLat, myLng], [custLat, custLng]], {
+                    color: '#3b82f6',
+                    weight: 3,
+                    opacity: 0.6,
+                    dashArray: '5, 10' // Dotted Line
+                }).addTo(deliveryLayerGroup);
+            }
+        }
+
+        // 4. WHOLESALER MARKERS (Orange Shop) - Only nearby ones
+        if(approvedWholesalers.length > 0) {
+            approvedWholesalers.forEach(ws => {
+                if(ws.location && ws.location.lat) {
+                    const wsLat = ws.location.lat;
+                    const wsLng = ws.location.lng;
+                    const dist = getDistance(myLat, myLng, wsLat, wsLng);
+
+                    // Show only if within 3KM of rider OR close to customer
+                    if(dist <= 3) {
+                        const shopIcon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background-color:#f59e0b; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid white;">
+                                    <i class="fa-solid fa-shop text-white text-[10px]"></i>
+                                   </div>`,
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        });
+
+                        L.marker([wsLat, wsLng], {icon: shopIcon})
+                            .bindPopup(`
+                                <div class="text-center">
+                                    <b style="color:#d97706">${ws.shopName}</b><br>
+                                    <a href="tel:${ws.ownerMobile}" style="background:#f59e0b; color:white; padding:2px 6px; text-decoration:none; border-radius:4px; font-size:10px; display:inline-block; margin-top:2px;">CALL</a>
+                                </div>
+                            `)
+                            .addTo(deliveryLayerGroup);
+                    }
+                }
+            });
+        }
+
+        // Fit Map Bounds
+        if(bounds.length > 0) {
+            deliveryMap.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
 
     // --- LISTEN ORDERS ---
     window.listenOrders = function() {
@@ -431,6 +567,9 @@ if (window.isDeliveryHomeScriptLoaded) {
 
         updateActiveDistance();
         
+        // --- MAP HOOK: Update Map if it is already open ---
+        if(isMapOpen) updateMapVisuals();
+
         let orderTime = "N/A";
         if(o.timestamp) {
             const d = new Date(o.timestamp);
@@ -667,7 +806,6 @@ if (window.isDeliveryHomeScriptLoaded) {
 
     window.closeWholesalerModal = function() {
         document.getElementById('wholesalerModal').classList.add('hidden');
-        // CLEANUP LISTENER
         if (myWholesalerQuery) {
             console.log("Cleanup: Detaching Wholesaler Listener");
             myWholesalerQuery.off();
@@ -738,7 +876,7 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(!lat || !lng) return showToast("Connect Location First");
 
         const data = {
-            partnerMobile: String(session.mobile), // Ensure string
+            partnerMobile: String(session.mobile),
             partnerName: session.name,
             shopName: name,
             ownerMobile: mobile,
@@ -763,45 +901,34 @@ if (window.isDeliveryHomeScriptLoaded) {
         }
     }
 
-    // --- REVISED: CLIENT-SIDE FILTERING FOR MY SHOPS ---
-    // Fixes the issue where only 1 shop was showing due to DB indexing limits
+    // --- CLIENT-SIDE FILTERING FOR MY SHOPS ---
     window.loadMyWholesalerRequests = function() {
         const list = document.getElementById('myWholesalerList');
         if(!list) return;
 
-        // Keep the loading state consistent with the HTML update
         list.innerHTML = '<div class="flex flex-col items-center justify-center py-8 text-slate-600"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i><p class="text-xs">Syncing shops...</p></div>';
         
-        // 1. DETACH PREVIOUS LISTENER IF EXISTS
         if (myWholesalerQuery) {
-            console.log("Detaching previous listener...");
             myWholesalerQuery.off();
         }
         
-        // 2. FETCH ALL REQUESTS (Client-side filtering strategy)
-        // This bypasses the need for specific database indexing on 'partnerMobile'
         myWholesalerQuery = db.ref('wholesalerRequests');
         
-        // 3. ATTACH NEW LISTENER
         myWholesalerQuery.on('value', snap => {
-            console.log("Full Data Received (Client Filter):", snap.val()); 
             list.innerHTML = '';
             
             if(snap.exists()) {
                 const myRequests = [];
-                const myMobileStr = String(session.mobile); // Current user's mobile
+                const myMobileStr = String(session.mobile);
 
                 snap.forEach(child => {
                     const val = child.val();
-                    // FILTER HERE: Check if this request belongs to the current user
-                    // We check both string and number formats to be safe
                     if (String(val.partnerMobile) === myMobileStr) {
                          myRequests.push({key: child.key, ...val});
                     }
                 });
 
                 if(myRequests.length > 0) {
-                    // Sort by timestamp if available, else standard reverse
                     myRequests.reverse(); 
                     
                     myRequests.forEach(req => {
@@ -861,3 +988,4 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(scrollContainer) scrollContainer.scrollTop = 0;
     }
 }
+
