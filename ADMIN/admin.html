@@ -85,6 +85,9 @@
             <p class="text-xs text-slate-500">Advanced Management</p>
         </div>
         <nav class="flex-1 p-4 space-y-3 overflow-y-auto">
+            <button onclick="openModal('wholesalerVerifyModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-amber-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
+                <i class="fa-solid fa-shop w-5 text-amber-500"></i> Verify Wholesalers
+            </button>
             <button onclick="openModal('bannerModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-pink-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
                 <i class="fa-solid fa-images w-5 text-pink-500"></i> Manage App Banners
             </button>
@@ -94,6 +97,9 @@
             <button onclick="openModal('partnerModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-green-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
                 <i class="fa-solid fa-helmet-safety w-5 text-green-500"></i> Delivery Team Info
                 <span id="pendingReqBadge" class="hidden ml-auto bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">New</span>
+            </button>
+            <button onclick="openModal('masterProductModal')" class="w-full text-left px-4 py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-indigo-600 hover:text-white transition flex items-center gap-3 border border-slate-700">
+                <i class="fa-solid fa-database w-5 text-indigo-500"></i> Master Inventory DB
             </button>
         </nav>
         <div class="p-4 border-t border-slate-800">
@@ -213,7 +219,7 @@
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-800"><h3 class="text-sm font-bold text-slate-300 mb-4">Top Selling Products</h3><div id="topProductsList" class="space-y-2 text-sm text-slate-400"><p class="text-center text-xs">Loading data...</p></div></div>
             </div>
 
-            <!-- TAB 4: APP CONTENT (The New Tab) -->
+            <!-- TAB 4: APP CONTENT -->
             <div id="tab-content" class="hidden space-y-6">
                 <div class="flex justify-between items-end">
                     <h2 class="text-xl sm:text-2xl font-bold text-white">App Content & Policies</h2>
@@ -350,6 +356,21 @@
         </div>
     </div>
 
+    <!-- MODAL: WHOLESALER VERIFICATION -->
+    <div id="wholesalerVerifyModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-4xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[85vh]">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Wholesaler Verification Requests</h3>
+                <button onclick="closeModal('wholesalerVerifyModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto bg-slate-900 p-4 relative">
+                 <div id="wholesalerVerifyList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <p class="text-center text-slate-500 col-span-2 py-10">Loading requests...</p>
+                 </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: PARTNER NANO DETAILS -->
     <div id="partnerFullDetailModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center modal-overlay p-4">
         <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh] animate-[scaleIn_0.2s_ease-out]">
@@ -408,9 +429,61 @@
         <div class="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[80vh]"><div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl"><div><h3 class="font-bold text-white">Partner Distances</h3><p class="text-[10px] text-slate-400">Distance to Customer</p></div><button onclick="closeModal('calcDistanceModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="p-4 overflow-y-auto space-y-2" id="distanceListContainer"><p class="text-center text-slate-500 text-xs py-4">Calculating distances...</p></div></div>
     </div>
 
+    <!-- NEW MODAL: MASTER PRODUCTS -->
+    <div id="masterProductModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[85vh]">
+            <!-- Header -->
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                <h3 class="font-bold text-white">Master Product Database</h3>
+                <button onclick="closeModal('masterProductModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Content -->
+            <div class="p-5 overflow-y-auto space-y-6">
+                
+                <!-- Add Form -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Add New Item</label>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex gap-2">
+                             <input type="text" id="mpName" placeholder="Product Name (e.g. Aalu (आलू))" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500">
+                             <button onclick="addMasterProduct()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-lg text-xs shadow-lg uppercase tracking-wide whitespace-nowrap">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Toggle -->
+                 <div class="text-right">
+                    <button onclick="toggleBulkUpload()" class="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold underline">Switch to Bulk List Upload</button>
+                </div>
+                
+                <!-- Bulk Form (Hidden by default) -->
+                <div id="bulkUploadSection" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700">
+                     <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Paste List (One per line)</label>
+                     <textarea id="mpBulkData" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-xs font-mono h-32 focus:outline-none leading-relaxed" placeholder="Aalu (आलू)&#10;Pyaz (प्याज़)&#10;Tamatar (टमाटर)"></textarea>
+                     <button onclick="processBulkUpload()" class="w-full mt-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg text-xs">Upload List</button>
+                     <p class="text-[9px] text-slate-500 mt-2">* Each line becomes one product.</p>
+                </div>
+
+                <!-- List -->
+                <div>
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2 mb-2">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase">Database Items</h4>
+                        <span class="text-[10px] text-slate-600 font-mono" id="mpTotalCount">0 Found</span>
+                    </div>
+                    <div id="masterProductList" class="space-y-2">
+                        <p class="text-center text-slate-500 text-xs py-8">Loading database...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
 
-    <!-- SINGLE JAVASCRIPT FILE -->
+    <!-- MAIN JAVASCRIPT FILES -->
+    <!-- Order Matters: admin.js first (Core), then admin-managers.js (Tools) -->
     <script src="admin.js"></script>
+    <script src="admin-managers.js"></script>
 </body>
 </html>
