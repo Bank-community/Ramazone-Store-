@@ -13,7 +13,6 @@ const firebaseConfig = {
 };
 
 // Initialize ImageKit for Banner Uploads
-// Note: Replace with your actual keys if needed
 const imageKit = new ImageKit({
     publicKey: "public_key_test", 
     urlEndpoint: "https://ik.imagekit.io/your_id", 
@@ -45,16 +44,16 @@ let ordersData = {};   // Stores active orders
 // Assignment Logic
 let selectedOrderIdForAssignment = null;
 
-// PIN Recovery Logic
+// PIN Recovery Logic Variables (Used in Managers)
 let recTargetMobile = null;
 let recTargetPin = null;
 let recTargetName = null;
 let recTargetContext = null; 
 let recTargetShop = null;
 
-// Partner Management
-let currentPartnerTab = 'active'; // 'active' or 'requests'
-let currentPartnerMobile = null; // For Nano Detail Modal
+// Partner Management Variables (Used in Managers)
+let currentPartnerTab = 'active'; 
+let currentPartnerMobile = null; 
 
 // ==========================================
 // 3. INITIALIZATION
@@ -88,7 +87,6 @@ window.onload = () => {
 // ==========================================
 
 function switchTab(tabId) { 
-    // Define all tabs (Added 'content' here)
     const tabs = ['orders', 'map', 'analytics', 'history', 'partners', 'alerts', 'content'];
     
     // Hide all
@@ -130,12 +128,13 @@ function switchTab(tabId) {
         }, 200); 
     }
     
-    if(tabId === 'analytics') { 
+    // Call functions from admin-managers.js if they exist
+    if(tabId === 'analytics' && typeof initAnalytics === 'function') { 
         initAnalytics(); 
     }
 
-    if(tabId === 'content') {
-        loadVideos(); // Load videos when content tab is opened
+    if(tabId === 'content' && typeof loadVideos === 'function') {
+        loadVideos(); 
     }
 }
 
@@ -161,10 +160,11 @@ function openModal(id) {
     if(modal) {
         modal.classList.remove('hidden');
         
-        // Load Data based on modal type
-        if(id === 'customerModal') loadCustomers(); 
-        if(id === 'partnerModal') renderAllPartnerViews(); 
-        if(id === 'bannerModal') loadBanners(); 
+        // Load Data based on modal type (Functions in admin-managers.js)
+        if(id === 'customerModal' && typeof loadCustomers === 'function') loadCustomers(); 
+        if(id === 'partnerModal' && typeof renderAllPartnerViews === 'function') renderAllPartnerViews(); 
+        if(id === 'bannerModal' && typeof loadBanners === 'function') loadBanners(); 
+        if(id === 'masterProductModal' && typeof loadMasterProducts === 'function') loadMasterProducts(); 
     }
 }
 
@@ -192,34 +192,34 @@ function showToast(msg) {
 }
 
 // ==========================================
-// 5. PARTNER MANAGEMENT SYSTEM
+// 5. CORE PARTNER TRACKING (Listener)
 // ==========================================
 
 function trackPartners() {
     db.ref('deliveryBoys').on('value', snap => {
         if(snap.exists()) {
             partnersData = snap.val();
-            renderDashboardTeamList();
-            renderPartnerModalList();
+            renderDashboardTeamList(); // Kept in core for dashboard view
+            
+            // Call Manager functions if available
+            if(typeof renderPartnerModalList === 'function') renderPartnerModalList();
+            if(typeof updatePartnerBadges === 'function') updatePartnerBadges();
+            
             updateMapCounts();
             renderMarkers();
-            updatePartnerBadges();
+            
             if(currentPartnerMobile && !document.getElementById('partnerFullDetailModal').classList.contains('hidden')) {
-                refreshNanoModal(currentPartnerMobile);
+                if(typeof refreshNanoModal === 'function') refreshNanoModal(currentPartnerMobile);
             }
         } else {
             partnersData = {};
             renderDashboardTeamList();
-            renderPartnerModalList();
+            if(typeof renderPartnerModalList === 'function') renderPartnerModalList();
         }
     });
 }
 
-function renderAllPartnerViews() {
-    renderDashboardTeamList();
-    renderPartnerModalList();
-}
-
+// Simple Dashboard List Render (Kept in Core)
 function renderDashboardTeamList() {
     const tableBody = document.getElementById('partnersTable');
     if(!tableBody) return;
@@ -262,258 +262,6 @@ function renderDashboardTeamList() {
             </tr>
         `;
     });
-}
-
-function renderPartnerModalList() {
-    const activeBody = document.getElementById('partnerDetailTable');
-    const reqList = document.getElementById('requestsList');
-    
-    if(activeBody) activeBody.innerHTML = '';
-    if(reqList) reqList.innerHTML = '';
-    
-    let hasReq = false;
-    let hasActive = false;
-
-    Object.entries(partnersData).forEach(([mobile, p]) => {
-        if(!p.name) return;
-
-        if(p.status === 'pending') {
-            hasReq = true;
-            if(reqList) {
-                const card = document.createElement('div');
-                card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col gap-3 animate-[fadeIn_0.3s_ease-out]";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center border border-amber-500/50 relative">
-                                <span class="text-amber-500 font-bold text-lg">${p.name.charAt(0).toUpperCase()}</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-white text-base">${p.name}</h4>
-                                <p class="text-xs text-slate-400 font-mono tracking-wide">+91 ${mobile}</p>
-                                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded uppercase mt-1 inline-block border border-slate-600">${p.vehicle || 'Unknown'}</span>
-                            </div>
-                        </div>
-                        <span class="bg-amber-600 text-white text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider">Pending</span>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        <button onclick="verifyOnWhatsApp('${mobile}', '${p.name}')" class="bg-green-900/30 hover:bg-green-900/50 text-green-400 border border-green-600/30 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition">
-                            <i class="fa-brands fa-whatsapp text-lg"></i> Request Proof
-                        </button>
-                        <button onclick="approvePartner('${mobile}')" class="bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg text-xs font-bold shadow-lg transition transform active:scale-95">
-                            <i class="fa-solid fa-check mr-1"></i> APPROVE
-                        </button>
-                    </div>
-                    <button onclick="deletePartnerAccount('${mobile}', true)" class="text-[10px] text-red-500 hover:text-red-400 text-center mt-1 underline">Reject & Delete</button>
-                `;
-                reqList.appendChild(card);
-            }
-        } 
-        else {
-            hasActive = true;
-            if(activeBody) {
-                const isOnline = p.status === 'online';
-                const isDisabled = p.status === 'disabled';
-                
-                let statusBadge = isOnline 
-                    ? `<span class="status-badge bg-green-500/20 text-green-400 border border-green-500/30">ONLINE</span>` 
-                    : (isDisabled 
-                        ? `<span class="status-badge bg-red-500/20 text-red-400 border border-red-500/30">DISABLED</span>` 
-                        : `<span class="status-badge bg-slate-700 text-slate-400 border border-slate-600">OFFLINE</span>`);
-                
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/50 transition cursor-pointer group border-b border-slate-800 last:border-0";
-                
-                tr.innerHTML = `
-                    <td class="p-3 align-middle">${statusBadge}</td>
-                    <td class="p-3 align-middle" onclick="openPartnerDetail('${mobile}')">
-                        <div class="font-bold text-white text-sm">${p.name}</div>
-                        <div class="text-[10px] text-slate-500 font-mono">${mobile}</div>
-                    </td>
-                    <td class="p-3 align-middle text-xs text-slate-400 capitalize">${p.vehicle || 'Bike'}</td>
-                    <td class="p-3 align-middle font-mono font-bold text-green-400">₹${p.earnings || 0}</td>
-                    <td class="p-3 align-middle text-right flex justify-end gap-2">
-                        <button onclick="openPinRecovery('${mobile}', '${p.pin}', '${p.name}', 'partner', 'Ramazone Delivery')" class="bg-slate-700 hover:bg-slate-600 text-slate-300 p-2 rounded-lg text-xs font-bold" title="Recover PIN">
-                            <i class="fa-solid fa-key"></i>
-                        </button>
-                        <button onclick="openPartnerDetail('${mobile}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition" title="Full Details">
-                            <i class="fa-solid fa-angle-right"></i>
-                        </button>
-                    </td>
-                `;
-                activeBody.appendChild(tr);
-            }
-        }
-    });
-
-    const noReqMsg = document.getElementById('noReqMsg');
-    if(noReqMsg) {
-        if(!hasReq) noReqMsg.classList.remove('hidden');
-        else noReqMsg.classList.add('hidden');
-    }
-    
-    if(!hasActive && activeBody) {
-        activeBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500 text-sm">No active partners. Check 'New Requests'.</td></tr>`;
-    }
-}
-
-function updatePartnerBadges() {
-    let pendingCount = 0;
-    Object.values(partnersData).forEach(p => { 
-        if(p.status === 'pending') pendingCount++; 
-    });
-
-    const badge = document.getElementById('pendingReqBadge');
-    const tabBadge = document.getElementById('reqCountBadge');
-    
-    if(pendingCount > 0) {
-        if(badge) { badge.classList.remove('hidden'); badge.innerText = "New"; }
-        if(tabBadge) { tabBadge.classList.remove('hidden'); tabBadge.innerText = pendingCount; }
-    } else {
-        if(badge) badge.classList.add('hidden');
-        if(tabBadge) tabBadge.classList.add('hidden');
-    }
-}
-
-function switchPartnerTab(type) {
-    currentPartnerTab = type;
-    const btnActive = document.getElementById('btn-tab-active');
-    const btnReq = document.getElementById('btn-tab-requests');
-    if(btnActive) btnActive.classList.remove('active', 'border-b-2');
-    if(btnReq) btnReq.classList.remove('active', 'border-b-2');
-    
-    if(type === 'active') {
-        if(btnActive) btnActive.classList.add('active', 'border-b-2');
-        document.getElementById('view-active-partners').classList.remove('hidden');
-        document.getElementById('view-partner-requests').classList.add('hidden');
-    } else {
-        if(btnReq) btnReq.classList.add('active', 'border-b-2');
-        document.getElementById('view-active-partners').classList.add('hidden');
-        document.getElementById('view-partner-requests').classList.remove('hidden');
-    }
-    renderPartnerModalList();
-}
-
-function verifyOnWhatsApp(mobile, name) {
-    const msg = `Hello ${name}, Welcome to Ramazone Delivery Fleet! 🛵\n\nYour registration is received. To activate your account, please send clear photos of:\n\n1. Aadhar Card (Front & Back)\n2. Driving License (For Bike)\n3. Your Selfie\n4. Bank Details/UPI for Payouts\n\nOnce verified, you can login.`;
-    window.open(`https://wa.me/91${mobile}?text=${encodeURIComponent(msg)}`, '_blank');
-}
-
-function approvePartner(mobile) {
-    if(confirm("Confirm Approval? This partner will be able to login.")) {
-        db.ref('deliveryBoys/' + mobile).update({
-            status: 'offline', 
-            joinedAt: firebase.database.ServerValue.TIMESTAMP,
-            earnings: 0,
-            lifetimeEarnings: 0,
-            totalDistance: 0,
-            onlineMinutes: 0
-        }).then(() => {
-            showToast("Partner Approved Successfully!");
-        });
-    }
-}
-
-function openPartnerDetail(mobile) {
-    currentPartnerMobile = mobile;
-    const p = partnersData[mobile];
-    if(!p) return;
-
-    document.getElementById('nanoInitials').innerText = p.name ? p.name.charAt(0).toUpperCase() : 'U';
-    document.getElementById('nanoName').innerText = p.name;
-    document.getElementById('nanoMobile').innerText = '+91 ' + mobile;
-    
-    const toggle = document.getElementById('nanoToggle');
-    const statusTxt = document.getElementById('nanoStatusText');
-    
-    if(p.status === 'disabled') {
-        toggle.checked = false;
-        statusTxt.innerText = "Partner is DISABLED (Login Blocked)";
-        statusTxt.className = "text-xs text-red-400 mt-1 font-bold";
-    } else {
-        toggle.checked = true;
-        statusTxt.innerText = "Partner is ACTIVE";
-        statusTxt.className = "text-xs text-green-400 mt-1 font-bold";
-    }
-
-    refreshNanoModal(mobile);
-    openModal('partnerFullDetailModal');
-}
-
-function refreshNanoModal(mobile) {
-    const p = partnersData[mobile];
-    if(!p) return;
-
-    document.getElementById('nanoLifeEarn').innerText = p.lifetimeEarnings || 0;
-    document.getElementById('nanoCurrentBal').innerText = p.earnings || 0;
-    document.getElementById('nanoDist').innerText = (p.totalDistance || 0).toFixed(1);
-    
-    const hours = ((p.onlineMinutes || 0) / 60).toFixed(1);
-    document.getElementById('nanoOnlineTime').innerText = hours;
-
-    if(p.joinedAt) {
-        document.getElementById('nanoJoined').innerText = new Date(p.joinedAt).toLocaleDateString();
-    } else {
-        document.getElementById('nanoJoined').innerText = "N/A";
-    }
-}
-
-function togglePartnerStatus() {
-    if(!currentPartnerMobile) return;
-    const isChecked = document.getElementById('nanoToggle').checked;
-    const newStatus = isChecked ? 'offline' : 'disabled';
-    
-    db.ref('deliveryBoys/' + currentPartnerMobile).update({ status: newStatus }).then(() => {
-        showToast(isChecked ? "Access Enabled" : "Access Disabled");
-    });
-}
-
-function submitPayout() {
-    if(!currentPartnerMobile) return;
-    const input = document.getElementById('payoutAmount');
-    const amount = parseFloat(input.value);
-    
-    if(!amount || amount <= 0) return showToast("Enter valid amount");
-    
-    const currentBal = partnersData[currentPartnerMobile].earnings || 0;
-    if(amount > currentBal) return showToast("Amount exceeds balance!");
-
-    db.ref('deliveryBoys/' + currentPartnerMobile + '/earnings').transaction(curr => {
-        return (curr || 0) - amount;
-    }, (err, committed, snap) => {
-        if(committed) {
-            showToast(`₹${amount} Settled Successfully`);
-            input.value = '';
-            
-            const logId = Date.now();
-            db.ref('payouts/' + logId).set({
-                partnerId: currentPartnerMobile,
-                amount: amount,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                admin: 'Admin HQ'
-            });
-        }
-    });
-}
-
-function deletePartnerAccount(mobileArg = null, isRequest = false) {
-    const mobile = mobileArg || currentPartnerMobile;
-    if(!mobile) return;
-    
-    const msg = isRequest 
-        ? "Reject request? This cannot be undone." 
-        : "⚠️ DANGER: Delete partner account permanently? Earnings & History will be lost.";
-    
-    if(confirm(msg)) {
-        if(!isRequest && !confirm("Double Check: Are you absolutely sure?")) return;
-        
-        db.ref('deliveryBoys/' + mobile).remove()
-        .then(() => {
-            showToast("Partner Deleted");
-            if(!isRequest) closeModal('partnerFullDetailModal');
-        });
-    }
 }
 
 // ==========================================
@@ -961,350 +709,3 @@ function renderMarkers() {
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
 }
-
-// ==========================================
-// 9. CUSTOMERS, PIN RECOVERY & BANNERS (LEGACY)
-// ==========================================
-
-function loadCustomers() {
-    const t = document.getElementById('custTable'); 
-    t.innerHTML='<tr><td colspan="6" class="p-4 text-center">Loading...</td></tr>';
-    
-    db.ref('users').once('value', s => { 
-        t.innerHTML=''; 
-        if(s.exists()) {
-            Object.values(s.val()).forEach(u => { 
-                t.innerHTML += `
-                    <tr class="hover:bg-slate-800 transition">
-                        <td class="p-3 font-bold text-white">${u.name}</td>
-                        <td class="p-3 font-mono">${u.mobile}</td>
-                        <td class="p-3">${u.shopName || '-'}</td>
-                        <td class="p-3 font-mono tracking-widest text-xs flex items-center gap-2">
-                            <span class="text-amber-500 pin-text">••••</span>
-                            <button onclick="togglePin(this, '${u.pin}')" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-eye"></i></button>
-                        </td>
-                        <td class="p-3">
-                            <button onclick="openPinRecovery('${u.mobile}', '${u.pin}', '${u.name}', 'customer', '${u.shopName || 'Ramazone Store'}')" class="bg-slate-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-[10px] font-bold transition flex items-center gap-1">
-                                <i class="fa-solid fa-key"></i> SEND
-                            </button>
-                        </td>
-                        <td class="p-3 text-xs text-slate-500">${new Date(u.joinedAt || Date.now()).toLocaleDateString()}</td>
-                    </tr>
-                `; 
-            }); 
-        } else {
-            t.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">No Customers Found</td></tr>';
-        }
-    });
-}
-
-window.togglePin = function(btn, pin) {
-    const span = btn.parentElement.querySelector('.pin-text');
-    const icon = btn.querySelector('i');
-    if (span.innerText === '••••') {
-        span.innerText = pin;
-        icon.classList.replace('fa-eye', 'fa-eye-slash');
-    } else {
-        span.innerText = '••••';
-        icon.classList.replace('fa-eye-slash', 'fa-eye');
-    }
-}
-
-function openPinRecovery(mobile, pin, name, context, shopName) {
-    if(!pin) { showToast("User has no PIN set"); return; }
-    recTargetMobile = mobile; 
-    recTargetPin = pin; 
-    recTargetName = name; 
-    recTargetContext = context; 
-    recTargetShop = shopName;
-    
-    document.getElementById('recName').innerText = name + (context === 'partner' ? ' (Partner)' : '');
-    document.getElementById('recMobile').innerText = "+91 " + mobile;
-    document.getElementById('pinRecoveryModal').classList.remove('hidden');
-}
-
-function sendPinWhatsApp() {
-    if(!recTargetMobile) return;
-    let body = recTargetContext === 'customer' 
-        ? `Your Login PIN for *${recTargetShop}* is: *${recTargetPin}*` 
-        : `Your Login PIN for *Ramazone Delivery App* is: *${recTargetPin}*`;
-    
-    const msg = `Hello ${recTargetName},\n\n${body}\n\nPlease keep it safe.\n- Team *Ramazone*`;
-    window.open(`https://wa.me/91${recTargetMobile}?text=${encodeURIComponent(msg)}`, '_blank');
-    closeModal('pinRecoveryModal');
-}
-
-function sendPinSMS() {
-    if(!recTargetMobile) return;
-    let body = recTargetContext === 'customer' 
-        ? `Hello ${recTargetName}, Your PIN for ${recTargetShop} is: ${recTargetPin}` 
-        : `Hello ${recTargetName}, Your PIN for Ramazone Delivery is: ${recTargetPin}`;
-    
-    window.open(`sms:${recTargetMobile}?body=${encodeURIComponent(body)}`, '_self');
-    closeModal('pinRecoveryModal');
-}
-
-function loadBanners() {
-    const list = document.getElementById('bannerList'); 
-    list.innerHTML = '<p class="text-xs text-slate-500">Loading...</p>';
-    
-    db.ref('admin/sliders').once('value', s => { 
-        list.innerHTML = ''; 
-        if(s.exists()) {
-            Object.entries(s.val()).forEach(([key, val]) => { 
-                list.innerHTML += `
-                    <div class="bg-slate-800 p-2 rounded-lg flex items-center gap-3 border border-slate-700">
-                        <img src="${val.img}" class="w-16 h-10 object-cover rounded">
-                        <div class="flex-1 overflow-hidden">
-                            <p class="text-[10px] text-blue-400 truncate">${val.link || '#'}</p>
-                        </div>
-                        <button onclick="db.ref('admin/sliders/${key}').remove(); loadBanners()" class="text-red-500 hover:text-red-400">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>`; 
-            }); 
-        } else {
-            list.innerHTML = '<p class="text-xs text-slate-500">No active banners.</p>'; 
-        }
-    });
-}
-
-function uploadBanner() {
-    const file = document.getElementById('bannerFile').files[0]; 
-    const link = document.getElementById('bannerLink').value || '#';
-    
-    if(!file) return showToast("Select Image");
-    
-    const btn = document.getElementById('uploadBtn'); 
-    btn.innerHTML = 'Uploading...'; 
-    btn.disabled = true;
-    
-    imageKit.upload({ file : file, fileName : "banner_" + Date.now() + ".jpg", tags : ["banner"] }, function(err, result) {
-        if(err) { 
-            const reader = new FileReader(); 
-            reader.readAsDataURL(file); 
-            reader.onload = function () { saveBannerToDb(reader.result, link, btn); }; 
-        } else {
-            saveBannerToDb(result.url, link, btn);
-        }
-    });
-}
-
-function saveBannerToDb(imgUrl, link, btn) {
-    db.ref('admin/sliders').push({ img: imgUrl, link: link })
-    .then(() => { 
-        showToast("Banner Live!"); 
-        document.getElementById('bannerFile').value=''; 
-        btn.innerHTML='UPLOAD & PUBLISH'; 
-        btn.disabled=false; 
-        loadBanners(); 
-    });
-}
-
-// ==========================================
-// 10. ANALYTICS & CHARTS
-// ==========================================
-
-function initAnalytics() {
-    db.ref('orders').once('value', snap => {
-        let totalOrders = 0, totalRev = 0;
-        let customers = new Set();
-        let productCounts = {};
-        const last7Days = {};
-        const today = new Date();
-        
-        for(let i=6; i>=0; i--) { 
-            const d = new Date(today); 
-            d.setDate(today.getDate()-i); 
-            last7Days[d.toLocaleDateString()] = 0; 
-        }
-
-        if(snap.exists()) {
-            Object.values(snap.val()).forEach(o => {
-                if(o.status === 'delivered') {
-                    totalOrders++; 
-                    totalRev += parseInt(o.payment.deliveryFee || 0);
-                    customers.add(o.user.mobile);
-                    
-                    if(o.cart) {
-                        o.cart.forEach(p => {
-                            if(p.name) productCounts[p.name] = (productCounts[p.name] || 0) + (p.count || 1);
-                        });
-                    }
-                    
-                    const dateKey = new Date(o.timestamp).toLocaleDateString();
-                    if(last7Days.hasOwnProperty(dateKey)) {
-                        last7Days[dateKey] += parseInt(o.payment.deliveryFee || 0);
-                    }
-                }
-            });
-        }
-
-        document.getElementById('anTotalOrders').innerText = totalOrders;
-        document.getElementById('anTotalRev').innerText = totalRev;
-        document.getElementById('anAvgVal').innerText = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
-        document.getElementById('anActiveCust').innerText = customers.size;
-
-        renderSalesChart(Object.keys(last7Days), Object.values(last7Days));
-
-        const sortedProducts = Object.entries(productCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
-        const prodContainer = document.getElementById('topProductsList');
-        prodContainer.innerHTML = '';
-        
-        if(sortedProducts.length > 0) {
-            sortedProducts.forEach(([name, count], index) => {
-                prodContainer.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-800 p-2 rounded hover:bg-slate-700 transition">
-                        <span class="truncate flex-1">
-                            <span class="text-blue-500 font-bold mr-2">#${index+1}</span>${name}
-                        </span>
-                        <span class="bg-slate-700 px-2 py-0.5 rounded text-xs text-white border border-slate-600">${count} sold</span>
-                    </div>`;
-            });
-        } else {
-            prodContainer.innerHTML = '<p class="text-center text-xs text-slate-500">No sales data yet.</p>';
-        }
-    });
-}
-
-function renderSalesChart(labels, data) {
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    if(salesChartInstance) salesChartInstance.destroy();
-    
-    salesChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: { 
-            labels: labels, 
-            datasets: [{ 
-                label: 'Sales (₹)', 
-                data: data, 
-                backgroundColor: '#3b82f6', 
-                borderRadius: 4 
-            }] 
-        },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { legend: { display: false } }, 
-            scales: { 
-                y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, 
-                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: {size: 10} } } 
-            } 
-        }
-    });
-}
-
-// ==========================================
-// 11. CONTENT MANAGEMENT (MERGED)
-// ==========================================
-
-// --- A. Policies Logic ---
-function loadSelectedPolicy() {
-    const policyKey = document.getElementById('policySelector').value;
-    const editor = document.getElementById('policyEditor');
-    
-    editor.value = "Loading...";
-    editor.disabled = true;
-
-    db.ref('admin/policies/' + policyKey).once('value', snap => {
-        editor.disabled = false;
-        if(snap.exists()) {
-            editor.value = snap.val();
-        } else {
-            editor.value = "";
-            editor.placeholder = "No content yet. Write something...";
-        }
-    }, err => {
-        editor.disabled = false;
-        editor.value = "Error loading policy.";
-        console.error(err);
-    });
-}
-
-function savePolicy() {
-    const policyKey = document.getElementById('policySelector').value;
-    const content = document.getElementById('policyEditor').value;
-    const btn = document.getElementById('btnSavePolicy');
-
-    if(!content.trim()) return showToast("Content cannot be empty");
-
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-    btn.disabled = true;
-
-    db.ref('admin/policies/' + policyKey).set(content)
-    .then(() => {
-        showToast("Policy Updated Successfully!");
-        btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
-        btn.disabled = false;
-    })
-    .catch(err => {
-        showToast("Error saving: " + err.message);
-        btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
-        btn.disabled = false;
-    });
-}
-
-// --- B. Videos Logic ---
-function loadVideos() {
-    const list = document.getElementById('videoList');
-    if(!list) return;
-    
-    list.innerHTML = '<p class="text-center text-slate-500 text-xs py-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading videos...</p>';
-
-    db.ref('admin/videos').once('value', snap => {
-        list.innerHTML = '';
-        
-        if(snap.exists()) {
-            Object.entries(snap.val()).forEach(([key, vid]) => {
-                const div = document.createElement('div');
-                div.className = "bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center group hover:bg-slate-750 transition";
-                div.innerHTML = `
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="w-10 h-10 rounded-lg bg-red-900/20 text-red-500 flex items-center justify-center shrink-0 border border-red-900/30">
-                            <i class="fa-brands fa-youtube text-lg"></i>
-                        </div>
-                        <div class="overflow-hidden">
-                            <h4 class="font-bold text-white text-sm truncate">${vid.title}</h4>
-                            <a href="${vid.link}" target="_blank" class="text-[10px] text-blue-400 hover:underline truncate block">${vid.link}</a>
-                        </div>
-                    </div>
-                    <button onclick="deleteVideo('${key}')" class="w-8 h-8 rounded-lg bg-slate-700 text-slate-400 hover:bg-red-600 hover:text-white transition flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-trash text-xs"></i>
-                    </button>
-                `;
-                list.appendChild(div);
-            });
-        } else {
-            list.innerHTML = '<p class="text-center text-slate-500 text-xs py-4">No videos added yet.</p>';
-        }
-    });
-}
-
-function addVideo() {
-    const title = document.getElementById('vidTitle').value.trim();
-    const link = document.getElementById('vidLink').value.trim();
-
-    if(!title || !link) return showToast("Enter Title and Link");
-    if(!link.includes('youtube.com') && !link.includes('youtu.be')) return showToast("Only YouTube links allowed");
-
-    const newVid = { title, link, addedAt: firebase.database.ServerValue.TIMESTAMP };
-
-    db.ref('admin/videos').push(newVid)
-    .then(() => {
-        showToast("Video Added!");
-        document.getElementById('vidTitle').value = '';
-        document.getElementById('vidLink').value = '';
-        loadVideos();
-    });
-}
-
-function deleteVideo(key) {
-    if(confirm("Delete this video?")) {
-        db.ref('admin/videos/' + key).remove()
-        .then(() => {
-            showToast("Video Deleted");
-            loadVideos();
-        });
-    }
-}
-
