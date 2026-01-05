@@ -31,6 +31,10 @@
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #f59e0b; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(245,158,11,0.5); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #374151; border-radius: 2px; }
+
+        /* Modal Animation */
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-animate { animation: slideUp 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="pb-24">
@@ -72,6 +76,7 @@
         <nav class="flex-1 p-4 space-y-2">
             <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-key text-amber-500 w-5"></i> Change PIN</button>
             <button onclick="updateVehicle()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-motorcycle text-amber-500 w-5"></i> Vehicle Info</button>
+            <button onclick="openWholesalerModal()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-store text-amber-500 w-5"></i> Add Wholesaler Shop</button>
             <div class="h-px bg-gray-800 my-2"></div>
             <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-900/30 text-red-500 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-power-off w-5"></i> Logout</button>
         </nav>
@@ -211,6 +216,67 @@
 
     </div>
 
+    <!-- WHOLESALER ADD MODAL (NEW) -->
+    <div id="wholesalerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[85vh] modal-animate">
+            
+            <!-- Incentive Header -->
+            <div class="bg-gradient-to-r from-amber-600 to-yellow-600 p-3 text-center rounded-t-2xl relative">
+                <div class="absolute top-3 right-3 text-white/80 cursor-pointer hover:text-white" onclick="closeWholesalerModal()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </div>
+                <h3 class="font-extrabold text-white text-sm uppercase tracking-wide"><i class="fa-solid fa-sack-dollar mr-1"></i> Earn Extra Incentive</h3>
+                <p class="text-[10px] text-white/90 mt-1 font-bold leading-tight px-4">
+                    Yadi aap wholesaler ko add karte hain aur verify karvate hain, to aapko har order par alag se incentive milega!
+                </p>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-5 overflow-y-auto space-y-6 flex-1 bg-slate-900">
+                
+                <!-- Add Form -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 relative">
+                    <input type="hidden" id="wsEditId" value="">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-shop text-amber-500"></i> Add New Shop
+                    </h4>
+                    
+                    <div class="space-y-3">
+                        <!-- Connect Location Button -->
+                        <button onclick="connectWholesalerLocation()" id="btnConnectLoc" class="w-full bg-blue-900/30 text-blue-400 border border-blue-600/50 hover:bg-blue-600 hover:text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-location-crosshairs text-lg"></i> Connect Live Location
+                        </button>
+                        
+                        <div class="grid grid-cols-1 gap-3">
+                            <input type="text" id="wsName" placeholder="Wholesaler Shop Name" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
+                            <input type="tel" id="wsMobile" placeholder="Owner Mobile Number" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Shop Address</label>
+                            <textarea id="wsAddress" placeholder="Address will auto-fill from location..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs mt-1 h-20 focus:outline-none focus:border-amber-500 resize-none"></textarea>
+                            <input type="hidden" id="wsLat">
+                            <input type="hidden" id="wsLng">
+                        </div>
+
+                        <button onclick="submitWholesalerRequest()" id="btnWsSubmit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg transition mt-2">
+                            SUBMIT FOR VERIFICATION
+                        </button>
+                    </div>
+                </div>
+
+                <!-- My Added Shops List -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-800 pb-2">My Added Shops</h4>
+                    <div id="myWholesalerList" class="space-y-3">
+                        <p class="text-center text-slate-600 text-xs py-4">Loading your list...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- Overlays -->
     <div id="celebrationOverlay" class="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center hidden">
         <div class="text-center animate-[popIn_0.5s_ease-out]">
@@ -219,7 +285,7 @@
             <p class="text-xl text-green-400 font-bold drop-shadow-md">+ ₹20 Earned</p>
         </div>
     </div>
-    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[60] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
 
     <script>
         const firebaseConfig = {
@@ -740,6 +806,175 @@
         
         function callCust() { if(activeOrder && activeOrder.user) window.open(`tel:${activeOrder.user.mobile}`); }
         function openWhatsApp() { if(activeOrder && activeOrder.user) window.open(`https://wa.me/91${activeOrder.user.mobile}`, '_blank'); }
+
+        // ==========================================
+        // WHOLESALER SHOP LOGIC
+        // ==========================================
+
+        function openWholesalerModal() {
+            toggleMenu();
+            document.getElementById('wholesalerModal').classList.remove('hidden');
+            resetWsForm();
+            loadMyWholesalerRequests();
+        }
+
+        function closeWholesalerModal() {
+            document.getElementById('wholesalerModal').classList.add('hidden');
+        }
+
+        function resetWsForm() {
+            document.getElementById('wsName').value = '';
+            document.getElementById('wsMobile').value = '';
+            document.getElementById('wsAddress').value = '';
+            document.getElementById('wsLat').value = '';
+            document.getElementById('wsLng').value = '';
+            document.getElementById('wsEditId').value = '';
+            document.getElementById('btnConnectLoc').innerHTML = '<i class="fa-solid fa-location-crosshairs text-lg"></i> Connect Live Location';
+            document.getElementById('btnWsSubmit').innerText = "SUBMIT FOR VERIFICATION";
+        }
+
+        function connectWholesalerLocation() {
+            const btn = document.getElementById('btnConnectLoc');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detecting...';
+            
+            if(!navigator.geolocation) {
+                alert("GPS not supported");
+                btn.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> GPS Failed';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                
+                document.getElementById('wsLat').value = lat;
+                document.getElementById('wsLng').value = lng;
+                
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Location Connected';
+                btn.classList.replace('bg-blue-900/30', 'bg-green-900/30');
+                btn.classList.replace('text-blue-400', 'text-green-400');
+                
+                // Reverse Geocoding (OpenStreetMap - Free)
+                document.getElementById('wsAddress').value = "Fetching address details...";
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    const data = await response.json();
+                    if(data && data.display_name) {
+                        document.getElementById('wsAddress').value = data.display_name;
+                    } else {
+                        document.getElementById('wsAddress').value = `Lat: ${lat}, Lng: ${lng} (Type Address manually)`;
+                    }
+                } catch(e) {
+                    document.getElementById('wsAddress').value = `Lat: ${lat}, Lng: ${lng} (Type Address manually)`;
+                }
+
+            }, (err) => {
+                alert("GPS Access Denied: " + err.message);
+                btn.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Retry Location';
+            }, { enableHighAccuracy: true });
+        }
+
+        function submitWholesalerRequest() {
+            const name = document.getElementById('wsName').value.trim();
+            const mobile = document.getElementById('wsMobile').value.trim();
+            const address = document.getElementById('wsAddress').value.trim();
+            const lat = document.getElementById('wsLat').value;
+            const lng = document.getElementById('wsLng').value;
+            const editId = document.getElementById('wsEditId').value;
+
+            if(!name || !mobile || !address) return showToast("Fill all fields");
+            if(!lat || !lng) return showToast("Connect Location First");
+
+            const data = {
+                partnerMobile: session.mobile,
+                partnerName: session.name,
+                shopName: name,
+                ownerMobile: mobile,
+                address: address,
+                location: { lat: parseFloat(lat), lng: parseFloat(lng) },
+                status: 'pending', // pending, approved, disabled
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            if(editId) {
+                db.ref('wholesalerRequests/' + editId).update(data)
+                .then(() => {
+                    showToast("Shop Updated!");
+                    resetWsForm();
+                });
+            } else {
+                db.ref('wholesalerRequests').push(data)
+                .then(() => {
+                    showToast("Submitted Successfully!");
+                    resetWsForm();
+                });
+            }
+        }
+
+        function loadMyWholesalerRequests() {
+            const list = document.getElementById('myWholesalerList');
+            list.innerHTML = '<p class="text-center text-slate-600 text-xs py-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
+            
+            db.ref('wholesalerRequests').orderByChild('partnerMobile').equalTo(session.mobile).on('value', snap => {
+                list.innerHTML = '';
+                if(snap.exists()) {
+                    const requests = [];
+                    snap.forEach(c => requests.push({key: c.key, ...c.val()}));
+                    requests.reverse(); // Show newest first
+
+                    requests.forEach(req => {
+                        let statusBadge = '';
+                        let actions = '';
+                        let opacity = '';
+
+                        if(req.status === 'pending') {
+                            statusBadge = `<span class="bg-amber-900/40 text-amber-500 text-[10px] px-2 py-0.5 rounded border border-amber-900/50 uppercase font-bold">Pending</span>`;
+                            actions = `
+                                <div class="flex gap-2 mt-2">
+                                    <button onclick="editWsRequest('${req.key}', '${req.shopName}', '${req.ownerMobile}', '${req.address}', ${req.location.lat}, ${req.location.lng})" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-white flex-1 font-bold">Edit</button>
+                                    <button onclick="db.ref('wholesalerRequests/${req.key}').remove()" class="text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 px-3 py-1.5 rounded border border-red-900/50 flex-1 font-bold">Delete</button>
+                                </div>
+                            `;
+                        } else if(req.status === 'approved') {
+                            statusBadge = `<span class="bg-green-900/40 text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-900/50 uppercase font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Verified</span>`;
+                        } else {
+                            statusBadge = `<span class="bg-red-900/40 text-red-400 text-[10px] px-2 py-0.5 rounded border border-red-900/50 uppercase font-bold">Disabled</span>`;
+                            opacity = 'opacity-50';
+                        }
+
+                        list.innerHTML += `
+                            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 ${opacity}">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h4 class="font-bold text-white text-sm">${req.shopName}</h4>
+                                    ${statusBadge}
+                                </div>
+                                <p class="text-[10px] text-slate-400 font-mono mb-1"><i class="fa-solid fa-phone mr-1"></i>${req.ownerMobile}</p>
+                                <p class="text-[10px] text-slate-500 truncate"><i class="fa-solid fa-map-pin mr-1"></i>${req.address}</p>
+                                ${actions}
+                            </div>
+                        `;
+                    });
+                } else {
+                    list.innerHTML = '<p class="text-center text-slate-600 text-xs py-4">You haven\'t added any shops yet.</p>';
+                }
+            });
+        }
+
+        function editWsRequest(key, name, mobile, address, lat, lng) {
+            document.getElementById('wsEditId').value = key;
+            document.getElementById('wsName').value = name;
+            document.getElementById('wsMobile').value = mobile;
+            document.getElementById('wsAddress').value = address;
+            document.getElementById('wsLat').value = lat;
+            document.getElementById('wsLng').value = lng;
+            
+            document.getElementById('btnConnectLoc').innerHTML = '<i class="fa-solid fa-check"></i> Location Set (Tap to Update)';
+            document.getElementById('btnWsSubmit').innerText = "UPDATE REQUEST";
+            
+            // Scroll to top
+            document.querySelector('.modal-animate').scrollTop = 0;
+        }
+
     </script>
 </body>
 </html>
