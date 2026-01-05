@@ -763,11 +763,14 @@ if (window.isDeliveryHomeScriptLoaded) {
         }
     }
 
+    // --- REVISED: CLIENT-SIDE FILTERING FOR MY SHOPS ---
+    // Fixes the issue where only 1 shop was showing due to DB indexing limits
     window.loadMyWholesalerRequests = function() {
         const list = document.getElementById('myWholesalerList');
         if(!list) return;
 
-        list.innerHTML = '<p class="text-center text-slate-600 text-xs py-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
+        // Keep the loading state consistent with the HTML update
+        list.innerHTML = '<div class="flex flex-col items-center justify-center py-8 text-slate-600"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i><p class="text-xs">Syncing shops...</p></div>';
         
         // 1. DETACH PREVIOUS LISTENER IF EXISTS
         if (myWholesalerQuery) {
@@ -775,54 +778,67 @@ if (window.isDeliveryHomeScriptLoaded) {
             myWholesalerQuery.off();
         }
         
-        // 2. CREATE NEW QUERY
-        // Ensuring partnerMobile is treated as string for query matching
-        const myMobileStr = String(session.mobile);
-        
-        myWholesalerQuery = db.ref('wholesalerRequests').orderByChild('partnerMobile').equalTo(myMobileStr);
+        // 2. FETCH ALL REQUESTS (Client-side filtering strategy)
+        // This bypasses the need for specific database indexing on 'partnerMobile'
+        myWholesalerQuery = db.ref('wholesalerRequests');
         
         // 3. ATTACH NEW LISTENER
         myWholesalerQuery.on('value', snap => {
-            console.log("Data Received:", snap.val()); // Debug log
+            console.log("Full Data Received (Client Filter):", snap.val()); 
             list.innerHTML = '';
             
             if(snap.exists()) {
-                const requests = [];
-                snap.forEach(c => requests.push({key: c.key, ...c.val()}));
-                requests.reverse(); 
+                const myRequests = [];
+                const myMobileStr = String(session.mobile); // Current user's mobile
 
-                requests.forEach(req => {
-                    let statusBadge = '';
-                    let actions = '';
-                    let opacity = '';
+                snap.forEach(child => {
+                    const val = child.val();
+                    // FILTER HERE: Check if this request belongs to the current user
+                    // We check both string and number formats to be safe
+                    if (String(val.partnerMobile) === myMobileStr) {
+                         myRequests.push({key: child.key, ...val});
+                    }
+                });
 
-                    if(req.status === 'pending') {
-                        statusBadge = `<span class="bg-amber-900/40 text-amber-500 text-[10px] px-2 py-0.5 rounded border border-amber-900/50 uppercase font-bold">Pending</span>`;
-                        actions = `
-                            <div class="flex gap-2 mt-2">
-                                <button onclick="editWsRequest('${req.key}', '${req.shopName}', '${req.ownerMobile}', '${req.address}', ${req.location.lat}, ${req.location.lng})" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-white flex-1 font-bold">Edit</button>
-                                <button onclick="db.ref('wholesalerRequests/${req.key}').remove()" class="text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 px-3 py-1.5 rounded border border-red-900/50 flex-1 font-bold">Delete</button>
+                if(myRequests.length > 0) {
+                    // Sort by timestamp if available, else standard reverse
+                    myRequests.reverse(); 
+                    
+                    myRequests.forEach(req => {
+                        let statusBadge = '';
+                        let actions = '';
+                        let opacity = '';
+
+                        if(req.status === 'pending') {
+                            statusBadge = `<span class="bg-amber-900/40 text-amber-500 text-[10px] px-2 py-0.5 rounded border border-amber-900/50 uppercase font-bold">Pending</span>`;
+                            actions = `
+                                <div class="flex gap-2 mt-2">
+                                    <button onclick="editWsRequest('${req.key}', '${req.shopName}', '${req.ownerMobile}', '${req.address}', ${req.location.lat}, ${req.location.lng})" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-white flex-1 font-bold">Edit</button>
+                                    <button onclick="db.ref('wholesalerRequests/${req.key}').remove()" class="text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 px-3 py-1.5 rounded border border-red-900/50 flex-1 font-bold">Delete</button>
+                                </div>
+                            `;
+                        } else if(req.status === 'approved') {
+                            statusBadge = `<span class="bg-green-900/40 text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-900/50 uppercase font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Verified</span>`;
+                        } else {
+                            statusBadge = `<span class="bg-red-900/40 text-red-400 text-[10px] px-2 py-0.5 rounded border border-red-900/50 uppercase font-bold">Disabled</span>`;
+                            opacity = 'opacity-50';
+                        }
+
+                        list.innerHTML += `
+                            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 ${opacity} animate-[fadeIn_0.3s_ease-out]">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h4 class="font-bold text-white text-sm">${req.shopName}</h4>
+                                    ${statusBadge}
+                                </div>
+                                <p class="text-[10px] text-slate-400 font-mono mb-1"><i class="fa-solid fa-phone mr-1"></i>${req.ownerMobile}</p>
+                                <p class="text-[10px] text-slate-500 truncate"><i class="fa-solid fa-map-pin mr-1"></i>${req.address}</p>
+                                ${actions}
                             </div>
                         `;
-                    } else if(req.status === 'approved') {
-                        statusBadge = `<span class="bg-green-900/40 text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-900/50 uppercase font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Verified</span>`;
-                    } else {
-                        statusBadge = `<span class="bg-red-900/40 text-red-400 text-[10px] px-2 py-0.5 rounded border border-red-900/50 uppercase font-bold">Disabled</span>`;
-                        opacity = 'opacity-50';
-                    }
-
-                    list.innerHTML += `
-                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 ${opacity}">
-                            <div class="flex justify-between items-start mb-1">
-                                <h4 class="font-bold text-white text-sm">${req.shopName}</h4>
-                                ${statusBadge}
-                            </div>
-                            <p class="text-[10px] text-slate-400 font-mono mb-1"><i class="fa-solid fa-phone mr-1"></i>${req.ownerMobile}</p>
-                            <p class="text-[10px] text-slate-500 truncate"><i class="fa-solid fa-map-pin mr-1"></i>${req.address}</p>
-                            ${actions}
-                        </div>
-                    `;
-                });
+                    });
+                } else {
+                     list.innerHTML = '<p class="text-center text-slate-600 text-xs py-4">You haven\'t added any shops yet.</p>';
+                }
             } else {
                 list.innerHTML = '<p class="text-center text-slate-600 text-xs py-4">You haven\'t added any shops yet.</p>';
             }
@@ -845,5 +861,3 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(scrollContainer) scrollContainer.scrollTop = 0;
     }
 }
-
-
