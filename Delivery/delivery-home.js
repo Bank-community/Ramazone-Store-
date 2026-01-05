@@ -630,10 +630,16 @@ function showWholesalerDetails(name, addr, mob) {
     alert(`🏪 ${name}\n\n📍 ${addr}\n\n📞 ${mob}`);
 }
 
-// 4. Modal Logic (Add Shop) - Remains same
+// 4. Modal Logic (Add Shop)
 function openWholesalerModal() {
     toggleMenu();
-    document.getElementById('wholesalerModal').classList.remove('hidden');
+    const modal = document.getElementById('wholesalerModal');
+    modal.classList.remove('hidden');
+    
+    // Reset scroll to top of the content container
+    const scrollContainer = modal.querySelector('.overflow-y-auto');
+    if(scrollContainer) scrollContainer.scrollTop = 0;
+    
     resetWsForm();
     loadMyWholesalerRequests();
 }
@@ -790,6 +796,8 @@ function editWsRequest(key, name, mobile, address, lat, lng) {
     document.getElementById('btnConnectLoc').innerHTML = '<i class="fa-solid fa-check"></i> Location Set (Tap to Update)';
     document.getElementById('btnWsSubmit').innerText = "UPDATE REQUEST";
     
-    document.querySelector('.modal-animate').scrollTop = 0;
+    // Reset scroll to top
+    const modal = document.getElementById('wholesalerModal');
+    const scrollContainer = modal.querySelector('.overflow-y-auto');
+    if(scrollContainer) scrollContainer.scrollTop = 0;
 }
-
