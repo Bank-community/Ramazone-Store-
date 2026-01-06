@@ -72,9 +72,12 @@ function closeModal(id) {
 }
 
 function logout() { 
-    localStorage.removeItem('rmz_user'); 
+    localStorage.removeItem('rmz_user');
+    localStorage.removeItem('rmz_active_order'); // Order data hatao
+    localStorage.removeItem('rmz_cart');         // Cart bhi khali karo (optional but recommended)
     window.location.href='index.html'; 
 }
+
 
 // --- UI SETUP & NAVIGATION ---
 function setupUI() {
