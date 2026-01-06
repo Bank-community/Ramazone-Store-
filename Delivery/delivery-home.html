@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- LEAFLET MAPS (NEW ADDITION) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -39,6 +43,11 @@
         /* Horizontal Scrollbar Hide */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* MAP CUSTOM STYLES */
+        #deliveryMap { height: 100%; width: 100%; z-index: 1; border-radius: 12px; }
+        .map-container { height: 250px; width: 100%; position: relative; overflow: hidden; border-radius: 12px; border: 1px solid #374151; }
+        .custom-div-icon { background: transparent; border: none; }
     </style>
 </head>
 <body class="pb-24">
@@ -56,7 +65,7 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <!-- SOS BUTTON (Updated with Number) -->
+            <!-- SOS BUTTON -->
             <button onclick="triggerSOS('7903698180')" class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-red-500 animate-pulse shadow-lg shadow-red-600/30">
                 <i class="fa-solid fa-bell text-xs"></i>
             </button>
@@ -96,25 +105,23 @@
     <!-- MAIN CONTENT -->
     <div class="px-4 mt-20">
         
-        <!-- WHOLESALER STRIP (NEW) - Hidden by default -->
+        <!-- WHOLESALER STRIP -->
         <div id="wholesalerStrip" class="hidden mb-4">
             <div class="flex justify-between items-end mb-2 px-1">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-shop text-amber-500 mr-1"></i> Nearby Wholesalers</h3>
                 <span class="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-gray-500">Verified</span>
             </div>
-            <!-- Added snap-x for smoother scrolling -->
             <div id="wsListContainer" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x w-full">
                 <!-- Cards injected by JS -->
             </div>
         </div>
 
-        <!-- SMART RADIUS CONTROLLER (MAX 10 KM) -->
+        <!-- SMART RADIUS CONTROLLER -->
         <div id="radiusControl" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-4">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-crosshairs text-amber-500 mr-1"></i> Scanning Range</h3>
                 <span class="text-sm font-bold text-white bg-gray-700 px-2 py-0.5 rounded"><span id="radiusVal">5</span> KM</span>
             </div>
-            <!-- MAX CHANGED TO 10 -->
             <input type="range" min="1" max="10" value="5" class="w-full" id="radiusSlider" oninput="updateRadius(this.value)" onchange="listenOrders()">
             <p class="text-[9px] text-gray-500 mt-1 text-center">Showing orders within this circle.</p>
         </div>
@@ -165,6 +172,18 @@
             </div>
             <div class="flex-1 overflow-y-auto p-5 space-y-6">
                 
+                <!-- NEW MAP CONTAINER -->
+                <div id="liveMapSection" class="hidden mb-4 animate-[fadeIn_0.5s_ease-out]">
+                     <div class="flex justify-between items-end mb-2">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-map text-blue-500 mr-1"></i> Smart Route</h3>
+                        <button onclick="toggleLiveMap()" class="text-[10px] text-red-400 font-bold hover:text-red-300">Hide Map</button>
+                    </div>
+                    <div class="map-container shadow-lg shadow-black/50">
+                        <div id="deliveryMap"></div>
+                        <div id="mapLoader" class="absolute inset-0 bg-slate-900/80 flex items-center justify-center z-[1000] text-white text-xs font-bold">Initializing GPS...</div>
+                    </div>
+                </div>
+
                 <div class="relative pl-6 border-l-2 border-gray-700">
                     <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900"></span>
                     <h3 class="text-xs font-bold text-gray-400 uppercase">Partner (You)</h3>
@@ -189,18 +208,15 @@
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
                             <p class="text-sm font-bold text-pink-400" id="actPrefBudget">Standard</p>
                         </div>
-                        <!-- Order Time -->
                         <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Order Time</p>
                             <p class="text-sm font-bold text-white" id="actOrderTime">--:--</p>
                         </div>
-                        <!-- Distance -->
                         <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Distance</p>
                             <p class="text-sm font-bold text-amber-400" id="actDist">Calc...</p>
                         </div>
                     </div>
-                    <!-- NEW: WEIGHT & SPECIAL REQUEST -->
                     <div id="actExtraDetails" class="mt-3 space-y-2"></div>
                 </div>
 
@@ -212,11 +228,13 @@
                     
                     <!-- MAP ACTIONS -->
                     <div class="flex gap-2 mt-3">
+                         <!-- SHOW MAP BUTTON (NEW) -->
+                        <button onclick="toggleLiveMap()" class="bg-indigo-600 text-white border border-indigo-500 px-3 py-2 rounded text-xs font-bold hover:bg-indigo-500 transition flex items-center justify-center gap-1 shadow-lg shadow-indigo-500/30">
+                            <i class="fa-solid fa-map"></i> View Map
+                        </button>
+                        
                         <button onclick="openMap('dir')" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-600 hover:text-white transition flex items-center justify-center gap-1">
                             <i class="fa-solid fa-location-arrow"></i> Navigate
-                        </button>
-                        <button onclick="openMap('view')" class="bg-gray-700 border border-gray-600 px-3 py-2 rounded text-xs text-white hover:bg-gray-600" title="Street View">
-                            <i class="fa-solid fa-street-view text-lg"></i>
                         </button>
                         <button onclick="openWhatsApp()" class="bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded text-xs hover:bg-green-600 hover:text-white">
                             <i class="fa-brands fa-whatsapp text-lg"></i>
@@ -239,64 +257,65 @@
 
     </div>
 
-    <!-- WHOLESALER ADD MODAL (NEW) -->
-    <div id="wholesalerModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
-        <div class="bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-700 shadow-2xl flex flex-col h-[85vh] modal-animate">
+    <!-- WHOLESALER FULL SCREEN PAGE -->
+    <div id="wholesalerModal" class="hidden fixed inset-0 z-[100] bg-gray-900 flex flex-col w-full h-full modal-animate">
+        
+        <!-- Incentive Header -->
+        <div class="bg-gradient-to-r from-amber-600 to-yellow-600 p-4 text-center relative shadow-md shrink-0">
+            <button onclick="closeWholesalerModal()" class="absolute top-4 left-4 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full text-white hover:bg-white/30 transition">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
             
-            <!-- Incentive Header -->
-            <div class="bg-gradient-to-r from-amber-600 to-yellow-600 p-3 text-center rounded-t-2xl relative">
-                <div class="absolute top-3 right-3 text-white/80 cursor-pointer hover:text-white" onclick="closeWholesalerModal()">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </div>
-                <h3 class="font-extrabold text-white text-sm uppercase tracking-wide"><i class="fa-solid fa-sack-dollar mr-1"></i> Earn Extra Incentive</h3>
-                <p class="text-[10px] text-white/90 mt-1 font-bold leading-tight px-4">
-                    Yadi aap wholesaler ko add karte hain aur verify karvate hain, to aapko har order par alag se incentive milega!
-                </p>
-            </div>
+            <h3 class="font-extrabold text-white text-base uppercase tracking-wide mt-1"><i class="fa-solid fa-sack-dollar mr-1"></i> Earn Incentive</h3>
+            <p class="text-xs text-white/90 mt-2 font-bold leading-tight px-8">
+                Yadi aap wholesaler ko add karte hain aur verify karvate hain, to aapko har order par alag se incentive milega!
+            </p>
+        </div>
 
-            <!-- Content Area -->
-            <div class="p-5 overflow-y-auto space-y-6 flex-1 bg-slate-900">
+        <!-- Content Area -->
+        <div class="p-5 overflow-y-auto space-y-6 flex-1 bg-slate-900 pb-20">
+            
+            <!-- Add Form -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 relative shadow-lg">
+                <input type="hidden" id="wsEditId" value="">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-shop text-amber-500"></i> Add New Shop
+                </h4>
                 
-                <!-- Add Form -->
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 relative">
-                    <input type="hidden" id="wsEditId" value="">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-shop text-amber-500"></i> Add New Shop
-                    </h4>
+                <div class="space-y-4">
+                    <button onclick="connectWholesalerLocation()" id="btnConnectLoc" class="w-full bg-blue-900/30 text-blue-400 border border-blue-600/50 hover:bg-blue-600 hover:text-white font-bold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-location-crosshairs text-lg"></i> Connect Live Location
+                    </button>
                     
-                    <div class="space-y-3">
-                        <!-- Connect Location Button -->
-                        <button onclick="connectWholesalerLocation()" id="btnConnectLoc" class="w-full bg-blue-900/30 text-blue-400 border border-blue-600/50 hover:bg-blue-600 hover:text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
-                            <i class="fa-solid fa-location-crosshairs text-lg"></i> Connect Live Location
-                        </button>
-                        
-                        <div class="grid grid-cols-1 gap-3">
-                            <input type="text" id="wsName" placeholder="Wholesaler Shop Name" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
-                            <input type="tel" id="wsMobile" placeholder="Owner Mobile Number" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
-                        </div>
-                        
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Shop Address</label>
-                            <textarea id="wsAddress" placeholder="Address will auto-fill from location..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs mt-1 h-20 focus:outline-none focus:border-amber-500 resize-none"></textarea>
-                            <input type="hidden" id="wsLat">
-                            <input type="hidden" id="wsLng">
-                        </div>
-
-                        <button onclick="submitWholesalerRequest()" id="btnWsSubmit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg transition mt-2">
-                            SUBMIT FOR VERIFICATION
-                        </button>
+                    <div class="grid grid-cols-1 gap-4">
+                        <input type="text" id="wsName" placeholder="Wholesaler Shop Name" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3.5 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
+                        <input type="tel" id="wsMobile" placeholder="Owner Mobile Number" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3.5 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
                     </div>
-                </div>
-
-                <!-- My Added Shops List -->
-                <div>
-                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-800 pb-2">My Added Shops</h4>
-                    <div id="myWholesalerList" class="space-y-3">
-                        <p class="text-center text-slate-600 text-xs py-4">Loading your list...</p>
+                    
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Shop Address</label>
+                        <textarea id="wsAddress" placeholder="Address will auto-fill from location..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white text-xs mt-1 h-24 focus:outline-none focus:border-amber-500 resize-none leading-relaxed"></textarea>
+                        <input type="hidden" id="wsLat">
+                        <input type="hidden" id="wsLng">
                     </div>
-                </div>
 
+                    <button onclick="submitWholesalerRequest()" id="btnWsSubmit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl text-sm shadow-lg transition mt-2 transform active:scale-95">
+                        SUBMIT FOR VERIFICATION
+                    </button>
+                </div>
             </div>
+
+            <!-- My Added Shops List -->
+            <div>
+                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-800 pb-2">My Added Shops</h4>
+                <div id="myWholesalerList" class="space-y-3 pb-10">
+                    <div class="flex flex-col items-center justify-center py-8 text-slate-600">
+                        <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
+                        <p class="text-xs">Syncing shops...</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -310,7 +329,7 @@
     </div>
     <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
 
-       <script src="delivery-home.js"></script>
+    <script src="delivery-home.js"></script>
 </body>
 </html>
 
