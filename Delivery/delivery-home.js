@@ -3,7 +3,7 @@
 // (Core Logic, Orders, Duty, Initialization)
 // ==========================================
 
-console.log("Loading Delivery Core Logic (Light Mode)...");
+console.log("Loading Delivery Core Logic (Light Mode + Smart GPS)...");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
@@ -33,6 +33,11 @@ window.myLng = 0;
 window.approvedWholesalers = []; // Store list for utils to display
 window.myWholesalerQuery = null;
 window.isMapOpen = false;
+
+// SMART GPS VARIABLES
+let lastSentLat = 0;
+let lastSentLng = 0;
+const GPS_UPDATE_THRESHOLD_KM = 0.03; // 30 Meters
 
 let watchId, heartbeatInterval;
 const PARTNER_PAY = 20;
@@ -152,36 +157,63 @@ async function pingServer() {
 
 function startGPS() {
     if("geolocation" in navigator) {
+        // Force update status immediately on start
         window.db.ref('deliveryBoys/'+window.session.mobile).update({status:'online'});
+        
         watchId = navigator.geolocation.watchPosition(p => {
-            window.myLat = p.coords.latitude;
-            window.myLng = p.coords.longitude;
+            const newLat = p.coords.latitude;
+            const newLng = p.coords.longitude;
+            
+            // Update Global Variables (Always keep these live for UI)
+            window.myLat = newLat;
+            window.myLng = newLng;
             
             const locStatus = document.getElementById('locStatus');
             if(locStatus) locStatus.innerText = "GPS Live";
             
-            window.db.ref('deliveryBoys/'+window.session.mobile).update({
-                status:'online',
-                location:{lat:window.myLat, lng:window.myLng},
-                lastUpdated: firebase.database.ServerValue.TIMESTAMP
-            });
+            // --- SMART GPS LOGIC (Bandwidth Saver) ---
+            // Calculate distance from last SENT location
+            const distMoved = parseFloat(window.getDistance(lastSentLat, lastSentLng, newLat, newLng));
             
+            // Only update Firebase if moved > 30 meters (0.03 KM) OR if it's the first update
+            if(distMoved >= GPS_UPDATE_THRESHOLD_KM || (lastSentLat === 0 && lastSentLng === 0)) {
+                
+                window.db.ref('deliveryBoys/'+window.session.mobile).update({
+                    status:'online',
+                    location:{lat:newLat, lng:newLng},
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                // Update "Last Sent" coordinates
+                lastSentLat = newLat;
+                lastSentLng = newLng;
+                
+                // console.log("📡 GPS Sent to Server (Moved: " + (distMoved*1000).toFixed(0) + "m)");
+            } else {
+                // console.log("Skipping Server Update (Moved only: " + (distMoved*1000).toFixed(0) + "m)");
+            }
+
+            // --- LOCAL UI UPDATES (Run on EVERY pulse for smoothness) ---
             if(window.activeOrder) {
                 updateActiveDistance();
-                if(window.updateDashboardDistance) window.updateDashboardDistance(); // Update Smart Dashboard
+                if(window.updateDashboardDistance) window.updateDashboardDistance(); // Live Dashboard
             }
             if(window.isMapOpen) {
                 if(window.updateMapVisuals) window.updateMapVisuals(); 
-                if(window.renderActiveWholesalerWidget) window.renderActiveWholesalerWidget(); // Refresh nearby shops
+                if(window.renderActiveWholesalerWidget) window.renderActiveWholesalerWidget(); 
             }
             if(window.updateWholesalerDisplay) window.updateWholesalerDisplay();
             
-            listenOrders(); // Re-scan orders on move
+            listenOrders(); // Re-scan orders locally
             
         }, e => {
             const locStatus = document.getElementById('locStatus');
             if(locStatus) locStatus.innerText = "GPS Weak";
-        }, {enableHighAccuracy: true});
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 10000, // Accept cached positions up to 10s old
+            timeout: 10000
+        });
     }
 }
 function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
@@ -496,3 +528,5 @@ window.updateStatus = function(st) {
 window.changeStatus = function() {
     if(window.activeOrder) updateBtnUI(window.activeOrder.status);
 }
+
+
