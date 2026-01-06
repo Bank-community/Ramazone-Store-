@@ -11,50 +11,69 @@ let isTransitioning = false;
 let selectedQtyValue = ''; // NEW: Stores selected quantity button value
 
 // --- TRACKING & BANNER LOGIC ---
+
 function checkActiveOrderHome() {
-    function checkActiveOrderHome() {
     const savedOrder = JSON.parse(localStorage.getItem('rmz_active_order'));
     
-    // SECURITY CHECK: Kya order ka mobile number current session ke mobile se match karta hai?
+    // 1. Check: Kya Local data exist karta hai?
+    // 2. Check: Kya ye order abhi login kiye hue user (session.mobile) ka hi hai?
     if (savedOrder && session && savedOrder.user && savedOrder.user.mobile === session.mobile) {
-        // ... Date check logic (existing) ...
-         activateBanner(savedOrder);
+        
+        // Active Status Check (Date check hata diya hai taaki purane active orders bhi dikhein)
+        const activeStatuses = ['placed', 'accepted', 'out_for_delivery', 'admin_accepted'];
+        
+        if (activeStatuses.includes(savedOrder.status)) {
+            activateBanner(savedOrder);
+            return; // Local data sahi hai, yahi use karo
+        } else {
+            // Agar delivered/cancelled hai toh Local Storage clear karo
+            localStorage.removeItem('rmz_active_order');
+        }
     } else {
-        // Agar mobile match nahi kiya, ya order purana hai -> Clear LocalStorage
+        // Agar user match nahi hua (dusra device/user) toh Local Storage clear karo
         localStorage.removeItem('rmz_active_order');
-        // Cloud se fresh data mangwao
-        fetchActiveOrderFromCloud();
     }
+
+    // Local Storage mein kuch nahi mila ya galat tha, ab Cloud (Database) check karo
+    fetchActiveOrderFromCloud();
 }
 
 
+
+// home-features.js mein is function ko update karein
+
 function fetchActiveOrderFromCloud() {
-    // Check for the last order made by this user in DB
+    // Safety Check: Agar session nahi hai toh return karo
     if(!session || !session.mobile) return;
 
+    // Database se last order fetch karo
     db.ref('orders').orderByChild('user/mobile').equalTo(session.mobile).limitToLast(1).once('value', snap => {
         if(snap.exists()) {
             const data = snap.val();
             const orderId = Object.keys(data)[0];
             const order = data[orderId];
             
+            // Timestamp fix
             let ts = order.timestamp; 
             if(typeof ts === 'object' || !ts) ts = Date.now();
 
-            const orderDate = new Date(ts);
-            const today = new Date();
-            const isSameDay = orderDate.getDate() === today.getDate() && 
-                              orderDate.getMonth() === today.getMonth() && 
-                              orderDate.getFullYear() === today.getFullYear();
+            // ACTIVE ORDER LOGIC:
+            // Hum date check nahi karenge. Hum bas ye dekhenge ki order abhi chal raha hai ya nahi.
+            const activeStatuses = ['placed', 'accepted', 'out_for_delivery', 'admin_accepted'];
 
-            if (isSameDay && order.status !== 'delivered' && order.status !== 'cancelled') {
-                const fullOrder = { id: orderId, ...order, timestamp: ts }; // Store clean TS
-                localStorage.setItem('rmz_active_order', JSON.stringify(fullOrder));
+            if (activeStatuses.includes(order.status)) {
+                const fullOrder = { id: orderId, ...order, timestamp: ts };
+                
+                // 1. Banner dikhao
                 activateBanner(fullOrder);
+                
+                // 2. Local Storage mein save kar lo taaki agli baar fast khule (Hybrid approach)
+                localStorage.setItem('rmz_active_order', JSON.stringify(fullOrder));
             }
         }
     });
 }
+
 
 function activateBanner(order) {
     activeTrackingOrder = order;
