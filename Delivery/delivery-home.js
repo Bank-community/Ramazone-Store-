@@ -3,7 +3,7 @@
 // (Core Logic, Orders, Duty, Initialization)
 // ==========================================
 
-console.log("Loading Delivery Core Logic...");
+console.log("Loading Delivery Core Logic (Light Mode)...");
 
 const firebaseConfig = {
     apiKey: "AIzaSyCmgMr4cj7ec1B09eu3xpRhCwsVCeQR9v0",
@@ -19,8 +19,11 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 window.db = firebase.database(); // Expose DB globally for Utils
 
-// GLOBAL STATE VARIABLES (Attached to Window for sharing)
-window.session = JSON.parse(localStorage.getItem('rmz_delivery_user'));
+// GLOBAL STATE VARIABLES
+try {
+    window.session = JSON.parse(localStorage.getItem('rmz_delivery_user'));
+} catch(e) { window.session = null; }
+
 if (!window.session) window.location.href = 'delivery-login.html';
 
 window.isOnline = false;
@@ -91,23 +94,25 @@ window.toggleDuty = function() {
     const status = document.getElementById('dutyStatusText');
     
     if(window.isOnline) {
-        if(status) { status.innerText = "ONLINE"; status.classList.add('text-green-400'); }
+        if(status) { status.innerText = "ONLINE"; status.classList.add('text-green-600'); }
         document.getElementById('offlineState').classList.add('hidden');
         document.getElementById('statsSection').classList.remove('hidden');
         document.getElementById('radiusControl').classList.remove('hidden');
+        
         window.db.ref('deliveryBoys/'+window.session.mobile+'/status').onDisconnect().set('offline');
         startGPS();
         startHeartbeat();
         listenOrders();
         if(window.updateWholesalerDisplay) window.updateWholesalerDisplay(); // Call Utils function
     } else {
-        if(status) { status.innerText = "OFFLINE"; status.classList.remove('text-green-400'); }
+        if(status) { status.innerText = "OFFLINE"; status.classList.remove('text-green-600'); }
         document.getElementById('offlineState').classList.remove('hidden');
         document.getElementById('noOrdersState').classList.add('hidden');
         document.getElementById('ordersContainer').classList.add('hidden');
         document.getElementById('statsSection').classList.add('hidden');
         document.getElementById('radiusControl').classList.add('hidden');
         document.getElementById('wholesalerStrip').classList.add('hidden');
+        
         stopGPS();
         stopHeartbeat();
         window.db.ref('deliveryBoys/'+window.session.mobile+'/status').set('offline');
@@ -161,8 +166,14 @@ function startGPS() {
                 lastUpdated: firebase.database.ServerValue.TIMESTAMP
             });
             
-            if(window.activeOrder) updateActiveDistance();
-            if(window.isMapOpen && window.updateMapVisuals) window.updateMapVisuals(); // Update Map if open
+            if(window.activeOrder) {
+                updateActiveDistance();
+                if(window.updateDashboardDistance) window.updateDashboardDistance(); // Update Smart Dashboard
+            }
+            if(window.isMapOpen) {
+                if(window.updateMapVisuals) window.updateMapVisuals(); 
+                if(window.renderActiveWholesalerWidget) window.renderActiveWholesalerWidget(); // Refresh nearby shops
+            }
             if(window.updateWholesalerDisplay) window.updateWholesalerDisplay();
             
             listenOrders(); // Re-scan orders on move
@@ -195,6 +206,7 @@ function fetchApprovedWholesalersList() {
             });
         }
         if(window.updateWholesalerDisplay) window.updateWholesalerDisplay(); 
+        if(window.renderActiveWholesalerWidget) window.renderActiveWholesalerWidget();
     });
 }
 
@@ -210,7 +222,6 @@ window.listenOrders = function() {
         
         if(snap.exists()) {
             Object.entries(snap.val()).forEach(([id, o]) => {
-                // Uses getDistance from utils
                 const dist = parseFloat(window.getDistance(window.myLat, window.myLng, o.location.lat, o.location.lng));
                 const isInRange = dist <= parseFloat(serviceRadius);
                 const isMyOrder = (o.status === 'accepted' && o.deliveryBoyId === window.session.mobile);
@@ -234,9 +245,9 @@ window.listenOrders = function() {
                     if(o.cart) o.cart.forEach(item => {
                         if(item.qty === 'Special Request') {
                             specialReqHTML = `
-                                <div class="mt-3 bg-amber-900/30 border border-amber-500/50 p-2 rounded text-xs flex items-start gap-2 animate-pulse">
-                                    <i class="fa-solid fa-star text-amber-400 mt-0.5"></i>
-                                    <div><p class="font-bold text-amber-400 uppercase text-[9px]">Special Request</p><p class="text-gray-200">${item.name}</p></div>
+                                <div class="mt-3 bg-amber-50 border border-amber-200 p-2 rounded text-xs flex items-start gap-2">
+                                    <i class="fa-solid fa-star text-amber-500 mt-0.5"></i>
+                                    <div><p class="font-bold text-amber-600 uppercase text-[9px]">Special Request</p><p class="text-gray-700">${item.name}</p></div>
                                 </div>`;
                         }
                     });
@@ -245,49 +256,49 @@ window.listenOrders = function() {
                     let cardClass = "glass-card";
                     if(isMyOrder) {
                         assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`;
-                        cardClass = "glass-card border-2 border-blue-500 bg-blue-900/20";
+                        cardClass = "bg-blue-50 border border-blue-200 shadow-sm";
                     }
 
                     let prodTxt = o.cart ? o.cart.filter(i=>i.qty!=='Special Request').map(i => `${i.count}x ${i.name}`).join(', ') : 'Items';
                     const div = document.createElement('div');
-                    div.className = `${cardClass} p-4 rounded-xl pulse-border relative`;
+                    div.className = `${cardClass} p-4 rounded-xl relative mb-4`;
                     
                     const safeOrder = JSON.stringify(o).replace(/"/g, '"');
                     const mapAction = `openMapDirect(${o.location.lat},${o.location.lng})`;
                     const btnDisabled = (window.activeOrder && window.activeOrder.id !== id) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
                     const btnText = (window.activeOrder && window.activeOrder.id === id) ? 'CONTINUE TASK' : (window.activeOrder ? 'Finish Current' : 'ACCEPT ORDER');
-                    const bgClass = (window.activeOrder && window.activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (window.activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
+                    const bgClass = (window.activeOrder && window.activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (window.activeOrder ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-500');
                     const clickAction = (window.activeOrder && window.activeOrder.id === id) ? `loadActive('${id}', ${safeOrder})` : `acceptOrder('${id}')`;
 
                     div.innerHTML = `
                         <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-white text-lg">${shopName}</h4>
-                            <span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${fee}</span>
+                            <h4 class="font-bold text-gray-900 text-lg">${shopName}</h4>
+                            <span class="bg-green-100 text-green-700 border border-green-200 text-xs font-bold px-2 py-1 rounded">₹${fee}</span>
                         </div>
-                        <div class="text-xs text-gray-400 space-y-1 mb-3">
+                        <div class="text-xs text-gray-500 space-y-1 mb-3">
                             <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
                             <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
                             <div class="grid grid-cols-2 gap-2 mt-3 mb-2">
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Pref. Time</span><span class="text-xs font-bold text-blue-400 truncate">${prefTime}</span>
+                                <div class="bg-gray-50 p-2 rounded border border-gray-200 flex flex-col items-center justify-center">
+                                    <span class="text-[9px] text-gray-400 uppercase font-bold">Pref. Time</span><span class="text-xs font-bold text-blue-600 truncate">${prefTime}</span>
                                 </div>
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Budget</span><span class="text-xs font-bold text-pink-400 truncate">${prefBudg}</span>
+                                <div class="bg-gray-50 p-2 rounded border border-gray-200 flex flex-col items-center justify-center">
+                                    <span class="text-[9px] text-gray-400 uppercase font-bold">Budget</span><span class="text-xs font-bold text-pink-600 truncate">${prefBudg}</span>
                                 </div>
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Details</span>
-                                    <div class="text-xs font-bold text-white truncate flex items-center gap-2"><span>${orderTime}</span><span class="bg-gray-700 px-1 rounded text-[10px] text-gray-300">${weight}kg</span></div>
+                                <div class="bg-gray-50 p-2 rounded border border-gray-200 flex flex-col items-center justify-center">
+                                    <span class="text-[9px] text-gray-400 uppercase font-bold">Details</span>
+                                    <div class="text-xs font-bold text-gray-700 truncate flex items-center gap-2"><span>${orderTime}</span><span class="bg-gray-200 px-1 rounded text-[10px] text-gray-600">${weight}kg</span></div>
                                 </div>
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Distance</span><span class="text-xs font-bold text-amber-400 truncate">${dist} KM</span>
+                                <div class="bg-gray-50 p-2 rounded border border-gray-200 flex flex-col items-center justify-center">
+                                    <span class="text-[9px] text-gray-400 uppercase font-bold">Distance</span><span class="text-xs font-bold text-amber-600 truncate">${dist} KM</span>
                                 </div>
                             </div>
                             ${specialReqHTML}
                             ${assignedInfo}
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="${mapAction}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Navigate"><i class="fa-solid fa-location-arrow"></i></button>
-                            <button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>${btnText}</button>
+                            <button onclick="${mapAction}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg shadow-sm transition" title="Navigate"><i class="fa-solid fa-location-arrow"></i></button>
+                            <button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow-sm active:scale-95 transition" ${btnDisabled}>${btnText}</button>
                         </div>
                     `;
                     list.appendChild(div);
@@ -376,7 +387,7 @@ window.loadActive = function(id, o) {
     const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
 
     document.getElementById('actShop').innerText = "You (Partner)";
-    document.getElementById('actShop').classList.add('text-blue-400');
+    document.getElementById('actShop').classList.add('text-blue-600');
     document.getElementById('actShopLoc').innerText = "Your GPS is Live Tracking";
     document.getElementById('actCust').innerText = custName;
     document.getElementById('actAddr').innerText = address;
@@ -384,7 +395,6 @@ window.loadActive = function(id, o) {
     document.getElementById('actPrefTime').innerText = prefTime;
     document.getElementById('actPrefBudget').innerText = prefBudg;
 
-    // Time
     let orderTime = "N/A";
     if(o.timestamp) {
         const d = new Date(o.timestamp);
@@ -392,37 +402,39 @@ window.loadActive = function(id, o) {
     }
     document.getElementById('actOrderTime').innerText = orderTime;
 
-    // Items List
     const ul = document.getElementById('actItems');
     ul.innerHTML = o.cart ? o.cart.filter(i=>i.qty!=='Special Request').map(i => `
-        <li class="flex justify-between border-b border-gray-700 pb-1 last:border-0">
-            <span>${i.name}</span><span class="text-white font-bold">${i.qty} x${i.count}</span>
+        <li class="flex justify-between border-b border-gray-100 pb-1 last:border-0">
+            <span>${i.name}</span><span class="text-gray-900 font-bold">${i.qty} x${i.count}</span>
         </li>
     `).join('') : '';
 
-    // Extra Details (Weight + Special Req)
     const weight = window.calculateOrderWeight ? window.calculateOrderWeight(o.cart) : 0;
     let specialReqHTML = '';
     if(o.cart) o.cart.forEach(item => {
         if(item.qty === 'Special Request') {
             specialReqHTML = `
-                <div class="mt-3 bg-amber-900/30 border border-amber-500/50 p-3 rounded-lg flex items-start gap-3">
-                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400 mt-1"></i>
-                    <div><p class="font-bold text-amber-400 uppercase text-xs">Special Request</p><p class="text-white text-sm font-bold">${item.name}</p></div>
+                <div class="mt-3 bg-amber-50 border border-amber-200 p-3 rounded-lg flex items-start gap-3">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-500 mt-1"></i>
+                    <div><p class="font-bold text-amber-600 uppercase text-xs">Special Request</p><p class="text-gray-700 text-sm font-bold">${item.name}</p></div>
                 </div>`;
         }
     });
 
     document.getElementById('actExtraDetails').innerHTML = `
-        <div class="flex items-center justify-between bg-gray-900 p-2 rounded border border-gray-600 mt-2">
+        <div class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200 mt-2">
             <span class="text-[10px] text-gray-400 font-bold uppercase">Total Weight</span>
-            <span class="text-sm font-bold text-white"><i class="fa-solid fa-weight-hanging text-gray-500 mr-1"></i>${weight} KG</span>
+            <span class="text-sm font-bold text-gray-800"><i class="fa-solid fa-weight-hanging text-gray-500 mr-1"></i>${weight} KG</span>
         </div>
         ${specialReqHTML}
     `;
     
     updateActiveDistance();
-    if(window.toggleLiveMap) window.toggleLiveMap(true); // Open Map via Utils
+    
+    // --- OPEN MAP & WIDGETS ---
+    if(window.toggleLiveMap) window.toggleLiveMap(true); 
+    if(window.renderActiveWholesalerWidget) window.renderActiveWholesalerWidget();
+
     updateBtnUI(o.status);
 }
 
@@ -438,12 +450,12 @@ function updateBtnUI(status) {
     const b = document.getElementById('actionBtn');
     const s = document.getElementById('activeStatus');
     if(status === 'accepted') {
-        s.innerText = "Going to Shop"; s.className = "text-xs bg-blue-500/20 text-blue-500 px-2 py-1 rounded uppercase font-bold";
-        b.innerText = "PICKED UP ORDER"; b.className = "w-full bg-blue-600 text-white font-bold py-4 rounded-xl";
+        s.innerText = "Going to Shop"; s.className = "text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded uppercase font-bold";
+        b.innerText = "PICKED UP ORDER"; b.className = "w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200";
         b.onclick = () => updateStatus('out_for_delivery');
     } else if(status === 'out_for_delivery') {
-        s.innerText = "Out for Delivery"; s.className = "text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold";
-        b.innerText = "DELIVERED & CASH COLLECTED"; b.className = "w-full bg-green-600 text-white font-bold py-4 rounded-xl";
+        s.innerText = "Out for Delivery"; s.className = "text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded uppercase font-bold";
+        b.innerText = "DELIVERED & CASH COLLECTED"; b.className = "w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-200";
         b.onclick = () => updateStatus('delivered');
     }
 }
@@ -482,6 +494,5 @@ window.updateStatus = function(st) {
 }
 
 window.changeStatus = function() {
-    // This is just a fallback bridge for HTML onClick event that might point here
     if(window.activeOrder) updateBtnUI(window.activeOrder.status);
 }
