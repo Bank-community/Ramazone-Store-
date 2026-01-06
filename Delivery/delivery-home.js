@@ -1,7 +1,6 @@
 // --- ANTI-DUPLICATE GUARD ---
 if (window.isDeliveryHomeScriptLoaded) {
     console.warn("Delivery Home Script is already running. Skipping duplicate execution.");
-    // This return prevents the rest of the script from executing again
 } else {
     window.isDeliveryHomeScriptLoaded = true;
 
@@ -15,7 +14,6 @@ if (window.isDeliveryHomeScriptLoaded) {
         appId: "1:984733883633:web:adc1e1d22b629a6b631d50"
     };
     
-    // Initialize Firebase only if not already initialized
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -27,16 +25,11 @@ if (window.isDeliveryHomeScriptLoaded) {
     let serviceRadius = localStorage.getItem('rmz_pref_radius') || 5;
     if(serviceRadius > 10) serviceRadius = 10;
 
-    // Store Approved Wholesalers locally
     let approvedWholesalers = [];
-    
-    // GLOBAL VARIABLE FOR LISTENER MANAGEMENT
     let myWholesalerQuery = null;
-
     const PARTNER_PAY = 20;
 
     window.onload = () => {
-        // Safe Element Selection
         const els = {
             headerName: document.getElementById('headerName'),
             vehicleType: document.getElementById('vehicleType'),
@@ -53,12 +46,10 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(els.menuName) els.menuName.innerText = session.name;
         if(els.menuMobile) els.menuMobile.innerText = '+91 ' + session.mobile;
         
-        // Set saved radius
         if(els.radiusSlider) els.radiusSlider.value = serviceRadius;
         if(els.radiusVal) els.radiusVal.innerText = serviceRadius;
         if(els.scanKm) els.scanKm.innerText = serviceRadius;
 
-        // --- ACCOUNT STATUS CHECK ---
         db.ref('deliveryBoys/' + session.mobile + '/status').on('value', snap => {
             const s = snap.val();
             if(s === 'disabled') {
@@ -73,7 +64,6 @@ if (window.isDeliveryHomeScriptLoaded) {
             toggleDuty();
         }
         
-        // Load initial data
         fetchEarnings(); 
         fetchApprovedWholesalers(); 
         checkForActive();
@@ -94,7 +84,6 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(ov) ov.classList.toggle('open'); 
     }
 
-    // --- RADIUS LOGIC ---
     window.updateRadius = function(val) {
         serviceRadius = val;
         localStorage.setItem('rmz_pref_radius', val);
@@ -114,7 +103,6 @@ if (window.isDeliveryHomeScriptLoaded) {
         return (R * c).toFixed(1); 
     }
 
-    // --- WEIGHT CALCULATOR ---
     function calculateOrderWeight(cart) {
         if (!cart || !Array.isArray(cart)) return 0;
         let totalKg = 0;
@@ -133,7 +121,6 @@ if (window.isDeliveryHomeScriptLoaded) {
         return totalKg.toFixed(2);
     }
 
-    // --- TOGGLE DUTY ---
     window.toggleDuty = function() {
         const switchEl = document.getElementById('dutySwitch');
         if(!switchEl) return;
@@ -168,7 +155,6 @@ if (window.isDeliveryHomeScriptLoaded) {
         }
     }
 
-    // --- HEARTBEAT & GPS ---
     function startHeartbeat() {
         if(heartbeatInterval) clearInterval(heartbeatInterval);
         pingServer(); heartbeatInterval = setInterval(pingServer, 60000); 
@@ -186,8 +172,6 @@ if (window.isDeliveryHomeScriptLoaded) {
             battery: batteryLevel 
         };
         db.ref('deliveryBoys/'+session.mobile).update(updates);
-        
-        // Increment Online Minutes
         db.ref('deliveryBoys/'+session.mobile+'/onlineMinutes').transaction(m => (m || 0) + 1);
     }
 
@@ -207,7 +191,6 @@ if (window.isDeliveryHomeScriptLoaded) {
                 });
                 
                 if(activeOrder) updateActiveDistance();
-                
                 updateWholesalerDisplay();
                 listenOrders(); 
                 
@@ -219,7 +202,7 @@ if (window.isDeliveryHomeScriptLoaded) {
     }
     function stopGPS() { if(watchId) navigator.geolocation.clearWatch(watchId); }
 
-    // --- LISTEN ORDERS ---
+    // --- SAFELY LISTEN ORDERS (Crash Proof) ---
     window.listenOrders = function() {
         const list = document.getElementById('ordersList');
         if(!list) return;
@@ -231,110 +214,127 @@ if (window.isDeliveryHomeScriptLoaded) {
             
             if(snap.exists()) {
                 Object.entries(snap.val()).forEach(([id, o]) => {
-                    const dist = parseFloat(getDistance(myLat, myLng, o.location.lat, o.location.lng));
-                    const isInRange = dist <= parseFloat(serviceRadius);
-                    const isMyOrder = (o.status === 'accepted' && o.deliveryBoyId === session.mobile);
-                    
-                    if((o.status === 'placed' && isInRange) || isMyOrder) {
-                        count++;
+                    try {
+                        // CRITICAL: Safe Checks to prevent crash on bad data
+                        if(!o) return;
                         
-                        const shopName = o.user && o.user.shopName ? o.user.shopName : "Unknown Shop";
-                        const address = o.location && o.location.address ? o.location.address : "Address Hidden";
-                        const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
-                        const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
-                        const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
-                        
-                        let orderTime = "N/A";
-                        if(o.timestamp) {
-                            const d = new Date(o.timestamp);
-                            orderTime = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        // If no location, we cannot deliver. Skip this order.
+                        if(!o.location || !o.location.lat || !o.location.lng) {
+                            console.warn("Skipping order with missing location:", id);
+                            return;
                         }
 
-                        const weight = calculateOrderWeight(o.cart);
+                        const dist = parseFloat(getDistance(myLat, myLng, o.location.lat, o.location.lng));
+                        const isInRange = dist <= parseFloat(serviceRadius);
+                        const isMyOrder = (o.status === 'accepted' && o.deliveryBoyId === session.mobile);
+                        
+                        if((o.status === 'placed' && isInRange) || isMyOrder) {
+                            count++;
+                            
+                            // Safe Access using Optional Chaining (?.) or Defaults
+                            const shopName = o.user?.shopName || "Unknown Shop";
+                            const address = o.location?.address || "Address Hidden";
+                            const fee = o.payment?.deliveryFee || 0;
+                            const prefTime = o.preferences?.deliveryTime || "Standard";
+                            const prefBudg = o.preferences?.budget || "Standard";
+                            
+                            let orderTime = "N/A";
+                            if(o.timestamp) {
+                                const d = new Date(o.timestamp);
+                                orderTime = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            }
 
-                        let specialReqHTML = '';
-                        if(o.cart) o.cart.forEach(item => {
-                            if(item.qty === 'Special Request') {
-                                specialReqHTML = `
-                                    <div class="mt-3 bg-amber-900/30 border border-amber-500/50 p-2 rounded text-xs flex items-start gap-2 animate-pulse">
-                                        <i class="fa-solid fa-star text-amber-400 mt-0.5"></i>
-                                        <div>
-                                            <p class="font-bold text-amber-400 uppercase text-[9px]">Special Request</p>
-                                            <p class="text-gray-200">${item.name}</p>
+                            const weight = calculateOrderWeight(o.cart);
+
+                            let specialReqHTML = '';
+                            if(o.cart && Array.isArray(o.cart)) {
+                                o.cart.forEach(item => {
+                                    if(item.qty === 'Special Request') {
+                                        specialReqHTML = `
+                                            <div class="mt-3 bg-amber-900/30 border border-amber-500/50 p-2 rounded text-xs flex items-start gap-2 animate-pulse">
+                                                <i class="fa-solid fa-star text-amber-400 mt-0.5"></i>
+                                                <div>
+                                                    <p class="font-bold text-amber-400 uppercase text-[9px]">Special Request</p>
+                                                    <p class="text-gray-200">${item.name}</p>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                });
+                            }
+
+                            let assignedInfo = "";
+                            let cardClass = "glass-card";
+                            
+                            if(isMyOrder) {
+                                assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`;
+                                cardClass = "glass-card border-2 border-blue-500 bg-blue-900/20";
+                            }
+
+                            let prodTxt = (o.cart && Array.isArray(o.cart)) 
+                                ? o.cart.filter(i=>i.qty!=='Special Request').map(i => `${i.count}x ${i.name}`).join(', ') 
+                                : 'Items';
+                            
+                            const div = document.createElement('div');
+                            div.className = `${cardClass} p-4 rounded-xl pulse-border relative`;
+                            
+                            const safeOrder = JSON.stringify(o).replace(/"/g, '&quot;');
+                            const mapAction = `openMapDirect(${o.location.lat},${o.location.lng})`;
+                            const btnDisabled = (activeOrder && activeOrder.id !== id) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+                            const btnText = (activeOrder && activeOrder.id === id) ? 'CONTINUE TASK' : (activeOrder ? 'Finish Current' : 'ACCEPT ORDER');
+                            const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
+                            const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${safeOrder})` : `acceptOrder('${id}')`;
+
+                            const gridHTML = `
+                                <div class="grid grid-cols-2 gap-2 mt-3 mb-2">
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Pref. Time</span>
+                                        <span class="text-xs font-bold text-blue-400 truncate">${prefTime}</span>
+                                    </div>
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Budget</span>
+                                        <span class="text-xs font-bold text-pink-400 truncate">${prefBudg}</span>
+                                    </div>
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Details</span>
+                                        <div class="text-xs font-bold text-white truncate flex items-center gap-2">
+                                            <span>${orderTime}</span>
+                                            <span class="bg-gray-700 px-1 rounded text-[10px] text-gray-300">${weight}kg</span>
                                         </div>
                                     </div>
-                                `;
-                            }
-                        });
-
-                        let assignedInfo = "";
-                        let cardClass = "glass-card";
-                        
-                        if(isMyOrder) {
-                            assignedInfo = `<div class="mt-2 text-center bg-blue-600 text-white text-xs font-bold py-1 rounded">ASSIGNED TO YOU</div>`;
-                            cardClass = "glass-card border-2 border-blue-500 bg-blue-900/20";
-                        }
-
-                        let prodTxt = o.cart ? o.cart.filter(i=>i.qty!=='Special Request').map(i => `${i.count}x ${i.name}`).join(', ') : 'Items';
-                        
-                        const div = document.createElement('div');
-                        div.className = `${cardClass} p-4 rounded-xl pulse-border relative`;
-                        
-                        // Escaping logic for onclick json
-                        const safeOrder = JSON.stringify(o).replace(/"/g, '&quot;');
-
-                        const mapAction = `openMapDirect(${o.location.lat},${o.location.lng})`;
-                        const btnDisabled = (activeOrder && activeOrder.id !== id) ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
-                        const btnText = (activeOrder && activeOrder.id === id) ? 'CONTINUE TASK' : (activeOrder ? 'Finish Current' : 'ACCEPT ORDER');
-                        const bgClass = (activeOrder && activeOrder.id === id) ? 'bg-blue-600 hover:bg-blue-500' : (activeOrder ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500');
-                        const clickAction = (activeOrder && activeOrder.id === id) ? `loadActive('${id}', ${safeOrder})` : `acceptOrder('${id}')`;
-
-                        const gridHTML = `
-                            <div class="grid grid-cols-2 gap-2 mt-3 mb-2">
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Pref. Time</span>
-                                    <span class="text-xs font-bold text-blue-400 truncate">${prefTime}</span>
-                                </div>
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Budget</span>
-                                    <span class="text-xs font-bold text-pink-400 truncate">${prefBudg}</span>
-                                </div>
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Details</span>
-                                    <div class="text-xs font-bold text-white truncate flex items-center gap-2">
-                                        <span>${orderTime}</span>
-                                        <span class="bg-gray-700 px-1 rounded text-[10px] text-gray-300">${weight}kg</span>
+                                    <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">Distance</span>
+                                        <span class="text-xs font-bold text-amber-400 truncate">${dist} KM</span>
                                     </div>
                                 </div>
-                                <div class="bg-gray-900/40 p-2 rounded border border-gray-700 flex flex-col items-center justify-center">
-                                    <span class="text-[9px] text-gray-500 uppercase font-bold">Distance</span>
-                                    <span class="text-xs font-bold text-amber-400 truncate">${dist} KM</span>
-                                </div>
-                            </div>
-                        `;
+                            `;
 
-                        div.innerHTML = `
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-bold text-white text-lg">${shopName}</h4>
-                                <span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${fee}</span>
-                            </div>
-                            <div class="text-xs text-gray-400 space-y-1 mb-3">
-                                <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
-                                <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
-                                
-                                ${gridHTML}
-                                ${specialReqHTML}
-                                
-                                ${assignedInfo}
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="${mapAction}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Navigate"><i class="fa-solid fa-location-arrow"></i></button>
-                                <button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
-                                    ${btnText}
-                                </button>
-                            </div>
-                        `;
-                        list.appendChild(div);
+                            div.innerHTML = `
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-white text-lg">${shopName}</h4>
+                                    <span class="bg-green-600 text-xs font-bold px-2 py-1 rounded">₹${fee}</span>
+                                </div>
+                                <div class="text-xs text-gray-400 space-y-1 mb-3">
+                                    <p class="truncate"><i class="fa-solid fa-box mr-1"></i> ${prodTxt}</p>
+                                    <p class="truncate"><i class="fa-solid fa-location-dot mr-1"></i> ${address}</p>
+                                    
+                                    ${gridHTML}
+                                    ${specialReqHTML}
+                                    
+                                    ${assignedInfo}
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="${mapAction}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition" title="Navigate"><i class="fa-solid fa-location-arrow"></i></button>
+                                    <button onclick="${clickAction}" class="flex-1 ${bgClass} text-white font-bold py-3 rounded-lg shadow active:scale-95 transition" ${btnDisabled}>
+                                        ${btnText}
+                                    </button>
+                                </div>
+                            `;
+                            list.appendChild(div);
+                        }
+                    } catch (err) {
+                        console.error("Error rendering order:", id, err);
+                        // Loop continues to next order
                     }
                 });
             }
@@ -381,7 +381,7 @@ if (window.isDeliveryHomeScriptLoaded) {
                 const orders = snap.val();
                 Object.keys(orders).forEach(key => {
                     const o = orders[key];
-                    if(o.status !== 'delivered') {
+                    if(o && o.status !== 'delivered') {
                         loadActive(key, o);
                         foundActive = true;
                         if(!document.getElementById('dutySwitch').checked) {
@@ -404,6 +404,7 @@ if (window.isDeliveryHomeScriptLoaded) {
     }
 
     window.loadActive = function(id, o) {
+        if(!o) return;
         activeOrder = {id, ...o};
         document.getElementById('ordersContainer').classList.add('hidden');
         document.getElementById('noOrdersState').classList.add('hidden');
@@ -412,11 +413,11 @@ if (window.isDeliveryHomeScriptLoaded) {
         document.getElementById('activeOrderPanel').classList.remove('hidden');
         document.getElementById('wholesalerStrip').classList.add('hidden'); 
         
-        const custName = o.user && o.user.name ? o.user.name : "Customer";
-        const address = o.location && o.location.address ? o.location.address : "Unknown Address";
-        const fee = o.payment && o.payment.deliveryFee ? o.payment.deliveryFee : 0;
-        const prefTime = o.preferences && o.preferences.deliveryTime ? o.preferences.deliveryTime : "Standard";
-        const prefBudg = o.preferences && o.preferences.budget ? o.preferences.budget : "Standard";
+        const custName = o.user?.name || "Customer";
+        const address = o.location?.address || "Unknown Address";
+        const fee = o.payment?.deliveryFee || 0;
+        const prefTime = o.preferences?.deliveryTime || "Standard";
+        const prefBudg = o.preferences?.budget || "Standard";
 
         document.getElementById('actShop').innerText = "You (Partner)";
         document.getElementById('actShop').classList.add('text-blue-400');
@@ -439,28 +440,31 @@ if (window.isDeliveryHomeScriptLoaded) {
         document.getElementById('actOrderTime').innerText = orderTime;
 
         const ul = document.getElementById('actItems');
-        ul.innerHTML = o.cart ? o.cart.filter(i=>i.qty!=='Special Request').map(i => `
-            <li class="flex justify-between border-b border-gray-700 pb-1 last:border-0">
-                <span>${i.name}</span>
-                <span class="text-white font-bold">${i.qty} x${i.count}</span>
-            </li>
-        `).join('') : '';
+        ul.innerHTML = (o.cart && Array.isArray(o.cart)) 
+            ? o.cart.filter(i=>i.qty!=='Special Request').map(i => `
+                <li class="flex justify-between border-b border-gray-700 pb-1 last:border-0">
+                    <span>${i.name}</span>
+                    <span class="text-white font-bold">${i.qty} x${i.count}</span>
+                </li>`).join('') 
+            : '';
 
         const weight = calculateOrderWeight(o.cart);
         let specialReqHTML = '';
-        if(o.cart) o.cart.forEach(item => {
-            if(item.qty === 'Special Request') {
-                specialReqHTML = `
-                    <div class="mt-3 bg-amber-900/30 border border-amber-500/50 p-3 rounded-lg flex items-start gap-3">
-                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400 mt-1"></i>
-                        <div>
-                            <p class="font-bold text-amber-400 uppercase text-xs">Special Request</p>
-                            <p class="text-white text-sm font-bold">${item.name}</p>
+        if(o.cart && Array.isArray(o.cart)) {
+            o.cart.forEach(item => {
+                if(item.qty === 'Special Request') {
+                    specialReqHTML = `
+                        <div class="mt-3 bg-amber-900/30 border border-amber-500/50 p-3 rounded-lg flex items-start gap-3">
+                            <i class="fa-solid fa-wand-magic-sparkles text-amber-400 mt-1"></i>
+                            <div>
+                                <p class="font-bold text-amber-400 uppercase text-xs">Special Request</p>
+                                <p class="text-white text-sm font-bold">${item.name}</p>
+                            </div>
                         </div>
-                    </div>
-                `;
-            }
-        });
+                    `;
+                }
+            });
+        }
 
         const extraContainer = document.getElementById('actExtraDetails');
         extraContainer.innerHTML = `
@@ -657,7 +661,6 @@ if (window.isDeliveryHomeScriptLoaded) {
         const modal = document.getElementById('wholesalerModal');
         modal.classList.remove('hidden');
         
-        // Reset scroll
         const scrollContainer = modal.querySelector('.overflow-y-auto');
         if(scrollContainer) scrollContainer.scrollTop = 0;
         
@@ -667,7 +670,6 @@ if (window.isDeliveryHomeScriptLoaded) {
 
     window.closeWholesalerModal = function() {
         document.getElementById('wholesalerModal').classList.add('hidden');
-        // CLEANUP LISTENER
         if (myWholesalerQuery) {
             console.log("Cleanup: Detaching Wholesaler Listener");
             myWholesalerQuery.off();
@@ -738,7 +740,7 @@ if (window.isDeliveryHomeScriptLoaded) {
         if(!lat || !lng) return showToast("Connect Location First");
 
         const data = {
-            partnerMobile: String(session.mobile), // Ensure string
+            partnerMobile: String(session.mobile), 
             partnerName: session.name,
             shopName: name,
             ownerMobile: mobile,
@@ -769,21 +771,15 @@ if (window.isDeliveryHomeScriptLoaded) {
 
         list.innerHTML = '<p class="text-center text-slate-600 text-xs py-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
         
-        // 1. DETACH PREVIOUS LISTENER IF EXISTS
         if (myWholesalerQuery) {
             console.log("Detaching previous listener...");
             myWholesalerQuery.off();
         }
         
-        // 2. CREATE NEW QUERY
-        // Ensuring partnerMobile is treated as string for query matching
         const myMobileStr = String(session.mobile);
-        
         myWholesalerQuery = db.ref('wholesalerRequests').orderByChild('partnerMobile').equalTo(myMobileStr);
         
-        // 3. ATTACH NEW LISTENER
         myWholesalerQuery.on('value', snap => {
-            console.log("Data Received:", snap.val()); // Debug log
             list.innerHTML = '';
             
             if(snap.exists()) {
