@@ -12,30 +12,21 @@ let selectedQtyValue = ''; // NEW: Stores selected quantity button value
 
 // --- TRACKING & BANNER LOGIC ---
 function checkActiveOrderHome() {
+    function checkActiveOrderHome() {
     const savedOrder = JSON.parse(localStorage.getItem('rmz_active_order'));
     
-    if (savedOrder) {
-        let ts = savedOrder.timestamp;
-        // Safety check for timestamp type
-        if (typeof ts === 'object' || !ts) ts = Date.now(); 
-        
-        const orderDate = new Date(ts);
-        const today = new Date();
-        const isSameDay = orderDate.getDate() === today.getDate() && 
-                          orderDate.getMonth() === today.getMonth() && 
-                          orderDate.getFullYear() === today.getFullYear();
-
-        if (isSameDay && savedOrder.status !== 'delivered' && savedOrder.status !== 'cancelled') {
-            activateBanner(savedOrder);
-            return;
-        } else {
-            // Clear expired/invalid local data
-            localStorage.removeItem('rmz_active_order');
-        }
+    // SECURITY CHECK: Kya order ka mobile number current session ke mobile se match karta hai?
+    if (savedOrder && session && savedOrder.user && savedOrder.user.mobile === session.mobile) {
+        // ... Date check logic (existing) ...
+         activateBanner(savedOrder);
+    } else {
+        // Agar mobile match nahi kiya, ya order purana hai -> Clear LocalStorage
+        localStorage.removeItem('rmz_active_order');
+        // Cloud se fresh data mangwao
+        fetchActiveOrderFromCloud();
     }
-    // Fallback: Check Cloud if nothing local found
-    fetchActiveOrderFromCloud();
 }
+
 
 function fetchActiveOrderFromCloud() {
     // Check for the last order made by this user in DB
@@ -809,4 +800,3 @@ function shareStore() {
     const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
 }
-
