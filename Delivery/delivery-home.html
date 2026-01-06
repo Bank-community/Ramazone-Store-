@@ -13,6 +13,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- LEAFLET ROUTING MACHINE -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -61,6 +65,9 @@
         #deliveryMap { height: 100%; width: 100%; z-index: 1; border-radius: 12px; }
         .map-container { height: 320px; width: 100%; position: relative; overflow: hidden; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .custom-div-icon { background: transparent; border: none; }
+        
+        /* Hide Default Routing Instructions */
+        .leaflet-routing-container { display: none !important; }
     </style>
 </head>
 <body class="pb-24 bg-gray-50">
@@ -204,8 +211,8 @@
 
                     <!-- SMART DASHBOARD (Wholesaler + Distance) -->
                     <div id="smartDashboard" class="flex gap-2 mt-3 h-20">
-                        <!-- Left: Wholesaler Carousel (65%) -->
-                        <div class="w-[65%] bg-white rounded-xl border border-gray-200 p-2.5 shadow-sm relative overflow-hidden flex flex-col justify-center">
+                        <!-- Left: Wholesaler Carousel (75%) -->
+                        <div class="w-[75%] bg-white rounded-xl border border-gray-200 p-2.5 shadow-sm relative overflow-hidden flex flex-col justify-center">
                             <div id="activeWholesalerCard">
                                 <!-- JS will inject content here -->
                                 <p class="text-[10px] text-gray-400 text-center">Loading Shops...</p>
@@ -216,11 +223,11 @@
                             </button>
                         </div>
 
-                        <!-- Right: Live Distance (35%) -->
-                        <div class="w-[35%] bg-blue-50 rounded-xl border border-blue-100 p-2 shadow-sm flex flex-col items-center justify-center text-center">
-                            <p class="text-[9px] text-blue-400 font-bold uppercase tracking-wider mb-0.5">Distance</p>
-                            <h3 class="text-lg font-extrabold text-blue-700 leading-none" id="liveDistBox">--</h3>
-                            <p class="text-[8px] text-blue-400 mt-1">To Customer</p>
+                        <!-- Right: Live Distance (25%) -->
+                        <div class="w-[25%] bg-blue-50 rounded-xl border border-blue-100 p-2 shadow-sm flex flex-col items-center justify-center text-center">
+                            <p class="text-[9px] text-blue-400 font-bold uppercase tracking-wider mb-0.5">Time</p>
+                            <h3 class="text-lg font-extrabold text-blue-700 leading-none" id="liveTimeBox">--</h3>
+                            <p class="text-[8px] text-blue-400 mt-1" id="liveDistBox">--</p>
                         </div>
                     </div>
                 </div>
@@ -373,3 +380,5 @@
     <script src="delivery-home.js"></script>
 </body>
 </html>
+
+
