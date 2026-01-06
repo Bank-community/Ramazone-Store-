@@ -1,9 +1,9 @@
 // ==========================================
 // FILE 1: delivery-utils.js
-// (Helpers, Map, Wholesaler UI, Sidebar)
+// (Helpers, Map, Smart Dashboard, Wholesaler UI)
 // ==========================================
 
-console.log("Loading Delivery Utils...");
+console.log("Loading Delivery Utils (Light Mode)...");
 
 // --- 1. GENERAL HELPERS ---
 
@@ -54,7 +54,7 @@ window.calculateOrderWeight = function(cart) {
     return totalKg.toFixed(2);
 }
 
-// --- 2. MAP LOGIC (Leaflet) ---
+// --- 2. MAP LOGIC (Light Theme & Popups) ---
 let deliveryMap = null;
 let deliveryLayerGroup = null;
 
@@ -68,6 +68,7 @@ window.toggleLiveMap = function(forceOpen = false) {
         setTimeout(() => {
             initDeliveryMap();
             updateMapVisuals();
+            renderActiveWholesalerWidget(); // Load Carousel
         }, 300);
     }
 }
@@ -77,7 +78,6 @@ window.initDeliveryMap = function() {
         deliveryMap.invalidateSize();
         return;
     }
-    // Access global MyLat/MyLng from Main File
     const startLat = window.myLat || 20.5937;
     const startLng = window.myLng || 78.9629;
 
@@ -86,7 +86,8 @@ window.initDeliveryMap = function() {
         attributionControl: false
     }).setView([startLat, startLng], 14);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // LIGHT THEME TILES (CartoDB Voyager)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19
     }).addTo(deliveryMap);
 
@@ -112,7 +113,7 @@ window.updateMapVisuals = function() {
     if(window.myLat && window.myLng) {
         const riderIcon = L.divIcon({
             className: 'custom-div-icon',
-            html: `<div style="background-color:#3b82f6; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); animation: pulse-blue 2s infinite;">
+            html: `<div style="background-color:#3b82f6; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); animation: pulse-blue 2s infinite;">
                     <i class="fa-solid fa-motorcycle text-white text-sm"></i>
                    </div>`,
             iconSize: [36, 36],
@@ -129,7 +130,7 @@ window.updateMapVisuals = function() {
 
         const custIcon = L.divIcon({
             className: 'custom-div-icon',
-            html: `<div style="background-color:#22c55e; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            html: `<div style="background-color:#22c55e; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <i class="fa-solid fa-house text-white text-xs"></i>
                    </div>`,
             iconSize: [30, 30],
@@ -137,7 +138,7 @@ window.updateMapVisuals = function() {
         });
 
         L.marker([custLat, custLng], {icon: custIcon})
-            .bindPopup(`<b style="color:black">Customer</b>`)
+            .bindPopup(`<b style="color:#111827">Customer</b>`)
             .addTo(deliveryLayerGroup);
         
         bounds.push([custLat, custLng]);
@@ -149,22 +150,30 @@ window.updateMapVisuals = function() {
         }
     }
 
-    // 3. WHOLESALER MARKERS (Only nearby)
+    // 3. WHOLESALER MARKERS (With Distance Popup)
     if(window.approvedWholesalers && window.approvedWholesalers.length > 0) {
         window.approvedWholesalers.forEach(ws => {
             if(ws.location && ws.location.lat) {
                 const dist = getDistance(window.myLat, window.myLng, ws.location.lat, ws.location.lng);
-                if(dist <= 3) { // Show within 3KM
+                if(dist <= 5) { // Show within 5KM in Light Mode
                     const shopIcon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div style="background-color:#f59e0b; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid white;">
+                        html: `<div style="background-color:#f59e0b; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <i class="fa-solid fa-shop text-white text-[10px]"></i>
                                </div>`,
                         iconSize: [24, 24],
                         iconAnchor: [12, 12]
                     });
+                    
+                    // POPUP WITH DISTANCE
                     L.marker([ws.location.lat, ws.location.lng], {icon: shopIcon})
-                        .bindPopup(`<div class="text-center"><b style="color:#d97706">${ws.shopName}</b><br><a href="tel:${ws.ownerMobile}">CALL</a></div>`)
+                        .bindPopup(`
+                            <div class="text-center p-1">
+                                <b style="color:#d97706; font-size:12px;">${ws.shopName}</b><br>
+                                <span style="font-size:10px; color:#6b7280;">${dist} KM Away</span><br>
+                                <a href="tel:${ws.ownerMobile}" style="color:#2563eb; font-weight:bold; font-size:10px; text-decoration:none;">📞 CALL</a>
+                            </div>
+                        `)
                         .addTo(deliveryLayerGroup);
                 }
             }
@@ -172,7 +181,74 @@ window.updateMapVisuals = function() {
     }
 }
 
-// --- 3. EXTERNAL ACTIONS & SIDEBAR ---
+// --- 3. SMART DASHBOARD (Left Carousel + Right Distance) ---
+
+let currentShopIndex = 0;
+let nearbyShopsCache = [];
+
+window.renderActiveWholesalerWidget = function() {
+    const container = document.getElementById('activeWholesalerCard');
+    const nextBtn = document.getElementById('btnNextShop');
+    
+    if(!container) return;
+
+    // Filter Nearby Shops
+    if(window.approvedWholesalers && window.approvedWholesalers.length > 0) {
+        nearbyShopsCache = window.approvedWholesalers.map(ws => {
+            const d = parseFloat(getDistance(window.myLat, window.myLng, ws.location.lat, ws.location.lng));
+            return { ...ws, dist: d };
+        }).sort((a, b) => a.dist - b.dist).slice(0, 5); // Take top 5
+    }
+
+    if(nearbyShopsCache.length === 0) {
+        container.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 text-xs gap-2"><i class="fa-solid fa-store-slash"></i> No shops nearby</div>`;
+        if(nextBtn) nextBtn.classList.add('hidden');
+        return;
+    }
+
+    // Show Button if more than 1 shop
+    if(nearbyShopsCache.length > 1 && nextBtn) {
+        nextBtn.classList.remove('hidden');
+        nextBtn.onclick = () => {
+            currentShopIndex = (currentShopIndex + 1) % nearbyShopsCache.length;
+            renderSingleShopCard(nearbyShopsCache[currentShopIndex]);
+        };
+    } else if (nextBtn) {
+        nextBtn.classList.add('hidden');
+    }
+
+    // Render First Shop
+    renderSingleShopCard(nearbyShopsCache[currentShopIndex]);
+}
+
+function renderSingleShopCard(shop) {
+    const container = document.getElementById('activeWholesalerCard');
+    if(!container) return;
+
+    container.innerHTML = `
+        <div class="flex justify-between items-start mb-1">
+            <h4 class="font-bold text-gray-800 text-xs truncate w-[85%]" title="${shop.shopName}">${shop.shopName}</h4>
+            <span class="text-[9px] bg-amber-100 text-amber-700 px-1 rounded font-bold">${shop.dist}KM</span>
+        </div>
+        <p class="text-[9px] text-gray-500 truncate mb-1"><i class="fa-solid fa-map-pin mr-1"></i>${shop.address}</p>
+        <div class="flex gap-1.5 mt-auto">
+             <button onclick="window.open('tel:${shop.ownerMobile}')" class="bg-gray-100 hover:bg-gray-200 text-gray-600 w-6 h-6 rounded flex items-center justify-center transition"><i class="fa-solid fa-phone text-[10px]"></i></button>
+             <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${shop.location.lat},${shop.location.lng}')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 w-6 h-6 rounded flex items-center justify-center transition"><i class="fa-solid fa-location-arrow text-[10px]"></i></button>
+             <button onclick="showWholesalerDetails('${shop.shopName}', '${shop.address}', '${shop.ownerMobile}')" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 h-6 rounded text-[9px] font-bold flex-1">View</button>
+        </div>
+    `;
+}
+
+window.updateDashboardDistance = function() {
+    const box = document.getElementById('liveDistBox');
+    if(!box || !window.activeOrder || !window.activeOrder.location) return;
+    
+    const d = getDistance(window.myLat, window.myLng, window.activeOrder.location.lat, window.activeOrder.location.lng);
+    box.innerText = d + " KM";
+}
+
+
+// --- 4. EXTERNAL ACTIONS ---
 
 window.changePin = function() { 
     toggleMenu(); 
@@ -225,7 +301,7 @@ window.triggerCelebration = function() {
     setTimeout(() => overlay.classList.add('hidden'), 3000);
 }
 
-// --- 4. WHOLESALER LOGIC (Display & CRUD) ---
+// --- 5. WHOLESALER LOGIC (Strip & Modal) ---
 
 window.updateWholesalerDisplay = function() {
     const strip = document.getElementById('wholesalerStrip');
@@ -237,7 +313,6 @@ window.updateWholesalerDisplay = function() {
         return;
     }
 
-    // Sort by distance
     const nearby = window.approvedWholesalers.map(ws => {
         let lat = ws.location ? ws.location.lat : 0;
         let lng = ws.location ? ws.location.lng : 0;
@@ -255,17 +330,17 @@ window.updateWholesalerDisplay = function() {
 
     nearby.forEach(ws => {
         const div = document.createElement('div');
-        div.className = "flex-shrink-0 w-64 bg-slate-800 border border-slate-700 rounded-xl p-3 relative snap-center";
+        div.className = "flex-shrink-0 w-64 bg-white border border-gray-200 rounded-xl p-3 relative snap-center shadow-sm";
         div.innerHTML = `
             <div class="flex justify-between items-start mb-2">
-                <h4 class="font-bold text-white text-sm truncate w-3/4">${ws.shopName}</h4>
-                <span class="text-[10px] bg-amber-900/30 text-amber-500 border border-amber-900/50 px-1.5 py-0.5 rounded font-bold">${ws.dist} KM</span>
+                <h4 class="font-bold text-gray-900 text-sm truncate w-3/4">${ws.shopName}</h4>
+                <span class="text-[10px] bg-amber-50 text-amber-600 border border-amber-100 px-1.5 py-0.5 rounded font-bold">${ws.dist} KM</span>
             </div>
-            <p class="text-[10px] text-slate-400 mb-3 truncate"><i class="fa-solid fa-location-dot mr-1"></i>${ws.address}</p>
+            <p class="text-[10px] text-gray-500 mb-3 truncate"><i class="fa-solid fa-location-dot mr-1"></i>${ws.address}</p>
             <div class="flex gap-2">
-                <button onclick="window.open('tel:${ws.ownerMobile}')" class="bg-slate-700 hover:bg-slate-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-phone text-xs"></i></button>
-                <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${ws.location.lat},${ws.location.lng}')" class="bg-blue-600 hover:bg-blue-500 text-white w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-location-arrow text-xs"></i></button>
-                <button onclick="showWholesalerDetails('${ws.shopName}', '${ws.address}', '${ws.ownerMobile}')" class="bg-slate-700 hover:bg-slate-600 text-white px-3 h-8 rounded-lg text-[10px] font-bold flex-1 transition">View More</button>
+                <button onclick="window.open('tel:${ws.ownerMobile}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-phone text-xs"></i></button>
+                <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${ws.location.lat},${ws.location.lng}')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-location-arrow text-xs"></i></button>
+                <button onclick="showWholesalerDetails('${ws.shopName}', '${ws.address}', '${ws.ownerMobile}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 h-8 rounded-lg text-[10px] font-bold flex-1 transition">View More</button>
             </div>
         `;
         container.appendChild(div);
@@ -322,8 +397,8 @@ window.connectWholesalerLocation = function() {
         document.getElementById('wsLng').value = lng;
         
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Location Connected';
-        btn.classList.replace('bg-blue-900/30', 'bg-green-900/30');
-        btn.classList.replace('text-blue-400', 'text-green-400');
+        btn.classList.replace('bg-blue-50', 'bg-green-50');
+        btn.classList.replace('text-blue-600', 'text-green-600');
         
         document.getElementById('wsAddress').value = "Fetching address details...";
         try {
@@ -371,7 +446,7 @@ window.submitWholesalerRequest = function() {
 window.loadMyWholesalerRequests = function() {
     const list = document.getElementById('myWholesalerList');
     if(!list) return;
-    list.innerHTML = '<p class="text-center text-slate-600 text-xs py-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
+    list.innerHTML = '<p class="text-center text-gray-500 text-xs py-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>';
     if (window.myWholesalerQuery) window.myWholesalerQuery.off();
     
     window.myWholesalerQuery = window.db.ref('wholesalerRequests').orderByChild('partnerMobile').equalTo(String(window.session.mobile));
@@ -383,30 +458,30 @@ window.loadMyWholesalerRequests = function() {
             requests.reverse(); 
 
             requests.forEach(req => {
-                let statusBadge = req.status === 'approved' ? `<span class="bg-green-900/40 text-green-400 text-[10px] px-2 py-0.5 rounded border border-green-900/50 uppercase font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Verified</span>` : 
-                                 (req.status === 'pending' ? `<span class="bg-amber-900/40 text-amber-500 text-[10px] px-2 py-0.5 rounded border border-amber-900/50 uppercase font-bold">Pending</span>` : 
-                                 `<span class="bg-red-900/40 text-red-400 text-[10px] px-2 py-0.5 rounded border border-red-900/50 uppercase font-bold">Disabled</span>`);
+                let statusBadge = req.status === 'approved' ? `<span class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded border border-green-200 uppercase font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Verified</span>` : 
+                                 (req.status === 'pending' ? `<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded border border-amber-200 uppercase font-bold">Pending</span>` : 
+                                 `<span class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded border border-red-200 uppercase font-bold">Disabled</span>`);
                 
                 let actions = req.status === 'pending' ? `
                     <div class="flex gap-2 mt-2">
-                        <button onclick="editWsRequest('${req.key}', '${req.shopName}', '${req.ownerMobile}', '${req.address}', ${req.location.lat}, ${req.location.lng})" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-white flex-1 font-bold">Edit</button>
-                        <button onclick="window.db.ref('wholesalerRequests/${req.key}').remove()" class="text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 px-3 py-1.5 rounded border border-red-900/50 flex-1 font-bold">Delete</button>
+                        <button onclick="editWsRequest('${req.key}', '${req.shopName}', '${req.ownerMobile}', '${req.address}', ${req.location.lat}, ${req.location.lng})" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded text-gray-700 flex-1 font-bold">Edit</button>
+                        <button onclick="window.db.ref('wholesalerRequests/${req.key}').remove()" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded border border-red-200 flex-1 font-bold">Delete</button>
                     </div>` : '';
 
                 list.innerHTML += `
-                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 ${req.status === 'disabled' ? 'opacity-50' : ''}">
+                    <div class="bg-white p-3 rounded-xl border border-gray-200 ${req.status === 'disabled' ? 'opacity-50' : ''} shadow-sm">
                         <div class="flex justify-between items-start mb-1">
-                            <h4 class="font-bold text-white text-sm">${req.shopName}</h4>
+                            <h4 class="font-bold text-gray-900 text-sm">${req.shopName}</h4>
                             ${statusBadge}
                         </div>
-                        <p class="text-[10px] text-slate-400 font-mono mb-1"><i class="fa-solid fa-phone mr-1"></i>${req.ownerMobile}</p>
-                        <p class="text-[10px] text-slate-500 truncate"><i class="fa-solid fa-map-pin mr-1"></i>${req.address}</p>
+                        <p class="text-[10px] text-gray-500 font-mono mb-1"><i class="fa-solid fa-phone mr-1"></i>${req.ownerMobile}</p>
+                        <p class="text-[10px] text-gray-600 truncate"><i class="fa-solid fa-map-pin mr-1"></i>${req.address}</p>
                         ${actions}
                     </div>
                 `;
             });
         } else {
-            list.innerHTML = '<p class="text-center text-slate-600 text-xs py-4">You haven\'t added any shops yet.</p>';
+            list.innerHTML = '<p class="text-center text-gray-500 text-xs py-4">You haven\'t added any shops yet.</p>';
         }
     });
 }
