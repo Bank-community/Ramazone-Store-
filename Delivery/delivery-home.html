@@ -20,293 +20,323 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #111827; color: white; -webkit-tap-highlight-color: transparent; }
+        /* LIGHT THEME BASE */
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #111827; -webkit-tap-highlight-color: transparent; }
+        
+        /* Toggle Switch */
         .toggle-checkbox:checked { right: 0; border-color: #22c55e; }
         .toggle-checkbox:checked + .toggle-label { background-color: #22c55e; }
+        
+        /* Sidebar & Overlay */
         .sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
         .sidebar.open { transform: translateX(0); }
         .overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .overlay.open { opacity: 1; pointer-events: auto; }
-        .glass-card { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(75, 85, 99, 0.4); }
-        .pulse-border { animation: pulse-orange 2s infinite; }
-        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
         
-        /* Range Slider Style */
+        /* Modern Cards (Light Mode) */
+        .glass-card { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        
+        /* Pulse Animation */
+        .pulse-border { animation: pulse-orange 2s infinite; }
+        @keyframes pulse-orange { 
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } 
+        }
+        
+        /* Range Slider */
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #f59e0b; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(245,158,11,0.5); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #374151; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #f59e0b; cursor: pointer; margin-top: -8px; box-shadow: 0 2px 6px rgba(245,158,11,0.4); border: 2px solid white; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e5e7eb; border-radius: 4px; }
 
         /* Modal Animation */
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-animate { animation: slideUp 0.3s ease-out forwards; }
 
-        /* Horizontal Scrollbar Hide */
+        /* Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* MAP CUSTOM STYLES */
+        /* MAP STYLES */
         #deliveryMap { height: 100%; width: 100%; z-index: 1; border-radius: 12px; }
-        
-        /* UPDATED: Height increased to 350px for Square/Rectangle Shape */
-        .map-container { height: 350px; width: 100%; position: relative; overflow: hidden; border-radius: 12px; border: 1px solid #374151; }
+        .map-container { height: 320px; width: 100%; position: relative; overflow: hidden; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .custom-div-icon { background: transparent; border: none; }
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-24 bg-gray-50">
 
-    <!-- HEADER -->
-    <header class="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-30 px-4 py-3 flex items-center justify-between shadow-lg">
+    <!-- HEADER (Light Mode) -->
+    <header class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 py-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center gap-3">
-            <button onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition active:scale-95">
-                <i class="fa-solid fa-bars text-xl"></i>
+            <button onclick="toggleMenu()" class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 transition active:scale-95 bg-gray-100 rounded-full">
+                <i class="fa-solid fa-bars text-lg"></i>
             </button>
             <div>
-                <h1 class="text-sm font-bold leading-none text-white" id="headerName">Partner</h1>
-                <p class="text-[10px] text-gray-400 mt-1 uppercase" id="vehicleType">Bike</p>
+                <h1 class="text-sm font-bold leading-none text-gray-900" id="headerName">Partner</h1>
+                <p class="text-[10px] text-gray-500 mt-1 uppercase font-bold" id="vehicleType">Bike</p>
             </div>
         </div>
         
         <div class="flex items-center gap-3">
             <!-- SOS BUTTON -->
-            <button onclick="triggerSOS('7903698180')" class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-red-500 animate-pulse shadow-lg shadow-red-600/30">
+            <button onclick="triggerSOS('7903698180')" class="w-9 h-9 rounded-full bg-red-100 text-red-600 border border-red-200 flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm animate-pulse">
                 <i class="fa-solid fa-bell text-xs"></i>
             </button>
 
             <div class="flex items-center gap-2">
-                <span class="text-[10px] font-bold uppercase tracking-wider" id="dutyStatusText">OFFLINE</span>
-                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                    <input type="checkbox" name="toggle" id="dutySwitch" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 left-0 top-0 z-10" onchange="toggleDuty()"/>
-                    <label for="dutySwitch" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer transition-colors duration-300"></label>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500" id="dutyStatusText">OFFLINE</span>
+                <div class="relative inline-block w-12 mr-1 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="dutySwitch" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 left-0 top-0 z-10 shadow-sm" onchange="toggleDuty()"/>
+                    <label for="dutySwitch" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- SIDEBAR -->
-    <div id="menuOverlay" class="overlay fixed inset-0 bg-black/80 z-40 backdrop-blur-sm" onclick="toggleMenu()"></div>
-    <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-gray-900 z-50 shadow-2xl flex flex-col border-r border-gray-800">
-        <div class="p-6 bg-gray-800 border-b border-gray-700">
-            <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-3 border-2 border-amber-500 overflow-hidden">
+    <!-- SIDEBAR (Light Mode) -->
+    <div id="menuOverlay" class="overlay fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onclick="toggleMenu()"></div>
+    <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-white z-50 shadow-2xl flex flex-col border-r border-gray-200">
+        <div class="p-6 bg-gray-50 border-b border-gray-200">
+            <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-3 border-2 border-amber-500 shadow-sm overflow-hidden">
                 <i class="fa-solid fa-user text-2xl text-gray-400"></i>
             </div>
-            <h2 class="font-bold text-lg text-white" id="menuName">Partner</h2>
-            <p class="text-xs text-gray-400 font-mono" id="menuMobile">+91 ...</p>
+            <h2 class="font-bold text-lg text-gray-900" id="menuName">Partner</h2>
+            <p class="text-xs text-gray-500 font-mono" id="menuMobile">+91 ...</p>
             <div class="mt-2 flex gap-1 justify-center">
-                <i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i><i class="fa-solid fa-star text-yellow-400 text-xs"></i>
+                <i class="fa-solid fa-star text-amber-400 text-xs"></i><i class="fa-solid fa-star text-amber-400 text-xs"></i><i class="fa-solid fa-star text-amber-400 text-xs"></i><i class="fa-solid fa-star text-amber-400 text-xs"></i><i class="fa-solid fa-star text-amber-400 text-xs"></i>
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-key text-amber-500 w-5"></i> Change PIN</button>
-            <button onclick="updateVehicle()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-motorcycle text-amber-500 w-5"></i> Vehicle Info</button>
-            <button onclick="openWholesalerModal()" class="w-full text-left px-4 py-3 rounded hover:bg-gray-800 text-gray-300 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-store text-amber-500 w-5"></i> Add Wholesaler Shop</button>
-            <div class="h-px bg-gray-800 my-2"></div>
-            <button onclick="logout()" class="w-full text-left px-4 py-3 rounded hover:bg-red-900/30 text-red-500 font-medium text-sm flex items-center gap-3"><i class="fa-solid fa-power-off w-5"></i> Logout</button>
+            <button onclick="changePin()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 font-semibold text-sm flex items-center gap-3 transition"><i class="fa-solid fa-key text-amber-500 w-5"></i> Change PIN</button>
+            <button onclick="updateVehicle()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 font-semibold text-sm flex items-center gap-3 transition"><i class="fa-solid fa-motorcycle text-amber-500 w-5"></i> Vehicle Info</button>
+            <button onclick="openWholesalerModal()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 font-semibold text-sm flex items-center gap-3 transition"><i class="fa-solid fa-store text-amber-500 w-5"></i> Add Wholesaler Shop</button>
+            <div class="h-px bg-gray-200 my-2"></div>
+            <button onclick="logout()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-red-600 font-semibold text-sm flex items-center gap-3 transition"><i class="fa-solid fa-power-off w-5"></i> Logout</button>
         </nav>
     </div>
 
     <!-- MAIN CONTENT -->
     <div class="px-4 mt-20">
         
-        <!-- WHOLESALER STRIP -->
+        <!-- WHOLESALER STRIP (Light Mode) -->
         <div id="wholesalerStrip" class="hidden mb-4">
             <div class="flex justify-between items-end mb-2 px-1">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-shop text-amber-500 mr-1"></i> Nearby Wholesalers</h3>
-                <span class="text-[9px] bg-slate-800 px-2 py-0.5 rounded text-gray-500">Verified</span>
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest"><i class="fa-solid fa-shop text-amber-600 mr-1"></i> Nearby Wholesalers</h3>
+                <span class="text-[9px] bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded font-bold">Verified</span>
             </div>
             <div id="wsListContainer" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x w-full">
                 <!-- Cards injected by JS -->
             </div>
         </div>
 
-        <!-- SMART RADIUS CONTROLLER -->
-        <div id="radiusControl" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-4">
+        <!-- SMART RADIUS CONTROLLER (Light Mode) -->
+        <div id="radiusControl" class="hidden bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-4">
             <div class="flex justify-between items-center mb-2">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-crosshairs text-amber-500 mr-1"></i> Scanning Range</h3>
-                <span class="text-sm font-bold text-white bg-gray-700 px-2 py-0.5 rounded"><span id="radiusVal">5</span> KM</span>
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest"><i class="fa-solid fa-crosshairs text-amber-600 mr-1"></i> Scanning Range</h3>
+                <span class="text-sm font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded border border-gray-200"><span id="radiusVal">5</span> KM</span>
             </div>
-            <input type="range" min="1" max="10" value="5" class="w-full" id="radiusSlider" oninput="updateRadius(this.value)" onchange="listenOrders()">
-            <p class="text-[9px] text-gray-500 mt-1 text-center">Showing orders within this circle.</p>
+            <input type="range" min="1" max="10" value="5" class="w-full accent-amber-500" id="radiusSlider" oninput="updateRadius(this.value)" onchange="listenOrders()">
+            <p class="text-[10px] text-gray-400 mt-1 text-center font-medium">Showing orders within this circle.</p>
         </div>
 
-        <!-- Stats -->
+        <!-- Stats (Light Mode) -->
         <div id="statsSection" class="hidden grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex flex-col items-center shadow-lg">
+            <div class="bg-white rounded-xl p-3 border border-gray-200 flex flex-col items-center shadow-sm">
                 <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Earnings</span>
-                <span class="text-xl font-bold text-green-400 mt-1">₹<span id="earnings">0</span></span>
+                <span class="text-xl font-bold text-green-600 mt-1">₹<span id="earnings">0</span></span>
             </div>
-            <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex flex-col items-center shadow-lg">
+            <div class="bg-white rounded-xl p-3 border border-gray-200 flex flex-col items-center shadow-sm">
                 <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Trips</span>
-                <span class="text-xl font-bold text-amber-500 mt-1" id="trips">0</span>
+                <span class="text-xl font-bold text-amber-600 mt-1" id="trips">0</span>
             </div>
         </div>
 
-        <!-- Offline -->
+        <!-- Offline (Light Mode) -->
         <div id="offlineState" class="flex flex-col items-center justify-center py-12 text-center">
-            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-600"><i class="fa-solid fa-power-off text-3xl"></i></div>
-            <h2 class="text-lg font-bold text-gray-300">You are Offline</h2>
+            <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-4 text-gray-400 shadow-inner"><i class="fa-solid fa-power-off text-3xl"></i></div>
+            <h2 class="text-lg font-bold text-gray-700">You are Offline</h2>
             <p class="text-sm text-gray-500 mt-1">Go Online to start your shift</p>
         </div>
 
-        <!-- Online Scanning -->
+        <!-- Online Scanning (Light Mode) -->
         <div id="noOrdersState" class="hidden flex flex-col items-center justify-center py-12 text-center">
-            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 relative">
-                <span class="absolute w-full h-full rounded-full animate-ping bg-amber-500/20"></span>
+            <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-4 relative border border-amber-100">
+                <span class="absolute w-full h-full rounded-full animate-ping bg-amber-400/30"></span>
                 <i class="fa-solid fa-radar text-3xl text-amber-500"></i>
             </div>
-            <h2 class="text-lg font-bold text-gray-300">Scanning <span id="scanKm">5</span> KM Area...</h2>
-            <p class="text-xs text-gray-500 mt-4 bg-gray-800 px-3 py-1 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i> <span id="locStatus">GPS Waiting...</span></p>
+            <h2 class="text-lg font-bold text-gray-700">Scanning <span id="scanKm">5</span> KM Area...</h2>
+            <p class="text-xs text-gray-500 mt-4 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm"><i class="fa-solid fa-location-dot mr-1 text-blue-500"></i> <span id="locStatus">GPS Waiting...</span></p>
         </div>
 
         <!-- Orders List -->
         <div id="ordersContainer" class="hidden space-y-4 pb-20">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex justify-between">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex justify-between">
                 <span>Nearby Tasks</span>
-                <span id="orderCount" class="bg-amber-600 text-white px-1.5 rounded">0</span>
+                <span id="orderCount" class="bg-amber-600 text-white px-2 py-0.5 rounded text-[10px]">0</span>
             </h3>
             <div id="ordersList" class="space-y-4"></div>
         </div>
 
-        <!-- Active Order Panel -->
-        <div id="activeOrderPanel" class="hidden fixed inset-0 z-50 bg-gray-900 flex flex-col animate-[slideUp_0.3s_ease-out]">
-            <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center shadow-md">
-                <h2 class="font-bold text-amber-500">Live Task</h2>
-                <span class="text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded uppercase font-bold" id="activeStatus">Processing</span>
+        <!-- Active Order Panel (Light Mode + Smart Dashboard) -->
+        <div id="activeOrderPanel" class="hidden fixed inset-0 z-50 bg-gray-50 flex flex-col animate-[slideUp_0.3s_ease-out]">
+            <div class="bg-white p-4 border-b border-gray-200 flex justify-between items-center shadow-sm">
+                <h2 class="font-bold text-amber-600">Live Task</h2>
+                <span class="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded uppercase font-bold" id="activeStatus">Processing</span>
             </div>
-            <div class="flex-1 overflow-y-auto p-5 space-y-6">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
                 
                 <!-- NEW MAP CONTAINER -->
-                <div id="liveMapSection" class="hidden mb-4 animate-[fadeIn_0.5s_ease-out]">
+                <div id="liveMapSection" class="hidden animate-[fadeIn_0.5s_ease-out]">
                      <div class="flex justify-between items-end mb-2">
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-map text-blue-500 mr-1"></i> Smart Route</h3>
-                        <!-- Recenter Button Added -->
-                        <button onclick="recenterMap()" class="text-[10px] bg-blue-600/20 text-blue-400 border border-blue-600/50 px-2 py-0.5 rounded font-bold hover:bg-blue-600 hover:text-white transition flex items-center gap-1">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest"><i class="fa-solid fa-map text-blue-500 mr-1"></i> Smart Route</h3>
+                        <!-- Recenter Button -->
+                        <button onclick="recenterMap()" class="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded font-bold hover:bg-blue-600 hover:text-white transition flex items-center gap-1">
                             <i class="fa-solid fa-location-crosshairs"></i> Recenter
                         </button>
                     </div>
-                    <div class="map-container shadow-lg shadow-black/50 relative">
+                    <div class="map-container shadow-md bg-white">
                         <div id="deliveryMap"></div>
-                        <div id="mapLoader" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-[1000]">
+                        <div id="mapLoader" class="absolute inset-0 bg-gray-50/90 flex flex-col items-center justify-center z-[1000]">
                             <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500 mb-2"></i>
-                            <span class="text-white text-xs font-bold">Connecting GPS...</span>
+                            <span class="text-gray-600 text-xs font-bold">Connecting GPS...</span>
+                        </div>
+                    </div>
+
+                    <!-- SMART DASHBOARD (Wholesaler + Distance) -->
+                    <div id="smartDashboard" class="flex gap-2 mt-3 h-20">
+                        <!-- Left: Wholesaler Carousel (65%) -->
+                        <div class="w-[65%] bg-white rounded-xl border border-gray-200 p-2.5 shadow-sm relative overflow-hidden flex flex-col justify-center">
+                            <div id="activeWholesalerCard">
+                                <!-- JS will inject content here -->
+                                <p class="text-[10px] text-gray-400 text-center">Loading Shops...</p>
+                            </div>
+                            <!-- Slide Button -->
+                            <button id="btnNextShop" class="absolute right-0 top-0 bottom-0 w-6 bg-gray-100 hover:bg-gray-200 border-l border-gray-200 flex items-center justify-center text-gray-500 transition hidden">
+                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
+                        </div>
+
+                        <!-- Right: Live Distance (35%) -->
+                        <div class="w-[35%] bg-blue-50 rounded-xl border border-blue-100 p-2 shadow-sm flex flex-col items-center justify-center text-center">
+                            <p class="text-[9px] text-blue-400 font-bold uppercase tracking-wider mb-0.5">Distance</p>
+                            <h3 class="text-lg font-extrabold text-blue-700 leading-none" id="liveDistBox">--</h3>
+                            <p class="text-[8px] text-blue-400 mt-1">To Customer</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="relative pl-6 border-l-2 border-gray-700">
-                    <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900"></span>
+                <!-- Order Details (Light Mode) -->
+                <div class="relative pl-6 border-l-2 border-gray-200 ml-1">
+                    <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-sm"></span>
                     <h3 class="text-xs font-bold text-gray-400 uppercase">Partner (You)</h3>
-                    <p class="text-lg font-bold text-white mt-0.5" id="actShop">You</p>
-                    <p class="text-xs text-gray-500" id="actShopLoc">Live Location Active</p>
+                    <p class="text-lg font-bold text-gray-900 mt-0.5" id="actShop">You</p>
+                    <p class="text-xs text-green-600 font-bold flex items-center gap-1" id="actShopLoc"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Live Tracking Active</p>
                 </div>
                 
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Order Items</h4>
-                    <ul id="actItems" class="text-sm text-gray-300 space-y-2"></ul>
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-100 pb-2">Order Items</h4>
+                    <ul id="actItems" class="text-sm text-gray-700 space-y-2 font-medium"></ul>
                 </div>
 
-                <!-- Active Order Preferences Grid -->
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-inner">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-700 pb-2">Trip & Preferences</h4>
+                <!-- Active Order Preferences Grid (Light Mode) -->
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-100 pb-2">Trip & Preferences</h4>
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Pref. Time</p>
-                            <p class="text-sm font-bold text-blue-400" id="actPrefTime">Evening</p>
+                            <p class="text-sm font-bold text-blue-600" id="actPrefTime">Evening</p>
                         </div>
-                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
-                            <p class="text-sm font-bold text-pink-400" id="actPrefBudget">Standard</p>
+                            <p class="text-sm font-bold text-pink-600" id="actPrefBudget">Standard</p>
                         </div>
-                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Order Time</p>
-                            <p class="text-sm font-bold text-white" id="actOrderTime">--:--</p>
+                            <p class="text-sm font-bold text-gray-800" id="actOrderTime">--:--</p>
                         </div>
-                        <div class="bg-gray-900 p-2 rounded border border-gray-600 text-center">
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200 text-center">
                             <p class="text-[10px] text-gray-400 font-bold uppercase">Distance</p>
-                            <p class="text-sm font-bold text-amber-400" id="actDist">Calc...</p>
+                            <p class="text-sm font-bold text-amber-600" id="actDist">Calc...</p>
                         </div>
                     </div>
                     <div id="actExtraDetails" class="mt-3 space-y-2"></div>
                 </div>
 
-                <div class="relative pl-6 border-l-2 border-gray-700">
-                    <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-500 border-2 border-gray-900"></span>
+                <div class="relative pl-6 border-l-2 border-gray-200 ml-1">
+                    <span class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-sm"></span>
                     <h3 class="text-xs font-bold text-gray-400 uppercase">Deliver To</h3>
-                    <p class="text-lg font-bold text-white mt-0.5" id="actCust">Customer Name</p>
-                    <p class="text-sm text-gray-400" id="actAddr">Address</p>
+                    <p class="text-lg font-bold text-gray-900 mt-0.5" id="actCust">Customer Name</p>
+                    <p class="text-sm text-gray-500" id="actAddr">Address</p>
                     
                     <!-- MAP ACTIONS -->
                     <div class="flex gap-2 mt-3">
-                        <!-- REMOVED "SHOW MAP" BUTTON - AUTO OPEN NOW -->
-                        <button onclick="openMap('dir')" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-600 hover:text-white transition flex items-center justify-center gap-1">
+                        <button onclick="openMap('dir')" class="flex-1 bg-blue-50 text-blue-600 border border-blue-200 px-3 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition flex items-center justify-center gap-2 shadow-sm">
                             <i class="fa-solid fa-location-arrow"></i> Navigate
                         </button>
-                        <button onclick="openMap('view')" class="bg-gray-700 border border-gray-600 px-3 py-2 rounded text-xs text-white hover:bg-gray-600" title="Street View">
-                            <i class="fa-solid fa-street-view text-lg"></i>
-                        </button>
-                        <button onclick="openWhatsApp()" class="bg-green-600/20 text-green-400 border border-green-600 px-3 py-2 rounded text-xs hover:bg-green-600 hover:text-white">
+                        <button onclick="openWhatsApp()" class="bg-green-50 text-green-600 border border-green-200 px-3 py-2.5 rounded-lg text-xs hover:bg-green-600 hover:text-white shadow-sm transition">
                             <i class="fa-brands fa-whatsapp text-lg"></i>
                         </button>
-                        <button onclick="callCust()" class="bg-gray-700 border border-gray-600 px-3 py-2 rounded text-white hover:bg-gray-600">
+                        <button onclick="callCust()" class="bg-gray-100 border border-gray-200 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-200 shadow-sm transition">
                             <i class="fa-solid fa-phone text-lg"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="bg-gray-800 p-4 rounded-xl flex justify-between items-center border border-gray-700">
-                    <span class="text-sm text-gray-400 font-bold">Cash to Collect</span>
-                    <span class="text-2xl font-bold text-white">₹<span id="actFee">0</span></span>
+                <div class="bg-white p-4 rounded-xl flex justify-between items-center border border-gray-200 shadow-sm">
+                    <span class="text-sm text-gray-500 font-bold">Cash to Collect</span>
+                    <span class="text-2xl font-bold text-gray-900">₹<span id="actFee">0</span></span>
                 </div>
             </div>
-            <div class="p-5 bg-gray-800 border-t border-gray-700">
-                <button onclick="changeStatus()" id="actionBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition">UPDATE STATUS</button>
+            <div class="p-5 bg-white border-t border-gray-200 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+                <button onclick="changeStatus()" id="actionBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 active:scale-95 transition">UPDATE STATUS</button>
             </div>
         </div>
 
     </div>
 
-    <!-- WHOLESALER FULL SCREEN PAGE -->
-    <div id="wholesalerModal" class="hidden fixed inset-0 z-[100] bg-gray-900 flex flex-col w-full h-full modal-animate">
+    <!-- WHOLESALER FULL SCREEN PAGE (Light Mode) -->
+    <div id="wholesalerModal" class="hidden fixed inset-0 z-[100] bg-gray-50 flex flex-col w-full h-full modal-animate">
         
         <!-- Incentive Header -->
-        <div class="bg-gradient-to-r from-amber-600 to-yellow-600 p-4 text-center relative shadow-md shrink-0">
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-center relative shadow-md shrink-0">
             <button onclick="closeWholesalerModal()" class="absolute top-4 left-4 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full text-white hover:bg-white/30 transition">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             
             <h3 class="font-extrabold text-white text-base uppercase tracking-wide mt-1"><i class="fa-solid fa-sack-dollar mr-1"></i> Earn Incentive</h3>
             <p class="text-xs text-white/90 mt-2 font-bold leading-tight px-8">
-                Yadi aap wholesaler ko add karte hain aur verify karvate hain, to aapko har order par alag se incentive milega!
+                Add and verify wholesalers to earn extra incentives on every order!
             </p>
         </div>
 
         <!-- Content Area -->
-        <div class="p-5 overflow-y-auto space-y-6 flex-1 bg-slate-900 pb-20">
+        <div class="p-5 overflow-y-auto space-y-6 flex-1 bg-gray-50 pb-20">
             
-            <!-- Add Form -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 relative shadow-lg">
+            <!-- Add Form (Light Mode) -->
+            <div class="bg-white p-5 rounded-xl border border-gray-200 relative shadow-sm">
                 <input type="hidden" id="wsEditId" value="">
-                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
                     <i class="fa-solid fa-shop text-amber-500"></i> Add New Shop
                 </h4>
                 
                 <div class="space-y-4">
-                    <button onclick="connectWholesalerLocation()" id="btnConnectLoc" class="w-full bg-blue-900/30 text-blue-400 border border-blue-600/50 hover:bg-blue-600 hover:text-white font-bold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                    <button onclick="connectWholesalerLocation()" id="btnConnectLoc" class="w-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white font-bold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm">
                         <i class="fa-solid fa-location-crosshairs text-lg"></i> Connect Live Location
                     </button>
                     
                     <div class="grid grid-cols-1 gap-4">
-                        <input type="text" id="wsName" placeholder="Wholesaler Shop Name" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3.5 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
-                        <input type="tel" id="wsMobile" placeholder="Owner Mobile Number" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3.5 text-white text-sm focus:outline-none focus:border-amber-500 font-bold">
+                        <input type="text" id="wsName" placeholder="Wholesaler Shop Name" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 text-sm focus:outline-none focus:border-amber-500 font-bold placeholder-gray-400">
+                        <input type="tel" id="wsMobile" placeholder="Owner Mobile Number" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 text-sm focus:outline-none focus:border-amber-500 font-bold placeholder-gray-400">
                     </div>
                     
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Shop Address</label>
-                        <textarea id="wsAddress" placeholder="Address will auto-fill from location..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white text-xs mt-1 h-24 focus:outline-none focus:border-amber-500 resize-none leading-relaxed"></textarea>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Shop Address</label>
+                        <textarea id="wsAddress" placeholder="Address will auto-fill from location..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900 text-xs mt-1 h-24 focus:outline-none focus:border-amber-500 resize-none leading-relaxed placeholder-gray-400"></textarea>
                         <input type="hidden" id="wsLat">
                         <input type="hidden" id="wsLng">
                     </div>
 
-                    <button onclick="submitWholesalerRequest()" id="btnWsSubmit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl text-sm shadow-lg transition mt-2 transform active:scale-95">
+                    <button onclick="submitWholesalerRequest()" id="btnWsSubmit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-xl text-sm shadow-md shadow-amber-200 transition mt-2 transform active:scale-95">
                         SUBMIT FOR VERIFICATION
                     </button>
                 </div>
@@ -314,9 +344,9 @@
 
             <!-- My Added Shops List -->
             <div>
-                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 border-b border-slate-800 pb-2">My Added Shops</h4>
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-200 pb-2">My Added Shops</h4>
                 <div id="myWholesalerList" class="space-y-3 pb-10">
-                    <div class="flex flex-col items-center justify-center py-8 text-slate-600">
+                    <div class="flex flex-col items-center justify-center py-8 text-gray-400">
                         <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
                         <p class="text-xs">Syncing shops...</p>
                     </div>
@@ -330,14 +360,16 @@
     <div id="celebrationOverlay" class="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center hidden">
         <div class="text-center animate-[popIn_0.5s_ease-out]">
             <div class="text-6xl mb-2">🎉</div>
-            <h2 class="text-3xl font-extrabold text-white drop-shadow-lg">Great Job!</h2>
-            <p class="text-xl text-green-400 font-bold drop-shadow-md">+ ₹20 Earned</p>
+            <h2 class="text-3xl font-extrabold text-white drop-shadow-lg text-stroke-black">Great Job!</h2>
+            <p class="text-xl text-green-400 font-bold drop-shadow-md text-stroke-black">+ ₹20 Earned</p>
         </div>
     </div>
-    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold"><span id="toastMsg">Updated</span></div>
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl z-[80] opacity-0 pointer-events-none transition-all duration-300 text-xs font-bold flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-amber-400"></i> <span id="toastMsg">Updated</span>
+    </div>
 
-   <script src="delivery-utils.js"></script>
-<script src="delivery-home.js"></script>
-
+    <!-- LOAD SCRIPTS IN ORDER -->
+    <script src="delivery-utils.js"></script>
+    <script src="delivery-home.js"></script>
 </body>
 </html>
