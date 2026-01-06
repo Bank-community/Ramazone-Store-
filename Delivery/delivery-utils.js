@@ -1,9 +1,9 @@
 // ==========================================
 // FILE 1: delivery-utils.js
-// (Helpers, Map, Smart Dashboard, Wholesaler UI)
+// (Helpers, Map, Smart Dashboard, Wholesaler UI, Routing)
 // ==========================================
 
-console.log("Loading Delivery Utils (Light Mode)...");
+console.log("Loading Delivery Utils (Light Mode + Routing)...");
 
 // --- 1. GENERAL HELPERS ---
 
@@ -22,7 +22,7 @@ window.toggleMenu = function() {
     if(ov) ov.classList.toggle('open'); 
 }
 
-// Distance Calculator (Haversine Formula)
+// Distance Calculator (Haversine Formula - Backup)
 window.getDistance = function(lat1, lon1, lat2, lon2) {
     if(!lat1 || !lon1 || !lat2 || !lon2) return 9999;
     const R = 6371; 
@@ -54,9 +54,10 @@ window.calculateOrderWeight = function(cart) {
     return totalKg.toFixed(2);
 }
 
-// --- 2. MAP LOGIC (Light Theme & Popups) ---
+// --- 2. MAP LOGIC (Light Theme & Routing) ---
 let deliveryMap = null;
 let deliveryLayerGroup = null;
+let routeControl = null;
 
 window.toggleLiveMap = function(forceOpen = false) {
     const mapSection = document.getElementById('liveMapSection');
@@ -107,7 +108,12 @@ window.updateMapVisuals = function() {
     if(!deliveryMap || !deliveryLayerGroup) return;
 
     deliveryLayerGroup.clearLayers();
-    const bounds = [];
+    
+    // Clear old route if exists
+    if(routeControl) {
+        try { deliveryMap.removeControl(routeControl); } catch(e) {}
+        routeControl = null;
+    }
 
     // 1. RIDER MARKER
     if(window.myLat && window.myLng) {
@@ -120,10 +126,9 @@ window.updateMapVisuals = function() {
             iconAnchor: [18, 18]
         });
         L.marker([window.myLat, window.myLng], {icon: riderIcon}).addTo(deliveryLayerGroup);
-        bounds.push([window.myLat, window.myLng]);
     }
 
-    // 2. CUSTOMER MARKER
+    // 2. CUSTOMER / DESTINATION MARKER & ROUTE
     if(window.activeOrder && window.activeOrder.location && window.activeOrder.location.lat) {
         const custLat = window.activeOrder.location.lat;
         const custLng = window.activeOrder.location.lng;
@@ -141,12 +146,9 @@ window.updateMapVisuals = function() {
             .bindPopup(`<b style="color:#111827">Customer</b>`)
             .addTo(deliveryLayerGroup);
         
-        bounds.push([custLat, custLng]);
-
+        // DRAW ROUTE (Turn-by-Turn)
         if(window.myLat && window.myLng) {
-            L.polyline([[window.myLat, window.myLng], [custLat, custLng]], {
-                color: '#3b82f6', weight: 3, opacity: 0.6, dashArray: '5, 10'
-            }).addTo(deliveryLayerGroup);
+            drawRoute(window.myLat, window.myLng, custLat, custLng);
         }
     }
 
@@ -155,7 +157,7 @@ window.updateMapVisuals = function() {
         window.approvedWholesalers.forEach(ws => {
             if(ws.location && ws.location.lat) {
                 const dist = getDistance(window.myLat, window.myLng, ws.location.lat, ws.location.lng);
-                if(dist <= 5) { // Show within 5KM in Light Mode
+                if(dist <= 5) { 
                     const shopIcon = L.divIcon({
                         className: 'custom-div-icon',
                         html: `<div style="background-color:#f59e0b; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -165,7 +167,6 @@ window.updateMapVisuals = function() {
                         iconAnchor: [12, 12]
                     });
                     
-                    // POPUP WITH DISTANCE
                     L.marker([ws.location.lat, ws.location.lng], {icon: shopIcon})
                         .bindPopup(`
                             <div class="text-center p-1">
@@ -179,6 +180,41 @@ window.updateMapVisuals = function() {
             }
         });
     }
+}
+
+// --- NEW ROUTING FUNCTION ---
+function drawRoute(startLat, startLng, endLat, endLng) {
+    if(!deliveryMap) return;
+
+    routeControl = L.Routing.control({
+        waypoints: [
+            L.latLng(startLat, startLng),
+            L.latLng(endLat, endLng)
+        ],
+        lineOptions: {
+            styles: [{color: '#3b82f6', opacity: 0.8, weight: 6}]
+        },
+        createMarker: function() { return null; }, // We use our own markers
+        addWaypoints: false,
+        draggableWaypoints: false,
+        fitSelectedRoutes: true,
+        showAlternatives: false,
+        containerClassName: 'hidden-routing-container' // Hidden via CSS
+    }).on('routesfound', function(e) {
+        const routes = e.routes;
+        const summary = routes[0].summary;
+        
+        // Update Dashboard with Real Road Data
+        const distKm = (summary.totalDistance / 1000).toFixed(1);
+        const timeMin = Math.round(summary.totalTime / 60);
+        
+        const timeBox = document.getElementById('liveTimeBox');
+        const distBox = document.getElementById('liveDistBox');
+        
+        if(timeBox) timeBox.innerText = timeMin + " min";
+        if(distBox) distBox.innerText = distKm + " KM";
+        
+    }).addTo(deliveryMap);
 }
 
 // --- 3. SMART DASHBOARD (Left Carousel + Right Distance) ---
@@ -239,12 +275,18 @@ function renderSingleShopCard(shop) {
     `;
 }
 
+// Fallback distance updater (runs if routing fails or for initial state)
 window.updateDashboardDistance = function() {
-    const box = document.getElementById('liveDistBox');
-    if(!box || !window.activeOrder || !window.activeOrder.location) return;
+    // Only update if routing hasn't updated it yet (check for '--')
+    const timeBox = document.getElementById('liveTimeBox');
+    if(timeBox && timeBox.innerText !== '--') return; // Routing is working
+
+    const distBox = document.getElementById('liveDistBox');
+    if(!distBox || !window.activeOrder || !window.activeOrder.location) return;
     
     const d = getDistance(window.myLat, window.myLng, window.activeOrder.location.lat, window.activeOrder.location.lng);
-    box.innerText = d + " KM";
+    distBox.innerText = d + " KM";
+    if(timeBox) timeBox.innerText = Math.ceil(d * 3) + " min"; // Rough estimate
 }
 
 
@@ -499,3 +541,5 @@ window.editWsRequest = function(key, name, mobile, address, lat, lng) {
     const scrollContainer = modal.querySelector('.overflow-y-auto');
     if(scrollContainer) scrollContainer.scrollTop = 0;
 }
+
+
